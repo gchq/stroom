@@ -1,0 +1,48 @@
+<s>&lt;?</s><pi>xml version</pi><s>=</s><pi>"1.0" encoding</pi><s>=</s><pi>"UTF-8" </pi><s>?&gt;</s><c>
+</c><s>&lt;</s><e>xsl</e><s>:</s><e>stylesheet</e><an> xmlns</an><s>=</s><av>"event-logging:3"</av><an> xpath-default-namespace</an><s>=</s><av>"records:2"</av><an> xmlns</an><s>:</s><an>stroom</an><s>=</s><av>"stroom"</av><an> xmlns</an><s>:</s><an>xsl</an><s>=</s><av>"http://www.w3.org/1999/XSL/Transform"</av><an> xmlns</an><s>:</s><an>xsi</an><s>=</s><av>"http://www.w3.org/2001/XMLSchema-instance"</av><an> version</an><s>=</s><av>"2.0"</av><s>&gt;</s><c>
+  </c><s>&lt;</s><e>xsl</e><s>:</s><e>template</e><an> match</an><s>=</s><av>"records"</av><s>&gt;</s><c>
+    </c><s>&lt;</s><e>Events</e><an> xsi</an><s>:</s><an>schemaLocation</an><s>=</s><av>"event-logging:3 file://event-logging-v3.0.0.xsd"</av><an> Version</an><s>=</s><av>"3.0.0"</av><s>&gt;</s><c>
+      </c><s>&lt;</s><e>xsl</e><s>:</s><e>apply-templates</e><an></an><s> /&gt;</s><c>
+    </c><s>&lt;/</s><e>Events</e><s>&gt;</s><c>
+  </c><s>&lt;/</s><e>xsl</e><s>:</s><e>template</e><s>&gt;</s><c>
+  </c><s>&lt;</s><e>xsl</e><s>:</s><e>template</e><an> match</an><s>=</s><av>"record"</av><s>&gt;</s><c>
+    </c><s>&lt;</s><e>xsl</e><s>:</s><e>if</e><an> test</an><s>=</s><av>"data[@name = 'Action']/@value = 'OPEN'"</av><s>&gt;</s><c>
+      </c><s>&lt;</s><e>xsl</e><s>:</s><e>variable</e><an> name</an><s>=</s><av>"date"</av><an> select</an><s>=</s><av>"data[@name = 'Time']/@value"</av><an></an><s> /&gt;</s><c>
+      </c><s>&lt;</s><e>xsl</e><s>:</s><e>variable</e><an> name</an><s>=</s><av>"formattedDate"</av><an> select</an><s>=</s><av>"stroom:format-date($date, 'dd/MM/yyyy:HH:mm:ss')"</av><an></an><s> /&gt;</s><c>
+      </c><s>&lt;</s><e>Event</e><s>&gt;</s><c>
+        </c><s>&lt;</s><e>EventTime</e><s>&gt;</s><c>
+          </c><s>&lt;</s><e>TimeCreated</e><s>&gt;</s><c>
+            </c><s>&lt;</s><e>xsl</e><s>:</s><e>value-of</e><an> select</an><s>=</s><av>"$formattedDate"</av><an></an><s> /&gt;</s><c>
+          </c><s>&lt;/</s><e>TimeCreated</e><s>&gt;</s><c>
+        </c><s>&lt;/</s><e>EventTime</e><s>&gt;</s><c>
+        </c><s>&lt;</s><e>EventSource</e><s>&gt;</s><c>
+          </c><s>&lt;</s><e>Generator</e><s>&gt;</s><c>Very Simple Provider</c><s>&lt;/</s><e>Generator</e><s>&gt;</s><c>
+          </c><s>&lt;</s><e>Device</e><s>&gt;</s><c>
+            </c><s>&lt;</s><e>IPAddress</e><s>&gt;</s><c>3.3.3.3</c><s>&lt;/</s><e>IPAddress</e><s>&gt;</s><c>
+            </c><s>&lt;</s><e>Location</e><s>&gt;</s><c>
+              </c><s>&lt;</s><e>Country</e><s>&gt;</s><c>UK</c><s>&lt;/</s><e>Country</e><s>&gt;</s><c>
+              </c><s>&lt;</s><e>Site</e><s>&gt;</s><c>Site</c><s>&lt;/</s><e>Site</e><s>&gt;</s><c>
+              </c><s>&lt;</s><e>Building</e><s>&gt;</s><c>Main</c><s>&lt;/</s><e>Building</e><s>&gt;</s><c>
+              </c><s>&lt;</s><e>Floor</e><s>&gt;</s><c>1</c><s>&lt;/</s><e>Floor</e><s>&gt;</s><c>
+              </c><s>&lt;</s><e>Room</e><s>&gt;</s><c>1</c><s>&lt;/</s><e>Room</e><s>&gt;</s><c>
+            </c><s>&lt;/</s><e>Location</e><s>&gt;</s><c>
+          </c><s>&lt;/</s><e>Device</e><s>&gt;</s><c>
+          </c><s>&lt;</s><e>User</e><s>&gt;</s><c>
+            </c><s>&lt;</s><e>Id</e><s>&gt;</s><c>
+              </c><s>&lt;</s><e>xsl</e><s>:</s><e>value-of</e><an> select</an><s>=</s><av>"data[@name = 'User']/@value"</av><an></an><s> /&gt;</s><c>
+            </c><s>&lt;/</s><e>Id</e><s>&gt;</s><c>
+          </c><s>&lt;/</s><e>User</e><s>&gt;</s><c>
+        </c><s>&lt;/</s><e>EventSource</e><s>&gt;</s><c>
+        </c><s>&lt;</s><e>EventDetail</e><s>&gt;</s><c>
+          </c><s>&lt;</s><e>View</e><s>&gt;</s><c>
+            </c><s>&lt;</s><e>Type</e><s>&gt;</s><c>File</c><s>&lt;/</s><e>Type</e><s>&gt;</s><c>
+            </c><s>&lt;</s><e>Title</e><s>&gt;</s><c>UNKNOWN</c><s>&lt;/</s><e>Title</e><s>&gt;</s><c>
+            </c><s>&lt;</s><e>Path</e><s>&gt;</s><c>
+              </c><s>&lt;</s><e>xsl</e><s>:</s><e>value-of</e><an> select</an><s>=</s><av>"data[@name = 'File']/@value"</av><an></an><s> /&gt;</s><c>
+            </c><s>&lt;/</s><e>Path</e><s>&gt;</s><c>
+          </c><s>&lt;/</s><e>View</e><s>&gt;</s><c>
+        </c><s>&lt;/</s><e>EventDetail</e><s>&gt;</s><c>
+      </c><s>&lt;/</s><e>Event</e><s>&gt;</s><c>
+    </c><s>&lt;/</s><e>xsl</e><s>:</s><e>if</e><s>&gt;</s><c>
+  </c><s>&lt;/</s><e>xsl</e><s>:</s><e>template</e><s>&gt;</s><c>
+</c><s>&lt;/</s><e>xsl</e><s>:</s><e>stylesheet</e><s>&gt;</s>

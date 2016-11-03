@@ -1,0 +1,109 @@
+<!doctype html>
+<!-- The DOCTYPE declaration above will set the     -->
+<!-- browser's rendering engine into                -->
+<!-- "Standards Mode". Replacing this declaration   -->
+<!-- with a "Quirks Mode" doctype is not supported. -->
+
+<!--
+  ~ Copyright 2016 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+    <!--                                                               -->
+    <!-- Consider inlining CSS to reduce the number of requested files -->
+    <!--                                                               -->
+    <link type="text/css" rel="stylesheet" href="TestSuperDevMode.css">
+
+    <!--                                           -->
+    <!-- Any title is fine                         -->
+    <!--                                           -->
+    <title>Web Application Starter Project</title>
+    
+    <!--                                           -->
+    <!-- This script loads your compiled module.   -->
+    <!-- If you add any GWT meta tags, they must   -->
+    <!-- be added before this line.                -->
+    <!--                                           -->
+    <script type="text/javascript" src="stroom/stroom.nocache.js"></script>
+  </head>
+
+  <!--                                           -->
+  <!-- The body can have arbitrary html, or      -->
+  <!-- you can leave the body empty if you want  -->
+  <!-- to create a completely dynamic UI.        -->
+  <!--                                           -->
+  <body class="stroomBody" unselectable="on" oncontextmenu="return false;">
+      <!-- OPTIONAL: include this if you want history support -->
+    <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
+    
+    <div class="stroomBackground">
+    </div>    
+    <table class="tubeEffect">
+      <tr style="width:100%;height:150px;">
+        <td style="display:inline-block;width:400px;height:150px;background:url('images/topleft.png')">
+          <br/>
+        </td>
+        <td style="width:100%;height:150px;background:url('images/top.png')">
+          <br/>
+        </td>
+        <td style="display:inline-block;width:400px;height:150px;background:url('images/topright.png')">
+          <br/>
+        </td>
+      </tr>
+      <tr style="width:100%;height:100%;">
+        <td style="display:inline-block;width:400px;height:100%;background:url('images/left.png')">
+          <br/>
+        </td>
+        <td style="width:100%;height:100%;background:url('images/middle.png')">
+          <br/>
+        </td>
+        <td style="display:inline-block;width:400px;height:100%;background:url('images/right.png')">
+          <br/>
+        </td>
+      </tr>
+      <tr style="width:100%;height:150px;">
+        <td style="display:inline-block;width:400px;height:150px;background:url('images/bottomleft.png')">
+          <br/>
+        </td>
+        <td style="width:100%;height:150px;background:url('images/bottom.png')">
+          <br/>
+        </td>
+        <td style="display:inline-block;width:400px;height:150px;background:url('images/bottomright.png')">
+          <br/>
+        </td>
+      </tr>
+    </table>
+    
+    <div id="loading" unselectable="on">
+	  <div id="loadingBox" unselectable="on">
+	    <img id="loadingImage" src="images/loading.gif" unselectable="on"/>
+	    <div id="loadingTitle" unselectable="on">Stroom</div>
+	    <div id="loadingText" unselectable="on">Loading Application. Please wait...</div>
+	  </div>
+	</div>
+	
+	<div id="logo" style="position:absolute;top:0px;left:0px;width:430px;height:21px;margin:7px;background:url('images/logo.png')" />
+  
+    <noscript>
+      <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color:white; border: 1px solid red; padding: 4px; font-family: sans-serif">
+        Your web browser must have JavaScript enabled
+        in order for this application to display correctly.
+      </div>
+    </noscript>
+  </body>
+</html>

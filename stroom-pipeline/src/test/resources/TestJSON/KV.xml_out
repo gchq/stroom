@@ -1,0 +1,11 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<map xmlns="http://www.w3.org/2013/XSL/json">
+   <string key="string1">aaa</string>
+   <string key="string2">bbb</string>
+   <number key="int1">1</number>
+   <number key="int2">2</number>
+   <number key="float1">1.0</number>
+   <number key="float2">2.0</number>
+   <boolean key="boolean1">true</boolean>
+   <boolean key="boolean2">false</boolean>
+</map>

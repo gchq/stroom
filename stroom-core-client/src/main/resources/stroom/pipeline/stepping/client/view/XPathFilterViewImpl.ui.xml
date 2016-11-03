@@ -1,0 +1,33 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:l="urn:import:stroom.item.client"
+  xmlns:v="urn:import:stroom.widget.tickbox.client.view">
+  <g:SimplePanel width="100%">
+    <g:Grid ui:field="grid" styleName="stroom-control-grid" width="100%">
+      <g:row>
+        <g:cell>XPath:</g:cell>
+        <g:customCell>
+          <g:TextBox ui:field="xPath" width="100%" />
+        </g:customCell>
+      </g:row>
+      <g:row>
+        <g:cell>Condition:</g:cell>
+        <g:customCell>
+          <l:ItemListBox ui:field="matchType" width="100%" />
+        </g:customCell>
+      </g:row>
+      <g:row>
+        <g:cell>Value:</g:cell>
+        <g:customCell>
+          <g:TextBox ui:field="value" width="100%" />
+        </g:customCell>
+      </g:row>
+      <g:row>
+        <g:cell>Ignore Case:</g:cell>
+        <g:customCell>
+          <v:TickBox ui:field="ignoreCase" />
+        </g:customCell>
+      </g:row>
+    </g:Grid>
+  </g:SimplePanel>
+</ui:UiBinder> 

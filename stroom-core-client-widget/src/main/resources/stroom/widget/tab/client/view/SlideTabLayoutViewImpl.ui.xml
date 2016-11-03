@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:tab="urn:import:stroom.widget.tab.client.view">
+	<g:DockLayoutPanel unit="PX" width="100%" height="100%">
+		<g:north size="30">
+			<tab:SlideTabBar ui:field="tabBar" width="100%" height="100%" />
+		</g:north>
+		<g:center>
+			<tab:LayerContainerImpl ui:field="layerContainer" width="100%"
+				height="100%" />
+		</g:center>
+	</g:DockLayoutPanel>
+</ui:UiBinder> 

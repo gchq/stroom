@@ -1,0 +1,132 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.xml.event.np;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.event.Receiver;
+import net.sf.saxon.event.ReceiverOptions;
+import net.sf.saxon.om.CodedName;
+import net.sf.saxon.om.NamePool;
+import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.tree.tiny.CharSlice;
+import net.sf.saxon.type.BuiltInAtomicType;
+import net.sf.saxon.type.Untyped;
+
+public class EventListConsumer {
+    private static final String EMPTY = "";
+    private final Receiver receiver;
+    private final PipelineConfiguration pipe;
+    private final NamePool pool;
+
+    private final Map<Integer, Integer> codeMap = new HashMap<>();
+
+    public EventListConsumer(final Receiver receiver, final PipelineConfiguration pipe) {
+        this.receiver = receiver;
+        this.pipe = pipe;
+
+        pool = pipe.getConfiguration().getNamePool();
+    }
+
+    public void startDocument() throws XPathException {
+        receiver.setPipelineConfiguration(pipe);
+        receiver.open();
+        receiver.startDocument(0);
+    }
+
+    public void endDocument() throws XPathException {
+        receiver.endDocument();
+        receiver.close();
+    }
+
+    public void consume(final NPEventList eventList) throws XPathException {
+        final NPEventListNamePool namePool = eventList.namePool;
+
+        int eventTypeIndex = 0;
+        int nameCodeIndex = 0;
+
+        int attsIndex = 0;
+        int charPosIndex = 0;
+
+        int lastPos = 0;
+
+        int nameCode = 0;
+        NPAttributes atts = null;
+
+        for (eventTypeIndex = 0; eventTypeIndex < eventList.eventTypeArr.length; eventTypeIndex++) {
+            {
+                switch (eventList.eventTypeArr[eventTypeIndex]) {
+                case NPEventList.START_ELEMENT:
+                    nameCode = eventList.nameCodeArr[nameCodeIndex++];
+                    startElement(namePool, nameCode);
+                    receiver.startContent();
+                    break;
+                case NPEventList.START_ELEMENT_WITH_ATTS:
+                    nameCode = eventList.nameCodeArr[nameCodeIndex++];
+                    startElement(namePool, nameCode);
+                    atts = eventList.attsArr[attsIndex++];
+                    attributes(namePool, atts);
+                    receiver.startContent();
+                    break;
+                case NPEventList.END_ELEMENT:
+                    receiver.endElement();
+                    break;
+                case NPEventList.CHARACTERS:
+                    final int pos = eventList.charPosArr[charPosIndex++];
+                    final CharSlice slice = new CharSlice(eventList.charArr, lastPos, pos - lastPos);
+                    receiver.characters(slice, 0, ReceiverOptions.WHOLE_TEXT_NODE);
+                    lastPos = pos;
+                    break;
+                }
+            }
+        }
+    }
+
+    private void startElement(final NPEventListNamePool namePool, final int nameCode) throws XPathException {
+        final int code = mapCode(namePool, nameCode);
+        receiver.startElement(new CodedName(code, pool), Untyped.getInstance(), 0, ReceiverOptions.NAMESPACE_OK);
+    }
+
+    private void attributes(final NPEventListNamePool namePool, final NPAttributes atts) throws XPathException {
+        int code = 0;
+        for (int a = 0; a < atts.length; a++) {
+            code = atts.nameCode[a];
+            code = mapCode(namePool, code);
+            receiver.attribute(new CodedName(code, pool), BuiltInAtomicType.UNTYPED_ATOMIC, atts.value[a], 0,
+                    ReceiverOptions.NAMESPACE_OK);
+        }
+    }
+
+    private int mapCode(final NPEventListNamePool namePool, final int nameCode) {
+        Integer code = codeMap.get(nameCode);
+        if (code == null) {
+            final String uri = namePool.getURI(nameCode);
+            final String localName = namePool.getLocalName(nameCode);
+            final String prefix = pool.suggestPrefixForURI(uri);
+            if (prefix == null) {
+                code = pool.allocate(EMPTY, uri, localName);
+            } else {
+                code = pool.allocate(prefix, uri, localName);
+            }
+            codeMap.put(nameCode, code);
+        }
+
+        return code;
+    }
+}

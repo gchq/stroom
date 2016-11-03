@@ -1,0 +1,99 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+----------------------------------------
+-- Security
+----------------------------------------
+
+-- User
+CREATE TABLE USR (
+  ID 				int(11) NOT NULL AUTO_INCREMENT,
+  VER				tinyint(4) NOT NULL,
+  CRT_MS 			bigint(20) DEFAULT NULL,
+  CRT_USER			varchar(255) DEFAULT NULL,
+  UPD_MS 			bigint(20) DEFAULT NULL,
+  UPD_USER 			varchar(255) DEFAULT NULL,
+  NAME				varchar(255) NOT NULL,
+  UUID 				varchar(255) NOT NULL,
+  GRP               bit(1) NOT NULL,
+  STAT				tinyint(4) NOT NULL,
+  CUR_LOGIN_FAIL	smallint(6) NOT NULL,
+  LOGIN_EXPIRY		bit(1) NOT NULL,
+  LAST_LOGIN_MS		bigint(20) DEFAULT NULL,
+  LOGIN_VALID_MS	bigint(20) DEFAULT NULL,
+  PASS_EXPIRY_MS	bigint(20) DEFAULT NULL,
+  PASS_HASH			varchar(255) DEFAULT NULL,
+  TOTL_LOGIN_FAIL	smallint(6) NOT NULL,
+  PRIMARY KEY       (ID),
+  UNIQUE 			(NAME, GRP),
+  CONSTRAINT        USR_UK_UUID UNIQUE INDEX USR_UUID_IDX (UUID)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- User Group User
+CREATE TABLE USR_GRP_USR (
+  ID 				bigint(20) NOT NULL AUTO_INCREMENT,
+  VER				tinyint(4) NOT NULL,
+  GRP_UUID 			varchar(255) NOT NULL,
+  USR_UUID 			varchar(255) NOT NULL,
+  PRIMARY KEY       (ID),
+  CONSTRAINT        USR_GRP_USR_UK_GRP_UUID_USR_UUID UNIQUE INDEX USR_GRP_USR_GRP_UUID_USR_UUID_IDX (GRP_UUID, USR_UUID)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- Permission
+CREATE TABLE PERM (
+  ID 				int(11) NOT NULL AUTO_INCREMENT,
+  VER				tinyint(4) NOT NULL,
+  NAME 			    varchar(255) NOT NULL,
+  PRIMARY KEY       (ID),
+  UNIQUE 			(NAME)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- Application Permission
+CREATE TABLE APP_PERM (
+  ID 				bigint(20) NOT NULL AUTO_INCREMENT,
+  VER				tinyint(4) NOT NULL,
+  USR_UUID  	    varchar(255) NOT NULL,
+  FK_PERM_ID        int(11) NOT NULL,
+  PRIMARY KEY       (ID),
+  CONSTRAINT        APP_PERM_UK_USR_UUID_FK_PERM_ID UNIQUE INDEX APP_PERM_USR_UUID_FK_PERM_ID_IDX (USR_UUID, FK_PERM_ID)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- Document Permission
+CREATE TABLE DOC_PERM (
+  ID 				bigint(20) NOT NULL AUTO_INCREMENT,
+  VER				tinyint(4) NOT NULL,
+  USR_UUID  	    varchar(255) NOT NULL,
+  DOC_TP            varchar(255) NOT NULL,
+  DOC_UUID          varchar(255) NOT NULL,
+  PERM              varchar(255) NOT NULL,
+  PRIMARY KEY       (ID),
+  CONSTRAINT        DOC_PERM_UK_USR_UUID_DOC_TP_DOC_UUID_PERM UNIQUE INDEX DOC_PERM_USR_UUID_DOC_TP_DOC_UUID_PERM_IDX (USR_UUID, DOC_TP, DOC_UUID, PERM)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+INSERT INTO USR (VER,CRT_MS,CRT_USER,UPD_MS,UPD_USER,NAME,UUID,GRP,STAT,CUR_LOGIN_FAIL,LOGIN_EXPIRY,LAST_LOGIN_MS,LOGIN_VALID_MS,PASS_EXPIRY_MS,PASS_HASH,TOTL_LOGIN_FAIL) SELECT VER,CRT_MS,CRT_USER,UPD_MS,UPD_USER,NAME,UUID,0,STAT,CUR_LOGIN_FAIL,LOGIN_EXPIRY,LAST_LOGIN_MS,LOGIN_VALID_MS,PASS_EXPIRY_MS,PASS_HASH,TOTL_LOGIN_FAIL FROM SYS_USR;
+INSERT INTO USR (VER,CRT_MS,CRT_USER,UPD_MS,UPD_USER,NAME,UUID,GRP,STAT,CUR_LOGIN_FAIL,LOGIN_EXPIRY,LAST_LOGIN_MS,LOGIN_VALID_MS,PASS_EXPIRY_MS,TOTL_LOGIN_FAIL) SELECT VER,CRT_MS,CRT_USER,UPD_MS,UPD_USER,NAME,UUID,1,0,0,0,0,0,0,0 FROM SYS_ROLE;
+
+INSERT INTO PERM (ID,VER,NAME) VALUES (1,1,'Administrator');
+INSERT INTO APP_PERM (VER,USR_UUID,FK_PERM_ID) SELECT 1,UUID,1 FROM USR WHERE GRP = 1 AND NAME LIKE 'Admin%';
+
+INSERT INTO USR_GRP_USR (VER,USR_UUID,GRP_UUID) SELECT 1,u.UUID,r.UUID FROM SYS_USR_ROLE sur JOIN SYS_USR u ON (u.ID = sur.FK_SYS_USR_ID) JOIN SYS_ROLE r ON (r.ID = sur.FK_SYS_ROLE_ID);
+
+DROP TABLE SYS_USR_GRP;
+DROP TABLE SYS_USR_ROLE;
+DROP TABLE SYS_ROLE_PERM;
+DROP TABLE SYS_PERM;
+DROP TABLE SYS_ROLE;
+DROP TABLE SYS_USR;

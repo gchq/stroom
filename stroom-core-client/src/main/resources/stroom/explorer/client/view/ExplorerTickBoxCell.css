@@ -1,0 +1,31 @@
+.outer {
+display: inline-block;
+white-space: nowrap;
+vertical-align: top;
+}
+
+.outer * {
+display: inline-block;
+white-space: nowrap;
+vertical-align: top;
+}
+
+.expander {
+padding-top: 2px;
+padding-right: 5px;
+}
+
+.tickBox {
+padding-top: 1px;
+}
+
+.icon {
+padding-left: 3px;
+padding-top: 1px;
+}
+
+.text {
+padding-left: 2px;
+padding-right: 2px;
+padding-top: 1px;
+}

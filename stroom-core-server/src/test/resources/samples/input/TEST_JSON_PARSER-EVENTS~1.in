@@ -1,0 +1,10 @@
+{"utimestamp":1445453105, "EventTime":"2015-10-22 07:41:00", "sourceAddress":"192.168.0.1", "destinationUserName":"user1", "duration":456, "status":200, "request":"/"}
+{"utimestamp":1445452804, "EventTime":"2015-10-22 07:42:00", "sourceAddress":"192.168.0.1", "destinationUserName":"user2", "duration":8126, "status":200, "request":"/"}
+{"utimestamp":1445453105, "EventTime":"2015-10-22 07:43:00", "sourceAddress":"192.168.0.1", "destinationUserName":"user3", "duration":3568, "status":200, "request":"/"}
+{"utimestamp":1445452804, "EventTime":"2015-10-22 07:44:00", "sourceAddress":"192.168.0.1", "destinationUserName":"user4", "duration":284, "status":200, "request":"/"}
+{"utimestamp":1445453105, "EventTime":"2015-10-22 07:45:00", "sourceAddress":"192.168.0.1", "destinationUserName":"user5", "duration":3678, "status":200, "request":"/"}
+{"utimestamp":1445452804, "EventTime":"2015-10-22 07:46:00", "sourceAddress":"192.168.0.1", "destinationUserName":"user6", "duration":2426, "status":200, "request":"/"}
+{"utimestamp":1445453105, "EventTime":"2015-10-22 07:47:00", "sourceAddress":"192.168.0.1", "destinationUserName":"user7", "duration":742, "status":200, "request":"/"}
+{"utimestamp":1445452804, "EventTime":"2015-10-22 07:48:00", "sourceAddress":"192.168.0.1", "destinationUserName":"user8", "duration":1235, "status":200, "request":"/"}
+{"utimestamp":1445453105, "EventTime":"2015-10-22 07:49:00", "sourceAddress":"192.168.0.1", "destinationUserName":"user9", "duration":2461, "status":200, "request":"/"}
+{"utimestamp":1445453105, "EventTime":"2015-10-22 07:50:00", "sourceAddress":"192.168.0.1", "destinationUserName":"user10", "duration":3553, "status":200, "request":"/"}

@@ -1,0 +1,93 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.slideTab {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	cursor: pointer;
+	
+	transition: opacity .5s, width .5s;
+	-webkit-transition: opacity .5s, width .5s;
+	-moz-transition: opacity .5s, width .5s;
+	-o-transition: opacity .5s, width .5s;
+}
+
+.slideTab.selected {
+}
+
+.slideTab .label {
+	padding: 4px 20px 0px 10px;
+	cursor: default;
+	font-weight: bold;
+	opacity: .5;
+	transition: opacity .5s;
+	-webkit-transition: opacity .5s;
+	-moz-transition: opacity .5s;
+	-o-transition: opacity .5s;
+}
+
+.slideTab .label:hover {
+	opacity: .8;
+}
+
+.slideTab.selected .label {
+	opacity: .8;
+}
+
+.slideTab .hotspot {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	top: 0px;
+	bottom: 0px;
+	margin: 0px;
+	padding: 0px;
+	border-width: 1px;
+	border-color: black;
+	border-style: solid;
+	background-color: red;
+	opacity: 0;
+	
+	transition: opacity .2s;
+	-webkit-transition: opacity .2s;
+	-moz-transition: opacity .2s;
+	-o-transition: opacity .2s;
+	
+	cursor: pointer;
+}
+
+.slideTab .hotspotVisible {
+	opacity: .3 !important;
+}
+
+/* Close button */
+@sprite .slideTab .close {
+	gwt-image: 'close';
+	position: absolute;
+	right: 3px;
+	top: 6px;
+	cursor: pointer;
+}
+
+@sprite .slideTab .closeActive
+	{
+	gwt-image: 'closeActive';
+	position: absolute;
+	right: 3px;
+	top: 6px;
+	cursor: pointer;
+}

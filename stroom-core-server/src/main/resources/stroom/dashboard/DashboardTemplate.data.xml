@@ -1,0 +1,74 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2016 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<dashboard>
+   <components>
+      <component>
+         <type>table</type>
+         <id>table-IIO1T</id>
+         <name>Table</name>
+         <table>
+            <queryId>query-JT8D7</queryId>
+            <fields/>
+         </table>
+      </component>
+      <component>
+         <type>query</type>
+         <id>query-JT8D7</id>
+         <name>Query</name>
+         <query>
+            <expression>
+               <enabled>true</enabled>
+               <op>AND</op>
+            </expression>
+         </query>
+      </component>
+   </components>
+   <splitLayout>
+      <preferredSize>
+         <width>200</width>
+         <height>200</height>
+      </preferredSize>
+      <dimension>1</dimension>
+      <children>
+         <tabLayout>
+            <preferredSize>
+               <width>200</width>
+               <height>200</height>
+            </preferredSize>
+            <tabs>
+               <tab>
+                  <id>query-JT8D7</id>
+               </tab>
+            </tabs>
+            <selected>0</selected>
+         </tabLayout>
+         <tabLayout>
+            <preferredSize>
+               <width>200</width>
+               <height>200</height>
+            </preferredSize>
+            <tabs>
+               <tab>
+                  <id>table-IIO1T</id>
+               </tab>
+            </tabs>
+            <selected>0</selected>
+         </tabLayout>
+      </children>
+   </splitLayout>
+   <tabVisibility>SHOW_ALL</tabVisibility>
+</dashboard>

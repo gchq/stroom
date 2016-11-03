@@ -1,0 +1,22 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:e="urn:import:stroom.entity.client">
+  <ui:style>
+    .label {
+    	float: left;
+    	width: 110px;
+    	margin-top: 2px;
+    	vertical-align: top;
+    	white-space: nowrap;
+    }
+    
+    .noMargin {
+    	margin: 0px;
+    }
+  </ui:style>
+  <g:FlowPanel>
+    <g:Label styleName="{style.label}" text="Stream Type:" />
+    <e:EntityItemListBox ui:field="list"
+      addStyleNames="{style.noMargin}" />
+  </g:FlowPanel>
+</ui:UiBinder> 

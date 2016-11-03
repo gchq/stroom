@@ -1,0 +1,7 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
+  <g:FlowPanel styleName="menuItem">
+    <g:SimplePanel ui:field="background" styleName="background"/>
+    <g:Label ui:field="text" styleName="text"/>    
+  </g:FlowPanel>
+</ui:UiBinder> 

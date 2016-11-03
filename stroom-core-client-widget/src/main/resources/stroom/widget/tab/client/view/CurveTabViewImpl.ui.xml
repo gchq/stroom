@@ -1,0 +1,30 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+  <ui:with field="res"
+    type="stroom.widget.tab.client.view.CurveTabViewImpl.Resources" />
+
+  <g:FlowPanel ui:field="layout" styleName="{res.style.curveTab}">
+    <g:FlowPanel styleName="{res.style.container}">
+      <g:SimplePanel ui:field="leftBackground" styleName="{res.style.leftBackground}" />
+    </g:FlowPanel>
+    <g:FlowPanel styleName="{res.style.container}">
+      <g:SimplePanel ui:field="imageBackground" styleName="{res.style.midBackground}" />
+      <g:Image ui:field="image" styleName="{res.style.icon}" />
+    </g:FlowPanel>
+    <g:FlowPanel styleName="{res.style.container}">
+      <g:SimplePanel ui:field="textBackground" styleName="{res.style.midBackground}" />
+      <g:Label ui:field="text" styleName="{res.style.text}" />
+    </g:FlowPanel>
+    <g:FlowPanel ui:field="closeContainer" styleName="{res.style.container}">
+      <g:SimplePanel ui:field="closeBackground"
+        styleName="{res.style.closeBackground}" />
+    </g:FlowPanel>
+    <g:FlowPanel styleName="{res.style.rightContainer}">
+      <g:SimplePanel ui:field="rightBackground"
+        styleName="{res.style.rightBackground}" />
+    </g:FlowPanel>
+    <g:SimplePanel ui:field="close" styleName="{res.style.close}" />
+  </g:FlowPanel>
+</ui:UiBinder> 

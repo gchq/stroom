@@ -1,0 +1,118 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.curveTab {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	cursor: pointer;
+}
+
+.curveTab.selected {
+	z-index: 1;
+}
+
+.curveTab .background {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	opacity: 0.6;
+	height: 24px;
+	width: 100%;
+	padding-left: 5px;
+	padding-right: 15px;
+	overflow: hidden;
+}
+
+.curveTab.hover .background {
+	opacity: 0.7;
+}
+
+.curveTab.selected .background {
+	height: 25px;
+	opacity: 1;
+}
+
+@sprite .curveTab .leftBackground {
+	gwt-image: 'left';
+	position: absolute;
+	left: 0px;
+	top: 0px;
+}
+
+@sprite .curveTab .midBackground {
+	gwt-image: 'middle';
+	width: 100%;
+}
+
+@sprite .curveTab .rightBackground {
+	gwt-image: 'right';
+	position: absolute;
+	right: 0px;
+	top: 0px;
+}
+
+/* Tab content */
+.curveTab .icon {
+	position: absolute;
+	top: 0px;
+	left: 5px;
+	margin-top: 5px;
+	-moz-user-select: none;
+}
+
+.curveTab .face {
+	border: none;
+	outline: none;
+	background: none;
+	cursor: pointer;
+	text-decoration: none;
+	min-width: 16px;
+	min-height: 16px;
+	margin: auto;
+	padding: 0;
+	overflow: hidden;
+	position: relative;
+	color: #5398ff;
+	font-size: 16px;
+	opacity: 1;
+}
+
+.curveTab .text {
+	position: relative;
+	white-space: nowrap;
+	padding: 6px 32px 0px 26px;
+	-moz-user-select: none;
+}
+
+/* Close button */
+@sprite .curveTab  .close {
+	gwt-image: 'close';
+	position: absolute;
+	right: 15px;
+	top: 8px;
+	-moz-user-select: none;
+	cursor: pointer;
+}
+
+@sprite .curveTab  .closeActive	{
+	gwt-image: 'closeActive';
+	position: absolute;
+	right: 15px;
+	top: 8px;
+	-moz-user-select: none;
+	cursor: pointer;
+}

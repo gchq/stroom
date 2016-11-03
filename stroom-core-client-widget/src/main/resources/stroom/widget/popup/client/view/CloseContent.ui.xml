@@ -1,0 +1,23 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+	<ui:style>
+	.layout {
+		width: 100%;
+		text-align: right;
+		padding-top: 5px;
+	}
+	</ui:style>
+
+	<g:VerticalPanel width="100%" height="100%">
+		<g:cell width="100%" height="100%">
+			<g:SimplePanel ui:field="content" width="100%" height="100%" />
+		</g:cell>
+		<g:cell>
+			<g:FlowPanel styleName="{style.layout}">
+				<g:Button ui:field="close" text="Close" />
+			</g:FlowPanel>
+		</g:cell>
+	</g:VerticalPanel>
+</ui:UiBinder> 

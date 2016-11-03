@@ -1,0 +1,251 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.pipeline.shared;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineLink;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelineReference;
+
+public class PipelineDataMerger {
+    private final Map<String, PipelineElement> allElementMap = new HashMap<>();
+    private final Map<String, PipelineElement> elementMap = new HashMap<>();
+    private final Map<String, Map<String, PipelineProperty>> propertyMap = new HashMap<>();
+    private final Map<String, Map<String, List<PipelineReference>>> pipelineReferenceMap = new HashMap<>();
+    private final Map<String, List<PipelineLink>> linkMap = new HashMap<>();
+    private final List<PipelineElement> sourceList = new ArrayList<>();
+
+    public static Map<String, PipelineElementType> createElementMap() {
+        final Map<String, PipelineElementType> elementMap = new HashMap<>();
+        return elementMap;
+    }
+
+    public PipelineDataMerger() {
+        // Default constructor necessary for GWT serialisation.
+    }
+
+    public void merge(final PipelineData... configStack) throws PipelineModelException {
+        merge(Arrays.asList(configStack));
+    }
+
+    public void merge(final List<PipelineData> configStack) throws PipelineModelException {
+        for (final PipelineData pipelineData : configStack) {
+            if (pipelineData != null) {
+                // Merge elements.
+                for (final PipelineElement element : pipelineData.getElements().getAdd()) {
+                    final PipelineElement existing = allElementMap.get(element.getId());
+                    if (existing == null) {
+                        allElementMap.put(element.getId(), element);
+                        elementMap.put(element.getId(), element);
+                    } else if (!existing.getType().equals(element.getType())) {
+                        throw new PipelineModelException("Attempt to add element with id=" + existing.getId()
+                                + " but element already exists with the same id but different type");
+                    }
+                }
+
+                for (final PipelineElement element : pipelineData.getElements().getRemove()) {
+                    elementMap.remove(element.getId());
+                }
+            }
+        }
+
+        // Now we have a set of elements merge everything else.
+        for (final PipelineData pipelineData : configStack) {
+            if (pipelineData != null) {
+                // Merge properties.
+                for (final PipelineProperty property : pipelineData.getProperties().getAdd()) {
+                    final PipelineElement element = elementMap.get(property.getElement());
+                    if (element != null) {
+                        final String elementType = element.getType();
+                        if (elementType != null) {
+                            Map<String, PipelineProperty> map = propertyMap.get(property.getElement());
+                            if (map == null) {
+                                map = new HashMap<>();
+                                propertyMap.put(property.getElement(), map);
+                            }
+                            map.put(property.getName(), property);
+                        }
+                    }
+                }
+                for (final PipelineProperty property : pipelineData.getProperties().getRemove()) {
+                    final Map<String, PipelineProperty> map = propertyMap.get(property.getElement());
+                    if (map != null) {
+                        map.remove(property.getName());
+                        if (map.size() == 0) {
+                            propertyMap.remove(property.getElement());
+                        }
+                    }
+                }
+
+                // Merge pipeline references.
+                for (final PipelineReference reference : pipelineData.getPipelineReferences().getAdd()) {
+                    final PipelineElement element = elementMap.get(reference.getElement());
+                    if (element != null) {
+                        final String elementType = element.getType();
+                        if (elementType != null) {
+                            Map<String, List<PipelineReference>> map = pipelineReferenceMap.get(reference.getElement());
+                            if (map == null) {
+                                map = new HashMap<>();
+                                pipelineReferenceMap.put(reference.getElement(), map);
+                            }
+                            List<PipelineReference> list = map.get(reference.getName());
+                            if (list == null) {
+                                list = new ArrayList<>();
+                                map.put(reference.getName(), list);
+                            }
+                            if (!list.contains(reference)) {
+                                list.add(reference);
+                            }
+                        }
+                    }
+                }
+                for (final PipelineReference reference : pipelineData.getPipelineReferences().getRemove()) {
+                    final Map<String, List<PipelineReference>> map = pipelineReferenceMap.get(reference.getElement());
+                    if (map != null) {
+                        final List<PipelineReference> list = map.get(reference.getName());
+                        if (list != null) {
+                            list.remove(reference);
+                        }
+                    }
+                }
+
+                // Merge links.
+                for (final PipelineLink link : pipelineData.getLinks().getAdd()) {
+                    final PipelineElement fromElement = elementMap.get(link.getFrom());
+                    final PipelineElement toElement = elementMap.get(link.getTo());
+
+                    // Only add links between elements that have been defined.
+                    if (fromElement != null && toElement != null) {
+                        final String fromType = elementMap.get(link.getFrom()).getType();
+                        final String toType = elementMap.get(link.getTo()).getType();
+
+                        if (fromType != null && toType != null) {
+                            List<PipelineLink> list = linkMap.get(link.getFrom());
+                            if (list == null) {
+                                list = new ArrayList<>();
+                                linkMap.put(link.getFrom(), list);
+                            }
+
+                            list.add(link);
+                        }
+                    }
+                }
+                for (final PipelineLink link : pipelineData.getLinks().getRemove()) {
+                    final List<PipelineLink> list = linkMap.get(link.getFrom());
+                    if (list != null) {
+                        list.remove(link);
+                        if (list.size() == 0) {
+                            linkMap.remove(link.getFrom());
+                        }
+                    }
+                }
+            }
+        }
+
+        // Ensure an element can only be linked to once.
+        final Map<String, PipelineLink> uniqueLinkToMap = new HashMap<>();
+        for (final Entry<String, List<PipelineLink>> entry : linkMap.entrySet()) {
+            final List<PipelineLink> links = entry.getValue();
+            final Iterator<PipelineLink> iter = links.iterator();
+            while (iter.hasNext()) {
+                final PipelineLink link = iter.next();
+                final PipelineLink existing = uniqueLinkToMap.get(link.getTo());
+                if (existing == null) {
+                    // We haven't linked to this element before so just record
+                    // the link.
+                    uniqueLinkToMap.put(link.getTo(), link);
+                } else {
+                    // We already have a link to this element so remove this
+                    // additional link.
+                    iter.remove();
+                }
+            }
+        }
+
+        final Set<String> sourceIds = new HashSet<>(elementMap.keySet());
+        for (final List<PipelineLink> links : linkMap.values()) {
+            for (final PipelineLink link : links) {
+                sourceIds.remove(link.getTo());
+            }
+        }
+
+        sourceList.clear();
+        for (final String sourceId : sourceIds) {
+            sourceList.add(elementMap.get(sourceId));
+        }
+    }
+
+    public List<PipelineElement> getSources() {
+        return sourceList;
+    }
+
+    public Map<String, PipelineElement> getElements() {
+        return elementMap;
+    }
+
+    public Map<String, Map<String, PipelineProperty>> getProperties() {
+        return propertyMap;
+    }
+
+    public Map<String, List<PipelineLink>> getLinks() {
+        return linkMap;
+    }
+
+    public Map<String, Map<String, List<PipelineReference>>> getPipelineReferences() {
+        return pipelineReferenceMap;
+    }
+
+    public PipelineData createMergedData() {
+        // Create merged data.
+        final PipelineData pipelineData = new PipelineData();
+
+        for (final PipelineElement element : elementMap.values()) {
+            pipelineData.addElement(element);
+        }
+        for (final Map<String, PipelineProperty> map : propertyMap.values()) {
+            for (final PipelineProperty property : map.values()) {
+                pipelineData.addProperty(property);
+            }
+        }
+        for (final Map<String, List<PipelineReference>> map : pipelineReferenceMap.values()) {
+            for (final List<PipelineReference> list : map.values()) {
+                for (final PipelineReference pipelineReference : list) {
+                    pipelineData.addPipelineReference(pipelineReference);
+                }
+            }
+        }
+        for (final List<PipelineLink> list : linkMap.values()) {
+            for (final PipelineLink link : list) {
+                pipelineData.addLink(link);
+            }
+        }
+
+        return pipelineData;
+    }
+}

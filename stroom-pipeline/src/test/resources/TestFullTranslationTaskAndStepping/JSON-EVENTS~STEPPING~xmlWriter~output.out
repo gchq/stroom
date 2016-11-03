@@ -1,0 +1,4103 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:42:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user2</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:43:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user3</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:44:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user4</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:45:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user5</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:46:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user6</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:47:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user7</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:48:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user8</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:49:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user9</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:42:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user2</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:43:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user3</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:44:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user4</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:45:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user5</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:46:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user6</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:47:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user7</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:48:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user8</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:49:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user9</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:42:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user2</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:43:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user3</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:44:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user4</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:45:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user5</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:46:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user6</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:47:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user7</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:48:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user8</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:49:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user9</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:42:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user2</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:43:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user3</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:44:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user4</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:45:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user5</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:46:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user6</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:47:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user7</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:48:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user8</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:49:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user9</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:49:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user9</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:48:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user8</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:47:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user7</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:46:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user6</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:45:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user5</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:44:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user4</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:43:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user3</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:42:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user2</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:49:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user9</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:48:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user8</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:47:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user7</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:46:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user6</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:45:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user5</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:44:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user4</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:43:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user3</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:42:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user2</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.3</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:49:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user9</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:48:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user8</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:47:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user7</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:46:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user6</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:45:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user5</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:44:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user4</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:43:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user3</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:42:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user2</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.2</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:49:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user9</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:48:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user8</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:47:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user7</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:46:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user6</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:45:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user5</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:44:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user4</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:43:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user3</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:42:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user2</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:42:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user2</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:43:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user3</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:44:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user4</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:45:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user5</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:46:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user6</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:47:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user7</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:48:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user8</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:49:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user9</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:50:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user10</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:49:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user9</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:48:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.4</IPAddress>
+         </Device>
+         <User>
+            <Id>user8</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:41:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user1</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:42:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user2</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>
+
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:stroom="stroom"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2015-10-22T07:43:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name/>
+            <Environment/>
+         </System>
+         <Generator>Apache HTTPD</Generator>
+         <Device>
+            <IPAddress>192.168.0.1</IPAddress>
+         </Device>
+         <User>
+            <Id>user3</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <View>
+            <WebPage>
+               <Type>WebPage</Type>
+               <URL>/</URL>
+               <ResponseCode>200</ResponseCode>
+            </WebPage>
+         </View>
+      </EventDetail>
+   </Event>
+</Events>

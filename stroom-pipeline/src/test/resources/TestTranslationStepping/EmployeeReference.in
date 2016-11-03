@@ -1,0 +1,5 @@
+Surname,Initials,Title,Known As,Number,UserId,Position
+LastName1,F,Mr ,FirstName1,91111,user1,Worker
+LastName2,F,Mr ,FirstName2,92222,user2,Worker
+Manager1,F,Mr ,FirstName,99999,manager1,Manager
+DoorUser1,F,Mr ,FirstName1,99111,dooru1,Other

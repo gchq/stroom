@@ -1,0 +1,12 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<feed>
+   <classification/>
+   <contextEncoding>UTF-8</contextEncoding>
+   <description>XML-EVENTS</description>
+   <encoding>UTF-8</encoding>
+   <name>XML-EVENTS</name>
+   <reference>false</reference>
+   <status>RECEIVE</status>
+   <streamType>Raw Events</streamType>
+   <uuid>215f63ec-1e89-4fae-9cb4-6e8abccb6d30</uuid>
+</feed>

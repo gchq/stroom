@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records>
+  <record>
+    <data name="sid" value="someuser" />
+    <data name="sid2" value="someuser" />
+    <data name="size" value="636" />
+    <data name="eventTime" value="2010-01-01T12:00:00.000Z" />
+  </record>
+  <record>
+    <data name="sid" value="someuser" />
+  </record>
+  <record>
+    <data name="sid" value="someuser" />
+  </record>
+</records>
+

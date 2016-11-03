@@ -1,0 +1,31 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client"
+  xmlns:f="urn:import:stroom.dashboard.flexlayout.client">
+  <g:Grid styleName="stroom-control-grid" width="100%">
+    <g:row>
+      <g:cell>Id:</g:cell>
+      <g:customCell>
+        <g:Label ui:field="id" addStyleNames="stroom-control-label" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Name:</g:cell>
+      <g:customCell>
+        <g:TextBox ui:field="name" width="100%" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Table Id:</g:cell>
+      <g:customCell>
+        <i:StringListBox ui:field="tableId" width="100%" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Visualisation:</g:cell>
+      <g:customCell>
+        <g:SimplePanel ui:field="visualisation" width="100%" />
+      </g:customCell>
+    </g:row>
+  </g:Grid>
+</ui:UiBinder> 

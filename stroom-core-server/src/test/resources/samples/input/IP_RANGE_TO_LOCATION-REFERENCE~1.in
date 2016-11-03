@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<archive>
+    <ref type="Zone" uri="Zone1 - 192.168.1.1"/>
+    <ref type="Zone" uri="Zone2 - 192.168.5.5"/>
+    <ref type="Zone" uri="Zone3 - 192.168.11.1 to 192.168.15.1" />
+    <ref type="Zone" uri="Zone4 - 192.168.20.1 to 192.168.25.1"/>
+    <ref type="Zone" uri="Zone5 - 192.168.30.1 to 192.168.35.1"/>
+</archive>

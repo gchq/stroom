@@ -1,0 +1,7 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <description/>
+   <name>TEST_DS_PARSER-EVENTS</name>
+   <pipelineType>Event Data</pipelineType>
+   <uuid>34c1b25a-8bda-4761-aef1-ed98cbae0661</uuid>
+</pipeline>

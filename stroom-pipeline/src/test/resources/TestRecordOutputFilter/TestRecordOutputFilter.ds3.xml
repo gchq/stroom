@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<dataSplitter xmlns="data-splitter:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd" version="3.0"> 
+  <!-- 
+  Standard Apache Format  
+   
+  %h - host name should be ok without quotes 
+  %l - Remote logname (from identd, if supplied). This will return a dash unless IdentityCheck is set On. 
+  \"%u\" - user name should be quoted to deal with DNs 
+  %t - time is added in square brackets so is contained for parsing purposes 
+  \"%r\" - URL is quoted 
+  %>s - Response code doesn't need to be quoted as it is a single number 
+  %b - The size in bytes of the response sent to the client 
+  \"%{Referer}i\" - Referrer is quoted so that's ok 
+  \"%{User-Agent}i\" - User agent is quoted so also ok 
+   
+  LogFormat "%h %l \"%u\" %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined 
+  --> 
+ 
+  <!-- Match line --> 
+  <split delimiter="\n"> 
+    <group value="$1"> 
+      <regex pattern="^([^ ]+) (&#34;([^&#34;]*)&#34;|([^ ]+)) (&#34;([^&#34;]*)&#34;|([^ ]+)) \[([^\]]+)\] (&#34;([^&#34;]+)&#34;|([^ ]+)) ([^ ]+) ([^ ]+) (&#34;([^&#34;]+)&#34;|([^ ]+)) (&#34;([^&#34;]+)&#34;|([^ ]+))"> 
+        <data name="host" value="$1" /> 
+        <data name="log" value="$3+$4" /> 
+        <data name="user" value="$6+$7" /> 
+        <data name="time" value="$8" /> 
+        <data name="url" value="$10+$11"> 
+          <group value="$10+$11" ignoreErrors="true"> 
+            <regex pattern="^([^ ]+) ([^ ]+) ([^ /]*)/([^ ]*)"> 
+              <data name="httpMethod" value="$1" /> 
+              <data name="url" value="$2" /> 
+              <data name="protocol" value="$3" /> 
+              <data name="version" value="$4" /> 
+            </regex> 
+          </group> 
+        </data> 
+        <data name="response" value="$12" /> 
+        <data name="size" value="$13" /> 
+        <data name="referrer" value="$15+$16" /> 
+        <data name="userAgent" value="$18+$19" /> 
+      </regex> 
+ 
+      <!-- Capture all other lines that don't match the above pattern --> 
+      <all> 
+        <data name="line" value="$" /> 
+      </all> 
+    </group> 
+  </split> 
+</dataSplitter>

@@ -1,0 +1,64 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.background {
+	position: absolute;
+	left: -100000;
+	top: -100000;
+	border: 1px solid rgba(0,0,0,.2);
+	background-color: #f5f9fd;
+/* 	background-image: linear-gradient(#f5f9fd, #e1ebf8); */
+	border-radius: 5px;
+	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+	cursor: pointer;
+	z-index: 2;
+	
+	transition: background-color .3s;
+	-webkit-transition: background-color .3s;
+	-moz-transition: background-color .3s;
+	-o-transition: background-color .3s;
+}
+
+.background:hover {
+	background-color: #f7fbff;
+	background-image: none;
+}
+
+.backgroundSelected {
+	background-color: #bbdefb;
+	background-image: none;
+}
+
+.backgroundSelected:hover {
+	background-color: #bbdefb;
+	background-image: none;
+}
+
+.hotspot {
+	background-color: rgba(255,0,0,.3);
+}
+
+.image {
+	position: absolute;
+	left: 3px;
+	top: 1px;
+	cursor: pointer;
+}
+
+.label {
+	padding: 2px 5px 2px 5px;
+	cursor: pointer;
+}

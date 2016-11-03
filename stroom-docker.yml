@@ -1,0 +1,9 @@
+name: stroom
+root: ~/git_work/stroom/
+
+windows:
+  - shell:
+  - vim: vim pom.xml
+  - MySQL: docker start stroom-mysql && sleep 10 && mysql -h"172.17.0.2" -P"3306" -u"stroomuser" -p"stroompassword1" stroom
+  - Chrome: /usr/bin/google-chrome-stable http://localhost:8888/ &
+

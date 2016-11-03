@@ -1,0 +1,15 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<statisticStore>
+   <createTime>2015-04-27T16:39:05.000Z</createTime>
+   <createUser>admin</createUser>
+   <description>This is my description</description>
+   <enabled>true</enabled>
+   <engineName>SQL</engineName>
+   <rollUpType>ALL</rollUpType>
+   <precision>60000</precision>
+   <name>ValueStatisticSQL</name>
+   <statisticType>VALUE</statisticType>
+   <updateTime>2015-04-27T16:39:05.000Z</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>a5b76a2e-7689-4f5d-9316-e948140423f9</uuid>
+</statisticStore>

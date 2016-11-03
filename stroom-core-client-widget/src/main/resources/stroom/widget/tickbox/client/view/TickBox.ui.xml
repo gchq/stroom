@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+  <ui:with field="res"
+    type="stroom.widget.tickbox.client.view.TickBox.Resources" />
+
+  <g:FlowPanel ui:field="layout" styleName="{res.style.tickBox}">
+    <g:Image ui:field="image" />
+  </g:FlowPanel>
+
+</ui:UiBinder>

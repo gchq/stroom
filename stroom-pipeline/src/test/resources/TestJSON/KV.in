@@ -1,0 +1,10 @@
+{
+"string1":"aaa",
+"string2":"bbb",
+"int1":1,
+"int2":2,
+"float1":1.0,
+"float2":2.0,
+"boolean1":true,
+"boolean2":false
+}

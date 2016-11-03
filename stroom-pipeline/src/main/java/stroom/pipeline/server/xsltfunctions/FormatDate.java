@@ -1,0 +1,189 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.pipeline.server.xsltfunctions;
+
+import stroom.util.spring.StroomScope;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import stroom.util.date.DateUtil;
+import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.value.StringValue;
+
+@Component
+@Scope(StroomScope.PROTOTYPE)
+public class FormatDate extends StroomExtensionFunctionCall {
+    private static final String GMT_BST_GUESS = "GMT/BST";
+    private static final DateTimeZone EUROPE_LONDON_TIME_ZONE = DateTimeZone.forID("Europe/London");
+
+    @Override
+    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
+            throws XPathException {
+        Sequence result = StringValue.EMPTY_STRING;
+
+        if (arguments.length == 1) {
+            result = convertMilliseconds(functionName, context, arguments);
+
+        } else if (arguments.length >= 2 && arguments.length <= 3) {
+            result = convertToStandardDateFormat(functionName, context, arguments);
+
+        } else if (arguments.length >= 4 && arguments.length <= 5) {
+            result = convertToSpecifiedDateFormat(functionName, context, arguments);
+        }
+
+        return result;
+    }
+
+    private Sequence convertMilliseconds(final String functionName, final XPathContext context,
+            final Sequence[] arguments) throws XPathException {
+        Sequence result = StringValue.EMPTY_STRING;
+        final String milliseconds = getSafeString(functionName, context, arguments, 0);
+
+        try {
+            final long ms = Long.parseLong(milliseconds);
+            final String time = DateUtil.createNormalDateTimeString(ms);
+            result = StringValue.makeStringValue(time);
+
+        } catch (final Throwable e) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("Failed to parse date: \"");
+            sb.append(milliseconds);
+            sb.append('"');
+            outputWarning(context, sb, e);
+        }
+
+        return result;
+    }
+
+    private Sequence convertToStandardDateFormat(final String functionName, final XPathContext context,
+            final Sequence[] arguments) throws XPathException {
+        Sequence result = StringValue.EMPTY_STRING;
+        final String date = getSafeString(functionName, context, arguments, 0);
+        final String pattern = getSafeString(functionName, context, arguments, 1);
+        String timeZone = null;
+        if (arguments.length == 3) {
+            timeZone = getSafeString(functionName, context, arguments, 2);
+        }
+
+        // Parse the supplied date.
+        long ms = -1;
+        try {
+            ms = DateUtil.parseDate(pattern, timeZone, date);
+        } catch (final Throwable e) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("Failed to parse date: \"");
+            sb.append(date);
+            sb.append("\" (Pattern: ");
+            sb.append(pattern);
+            sb.append(", Time Zone: ");
+            sb.append(timeZone);
+            sb.append(")");
+            outputWarning(context, sb, e);
+        }
+
+        if (ms != -1) {
+            final String time = DateUtil.createNormalDateTimeString(ms);
+            result = StringValue.makeStringValue(time);
+        }
+
+        return result;
+    }
+
+    private Sequence convertToSpecifiedDateFormat(final String functionName, final XPathContext context,
+            final Sequence[] arguments) throws XPathException {
+        Sequence result = StringValue.EMPTY_STRING;
+        final String date = getSafeString(functionName, context, arguments, 0);
+        final String patternIn = getSafeString(functionName, context, arguments, 1);
+        final String timeZoneIn = getSafeString(functionName, context, arguments, 2);
+        final String patternOut = getSafeString(functionName, context, arguments, 3);
+        String timeZoneOut = null;
+        if (arguments.length == 5) {
+            timeZoneOut = getSafeString(functionName, context, arguments, 4);
+        }
+
+        // Parse the supplied date.
+        long ms = -1;
+        try {
+            ms = DateUtil.parseDate(patternIn, timeZoneIn, date);
+        } catch (final Throwable e) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("Failed to parse date: \"");
+            sb.append(date);
+            sb.append("\" (Pattern: ");
+            sb.append(patternIn);
+            sb.append(", Time Zone: ");
+            sb.append(timeZoneIn);
+            sb.append(")");
+            outputWarning(context, sb, e);
+        }
+
+        if (ms != -1) {
+            // Resolve the output time zone.
+            final DateTimeZone dateTimeZone = getTimeZone(context, timeZoneOut);
+            if (dateTimeZone != null) {
+                try {
+                    // Now format the date using the specified pattern and time
+                    // zone.
+                    DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern(patternOut);
+                    dateTimeFormatter = dateTimeFormatter.withZone(dateTimeZone);
+                    final String time = dateTimeFormatter.print(ms);
+                    result = StringValue.makeStringValue(time);
+                } catch (final Throwable e) {
+                    final StringBuilder sb = new StringBuilder();
+                    sb.append("Failed to format date: \"");
+                    sb.append(date);
+                    sb.append("\" (Pattern: ");
+                    sb.append(patternOut);
+                    sb.append(", Time Zone: ");
+                    sb.append(timeZoneOut);
+                    sb.append(")");
+                    outputWarning(context, sb, e);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private DateTimeZone getTimeZone(final XPathContext context, final String timeZone) {
+        DateTimeZone dateTimeZone = null;
+        try {
+            if (timeZone != null) {
+                if (GMT_BST_GUESS.equals(timeZone)) {
+                    dateTimeZone = EUROPE_LONDON_TIME_ZONE;
+                } else {
+                    dateTimeZone = DateTimeZone.forID(timeZone);
+                }
+            } else {
+                dateTimeZone = DateTimeZone.UTC;
+            }
+        } catch (final IllegalArgumentException e) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("Time Zone '");
+            sb.append(timeZone);
+            sb.append("' is not recognised");
+            outputWarning(context, sb, e);
+        }
+
+        return dateTimeZone;
+    }
+}

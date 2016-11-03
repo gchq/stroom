@@ -1,0 +1,79 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.separator {
+    margin-left: 4px;
+    margin-right: 4px;
+	border-top: 1px solid black;
+	cursor: default;
+}
+
+.outer {
+    position: relative;
+	width: 100%;
+	padding: 4px;
+}
+
+.highlight {
+	width: 100%;
+	padding: 4px;
+	background-color: yellow;
+}
+
+.icon {
+    position: absolute;
+	display: inline-block;
+	vertical-align: top;
+}
+
+.face {
+	border: none;
+	outline: none;
+	background: none;
+	cursor: pointer;
+	text-decoration: none;
+	min-width: 16px;
+	min-height: 16px;
+	margin: auto;
+	padding: 0;
+	overflow: hidden;
+	position: relative;
+	color: #5398ff;
+	font-size: 16px;
+	opacity: 1;
+}
+
+.disabled {
+	cursor: default;
+	color: #000;
+	opacity: 0.3;
+}
+
+.text {
+	display: inline-block;
+	vertical-align: top;
+	padding-top: 1px;
+	margin-left: 24px;
+	margin-right: 5px;
+}
+
+.shortcut {
+	display: inline-block;
+	vertical-align: top;
+	padding-top: 1px;
+	float: right;
+	padding-left: 15px;
+}

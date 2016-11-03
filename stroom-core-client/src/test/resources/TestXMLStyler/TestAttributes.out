@@ -1,0 +1,6 @@
+<s>&lt;?</s><pi>xml version</pi><s>=</s><pi>"1.1" encoding</pi><s>=</s><pi>"UTF-8"</pi><s>?&gt;</s><c>
+</c><s>&lt;</s><e>test</e><an> xmlns</an><s>=</s><av>"mynamespace"</av><an> xmlns</an><s>:</s><an>xsi</an><s>=</s><av>"http://www.w3.org/2001/XMLSchema-instance"</av><an> xsi</an><s>:</s><an>schemaLocation</an><s>=</s><av>"mynamespace file://mynamespace.xsd"</av><an> version</an><s>=</s><av>"1.0"</av><s>&gt;</s><c>
+  </c><s>&lt;</s><e>element</e><an> attribute1</an><s>=</s><av>"This is a long attribute"</av><an> attribute2</an><s>=</s><av>"This is an equality 5 = 54"</av><an> attribute3</an><s>=</s><av>"This is a greater  than 6 &lt; 54"</av><an> attribute4</an><s>=</s><av>"This is a less  than 6 &gt; 54"</av><an> attribute5</an><s>=</s><av>"This is a multi-line
+ attribute value 123 &lt;&gt; 123"</av><an></an><s>&gt;</s><c> 
+  </c><s>&lt;/</s><e>element</e><s>&gt;</s><c>
+</c><s>&lt;/</s><e>test</e><s>&gt;</s>

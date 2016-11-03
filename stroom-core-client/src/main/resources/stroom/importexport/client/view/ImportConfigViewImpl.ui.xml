@@ -1,0 +1,19 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+  <ui:style>
+    .label {
+    	float: left;
+    	width: 100px;
+    	clear: left;
+    }
+  </ui:style>
+
+  <g:FormPanel ui:field="form" width="100%">
+    <g:FlowPanel width="100%">
+      <g:Label text="File: " styleName="{style.label}" />
+      <g:FileUpload ui:field="fileUpload" addStyleNames="itemCheckList" name="fileUpload" width="100%" />
+    </g:FlowPanel>
+  </g:FormPanel>
+</ui:UiBinder>

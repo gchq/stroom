@@ -1,0 +1,158 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.pipeline.structure.client.presenter;
+
+import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.gwt.view.client.SelectionModel;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
+import stroom.alert.client.event.AlertEvent;
+import stroom.entity.client.event.DirtyEvent;
+import stroom.entity.client.event.DirtyEvent.DirtyHandler;
+import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.pipeline.client.event.ChangeDataEvent;
+import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
+import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
+import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+import stroom.widget.util.client.MySingleSelectionModel;
+
+public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresenter.PipelineTreeView>
+        implements ChangeDataHandler<PipelineModel>, HasDirtyHandlers, PipelineTreeUiHandlers, HasContextMenuHandlers {
+    public interface PipelineTreeView extends View, HasContextMenuHandlers, HasUiHandlers<PipelineTreeUiHandlers> {
+        void setTree(DefaultTreeForTreeLayout<PipelineElement> tree);
+
+        void setSelectionModel(SelectionModel<PipelineElement> selectionModel);
+
+        void refresh();
+
+        void setAllowDragging(boolean allowDragging);
+
+        void setAllowNullSelection(boolean allowNullSelection);
+    }
+
+    private final MySingleSelectionModel<PipelineElement> selectionModel;
+    private PipelineModel pipelineModel;
+    private PipelineTreeBuilder pipelineTreeBuilder;
+
+    @Inject
+    public PipelineTreePresenter(final EventBus eventBus, final PipelineTreeView view) {
+        super(eventBus, view);
+
+        selectionModel = new MySingleSelectionModel<>();
+        view.setSelectionModel(selectionModel);
+        view.setUiHandlers(this);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        if (selectionModel != null) {
+            registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
+                @Override
+                public void onSelectionChange(final SelectionChangeEvent event) {
+                    getView().refresh();
+                }
+            }));
+        }
+    }
+
+    public void setModel(final PipelineModel model) {
+        this.pipelineModel = model;
+        if (model != null) {
+            model.addChangeDataHandler(this);
+        }
+        refresh();
+    }
+
+    @Override
+    public void onChange(final ChangeDataEvent<PipelineModel> event) {
+        refresh();
+    }
+
+    @Override
+    public void onMove(final PipelineElement parent, final PipelineElement child) {
+        if (pipelineModel != null && pipelineModel.getParentMap() != null) {
+            try {
+                pipelineModel.removeElement(child);
+                pipelineModel.addExistingElement(parent, child);
+                setDirty(true);
+            } catch (final Exception e) {
+                AlertEvent.fireError(PipelineTreePresenter.this, e.getMessage(), null);
+            }
+        }
+    }
+
+    private void refresh() {
+        if (pipelineModel != null && pipelineTreeBuilder != null) {
+            final DefaultTreeForTreeLayout<PipelineElement> tree = pipelineTreeBuilder.getTree(pipelineModel);
+            final PipelineElement selectedElement = selectionModel.getSelectedObject();
+            if (selectedElement != null) {
+                // If the selected element no longer exists then
+                // deselect it.
+                if (tree.getParent(selectedElement) == null && tree.getChildren(selectedElement) == null) {
+                    selectionModel.clear();
+                } else {
+                    selectionModel.setSelected(selectedElement, false);
+                }
+            }
+
+            getView().setTree(tree);
+            getView().refresh();
+        }
+    }
+
+    public void setPipelineTreeBuilder(final PipelineTreeBuilder pipelineTreeBuilder) {
+        this.pipelineTreeBuilder = pipelineTreeBuilder;
+        refresh();
+    }
+
+    public MySingleSelectionModel<PipelineElement> getSelectionModel() {
+        return selectionModel;
+    }
+
+    public void setAllowDragging(final boolean allowDragging) {
+        getView().setAllowDragging(allowDragging);
+    }
+
+    public void setAllowNullSelection(final boolean allowNullSelection) {
+        getView().setAllowNullSelection(allowNullSelection);
+    }
+
+    @Override
+    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
+        return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    private void setDirty(final boolean dirty) {
+        if (dirty) {
+            DirtyEvent.fire(this, dirty);
+        }
+    }
+
+    @Override
+    public HandlerRegistration addContextMenuHandler(final Handler handler) {
+        return getView().addContextMenuHandler(handler);
+    }
+}

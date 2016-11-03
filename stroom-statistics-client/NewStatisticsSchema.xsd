@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:s="statistics:2" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="statistics:2" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0" id="statistics-v2.0">
+	<!--
+	  ~ Copyright 2016 Crown Copyright
+	  ~
+	  ~ Licensed under the Apache License, Version 2.0 (the "License");
+	  ~ you may not use this file except in compliance with the License.
+	  ~ You may obtain a copy of the License at
+	  ~
+	  ~     http://www.apache.org/licenses/LICENSE-2.0
+	  ~
+	  ~ Unless required by applicable law or agreed to in writing, software
+	  ~ distributed under the License is distributed on an "AS IS" BASIS,
+	  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	  ~ See the License for the specific language governing permissions and
+	  ~ limitations under the License.
+	  -->
+
+	<xs:element name="statistics">
+		<xs:annotation>
+			<xs:documentation>This is a provisional scheme for the new stats work</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:choice maxOccurs="unbounded">
+					<xs:element name="countStatistic" type="s:CountStatisticType"/>
+					<xs:element name="valueStatistic">
+						<xs:complexType>
+							<xs:complexContent>
+								<xs:extension base="s:ValueStatisticType"/>
+							</xs:complexContent>
+						</xs:complexType>
+					</xs:element>
+				</xs:choice>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:simpleType name="DateTimeSimpleType">
+		<xs:annotation>
+			<xs:documentation>This type constrains the date time format further so that is always represented as 'yyyy-MM-ssThh:mm:ss.sssZ'.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:dateTime">
+			<xs:pattern value="[\d]{4}-[\d]{2}-[\d]{2}T[\d]{2}:[\d]{2}:[\d]{2}.[\d]{3}Z"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="TagType">
+		<xs:attribute name="name" use="required">
+			<xs:annotation>
+				<xs:documentation>The name of the tag, e.g. feedName, userId, hostname, ipAddress etc.</xs:documentation>
+			</xs:annotation>
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:minLength value="1"/>
+					<xs:maxLength value="50"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="value" use="required">
+			<xs:annotation>
+				<xs:documentation>The actual value of the tag, e.g. MY_FEED, jbloggs, server.mydomain, 192.168.0.1, etc.</xs:documentation>
+			</xs:annotation>
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:minLength value="1"/>
+					<xs:maxLength value="100"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+	</xs:complexType>
+	<xs:complexType name="AbstractStatisticType">
+		<xs:sequence>
+			<xs:element name="name">
+				<xs:annotation>
+					<xs:documentation>Name of the statistic e.g. CPU% or RemovableMediaWriteEvent </xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="time" type="s:DateTimeSimpleType">
+				<xs:annotation>
+					<xs:documentation>The time the event happened</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="finestGranularity" nillable="false" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>This is the smallest time interval in milliseconds that you wish to record the statistics at.  E.g. if you need statistics down to the second level then enter 1000, or if you are happy to have counts at the day level then enter 86400000 (i.e. 1000*60*60*24).  If omitted then the finest possible granularity that the event store supports is used.</xs:documentation>
+				</xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:long">
+						<xs:minInclusive value="1000"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="tags" minOccurs="0">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="tag" type="s:TagType" maxOccurs="unbounded">
+							<xs:annotation>
+								<xs:documentation>Tags/values are used to optionally further refine the statistic</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="CountStatisticType">
+		<xs:complexContent>
+			<xs:extension base="s:AbstractStatisticType"/>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="ValueStatisticType">
+		<xs:complexContent>
+			<xs:extension base="s:AbstractStatisticType">
+				<xs:sequence>
+					<xs:element name="value" type="xs:double" nillable="false">
+						<xs:annotation>
+							<xs:documentation>This is the value from the event e.g. 98.3 for a CPU% statistic</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+</xs:schema>
+	

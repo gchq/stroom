@@ -1,0 +1,59 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:v="urn:import:stroom.widget.layout.client.view">
+    <ui:style>
+        .max {
+        width: 100%;
+        height: 100%;
+        }
+
+        .scrollPanel {
+        width: 100%;
+        height: 100%;
+        background: white;
+        border: 1px solid #C5CDE2 !important;
+        }
+
+        .cascade {
+        margin-top: 5px;
+        }
+    </ui:style>
+
+    <g:MySplitLayoutPanel width="100%" height="100%">
+        <g:north size="200">
+            <g:DockLayoutPanel unit="PX" styleName="{style.max}">
+                <g:north size="15">
+                    <g:Label ui:field="usersLabel" text="Users:" width="100%"/>
+                </g:north>
+                <g:center>
+                    <v:ResizeSimplePanel ui:field="users" styleName="{style.max}"/>
+                </g:center>
+            </g:DockLayoutPanel>
+        </g:north>
+        <g:center>
+            <g:MySplitLayoutPanel width="100%" height="100%">
+                <g:north size="110">
+                    <g:DockLayoutPanel unit="PX" styleName="{style.max}">
+                        <g:north size="15">
+                            <g:Label ui:field="permissionsLabel" text="Permissions:" width="100%"/>
+                        </g:north>
+                        <g:center>
+                            <g:ScrollPanel ui:field="permissions" styleName="{style.scrollPanel}"/>
+                        </g:center>
+                    </g:DockLayoutPanel>
+                </g:north>
+                <g:center>
+                    <g:DockLayoutPanel unit="PX" styleName="{style.max}">
+                        <g:north size="15">
+                            <g:Label ui:field="createPermissionsLabel" text="Create Permissions:" width="100%"/>
+                        </g:north>
+                        <g:center>
+                            <g:ScrollPanel ui:field="createPermissions" styleName="{style.scrollPanel}"/>
+                        </g:center>
+                    </g:DockLayoutPanel>
+                </g:center>
+            </g:MySplitLayoutPanel>
+        </g:center>
+    </g:MySplitLayoutPanel>
+
+</ui:UiBinder> 

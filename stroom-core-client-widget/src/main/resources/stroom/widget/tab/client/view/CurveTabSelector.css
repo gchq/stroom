@@ -1,0 +1,80 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.curveTabSelector {
+	position: absolute;
+	left: 0px;
+	top: 4px;
+	height: 24px;
+	cursor: pointer;
+}
+
+
+.curveTabSelector .background {
+	position: absolute;
+	opacity: 0.3;
+	height: 24px;
+	width: 100%;
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+.curveTabSelector.hover .background {
+	opacity: 0.4;
+}
+
+@sprite .curveTabSelector .background .leftBackground {
+	gwt-image: 'left';
+	position: absolute;
+	left: 0px;
+	top: 0px;
+}
+
+@sprite .curveTabSelector .background .midBackground {
+	gwt-image: 'middle';
+	width: 100%;
+}
+
+@sprite .curveTabSelector .background .rightBackground {
+	gwt-image: 'right';
+	position: absolute;
+	right: 0px;
+	top: 0px;
+}
+
+.curveTabSelector .foreground {
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+/* Content. */
+@sprite .curveTabSelector .foreground .arrows {
+	gwt-image: 'arrows';
+	position: absolute;
+	left: 8px;
+	top: 4px;
+	width: 8px;
+	height: 5px;
+}
+
+.curveTabSelector .foreground .text {
+	position: relative;
+	font-size: 7px;
+	white-space: nowrap;
+	margin-left: 7px;
+	margin-top: 7px;
+	-moz-user-select: none;
+}

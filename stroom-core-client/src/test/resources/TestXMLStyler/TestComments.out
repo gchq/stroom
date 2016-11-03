@@ -1,0 +1,38 @@
+<s>&lt;?</s><pi>xml version</pi><s>=</s><pi>"1.1" encoding</pi><s>=</s><pi>"UTF-8"</pi><s>?&gt;</s><c>
+</c><s>&lt;</s><e>test</e><an> xmlns</an><s>=</s><av>"mynamespace"</av><an> xmlns</an><s>:</s><an>xsi</an><s>=</s><av>"http://www.w3.org/2001/XMLSchema-instance"</av><an> xsi</an><s>:</s><an>schemaLocation</an><s>=</s><av>"mynamespace file://mynamespace.xsd"</av><an> version</an><s>=</s><av>"1.0"</av><s>&gt;</s><c>
+  </c><s>&lt;</s><e>element</e><s>&gt;</s><c>true</c><s>&lt;/</s><e>element</e><s>&gt;</s><c>
+
+  </c><s>&lt;!--</s><z> This is comment 1 </z><s>--&gt;</s><c>
+  </c><s>&lt;</s><e>element</e><s>&gt;</s><c>
+
+    </c><s>&lt;!--</s><z> This is comment 2
+    it is a multi-line comment </z><s>--&gt;</s><c>
+    </c><s>&lt;</s><e>subElement</e><s>&gt;</s><c> </c><s>&lt;/</s><e>subElement</e><s>&gt;</s><c>
+  </c><s>&lt;/</s><e>element</e><s>&gt;</s><c>
+  </c><s>&lt;</s><e>element</e><s>&gt;</s><c>
+    </c><s>&lt;</s><e>subElement</e><s>&gt;</s><c> </c><s>&lt;/</s><e>subElement</e><s>&gt;</s><c>
+
+    </c><s>&lt;!--</s><z> 
+    This is comment 3
+    it is another multi-line comment 
+    </z><s>--&gt;</s><c>
+  </c><s>&lt;/</s><e>element</e><s>&gt;</s><c>
+  </c><s>&lt;</s><e>element</e><s>&gt;
+    &lt;</s><e>subElement</e><s>&gt;</s><c> </c><s>&lt;/</s><e>subElement</e><s>&gt;
+
+    &lt;!--</s><z> This is comment 4
+    it is another multi-line comment 
+    </z><s>--&gt;
+  &lt;/</s><e>Splitter</e><s>&gt;</s><c>
+  </c><s>&lt;</s><e>element</e><s>&gt;
+    &lt;</s><e>subElement</e><s>&gt;</s><c> </c><s>&lt;/</s><e>subElement</e><s>&gt;
+
+    &lt;!--</s><z> This is comment 5
+    it is another multi-line comment 
+    </z><s>--&gt;
+
+    &lt;!--</s><z> This is comment 6
+    it is another multi-line comment 
+    </z><s>--&gt;
+  &lt;/</s><e>element</e><s>&gt;</s><c>
+</c><s>&lt;/</s><e>test</e><s>&gt;</s>

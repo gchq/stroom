@@ -1,0 +1,39 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui">
+  <g:Grid styleName="stroom-control-grid" width="100%">
+    <g:row>
+      <g:customCell>
+        <g:Label text="Element Id:" />
+      </g:customCell>
+      <g:customCell>
+        <g:Label ui:field="element" addStyleNames="stroom-control-label" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:customCell>
+        <g:Label text="Pipeline:" />
+      </g:customCell>
+      <g:customCell>
+        <g:SimplePanel ui:field="pipeline" width="100%" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:customCell>
+        <g:Label text="Feed:" />
+      </g:customCell>
+      <g:customCell>
+        <g:SimplePanel ui:field="feed" width="100%" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:customCell>
+        <g:Label text="Stream Type:" />
+      </g:customCell>
+      <g:customCell>
+        <g:SimplePanel ui:field="streamType" width="100%" />
+      </g:customCell>
+    </g:row>
+  </g:Grid>
+</ui:UiBinder>
+ 

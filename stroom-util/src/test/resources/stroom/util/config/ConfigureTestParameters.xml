@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<parameters>
+    <parameter>
+        <description>HTTP port to use</description>
+        <name>@@PORT_PREFIX@@</name>
+        <value>80</value>
+    </parameter>
+    <parameter>
+        <description>Node Name</description>
+        <name>@@NODE_NAME@@</name>
+        <regEx>[a-zA-Z0-9-]+</regEx>
+        <value></value>
+		<unknownProp>XXX</unknownProp>
+    </parameter>
+</parameters>

@@ -1,0 +1,236 @@
+/*
+ * Copyright 2011 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+@def selectionBorderWidth 0px ;
+.dataGridWidget {
+	
+}
+
+.dataGridWidget input,select {
+	margin: 0px;
+}
+
+.dataGridFirstColumn {
+	
+}
+
+.dataGridLastColumn {
+	
+}
+
+.dataGridHeaderBackground {
+}
+
+.dataGridFooter {
+	padding: 1px;
+	padding-left: 2px;
+	padding-right: 2px;
+	vertical-align: top;
+	text-align: left;
+	overflow: hidden;
+	white-space: nowrap;
+	font-weight: bold;
+	height: auto;
+	cursor: default;
+}
+
+.dataGridHeader {
+	padding: 1px;
+	padding-left: 2px;
+	padding-right: 2px;
+	vertical-align: top;
+	text-align: left;
+	overflow: hidden;
+	white-space: nowrap;
+	font-weight: bold;
+    height : auto;
+	cursor: default;
+	height: auto;
+}
+
+@sprite .dataGridHeaderSelected {
+	gwt-image: 'headerHighlight';
+}
+
+.dataGridCell {
+	padding: 1px;
+	padding-left: 2px;
+	padding-right: 2px;
+	vertical-align: top;
+	overflow: hidden;
+	height: 18px;
+	white-space: nowrap;
+	
+	-moz-user-focus: initial;
+	-moz-user-input: initial;
+	-moz-user-select: initial;
+	-webkit-user-focus: initial;
+	-webkit-user-input: initial;
+	-webkit-user-select: initial;
+	user-focus: initial;
+	user-input: initial;
+	user-select: initial;	
+}
+
+.dataGridResizableCell {
+	border-right: 5px solid transparent;
+	white-space: nowrap;
+	
+	-moz-user-focus: initial;
+	-moz-user-input: initial;
+	-moz-user-select: initial;
+	-webkit-user-focus: initial;
+	-webkit-user-input: initial;
+	-webkit-user-select: initial;
+	user-focus: initial;
+	user-input: initial;
+	user-select: initial;	
+}
+
+.dataGridFirstColumnFooter {
+	
+}
+
+.dataGridFirstColumnHeader {
+	
+}
+
+.dataGridLastColumnFooter {
+	
+}
+
+.dataGridLastColumnHeader {
+	
+}
+
+.dataGridSortableHeader {
+	cursor: pointer;
+	cursor: hand;
+	text-decoration: underline;
+}
+
+.dataGridSortableHeader:hover {
+}
+
+.dataGridSortedHeaderAscending {
+	
+}
+
+.dataGridSortedHeaderDescending {
+	
+}
+
+.dataGridEvenRow {
+}
+
+.dataGridEvenRowCell {
+}
+
+.dataGridOddRow {
+}
+
+.dataGridOddRowCell {
+}
+
+.dataGridHoveredRow {
+}
+
+.dataGridHoveredRowCell {
+}
+
+.dataGridKeyboardSelectedRow {
+}
+
+.dataGridKeyboardSelectedRowCell {
+
+}
+
+.dataGridSelectedRow {
+	background: #bbdefb none repeat scroll 0 0;
+}
+
+.dataGridSelectedRowCell {
+}
+
+/**
+ * The keyboard selected cell is visible over selection.
+ */
+.dataGridKeyboardSelectedCell {
+}
+
+.resizeHandle {
+	position: absolute;
+	width: 10px;
+	z-index: 1000;
+	background-color: #A49AED;
+	opacity: 0.3;
+	cursor: col-resize;
+}
+
+.resizeLine {
+	position: absolute;
+	width: 2px;
+	z-index: 1000;
+	background-color: #A49AED;
+	cursor: col-resize;
+}
+
+.resizeGlass {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	margin: 0px;
+	padding: 0px;
+	border-width: 0px;
+	/* We need to set the background color or mouse events will go right */
+	/* through the glassElem. If the layout contains an iframe, the */
+	/* iframe will capture the event and the slider will stop moving. */
+	background-color: white;
+	opacity: 0;
+	z-index: 2;
+	cursor: col-resize;
+}
+
+.moveHandle {
+	position: absolute;
+	z-index: 1000;
+	background-color: gray;
+	opacity: 0.3;
+	cursor: default;
+}
+
+.moveLine {
+	position: absolute;
+	width: 2px;
+	z-index: 1000;
+	background-color: #A49AED;
+	cursor: default;
+}
+
+.moveGlass {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	margin: 0px;
+	padding: 0px;
+	border-width: 0px;
+	/* We need to set the background color or mouse events will go right */
+	/* through the glassElem. If the layout contains an iframe, the */
+	/* iframe will capture the event and the slider will stop moving. */
+	background-color: white;
+	opacity: 0;
+	z-index: 2;
+	cursor: default;
+}

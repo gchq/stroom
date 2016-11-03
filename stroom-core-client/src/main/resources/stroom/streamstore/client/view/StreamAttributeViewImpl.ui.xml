@@ -1,0 +1,24 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client">
+  <g:Grid styleName="stroom-control-grid" width="280px">
+    <g:row>
+      <g:cell>Attribute Key:</g:cell>
+      <g:customCell>
+        <i:ItemListBox ui:field="streamAttributeKey" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Condition:</g:cell>
+      <g:customCell>
+        <i:ItemListBox ui:field="streamAttributeCondition" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Value:</g:cell>
+      <g:customCell>
+        <g:TextBox ui:field="streamAttributeValue" />
+      </g:customCell>
+    </g:row>
+  </g:Grid>
+</ui:UiBinder> 

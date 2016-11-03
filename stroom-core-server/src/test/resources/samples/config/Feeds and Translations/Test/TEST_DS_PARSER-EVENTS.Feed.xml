@@ -1,0 +1,12 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<feed>
+   <classification/>
+   <contextEncoding>UTF-8</contextEncoding>
+   <description>TEST_DS_PARSER-EVENTS</description>
+   <encoding>UTF-8</encoding>
+   <name>TEST_DS_PARSER-EVENTS</name>
+   <reference>false</reference>
+   <status>RECEIVE</status>
+   <streamType>Raw Events</streamType>
+   <uuid>5d668615-d5ee-4026-8cd3-062e79bedc57</uuid>
+</feed>

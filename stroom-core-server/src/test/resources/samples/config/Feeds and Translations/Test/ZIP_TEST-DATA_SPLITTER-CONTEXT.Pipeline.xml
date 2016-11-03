@@ -1,0 +1,7 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <description/>
+   <name>ZIP_TEST-DATA_SPLITTER-CONTEXT</name>
+   <pipelineType>Event Data</pipelineType>
+   <uuid>5099b649-9992-4335-abba-ebe30a86f374</uuid>
+</pipeline>

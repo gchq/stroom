@@ -1,0 +1,54 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:paging="urn:import:stroom.widget.button.client">
+    <ui:style>
+        .paging {
+        position: relative;
+        width: 250px;
+        text-align: right;
+        }
+
+        .label {
+        display: inline-block;
+        margin: 0px;
+        margin-top: 2px;
+        cursor: pointer;
+        }
+
+        .textBox {
+        display: inline-block;
+        width: 30px;
+        height: 14px;
+        padding: 0px;
+        margin: 0px;
+        margin-top: 2px;
+        border: none;
+        }
+
+        .space {
+        display: inline;
+        width: 8px;
+        }
+
+        .button {
+        padding: 1px;
+        text-align: center;
+        }
+    </ui:style>
+
+    <g:FlowPanel styleName="{style.paging}">
+        <g:Label ui:field="lblFrom" styleName="{style.label}"/>
+        <g:TextBox ui:field="txtFrom" styleName="{style.textBox}" visible="false"/>
+        <g:Label ui:field="lblToSeparator" text="&nbsp;to&nbsp;" styleName="{style.label}"/>
+        <g:Label ui:field="lblTo" styleName="{style.label}"/>
+        <g:TextBox ui:field="txtTo" styleName="{style.textBox}" visible="false"/>
+        <g:Label ui:field="lblOfSeparator" text="&nbsp;of&nbsp;" styleName="{style.label}"/>
+        <g:Label ui:field="lblOf" styleName="{style.label}"/>
+        <g:HTMLPanel styleName="{style.space}">&nbsp;</g:HTMLPanel>
+        <paging:GlyphButton ui:field="first"/>
+        <paging:GlyphButton ui:field="prev"/>
+        <paging:GlyphButton ui:field="next"/>
+        <paging:GlyphButton ui:field="last"/>
+        <paging:GlyphButton ui:field="refresh"/>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -1,0 +1,46 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+	<ui:style>
+		.layout {
+			display: inline-block;
+			white-space: nowrap;
+			position: absolute;
+			right: 100px;
+			top: 2px;
+			white-space: nowrap;
+		}
+		
+		.html {
+			display: inline-block;
+		}
+		
+		.label {
+			display: inline-block;
+			cursor: pointer;
+		}
+		
+		.textBox {
+			display: inline-block;
+			width: 30px;
+			height: 14px;
+			padding: 0px;
+			margin: 0px;
+			border: none;
+		}
+	</ui:style>
+
+	<g:FlowPanel styleName="{style.layout}">
+	    <g:HTML styleName="{style.html}">[</g:HTML>
+		<g:HTML ui:field="lblStreamId" styleName="{style.label}">&nbsp;-&nbsp;</g:HTML>
+		<g:TextBox ui:field="txtStreamId" styleName="{style.textBox}" visible="false" />
+		<g:HTML styleName="{style.html}">:</g:HTML>
+		<g:HTML ui:field="lblStreamNo" styleName="{style.label}">&nbsp;-&nbsp;</g:HTML>
+		<g:TextBox ui:field="txtStreamNo" styleName="{style.textBox}" visible="false" />
+		<g:HTML styleName="{style.html}">:</g:HTML>
+		<g:HTML ui:field="lblRecordNo" styleName="{style.label}">&nbsp;-&nbsp;</g:HTML>
+		<g:TextBox ui:field="txtRecordNo" styleName="{style.textBox}" visible="false" />
+		<g:HTML styleName="{style.html}">]</g:HTML>
+	</g:FlowPanel>
+</ui:UiBinder>

@@ -1,0 +1,84 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.background {
+	position: absolute;
+	left: -100000;
+	top: -100000;
+	border: 1px solid rgba(0,0,0,0);
+	border-radius: 5px;
+	box-shadow: rgba(0, 0, 0, 0) 0 2px 4px, rgba(0, 0, 0, 0) 0 0 3px;
+	z-index: 2;
+	min-width: 50px;
+}
+
+.selectable {
+	transition: box-shadow .3s, border .3s, background-color .3s;
+	-webkit-transition: box-shadow .3s, border .3s, background-color .3s;
+	-moz-transition: box-shadow .3s, border .3s, background-color .3s;
+	-o-transition: box-shadow .3s, border .3s, background-color .3s;
+	cursor: pointer;
+}
+
+.background.selectable:hover {
+	border: 1px solid rgba(0,0,0,.2);
+	background-color: #f7fbff;
+	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+}
+
+.background.selectable.backgroundSelected {
+	border: 1px solid rgba(0,0,0,.2);
+	background-color: #bbdefb;
+	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+}
+
+.background.selectable.backgroundSelectedDisabled {
+	border: 1px solid rgba(0,0,0,.2);
+	background-color: #ccc;
+	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+}
+
+.background.selectable.backgroundSelected:hover {
+	border: 1px solid rgba(0,0,0,.2);
+	background-color: #bbdefb;
+	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+}
+
+.background.selectable.backgroundSelectedDisabled:hover {
+	border: 1px solid rgba(0,0,0,.2);
+	background-color: #ccc;
+	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+}
+
+.background.selectable.hotspot {
+	border: 1px solid rgba(0,0,0,.2);
+	background-color: rgba(255,0,0,.3);
+	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+}
+
+.image {
+	position: absolute;
+	left: 3px;
+	top: 1px;
+}
+
+.label {
+	padding: 2px 5px 2px 5px;
+}
+
+.labelDisabled {
+	color: #999;
+}

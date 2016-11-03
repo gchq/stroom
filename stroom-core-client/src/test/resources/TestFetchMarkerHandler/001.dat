@@ -1,0 +1,12 @@
+SomePipelineElement [1:1] WARN: Warning 1
+SomePipelineElement [1:1] INFO: Info 1
+SomePipelineElement [1:1] WARN: Warning 2
+SomePipelineElement [1:1] INFO: Info 2
+SomePipelineElement [1:1] ERROR: Error 1
+SomePipelineElement [1:1] WARN: Warning 3
+SomePipelineElement [1:1] ERROR: Error 2
+SomePipelineElement [1:1] ERROR: Error 3
+SomePipelineElement [1:1] FATAL: Fatal 1
+SomePipelineElement [1:1] ERROR: Error 4
+SomePipelineElement [1:1] ERROR: Error 5
+SomePipelineElement [1:1] FATAL: Fatal 2

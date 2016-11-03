@@ -1,0 +1,17 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<feed>
+   <classification/>
+   <contextEncoding/>
+   <createTime>2015-04-27T16:39:45.000Z</createTime>
+   <createUser>admin</createUser>
+   <description/>
+   <encoding/>
+   <name>VALUE_OUTPUT_FEED_SQL</name>
+   <reference>false</reference>
+   <retentionDayAge/>
+   <status>RECEIVE</status>
+   <streamType>Raw Events</streamType>
+   <updateTime>2015-04-27T16:39:45.000Z</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>2291a856-17cc-4715-a373-7ffee867ec80</uuid>
+</feed>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<log4j:configuration xmlns:log4j='http://jakarta.apache.org/log4j/'>
+  <appender name="STDOUT"
+    class="stroom.util.test.StroomJunitConsoleAppender">
+    <layout class="org.apache.log4j.EnhancedPatternLayout">
+      <param name="ConversionPattern"
+        value="%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}{GMT+0} %-5p [%t] (%F:%L) - %m%n" />
+    </layout>
+  </appender>
+
+  <logger name="stroom" additivity="false">
+    <level value="debug" />
+    <appender-ref ref="STDOUT" />
+  </logger>
+
+  <logger name="stroom.statistics.sql.SQLStatisticAggregationManager">
+    <level value="debug" />
+  </logger>
+
+  <logger name="stroom.statistics.sql.SQLStatisticAggregationTransactionHelper">
+    <level value="debug" />
+  </logger>
+  
+  <logger name="stroom.statistics.legacy.aggregator.StatisticAggregationManager">
+    <level value="debug" />
+  </logger>
+  <logger name="stroom.statistics.legacy.aggregator.StatisticAggregationTransactionHelper">
+    <level value="debug" />
+  </logger>
+
+  <logger name="stroom.statistics" additivity="false">
+    <level value="debug" />
+    <appender-ref ref="STDOUT" />
+  </logger>
+
+  <root>
+    <level value="info" />
+    <appender-ref ref="STDOUT" />
+  </root>
+</log4j:configuration>

@@ -1,0 +1,58 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.pipeline.server.task;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import stroom.pipeline.shared.StepLocation;
+import stroom.util.spring.StroomScope;
+
+@Component
+@Scope(value = StroomScope.TASK)
+public class SteppingResponseCache {
+    private static final int MAX_CACHE_SIZE = 100;
+
+    private final Map<StepLocation, StepData> locationMap = new HashMap<>();
+    private Deque<StepLocation> recents = new ArrayDeque<>();
+
+    public StepData getStepData(final StepLocation location) {
+        // Cleanup code to remove old data.
+        final StepLocation existing = recents.peekLast();
+        if (existing == null || !existing.equals(location)) {
+            recents.add(location);
+
+            if (recents.size() > MAX_CACHE_SIZE) {
+                final StepLocation forRemoval = recents.pollFirst();
+                locationMap.remove(forRemoval);
+            }
+        }
+
+        StepData data = locationMap.get(location);
+        if (data == null) {
+            data = new StepData();
+            locationMap.put(location, data);
+        }
+
+        return data;
+    }
+}

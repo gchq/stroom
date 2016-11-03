@@ -1,0 +1,41 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <elements>
+      <add>
+         <element>
+            <id>xmlWriter</id>
+            <type>XMLWriter</type>
+         </element>
+         <element>
+            <id>fileAppender2</id>
+            <type>FileAppender</type>
+         </element>
+      </add>
+   </elements>
+   <properties>
+      <add>
+         <property>
+            <element>splitFilter</element>
+            <name>splitCount</name>
+            <value>
+               <integer>400</integer>
+            </value>
+         </property>
+         <property>
+            <element>fileAppender2</element>
+            <name>outputPaths</name>
+            <value>
+               <string>${stroom.temp}/xml/output1,${stroom.temp}/xml/output2</string>
+            </value>
+         </property>
+      </add>
+   </properties>
+   <links>
+      <add>
+         <link>
+            <from>writeRecordCountFilter</from>
+            <to>xmlWriter</to>
+         </link>
+      </add>
+   </links>
+</pipeline>

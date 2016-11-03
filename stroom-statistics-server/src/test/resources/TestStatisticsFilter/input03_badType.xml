@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<statistics>
+  <statistic>
+    <time>2000-01-01T00:00:00.000Z</time>
+    <precision>1000</precision>
+    <value>1.5</value>
+    <tags>
+      <tag name="xxxxxxxx" value="1tag1value"/>
+      <tag name="tag2name" value="1tag2value"/>
+    </tags>
+  </statistic>
+</statistics>

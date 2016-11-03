@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<statistics>
+  <statistic>
+    <time>2000-01-01T00:00:00.000Z</time>
+    <tags>
+      <tag name="tag1name" value="1tag1value"/>
+      <tag name="tag2name" value="1tag2value"/>
+    </tags>
+  </statistic>
+</statistics>

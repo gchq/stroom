@@ -1,0 +1,37 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:view="urn:import:stroom.widget.layout.client.view">
+
+  <ui:style>
+    .north {
+    	width: 100%;
+    	height: 100%;
+    	border-bottom: 1px solid #c5cde2;
+    	background-color: white;
+    }
+    
+    .south {
+    	width: 100%;
+    	height: 100%;
+    	border-top: 1px solid #c5cde2;
+    	background-color: white;
+    }
+    
+    .details {
+    	padding: 5px;
+    }
+  </ui:style>
+
+  <g:MySplitLayoutPanel vSplits="0.5" width="100%" height="100%">
+    <g:north size="200">
+      <view:ResizeSimplePanel ui:field="processorList"
+        addStyleNames="{style.north}" />
+    </g:north>
+    <g:center>
+      <g:MaxScrollPanel addStyleNames="{style.south}">
+        <g:SimplePanel ui:field="details" />
+      </g:MaxScrollPanel>
+    </g:center>
+  </g:MySplitLayoutPanel>
+</ui:UiBinder>
+ 

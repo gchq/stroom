@@ -1,0 +1,139 @@
+/*
+ * Copyright 2010 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+.cellTreeWidget {
+	padding-left: 2px;
+}
+
+.cellTreeWidget div {
+	overflow: visible !important;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+.cellTreeWidget * {
+	-webkit-user-select: none;
+}
+
+.cellTreeEmptyMessage {
+	display: none;
+	padding-left: 16px;
+	font-style: italic;
+}
+
+.cellTreeItem {
+	cursor: hand;
+	cursor: pointer;
+	zoom: 1;
+}
+
+.cellTreeItemImage {
+	background-color: transparent;
+	opacity: 1;
+	width: 17px;
+	height: 17px;
+	z-index: 2;
+}
+
+.cellTreeItemImageValue {
+	zoom: 1;
+}
+
+.cellTreeItemValue {
+	padding-left: 1px;
+	outline: none;
+	white-space: nowrap;
+}
+
+.cellTreeOpenItem {
+	
+}
+
+.cellTreeTopItem {
+	
+}
+
+.cellTreeTopItemImage {
+	
+}
+
+.cellTreeTopItemImageValue {
+	
+}
+
+.cellTreeKeyboardSelectedItem {
+}
+
+.cellTreeSelectedItem {
+	
+}
+
+.cellTreeSelectedItem * {
+}
+
+.cellTreeItemOuter {
+	padding-left: 18px;
+	padding-right: 1px;
+	padding-top: 1px;
+	padding-bottom: 1px;
+	position: relative;
+	zoom: 1;
+	white-space: nowrap;
+	display: inline-block;
+	outline: none;
+}
+
+.cellTreeItemIcon {
+	position: absolute;
+	left: 0px;
+	top: 50%;
+	margin-top: -8px;
+	line-height: 0px;
+}
+
+.cellTreeItemText {
+	-webkit-user-select: initial;
+}
+
+/* Make sure these classes are not obfuscated */
+@external .cellTreeSelectedItem, .cellTreeItemOuter;
+
+.cellTreeSelectedItem .cellTreeItemOuter {
+	background-color: #bbdefb;
+	outline: none;
+}
+
+.cellTreeSelectedItem .cellTreeItemOuter * {
+	background-color: #bbdefb;
+	outline: none;
+}
+
+/* Add styles for drop down boxes */
+.cellTreeItemOuter select {
+	border: 1px solid #c5cde2;
+	width: 200px;
+	cursor: pointer;
+}
+
+.cellTreeSelectedItem .cellTreeItemOuter select {
+	border: 1px solid #a5adc2;
+	width: 200px;
+	cursor: default;
+}
+
+.cellTreeShowMoreButton {
+	padding-left: 16px;
+	outline: none;
+}

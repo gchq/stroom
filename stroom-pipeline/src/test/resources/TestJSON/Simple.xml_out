@@ -1,0 +1,48 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<map xmlns="http://www.w3.org/2013/XSL/json">
+   <map key="data">
+      <map key="structure">
+         <map key="values">
+            <array key="fields">
+               <string>${names}</string>
+               <string>${values}</string>
+            </array>
+            <string key="limit">${maxSeries}</string>
+         </map>
+      </map>
+   </map>
+   <array key="tabs">
+      <map>
+         <string key="name">Data</string>
+         <array key="controls">
+            <map>
+               <string key="id">names</string>
+               <string key="type">field</string>
+               <string key="label">Names</string>
+            </map>
+            <map>
+               <string key="id">values</string>
+               <string key="type">field</string>
+               <string key="label">Values</string>
+            </map>
+         </array>
+      </map>
+      <map>
+         <string key="name">Doughnut</string>
+         <array key="controls">
+            <map>
+               <string key="id">maxSeries</string>
+               <string key="type">number</string>
+               <string key="label">Max Series</string>
+               <string key="defaultValue">10</string>
+            </map>
+            <map>
+               <string key="id">sort</string>
+               <string key="type">boolean</string>
+               <string key="label">Sort By Value</string>
+               <string key="defaultValue">true</string>
+            </map>
+         </array>
+      </map>
+   </array>
+</map>

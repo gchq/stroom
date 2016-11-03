@@ -1,0 +1,142 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:l="urn:import:stroom.item.client"
+  xmlns:c="urn:import:stroom.widget.customdatebox.client"
+  xmlns:v="urn:import:stroom.widget.tickbox.client.view">
+  <ui:style>
+    .label {
+    	display: block;
+    	width: 86px;
+    	white-space: nowrap;
+    	margin: 0px;
+    }
+    
+    .panel {
+    	width: 200px;
+    	margin-bottom: 4px;
+    	display: inline-block;
+    	vertical-align: top;
+    }
+    
+    .atts {
+    	margin-bottom: 4px;
+    	display: inline-block;
+    	vertical-align: top;
+    }
+    
+    .noMargin {
+    	margin: 0px;
+    }
+
+    .topMargin {
+    	margin-top: 4px;
+    }
+  </ui:style>
+  <g:DockLayoutPanel ui:field="layout" unit="PX" width="100%" height="100%">
+    <g:north size="38">
+    <g:FlowPanel ui:field="templatePanel" addStyleNames="{style.panel}" width="100%">
+      <g:Label text="Template:" addStyleNames="{style.label}" />
+      <l:ItemListBox ui:field="streamListFilterTemplate" addStyleNames="{style.noMargin}" width="100%" />
+    </g:FlowPanel>
+    </g:north>
+    
+    <g:south size="269">
+    <g:FlowPanel width="100%" ui:field="southPanel" addStyleNames="{style.topMargin}">
+    <g:FlowPanel width="100%">
+      <g:FlowPanel ui:field="streamIdPanel" addStyleNames="{style.panel}">
+        <g:Label text="Stream Id:" addStyleNames="{style.label}" />
+        <g:TextBox ui:field="streamId" addStyleNames="{style.noMargin}" />
+      </g:FlowPanel>
+      <g:FlowPanel ui:field="parentStreamIdPanel" addStyleNames="{style.panel}">
+        <g:Label text="Parent Stream Id:" addStyleNames="{style.label}" />
+        <g:TextBox ui:field="parentStreamId" addStyleNames="{style.noMargin}" />
+      </g:FlowPanel>
+    </g:FlowPanel>
+    <g:FlowPanel ui:field="createdPanel" addStyleNames="{style.panel}" width="100%">
+      <g:Label text="Created:" addStyleNames="{style.label}" width="100%" />
+      <g:FlowPanel width="100%">
+        <c:CustomDateBox ui:field="createFrom" addStyleNames="{style.noMargin}" />
+        <c:CustomDateBox ui:field="createTo" addStyleNames="{style.noMargin}" />
+      </g:FlowPanel>
+    </g:FlowPanel>
+    <g:FlowPanel ui:field="effectivePanel" addStyleNames="{style.panel}" width="100%">
+      <g:Label text="Effective:" addStyleNames="{style.label}" width="100%"/>
+      <g:FlowPanel width="100%">
+        <c:CustomDateBox ui:field="effectiveFrom" addStyleNames="{style.noMargin}" />
+        <c:CustomDateBox ui:field="effectiveTo" addStyleNames="{style.noMargin}" />
+      </g:FlowPanel>
+    </g:FlowPanel>
+    <g:FlowPanel ui:field="streamAttributesPanel" addStyleNames="{style.atts}" width="100%">
+      <g:Label text="Stream Attributes:" addStyleNames="{style.label}" width="100%" />
+      <g:SimplePanel ui:field="streamAttributes" width="100%" />
+    </g:FlowPanel>
+    <g:FlowPanel ui:field="advancedPanel" addStyleNames="{style.panel}" width="100%">
+      <g:FlowPanel styleName="{style.panel}" width="100%">
+        <g:Label text="Status:" addStyleNames="{style.label}" width="100%"/>
+        <l:ItemListBox ui:field="streamStatus" addStyleNames="{style.noMargin}" width="400px" />
+      </g:FlowPanel>
+      <g:FlowPanel addStyleNames="{style.panel}" width="100%">
+        <g:Label text="Status Time:" addStyleNames="{style.label}" width="100%"/>
+        <g:FlowPanel width="100%">
+          <c:CustomDateBox ui:field="statusFrom" addStyleNames="{style.noMargin}" />
+          <c:CustomDateBox ui:field="statusTo" addStyleNames="{style.noMargin}" />
+        </g:FlowPanel>
+      </g:FlowPanel>
+    </g:FlowPanel>
+    </g:FlowPanel>
+    </g:south>
+    
+    <g:center>
+      <g:MySplitLayoutPanel vSplits="0.5" width="100%" height="100%">
+	    <g:north size="200">
+	      <g:MySplitLayoutPanel hSplits="0.5" width="100%" height="100%">
+	        <g:west size="200">
+              <g:DockLayoutPanel ui:field="folderPanel" unit="PX" width="100%" height="100%">
+                <g:north size="16">
+                  <g:Label text="Folders:" addStyleNames="{style.label}" />
+                </g:north>
+                <g:center>
+                  <g:SimplePanel ui:field="folder" width="100%" height="100%" />                
+                </g:center>
+              </g:DockLayoutPanel>
+            </g:west>
+            <g:center>
+              <g:DockLayoutPanel ui:field="feedPanel" unit="PX" width="100%" height="100%">
+                <g:north size="16">
+                  <g:Label text="Feeds:" addStyleNames="{style.label}" />
+                </g:north>
+                <g:center>
+                  <g:SimplePanel ui:field="feed" width="100%" height="100%" />
+                </g:center>
+              </g:DockLayoutPanel>
+            </g:center>
+          </g:MySplitLayoutPanel>
+        </g:north>
+        <g:center>
+          <g:MySplitLayoutPanel hSplits="0.5" width="100%" height="100%">
+	        <g:west size="200">
+              <g:DockLayoutPanel ui:field="pipelinePanel" unit="PX" width="100%" height="100%">
+                <g:north size="16">	        
+                  <g:Label text="Pipelines:" addStyleNames="{style.label}" />
+                </g:north>
+                <g:center>
+                  <g:SimplePanel ui:field="pipeline" width="100%" height="100%" />
+                </g:center>                
+              </g:DockLayoutPanel>
+            </g:west>
+            <g:center>
+              <g:DockLayoutPanel ui:field="streamTypePanel" unit="PX" width="100%" height="100%">
+                <g:north size="16">
+                  <g:Label text="Stream Types:" addStyleNames="{style.label}" />
+                </g:north>
+                <g:center>
+                  <g:SimplePanel ui:field="streamType" width="100%" height="100%" />
+                </g:center>
+              </g:DockLayoutPanel>
+            </g:center>
+          </g:MySplitLayoutPanel>
+        </g:center>
+      </g:MySplitLayoutPanel>
+    </g:center>
+  </g:DockLayoutPanel>
+</ui:UiBinder> 

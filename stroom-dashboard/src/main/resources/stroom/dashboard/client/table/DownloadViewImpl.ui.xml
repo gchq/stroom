@@ -1,0 +1,26 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:list="urn:import:stroom.item.client"
+  xmlns:v="urn:import:stroom.widget.valuespinner.client"
+  xmlns:view="urn:import:stroom.widget.tickbox.client.view">
+  <g:Grid styleName="stroom-control-grid" width="100%">
+    <g:row>
+      <g:cell>File Type:</g:cell>
+      <g:customCell>
+        <list:ItemListBox ui:field="fileType" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Sample Only:</g:cell>
+      <g:customCell>
+        <view:TickBox ui:field="sample" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Sample Size (%):</g:cell>
+      <g:customCell>
+        <v:ValueSpinner ui:field="percent" />
+      </g:customCell>
+    </g:row>
+  </g:Grid>  
+</ui:UiBinder>

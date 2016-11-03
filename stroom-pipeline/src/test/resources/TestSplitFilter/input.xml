@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Elements xmlns:a="a">   text0-1
+   text1-1  <Element1 Att1="stuff1" xmlns:b="b">       text1-2     
+      text2-1  <Element2 Att2="stuff2" xmlns:c="c">text2-2</Element2>text2-3
+      text3-1  <Element3 Att3="stuff3" xmlns:d="d">text3-2
+         text4-1  <Element4 Att4="stuff4" xmlns:e="e">text4-2</Element4>text4-3
+    text3-3  </Element3>     text3-4
+   text1-3</Element1>    text1-4    
+   text5-1<Element5 Att5="stuff5" xmlns:f="f">text5-2
+      text6-1    <Element6 Att6="stuff6" xmlns:g="g">text6-2</Element6>text6-3
+      text7-1   <Element7 Att7="stuff7" xmlns:h="h">text7-2
+         text8-1   <Element8 Att8="stuff8" xmlns:i="i">  text   8-2</Element8>text8-3
+      text7-3     </Element7>text7-4
+   text5-3</Element5> text5-4        
+   
+text0-2     </Elements>

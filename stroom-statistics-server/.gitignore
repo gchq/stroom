@@ -1,0 +1,11 @@
+/.classpath
+/.externalToolBuilders/
+/.project
+/.settings/
+/target/
+/StatsTestData_Values.xml
+/StatsTestData_Counts.xml
+/StatsPurgeTestData_Counts.xml
+/StatsPurgeTestData_Values.xml
+/StatsBulkTestData_Counts.xml
+/StatsBulkTestData_Values.xml

@@ -1,0 +1,32 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:p="urn:import:stroom.widget.button.client">
+
+  <ui:with field="res" type="stroom.task.client.presenter.TaskPresenter.Resources" />
+
+  <ui:style>
+    .layout {
+    	position: relative;
+    	width: 100%;
+    	padding: 2px;
+    	border: 1px solid grey;
+    }
+    
+    .terminate {
+    	vertical-align: middle;
+    	padding: 3px;
+    	padding-bottom: 0px;    	
+    }
+  </ui:style>
+  <g:HorizontalPanel ui:field="layout" styleName="{style.layout}">
+    <g:cell>
+      <g:FlowPanel>
+        <g:Label ui:field="taskName" />
+        <g:Label ui:field="taskAge" />
+        <g:Label ui:field="taskStatus" />
+      </g:FlowPanel>
+    </g:cell>
+    <g:cell>
+      <p:ImageButton ui:field="terminate" addStyleNames="{style.terminate}" enabledImage="{res.terminate}" title="Terminate" visible="false" />
+    </g:cell>
+  </g:HorizontalPanel>
+</ui:UiBinder> 

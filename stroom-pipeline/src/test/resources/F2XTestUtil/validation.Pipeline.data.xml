@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<pipeline>
+    <elements>
+        <add>
+            <element>
+                <id>combinedParser</id>
+                <type>CombinedParser</type>
+            </element>
+            <element>
+                <id>schemaFilter</id>
+                <type>SchemaFilter</type>
+            </element>
+        </add>
+    </elements>
+    <properties>
+        <add>
+            <property>
+                <element>schemaFilter</element>
+                <name>schemaGroup</name>
+                <value>
+                    <string>EVENTS</string>
+                </value>
+            </property>
+        </add>
+    </properties>
+    <links>
+        <add>
+            <link>
+                <from>combinedParser</from>
+                <to>schemaFilter</to>
+            </link>
+        </add>
+    </links>
+</pipeline>

@@ -1,0 +1,41 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+  <ui:with field="res"
+    type="stroom.widget.dropdowntree.client.view.DropDownViewImpl.Resources" />
+
+  <ui:style>
+  .container {
+  	position: relative;
+  	display: inline-block;
+  	width: 200px;
+  	height: 19px;
+  	background-color: white;
+  	border: 1px solid #C5CDE2;
+  	cursor: pointer;
+  }
+  
+  .label {
+  	position: absolute;
+	left: 4px;
+	right: 20px;
+	top: 1px;
+	bottom: 1px;
+  	overflow: hidden;
+  	white-space: nowrap;
+  	cursor: pointer;
+  }
+  
+  .button {
+  	position: absolute;
+  	bottom: 4px;
+  	right: 4px;
+  	cursor: pointer;
+  }
+  </ui:style>
+  <g:FlowPanel ui:field="container" styleName="{style.container}">
+    <g:Label ui:field="label" styleName="{style.label}" />
+    <g:Image ui:field="button" resource="{res.popup}" styleName="{style.button}" />
+  </g:FlowPanel>
+</ui:UiBinder>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.5.0//EN"
+  "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0/distro-source/core/src/gwt-module.dtd">
+<module rename-to='stroom'>
+  <inherits name='stroom.app.App' />
+
+  <!-- Used to enable SuperDevMode - remove in production for security reasons -->
+  <add-linker name="xsiframe" />
+  <set-configuration-property name="devModeRedirectEnabled" value="true" />
+
+  <set-configuration-property name="CssResource.style" value="pretty" />
+
+  <!-- Make it easier to debug d3 -->
+  <!-- <set-property name="d3.pretty" value="true" /> -->
+</module>

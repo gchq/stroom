@@ -1,0 +1,7 @@
+.idea
+.DS_Store
+*.iml
+*/target/
+*.swp
+node_modules
+_book

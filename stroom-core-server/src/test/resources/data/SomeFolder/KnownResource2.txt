@@ -1,0 +1,1 @@
+This file is a known resource used to test the ResourceFinder.

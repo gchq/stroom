@@ -1,0 +1,10 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<index>
+   <description/>
+   <maxDocsPerShard>1000000000</maxDocsPerShard>
+   <name>Example index</name>
+   <partitionBy>MONTH</partitionBy>
+   <partitionSize>1</partitionSize>
+   <shardsPerPartition>1</shardsPerPartition>
+   <uuid>57a35b9a-083c-4a93-a813-fc3ddfe1ff44</uuid>
+</index>

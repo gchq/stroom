@@ -1,0 +1,74 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client"
+  xmlns:v="urn:import:stroom.widget.tickbox.client.view"
+  xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
+  <g:FlowPanel width="100%">
+    <g:Grid ui:field="grid" styleName="stroom-control-grid" width="100%">
+      <g:row>
+        <g:customCell>
+          <g:Label text="Type:" width="105px" />
+        </g:customCell>
+        <g:customCell>
+          <i:ItemListBox ui:field="type" width="100%" />
+        </g:customCell>
+      </g:row>
+
+      <!-- Number format settings -->
+      <g:row>
+        <g:cell>Decimal Places:</g:cell>
+        <g:customCell>
+          <valuespinner:ValueSpinner ui:field="decimalPlaces"
+            width="100%" />
+        </g:customCell>
+      </g:row>
+      <g:row>
+        <g:cell>Use Separator (,):</g:cell>
+        <g:customCell>
+          <v:TickBox ui:field="separate" width="100%" />
+        </g:customCell>
+      </g:row>
+
+      <!-- Date time settings -->
+      <g:row>
+        <g:cell>Format:</g:cell>
+        <g:customCell>
+          <i:StringListBox ui:field="format" width="100%" />
+        </g:customCell>
+      </g:row>
+      <g:row>
+        <g:cell>Custom:</g:cell>
+        <g:customCell>
+          <v:TickBox ui:field="custom" width="100%" />
+        </g:customCell>
+      </g:row>
+      <g:row>
+        <g:cell>Custom Format:</g:cell>
+        <g:customCell>
+          <g:TextBox ui:field="text" width="100%" />
+        </g:customCell>
+      </g:row>
+      <g:row>
+        <g:cell>Time Zone:</g:cell>
+        <g:customCell>
+          <i:ItemListBox ui:field="timeZoneUse" width="100%" />
+        </g:customCell>
+      </g:row>
+      <g:row>
+        <g:cell>Time Zone Id:</g:cell>
+        <g:customCell>
+          <i:StringListBox ui:field="timeZoneId" width="100%" />
+        </g:customCell>
+      </g:row>
+      <g:row>
+        <g:cell>Time Zone Offset:</g:cell>
+        <g:customCell>
+          <g:FlowPanel>
+          	<valuespinner:ValueSpinner ui:field="timeZoneOffsetHours" />
+          	<valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes" />
+          </g:FlowPanel>
+        </g:customCell>
+      </g:row>
+    </g:Grid>
+  </g:FlowPanel>
+</ui:UiBinder>

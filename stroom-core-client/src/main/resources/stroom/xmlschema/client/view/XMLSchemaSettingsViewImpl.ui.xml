@@ -1,0 +1,38 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+  <g:FlowPanel styleName="stroom-control-page">
+    <g:Grid styleName="stroom-control-grid">
+      <g:row>
+        <g:cell>Description:</g:cell>
+        <g:customCell>
+          <g:TextArea ui:field="description" width="400px" />
+        </g:customCell>
+      </g:row>
+      <g:row>
+        <g:cell>Namespace URI:</g:cell>
+        <g:customCell>
+          <g:TextBox ui:field="namespaceURI" width="400px" />
+        </g:customCell>
+      </g:row>
+      <g:row>
+        <g:cell>System Id:</g:cell>
+        <g:customCell>
+          <g:TextBox ui:field="systemId" width="400px" />
+        </g:customCell>
+      </g:row>
+      <g:row>
+        <g:cell>Schema Group:</g:cell>
+        <g:customCell>
+          <g:TextBox ui:field="schemaGroup" width="400px" />
+        </g:customCell>
+      </g:row>
+      <g:row>
+        <g:cell>Deprecated:</g:cell>
+        <g:customCell>
+          <tickbox:TickBox ui:field="deprecated" />
+        </g:customCell>
+      </g:row>
+    </g:Grid>
+  </g:FlowPanel>
+</ui:UiBinder> 

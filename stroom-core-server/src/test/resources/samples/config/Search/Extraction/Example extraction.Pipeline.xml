@@ -1,0 +1,14 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <description/>
+   <name>Example extraction</name>
+   <parentPipelineXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+      &lt;doc&gt;
+      &lt;type&gt;Pipeline&lt;/type&gt;
+      &lt;uuid&gt;3d9d60e9-61c2-4c88-a57b-7bc584dd970e&lt;/uuid&gt;
+      &lt;name&gt;Search Extraction&lt;/name&gt;
+      &lt;/doc&gt;
+   </parentPipelineXML>
+   <pipelineType>Search Extraction</pipelineType>
+   <uuid>e5ecdf93-d433-45ac-b14a-1f77f16ae4f7</uuid>
+</pipeline>

@@ -1,0 +1,9 @@
+name: stroom
+root: ~/git_work/stroom/
+
+windows:
+  - shell:
+  - vim: vim pom.xml
+  - MySQL: mysql --user=stroomuser --password=stroompassword1 stroom
+  - Chrome: /usr/bin/google-chrome-stable http://localhost:8888/
+

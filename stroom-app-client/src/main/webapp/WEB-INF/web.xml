@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2016 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+<web-app>
+  <!-- Application display name and context -->
+  <display-name>Stroom</display-name>
+
+  <context-param>
+    <param-name>log4jRefreshInterval</param-name>
+    <param-value>10000</param-value>
+  </context-param>
+
+  <!-- Spring Security filter -->
+  <filter>
+    <filter-name>rejectPostFilter</filter-name>
+    <filter-class>stroom.servlet.RejectPostFilter</filter-class>
+    <init-param>
+      <param-name>rejectUri</param-name>
+      <param-value>/</param-value>
+    </init-param>
+  </filter>
+  <filter>
+    <filter-name>upgradeFilter</filter-name>
+    <filter-class>stroom.util.upgrade.UpgradeDispatcherFilter</filter-class>
+  </filter>
+  <filter>
+    <filter-name>threadScopeContextFilter</filter-name>
+    <filter-class>stroom.util.thread.ThreadScopeContextFilter</filter-class>
+  </filter>
+
+  <filter>
+    <filter-name>clusterCallCertificateRequiredFilter</filter-name>
+    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+    <init-param>
+      <param-name>contextAttribute</param-name>
+      <param-value>org.springframework.web.servlet.FrameworkServlet.CONTEXT.spring</param-value>
+    </init-param>
+  </filter>
+  <filter>
+    <filter-name>exportCertificateRequiredFilter</filter-name>
+    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+    <init-param>
+      <param-name>contextAttribute</param-name>
+      <param-value>org.springframework.web.servlet.FrameworkServlet.CONTEXT.spring</param-value>
+    </init-param>
+  </filter>
+  <filter>
+    <filter-name>shiroFilter</filter-name>
+    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+    <init-param>
+      <param-name>contextAttribute</param-name>
+      <param-value>org.springframework.web.servlet.FrameworkServlet.CONTEXT.spring</param-value>
+    </init-param>
+    <init-param>
+      <param-name>targetFilterLifecycle</param-name>
+      <param-value>true</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>upgradeFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  <filter-mapping>
+    <filter-name>threadScopeContextFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  <filter-mapping>
+    <filter-name>rejectPostFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  <filter-mapping>
+    <filter-name>clusterCallCertificateRequiredFilter</filter-name>
+    <url-pattern>/clustercall.rpc</url-pattern>
+  </filter-mapping>
+  <filter-mapping>
+    <filter-name>exportCertificateRequiredFilter</filter-name>
+    <url-pattern>/export/*</url-pattern>
+  </filter-mapping>
+  <filter-mapping>
+    <filter-name>shiroFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!-- Add a context listener for identifying which sessions are active. -->
+  <listener>
+    <listener-class>stroom.servlet.SessionListListener</listener-class>
+  </listener>
+
+  <!-- Initialise Log4J -->
+  <servlet>
+    <servlet-name>log4j</servlet-name>
+    <servlet-class>stroom.util.logging.Log4JServlet</servlet-class>
+    <init-param>
+      <param-name>log4j</param-name>
+      <param-value>classpath:log4j.xml</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <!-- Initialise Spring and the Stroom lifecycle servlet -->
+  <servlet>
+    <servlet-name>spring</servlet-name>
+    <servlet-class>stroom.util.upgrade.UpgradeDispatcherServlet</servlet-class>
+    <init-param>
+      <param-name>spring.profiles.active</param-name>
+      <param-value>production,PROD_SECURITY</param-value>
+    </init-param>
+    <!--<init-param>-->
+      <!--<param-name>upgrade-class</param-name>-->
+      <!--<param-value>stroom.upgrade.StroomUpgradeHandler</param-value>-->
+    <!--</init-param>-->
+    <init-param>
+      <param-name>contextClass</param-name>
+      <param-value>org.springframework.web.context.support.AnnotationConfigWebApplicationContext</param-value>
+    </init-param>
+    <init-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>
+        stroom.spring.ScopeConfiguration,
+        stroom.spring.PersistenceConfiguration,
+        stroom.spring.ServerComponentScanConfiguration,
+        stroom.spring.ServerConfiguration,
+        stroom.spring.CachedServiceConfiguration,
+        stroom.logging.spring.EventLoggingConfiguration,
+        stroom.index.spring.IndexConfiguration,
+        stroom.search.spring.SearchConfiguration,
+        stroom.script.spring.ScriptConfiguration,
+        stroom.visualisation.spring.VisualisationConfiguration,
+        stroom.dashboard.spring.DashboardConfiguration,
+        stroom.spring.CoreClientConfiguration,
+        stroom.statistics.spring.StatisticsConfiguration,
+        stroom.security.spring.SecurityConfiguration
+      </param-value>
+    </init-param>
+    <load-on-startup>3</load-on-startup>
+  </servlet>
+
+  <!-- Deal with requests to the dispatch servlet -->
+  <servlet-mapping>
+    <servlet-name>spring</servlet-name>
+    <url-pattern>*.rpc</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>spring</servlet-name>
+    <url-pattern>/stroom/dynamic.css</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>spring</servlet-name>
+    <url-pattern>/stroom/script</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>spring</servlet-name>
+    <url-pattern>/datafeed</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>spring</servlet-name>
+    <url-pattern>/datafeed/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>spring</servlet-name>
+    <url-pattern>/resourcestore/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>spring</servlet-name>
+    <url-pattern>/export/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>spring</servlet-name>
+    <url-pattern>/echo</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>spring</servlet-name>
+    <url-pattern>/debug</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>spring</servlet-name>
+    <url-pattern>/status</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>spring</servlet-name>
+    <url-pattern>/sessionList</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>spring</servlet-name>
+    <url-pattern>/gwtRequest</url-pattern>
+  </servlet-mapping>
+
+  <!-- Set the session timeout to 5 min .... system implements keep alive. -->
+  <session-config>
+    <session-timeout>5</session-timeout>
+  </session-config>
+
+  <!-- Default page to serve -->
+  <welcome-file-list>
+    <welcome-file>stroom.jsp</welcome-file>
+  </welcome-file-list>
+</web-app>

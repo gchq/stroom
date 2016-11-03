@@ -1,0 +1,12 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<feed>
+   <classification/>
+   <contextEncoding>UTF-8</contextEncoding>
+   <description>FILENO_TO_LOCATION-REFERENCE</description>
+   <encoding>UTF-8</encoding>
+   <name>FILENO_TO_LOCATION-REFERENCE</name>
+   <reference>true</reference>
+   <status>RECEIVE</status>
+   <streamType>Raw Events</streamType>
+   <uuid>60f9f51d-e5d6-41f5-86b9-ae866b8c9fa3</uuid>
+</feed>

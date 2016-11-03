@@ -1,0 +1,31 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:xmleditor="urn:import:stroom.xmleditor.client.view"
+  xmlns:v="urn:import:stroom.widget.layout.client.view">
+  <ui:style src="xmleditor.css"
+    type="stroom.xmleditor.client.view.XMLEditorViewImpl.Style" />
+      
+    <ui:with field="res"
+    type="stroom.xmleditor.client.view.XMLEditorViewImpl.Resources" />
+
+  <g:DockLayoutPanel ui:field="layout" unit="PX" width="100%" height="100%">
+    <g:east size="0">
+      <xmleditor:RightBar ui:field="rightBar" />
+    </g:east>
+    <g:west size="0">
+      <xmleditor:LeftBar ui:field="leftBar" />
+    </g:west>
+    <g:center>
+      <v:ResizeFlowPanel width="100%" height="100%">
+        <xmleditor:XMLArea ui:field="xmlArea" />
+        <g:FlowPanel ui:field="filterButtons" styleName="{style.filterButtons}"
+          visible="false">
+          <g:Image ui:field="filterInactive" styleName="{style.filterButton}"
+            resource="{res.filterInactive}" />
+          <g:Image ui:field="filterActive" styleName="{style.filterButton}"
+            resource="{res.filterActive}" />
+        </g:FlowPanel>
+      </v:ResizeFlowPanel>
+    </g:center>
+  </g:DockLayoutPanel>
+</ui:UiBinder>

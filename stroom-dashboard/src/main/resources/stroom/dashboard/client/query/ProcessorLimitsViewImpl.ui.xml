@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:v="urn:import:stroom.widget.valuespinner.client">
+  <g:Grid styleName="stroom-control-grid">
+    <g:row>
+      <g:cell>Record Limit:</g:cell>
+      <g:customCell>
+        <v:ValueSpinner ui:field="recordLimit" width="200px" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Time Limit (mins):</g:cell>
+      <g:customCell>
+        <v:ValueSpinner ui:field="timeLimit" width="200px" />
+      </g:customCell>
+    </g:row>
+  </g:Grid>
+</ui:UiBinder>

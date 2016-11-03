@@ -1,0 +1,766 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2016 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+    <util:list id="defaultPropertyList">
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.temp"/>
+            <property name="description"
+                      value="Temp folder to write stuff to. Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.proxyDir"/>
+            <property name="value" value="${stroom.temp}/proxy"/>
+            <property name="description"
+                      value="Folder to look for Stroom Proxy Content to aggregate"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.proxyThreads"/>
+            <property name="value" value="10"/>
+            <property name="description" value="Number of threads used in aggregation"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.maxAggregation"/>
+            <property name="value" value="10000"/>
+            <property name="description"
+                      value="This stops the aggregation after a certain size / nested streams"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.maxAggregationScan"/>
+            <property name="value" value="100000"/>
+            <property name="description"
+                      value="The limit of files to inspect before aggregation begins (should be bigger than maxAggregation)"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.maxStreamSize"/>
+            <property name="value" value="1G"/>
+            <property name="description"
+                      value="This stops the aggregation after a certain size / nested streams"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+
+        <!-- STREAM STORE -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.streamAttribute.deleteAge"/>
+            <property name="value" value="30d"/>
+            <property name="description"
+                      value="The age of streams that we store meta data in the database for"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.streamAttribute.deleteBatchSize"/>
+            <property name="value" value="1000"/>
+            <property name="description"
+                      value="How many stream attributes we want to try and delete in a single batch"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.stream.deletePurgeAge"/>
+            <property name="value" value="7d"/>
+            <property name="description"
+                      value="How long a stream is left logically deleted before it is deleted from the database"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.stream.deleteBatchSize"/>
+            <property name="value" value="1000"/>
+            <property name="description"
+                      value="How many streams we want to try and delete in a single batch"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.fileSystemCleanBatchSize"/>
+            <property name="value" value="20"/>
+            <property name="description"
+                      value="Set child jobs to be created by the file system clean sub task"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.fileSystemCleanDeleteOut"/>
+            <property name="value" value="false"/>
+            <property name="description"
+                      value="Write a delete out in the root of the volume rather than physically deleting the files"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.fileSystemCleanOldAge"/>
+            <property name="value" value="1d"/>
+            <property name="description" value="Duration until a file is deemed old"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <!-- STREAM TASKS -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.streamTask.fillTaskQueue"/>
+            <property name="value" value="true"/>
+            <property name="description"
+                      value="Should the master node fill the task queue ready for workers to fetch tasks?"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.streamTask.createTasks"/>
+            <property name="value" value="true"/>
+            <property name="description"
+                      value="Should the master node create new tasks for stream processor filters?"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.streamTask.assignTasks"/>
+            <property name="value" value="true"/>
+            <property name="description"
+                      value="Should the master node assign tasks to workers when tasks are requested?"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.streamTask.deleteAge"/>
+            <property name="value" value="1d"/>
+            <property name="description"
+                      value="How long to keep tasks on the database for before deleting them (if they are complete)"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.streamTask.deleteBatchSize"/>
+            <property name="value" value="1000"/>
+            <property name="description"
+                      value="How many streams tasks we want to try and delete in a single batch"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.streamTask.queueSize"/>
+            <property name="value" value="1000"/>
+            <property name="description"
+                      value="Maximum number of tasks to cache ready for processing per processor filter"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+
+        <!-- BENCHMARK -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.benchmark.streamCount"/>
+            <property name="value" value="1000"/>
+            <property name="description"
+                      value="Set the number of streams to be created during a benchmark test"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.benchmark.recordCount"/>
+            <property name="value" value="10000"/>
+            <property name="description"
+                      value="Set the number of records to be created for each stream during a benchmark test"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.benchmark.concurrentWriters"/>
+            <property name="value" value="10"/>
+            <property name="description"
+                      value="Set the number of threads to use concurrently to write test streams"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.bufferSize"/>
+            <property name="value" value="4096"/>
+            <property name="description" value="If set the default buffer size to use"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.node"/>
+            <property name="value" value="tba"/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.rack"/>
+            <property name="value" value="tba"/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.startOnLoad"/>
+            <property name="value" value="true"/>
+            <property name="description"
+                      value="Set this to false for development and testing purposes otherwise the Stroom will try and process files automatically outside of test cases."/>
+            <property name="editable" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.maintenanceMessage"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="Provide a message to prevent futher logins and alert currently logged in users about an outage."/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.developmentMode"/>
+            <property name="value" value="false"/>
+            <property name="description" value=""/>
+            <property name="editable" value="false"/>
+        </bean>
+
+        <!-- SECURITY PROPERTIES -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name"
+                      value="stroom.security.allowCertificateAuthentication"/>
+            <property name="value" value="false"/>
+            <property name="description"
+                      value="Choose whether Stroom should allow UI access using certificates"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.security.certificateDNPattern"/>
+            <property name="value" value="CN=[^ ]+ [^ ]+ \(?([a-zA-Z0-9]+)\)?"/>
+            <property name="description"
+                      value="The regular expression to use to extract user names from a certificate DN"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <!-- INDEX PROPERTIES -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.index.ramBufferSizeMB"/>
+            <property name="value" value="1024"/>
+            <property name="description"
+                      value="The amount of RAM Lucene can use to buffer when indexing in Mb"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <!-- SEARCH PROPERTIES -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.search.maxStoredDataQueueSize"/>
+            <property name="value" value="1000000"/>
+            <property name="description"
+                      value="The maximum number documents that will have stored data retrieved from the index shard and queued prior to further processing"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <!-- SEARCH SHARD -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.search.shard.maxOpen"/>
+            <property name="value" value="5"/>
+            <property name="description"
+                      value="The number of open Lucene index shards to cache on each node"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.search.shard.maxDocIdQueueSize"/>
+            <property name="value" value="1000000"/>
+            <property name="description"
+                      value="The maximum number of doc ids that will be queued ready for stored data to be retrieved from the index shard"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.search.shard.maxThreads"/>
+            <property name="value" value="4"/>
+            <property name="description"
+                      value="The absolute maximum number of threads per node, used to search Lucene index shards across all searches"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.search.shard.maxThreadsPerTask"/>
+            <property name="value" value="2"/>
+            <property name="description"
+                      value="The maximum number of threads per search, per node, used to search Lucene index shards"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <!-- SEARCH EXTRACTION -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.search.extraction.maxThreads"/>
+            <property name="value" value="4"/>
+            <property name="description"
+                      value="The absolute maximum number of threads per node, used to extract search results from streams using a pipeline"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.search.extraction.maxThreadsPerTask"/>
+            <property name="value" value="2"/>
+            <property name="description"
+                      value="The maximum number of threads per search, per node, used to extract search results from streams using a pipeline"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <!-- SEARCH SENDER -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.search.maxBooleanClauseCount"/>
+            <property name="value" value="1024"/>
+            <property name="description"
+                      value="The maximum number of clauses that a boolean search can contain."/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.search.maxResults"/>
+            <property name="value" value="1000000,100,10,1"/>
+            <property name="description"
+                      value="The maximum number of search results to keep in memory at each level."/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <!-- SEARCH BASED PROCESSING -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.search.process.defaultTimeLimit"/>
+            <property name="value" value="30"/>
+            <property name="description"
+                      value="The default number of minutes that search processing will be limited by."/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.search.process.defaultRecordLimit"/>
+            <property name="value" value="1000000"/>
+            <property name="description"
+                      value="The default number of records that search processing will be limited by."/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <!-- PIPELINE PROPERTIES -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.pipeline.xslt.maxElements"/>
+            <property name="value" value="1000000"/>
+            <property name="description"
+                      value="The maximum number of elements that the XSLT filter will expect to receive before it errors. This protects Stroom from ruinning out of memory in cases where an appropriate XML splitter has not been used in a pipeline."/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name"
+                      value="stroom.pipeline.appender.maxActiveDestinations"/>
+            <property name="value" value="100"/>
+            <property name="description"
+                      value="The maximum number active destinations that Stroom will allow rolling appenders to be writing to at any one time."/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.smtpHost"/>
+            <property name="value" value=""/>
+            <property name="description" value="SMTP Host name for email"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.smtpUserDomain"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="SMTP User Domain (to append to user names)"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.daysToAccountExpiry"/>
+            <property name="value" value="90"/>
+            <property name="description"
+                      value="Number of days before we disable an account"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.daysToUnusedAccountExpiry"/>
+            <property name="value" value="30"/>
+            <property name="description"
+                      value="Number of days before we disable an unused account"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.daysToPasswordExpiry"/>
+            <property name="value" value="90"/>
+            <property name="description"
+                      value="Number of days before passwords expire"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.streamstore.resilientReplicationCount"/>
+            <property name="value" value="1"/>
+            <property name="description"
+                      value="Set to determine how many volume locations will be used to store a single stream"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.streamstore.preferLocalVolumes"/>
+            <property name="value" value="false"/>
+            <property name="description"
+                      value="Should the stream store always attempt to write to local volumes before writing to remote ones?"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.streamstore.volumeSelector"/>
+            <property name="value" value="RoundRobin"/>
+            <property name="description"
+                      value="How should volumes be selected for use? Possible volume selectors include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', 'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') default is 'RoundRobin'"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <!-- MAIN DATA SOURCE -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.jpaHbm2DdlAuto"/>
+            <property name="value" value="validate"/>
+            <property name="description"
+                      value="Set by property file to enable auto schema creation"/>
+            <property name="editable" value="false"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.jdbcDriverClassName"/>
+            <property name="value" value="org.hsqldb.jdbcDriver"/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.jpaDialect"/>
+            <property name="value" value="org.hibernate.dialect.HSQLDialect"/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.jdbcDriverUrl"/>
+            <property name="value"
+                      value="jdbc:hsqldb:file:${stroom.temp}/STROOMDB/HSQLDB.DAT;shutdown=true"/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.jdbcDriverUsername"/>
+            <property name="value" value="sa"/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.jdbcDriverPassword"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
+            <property name="password" value="true"/>
+        </bean>
+
+        <!-- CACHE DATA SOURCE -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.cache.jdbcDriverClassName"/>
+            <property name="description" value="Optional Cache Values"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.cache.jdbcDriverUrl"/>
+            <property name="description" value="Optional Cache Values"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.cache.jdbcDriverUsername"/>
+            <property name="description" value="Optional Cache Values"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.cache.jdbcDriverPassword"/>
+            <property name="description" value="Optional Cache Values"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+            <property name="password" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.jdbcMaxPoolSize"/>
+            <property name="value" value="10"/>
+            <property name="description" value="Node Pool Size"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.showSql"/>
+            <property name="value" value="false"/>
+            <property name="description" value="Log SQL"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.pageTitle"/>
+            <property name="value" value="Stroom"/>
+            <property name="description"
+                      value="The page title for Stroom shown in the browser tab"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.namePattern"/>
+            <property name="value" value="^[a-zA-Z0-9_\- \.\(\)]{1,}$"/>
+            <property name="description" value="The regex pattern for entity names"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.feedNamePattern"/>
+            <property name="value" value="^[A-Z0-9_-]{3,}$"/>
+            <property name="description" value="The regex pattern for feed names"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.loginHTML"/>
+            <property name="value"
+                      value="&lt;h1&gt;About Stroom&lt;/h1&gt;&lt;p&gt;Stroom is designed to receive data from multiple systems.&lt;/p&gt;"/>
+            <property name="description" value="HTML"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.welcomeHTML"/>
+            <property name="value"
+                      value="&lt;h1&gt;About Stroom&lt;/h1&gt;&lt;p&gt;Stroom is designed to receive data from multiple systems.&lt;/p&gt;"/>
+            <property name="description" value="HTML"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.aboutHTML"/>
+            <property name="value"
+                      value="&lt;h1&gt;About Stroom&lt;/h1&gt;&lt;p&gt;Stroom is designed to receive data from multiple systems.&lt;/p&gt;"/>
+            <property name="description" value="HTML"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+
+        <!-- <bean class="stroom.node.shared.GlobalProperty"> -->
+        <!-- <property name="name" value="stroom.clusterCallUrl" /> -->
+        <!-- <property name="value" -->
+        <!-- value="https://@SERVER@:8080/stroom/clustercall.rpc" /> -->
+        <!-- <property name="description" value="URL pattern to call out to the
+          cluster" /> -->
+        <!-- <property name="editable" value="true" /> -->
+        <!-- <property name="requireRestart" value="true" /> -->
+        <!-- </bean> -->
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.clusterCallUseLocal"/>
+            <property name="value" value="true"/>
+            <property name="description"
+                      value="Do local calls when calling our own local services (true is an optimisation)"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.clusterCallReadTimeout"/>
+            <property name="value" value="30s"/>
+            <property name="description"
+                      value="Time in ms (but can be specified as 10s, 1m) before throwing read timeout"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.clusterCallIgnoreSSLHostnameVerifier"/>
+            <property name="value" value="true"/>
+            <property name="description"
+                      value="If cluster calls are using SSL then choose if we want to ignore host name verification"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.clusterResponseTimeout"/>
+            <property name="value" value="30s"/>
+            <property name="description"
+                      value="Time in ms (but can be specified as 10s, 1m) before giving up on cluster results"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name"
+                      value="stroom.clusterCallCertificateRequiredFilterCn"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="Allowed Certificates to talk within cluster"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.exportCertificateRequiredFilterCn"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="Allowed Certificates to export config from system"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.theme.background-attachment"/>
+            <property name="value" value="scroll"/>
+            <property name="description" value="GUI"/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.theme.background-color"/>
+            <property name="value" value="#1E88E5"/> <!-- #FF6F00 -->
+            <property name="description" value="GUI"/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.theme.background-image"/>
+            <property name="value" value="url(../images/theme/grid.png)"/>
+            <property name="description" value="GUI"/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.theme.background-position"/>
+            <property name="value" value="0 0"/>
+            <property name="description" value="GUI"/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.theme.background-repeat"/>
+            <property name="value" value="repeat"/>
+            <property name="description" value="GUI"/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.theme.background-opacity"/>
+            <property name="value" value="0"/>
+            <property name="description" value="GUI"/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.theme.tube.visible"/>
+            <property name="value" value="hidden"/>
+            <property name="description" value="GUI"/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.theme.tube.opacity"/>
+            <property name="value" value="0.6"/>
+            <property name="description" value="GUI"/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.unknownClassification"/>
+            <property name="value" value="UNKNOWN CLASSIFICATION"/>
+            <property name="description" value="GUI"/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.theme.labelColours"/>
+            <property name="value" value="TEST1=#FF0000,TEST2=#FF9900"/>
+            <property name="description" value="A comma separated list of KV pairs to provide colours for labels."/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <!-- Common statistics store properties -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.stats.common.statisticEngines"/>
+            <property name="value" value="sql"/>
+            <property name="description"
+                      value="Comma delimited list of enabled engines that implement Statistic Event Store (currently 'sql')"/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <!-- Legacy statistics store properties -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.stats.legacy.statisticAggregationBatchSize"/>
+            <property name="value" value="1000000"/>
+            <property name="description"
+                      value="Number of STAT_VAL_SRC records to merge into STAT_VAL in one batch"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <!-- SQL statistics store properties -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.stats.sql.statisticAggregationBatchSize"/>
+            <property name="value" value="1000000"/>
+            <property name="description"
+                      value="Number of SQL_STAT_VAL_SRC records to merge into SQL_STAT_VAL in one batch"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.stats.sql.search.maxResults"/>
+            <property name="value" value="100000"/>
+            <property name="description"
+                      value="The maximum number of records that can be returned from the statisics DB in a single query prior to aggregation"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.stats.sql.maxProcessingAge"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="The maximum age of statistics to process, i.e. any statistics with an statistic event time older than the current time minus maxProcessingAge will be silently dropped.  Leave blank to process all data."/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+
+    </util:list>
+</beans>

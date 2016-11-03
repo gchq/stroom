@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+  <!-- Inherit the core Web Toolkit stuff. -->
+  <inherits name='com.google.gwt.user.User' />
+
+  <inherits name='stroom.cell.expander.Expander' />
+  <inherits name='stroom.cell.tickbox.TickBox' />
+  <inherits name='stroom.cell.info.Info' />
+  <inherits name='stroom.cell.valuespinner.ValueSpinner' />
+  <inherits name='stroom.cell.dropdowntree.DropDownTree' />
+  <inherits name='stroom.cell.list.CellList' />
+
+  <source path="client" />
+</module>

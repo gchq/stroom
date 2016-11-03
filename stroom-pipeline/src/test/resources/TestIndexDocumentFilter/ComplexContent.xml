@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records>
+  <record>
+    <data name="f1" value="someuser" />
+    <data name="f2" value="someuser" />
+    <data name="d1" value="2010-01-01T12:00:00.000Z" />
+    <data name="n1" value="2022" />
+  </record>
+  <record id="1:1234">
+    <data name="n1" value="" />
+    <data name="n2" value="ZZ" />
+  </record>
+</records>
+

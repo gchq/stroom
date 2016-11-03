@@ -1,0 +1,65 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:v="urn:import:stroom.widget.layout.client.view">
+    <ui:style>
+        .checkBoxArea {
+        width: 150px;
+        display: inline-block;
+        }
+
+        .resetPassword {
+        width: 150px;
+        margin-left: 10px;
+        float: right;
+        }
+
+        .border {
+        border: 1px solid #c5cde2;
+        }
+    </ui:style>
+
+
+    <g:DockLayoutPanel unit="PX" width="100%" height="100%">
+        <g:north size="45">
+
+            <g:FlowPanel>
+                <g:VerticalPanel styleName="{style.checkBoxArea}">
+                    <tickbox:TickBox ui:field="statusNotEnabled" text="Account Disabled"/>
+                    <tickbox:TickBox ui:field="loginNeverExpires" text="Login Never Expires"/>
+                </g:VerticalPanel>
+                <g:Button ui:field="resetPassword" text="Reset Password" styleName="gwt-Button {style.resetPassword}"/>
+                <g:Button ui:field="emailResetPassword" text="Email Reset Password"
+                          styleName="gwt-Button {style.resetPassword}"/>
+            </g:FlowPanel>
+
+        </g:north>
+        <g:center>
+            <g:MySplitLayoutPanel width="100%" height="100%">
+                <g:north size="200">
+                    <g:DockLayoutPanel unit="PX" width="100%" height="100%">
+                        <g:north size="15">
+                            <g:Label text="Group Membership:" width="100%"/>
+                        </g:north>
+                        <g:center>
+                            <v:ResizeSimplePanel ui:field="userGroups" width="100%" height="100%"/>
+                        </g:center>
+                    </g:DockLayoutPanel>
+                </g:north>
+                <g:center>
+                    <g:DockLayoutPanel unit="PX" width="100%" height="100%">
+                        <g:north size="15">
+                            <g:Label text="Application Permissions:" width="100%"/>
+                        </g:north>
+                        <g:center>
+                            <v:ResizeSimplePanel ui:field="appPermissions" styleName="{style.border}" width="100%"
+                                                 height="100%"/>
+                        </g:center>
+                    </g:DockLayoutPanel>
+                </g:center>
+            </g:MySplitLayoutPanel>
+        </g:center>
+    </g:DockLayoutPanel>
+
+
+</ui:UiBinder> 

@@ -1,0 +1,305 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.pipeline.structure.testclient.presenter;
+
+import stroom.feed.shared.Feed;
+import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineModelException;
+import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataUtil;
+import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelinePropertyType;
+import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.streamstore.shared.StreamType;
+import stroom.util.test.StroomUnitTest;
+import stroom.util.test.StroomJUnit4ClassRunner;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@RunWith(StroomJUnit4ClassRunner.class)
+public class TestPipelineModel extends StroomUnitTest {
+    private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
+            new String[] { PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS }, null);
+    private static final PipelinePropertyType PROP_TYPE1 = new PipelinePropertyType(ELEM_TYPE, "TestProperty1",
+            "String");
+    private static final PipelinePropertyType PROP_TYPE2 = new PipelinePropertyType(ELEM_TYPE, "TestProperty2",
+            "String");
+    private static final PipelinePropertyType PROP_TYPE3 = new PipelinePropertyType(ELEM_TYPE, "TestProperty3",
+            "String");
+    private static final PipelinePropertyType PROP_TYPE4 = new PipelinePropertyType(ELEM_TYPE, "TestProperty4",
+            "String");
+
+    @Test
+    public void testBasic() throws Exception {
+        test(null, null, 0, 0, 0, 0, 0, 0, 0, 0);
+    }
+
+    @Test
+    public void testSimple() throws Exception {
+        final PipelineData pipelineData = new PipelineData();
+        pipelineData.addElement(ELEM_TYPE, "test1");
+        pipelineData.addElement(ELEM_TYPE, "test2");
+        pipelineData.addLink("test1", "test2");
+
+        test(null, pipelineData, 2, 0, 0, 0, 0, 0, 1, 0);
+    }
+
+    @Test
+    public void testComplex() throws Exception {
+        final PipelineData pipelineData = new PipelineData();
+        pipelineData.addElement(ELEM_TYPE, "test1");
+        pipelineData.addElement(ELEM_TYPE, "test2");
+        pipelineData.addElement(ELEM_TYPE, "test3");
+        pipelineData.addElement(ELEM_TYPE, "test4");
+        pipelineData.addLink("test1", "test2");
+        pipelineData.addLink("test2", "test3");
+        pipelineData.addLink("test3", "test4");
+        pipelineData.removeElement(ELEM_TYPE, "test4");
+
+        test(null, pipelineData, 3, 0, 0, 0, 0, 0, 2, 0);
+    }
+
+    @Test
+    public void testComplexWithProperties() throws Exception {
+        final PipelineData pipelineData = new PipelineData();
+        pipelineData.addElement(ELEM_TYPE, "test1");
+        pipelineData.addElement(ELEM_TYPE, "test2");
+        pipelineData.addElement(ELEM_TYPE, "test3");
+        pipelineData.addElement(ELEM_TYPE, "test4");
+        pipelineData.addLink("test1", "test2");
+        pipelineData.addLink("test2", "test3");
+        pipelineData.addLink("test3", "test4");
+        pipelineData.addProperty("test1", PROP_TYPE1, true);
+        pipelineData.addProperty("test2", PROP_TYPE2, true);
+        pipelineData.addProperty("test3", PROP_TYPE3, true);
+        pipelineData.addProperty("test4", PROP_TYPE4, true);
+        pipelineData.removeElement(ELEM_TYPE, "test4");
+
+        test(null, pipelineData, 3, 0, 3, 0, 0, 0, 2, 0);
+    }
+
+    @Test
+    public void testComplexWithPropRemove() throws Exception {
+        final PipelineData pipelineData = new PipelineData();
+        pipelineData.addElement(ELEM_TYPE, "test1");
+        pipelineData.addElement(ELEM_TYPE, "test2");
+        pipelineData.addElement(ELEM_TYPE, "test3");
+        pipelineData.addElement(ELEM_TYPE, "test4");
+        pipelineData.addLink("test1", "test2");
+        pipelineData.addLink("test2", "test3");
+        pipelineData.addLink("test3", "test4");
+        pipelineData.addProperty("test1", PROP_TYPE1, true);
+        pipelineData.addProperty("test2", PROP_TYPE2, true);
+        pipelineData.addProperty("test3", PROP_TYPE3, true);
+        pipelineData.addProperty("test4", PROP_TYPE4, true);
+        pipelineData.removeProperty("test2", PROP_TYPE2);
+        pipelineData.removeElement(ELEM_TYPE, "test4");
+
+        test(null, pipelineData, 3, 0, 2, 1, 0, 0, 2, 0);
+    }
+
+    @Test
+    public void testUnknownElement() throws Exception {
+        final PipelineData pipelineData = new PipelineData();
+        pipelineData.addElement(ELEM_TYPE, "test");
+        pipelineData.addLink("unknown", "test");
+
+        test(null, pipelineData, 1, 0, 0, 0, 0, 0, 0, 0);
+    }
+
+    @Test
+    public void testInheritanceAdditive() throws Exception {
+        final List<PipelineData> baseStack = new ArrayList<>();
+
+        final PipelineData base = new PipelineData();
+        base.addElement(ELEM_TYPE, "test1");
+        base.addElement(ELEM_TYPE, "test2");
+        base.addLink("test1", "test2");
+        baseStack.add(base);
+
+        final PipelineData override = new PipelineData();
+        override.addElement(ELEM_TYPE, "test3");
+        override.addLink("test2", "test3");
+
+        test(baseStack, override, 1, 0, 0, 0, 0, 0, 1, 0);
+    }
+
+    @Test
+    public void testInheritanceRemove() throws Exception {
+        final List<PipelineData> baseStack = new ArrayList<>();
+
+        final PipelineData base = new PipelineData();
+        base.addElement(ELEM_TYPE, "test1");
+        base.addElement(ELEM_TYPE, "test2");
+        base.addLink("test1", "test2");
+        baseStack.add(base);
+
+        final PipelineData override = new PipelineData();
+        override.addElement(ELEM_TYPE, "test3");
+        override.removeElement(ELEM_TYPE, "test2");
+        override.addLink("test2", "test3");
+
+        test(baseStack, override, 1, 1, 0, 0, 0, 0, 0, 1);
+    }
+
+    @Test
+    public void testInheritancePropertiesSame() throws Exception {
+        final List<PipelineData> baseStack = new ArrayList<>();
+
+        final PipelineData base = new PipelineData();
+        base.addElement(ELEM_TYPE, "test1");
+        base.addElement(ELEM_TYPE, "test2");
+        base.addProperty("test1", PROP_TYPE1, false);
+        base.addLink("test1", "test2");
+        baseStack.add(base);
+
+        final PipelineData override = new PipelineData();
+        override.addProperty("test1", PROP_TYPE1, false);
+
+        test(baseStack, override, 0, 0, 1, 0, 0, 0, 0, 0);
+    }
+
+    @Test
+    public void testInheritancePropertiesDiff() throws Exception {
+        final List<PipelineData> baseStack = new ArrayList<>();
+
+        final PipelineData base = new PipelineData();
+        base.addElement(ELEM_TYPE, "test1");
+        base.addElement(ELEM_TYPE, "test2");
+        base.addProperty("test1", PROP_TYPE1, false);
+        base.addLink("test1", "test2");
+        baseStack.add(base);
+
+        final PipelineData override = new PipelineData();
+        override.addProperty("test1", PROP_TYPE1, true);
+
+        test(baseStack, override, 0, 0, 1, 0, 0, 0, 0, 0);
+    }
+
+    @Test
+    public void testInheritancePropertiesRemove() throws Exception {
+        final List<PipelineData> baseStack = new ArrayList<>();
+
+        final PipelineData base = new PipelineData();
+        base.addElement(ELEM_TYPE, "test1");
+        base.addElement(ELEM_TYPE, "test2");
+        base.addProperty("test1", PROP_TYPE1, false);
+        base.addLink("test1", "test2");
+        baseStack.add(base);
+
+        final PipelineData override = new PipelineData();
+        override.removeProperty("test1", PROP_TYPE1);
+
+        test(baseStack, override, 0, 0, 0, 1, 0, 0, 0, 0);
+    }
+
+    @Test
+    public void testInheritanceRefsSame() throws Exception {
+        final PipelineEntity pipelineEntity = new PipelineEntity();
+        pipelineEntity.setId(1);
+        final Feed feed = new Feed();
+        feed.setId(1);
+
+        final List<PipelineData> baseStack = new ArrayList<>();
+
+        final PipelineData base = new PipelineData();
+        base.addElement(ELEM_TYPE, "test1");
+        base.addElement(ELEM_TYPE, "test2");
+        base.addPipelineReference(
+                PipelineDataUtil.createReference("test1", "testProp", pipelineEntity, feed, StreamType.EVENTS.getName()));
+        base.addLink("test1", "test2");
+        baseStack.add(base);
+
+        final PipelineData override = new PipelineData();
+        override.addPipelineReference(
+                PipelineDataUtil.createReference("test1", "testProp", pipelineEntity, feed, StreamType.EVENTS.getName()));
+
+        test(baseStack, override, 0, 0, 0, 0, 1, 0, 0, 0);
+    }
+
+    @Test
+    public void testInheritanceRefsDiff() throws Exception {
+        final PipelineEntity pipelineEntity = new PipelineEntity();
+        pipelineEntity.setId(1);
+        final Feed feed = new Feed();
+        feed.setId(1);
+
+        final List<PipelineData> baseStack = new ArrayList<>();
+
+        final PipelineData base = new PipelineData();
+        base.addElement(ELEM_TYPE, "test1");
+        base.addElement(ELEM_TYPE, "test2");
+        base.addPipelineReference(
+                PipelineDataUtil.createReference("test1", "testProp", pipelineEntity, feed, StreamType.EVENTS.getName()));
+        base.addLink("test1", "test2");
+        baseStack.add(base);
+
+        final PipelineData override = new PipelineData();
+        override.addPipelineReference(
+                PipelineDataUtil.createReference("test1", "testProp", pipelineEntity, feed, StreamType.REFERENCE.getName()));
+
+        test(baseStack, override, 0, 0, 0, 0, 1, 0, 0, 0);
+    }
+
+    @Test
+    public void testInheritanceRefsRemove() throws Exception {
+        final PipelineEntity pipelineEntity = new PipelineEntity();
+        pipelineEntity.setId(1);
+        final Feed feed = new Feed();
+        feed.setId(1);
+
+        final List<PipelineData> baseStack = new ArrayList<>();
+
+        final PipelineData base = new PipelineData();
+        base.addElement(ELEM_TYPE, "test1");
+        base.addElement(ELEM_TYPE, "test2");
+        base.addPipelineReference(
+                PipelineDataUtil.createReference("test1", "testProp", pipelineEntity, feed, StreamType.EVENTS.getName()));
+        base.addLink("test1", "test2");
+        baseStack.add(base);
+
+        final PipelineData override = new PipelineData();
+        override.removePipelineReference(
+                PipelineDataUtil.createReference("test1", "testProp", pipelineEntity, feed, StreamType.EVENTS.getName()));
+
+        test(baseStack, override, 0, 0, 0, 0, 0, 1, 0, 0);
+    }
+
+    private void test(final List<PipelineData> baseStack, final PipelineData pipelineData, final int addedElements,
+            final int removedElements, final int addedProperties, final int removedProperties,
+            final int addedPipelineReferences, final int removedPipelineReferences, final int addedLinks,
+            final int removedLinks) throws PipelineModelException {
+        final PipelineModel pipelineModel = new PipelineModel();
+        pipelineModel.setBaseStack(baseStack);
+        pipelineModel.setPipelineData(pipelineData);
+        pipelineModel.build();
+        final PipelineData diff = pipelineModel.diff();
+
+        Assert.assertEquals(addedElements, diff.getAddedElements().size());
+        Assert.assertEquals(removedElements, diff.getRemovedElements().size());
+        Assert.assertEquals(addedProperties, diff.getAddedProperties().size());
+        Assert.assertEquals(removedProperties, diff.getRemovedProperties().size());
+        Assert.assertEquals(addedPipelineReferences, diff.getAddedPipelineReferences().size());
+        Assert.assertEquals(removedPipelineReferences, diff.getRemovedPipelineReferences().size());
+        Assert.assertEquals(addedLinks, diff.getAddedLinks().size());
+        Assert.assertEquals(removedLinks, diff.getRemovedLinks().size());
+    }
+}

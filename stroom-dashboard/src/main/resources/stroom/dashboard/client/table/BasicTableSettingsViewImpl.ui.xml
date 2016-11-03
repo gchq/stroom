@@ -1,0 +1,51 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client"
+  xmlns:v="urn:import:stroom.widget.tickbox.client.view"
+  xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
+
+  <g:Grid styleName="stroom-control-grid" width="100%">
+    <g:row>
+      <g:cell>Id:</g:cell>
+      <g:customCell>
+        <g:Label ui:field="id" addStyleNames="stroom-control-label" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Name:</g:cell>
+      <g:customCell>
+        <g:TextBox ui:field="name" width="100%" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Query Id:</g:cell>
+      <g:customCell>
+        <i:StringListBox ui:field="queryId" width="100%" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Extract Values:</g:cell>
+      <g:customCell>
+        <v:TickBox ui:field="extractValues" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Extraction Pipeline:</g:cell>
+      <g:customCell>
+        <g:SimplePanel ui:field="pipeline" width="100%" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Maximum Results:</g:cell>
+      <g:customCell>
+        <g:TextBox ui:field="maxResults" width="100%" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Show Group Detail:</g:cell>
+      <g:customCell>
+        <v:TickBox ui:field="showDetail" />
+      </g:customCell>
+    </g:row>
+  </g:Grid>
+</ui:UiBinder> 

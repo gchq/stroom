@@ -1,0 +1,20 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui">
+  <g:Grid ui:field="grid" styleName="stroom-control-grid" width="100%">
+    <g:row>
+      <g:cell>Name:</g:cell>
+      <g:customCell>
+        <g:Label ui:field="name" addStyleNames="stroom-control-label"
+          width="100%" />
+      </g:customCell>
+    </g:row>
+    <g:row>
+      <g:cell>Cluster URL:</g:cell>
+      <g:customCell>
+        <g:TextBox ui:field="clusterUrl" width="100%" />
+      </g:customCell>
+    </g:row>
+  </g:Grid>
+</ui:UiBinder>
+ 

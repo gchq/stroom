@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SomeData>
+  <SomeEvent>
+    <SomeTime>01/01/2009:12:00:01</SomeTime>
+    <SomeAction>OPEN</SomeAction>
+    <SomeUser>userone</SomeUser>
+    <SomeFile>D:\TranslationKit\example\VerySimple\OpenFileEvents.txt</SomeFile>
+  </SomeEvent>
+</SomeData>
+
+

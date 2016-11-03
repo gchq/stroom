@@ -1,0 +1,60 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
+  <ui:style>
+    .layout {
+    	width: 500px;
+    	height: 288px;
+    	margin: -5px -5px 0px;
+    	border-bottom: 1px solid #c5cde2;
+    }
+    
+    .stroom-body {
+	    position: relative;
+    	width: 500px;
+    	height: 30px;
+    }
+
+    .stroom-background {
+	    position: absolute;
+    	width: 500px;
+    	height: 30px;
+    }
+    
+    .logo {
+	    position: absolute;
+    	width: 500px;
+    	height: 30px;
+    	background: url(images/about.png);
+    }
+    
+    .body {
+    	padding: 5px;
+    	background-color: white;
+    }
+    
+    .buildInfo {
+    	position: absolute;
+    	right: 5px;
+    	bottom: 5px;
+    }
+  </ui:style>
+  <g:DockLayoutPanel unit="PX" styleName="{style.layout}">
+    <g:north size="30">
+      <g:FlowPanel styleName="stroom-body {style.stroom-body}">
+        <g:Label styleName="stroom-background {style.stroom-background}" />
+        <g:Label styleName="{style.logo}" />
+      </g:FlowPanel>
+    </g:north>
+    <g:center>
+      <g:FlowPanel styleName="{style.body}">
+        <g:SimplePanel ui:field="html" />
+        <g:FlowPanel styleName="{style.buildInfo}">
+          <g:Label ui:field="buildVersion" />
+          <g:Label ui:field="buildDate" />
+          <g:Label ui:field="upDate" />
+          <g:Label ui:field="nodeName" />
+        </g:FlowPanel>
+      </g:FlowPanel>
+    </g:center>
+  </g:DockLayoutPanel>
+</ui:UiBinder>

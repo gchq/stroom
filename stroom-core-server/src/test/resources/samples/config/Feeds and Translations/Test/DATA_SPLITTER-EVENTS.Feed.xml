@@ -1,0 +1,12 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<feed>
+   <classification/>
+   <contextEncoding>UTF-8</contextEncoding>
+   <description>DATA_SPLITTER-EVENTS</description>
+   <encoding>UTF-8</encoding>
+   <name>DATA_SPLITTER-EVENTS</name>
+   <reference>false</reference>
+   <status>RECEIVE</status>
+   <streamType>Raw Events</streamType>
+   <uuid>e3cbbc0e-db85-4a5a-9ca9-7685235e3b53</uuid>
+</feed>

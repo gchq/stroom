@@ -1,0 +1,70 @@
+{
+  "data" : {
+    "structure" : {
+      "nest" : {
+        "key" : {
+          "id" : "${series}",
+          "sort" : {
+            "enabled" : "true",
+            "direction" : "${sortSeries}"
+          }
+        },
+        "limit" : {
+          "enabled" : "true",
+          "size" : "${maxSeries}"
+        },
+        "values" : {
+          "fields" : [ {
+            "id" : "${x}",
+            "sort" : {
+              "enabled" : "true",
+              "direction" : "ascending"
+            }
+          }, {
+            "id" : "${y}"
+          } ],
+          "limit" : {
+            "enabled" : "true",
+            "size" : "5"
+          }
+        }
+      }
+    }
+  },
+  "tabs" : [ {
+    "name" : "Data",
+    "controls" : [ {
+      "id" : "x",
+      "type" : "field",
+      "label" : "X Axis"
+    }, {
+      "id" : "y",
+      "type" : "field",
+      "label" : "Y Axis"
+    }, {
+      "id" : "series",
+      "type" : "field",
+      "label" : "Series"
+    } ]
+  }, {
+    "name" : "Line",
+    "controls" : [ {
+      "id" : "interpolationMode",
+      "type" : "selection",
+      "label" : "Interpolation Mode",
+      "values" : [ "linear", "linear-closed", "step", "step-before", "step-after", "basis", "basis-open", "basis-closed", "bundle", "cardinal", "cardinal-open", "cardinal-closed", "monotone" ],
+      "defaultValue" : "basis-open"
+    }, {
+      "id" : "sortSeries",
+      "type" : "selection",
+      "label" : "Sort Series",
+      "values" : [ "", "ascending", "descending" ],
+      "defaultValue" : "ascending"
+    }, {
+      "id" : "maxSeries",
+      "type" : "number",
+      "label" : "Max Series",
+      "defaultValue" : "10"
+    } ]
+  } ]
+}

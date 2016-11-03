@@ -1,0 +1,11 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent"><ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui">
+  
+  <ui:style src="ContextMenu.css" type="stroom.widget.contextmenu.client.view.ContextMenuItem.Style" />
+    
+  <g:FlowPanel styleName="{style.layout}">
+    <g:Label ui:field="text" styleName="{style.text}" wordWrap="false" />
+  </g:FlowPanel>
+
+</ui:UiBinder>

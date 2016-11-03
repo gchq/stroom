@@ -1,0 +1,17 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+		.layout {
+			width: 400px;
+			height: 200px;
+			background-color: white;
+			border: 1px solid #c5cde2;
+		}
+	</ui:style>
+	<g:SimplePanel styleName="{style.layout}">
+		<g:MaxScrollPanel>
+			<g:FlowPanel ui:field="taskList" />
+		</g:MaxScrollPanel>
+	</g:SimplePanel>
+</ui:UiBinder> 

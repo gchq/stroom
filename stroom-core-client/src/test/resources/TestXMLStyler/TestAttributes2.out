@@ -1,0 +1,5 @@
+<s>&lt;</s><e>lvl1</e><s>&gt;</s><c>
+  </c><s>&lt;</s><e>lvl2</e><s>&gt;</s><c>
+    </c><s>&lt;</s><e>lvl3</e><an> att</an><s>=</s><av>"5 3"</av><s> /&gt;</s><c>
+  </c><s>&lt;/</s><e>lvl2</e><s>&gt;</s><c>
+</c><s>&lt;/</s><e>lvl1</e><s>&gt;</s>

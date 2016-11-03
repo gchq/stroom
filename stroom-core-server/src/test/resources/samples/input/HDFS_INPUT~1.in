@@ -1,0 +1,79 @@
+<root>
+
+
+<section class="color-group">
+<ul>
+<li class="color main-color" style="background-color: #E91E63;">
+<span class="name light-strong">Pink</span>
+<span class="shade light-strong">500</span>
+<span class="hex light-strong">#e91e63</span>
+</li>
+<li class="color dark" style="background-color: #fce4ec;"><span class="shade expanded">50</span><span   class="hex">#fce4ec</span></li>
+<li class="color dark" style="background-color: #f8bbd0;"><span class="shade">100</span><span class="hex">#f8bbd0</span></li>
+<li class="color dark" style="background-color: #f48fb1;"><span class="shade expanded">200</span><span class="hex">#f48fb1</span></li>
+<li class="color light-strong" style="background-color: #f06292;"><span class="shade">300</span><span class="hex">#f06292</span></li>
+<li class="color " style="background-color: #ec407a;"><span class="shade expanded">400</span><span class="hex">#ec407a</span></li>
+<li class="color" style="background-color: #e91e63;"><span class="shade">500</span><span class="hex">#e91e63</span></li>
+<li class="color" style="background-color: #d81b60;"><span class="shade expanded">600</span><span class="hex">#d81b60</span></li>
+<li class="color" style="background-color: #c2185b;"><span class="shade">700</span><span class="hex">#c2185b</span></li>
+<li class="color" style="background-color: #ad1457;"><span class="shade">800</span><span class="hex">#ad1457</span></li>
+<li class="color" style="background-color: #880e4f;"><span class="shade">900</span><span class="hex">#880e4f</span></li>
+<li class="color dark divide" style="background-color: #ff80ab;"><span class="shade accent">A100</span><span class="hex">#ff80ab</span></li>
+<li class="color light-strong" style="background-color: #ff4081;"><span class="shade accent expanded">A200</span><span class="hex">#ff4081</span></li>
+<li class="color" style="background-color: #f50057;"><span class="shade accent expanded">A400</span><span class="hex">#f50057</span></li>
+<li class="color" style="background-color: #c51162;"><span class="shade accent">A700</span><span class="hex">#c51162</span></li>
+</ul>
+</section>
+
+
+<section class="color-group">
+<ul>
+<li class="color main-color" style="background-color: #9c27b0;">
+<span class="name">Purple</span>
+<span class="shade">500</span>
+<span class="hex">#9c27b0</span>
+</li>
+<li class="color dark" style="background-color: #f3e5f5;"><span class="shade expanded">50</span><span   class="hex">#f3e5f5</span></li>
+<li class="color dark" style="background-color: #e1bee7;"><span class="shade">100</span><span class="hex">#e1bee7</span></li>
+<li class="color dark" style="background-color: #ce93d8;"><span class="shade expanded">200</span><span class="hex">#ce93d8</span></li>
+<li class="color light-strong" style="background-color: #ba68c8;"><span class="shade">300</span><span class="hex">#ba68c8</span></li>
+<li class="color light-strong" style="background-color: #ab47bc;"><span class="shade expanded">400</span><span class="hex">#ab47bc</span></li>
+<li class="color" style="background-color: #9c27b0;"><span class="shade">500</span><span class="hex">#9c27b0</span></li>
+<li class="color" style="background-color: #8e24aa;"><span class="shade expanded">600</span><span class="hex">#8e24aa</span></li>
+<li class="color" style="background-color: #7b1fa2;"><span class="shade">700</span><span class="hex">#7b1fa2</span></li>
+<li class="color" style="background-color: #6a1b9a;"><span class="shade expanded">800</span><span class="hex">#6a1b9a</span></li>
+<li class="color" style="background-color: #4a148c;"><span class="shade expanded">900</span><span class="hex">#4a148c</span></li>
+<li class="color dark divide" style="background-color: #ea80fc;"><span class="shade accent">A100</span><span class="hex">#ea80fc</span></li>
+<li class="color light-strong" style="background-color: #e040fb;"><span class="shade accent expanded">A200</span><span class="hex">#e040fb</span></li>
+<li class="color" style="background-color: #d500f9;"><span class="shade accent expanded">A400</span><span class="hex">#d500f9</span></li>
+<li class="color" style="background-color: #aa00ff;"><span class="shade accent">A700</span><span class="hex">#aa00ff</span></li>
+</ul>
+</section>
+
+
+<section class="color-group">
+<ul>
+<li class="color main-color" style="background-color: #673ab7;">
+<span class="name">Deep Purple</span>
+<span class="shade">500</span>
+<span class="hex">#673ab7</span>
+</li>
+<li class="color dark" style="background-color: #ede7f6;"><span class="shade expanded">50</span><span   class="hex">#ede7f6</span></li>
+<li class="color dark" style="background-color: #d1c4e9;"><span class="shade">100</span><span class="hex">#d1c4e9</span></li>
+<li class="color dark" style="background-color: #b39ddb;"><span class="shade expanded">200</span><span class="hex">#b39ddb</span></li>
+<li class="color" style="background-color: #9575cd;"><span class="shade">300</span><span class="hex">#9575cd</span></li>
+<li class="color" style="background-color: #7e57c2;"><span class="shade expanded">400</span><span class="hex">#7e57c2</span></li>
+<li class="color" style="background-color: #673ab7;"><span class="shade">500</span><span class="hex">#673ab7</span></li>
+<li class="color" style="background-color: #5e35b1;"><span class="shade expanded">600</span><span class="hex">#5e35b1</span></li>
+<li class="color" style="background-color: #512da8;"><span class="shade">700</span><span class="hex">#512da8</span></li>
+<li class="color" style="background-color: #4527a0;"><span class="shade expanded">800</span><span class="hex">#4527a0</span></li>
+<li class="color" style="background-color: #311b92;"><span class="shade expanded">900</span><span class="hex">#311b92</span></li>
+<li class="color dark divide" style="background-color: #b388ff;"><span class="shade accent">A100</span><span class="hex">#b388ff</span></li>
+<li class="color light-strong" style="background-color: #7c4dff;"><span class="shade accent expanded">A200</span><span class="hex">#7c4dff</span></li>
+<li class="color" style="background-color: #651fff;"><span class="shade accent expanded">A400</span><span class="hex">#651fff</span></li>
+<li class="color" style="background-color: #6200ea;"><span class="shade accent">A700</span><span class="hex">#6200ea</span></li>
+</ul>
+</section>
+
+
+</root>

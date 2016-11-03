@@ -1,0 +1,43 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:v="urn:import:stroom.widget.button.client">
+  <ui:style>
+    .outer {
+    border: solid 1px #c5cde2;
+    width: 100%;
+    height: 100%;
+    }
+  </ui:style>
+  <g:DockLayoutPanel unit="PX" width="100%" height="100%">
+    <g:north size="50">
+      <g:Grid styleName="stroom-control-grid" width="100%">
+        <g:row>
+          <g:cell>Jump to where message severity >= </g:cell>
+          <g:customCell>
+            <g:ListBox ui:field="skipToErrors" />
+          </g:customCell>
+        </g:row>
+        <g:row>
+          <g:cell>Jump to where output is:</g:cell>
+          <g:customCell>
+            <g:ListBox ui:field="skipToOutput" />
+          </g:customCell>
+        </g:row>
+      </g:Grid>
+    </g:north>
+    <g:center>
+      <g:DockLayoutPanel unit="PX" width="100%" height="100%">
+        <g:west size="20">
+          <g:FlowPanel>
+            <v:GlyphButton ui:field="addXPath" />
+            <v:GlyphButton ui:field="editXPath" />
+            <v:GlyphButton ui:field="removeXPath" />
+          </g:FlowPanel>
+        </g:west>
+        <g:center>
+          <g:SimplePanel ui:field="xPathList" addStyleNames="{style.outer}" />
+        </g:center>
+      </g:DockLayoutPanel>
+    </g:center>
+  </g:DockLayoutPanel>
+</ui:UiBinder> 

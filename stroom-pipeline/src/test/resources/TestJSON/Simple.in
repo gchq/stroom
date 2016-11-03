@@ -1,0 +1,51 @@
+{
+   "data" :
+   {
+      "structure" :
+      {
+         "values" :
+         {
+            "fields" : ["${names}", "${values}"],
+            "limit" : "${maxSeries}"
+         }
+      }
+   },
+
+   "tabs" :
+   [
+      {
+         "name" : "Data",
+         "controls" :
+         [
+            {
+               "id" : "names",
+               "type" :  "field",
+               "label" : "Names"
+            },
+            {
+               "id" : "values",
+               "type" :  "field",
+               "label" : "Values"
+            }
+         ]
+      },
+      {
+         "name" : "Doughnut",
+         "controls" :
+         [
+            {
+               "id" : "maxSeries",
+               "type" :  "number",
+               "label" : "Max Series",
+               "defaultValue" : "10"
+            },
+            {
+               "id" : "sort",
+               "type" :  "boolean",
+               "label" : "Sort By Value",
+               "defaultValue" : "true"
+            }
+         ]
+      }
+   ]
+}
