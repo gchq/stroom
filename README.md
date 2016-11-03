@@ -18,7 +18,6 @@ Stroom spans several repositories:
 - [`stroom-docs`](https://github.com/gchq/stroom-docs)
 - [`stroom-visualisations-dev`](https://github.com/gchq/stroom-visualisations-dev)
 - [`stroom-content`           ](https://github.com/gchq/stroom-content)
-- [`stroom-releases`          ](https://github.com/gchq/stroom-releases)
 - [`stroom-clients`           ](https://github.com/gchq/stroom-clients)
 - [`event-logging`            ](https://github.com/gchq/event-logging)
 - [`event-logging-schema`     ](https://github.com/gchq/event-logging-schema)
