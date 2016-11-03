@@ -8,6 +8,7 @@ Welcome to the repository for the main Stroom application. The application spans
 - [The install guide](http://github.com/gchq/stroom-docs/tree/master/install-guide)
 - [The user guide](http://github.com/gchq/stroom-docs/tree/master/user-guide)
 
+If you'd like to make a contribution then the details for doing all of that are in [CONTRIBUTING.md](https://github.com/gchq/stroom/blob/master/CONTRIBUTING.md).
 
 Stroom spans several repositories:
 
