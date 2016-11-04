@@ -42,11 +42,7 @@ public class Replace extends AbstractFunction implements Serializable {
         @Override
         public Object eval() {
             final Object val = childGenerator.eval();
-            if (val != null) {
-                return pattern.matcher(TypeConverter.getString(val)).replaceAll(replacement);
-            }
-
-            return null;
+            return pattern.matcher(TypeConverter.getString(val)).replaceAll(replacement);
         }
     }
 
@@ -94,6 +90,9 @@ public class Replace extends AbstractFunction implements Serializable {
             throw new ParseException("String expected as second argument of '" + name + "' function", 0);
         }
         final String regex = params[1].toString();
+        if (regex.length() == 0) {
+            throw new ParseException("An empty regex has been defined for second argument of '" + name + "' function", 0);
+        }
         if (!(params[2] instanceof String)) {
             throw new ParseException("String expected as third argument of '" + name + "' function", 0);
         }
