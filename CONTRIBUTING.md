@@ -6,7 +6,7 @@ We love pull requests and we want to make it as easy as possible to contribute c
 * Make sure you have a [GitHub account](https://github.com/).
 * Maybe create a [GitHub issue](https://github.com/gchq/stroom/issues): is this a comment or documentation change? Does an issue already exist? If you need an issue then describe it in as much detail as you can, e.g. step-by-step to reproduce.
 * Fork the repository on GitHub.
-* Clone the repo: `git clone http://github.com/gchq/stroom.git`
+* Clone the repo: `git clone https://github.com/gchq/stroom.git`
  * Create a branch for your change, probably from the master branch. Please don't work on master. Try this: `git checkout -b fix/master/my_contribution master`
 
 ## Making changes
