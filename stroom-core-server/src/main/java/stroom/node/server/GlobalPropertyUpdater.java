@@ -64,7 +64,7 @@ public class GlobalPropertyUpdater {
                 existing.setValue(prop.getValue());
 
                 if (prop.getValue() != null) {
-                    StroomProperties.setProperty(prop.getName(), prop.getValue(), "database");
+                    StroomProperties.setProperty(prop.getName(), prop.getValue(), StroomProperties.Source.DB);
                 }
             }
         });

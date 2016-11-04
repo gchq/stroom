@@ -83,7 +83,7 @@ public final class FileUtil {
 
             // Redirect the temp dir for dev.
 
-            StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, path, "dev");
+            StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, path, StroomProperties.Source.USER_CONF);
             // Also set the temp dir as a system property as EclipseDevMode
             // starts a new JVM and will forget this property otherwise.
             System.setProperty(StroomProperties.STROOM_TEMP, path);

@@ -48,7 +48,7 @@ public class TestHeadless {
 //                    "stroom.entity.server.util.StroomConnectionTesterOkOnException", "test");
 
             newTempDir = FileUtil.getTempDir().getCanonicalPath() + File.separator + "headless";
-            StroomProperties.setOverrideProperty("stroom.temp", newTempDir, "test");
+            StroomProperties.setOverrideProperty("stroom.temp", newTempDir, StroomProperties.Source.TEST);
 
             // Make sure the new temp directory is empty.
             final File tmpDir = new File(newTempDir);

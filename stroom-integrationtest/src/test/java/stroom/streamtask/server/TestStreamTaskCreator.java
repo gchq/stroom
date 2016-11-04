@@ -117,8 +117,8 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         }
 
         final int initialQueueSize = StroomProperties.getIntProperty(StreamTaskCreatorImpl.STREAM_TASKS_QUEUE_SIZE_PROPERTY, 1000);
-        StroomProperties.setIntProperty(StreamTaskCreatorImpl.STREAM_TASKS_QUEUE_SIZE_PROPERTY, 5000, "test");
-        StroomProperties.setBooleanProperty(StreamTaskCreatorImpl.STREAM_TASKS_FILL_TASK_QUEUE_PROPERTY, false, "test");
+        StroomProperties.setIntProperty(StreamTaskCreatorImpl.STREAM_TASKS_QUEUE_SIZE_PROPERTY, 5000, StroomProperties.Source.TEST);
+        StroomProperties.setBooleanProperty(StreamTaskCreatorImpl.STREAM_TASKS_FILL_TASK_QUEUE_PROPERTY, false, StroomProperties.Source.TEST);
 
         streamTaskCreator.createTasks(new TaskMonitorImpl());
 
@@ -137,8 +137,8 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         tasks = streamTaskCreator.assignStreamTasks(node, 5000);
         Assert.assertEquals(1000, tasks.size());
 
-        StroomProperties.setBooleanProperty(StreamTaskCreatorImpl.STREAM_TASKS_FILL_TASK_QUEUE_PROPERTY, true, "test");
-        StroomProperties.setIntProperty(StreamTaskCreatorImpl.STREAM_TASKS_QUEUE_SIZE_PROPERTY, initialQueueSize, "test");
+        StroomProperties.setBooleanProperty(StreamTaskCreatorImpl.STREAM_TASKS_FILL_TASK_QUEUE_PROPERTY, true, StroomProperties.Source.TEST);
+        StroomProperties.setIntProperty(StreamTaskCreatorImpl.STREAM_TASKS_QUEUE_SIZE_PROPERTY, initialQueueSize, StroomProperties.Source.TEST);
     }
 
     @Test

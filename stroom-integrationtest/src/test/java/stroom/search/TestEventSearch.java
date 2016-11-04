@@ -105,8 +105,8 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
     private void test(final ExpressionOperator expressionIn, final int expectResultCount, final String[] compoentIds,
             final boolean extractValues) {
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
-        StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", "test");
-        StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", "test");
+        StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
+        StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 
         final Index index = indexService.find(new FindIndexCriteria()).getFirst();
         Assert.assertNotNull("Index is null", index);

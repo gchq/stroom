@@ -97,7 +97,7 @@ public class Headless extends AbstractCommandLineTool {
         final File tempDir = new File(tmp);
 
         // Redirect the temp dir for headless.
-        StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, tempDir.getCanonicalPath(), "headless");
+        StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, tempDir.getCanonicalPath(), StroomProperties.Source.USER_CONF);
 
         FileUtil.forgetTempDir();
     }

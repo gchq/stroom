@@ -471,8 +471,8 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
     private void testInteractive(final ExpressionOperator expressionIn, final int expectResultCount,
             final String[] componentIds, final boolean extractValues) {
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
-        StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", "test");
-        StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", "test");
+        StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
+        StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 
         final Index index = indexService.find(new FindIndexCriteria()).getFirst();
         Assert.assertNotNull("Index is null", index);
@@ -600,8 +600,8 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
 
     private void testEvents(final ExpressionOperator expressionIn, final int expectResultCount) {
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
-        StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", "test");
-        StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", "test");
+        StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
+        StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 
         final Index index = indexService.find(new FindIndexCriteria()).getFirst();
         Assert.assertNotNull("Index is null", index);

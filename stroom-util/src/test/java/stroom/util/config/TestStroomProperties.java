@@ -26,10 +26,10 @@ public class TestStroomProperties {
         final String oldValue = key + "-value";
         final String newValue = key + "-newValue";
 
-        StroomProperties.setProperty(key, oldValue, "test");
+        StroomProperties.setProperty(key, oldValue, StroomProperties.Source.TEST);
         Assert.assertEquals(oldValue, StroomProperties.getProperty(key));
 
-        StroomProperties.setOverrideProperty(key, newValue, "test");
+        StroomProperties.setOverrideProperty(key, newValue, StroomProperties.Source.TEST);
 
         Assert.assertEquals(newValue, StroomProperties.getProperty(key));
 

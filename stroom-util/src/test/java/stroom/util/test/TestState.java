@@ -36,7 +36,7 @@ public class TestState {
                     testDir = StroomTestUtil.createPerThreadTestDir(rootTestDir);
 
                     // Redirect the temp dir for the tests.
-                    StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, testDir.getCanonicalPath(), "test");
+                    StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, testDir.getCanonicalPath(), StroomProperties.Source.TEST);
 
                     FileUtil.forgetTempDir();
 

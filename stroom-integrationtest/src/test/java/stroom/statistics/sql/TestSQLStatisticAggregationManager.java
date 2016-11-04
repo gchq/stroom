@@ -552,7 +552,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
 
             final long futureDateMs = startDateMs + TimeUnit.DAYS.toMillis(2);
 
-            StroomProperties.setProperty(SQLStatisticConstants.PROP_KEY_STATS_MAX_PROCESSING_AGE, "30d", "override");
+            StroomProperties.setProperty(SQLStatisticConstants.PROP_KEY_STATS_MAX_PROCESSING_AGE, "30d", StroomProperties.Source.TEST);
 
             runAggregation(futureDateMs);
 

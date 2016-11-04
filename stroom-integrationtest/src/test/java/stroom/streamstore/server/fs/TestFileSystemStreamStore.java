@@ -97,13 +97,13 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         feed1 = setupFeed("FEED1");
         feed2 = setupFeed("FEED2");
         initialReplicationCount = StroomProperties.getIntProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, 1);
-        StroomProperties.setIntProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, 2, "test");
+        StroomProperties.setIntProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, 2, StroomProperties.Source.TEST);
     }
 
     @Override
     protected void onAfter() {
         StroomProperties.setIntProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, initialReplicationCount,
-                "test");
+                StroomProperties.Source.TEST);
     }
 
     /**
