@@ -16,13 +16,11 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.gwt.user.client.ui.Image;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TabConfig;
@@ -38,18 +36,22 @@ import stroom.widget.tab.client.presenter.Icon;
 
 public abstract class AbstractComponentPresenter<V extends View> extends MyPresenterWidget<V>
         implements Component, HasDirtyHandlers {
+    private final Provider<?> settingsPresenterProvider;
     private TabLayout tabLayout;
     private Components components;
     private ComponentConfig componentData;
     private TabConfig tabConfig;
-
-    private final Provider<?> settingsPresenterProvider;
     private SettingsPresenter settingsPresenter;
 
     public AbstractComponentPresenter(final EventBus eventBus, final V view,
             final Provider<?> settingsPresenterProvider) {
         super(eventBus, view);
         this.settingsPresenterProvider = settingsPresenterProvider;
+    }
+
+    @Override
+    public Components getComponents() {
+        return components;
     }
 
     /**
@@ -60,11 +62,6 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     @Override
     public void setComponents(final Components components) {
         this.components = components;
-    }
-
-    @Override
-    public Components getComponents() {
-        return components;
     }
 
     @Override
@@ -151,13 +148,13 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     }
 
     @Override
-    public void setTabConfig(final TabConfig tabConfig) {
-        this.tabConfig = tabConfig;
+    public TabConfig getTabConfig() {
+        return tabConfig;
     }
 
     @Override
-    public TabConfig getTabConfig() {
-        return tabConfig;
+    public void setTabConfig(final TabConfig tabConfig) {
+        this.tabConfig = tabConfig;
     }
 
     /***************

@@ -16,18 +16,16 @@
 
 package stroom.search;
 
+import org.joda.time.DateTimeZone;
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonIndexingTest;
 import stroom.dashboard.server.ActiveQuery;
 import stroom.dashboard.server.QueryMarshaller;
 import stroom.dashboard.server.SearchDataSourceProviderRegistry;
 import stroom.dashboard.server.SearchResultCreator;
-import stroom.dashboard.shared.BasicQueryKey;
-import stroom.dashboard.shared.ParamUtil;
-import stroom.dashboard.shared.Query;
-import stroom.dashboard.shared.Row;
-import stroom.dashboard.shared.TableResult;
-import stroom.dashboard.shared.TableResultRequest;
+import stroom.dashboard.shared.*;
 import stroom.entity.shared.DocRef;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
@@ -35,27 +33,13 @@ import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
-import stroom.query.shared.ComponentResultRequest;
-import stroom.query.shared.ComponentSettings;
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.Field;
-import stroom.query.shared.Format;
-import stroom.query.shared.QueryData;
-import stroom.query.shared.Search;
-import stroom.query.shared.SearchRequest;
-import stroom.query.shared.SearchResult;
-import stroom.query.shared.TableSettings;
+import stroom.query.shared.*;
 import stroom.search.server.LuceneSearchDataSourceProvider;
 import stroom.task.server.TaskManager;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedObject;
 import stroom.util.thread.ThreadUtil;
-import org.joda.time.DateTimeZone;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -131,7 +115,7 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
         boolean complete = false;
         final Map<String, SharedObject> results = new HashMap<>();
 
-        final Search search = new Search(searchData.getDataSource(), expression, resultComponentMap);
+        final Search search = new Search(searchData.getDataSource(), expression, resultComponentMap, true);
         final SearchRequest searchRequest = new SearchRequest(search, componentResultRequests,
                 DateTimeZone.UTC.getID());
 

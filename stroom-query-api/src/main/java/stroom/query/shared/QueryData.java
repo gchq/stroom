@@ -19,14 +19,10 @@ package stroom.query.shared;
 import stroom.entity.shared.DocRef;
 import stroom.util.shared.SharedObject;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.*;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "query", propOrder = { "dataSource", "expression", "limits" })
+@XmlType(name = "query", propOrder = {"dataSource", "expression", "limits", "automate"})
 @XmlRootElement(name = "query")
 public class QueryData extends ComponentSettings implements SharedObject {
     private static final long serialVersionUID = -2530827581046882396L;
@@ -37,6 +33,8 @@ public class QueryData extends ComponentSettings implements SharedObject {
     private ExpressionOperator expression;
     @XmlElement(name = "limits")
     private Limits limits;
+    @XmlElement(name = "automate")
+    private Automate automate;
 
     public QueryData() {
         // Default constructor necessary for GWT serialisation.
@@ -64,5 +62,13 @@ public class QueryData extends ComponentSettings implements SharedObject {
 
     public void setLimits(final Limits limits) {
         this.limits = limits;
+    }
+
+    public Automate getAutomate() {
+        return automate;
+    }
+
+    public void setAutomate(final Automate automate) {
+        this.automate = automate;
     }
 }

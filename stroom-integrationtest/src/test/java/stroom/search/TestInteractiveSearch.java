@@ -16,18 +16,16 @@
 
 package stroom.search;
 
+import org.joda.time.DateTimeZone;
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonIndexingTest;
 import stroom.dashboard.server.ActiveQuery;
 import stroom.dashboard.server.QueryMarshaller;
 import stroom.dashboard.server.SearchDataSourceProviderRegistry;
 import stroom.dashboard.server.SearchResultCreator;
-import stroom.dashboard.shared.BasicQueryKey;
-import stroom.dashboard.shared.ParamUtil;
-import stroom.dashboard.shared.Query;
-import stroom.dashboard.shared.Row;
-import stroom.dashboard.shared.TableResult;
-import stroom.dashboard.shared.TableResultRequest;
+import stroom.dashboard.shared.*;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.shared.DocRef;
@@ -37,19 +35,8 @@ import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
-import stroom.query.shared.ComponentResultRequest;
-import stroom.query.shared.ComponentSettings;
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.*;
 import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.Field;
-import stroom.query.shared.Format;
-import stroom.query.shared.QueryData;
-import stroom.query.shared.Search;
-import stroom.query.shared.SearchRequest;
-import stroom.query.shared.SearchResult;
-import stroom.query.shared.TableSettings;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
@@ -61,9 +48,6 @@ import stroom.util.config.StroomProperties;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedObject;
 import stroom.util.thread.ThreadUtil;
-import org.joda.time.DateTimeZone;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -499,7 +483,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         boolean complete = false;
         final Map<String, SharedObject> results = new HashMap<String, SharedObject>();
 
-        final Search search = new Search(searchData.getDataSource(), expression, resultComponentMap);
+        final Search search = new Search(searchData.getDataSource(), expression, resultComponentMap, true);
         final SearchRequest searchRequest = new SearchRequest(search, componentResultRequests,
                 DateTimeZone.UTC.getID());
 
@@ -612,7 +596,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         final ExpressionOperator expression = searchData.getExpression();
 
         final CountDownLatch complete = new CountDownLatch(1);
-        final Search search = new Search(searchData.getDataSource(), expression, null);
+        final Search search = new Search(searchData.getDataSource(), expression, null, true);
 
         final EventSearchTask eventSearchTask = new EventSearchTask(null, "test", new FindStreamCriteria(), search,
                 new EventRef(1, 1), new EventRef(Long.MAX_VALUE, Long.MAX_VALUE), 1000, 1000, 1000, 100);

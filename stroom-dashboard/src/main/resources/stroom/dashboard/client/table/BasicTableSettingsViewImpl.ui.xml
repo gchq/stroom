@@ -1,8 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client"
-  xmlns:v="urn:import:stroom.widget.tickbox.client.view"
-  xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client"
+             xmlns:v="urn:import:stroom.widget.tickbox.client.view">
 
   <g:Grid styleName="stroom-control-grid" width="100%">
     <g:row>

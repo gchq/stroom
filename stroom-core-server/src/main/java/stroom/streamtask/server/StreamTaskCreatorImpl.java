@@ -16,10 +16,11 @@
 
 package stroom.streamtask.server;
 
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
 import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.node.server.StroomPropertyService;
 import stroom.node.server.NodeCache;
+import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.Node;
 import stroom.query.shared.Limits;
 import stroom.query.shared.QueryData;
@@ -40,15 +41,14 @@ import stroom.streamtask.shared.*;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomStartup;
 import stroom.util.task.TaskMonitor;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -728,7 +728,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             }
         }
 
-        final Search search = new Search(queryData.getDataSource(), queryData.getExpression(), null);
+        final Search search = new Search(queryData.getDataSource(), queryData.getExpression(), null, false);
 
         // Update the tracker status message.
         tracker.setStatus("Searching...");

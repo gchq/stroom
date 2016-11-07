@@ -19,15 +19,9 @@ package stroom.dashboard.client.main;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.QueryKeyImpl;
-import stroom.dashboard.shared.VersionedQueryKey;
+import stroom.dashboard.shared.UniqueQueryKey;
 import stroom.entity.shared.DocRef;
-import stroom.query.shared.ComponentResultRequest;
-import stroom.query.shared.ComponentSettings;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.QueryKey;
-import stroom.query.shared.Search;
-import stroom.query.shared.SearchRequest;
-import stroom.query.shared.SearchResult;
+import stroom.query.shared.*;
 import stroom.util.shared.SharedObject;
 
 import java.util.HashMap;
@@ -42,7 +36,7 @@ public class SearchModel {
     private final Map<String, ResultComponent> componentMap = new HashMap<>();
     private ExpressionOperator currentExpression;
     private SearchResult currentResult;
-    private VersionedQueryKey currentQueryKey;
+    private UniqueQueryKey currentQueryKey;
     private Search currentSearch;
     private Search activeSearch;
     private Mode mode = Mode.INACTIVE;
@@ -88,7 +82,7 @@ public class SearchModel {
      * Run a search with the provided expression, returning results for all
      * components.
      */
-    public void search(final ExpressionOperator expression) {
+    public void search(final ExpressionOperator expression, final boolean incremental) {
         // Toggle the request mode or start a new search.
         switch (mode) {
         case ACTIVE:
@@ -98,7 +92,7 @@ public class SearchModel {
             break;
         case INACTIVE:
             reset();
-            startNewSearch(expression);
+            startNewSearch(expression, incremental);
             break;
         case PAUSED:
             // Tell every component that it should want data.
@@ -114,7 +108,7 @@ public class SearchModel {
      * @param expression
      *            The expression to search with.
      */
-    private void startNewSearch(final ExpressionOperator expression) {
+    private void startNewSearch(final ExpressionOperator expression, final boolean incremental) {
         final Map<String, ComponentSettings> resultComponentMap = createResultComponentMap();
         if (resultComponentMap != null) {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
@@ -122,10 +116,10 @@ public class SearchModel {
                 // Set the new search parameters.
                 currentExpression = expression.copy();
 
-                currentQueryKey = new VersionedQueryKey(currentQueryKey.getDashboardId(),
+                currentQueryKey = new UniqueQueryKey(currentQueryKey.getDashboardId(),
                         currentQueryKey.getDashboardName(), currentQueryKey.getQueryId(),
-                        currentQueryKey.getVersion() + 1);
-                currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap);
+                        createDiscrimiator());
+                currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, incremental);
                 activeSearch = currentSearch;
 
                 // Let the query presenter know search is active.
@@ -157,7 +151,7 @@ public class SearchModel {
             if (resultComponentMap != null) {
                 final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
                 if (dataSourceRef != null) {
-                    currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap);
+                    currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, true);
                     activeSearch = currentSearch;
 
                     // Tell the refreshing component that it should want data.
@@ -289,8 +283,8 @@ public class SearchModel {
 
     public void setInitialQueryKey(final QueryKeyImpl initialQueryKey) {
         destroy();
-        currentQueryKey = new VersionedQueryKey(initialQueryKey.getDashboardId(), initialQueryKey.getDashboardName(),
-                initialQueryKey.getQueryId(), -1);
+        currentQueryKey = new UniqueQueryKey(initialQueryKey.getDashboardId(), initialQueryKey.getDashboardName(),
+                initialQueryKey.getQueryId(), createDiscrimiator());
     }
 
     public SearchResult getCurrentResult() {
@@ -303,6 +297,12 @@ public class SearchModel {
 
     public void removeComponent(final String componentId) {
         componentMap.remove(componentId);
+    }
+
+    private String createDiscrimiator() {
+        final String rid = RandomId.getId(4);
+        final String now = String.valueOf(System.currentTimeMillis());
+        return rid + ":" + now;
     }
 
     public enum Mode {

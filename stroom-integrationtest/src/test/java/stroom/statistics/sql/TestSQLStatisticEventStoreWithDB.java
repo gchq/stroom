@@ -16,34 +16,17 @@
 
 package stroom.statistics.sql;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.annotation.Resource;
-import javax.sql.DataSource;
-
-import stroom.entity.server.util.StroomDatabaseInfo;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
-
+import stroom.AbstractCoreIntegrationTest;
+import stroom.CommonTestControl;
+import stroom.entity.server.util.ConnectionUtil;
+import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.query.shared.Condition;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionTerm;
 import stroom.query.shared.Search;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestControl;
-import stroom.entity.server.util.ConnectionUtil;
-import stroom.statistics.common.RolledUpStatisticEvent;
-import stroom.statistics.common.StatisticDataPoint;
-import stroom.statistics.common.StatisticDataSet;
-import stroom.statistics.common.StatisticEvent;
-import stroom.statistics.common.StatisticTag;
+import stroom.statistics.common.*;
 import stroom.statistics.common.exception.StatisticsEventValidationException;
 import stroom.statistics.shared.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
@@ -52,7 +35,26 @@ import stroom.util.shared.Monitor;
 import stroom.util.shared.TerminateHandler;
 import stroom.util.task.TaskMonitor;
 
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTest {
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestSQLStatisticEventStoreWithDB.class);
+    private static final String STAT_NAME = "MyStat";
+    private static final String TAG1 = "Tag1";
+    private static final String TAG1_VAL = "Tag1Value1";
+    private static final String TAG2 = "Tag2";
+    private static final String TAG2_VAL = "Tag2Value2";
+    private static final String TAG2_OTHER_VALUE_1 = "Tag2OtherValue1";
+    private static final String TAG2_OTHER_VALUE_2 = "Tag2OtherValue2";
+    private static final String DATE_RANGE = "2000-01-01T00:00:00.000Z,3000-01-01T00:00:00.000Z";
     @Resource
     private CommonTestControl commonTestControl;
     @Resource
@@ -67,18 +69,6 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     private SQLStatisticEventStore sqlStatisticEventStore;
     @Resource
     private StroomDatabaseInfo stroomDatabaseInfo;
-
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestSQLStatisticEventStoreWithDB.class);
-
-    private static final String STAT_NAME = "MyStat";
-    private static final String TAG1 = "Tag1";
-    private static final String TAG1_VAL = "Tag1Value1";
-    private static final String TAG2 = "Tag2";
-    private static final String TAG2_VAL = "Tag2Value2";
-    private static final String TAG2_OTHER_VALUE_1 = "Tag2OtherValue1";
-    private static final String TAG2_OTHER_VALUE_2 = "Tag2OtherValue2";
-    private static final String DATE_RANGE = "2000-01-01T00:00:00.000Z,3000-01-01T00:00:00.000Z";
-
     private boolean ignoreAllTests = false;
 
     @Override
@@ -206,7 +196,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
             rootOperator.addChild(new ExpressionTerm(tag.getTag(), Condition.EQUALS, tag.getValue()));
         }
 
-        final Search search = new Search(null, rootOperator, null);
+        final Search search = new Search(null, rootOperator, null, true);
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName(STAT_NAME);
         dataSource.setRollUpType(StatisticRollUpType.NONE);

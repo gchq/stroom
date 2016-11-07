@@ -16,13 +16,21 @@
 
 package stroom.dashboard.client.vis;
 
-import stroom.dashboard.client.main.AbstractComponentPresenter;
-import stroom.dashboard.client.main.Component;
-import stroom.dashboard.client.main.ComponentChangeEvent;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+import stroom.dashboard.client.main.*;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.Components;
-import stroom.dashboard.client.main.ResultComponent;
-import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
@@ -48,19 +56,6 @@ import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
 import stroom.visualisation.shared.Visualisation;
 import stroom.widget.tab.client.presenter.LayerContainer;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.json.client.JSONArray;
-import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.RootPanel;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.HashSet;
 import java.util.List;
@@ -497,7 +492,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                             getView().showMessage(currentError);
                         } else if (currentData == null) {
                             if (searching) {
-                                getView().showMessage("Waiting for data...");
+                                getView().hideMessage();
+                                //getView().showMessage("Waiting for data...");
                             } else {
                                 getView().showMessage("No data");
                             }

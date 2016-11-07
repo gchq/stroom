@@ -29,8 +29,8 @@
           addStyleNames="stroom-dashboard-query-stop" icon="fa fa-stop"
           title="Stop Query" enabled="false" />
         <search:StartButton ui:field="start"
-          addStyleNames="stroom-dashboard-query-play" icon="fa fa-play"
-          title="Execute Query" />
+                            addStyleNames="stroom-dashboard-query-play" icon="fa fa-play"
+                            title="Execute Query" enabled="false"/>
     </g:FlowPanel>
   </r:ResizeFlowPanel>
 </ui:UiBinder>
