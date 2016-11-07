@@ -81,6 +81,7 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.presenter.ImageIcon;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
@@ -316,6 +317,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 }
             }
         }
+        Collections.sort(indexedFields);
         expressionPresenter.setFields(indexedFields);
 
         final EqualsBuilder builder = new EqualsBuilder();
