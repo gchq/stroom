@@ -16,20 +16,12 @@
 
 package stroom.dashboard.server;
 
-import stroom.dashboard.shared.Dashboard;
-import stroom.dashboard.shared.Query;
-import stroom.dashboard.shared.QueryKeyImpl;
-import stroom.dashboard.shared.QueryService;
-import stroom.dashboard.shared.SearchBusPollAction;
-import stroom.dashboard.shared.SearchBusPollResult;
+import org.springframework.context.annotation.Scope;
+import stroom.dashboard.shared.*;
 import stroom.logging.SearchEventLog;
 import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
-import stroom.query.shared.QueryData;
-import stroom.query.shared.QueryKey;
-import stroom.query.shared.Search;
-import stroom.query.shared.SearchRequest;
-import stroom.query.shared.SearchResult;
+import stroom.query.shared.*;
 import stroom.security.SecurityContext;
 import stroom.task.cluster.ClusterResultCollector;
 import stroom.task.cluster.ClusterResultCollectorCache;
@@ -37,7 +29,6 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -130,7 +121,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                 // Create a collector for this query.
                 final SearchResultCollector newCollector = createCollector(sessionId, userId, queryKey, searchRequest);
 
-                // Create a new acttive query to store the result collector and
+                // Create a new active query to store the result collector and
                 // any other state that we wish to maintain for the duration of
                 // the query.
                 final ActiveQuery newQuery = new ActiveQuery(newCollector);

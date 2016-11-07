@@ -22,6 +22,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -112,6 +113,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private ImageButtonView processButton;
     private long defaultProcessorTimeLimit = DEFAULT_TIME_LIMIT;
     private long defaultProcessorRecordLimit = DEFAULT_RECORD_LIMIT;
+    private boolean initialised;
+    private Timer autoRefreshTimer;
 
     @Inject
     public QueryPresenter(final EventBus eventBus, final QueryView view, final SearchBus searchBus,
@@ -327,6 +330,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             queryData.setDataSource(dataSourceRef);
             setDirty(true);
         }
+
+        // Only allow searching if we have a data source and have loaded fields from it successfully.
+        getView().setEnabled(dataSourceRef != null && indexedFields.size() > 0);
+
+        init();
     }
 
     private void addOperator() {
@@ -433,6 +441,15 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     @Override
     public void start() {
+        run(true);
+    }
+
+    @Override
+    public void stop() {
+        searchModel.destroy();
+    }
+
+    private void run(final boolean incremental) {
         final DocRef dataSourceRef = queryData.getDataSource();
 
         if (dataSourceRef == null) {
@@ -447,13 +464,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             final ExpressionOperator root = new ExpressionOperator();
             expressionPresenter.write(root);
 
-            searchModel.search(root);
+            searchModel.search(root, incremental);
         }
-    }
-
-    @Override
-    public void stop() {
-        searchModel.destroy();
     }
 
     @Override
@@ -503,6 +515,17 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     public void link() {
     }
 
+    private void init() {
+        if (!initialised) {
+            initialised = true;
+            // An auto search can only commence if the UI has fully loaded and the data source has also loaded from the server.
+            final Automate automate = getAutomate();
+            if (automate.isOpen()) {
+                run(true);
+            }
+        }
+    }
+
     @Override
     public void changeSettings() {
         super.changeSettings();
@@ -529,6 +552,17 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         return (QueryData) settings;
     }
 
+    private Automate getAutomate() {
+        final QueryData queryData = getSettings();
+        Automate automate = queryData.getAutomate();
+        if (automate == null) {
+            automate = new Automate();
+            queryData.setAutomate(automate);
+        }
+
+        return automate;
+    }
+
     private ComponentSettings createSettings() {
         return new QueryData();
     }
@@ -543,6 +577,25 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     public void setMode(final SearchModel.Mode mode) {
         getView().setMode(mode);
+
+        if (SearchModel.Mode.INACTIVE.equals(mode)) {
+            // Schedule auto refresh after search has finished.
+            if (autoRefreshTimer != null) {
+                autoRefreshTimer.cancel();
+            }
+            autoRefreshTimer = null;
+
+            final Automate automate = getAutomate();
+            if (automate.isRefresh()) {
+                autoRefreshTimer = new Timer() {
+                    @Override
+                    public void run() {
+                        QueryPresenter.this.run(false);
+                    }
+                };
+                autoRefreshTimer.schedule(automate.getRefreshInterval() * 1000);
+            }
+        }
     }
 
     private List<Item> addExpressionActionsToMenu() {
@@ -621,6 +674,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         void setExpressionView(View view);
 
         void setMode(SearchModel.Mode mode);
+
+        void setEnabled(boolean enabled);
     }
 
     public interface Resources extends ClientBundle {

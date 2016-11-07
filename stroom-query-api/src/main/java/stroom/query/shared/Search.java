@@ -27,16 +27,18 @@ public class Search implements SharedObject {
     private DocRef dataSourceRef;
     private ExpressionOperator expression;
     private Map<String, ComponentSettings> componentSettingsMap;
+    private boolean incremental;
 
     public Search() {
         // Default constructor necessary for GWT serialisation.
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
-            final Map<String, ComponentSettings> componentSettingsMap) {
+                  final Map<String, ComponentSettings> componentSettingsMap, final boolean incremental) {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
+        this.incremental = incremental;
     }
 
     public DocRef getDataSourceRef() {
@@ -49,5 +51,9 @@ public class Search implements SharedObject {
 
     public Map<String, ComponentSettings> getComponentSettingsMap() {
         return componentSettingsMap;
+    }
+
+    public boolean isIncremental() {
+        return incremental;
     }
 }

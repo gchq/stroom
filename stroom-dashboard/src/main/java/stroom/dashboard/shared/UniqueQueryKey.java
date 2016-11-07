@@ -19,37 +19,33 @@ package stroom.dashboard.shared;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
-public class VersionedQueryKey extends QueryKeyImpl {
+public class UniqueQueryKey extends QueryKeyImpl {
     private static final long serialVersionUID = -3222989872764402068L;
 
-    private long version;
+    private String discriminator;
 
-    public VersionedQueryKey() {
+    public UniqueQueryKey() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public VersionedQueryKey(final long dashboardId, final String dashboardName, final String queryId,
-            final long version) {
+    public UniqueQueryKey(final long dashboardId, final String dashboardName, final String queryId,
+                          final String discriminator) {
         super(dashboardId, dashboardName, queryId);
-        this.version = version;
-    }
-
-    public long getVersion() {
-        return version;
+        this.discriminator = discriminator;
     }
 
     @Override
     public boolean equals(final Object o) {
         if (o == this) {
             return true;
-        } else if (!(o instanceof VersionedQueryKey)) {
+        } else if (!(o instanceof UniqueQueryKey)) {
             return false;
         }
 
-        final VersionedQueryKey queryKey = (VersionedQueryKey) o;
+        final UniqueQueryKey queryKey = (UniqueQueryKey) o;
         final EqualsBuilder builder = new EqualsBuilder();
         builder.appendSuper(super.equals(o));
-        builder.append(version, queryKey.version);
+        builder.append(discriminator, queryKey.discriminator);
         return builder.isEquals();
     }
 
@@ -57,12 +53,12 @@ public class VersionedQueryKey extends QueryKeyImpl {
     public int hashCode() {
         final HashCodeBuilder builder = new HashCodeBuilder();
         builder.appendSuper(super.hashCode());
-        builder.append(version);
+        builder.append(discriminator);
         return builder.toHashCode();
     }
 
     @Override
     public String toString() {
-        return super.toString() + " - " + version;
+        return super.toString() + " - " + discriminator;
     }
 }

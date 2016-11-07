@@ -27,7 +27,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.dashboard.client.main.SearchModel.Mode;
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
 import stroom.widget.button.client.*;
@@ -35,11 +34,7 @@ import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
         implements QueryView, RequiresResize, ProvidesResize {
-    public interface Binder extends UiBinder<Widget, QueryViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     ResizeSimplePanel expressionTree;
     @UiField
@@ -48,7 +43,6 @@ public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
     StartButton start;
     @UiField
     FabButton stop;
-
     @Inject
     public QueryViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -110,5 +104,13 @@ public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
             stop.setEnabled(true);
             break;
         }
+    }
+
+    @Override
+    public void setEnabled(final boolean enabled) {
+        start.setEnabled(enabled);
+    }
+
+    public interface Binder extends UiBinder<Widget, QueryViewImpl> {
     }
 }

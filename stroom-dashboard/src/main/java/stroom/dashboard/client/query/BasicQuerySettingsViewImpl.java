@@ -19,30 +19,28 @@ package stroom.dashboard.client.query;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySettingsView;
+import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.valuespinner.client.ValueSpinner;
 
 public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySettingsView {
-    public interface Binder extends UiBinder<Widget, BasicQuerySettingsViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     Label id;
     @UiField
     TextBox name;
     @UiField
     SimplePanel dataSource;
-
+    @UiField
+    TickBox queryOnOpen;
+    @UiField
+    TickBox autoRefresh;
+    @UiField
+    ValueSpinner refreshInterval;
     @Inject
     public BasicQuerySettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -76,7 +74,40 @@ public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySe
         dataSource.setWidget(w);
     }
 
+    @Override
+    public boolean isQueryOnOpen() {
+        return queryOnOpen.getBooleanValue();
+    }
+
+    @Override
+    public void setQueryOnOpen(final boolean queryOnOpen) {
+        this.queryOnOpen.setBooleanValue(queryOnOpen);
+    }
+
+    @Override
+    public boolean isAutoRefresh() {
+        return autoRefresh.getBooleanValue();
+    }
+
+    @Override
+    public void setAutoRefresh(final boolean autoRefresh) {
+        this.autoRefresh.setBooleanValue(autoRefresh);
+    }
+
+    @Override
+    public int getRefreshInterval() {
+        return this.refreshInterval.getValue();
+    }
+
+    @Override
+    public void setRefreshInterval(final int refreshInterval) {
+        this.refreshInterval.setValue(refreshInterval);
+    }
+
     public void onResize() {
         ((RequiresResize) widget).onResize();
+    }
+
+    public interface Binder extends UiBinder<Widget, BasicQuerySettingsViewImpl> {
     }
 }
