@@ -73,6 +73,8 @@ public class FieldsManager implements HeadingListener {
 
         ImageResource format();
 
+        ImageResource filter();
+
         @Source("fields.css")
         Style style();
     }

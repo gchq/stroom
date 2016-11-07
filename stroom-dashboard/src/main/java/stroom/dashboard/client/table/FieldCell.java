@@ -16,21 +16,17 @@
 
 package stroom.dashboard.client.table;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.google.gwt.cell.client.CompositeCell;
-import com.google.gwt.cell.client.FieldUpdater;
-import com.google.gwt.cell.client.HasCell;
-import com.google.gwt.cell.client.ImageResourceCell;
-import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.cell.client.*;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
-
 import stroom.query.shared.Field;
+import stroom.query.shared.Filter;
 import stroom.query.shared.Sort;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FieldCell extends CompositeCell<Field> {
     public static FieldCell create(final FieldsManager fieldsManager) {
@@ -103,6 +99,23 @@ public class FieldCell extends CompositeCell<Field> {
             }
         };
         cells.add(sortOrder);
+
+
+        final Column<Field, ImageResource> filter = new Column<Field, ImageResource>(new ImageResourceCell()) {
+            @Override
+            public ImageResource getValue(final Field field) {
+                final Filter filter = field.getFilter();
+                if (filter != null) {
+                    if ((filter.getIncludes() != null && filter.getIncludes().trim().length() > 0) ||
+                            (filter.getExcludes() != null && filter.getExcludes().trim().length() > 0)) {
+                        return fieldsManager.getResources().filter();
+                    }
+                }
+
+                return null;
+            }
+        };
+        cells.add(filter);
 
         return new FieldCell(cells);
     }
