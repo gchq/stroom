@@ -588,22 +588,20 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
             final Automate automate = getAutomate();
             if (automate.isRefresh()) {
-                int ms = 10000;
-
                 try {
                     final String interval = automate.getRefreshInterval();
-                    ms = ModelStringUtil.parseDurationString(interval).intValue();
+                    final int millis = ModelStringUtil.parseDurationString(interval).intValue();
+
+                    autoRefreshTimer = new Timer() {
+                        @Override
+                        public void run() {
+                            QueryPresenter.this.run(false);
+                        }
+                    };
+                    autoRefreshTimer.schedule(millis);
                 } catch (final Exception e) {
                     // Ignore as we cannot display this error now.
                 }
-
-                autoRefreshTimer = new Timer() {
-                    @Override
-                    public void run() {
-                        QueryPresenter.this.run(false);
-                    }
-                };
-                autoRefreshTimer.schedule(ms);
             }
         }
     }
