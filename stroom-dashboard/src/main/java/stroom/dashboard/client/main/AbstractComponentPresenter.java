@@ -44,7 +44,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     private SettingsPresenter settingsPresenter;
 
     public AbstractComponentPresenter(final EventBus eventBus, final V view,
-            final Provider<?> settingsPresenterProvider) {
+                                      final Provider<?> settingsPresenterProvider) {
         super(eventBus, view);
         this.settingsPresenterProvider = settingsPresenterProvider;
     }
@@ -95,14 +95,19 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
-                    final boolean dirty = settingsPresenter.isDirty(componentData);
-                    settingsPresenter.write(componentData);
+                    if (settingsPresenter.validate()) {
+                        final boolean dirty = settingsPresenter.isDirty(componentData);
+                        settingsPresenter.write(componentData);
 
-                    if (dirty) {
-                        changeSettings();
+                        if (dirty) {
+                            changeSettings();
+                        }
+
+                        HidePopupEvent.fire(AbstractComponentPresenter.this, settingsPresenter);
                     }
+                } else {
+                    HidePopupEvent.fire(AbstractComponentPresenter.this, settingsPresenter);
                 }
-                HidePopupEvent.fire(AbstractComponentPresenter.this, settingsPresenter);
             }
 
             @Override

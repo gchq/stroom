@@ -65,6 +65,7 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.ModelStringUtil;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.GlyphIcons;
@@ -587,13 +588,22 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
             final Automate automate = getAutomate();
             if (automate.isRefresh()) {
+                int ms = 10000;
+
+                try {
+                    final String interval = automate.getRefreshInterval();
+                    ms = ModelStringUtil.parseDurationString(interval).intValue();
+                } catch (final Exception e) {
+                    // Ignore as we cannot display this error now.
+                }
+
                 autoRefreshTimer = new Timer() {
                     @Override
                     public void run() {
                         QueryPresenter.this.run(false);
                     }
                 };
-                autoRefreshTimer.schedule(automate.getRefreshInterval() * 1000);
+                autoRefreshTimer.schedule(ms);
             }
         }
     }
