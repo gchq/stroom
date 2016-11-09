@@ -579,29 +579,37 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     public void setMode(final SearchModel.Mode mode) {
         getView().setMode(mode);
 
+        // If this is the end of a query then schedule a refresh.
         if (SearchModel.Mode.INACTIVE.equals(mode)) {
-            // Schedule auto refresh after search has finished.
-            if (autoRefreshTimer != null) {
-                autoRefreshTimer.cancel();
-            }
-            autoRefreshTimer = null;
+            scheduleRefresh();
+        }
+    }
 
-            final Automate automate = getAutomate();
-            if (automate.isRefresh()) {
-                try {
-                    final String interval = automate.getRefreshInterval();
-                    final int millis = ModelStringUtil.parseDurationString(interval).intValue();
+    private void scheduleRefresh() {
+        // Schedule auto refresh after a query has finished.
+        if (autoRefreshTimer != null) {
+            autoRefreshTimer.cancel();
+        }
+        autoRefreshTimer = null;
 
-                    autoRefreshTimer = new Timer() {
-                        @Override
-                        public void run() {
+        final Automate automate = getAutomate();
+        if (automate.isRefresh()) {
+            try {
+                final String interval = automate.getRefreshInterval();
+                final int millis = ModelStringUtil.parseDurationString(interval).intValue();
+
+                autoRefreshTimer = new Timer() {
+                    @Override
+                    public void run() {
+                        // Make sure search is currently inactive before we attempt to execute a new query.
+                        if (SearchModel.Mode.INACTIVE.equals(searchModel.getMode())) {
                             QueryPresenter.this.run(false);
                         }
-                    };
-                    autoRefreshTimer.schedule(millis);
-                } catch (final Exception e) {
-                    // Ignore as we cannot display this error now.
-                }
+                    }
+                };
+                autoRefreshTimer.schedule(millis);
+            } catch (final Exception e) {
+                // Ignore as we cannot display this error now.
             }
         }
     }
