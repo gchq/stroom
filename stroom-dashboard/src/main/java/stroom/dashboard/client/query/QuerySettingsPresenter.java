@@ -18,7 +18,6 @@ package stroom.dashboard.client.query;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-
 import stroom.dashboard.client.main.SettingsPresenter;
 import stroom.widget.tab.client.presenter.SlideTabLayoutView;
 
@@ -28,5 +27,10 @@ public class QuerySettingsPresenter extends SettingsPresenter {
             final BasicQuerySettingsPresenter basicSettingsPresenter) {
         super(eventBus, view);
         addTab("Basic", basicSettingsPresenter);
+    }
+
+    @Override
+    public boolean validate() {
+        return super.validate();
     }
 }

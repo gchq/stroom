@@ -25,7 +25,6 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySettingsView;
 import stroom.widget.tickbox.client.view.TickBox;
-import stroom.widget.valuespinner.client.ValueSpinner;
 
 public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySettingsView {
     private final Widget widget;
@@ -40,7 +39,7 @@ public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySe
     @UiField
     TickBox autoRefresh;
     @UiField
-    ValueSpinner refreshInterval;
+    TextBox refreshInterval;
     @Inject
     public BasicQuerySettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -95,13 +94,13 @@ public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySe
     }
 
     @Override
-    public int getRefreshInterval() {
-        return this.refreshInterval.getValue();
+    public String getRefreshInterval() {
+        return this.refreshInterval.getText();
     }
 
     @Override
-    public void setRefreshInterval(final int refreshInterval) {
-        this.refreshInterval.setValue(refreshInterval);
+    public void setRefreshInterval(final String refreshInterval) {
+        this.refreshInterval.setText(refreshInterval);
     }
 
     public void onResize() {

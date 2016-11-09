@@ -16,21 +16,20 @@
 
 package stroom.dashboard.client.main;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.SlideTabLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class SettingsPresenter extends MyPresenterWidget<SlideTabLayoutView> {
     private final Map<TabData, Layer> tabViewMap = new HashMap<>();
@@ -106,6 +105,10 @@ public class SettingsPresenter extends MyPresenterWidget<SlideTabLayoutView> {
                 entry.getValue().write(componentData);
             }
         }
+    }
+
+    public boolean validate() {
+        return !modifiers.values().stream().anyMatch(v -> !v.validate());
     }
 
     public boolean isDirty(final ComponentConfig componentData) {

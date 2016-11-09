@@ -21,9 +21,11 @@ import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 
 public interface ComponentDataModifier extends HasRead<ComponentConfig>, HasWrite<ComponentConfig> {
+    boolean validate();
+
     boolean isDirty(ComponentConfig componentData);
 
-    void setComponents(Components components);
-
     Components getComponents();
+
+    void setComponents(Components components);
 }

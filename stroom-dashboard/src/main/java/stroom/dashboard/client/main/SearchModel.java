@@ -40,6 +40,7 @@ public class SearchModel {
     private Search currentSearch;
     private Search activeSearch;
     private Mode mode = Mode.INACTIVE;
+
     public SearchModel(final SearchBus searchBus, final QueryPresenter queryPresenter, final IndexLoader indexLoader,
             final TimeZones timeZones) {
         this.searchBus = searchBus;
@@ -230,6 +231,10 @@ public class SearchModel {
             // If we have completed search then stop the task spinner.
             currentSearch = null;
         }
+    }
+
+    public Mode getMode() {
+        return mode;
     }
 
     private void setMode(final Mode mode) {
