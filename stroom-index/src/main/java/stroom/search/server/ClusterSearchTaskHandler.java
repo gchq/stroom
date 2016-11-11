@@ -16,6 +16,11 @@
 
 package stroom.search.server;
 
+import org.apache.lucene.search.Query;
+import org.apache.lucene.util.Version;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
+import org.springframework.util.StringUtils;
 import stroom.dashboard.expression.FieldIndexMap;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.shared.DocRef;
@@ -43,11 +48,6 @@ import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadUtil;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.util.Version;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
-import org.springframework.util.StringUtils;
 
 import javax.inject.Inject;
 import java.util.*;
@@ -60,21 +60,15 @@ import java.util.concurrent.atomic.AtomicLong;
 @TaskHandlerBean(task = ClusterSearchTask.class)
 @Scope(StroomScope.TASK)
 public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeResult>, ErrorReceiver {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterSearchTaskHandler.class);
-    private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
-
     /**
      * We don't want to collect more than 1 million doc's data into the queue by
      * default. When the queue is full the index shard data tasks will pause
      * until the docs are drained from the queue.
      */
     public static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000000;
-    private int maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
-
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterSearchTaskHandler.class);
+    private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
-
-    private int maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
-
     private final TaskManager taskManager;
     private final IndexService indexService;
     private final DictionaryService dictionaryService;
@@ -87,11 +81,12 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
     private final ExtractionTaskProperties extractionTaskProperties;
     private final StreamStore streamStore;
     private final SecurityContext securityContext;
-
-    private ClusterSearchTask task;
     private final LinkedBlockingDeque<String> errors = new LinkedBlockingDeque<>();
     private final AtomicBoolean searchComplete = new AtomicBoolean();
     private final AtomicBoolean sendingComplete = new AtomicBoolean();
+    private int maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
+    private int maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
+    private ClusterSearchTask task;
     private Index index;
 
     private TransferList<String[]> storedData;
@@ -219,7 +214,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
 
                     taskMonitor.info("Searching...");
                     search(task, search, storedFieldNames, filterStreams, indexFieldsMap, extractionFieldIndexMap,
-                            coprocessorMap, extractionCoprocessorsMap);
+                            extractionCoprocessorsMap);
 
                 } catch (final Throwable t) {
                     try {
@@ -249,7 +244,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
 
     private void search(final ClusterSearchTask task, final Search search, final String[] storedFieldNames,
                         final boolean filterStreams, final IndexFieldsMap indexFieldsMap,
-                        final FieldIndexMap extractionFieldIndexMap, final Map<Integer, Coprocessor<?>> coprocessorMap,
+                        final FieldIndexMap extractionFieldIndexMap,
                         final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Incoming search request:\n" + search.getExpression().toString());
@@ -283,7 +278,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                         SearchExpressionQuery query = null;
                         try {
                             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                                    dictionaryService, indexFieldsMap, maxBooleanClauseCount);
+                                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, task.getNow());
                             query = searchExpressionQueryBuilder.buildQuery(version, expression);
 
                             // Make sure the query was created successfully.

@@ -16,6 +16,7 @@
 
 package stroom.search.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.index.shared.*;
 import stroom.index.shared.IndexShard.IndexShardStatus;
@@ -35,7 +36,6 @@ import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadUtil;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 import java.util.*;
@@ -136,7 +136,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                         if (targetNodes.contains(node)) {
                             final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task.getSessionId(),
                                     task.getUserId(), "Cluster Search", search, shards, sourceNode, storedFields,
-                                    task.getResultSendFrequency(), task.getCoprocessorMap());
+                                    task.getResultSendFrequency(), task.getCoprocessorMap(), task.getNow());
                             dispatcher.execAsync(clusterSearchTask, resultCollector, sourceNode,
                                     Collections.singleton(node));
                             expectedNodeResultCount++;
