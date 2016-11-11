@@ -16,32 +16,22 @@
 
 package stroom.search.server;
 
-import stroom.dictionary.shared.Dictionary;
-import stroom.dictionary.shared.DictionaryService;
-import stroom.entity.shared.DocRef;
-import stroom.index.server.analyzer.AnalyzerFactory;
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexField.AnalyzerType;
-import stroom.query.shared.IndexFieldType;
-import stroom.query.shared.IndexFieldsMap;
-import stroom.util.date.DateUtil;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
-import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.*;
 import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.util.Version;
+import stroom.dictionary.shared.Dictionary;
+import stroom.dictionary.shared.DictionaryService;
+import stroom.entity.shared.DocRef;
+import stroom.index.server.analyzer.AnalyzerFactory;
+import stroom.query.DateExpressionParser;
+import stroom.query.shared.*;
+import stroom.query.shared.IndexField.AnalyzerType;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -60,12 +50,14 @@ public class SearchExpressionQueryBuilder {
     private final IndexFieldsMap indexFieldsMap;
     private final DictionaryService dictionaryService;
     private final int maxBooleanClauseCount;
+    private final ZonedDateTime now;
 
     public SearchExpressionQueryBuilder(final DictionaryService dictionaryService, final IndexFieldsMap indexFieldsMap,
-            final int maxBooleanClauseCount) {
+                                        final int maxBooleanClauseCount, final ZonedDateTime now) {
         this.dictionaryService = dictionaryService;
         this.indexFieldsMap = indexFieldsMap;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
+        this.now = now;
     }
 
     public SearchExpressionQuery buildQuery(final Version matchVersion, final ExpressionOperator expression) {
@@ -386,7 +378,7 @@ public class SearchExpressionQueryBuilder {
         if (wordArr != null) {
             final BooleanQuery dictionaryQuery = new BooleanQuery();
             for (final String val : wordArr) {
-                Query query = null;
+                Query query;
 
                 if (indexField.getFieldType().isNumeric()) {
                     query = getNumericIn(fieldName, val);
@@ -525,7 +517,7 @@ public class SearchExpressionQueryBuilder {
 
     private long getDate(final String fieldName, final String value) {
         try {
-            return DateUtil.parseNormalDateTimeString(value);
+            return new DateExpressionParser().parse(value, now).toInstant().toEpochMilli();
         } catch (final Exception e) {
             throw new SearchException("Expected a standard date value for field \"" + fieldName
                     + "\" but was given string \"" + value + "\"");
@@ -561,20 +553,20 @@ public class SearchExpressionQueryBuilder {
         return numbers;
     }
 
-    public static class SearchExpressionQuery {
+    static class SearchExpressionQuery {
         private final Query query;
         private final Set<String> terms;
 
-        public SearchExpressionQuery(final Query query, final Set<String> terms) {
+        SearchExpressionQuery(final Query query, final Set<String> terms) {
             this.query = query;
             this.terms = terms;
         }
 
-        public Query getQuery() {
+        Query getQuery() {
             return query;
         }
 
-        public Set<String> getTerms() {
+        Set<String> getTerms() {
             return terms;
         }
     }

@@ -16,44 +16,39 @@
 
 package stroom.search.server;
 
-import java.util.Collections;
-import java.util.Set;
-
-import javax.inject.Inject;
-
-import stroom.util.logging.StroomLogger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
+import stroom.dictionary.shared.DictionaryService;
+import stroom.feed.shared.FeedService;
 import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
+import stroom.node.server.NodeCache;
+import stroom.node.shared.Node;
 import stroom.query.CoprocessorMap;
 import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
 import stroom.query.SearchResultHandler;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.IndexFieldsMap;
-import stroom.query.shared.QueryKey;
-import stroom.query.shared.Search;
-import stroom.query.shared.SearchRequest;
+import stroom.query.shared.*;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.dictionary.shared.DictionaryService;
-import stroom.feed.shared.FeedService;
-import stroom.node.server.NodeCache;
-import stroom.node.shared.Node;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.Set;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
 public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(LuceneSearchDataSourceProvider.class);
-
     public static final String ENTITY_TYPE = Index.ENTITY_TYPE;
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(LuceneSearchDataSourceProvider.class);
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
 
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
@@ -82,13 +77,17 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
     @Override
     public SearchResultCollector createCollector(final String sessionId, final String userName, final QueryKey queryKey,
             final SearchRequest searchRequest) {
+        // Create a current time object.
+        final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+
+        // Get the search.
         final Search search = searchRequest.getSearch();
 
         // Load the index.
         final Index index = indexService.loadByUuid(search.getDataSourceRef().getUuid());
 
         // Extract highlights.
-        final Set<String> highlights = getHighlights(index, search.getExpression());
+        final Set<String> highlights = getHighlights(index, search.getExpression(), now);
 
         // This is a new search so begin a new asynchronous search.
         final Node node = nodeCache.getDefaultNode();
@@ -99,7 +98,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
         // Create an asynchronous search task.
         final String searchName = "Search '" + queryKey.toString() + "'";
         final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(sessionId, userName, searchName, search, node,
-                SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorMap.getMap());
+                SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorMap.getMap(), now);
 
         // Create a handler for search results.
         final SearchResultHandler resultHandler = new SearchResultHandler(coprocessorMap);
@@ -118,7 +117,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
      * Compiles the query, extracts terms and then returns them for use in hit
      * highlighting.
      */
-    private Set<String> getHighlights(final Index index, final ExpressionOperator expression) {
+    private Set<String> getHighlights(final Index index, final ExpressionOperator expression, final ZonedDateTime now) {
         Set<String> highlights = Collections.emptySet();
 
         try {
@@ -126,7 +125,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
             final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                    dictionaryService, indexFieldsMap, maxBooleanClauseCount);
+                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, now);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
                     .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expression);
 

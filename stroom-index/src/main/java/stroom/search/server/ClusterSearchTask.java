@@ -16,15 +16,15 @@
 
 package stroom.search.server;
 
-import java.util.List;
-import java.util.Map;
-
+import stroom.node.shared.Node;
 import stroom.query.shared.CoprocessorSettings;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.Search;
-import stroom.node.shared.Node;
 import stroom.task.cluster.ClusterTask;
-import stroom.util.shared.Task;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
 
 public class ClusterSearchTask extends ClusterTask<NodeResult> {
     private static final long serialVersionUID = -1305243739417365803L;
@@ -35,10 +35,11 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
     private final IndexField[] storedFields;
     private final int resultSendFrequency;
     private final Map<Integer, CoprocessorSettings> coprocessorMap;
+    private final ZonedDateTime now;
 
     public ClusterSearchTask(final String sessionId, final String userName, final String taskName, final Search search,
                              final List<Long> shards, final Node targetNode, final IndexField[] storedFields,
-                             final int resultSendFrequency, final Map<Integer, CoprocessorSettings> coprocessorMap) {
+                             final int resultSendFrequency, final Map<Integer, CoprocessorSettings> coprocessorMap, final ZonedDateTime now) {
         super(sessionId, userName, taskName);
         this.search = search;
         this.shards = shards;
@@ -46,6 +47,7 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
         this.storedFields = storedFields;
         this.resultSendFrequency = resultSendFrequency;
         this.coprocessorMap = coprocessorMap;
+        this.now = now;
     }
 
     public Node getTargetNode() {
@@ -70,5 +72,9 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
 
     public Map<Integer, CoprocessorSettings> getCoprocessorMap() {
         return coprocessorMap;
+    }
+
+    public ZonedDateTime getNow() {
+        return now;
     }
 }

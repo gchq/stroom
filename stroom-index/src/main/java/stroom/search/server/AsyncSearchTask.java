@@ -16,14 +16,15 @@
 
 package stroom.search.server;
 
-import java.io.Serializable;
-import java.util.Map;
-
+import stroom.node.shared.Node;
 import stroom.query.shared.CoprocessorSettings;
 import stroom.query.shared.Search;
-import stroom.node.shared.Node;
 import stroom.util.shared.VoidResult;
 import stroom.util.task.ServerTask;
+
+import java.io.Serializable;
+import java.time.ZonedDateTime;
+import java.util.Map;
 
 public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializable {
     private static final long serialVersionUID = -1305243739417365803L;
@@ -33,17 +34,20 @@ public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializab
     private final Node targetNode;
     private final int resultSendFrequency;
     private final Map<Integer, CoprocessorSettings> coprocessorMap;
+    private final ZonedDateTime now;
+
     private volatile transient ClusterSearchResultCollector resultCollector;
 
     public AsyncSearchTask(final String sessionId, final String userName, final String searchName, final Search search,
-            final Node targetNode, final int resultSendFrequency,
-            final Map<Integer, CoprocessorSettings> coprocessorMap) {
+                           final Node targetNode, final int resultSendFrequency,
+                           final Map<Integer, CoprocessorSettings> coprocessorMap, final ZonedDateTime now) {
         super(null, sessionId, userName);
         this.searchName = searchName;
         this.search = search;
         this.targetNode = targetNode;
         this.resultSendFrequency = resultSendFrequency;
         this.coprocessorMap = coprocessorMap;
+        this.now = now;
     }
 
     public String getSearchName() {
@@ -66,11 +70,15 @@ public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializab
         return coprocessorMap;
     }
 
-    public void setResultCollector(final ClusterSearchResultCollector resultCollector) {
-        this.resultCollector = resultCollector;
+    public ZonedDateTime getNow() {
+        return now;
     }
 
     public ClusterSearchResultCollector getResultCollector() {
         return resultCollector;
+    }
+
+    public void setResultCollector(final ClusterSearchResultCollector resultCollector) {
+        this.resultCollector = resultCollector;
     }
 }
