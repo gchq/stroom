@@ -16,6 +16,8 @@
 
 package stroom.streamtask.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.CommonTestScenarioCreator;
@@ -28,8 +30,6 @@ import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskMonitorImpl;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -122,7 +122,7 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 
         streamTaskCreator.createTasks(new TaskMonitorImpl());
 
-        // Because MySQL continues to create new incremental id's for streams this check will fail as ACe thinks more
+        // Because MySQL continues to create new incremental id's for streams this check will fail as Stroom thinks more
         // streams have been created so recreates recent stream info before this point which means that it doesn't have
         // recent stream info. This isn't a problem but this can't be checked in this test with MySql.
         // Assert.assertTrue(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail());
