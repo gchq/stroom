@@ -35,6 +35,7 @@ import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.SearchBus;
 import stroom.dashboard.client.main.SearchModel;
+import stroom.dashboard.client.main.UsesParams;
 import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
@@ -58,7 +59,14 @@ import stroom.pipeline.processor.shared.CreateProcessorAction;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
-import stroom.query.shared.*;
+import stroom.query.shared.Automate;
+import stroom.query.shared.ComponentSettings;
+import stroom.query.shared.ExpressionItem;
+import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.IndexField;
+import stroom.query.shared.IndexFieldsMap;
+import stroom.query.shared.Limits;
+import stroom.query.shared.QueryData;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -87,7 +95,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
-        implements QueryUiHandlers, HasDirtyHandlers {
+        implements QueryUiHandlers, HasDirtyHandlers, UsesParams {
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query");
     private static final long DEFAULT_TIME_LIMIT = 30L;
     private static final long DEFAULT_RECORD_LIMIT = 1000000L;
@@ -109,6 +117,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ImageButtonView historyButton;
     private final ImageButtonView favouriteButton;
     private final ImageButtonView warningsButton;
+
+    private String params;
     private QueryData queryData;
     private String currentWarnings;
     private ImageButtonView processButton;
@@ -441,12 +451,25 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
+    public void onParamsChanged(final String params) {
+        this.params = params;
+        if (initialised) {
+            stop();
+            start();
+        }
+    }
+
+    @Override
     public void start() {
         run(true);
     }
 
     @Override
     public void stop() {
+        if (autoRefreshTimer != null) {
+            autoRefreshTimer.cancel();
+            autoRefreshTimer = null;
+        }
         searchModel.destroy();
     }
 
@@ -465,7 +488,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             final ExpressionOperator root = new ExpressionOperator();
             expressionPresenter.write(root);
 
-            searchModel.search(root, incremental);
+            searchModel.search(root, params, incremental);
         }
     }
 

@@ -21,7 +21,15 @@ import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.QueryKeyImpl;
 import stroom.dashboard.shared.UniqueQueryKey;
 import stroom.entity.shared.DocRef;
-import stroom.query.shared.*;
+import stroom.query.shared.ComponentResultRequest;
+import stroom.query.shared.ComponentSettings;
+import stroom.query.shared.ExpressionItem;
+import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.ExpressionTerm;
+import stroom.query.shared.QueryKey;
+import stroom.query.shared.Search;
+import stroom.query.shared.SearchRequest;
+import stroom.query.shared.SearchResult;
 import stroom.util.shared.SharedObject;
 
 import java.util.HashMap;
@@ -83,7 +91,7 @@ public class SearchModel {
      * Run a search with the provided expression, returning results for all
      * components.
      */
-    public void search(final ExpressionOperator expression, final boolean incremental) {
+    public void search(final ExpressionOperator expression, final String params, final boolean incremental) {
         // Toggle the request mode or start a new search.
         switch (mode) {
         case ACTIVE:
@@ -93,7 +101,7 @@ public class SearchModel {
             break;
         case INACTIVE:
             reset();
-            startNewSearch(expression, incremental);
+            startNewSearch(expression, params, incremental);
             break;
         case PAUSED:
             // Tell every component that it should want data.
@@ -109,13 +117,18 @@ public class SearchModel {
      * @param expression
      *            The expression to search with.
      */
-    private void startNewSearch(final ExpressionOperator expression, final boolean incremental) {
+    private void startNewSearch(final ExpressionOperator expression, final String params, final boolean incremental) {
         final Map<String, ComponentSettings> resultComponentMap = createResultComponentMap();
         if (resultComponentMap != null) {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
             if (dataSourceRef != null && expression != null) {
-                // Set the new search parameters.
-                currentExpression = expression.copy();
+                // Create a parameter map.
+                final Map<String, String> paramMap = KVMapUtil.parse(params);
+
+                // Replace any parameters in the expression.
+                final ExpressionOperator copy = expression.copy();
+                replaceExpressionParameters(copy, paramMap);
+                currentExpression = copy;
 
                 currentQueryKey = new UniqueQueryKey(currentQueryKey.getDashboardId(),
                         currentQueryKey.getDashboardName(), currentQueryKey.getQueryId(),
@@ -138,6 +151,19 @@ public class SearchModel {
                 // search.
                 searchBus.put(currentQueryKey, this);
                 searchBus.poll();
+            }
+        }
+    }
+
+    private void replaceExpressionParameters(final ExpressionOperator operator, final Map<String, String> paramMap) {
+        for (ExpressionItem item : operator.getChildren()) {
+            if (item instanceof ExpressionOperator) {
+                replaceExpressionParameters((ExpressionOperator) item, paramMap);
+            } else if (item instanceof ExpressionTerm) {
+                final ExpressionTerm term = (ExpressionTerm) item;
+                final String value = term.getValue();
+                final String replaced = KVMapUtil.replaceParameters(value, paramMap);
+                term.setValue(replaced);
             }
         }
     }
@@ -169,8 +195,8 @@ public class SearchModel {
      *
      * @return A result component map.
      */
-    private final Map<String, ComponentSettings> createResultComponentMap() {
-        if (componentMap != null || componentMap.size() > 0) {
+    private Map<String, ComponentSettings> createResultComponentMap() {
+        if (componentMap.size() > 0) {
             final Map<String, ComponentSettings> resultComponentMap = new HashMap<>();
             for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
                 final String componentId = entry.getKey();
@@ -262,16 +288,11 @@ public class SearchModel {
             requestMap.put(componentId, componentResultRequest);
         }
 
-        final SearchRequest searchAction = new SearchRequest(search, requestMap, timeZones.getTimeZone());
-        return searchAction;
+        return new SearchRequest(search, requestMap, timeZones.getTimeZone());
     }
 
     public boolean isSearching() {
         return currentSearch != null;
-    }
-
-    public Search getCurrentSearch() {
-        return currentSearch;
     }
 
     public QueryKey getCurrentQueryKey() {
