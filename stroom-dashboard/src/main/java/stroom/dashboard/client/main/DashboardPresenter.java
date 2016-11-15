@@ -291,6 +291,10 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
     @Override
     protected void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
+
+        saveButton.setEnabled(!readOnly);
+        saveAsButton.setEnabled(true);
+
         addButton.setEnabled(!readOnly);
         if (!readOnly) {
             registerHandler(addButton.addClickHandler(event -> {
@@ -394,7 +398,7 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
         private final ComponentAddPresenter presenter;
         private HandlerRegistration handlerRegistration;
 
-        public AddSelectionHandler(final ComponentAddPresenter presenter) {
+        AddSelectionHandler(final ComponentAddPresenter presenter) {
             this.presenter = presenter;
         }
 
