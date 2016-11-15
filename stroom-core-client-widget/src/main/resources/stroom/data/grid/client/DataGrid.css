@@ -42,7 +42,6 @@
 	overflow: hidden;
 	white-space: nowrap;
 	font-weight: bold;
-	height: auto;
 	cursor: default;
 }
 
@@ -57,7 +56,8 @@
 	font-weight: bold;
     height : auto;
 	cursor: default;
-	height: auto;
+
+	border-bottom: #dddddd solid 1px;
 }
 
 @sprite .dataGridHeaderSelected {
@@ -65,12 +65,12 @@
 }
 
 .dataGridCell {
-	padding: 1px;
+	padding: 4px;
 	padding-left: 2px;
 	padding-right: 2px;
-	vertical-align: top;
+	vertical-align: middle;
 	overflow: hidden;
-	height: 18px;
+	height: 24px;
 	white-space: nowrap;
 	
 	-moz-user-focus: initial;
@@ -81,7 +81,9 @@
 	-webkit-user-select: initial;
 	user-focus: initial;
 	user-input: initial;
-	user-select: initial;	
+	user-select: initial;
+
+	border-bottom: #dddddd solid 1px;
 }
 
 .dataGridResizableCell {
@@ -133,6 +135,7 @@
 }
 
 .dataGridEvenRow {
+    background-color: #f9f9f9;
 }
 
 .dataGridEvenRowCell {
@@ -158,7 +161,7 @@
 }
 
 .dataGridSelectedRow {
-	background: #bbdefb none repeat scroll 0 0;
+	background: #bbdefb none repeat scroll 0 0 !important;
 }
 
 .dataGridSelectedRowCell {
