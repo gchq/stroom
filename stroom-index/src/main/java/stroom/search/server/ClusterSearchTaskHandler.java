@@ -29,7 +29,11 @@ import stroom.index.shared.IndexService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
 import stroom.pipeline.server.errorhandler.TerminatedException;
-import stroom.query.shared.*;
+import stroom.query.shared.CoprocessorSettings;
+import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.IndexField;
+import stroom.query.shared.IndexFieldsMap;
+import stroom.query.shared.Search;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.server.extraction.ExtractionTaskExecutor;
 import stroom.search.server.extraction.ExtractionTaskProducer;
@@ -37,10 +41,18 @@ import stroom.search.server.extraction.ExtractionTaskProperties;
 import stroom.search.server.extraction.StreamMapCreator;
 import stroom.search.server.sender.SenderTask;
 import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
-import stroom.search.server.shard.*;
+import stroom.search.server.shard.IndexShardSearchTaskExecutor;
+import stroom.search.server.shard.IndexShardSearchTaskProducer;
+import stroom.search.server.shard.IndexShardSearchTaskProperties;
+import stroom.search.server.shard.IndexShardSearcherCache;
+import stroom.search.server.shard.TransferList;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
-import stroom.task.server.*;
+import stroom.task.server.TaskCallback;
+import stroom.task.server.TaskHandler;
+import stroom.task.server.TaskHandlerBean;
+import stroom.task.server.TaskManager;
+import stroom.task.server.TaskTerminatedException;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Location;
 import stroom.util.shared.ModelStringUtil;
@@ -50,8 +62,12 @@ import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -182,8 +198,8 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                                 fieldIndexMap = extractionFieldIndexMap;
                             }
 
-                            final Coprocessor<?> coprocessor = coprocessorFactory.create(indexFieldsMap,
-                                    coprocessorSettings, fieldIndexMap, taskMonitor);
+                            final Coprocessor<?> coprocessor = coprocessorFactory.create(
+                                    coprocessorSettings, fieldIndexMap, search.getParamMap(), taskMonitor);
 
                             if (coprocessor != null) {
                                 coprocessorMap.put(coprocessorId, coprocessor);

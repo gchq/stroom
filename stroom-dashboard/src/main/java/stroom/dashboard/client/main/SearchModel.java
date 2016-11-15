@@ -42,6 +42,7 @@ public class SearchModel {
     private final IndexLoader indexLoader;
     private final TimeZones timeZones;
     private final Map<String, ResultComponent> componentMap = new HashMap<>();
+    private Map<String, String> currentParameterMap;
     private ExpressionOperator currentExpression;
     private SearchResult currentResult;
     private UniqueQueryKey currentQueryKey;
@@ -123,17 +124,17 @@ public class SearchModel {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
             if (dataSourceRef != null && expression != null) {
                 // Create a parameter map.
-                final Map<String, String> paramMap = KVMapUtil.parse(params);
+                currentParameterMap = KVMapUtil.parse(params);
 
                 // Replace any parameters in the expression.
                 final ExpressionOperator copy = expression.copy();
-                replaceExpressionParameters(copy, paramMap);
+                replaceExpressionParameters(copy, currentParameterMap);
                 currentExpression = copy;
 
                 currentQueryKey = new UniqueQueryKey(currentQueryKey.getDashboardId(),
                         currentQueryKey.getDashboardName(), currentQueryKey.getQueryId(),
                         createDiscrimiator());
-                currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, incremental);
+                currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, incremental);
                 activeSearch = currentSearch;
 
                 // Let the query presenter know search is active.
@@ -178,7 +179,7 @@ public class SearchModel {
             if (resultComponentMap != null) {
                 final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
                 if (dataSourceRef != null) {
-                    currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, true);
+                    currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, true);
                     activeSearch = currentSearch;
 
                     // Tell the refreshing component that it should want data.

@@ -17,25 +17,25 @@
 package stroom.search.server;
 
 import org.springframework.stereotype.Component;
-
 import stroom.dashboard.expression.FieldIndexMap;
 import stroom.query.TableCoprocessorSettings;
 import stroom.query.shared.CoprocessorSettings;
-import stroom.query.shared.IndexFieldsMap;
 import stroom.util.task.TaskMonitor;
+
+import java.util.Map;
 
 @Component
 public class CoprocessorFactory {
-    public Coprocessor<?> create(final IndexFieldsMap indexFieldsMap, final CoprocessorSettings settings,
-            final FieldIndexMap fieldIndexMap, final TaskMonitor taskMonitor) {
+    public Coprocessor<?> create(final CoprocessorSettings settings,
+                                 final FieldIndexMap fieldIndexMap, final Map<String, String> paramMap, final TaskMonitor taskMonitor) {
         if (settings instanceof TableCoprocessorSettings) {
             final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
-            final TableCoprocessor tableCoprocessor = new TableCoprocessor(indexFieldsMap, tableCoprocessorSettings,
-                    fieldIndexMap, taskMonitor);
+            final TableCoprocessor tableCoprocessor = new TableCoprocessor(tableCoprocessorSettings,
+                    fieldIndexMap, taskMonitor, paramMap);
             return tableCoprocessor;
         } else if (settings instanceof EventCoprocessorSettings) {
             final EventCoprocessorSettings eventCoprocessorSettings = (EventCoprocessorSettings) settings;
-            final EventCoprocessor eventCoprocessor = new EventCoprocessor(indexFieldsMap, eventCoprocessorSettings,
+            final EventCoprocessor eventCoprocessor = new EventCoprocessor(eventCoprocessorSettings,
                     fieldIndexMap);
             return eventCoprocessor;
         }

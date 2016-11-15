@@ -25,7 +25,12 @@ import stroom.dashboard.server.ActiveQuery;
 import stroom.dashboard.server.QueryMarshaller;
 import stroom.dashboard.server.SearchDataSourceProviderRegistry;
 import stroom.dashboard.server.SearchResultCreator;
-import stroom.dashboard.shared.*;
+import stroom.dashboard.shared.BasicQueryKey;
+import stroom.dashboard.shared.ParamUtil;
+import stroom.dashboard.shared.Query;
+import stroom.dashboard.shared.Row;
+import stroom.dashboard.shared.TableResult;
+import stroom.dashboard.shared.TableResultRequest;
 import stroom.entity.shared.DocRef;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
@@ -33,7 +38,18 @@ import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
-import stroom.query.shared.*;
+import stroom.query.shared.ComponentResultRequest;
+import stroom.query.shared.ComponentSettings;
+import stroom.query.shared.Condition;
+import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.ExpressionTerm;
+import stroom.query.shared.Field;
+import stroom.query.shared.Format;
+import stroom.query.shared.QueryData;
+import stroom.query.shared.Search;
+import stroom.query.shared.SearchRequest;
+import stroom.query.shared.SearchResult;
+import stroom.query.shared.TableSettings;
 import stroom.search.server.LuceneSearchDataSourceProvider;
 import stroom.task.server.TaskManager;
 import stroom.util.config.StroomProperties;
@@ -117,7 +133,7 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         boolean complete = false;
         final Map<String, SharedObject> results = new HashMap<String, SharedObject>();
 
-        final Search search = new Search(searchData.getDataSource(), expression, resultComponentMap, true);
+        final Search search = new Search(searchData.getDataSource(), expression, resultComponentMap);
         final SearchRequest searchRequest = new SearchRequest(search, componentResultRequests,
                 DateTimeZone.UTC.getID());
 

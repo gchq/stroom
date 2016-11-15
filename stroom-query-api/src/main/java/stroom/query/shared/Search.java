@@ -19,6 +19,7 @@ package stroom.query.shared;
 import stroom.entity.shared.DocRef;
 import stroom.util.shared.SharedObject;
 
+import java.util.Collections;
 import java.util.Map;
 
 public class Search implements SharedObject {
@@ -27,17 +28,29 @@ public class Search implements SharedObject {
     private DocRef dataSourceRef;
     private ExpressionOperator expression;
     private Map<String, ComponentSettings> componentSettingsMap;
+    private Map<String, String> paramMap;
     private boolean incremental;
 
     public Search() {
         // Default constructor necessary for GWT serialisation.
     }
 
+    public Search(final DocRef dataSourceRef, final ExpressionOperator expression) {
+        this(dataSourceRef, expression, null, Collections.emptyMap(), true);
+    }
+
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
-                  final Map<String, ComponentSettings> componentSettingsMap, final boolean incremental) {
+                  final Map<String, ComponentSettings> componentSettingsMap) {
+        this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), true);
+    }
+
+    public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
+                  final Map<String, ComponentSettings> componentSettingsMap, final Map<String, String> paramMap,
+                  final boolean incremental) {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
+        this.paramMap = paramMap;
         this.incremental = incremental;
     }
 
@@ -51,6 +64,10 @@ public class Search implements SharedObject {
 
     public Map<String, ComponentSettings> getComponentSettingsMap() {
         return componentSettingsMap;
+    }
+
+    public Map<String, String> getParamMap() {
+        return paramMap;
     }
 
     public boolean isIncremental() {
