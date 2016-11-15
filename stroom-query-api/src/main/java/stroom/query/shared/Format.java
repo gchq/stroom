@@ -16,45 +16,29 @@
 
 package stroom.query.shared;
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.util.shared.HasDisplayValue;
+import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlType;
-
-import stroom.util.shared.HasDisplayValue;
-import stroom.util.shared.SharedObject;
+import java.util.Arrays;
+import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "format", propOrder = { "type", "settings" })
+@XmlType(name = "format", propOrder = {"type", "settings", "wrap"})
 public class Format implements SharedObject {
-    public enum Type implements HasDisplayValue {
-        GENERAL("General"), NUMBER("Number"), DATE_TIME("Date Time"), TEXT("Text");
-
-        private final String displayValue;
-
-        Type(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-    }
-
-    public static List<Type> TYPES = Arrays.asList(Type.GENERAL, Type.NUMBER, Type.DATE_TIME, Type.TEXT);
-
     private static final long serialVersionUID = -5380825645719299089L;
-
+    public static List<Type> TYPES = Arrays.asList(Type.GENERAL, Type.NUMBER, Type.DATE_TIME, Type.TEXT);
     @XmlElement(name = "type")
     private Type type;
     @XmlElements({ @XmlElement(name = "numberFormatSettings", type = NumberFormatSettings.class),
             @XmlElement(name = "dateTimeFormatSettings", type = DateTimeFormatSettings.class) })
     private FormatSettings settings;
+    @XmlElement(name = "wrap")
+    private Boolean wrap;
 
     public Format() {
         // Default constructor necessary for GWT serialisation.
@@ -83,5 +67,28 @@ public class Format implements SharedObject {
 
     public void setSettings(final FormatSettings settings) {
         this.settings = settings;
+    }
+
+    public Boolean getWrap() {
+        return wrap;
+    }
+
+    public void setWrap(final Boolean wrap) {
+        this.wrap = wrap;
+    }
+
+    public enum Type implements HasDisplayValue {
+        GENERAL("General"), NUMBER("Number"), DATE_TIME("Date Time"), TEXT("Text");
+
+        private final String displayValue;
+
+        Type(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
     }
 }

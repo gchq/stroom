@@ -24,7 +24,6 @@ import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.HasData;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;
@@ -62,4 +61,6 @@ public interface DataGridView<R> extends View, HasData<R> {
     void setHeadingListener(HeadingListener headingListener);
 
     void setRefreshing(boolean refreshing);
+
+    DataGridViewImpl.DefaultResources getResources();
 }

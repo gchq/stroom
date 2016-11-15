@@ -101,6 +101,10 @@
 	user-select: initial;	
 }
 
+.dataGridCellWrapText {
+    white-space: normal;
+}
+
 .dataGridFirstColumnFooter {
 	
 }

@@ -16,9 +16,6 @@
 
 package stroom.dashboard.client.table;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -31,16 +28,18 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.client.table.FormatPresenter.FormatView;
+import stroom.item.client.ItemListBox;
+import stroom.item.client.StringListBox;
 import stroom.query.shared.Format.Type;
 import stroom.query.shared.TimeZone;
 import stroom.query.shared.TimeZone.Use;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers>implements FormatView {
     public static final List<String> STANDARD_FORMATS = Arrays
@@ -49,22 +48,15 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers>implemen
                     "d MMM yyyy HH:mm:ss", "yyyy-MM-dd", "dd/MM/yyyy", "dd/MM/yy", "MM/dd/yyyy", "d MMM yyyy");
 
     private static final int ROW_COUNT = 8;
-
-    public interface Binder extends UiBinder<Widget, FormatViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     Grid grid;
     @UiField
     ItemListBox<Type> type;
-
     @UiField
     ValueSpinner decimalPlaces;
     @UiField
     TickBox separate;
-
     @UiField
     StringListBox format;
     @UiField
@@ -79,6 +71,8 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers>implemen
     ValueSpinner timeZoneOffsetHours;
     @UiField
     ValueSpinner timeZoneOffsetMinutes;
+    @UiField
+    TickBox wrap;
 
     @Inject
     public FormatViewImpl(final Binder binder) {
@@ -252,6 +246,16 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers>implemen
         }
     }
 
+    @Override
+    public boolean isWrap() {
+        return wrap.getBooleanValue();
+    }
+
+    @Override
+    public void setWrap(final boolean wrap) {
+        this.wrap.setBooleanValue(wrap);
+    }
+
     @UiHandler("custom")
     public void onTickBoxClick(final ValueChangeEvent<TickBoxState> event) {
         text.setEnabled(custom.getBooleanValue());
@@ -270,5 +274,8 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers>implemen
     @UiHandler("timeZoneUse")
     public void onTimeZoneUseChange(final SelectionEvent<TimeZone.Use> event) {
         setType(this.type.getSelectedItem());
+    }
+
+    public interface Binder extends UiBinder<Widget, FormatViewImpl> {
     }
 }
