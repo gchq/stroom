@@ -14,19 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.util.client;
 
 public class RandomId {
     private static char[] CHARS = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
             'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
             'Z' };
 
-    public static String getId(final int len) {
+    public static String createId(final int len) {
         final char[] id = new char[len];
         for (int i = 0; i < len; i++) {
             final int index = (int) (Math.random() * CHARS.length);
             id[i] = CHARS[index];
         }
         return new String(id);
+    }
+
+    public static String createDiscrimiator() {
+        final String rid = createId(4);
+        final String now = String.valueOf(System.currentTimeMillis());
+        return rid + "_" + now;
     }
 }

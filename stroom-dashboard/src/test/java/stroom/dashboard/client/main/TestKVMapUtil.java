@@ -18,6 +18,7 @@ package stroom.dashboard.client.main;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.util.client.KVMapUtil;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.Map;
