@@ -16,8 +16,6 @@
 
 package stroom.main.client.presenter;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.shared.GwtEvent.Type;
@@ -32,44 +30,23 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
-
 import stroom.app.client.KeyboardInterceptor;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskEndEvent.TaskEndHandler;
 import stroom.task.client.TaskStartEvent;
-import stroom.task.client.TaskStartEvent.TaskStartHandler;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.util.client.DoubleSelectTest;
 
 public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPresenter.MainProxy> {
-    @ProxyCodeSplit
-    public interface MainProxy extends Proxy<MainPresenter> {
-    }
-
-    public interface MainView extends View {
-        SpinnerDisplay getSpinner();
-
-        void maximise(View view);
-    }
-
-    public interface SpinnerDisplay extends HasClickHandlers, HasDoubleClickHandlers {
-        void start();
-
-        void stop();
-    }
-
     @ContentSlot
-    public static final Type<RevealContentHandler<?>> MENUBAR = new Type<RevealContentHandler<?>>();
+    public static final Type<RevealContentHandler<?>> MENUBAR = new Type<>();
     @ContentSlot
-    public static final Type<RevealContentHandler<?>> EXPLORER = new Type<RevealContentHandler<?>>();
+    public static final Type<RevealContentHandler<?>> EXPLORER = new Type<>();
     @ContentSlot
-    public static final Type<RevealContentHandler<?>> CONTENT = new Type<RevealContentHandler<?>>();
-
+    public static final Type<RevealContentHandler<?>> CONTENT = new Type<>();
     private final Timer refreshTimer;
     private boolean click;
-
     @Inject
     public MainPresenter(final EventBus eventBus, final MainView view, final MainProxy proxy,
             final KeyboardInterceptor keyboardInterceptor) {
@@ -78,63 +55,49 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
         // Handle key presses.
         keyboardInterceptor.register(view.asWidget());
 
-        addRegisteredHandler(TaskStartEvent.getType(), new TaskStartHandler() {
-            @Override
-            public void onTaskStart(final TaskStartEvent event) {
-                // DebugPane.debug("taskStart:" + event.getTaskCount());
+        addRegisteredHandler(TaskStartEvent.getType(), event -> {
+            // DebugPane.debug("taskStart:" + event.getTaskCount());
 
-                // Always try and start spinner even if it might be spinning
-                // already.
+            // Always try and start spinner even if it might be spinning
+            // already.
+            if (view.getSpinner() != null) {
+                view.getSpinner().start();
+            }
+        });
+        addRegisteredHandler(TaskEndEvent.getType(), event -> {
+            // DebugPane.debug("taskEnd:" + event.getTaskCount());
+
+            // Only stop spinner if we are no longer executing any tasks.
+            if (event.getTaskCount() == 0) {
                 if (view.getSpinner() != null) {
-                    view.getSpinner().start();
-                }
-            }
-        });
-        addRegisteredHandler(TaskEndEvent.getType(), new TaskEndHandler() {
-            @Override
-            public void onTaskEnd(final TaskEndEvent event) {
-                // DebugPane.debug("taskEnd:" + event.getTaskCount());
-
-                // Only stop spinner if we are no longer executing any tasks.
-                if (event.getTaskCount() == 0) {
-                    if (view.getSpinner() != null) {
-                        view.getSpinner().stop();
-                    }
+                    view.getSpinner().stop();
                 }
             }
         });
 
-        registerHandler(view.getSpinner().addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (click) {
-                    click = false;
-                    OpenTaskManagerEvent.fire(MainPresenter.this);
+        registerHandler(view.getSpinner().addClickHandler(event -> {
+            if (click) {
+                click = false;
+                OpenTaskManagerEvent.fire(MainPresenter.this);
 
-                } else {
-                    final Timer clickTimer = new Timer() {
-                        @Override
-                        public void run() {
-                            if (click) {
-                                stopAutoRefresh();
-                                // refresh();
-                                startAutoRefresh();
-                            }
-
-                            click = false;
+            } else {
+                final Timer clickTimer = new Timer() {
+                    @Override
+                    public void run() {
+                        if (click) {
+                            stopAutoRefresh();
+                            // refresh();
+                            startAutoRefresh();
                         }
-                    };
-                    click = true;
-                    clickTimer.schedule(DoubleSelectTest.DOUBLE_SELECT_DELAY);
-                }
+
+                        click = false;
+                    }
+                };
+                click = true;
+                clickTimer.schedule(DoubleSelectTest.DOUBLE_SELECT_DELAY);
             }
         }));
-        addRegisteredHandler(MaximiseEvent.getType(), new MaximiseEvent.Handler() {
-            @Override
-            public void onMaximise(final MaximiseEvent event) {
-                view.maximise(event.getView());
-            }
-        });
+        addRegisteredHandler(MaximiseEvent.getType(), event -> view.maximise(event.getView()));
 
         refreshTimer = new Timer() {
             @Override
@@ -159,5 +122,21 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
     protected void revealInParent() {
         RevealRootContentEvent.fire(this, this);
         RootPanel.get("logo").setVisible(false);
+    }
+
+    @ProxyCodeSplit
+    public interface MainProxy extends Proxy<MainPresenter> {
+    }
+
+    public interface MainView extends View {
+        SpinnerDisplay getSpinner();
+
+        void maximise(View view);
+    }
+
+    public interface SpinnerDisplay extends HasClickHandlers, HasDoubleClickHandlers {
+        void start();
+
+        void stop();
     }
 }
