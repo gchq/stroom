@@ -105,7 +105,7 @@
 
   <!-- This is required for Gwt-Platform Proxy's generator -->
   <define-configuration-property name="gin.ginjector" is-multi-valued="false" />
-  <set-configuration-property name="gin.ginjector" value="stroom.app.client.gin.AppGinjector" />
+    <set-configuration-property name="gin.ginjector" value="stroom.app.client.gin.DashboardAppGinjector"/>
   <set-configuration-property name='xsiframe.failIfScriptTag' value='FALSE'/>
 
 </module>

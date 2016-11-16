@@ -19,14 +19,13 @@ package stroom.app.client;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.gwtplatform.mvp.client.DelayedBindRegistry;
-
-import stroom.app.client.gin.AppGinjector;
+import stroom.app.client.gin.DashboardAppGinjector;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
 public class DashboardApp implements EntryPoint {
-    public final AppGinjector ginjector = GWT.create(AppGinjector.class);
+    public final DashboardAppGinjector ginjector = GWT.create(DashboardAppGinjector.class);
 
     /**
      * This is the entry point method.
@@ -34,8 +33,6 @@ public class DashboardApp implements EntryPoint {
     public void onModuleLoad() {
         // This is required for Gwt-Platform proxy's generator.
         DelayedBindRegistry.bind(ginjector);
-
-        // Register all plugins that will respond to
 
         // Start the login manager. This will attempt to auto login with PKI and
         // will therefore start the rest of the application.
@@ -45,4 +42,5 @@ public class DashboardApp implements EntryPoint {
         // at some point.
         // ginjector.getPlaceManager().revealCurrentPlace();
     }
+
 }

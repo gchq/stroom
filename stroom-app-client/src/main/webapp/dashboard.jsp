@@ -24,7 +24,7 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <title><%=StroomProperties.getProperty("stroom.pageTitle", "Stroom")%></title>
 
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="dashboard.ico" type="image/x-icon" />
 
     <!-- Material Design Lite -->
 	<!-- <link rel="stylesheet" href="mdl/material.min.css" /> -->
@@ -44,9 +44,10 @@
     <link rel="stylesheet" href="css/firefox-scrollbar.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom-control.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom-button.css" type="text/css" />
+    <link rel="stylesheet" href="css/fa-button.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom-dashboard.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom.css" type="text/css" />
-    <link rel="stylesheet" href="stroom/dynamic.css" type="text/css" />
+    <link rel="stylesheet" href="dynamic.css" type="text/css" />
     <link rel="stylesheet" href="stroom/xmlarea.css" type="text/css" />
     
     <link rel="stylesheet" href="xsdbrowser/xsdbrowser.css" type="text/css" />      
@@ -93,7 +94,7 @@
 	  </div>
 	</div>
 	
-	<div id="logo" style="position:absolute;top:0px;left:0px;width:430px;height:21px;margin:7px;background:url('images/logo.png')" />
+	<div id="logo" style="position:absolute;top:0px;left:0px;width:146px;height:35px;background:url('images/logo.png');background-repeat:no-repeat" />
   
     <noscript>
       <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color:white; border: 1px solid red; padding: 4px; font-family: sans-serif">
