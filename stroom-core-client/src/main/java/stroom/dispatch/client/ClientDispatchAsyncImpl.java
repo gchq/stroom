@@ -16,15 +16,6 @@
 
 package stroom.dispatch.client;
 
-import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.presenter.AlertCallback;
-import stroom.dispatch.shared.Action;
-import stroom.security.client.ClientSecurityContext;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
-import stroom.task.shared.RefreshAction;
-import stroom.util.shared.SharedObject;
-import stroom.util.shared.SharedString;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -36,6 +27,15 @@ import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.rpc.StatusCodeException;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.presenter.AlertCallback;
+import stroom.dispatch.shared.Action;
+import stroom.security.client.ClientSecurityContext;
+import stroom.task.client.TaskEndEvent;
+import stroom.task.client.TaskStartEvent;
+import stroom.task.shared.RefreshAction;
+import stroom.util.shared.SharedObject;
+import stroom.util.shared.SharedString;
 
 import javax.inject.Provider;
 
@@ -93,7 +93,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
         refreshTimer.scheduleRepeating(ONE_MINUTE);
 
         // realService = GWT.create(DispatchService.class);
-        final String endPointName = GWT.getModuleBaseURL() + "dispatch.rpc";
+        final String endPointName = GWT.getHostPageBaseURL() + "dispatch.rpc";
         final ServiceDefTarget target = (ServiceDefTarget) dispatchService;
         target.setServiceEntryPoint(endPointName);
     }
@@ -230,7 +230,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
 
     @Override
     public String getImportFileURL() {
-        return GWT.getModuleBaseURL() + "importfile.rpc";
+        return GWT.getHostPageBaseURL() + "importfile.rpc";
     }
 
     @Override

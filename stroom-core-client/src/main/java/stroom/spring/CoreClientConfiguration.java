@@ -17,7 +17,11 @@
 package stroom.spring;
 
 import org.springframework.aop.framework.ProxyFactoryBean;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Scope;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import stroom.cluster.server.ClusterCallServiceRPC;
@@ -26,7 +30,14 @@ import stroom.dispatch.client.DispatchService;
 import stroom.dispatch.server.DispatchServiceImpl;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.feed.server.RemoteFeedServiceRPC;
-import stroom.servlet.*;
+import stroom.servlet.DebugServlet;
+import stroom.servlet.DynamicCSSServlet;
+import stroom.servlet.EchoServlet;
+import stroom.servlet.ExportConfigServlet;
+import stroom.servlet.ImportFileServlet;
+import stroom.servlet.SessionListServlet;
+import stroom.servlet.SessionResourceStoreImpl;
+import stroom.servlet.StatusServlet;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.thread.ThreadLocalBuffer;
@@ -72,10 +83,10 @@ public class CoreClientConfiguration {
         mapping.setAlwaysUseFullPath(true);
 
         final Properties mappings = new Properties();
-        mappings.setProperty("/stroom/dynamic.css", DynamicCSSServlet.BEAN_NAME);
-        mappings.setProperty("/stroom/dispatch.rpc", "dispatchServiceRPC");
-        mappings.setProperty("/stroom/importfile.rpc", ImportFileServlet.BEAN_NAME);
-        mappings.setProperty("/stroom/script", "scriptServlet");
+        mappings.setProperty("/dynamic.css", DynamicCSSServlet.BEAN_NAME);
+        mappings.setProperty("/dispatch.rpc", "dispatchServiceRPC");
+        mappings.setProperty("/importfile.rpc", ImportFileServlet.BEAN_NAME);
+        mappings.setProperty("/script", "scriptServlet");
         mappings.setProperty("/clustercall.rpc", ClusterCallServiceRPC.BEAN_NAME);
         mappings.setProperty("/export/*", ExportConfigServlet.BEAN_NAME);
         mappings.setProperty("/status", StatusServlet.BEAN_NAME);

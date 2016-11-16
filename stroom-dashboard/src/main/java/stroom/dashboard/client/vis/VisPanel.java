@@ -16,11 +16,6 @@
 
 package stroom.dashboard.client.vis;
 
-import stroom.dashboard.client.vis.MyScriptInjector.FromString;
-import stroom.dashboard.client.vis.MyScriptInjector.FromUrl;
-import stroom.script.shared.Script;
-import stroom.visualisation.client.presenter.VisFunction;
-import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
@@ -31,22 +26,19 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
+import stroom.dashboard.client.vis.MyScriptInjector.FromString;
+import stroom.dashboard.client.vis.MyScriptInjector.FromUrl;
+import stroom.script.shared.Script;
+import stroom.visualisation.client.presenter.VisFunction;
+import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 
 import java.util.List;
 import java.util.Set;
 
 public class VisPanel extends SimplePanel implements VisPane {
-    private class Wrapper extends Widget {
-        public Wrapper(final Element elem) {
-            setElement(elem);
-        }
-    }
-
     private final Set<Long> loadedScripts;
-
     private JavaScriptObject vis;
     private boolean autoResize = true;
-
     public VisPanel(final Set<Long> loadedScripts) {
         this.loadedScripts = loadedScripts;
     }
@@ -239,7 +231,7 @@ public class VisPanel extends SimplePanel implements VisPane {
 
     private String createURL(final Script script) {
         final StringBuilder sb = new StringBuilder();
-        sb.append("stroom/script?");
+        sb.append("script?");
         sb.append("uuid=");
         sb.append(script.getUuid());
         sb.append("&id=");
@@ -338,4 +330,10 @@ public class VisPanel extends SimplePanel implements VisPane {
     /*-{
     vis.resize();
     }-*/;
+
+    private class Wrapper extends Widget {
+        public Wrapper(final Element elem) {
+            setElement(elem);
+        }
+    }
 }

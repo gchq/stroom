@@ -157,11 +157,11 @@
   </servlet-mapping>
   <servlet-mapping>
     <servlet-name>spring</servlet-name>
-    <url-pattern>/stroom/dynamic.css</url-pattern>
+      <url-pattern>/dynamic.css</url-pattern>
   </servlet-mapping>
   <servlet-mapping>
     <servlet-name>spring</servlet-name>
-    <url-pattern>/stroom/script</url-pattern>
+      <url-pattern>/script</url-pattern>
   </servlet-mapping>
   <servlet-mapping>
     <servlet-name>spring</servlet-name>
