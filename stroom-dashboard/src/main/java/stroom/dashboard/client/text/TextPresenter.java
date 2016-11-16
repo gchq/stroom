@@ -316,14 +316,15 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     @Override
     public void link() {
-        String tableId = textSettings.getTableId();
+        final String tableId = textSettings.getTableId();
+        String newTableId = getComponents().validateOrGetFirstComponentId(tableId, TablePresenter.TYPE.getId());
 
-        final List<String> list = getComponents().getIdListByType(TablePresenter.TYPE.getId());
-        if (tableId != null && !list.contains(tableId)) {
-            tableId = null;
+        // If we can't get the same table id then set to null so that changes to any table can be listened to.
+        if (!EqualsUtil.isEquals(tableId, newTableId)) {
+            newTableId = null;
         }
 
-        textSettings.setTableId(tableId);
+        textSettings.setTableId(newTableId);
         update(currentTablePresenter);
     }
 

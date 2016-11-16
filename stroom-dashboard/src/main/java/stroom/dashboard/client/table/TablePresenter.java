@@ -663,14 +663,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     @Override
     public void link() {
         String queryId = tableSettings.getQueryId();
-        final List<String> list = getComponents().getIdListByType(QueryPresenter.TYPE.getId());
-        if (list.size() > 0) {
-            if (queryId == null) {
-                queryId = list.get(0);
-            } else if (!list.contains(queryId)) {
-                queryId = list.get(0);
-            }
-        }
+        queryId = getComponents().validateOrGetFirstComponentId(queryId, QueryPresenter.TYPE.getId());
         tableSettings.setQueryId(queryId);
         setQueryId(queryId);
     }

@@ -148,6 +148,16 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     }
 
     @Override
+    public String getId() {
+        return componentData.getId();
+    }
+
+    @Override
+    public String getDisplayValue() {
+        return componentData.getName() + " (" + componentData.getId() + ")";
+    }
+
+    @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }

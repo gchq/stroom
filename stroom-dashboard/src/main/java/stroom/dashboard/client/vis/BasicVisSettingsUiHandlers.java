@@ -19,5 +19,5 @@ package stroom.dashboard.client.vis;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface BasicVisSettingsUiHandlers extends UiHandlers {
-    void onTableIdChange();
+    void onTableChange();
 }
