@@ -16,7 +16,11 @@
 
 package stroom.dashboard.client.text;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
+import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TextSettings;
@@ -25,9 +29,6 @@ import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsBuilder;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
@@ -47,16 +48,8 @@ public class BasicTextSettingsPresenter
         view.setPipelineView(pipelinePresenter.getView());
     }
 
-    private void setTableIdList(final List<String> list) {
-        getView().setTableIdList(list);
-    }
-
-    private String getTableId() {
-        return getView().getTableId();
-    }
-
-    private void setTableId(final String tableId) {
-        getView().setTableId(tableId);
+    private void setTableList(final List<Component> list) {
+        getView().setTableList(list);
     }
 
     private DocRef getPipeline() {
@@ -79,8 +72,8 @@ public class BasicTextSettingsPresenter
     public void read(final ComponentConfig componentData) {
         super.read(componentData);
 
-        final List<String> list = getComponents().getIdListByType(TablePresenter.TYPE.getId());
-        setTableIdList(list);
+        final List<Component> list = getComponents().getComponentsByType(TablePresenter.TYPE.getId());
+        setTableList(list);
 
         final TextSettings settings = (TextSettings) componentData.getSettings();
         setTableId(settings.getTableId());
@@ -96,6 +89,19 @@ public class BasicTextSettingsPresenter
         settings.setTableId(getTableId());
         settings.setPipeline(getPipeline());
         settings.setShowAsHtml(isShowAsHtml());
+    }
+
+    private String getTableId() {
+        final Component table = getView().getTable();
+        if (table == null) {
+            return null;
+        }
+
+        return table.getId();
+    }
+
+    private void setTableId(final String tableId) {
+        getView().setTable(getComponents().get(tableId));
     }
 
     @Override
@@ -115,11 +121,11 @@ public class BasicTextSettingsPresenter
     }
 
     public interface BasicTextSettingsView extends BasicSettingsTabPresenter.SettingsView {
-        void setTableIdList(List<String> tableIdList);
+        void setTableList(List<Component> tableList);
 
-        String getTableId();
+        Component getTable();
 
-        void setTableId(String tableId);
+        void setTable(Component table);
 
         void setPipelineView(View view);
 

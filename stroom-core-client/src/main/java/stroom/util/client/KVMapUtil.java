@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.util.client;
 
 import java.util.Collections;
 import java.util.HashMap;

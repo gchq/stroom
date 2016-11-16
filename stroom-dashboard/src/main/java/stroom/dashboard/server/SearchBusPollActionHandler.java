@@ -17,11 +17,20 @@
 package stroom.dashboard.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.shared.*;
+import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.Query;
+import stroom.dashboard.shared.QueryKeyImpl;
+import stroom.dashboard.shared.QueryService;
+import stroom.dashboard.shared.SearchBusPollAction;
+import stroom.dashboard.shared.SearchBusPollResult;
 import stroom.logging.SearchEventLog;
 import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
-import stroom.query.shared.*;
+import stroom.query.shared.QueryData;
+import stroom.query.shared.QueryKey;
+import stroom.query.shared.Search;
+import stroom.query.shared.SearchRequest;
+import stroom.query.shared.SearchResult;
 import stroom.security.SecurityContext;
 import stroom.task.cluster.ClusterResultCollector;
 import stroom.task.cluster.ClusterResultCollectorCache;
@@ -81,8 +90,9 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                 LOGGER.debug(sb.toString());
             }
 
-            final Map<QueryKey, SearchResult> searchResultMap = new HashMap<QueryKey, SearchResult>();
-            final ActiveQueries searchSession = searchSessionManager.get(action.getSessionId());
+            final String searchSessionId = action.getSessionId() + "_" + action.getApplicationInstanceId();
+            final ActiveQueries searchSession = searchSessionManager.get(searchSessionId);
+            final Map<QueryKey, SearchResult> searchResultMap = new HashMap<>();
 
             // First kill off any queries that are no longer required by the UI.
             searchSession.destroyUnusedQueries(action.getSearchActionMap().keySet());

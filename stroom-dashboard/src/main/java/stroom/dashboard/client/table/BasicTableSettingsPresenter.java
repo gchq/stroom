@@ -16,7 +16,11 @@
 
 package stroom.dashboard.client.table;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
+import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.entity.shared.DocRef;
@@ -25,9 +29,6 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.shared.TableSettings;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsBuilder;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,7 @@ public class BasicTableSettingsPresenter
 
     @Inject
     public BasicTableSettingsPresenter(final EventBus eventBus, final BasicTableSettingsView view,
-            final EntityDropDownPresenter pipelinePresenter) {
+                                       final EntityDropDownPresenter pipelinePresenter) {
         super(eventBus, view);
         this.pipelinePresenter = pipelinePresenter;
 
@@ -49,16 +50,21 @@ public class BasicTableSettingsPresenter
         view.setPipelineView(pipelinePresenter.getView());
     }
 
-    private void setQueryIdList(final List<String> list) {
-        getView().setQueryIdList(list);
+    private void setQueryList(final List<Component> list) {
+        getView().setQueryList(list);
     }
 
     private String getQueryId() {
-        return getView().getQueryId();
+        final Component component = getView().getQuery();
+        if (component == null) {
+            return null;
+        }
+
+        return component.getId();
     }
 
     private void setQueryId(final String queryId) {
-        getView().setQueryId(queryId);
+        getView().setQuery(getComponents().get(queryId));
     }
 
     private boolean extractValues() {
@@ -97,8 +103,8 @@ public class BasicTableSettingsPresenter
     public void read(final ComponentConfig componentData) {
         super.read(componentData);
 
-        final List<String> list = getComponents().getIdListByType(QueryPresenter.TYPE.getId());
-        setQueryIdList(list);
+        final List<Component> list = getComponents().getComponentsByType(QueryPresenter.TYPE.getId());
+        setQueryList(list);
 
         final TableSettings settings = (TableSettings) componentData.getSettings();
         setQueryId(settings.getQueryId());
@@ -176,11 +182,11 @@ public class BasicTableSettingsPresenter
     }
 
     public interface BasicTableSettingsView extends BasicSettingsTabPresenter.SettingsView {
-        void setQueryIdList(List<String> queryIdList);
+        void setQueryList(List<Component> queryList);
 
-        String getQueryId();
+        Component getQuery();
 
-        void setQueryId(String queryId);
+        void setQuery(Component query);
 
         boolean isExtractValues();
 

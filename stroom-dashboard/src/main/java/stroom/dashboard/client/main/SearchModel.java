@@ -30,6 +30,8 @@ import stroom.query.shared.QueryKey;
 import stroom.query.shared.Search;
 import stroom.query.shared.SearchRequest;
 import stroom.query.shared.SearchResult;
+import stroom.util.client.KVMapUtil;
+import stroom.util.client.RandomId;
 import stroom.util.shared.SharedObject;
 
 import java.util.HashMap;
@@ -133,7 +135,7 @@ public class SearchModel {
 
                 currentQueryKey = new UniqueQueryKey(currentQueryKey.getDashboardId(),
                         currentQueryKey.getDashboardName(), currentQueryKey.getQueryId(),
-                        createDiscrimiator());
+                        RandomId.createDiscrimiator());
                 currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, incremental);
                 activeSearch = currentSearch;
 
@@ -311,7 +313,7 @@ public class SearchModel {
     public void setInitialQueryKey(final QueryKeyImpl initialQueryKey) {
         destroy();
         currentQueryKey = new UniqueQueryKey(initialQueryKey.getDashboardId(), initialQueryKey.getDashboardName(),
-                initialQueryKey.getQueryId(), createDiscrimiator());
+                initialQueryKey.getQueryId(), RandomId.createDiscrimiator());
     }
 
     public SearchResult getCurrentResult() {
@@ -324,12 +326,6 @@ public class SearchModel {
 
     public void removeComponent(final String componentId) {
         componentMap.remove(componentId);
-    }
-
-    private String createDiscrimiator() {
-        final String rid = RandomId.getId(4);
-        final String now = String.valueOf(System.currentTimeMillis());
-        return rid + ":" + now;
     }
 
     public enum Mode {

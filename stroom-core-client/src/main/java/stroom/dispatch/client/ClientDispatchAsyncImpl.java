@@ -34,6 +34,7 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.shared.RefreshAction;
+import stroom.util.client.RandomId;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.SharedString;
 
@@ -45,6 +46,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
 
     private final EventBus eventBus;
     private final DispatchServiceAsync dispatchService;
+    private final String applicationInstanceId;
     private boolean refreshing = false;
 
     @Inject
@@ -52,6 +54,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
                                    final DispatchServiceAsync dispatchService) {
         this.eventBus = eventBus;
         this.dispatchService = dispatchService;
+        this.applicationInstanceId = RandomId.createDiscrimiator();
 
         final Timer refreshTimer = new Timer() {
             @Override
@@ -61,6 +64,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
                     if (securityContext != null && securityContext.isLoggedIn()) {
                         refreshing = true;
                         final RefreshAction action = new RefreshAction();
+                        action.setApplicationInstanceId(applicationInstanceId);
                         execute(action, new AsyncCallbackAdaptor<SharedString>() {
                             @Override
                             public void onSuccess(final SharedString result) {
@@ -130,9 +134,10 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
         });
     }
 
-    private <R extends SharedObject> void dispatch(final Action<R> task, final String message,
+    private <R extends SharedObject> void dispatch(final Action<R> action, final String message,
                                                    final boolean showWorking, final AsyncCallbackAdaptor<R> callback) {
-        dispatchService.exec(task, new AsyncCallback<R>() {
+        action.setApplicationInstanceId(applicationInstanceId);
+        dispatchService.exec(action, new AsyncCallback<R>() {
             @Override
             public void onSuccess(final R result) {
                 if (showWorking) {
@@ -152,7 +157,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
                 }
 
                 if (message != null && message.length() >= LOGIN_HTML.length() && message.indexOf(LOGIN_HTML) != -1) {
-                    if (!("Logout".equalsIgnoreCase(task.getTaskName()))) {
+                    if (!("Logout".equalsIgnoreCase(action.getTaskName()))) {
                         // Logout.
                         AlertEvent.fireError(ClientDispatchAsyncImpl.this,
                                 "Your user session appears to have terminated", message, null);
@@ -160,7 +165,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
                 } else if (throwable instanceof StatusCodeException) {
                     final StatusCodeException scEx = (StatusCodeException) throwable;
                     if (scEx.getStatusCode() >= 100) {
-                        if (!("Logout".equalsIgnoreCase(task.getTaskName()))) {
+                        if (!("Logout".equalsIgnoreCase(action.getTaskName()))) {
                             // Logout.
                             AlertEvent.fireError(ClientDispatchAsyncImpl.this, "An error has occured",
                                     scEx.getStatusCode() + " - " + scEx.getMessage(), null);
@@ -183,13 +188,10 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
                 // Show the failure message if the callback does not
                 // deal with the failure.
                 if (callback == null || !callback.handlesFailure()) {
-                    AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, new AlertCallback() {
-                        @Override
-                        public void onClose() {
+                    AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, () -> {
                             // Let the callback handle any other aspect
                             // of the failure.
                             handleFailure(throwable);
-                        }
                     });
                 }
             }
@@ -230,7 +232,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
 
     @Override
     public String getImportFileURL() {
-        return GWT.getHostPageBaseURL() + "importfile.rpc";
+        return GWT.getModuleBaseURL() + "importfile.rpc";
     }
 
     @Override

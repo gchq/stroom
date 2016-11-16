@@ -29,8 +29,13 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-import stroom.dashboard.client.main.*;
+import stroom.dashboard.client.main.AbstractComponentPresenter;
+import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.ComponentChangeEvent;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.ResultComponent;
+import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
@@ -58,7 +63,6 @@ import stroom.visualisation.shared.Visualisation;
 import stroom.widget.tab.client.presenter.LayerContainer;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisView>
@@ -526,15 +530,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     @Override
     public void link() {
         String tableId = visSettings.getTableId();
-        final List<String> tableIdList = getComponents().getIdListByType(TablePresenter.TYPE.getId());
-        if (tableIdList.size() > 0) {
-            if (tableId == null) {
-                tableId = tableIdList.get(0);
-            } else if (!tableIdList.contains(tableId)) {
-                tableId = tableIdList.get(0);
-            }
-        }
-
+        tableId = getComponents().validateOrGetFirstComponentId(tableId, TablePresenter.TYPE.getId());
         updateTableId(tableId);
     }
 

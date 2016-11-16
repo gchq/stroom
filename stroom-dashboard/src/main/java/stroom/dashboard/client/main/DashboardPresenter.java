@@ -50,6 +50,7 @@ import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.explorer.shared.DocumentType;
 import stroom.security.client.ClientSecurityContext;
 import stroom.util.client.ImageUtil;
+import stroom.util.client.RandomId;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.GlyphButtonView;
@@ -417,10 +418,10 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
                     handlerRegistration.removeHandler();
                 }
 
-                String id = type.getId() + "-" + RandomId.getId(5);
+                String id = type.getId() + "-" + RandomId.createId(5);
                 // Make sure we don't duplicate ids.
                 while (components.idExists(id)) {
-                    id = type.getId() + "-" + RandomId.getId(5);
+                    id = type.getId() + "-" + RandomId.createId(5);
                 }
 
                 final ComponentConfig componentData = new ComponentConfig();

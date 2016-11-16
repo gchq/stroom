@@ -17,9 +17,9 @@
       </g:customCell>
     </g:row>
     <g:row>
-      <g:cell>Query Id:</g:cell>
+      <g:cell>Query:</g:cell>
       <g:customCell>
-        <i:StringListBox ui:field="queryId" width="100%" />
+        <i:ItemListBox ui:field="query" width="100%"/>
       </g:customCell>
     </g:row>
     <g:row>
