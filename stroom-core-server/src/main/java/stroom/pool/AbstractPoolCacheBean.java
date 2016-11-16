@@ -16,37 +16,17 @@
 
 package stroom.pool;
 
+import net.sf.ehcache.CacheManager;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
-
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import stroom.cache.AbstractCacheBean;
-import net.sf.ehcache.CacheManager;
 
 public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, ObjectPool<PoolItem<K, V>>>
         implements PoolBean<K, V> {
-    private static class ObjectFactory<K, V> extends BasePooledObjectFactory<PoolItem<K, V>> {
-        private final AbstractPoolCacheBean<K, V> parent;
-        private final K key;
-
-        public ObjectFactory(final AbstractPoolCacheBean<K, V> parent, final K key) {
-            this.parent = parent;
-            this.key = key;
-        }
-
-        @Override
-        public PoolItem<K, V> create() throws Exception {
-            return new PoolItem<>(key, parent.createValue(key));
-        }
-
-        @Override
-        public PooledObject<PoolItem<K, V>> wrap(final PoolItem<K, V> obj) {
-            return new DefaultPooledObject<>(obj);
-        }
-    }
-
     private static final int MAX_CACHE_ENTRIES = 1000000;
 
     public AbstractPoolCacheBean(final CacheManager cacheManager, final String name) {
@@ -55,8 +35,12 @@ public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, O
 
     @Override
     protected ObjectPool<PoolItem<K, V>> create(final K key) {
-        final GenericObjectPool<PoolItem<K, V>> pool = new GenericObjectPool<>(new ObjectFactory<>(this, key));
-        return pool;
+        final GenericObjectPoolConfig config = new GenericObjectPoolConfig();
+        config.setMaxTotal(1000);
+        config.setMaxIdle(1000);
+        config.setBlockWhenExhausted(false);
+
+        return new GenericObjectPool<>(new ObjectFactory<>(this, key), config);
     }
 
     protected abstract V createValue(K key);
@@ -81,6 +65,26 @@ public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, O
             }
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    private static class ObjectFactory<K, V> extends BasePooledObjectFactory<PoolItem<K, V>> {
+        private final AbstractPoolCacheBean<K, V> parent;
+        private final K key;
+
+        ObjectFactory(final AbstractPoolCacheBean<K, V> parent, final K key) {
+            this.parent = parent;
+            this.key = key;
+        }
+
+        @Override
+        public PoolItem<K, V> create() throws Exception {
+            return new PoolItem<>(key, parent.createValue(key));
+        }
+
+        @Override
+        public PooledObject<PoolItem<K, V>> wrap(final PoolItem<K, V> obj) {
+            return new DefaultPooledObject<>(obj);
         }
     }
 }

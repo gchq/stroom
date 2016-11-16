@@ -16,14 +16,14 @@
 
 package stroom.pipeline.server.factory;
 
+import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.util.io.StreamUtil;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.util.io.StreamUtil;
 
 public class PipelineImpl implements Pipeline {
     private final ProcessorFactory processorFactory;
@@ -95,40 +95,47 @@ public class PipelineImpl implements Pipeline {
             throw new ProcessException(e.getMessage(), e);
         }
 
-        if (!externallyStartedProcessing) {
-            internalStartProcessing();
-        }
-        if (!externallyStartedStream) {
-            internalStartStream();
-        }
+        try {
+            if (!externallyStartedProcessing) {
+                internalStartProcessing();
+            }
 
-        final List<Processor> processors = rootElement.createProcessors();
-        final Processor processor = processorFactory.create(processors);
-        if (processor == null) {
-            throw new ProcessException("The pipeline contains no child elements capable of processing");
-        }
+            try {
+                if (!externallyStartedStream) {
+                    internalStartStream();
+                }
 
-        if (stepping && processor instanceof ProcessorFactoryImpl.MultiWayProcessor) {
-            // FIXME : At present we can't support stepping where we have a
-            // multi-way processor as multi-way processors have
-            // PipedInput/PipedOutput or PipedReader/PipedWriter instances that
-            // run in separate threads to both produce and consume data
-            // respectively. As separate threads are used stepping cannot
-            // reliably get a snapshot of the data IO at each pipeline element.
-            // To fix this some sort of synchronisation needs to occur between
-            // all threads when a step is detected and before IO is captured or
-            // cleaned. This will be difficult to fix so leaving for now.
-            throw new ProcessException(
-                    "Stepping mode is not curently supported on forked pipelines that require piped IO to process them");
-        }
+                final List<Processor> processors = rootElement.createProcessors();
+                final Processor processor = processorFactory.create(processors);
+                if (processor == null) {
+                    throw new ProcessException("The pipeline contains no child elements capable of processing");
+                }
 
-        processor.process();
+                if (stepping && processor instanceof ProcessorFactoryImpl.MultiWayProcessor) {
+                    // FIXME : At present we can't support stepping where we have a
+                    // multi-way processor as multi-way processors have
+                    // PipedInput/PipedOutput or PipedReader/PipedWriter instances that
+                    // run in separate threads to both produce and consume data
+                    // respectively. As separate threads are used stepping cannot
+                    // reliably get a snapshot of the data IO at each pipeline element.
+                    // To fix this some sort of synchronisation needs to occur between
+                    // all threads when a step is detected and before IO is captured or
+                    // cleaned. This will be difficult to fix so leaving for now.
+                    throw new ProcessException(
+                            "Stepping mode is not curently supported on forked pipelines that require piped IO to process them");
+                }
 
-        if (!externallyStartedStream) {
-            internalEndStream();
-        }
-        if (!externallyStartedProcessing) {
-            internalEndProcessing();
+                processor.process();
+
+            } finally {
+                if (!externallyStartedStream) {
+                    internalEndStream();
+                }
+            }
+        } finally {
+            if (!externallyStartedProcessing) {
+                internalEndProcessing();
+            }
         }
     }
 
