@@ -18,7 +18,6 @@ package stroom.dispatch.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Timer;
@@ -28,7 +27,6 @@ import com.google.gwt.user.client.rpc.StatusCodeException;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.presenter.AlertCallback;
 import stroom.dispatch.shared.Action;
 import stroom.security.client.ClientSecurityContext;
 import stroom.task.client.TaskEndEvent;
@@ -69,15 +67,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
                             @Override
                             public void onSuccess(final SharedString result) {
                                 if (result != null) {
-                                    AlertEvent.fireWarn(ClientDispatchAsyncImpl.this, result.toString(),
-                                            new AlertCallback() {
-                                                @Override
-                                                public void onClose() {
-                                                    refreshing = false;
-
-                                                }
-                                            });
-
+                                    AlertEvent.fireWarn(ClientDispatchAsyncImpl.this, result.toString(), () -> refreshing = false);
                                 } else {
                                     refreshing = false;
                                 }
@@ -126,12 +116,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
             incrementTaskCount(message);
         }
 
-        Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-            @Override
-            public void execute() {
-                dispatch(task, message, showWorking, callback);
-            }
-        });
+        Scheduler.get().scheduleDeferred(() -> dispatch(task, message, showWorking, callback));
     }
 
     private <R extends SharedObject> void dispatch(final Action<R> action, final String message,
@@ -156,7 +141,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
                     decrementTaskCount();
                 }
 
-                if (message != null && message.length() >= LOGIN_HTML.length() && message.indexOf(LOGIN_HTML) != -1) {
+                if (message != null && message.length() >= LOGIN_HTML.length() && message.contains(LOGIN_HTML)) {
                     if (!("Logout".equalsIgnoreCase(action.getTaskName()))) {
                         // Logout.
                         AlertEvent.fireError(ClientDispatchAsyncImpl.this,
@@ -189,9 +174,9 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
                 // deal with the failure.
                 if (callback == null || !callback.handlesFailure()) {
                     AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, () -> {
-                            // Let the callback handle any other aspect
-                            // of the failure.
-                            handleFailure(throwable);
+                        // Let the callback handle any other aspect
+                        // of the failure.
+                        handleFailure(throwable);
                     });
                 }
             }
