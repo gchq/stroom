@@ -52,6 +52,7 @@ public class DashboardAppPresenter
     private final DashboardPresenter dashboardPresenter;
 
     private Dashboard dashboard;
+    private String params;
 
     @Inject
     public DashboardAppPresenter(final EventBus eventBus, final DashboardAppView view, final DashboardAppProxy proxy,
@@ -67,6 +68,7 @@ public class DashboardAppPresenter
 
             final String type = Window.Location.getParameter("type");
             final String uuid = Window.Location.getParameter("uuid");
+            params = Window.Location.getParameter("params");
 
             if (type == null || uuid == null) {
                 AlertEvent.fireError(this, "No dashboard uuid has been specified", null);
@@ -120,6 +122,7 @@ public class DashboardAppPresenter
             RevealRootContentEvent.fire(DashboardAppPresenter.this, DashboardAppPresenter.this);
             RootPanel.get("logo").setVisible(false);
 
+            dashboardPresenter.setParams(params);
             dashboardPresenter.read(dashboard);
             Window.setTitle(dashboard.getName());
         }

@@ -159,6 +159,10 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
         ShowPopupEvent.fire(this, presenter, PopupType.POPUP, popupPosition, null, target);
     }
 
+    public void setParams(final String params) {
+        this.currentParams = params;
+    }
+
     @Override
     protected void onRead(final Dashboard dashboard) {
         if (!loaded) {
@@ -170,9 +174,11 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
 
             final DashboardConfig dashboardData = dashboard.getDashboardData();
             if (dashboardData != null) {
-                currentParams = "";
-                if (dashboardData.getParameters() != null && dashboardData.getParameters().trim().length() > 0) {
-                    currentParams = dashboardData.getParameters().trim();
+                if (currentParams == null) {
+                    currentParams = "";
+                    if (dashboardData.getParameters() != null && dashboardData.getParameters().trim().length() > 0) {
+                        currentParams = dashboardData.getParameters().trim();
+                    }
                 }
                 getView().setParams(currentParams);
 
