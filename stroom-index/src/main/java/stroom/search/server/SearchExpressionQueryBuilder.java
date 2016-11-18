@@ -16,19 +16,6 @@
 
 package stroom.search.server;
 
-import stroom.dictionary.shared.Dictionary;
-import stroom.dictionary.shared.DictionaryService;
-import stroom.entity.shared.DocRef;
-import stroom.index.server.analyzer.AnalyzerFactory;
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexField.AnalyzerType;
-import stroom.query.shared.IndexFieldType;
-import stroom.query.shared.IndexFieldsMap;
-import stroom.util.date.DateUtil;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
@@ -41,7 +28,21 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.util.Version;
+import stroom.dictionary.shared.Dictionary;
+import stroom.dictionary.shared.DictionaryService;
+import stroom.entity.shared.DocRef;
+import stroom.index.server.analyzer.AnalyzerFactory;
+import stroom.query.DateExpressionParser;
+import stroom.query.shared.Condition;
+import stroom.query.shared.ExpressionItem;
+import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.ExpressionTerm;
+import stroom.query.shared.IndexField;
+import stroom.query.shared.IndexField.AnalyzerType;
+import stroom.query.shared.IndexFieldType;
+import stroom.query.shared.IndexFieldsMap;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -60,12 +61,14 @@ public class SearchExpressionQueryBuilder {
     private final IndexFieldsMap indexFieldsMap;
     private final DictionaryService dictionaryService;
     private final int maxBooleanClauseCount;
+    private final ZonedDateTime now;
 
     public SearchExpressionQueryBuilder(final DictionaryService dictionaryService, final IndexFieldsMap indexFieldsMap,
-            final int maxBooleanClauseCount) {
+                                        final int maxBooleanClauseCount, final ZonedDateTime now) {
         this.dictionaryService = dictionaryService;
         this.indexFieldsMap = indexFieldsMap;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
+        this.now = now;
     }
 
     public SearchExpressionQuery buildQuery(final Version matchVersion, final ExpressionOperator expression) {
@@ -222,7 +225,7 @@ public class SearchExpressionQueryBuilder {
             }
         } else {
             if (value == null || value.length() == 0) {
-                throw new SearchException("Value not set for field: " + field);
+                return null;
             }
         }
 
@@ -304,7 +307,7 @@ public class SearchExpressionQueryBuilder {
         } else {
             switch (condition) {
             case EQUALS:
-                return getSubQuery(matchVersion, indexField, value, terms);
+                return getSubQuery(matchVersion, indexField, value, terms, false);
             case CONTAINS:
                 return getContains(fieldName, value, indexField, matchVersion, terms);
             case IN:
@@ -358,13 +361,13 @@ public class SearchExpressionQueryBuilder {
 
     private Query getContains(final String fieldName, final String value, final IndexField indexField,
             final Version matchVersion, final Set<String> terms) {
-        final Query query = getSubQuery(matchVersion, indexField, value, terms);
+        final Query query = getSubQuery(matchVersion, indexField, value, terms, false);
         return modifyOccurance(query, Occur.MUST);
     }
 
     private Query getIn(final String fieldName, final String value, final IndexField indexField,
             final Version matchVersion, final Set<String> terms) {
-        final Query query = getSubQuery(matchVersion, indexField, value, terms);
+        final Query query = getSubQuery(matchVersion, indexField, value, terms, true);
         return modifyOccurance(query, Occur.SHOULD);
     }
 
@@ -386,14 +389,14 @@ public class SearchExpressionQueryBuilder {
         if (wordArr != null) {
             final BooleanQuery dictionaryQuery = new BooleanQuery();
             for (final String val : wordArr) {
-                Query query = null;
+                Query query;
 
                 if (indexField.getFieldType().isNumeric()) {
                     query = getNumericIn(fieldName, val);
                 } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
                     query = getDateIn(fieldName, val);
                 } else {
-                    query = getSubQuery(matchVersion, indexField, val, terms);
+                    query = getSubQuery(matchVersion, indexField, val, terms, false);
                 }
 
                 if (query != null) {
@@ -439,7 +442,7 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Query getSubQuery(final Version matchVersion, final IndexField field, final String value,
-            final Set<String> terms) {
+                              final Set<String> terms, final boolean in) {
         Query query = null;
 
         // Store terms for hit highlighting.
@@ -457,7 +460,7 @@ public class SearchExpressionQueryBuilder {
         // modify the query so that each word becomes a new term in a boolean
         // query.
         String val = value.trim();
-        if (!AnalyzerType.KEYWORD.equals(field.getAnalyzerType())) {
+        if (in || !AnalyzerType.KEYWORD.equals(field.getAnalyzerType())) {
             // If the field has been analysed then we need to analyse the search
             // query to create matching terms.
             final Analyzer analyzer = AnalyzerFactory.create(matchVersion, field.getAnalyzerType(),
@@ -525,7 +528,7 @@ public class SearchExpressionQueryBuilder {
 
     private long getDate(final String fieldName, final String value) {
         try {
-            return DateUtil.parseNormalDateTimeString(value);
+            return new DateExpressionParser().parse(value, now).toInstant().toEpochMilli();
         } catch (final Exception e) {
             throw new SearchException("Expected a standard date value for field \"" + fieldName
                     + "\" but was given string \"" + value + "\"");
@@ -561,20 +564,20 @@ public class SearchExpressionQueryBuilder {
         return numbers;
     }
 
-    public static class SearchExpressionQuery {
+    static class SearchExpressionQuery {
         private final Query query;
         private final Set<String> terms;
 
-        public SearchExpressionQuery(final Query query, final Set<String> terms) {
+        SearchExpressionQuery(final Query query, final Set<String> terms) {
             this.query = query;
             this.terms = terms;
         }
 
-        public Query getQuery() {
+        Query getQuery() {
             return query;
         }
 
-        public Set<String> getTerms() {
+        Set<String> getTerms() {
             return terms;
         }
     }

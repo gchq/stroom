@@ -16,8 +16,6 @@
 
 package stroom.dashboard.client.table;
 
-import java.util.List;
-
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -29,23 +27,21 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-
+import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
-import stroom.item.client.StringListBox;
+import stroom.item.client.ItemListBox;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import java.util.List;
+
 public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSettingsView {
-    public interface Binder extends UiBinder<Widget, BasicTableSettingsViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     Label id;
     @UiField
     TextBox name;
     @UiField
-    StringListBox queryId;
+    ItemListBox<Component> query;
     @UiField
     TickBox extractValues;
     @UiField
@@ -54,7 +50,6 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
     TextBox maxResults;
     @UiField
     TickBox showDetail;
-
     @Inject
     public BasicTableSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -81,24 +76,24 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
     }
 
     @Override
-    public void setQueryIdList(final List<String> queryIdList) {
-        final String queryId = getQueryId();
+    public void setQueryList(final List<Component> queryList) {
+        final Component query = getQuery();
 
-        this.queryId.clear();
-        this.queryId.addItems(queryIdList);
+        this.query.clear();
+        this.query.addItems(queryList);
 
         // Reselect query id.
-        setQueryId(queryId);
+        setQuery(query);
     }
 
     @Override
-    public void setQueryId(final String queryId) {
-        this.queryId.setSelected(queryId);
+    public Component getQuery() {
+        return this.query.getSelectedItem();
     }
 
     @Override
-    public String getQueryId() {
-        return queryId.getSelected();
+    public void setQuery(final Component query) {
+        this.query.setSelectedItem(query);
     }
 
     @Override
@@ -140,5 +135,8 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
 
     public void onResize() {
         ((RequiresResize) widget).onResize();
+    }
+
+    public interface Binder extends UiBinder<Widget, BasicTableSettingsViewImpl> {
     }
 }

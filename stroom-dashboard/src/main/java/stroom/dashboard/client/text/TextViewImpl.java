@@ -24,27 +24,22 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.dashboard.client.text.TextPresenter.TextView;
 import stroom.streamstore.client.view.ClassificationLabel;
 import stroom.widget.button.client.FabButton;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers>implements TextView {
-    public interface Binder extends UiBinder<Widget, TextViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     ResizeSimplePanel content;
-    @UiField
+    @UiField(provided = true)
     ClassificationLabel classification;
     @UiField
     FabButton playButton;
-
     @Inject
-    public TextViewImpl(final Binder binder) {
+    public TextViewImpl(final Binder binder, final ClassificationLabel classification) {
+        this.classification = classification;
         widget = binder.createAndBindUi(this);
     }
 
@@ -73,5 +68,8 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers>implements T
         if (getUiHandlers() != null) {
             getUiHandlers().beginStepping();
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, TextViewImpl> {
     }
 }

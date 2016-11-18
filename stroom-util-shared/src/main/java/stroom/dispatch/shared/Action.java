@@ -16,23 +16,23 @@
 
 package stroom.dispatch.shared;
 
-import java.io.Serializable;
-
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.SimpleThreadPool;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
 
+import java.io.Serializable;
+
 public abstract class Action<R extends SharedObject> implements Task<R>, Serializable {
     private static final long serialVersionUID = 4730274660149532350L;
 
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(4);
-
+    boolean terminate;
     private TaskId id;
     private String sessionId;
+    private String applicationInstanceId;
     private String userId;
-    boolean terminate;
 
     @Override
     public void terminate() {
@@ -51,6 +51,14 @@ public abstract class Action<R extends SharedObject> implements Task<R>, Seriali
 
     public final void setSessionId(final String sessionId) {
         this.sessionId = sessionId;
+    }
+
+    public String getApplicationInstanceId() {
+        return applicationInstanceId;
+    }
+
+    public void setApplicationInstanceId(final String applicationInstanceId) {
+        this.applicationInstanceId = applicationInstanceId;
     }
 
     @Override

@@ -21,7 +21,7 @@
   <artifactId>stroom</artifactId>
   <name>stroom</name>
   <description>STROOM</description>
-  <version>5.0-beta.5-SNAPSHOT</version>
+  <version>5.0-beta.6-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -44,7 +44,7 @@
     <servlet-api.version>2.5</servlet-api.version>
     <guice.version>3.0</guice.version>
     <gwtp-all.version>0.7</gwtp-all.version>
-    <gin.version>1.5.0</gin.version>
+    <gin.version>2.1.2</gin.version>
     <gwt-d3-js.version>3.4.8</gwt-d3-js.version>
     <Saxon-HE.version>9.6.0-6</Saxon-HE.version>
     <jackson.version>2.5.3</jackson.version>
@@ -98,8 +98,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.lifecycle-mapping.version>1.0.0</maven.lifecycle-mapping.version>
-    <gwt.version>2.7.0</gwt.version>
-    <maven.gwt.version>2.7.0</maven.gwt.version>
+    <gwt.version>2.8.0</gwt.version>
+    <maven.gwt.version>2.8.0</maven.gwt.version>
     <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
     <build.timestamp>${maven.build.timestamp}</build.timestamp>
 

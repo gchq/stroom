@@ -16,12 +16,8 @@
 
 package stroom.dashboard.client.vis;
 
-import java.util.List;
-
-import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -30,29 +26,31 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
+import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.vis.BasicVisSettingsPresenter.BasicVisSettingsView;
-import stroom.item.client.StringListBox;
+import stroom.item.client.ItemListBox;
+
+import java.util.List;
 
 public class BasicVisSettingsViewImpl extends ViewWithUiHandlers<BasicVisSettingsUiHandlers>
         implements BasicVisSettingsView {
-    public interface Binder extends UiBinder<Widget, BasicVisSettingsViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     Label id;
     @UiField
     TextBox name;
     @UiField
-    StringListBox tableId;
+    ItemListBox<Component> table;
     @UiField
     SimplePanel visualisation;
-
     @Inject
     public BasicVisSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        table.addSelectionHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onTableChange();
+            }
+        });
     }
 
     @Override
@@ -76,24 +74,24 @@ public class BasicVisSettingsViewImpl extends ViewWithUiHandlers<BasicVisSetting
     }
 
     @Override
-    public void setTableIdList(final List<String> tableIdList) {
-        final String tableId = getTableId();
+    public void setTableList(final List<Component> tableList) {
+        final Component table = getTable();
 
-        this.tableId.clear();
-        this.tableId.addItems(tableIdList);
+        this.table.clear();
+        this.table.addItems(tableList);
 
         // Reselect table id.
-        setTableId(tableId);
+        setTable(table);
     }
 
     @Override
-    public void setTableId(final String tableId) {
-        this.tableId.setSelected(tableId);
+    public Component getTable() {
+        return this.table.getSelectedItem();
     }
 
     @Override
-    public String getTableId() {
-        return tableId.getSelected();
+    public void setTable(final Component table) {
+        this.table.setSelectedItem(table);
     }
 
     @Override
@@ -107,10 +105,6 @@ public class BasicVisSettingsViewImpl extends ViewWithUiHandlers<BasicVisSetting
         ((RequiresResize) widget).onResize();
     }
 
-    @UiHandler("tableId")
-    public void onTableIdChange(final ChangeEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onTableIdChange();
-        }
+    public interface Binder extends UiBinder<Widget, BasicVisSettingsViewImpl> {
     }
 }

@@ -16,16 +16,12 @@
 
 package stroom.statistics.server.common.search;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.annotation.Resource;
-
 import org.springframework.context.annotation.Scope;
-
 import stroom.dashboard.expression.FieldIndexMap;
+import stroom.mapreduce.BlockingPairQueue;
+import stroom.mapreduce.PairQueue;
+import stroom.mapreduce.UnsafePairQueue;
+import stroom.node.server.NodeCache;
 import stroom.query.CompiledDepths;
 import stroom.query.CompiledFields;
 import stroom.query.Item;
@@ -36,13 +32,7 @@ import stroom.query.TableCoprocessorSettings;
 import stroom.query.TablePayload;
 import stroom.query.shared.CoprocessorSettings;
 import stroom.query.shared.DataSource;
-import stroom.query.shared.IndexFields;
-import stroom.query.shared.IndexFieldsMap;
 import stroom.query.shared.TableSettings;
-import stroom.mapreduce.BlockingPairQueue;
-import stroom.mapreduce.PairQueue;
-import stroom.mapreduce.UnsafePairQueue;
-import stroom.node.server.NodeCache;
 import stroom.statistics.common.StatisticDataPoint;
 import stroom.statistics.common.StatisticDataSet;
 import stroom.statistics.common.StatisticsFactory;
@@ -56,6 +46,12 @@ import stroom.util.date.DateUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 @TaskHandlerBean(task = StatStoreSearchTask.class)
 @Scope(value = StroomScope.TASK)
@@ -92,12 +88,10 @@ public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSea
             final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
             for (final Entry<Integer, CoprocessorSettings> entry : task.getCoprocessorMap().entrySet()) {
                 final TableSettings tableSettings = ((TableCoprocessorSettings) entry.getValue()).getTableSettings();
-                final IndexFields indexFields = dataSource.getIndexFieldsObject();
-                final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(indexFields);
                 final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(),
                         tableSettings.showDetail());
-                final CompiledFields compiledFields = new CompiledFields(indexFieldsMap, tableSettings.getFields(),
-                        fieldIndexMap);
+                final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(),
+                        fieldIndexMap, task.getSearch().getParamMap());
 
                 // Create a queue of string arrays.
                 final PairQueue<String, Item> queue = new BlockingPairQueue<>(taskMonitor);

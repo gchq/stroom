@@ -16,9 +16,11 @@
 
 package stroom.statistics.server.common;
 
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
 import stroom.node.server.StroomPropertyService;
+import stroom.query.DateExpressionParser;
 import stroom.query.shared.*;
 import stroom.query.shared.ExpressionOperator.Op;
 import stroom.statistics.common.*;
@@ -26,10 +28,10 @@ import stroom.statistics.common.rollup.RollUpBitMask;
 import stroom.statistics.shared.CustomRollUpMask;
 import stroom.statistics.shared.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.util.date.DateUtil;
 import stroom.util.logging.StroomLogger;
-import org.springframework.stereotype.Component;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 @Component
@@ -51,72 +53,11 @@ public abstract class AbstractStatistics implements Statistics {
         this.propertyService = propertyService;
     }
 
-    @Override
-    public boolean putEvent(final StatisticEvent statisticEvent) {
-        final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(statisticEvent.getName(),
-                getEngineName());
-        return putEvent(statisticEvent, statisticsDataSource);
-    }
-
-    @Override
-    public boolean putEvents(final List<StatisticEvent> statisticEvents) {
-        // sort the list of events by name so we can send ones with the same
-        // stat name off together
-        Collections.sort(statisticEvents, new Comparator<StatisticEvent>() {
-            @Override
-            public int compare(final StatisticEvent event1, final StatisticEvent event2) {
-                return event1.getName().compareTo(event2.getName());
-            }
-        });
-
-        final List<StatisticEvent> eventsBatch = new ArrayList<>();
-        String statNameLastSeen = null;
-
-        boolean outcome = true;
-
-        for (final StatisticEvent event : statisticEvents) {
-            // we can only put a batch of events if they share the same stat
-            // name
-            if (statNameLastSeen != null && !event.getName().equals(statNameLastSeen)) {
-                outcome = outcome && putBatch(eventsBatch);
-            }
-
-            eventsBatch.add(event);
-
-            statNameLastSeen = event.getName();
-        }
-
-        // sweep up any stragglers
-        outcome = outcome && putBatch(eventsBatch);
-
-        return outcome;
-    }
-
-    private boolean putBatch(final List<StatisticEvent> eventsBatch) {
-        boolean outcome = true;
-        if (eventsBatch.size() > 0) {
-            final StatisticEvent firstEventInBatch = eventsBatch.get(0);
-            final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(firstEventInBatch.getName(),
-                    getEngineName());
-            outcome = putEvents(eventsBatch, statisticsDataSource);
-            eventsBatch.clear();
-        }
-        return outcome;
-    }
-
-    protected boolean validateStatisticDataSource(final StatisticEvent statisticEvent,
-                                                  final StatisticStoreEntity statisticsDataSource) {
-        if (statisticsDataSourceValidator != null) {
-            return statisticsDataSourceValidator.validateStatisticDataSource(statisticEvent.getName(), getEngineName(),
-                    statisticEvent.getType(), statisticsDataSource);
-        } else {
-            // no validator has been supplied so return true
-            return true;
-        }
-    }
-
     protected static FindEventCriteria buildCriteria(final Search search, final StatisticStoreEntity dataSource) {
         LOGGER.trace(String.format("buildCriteria called for statistic %s", dataSource.getName()));
+
+        // Get now
+        final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 
         // object looks a bit like this
         // AND
@@ -185,7 +126,7 @@ public abstract class AbstractStatistics implements Statistics {
 
         // if we have got here then we have a single BETWEEN date term, so parse
         // it.
-        final Range<Long> range = extractRange(dateTerm);
+        final Range<Long> range = extractRange(dateTerm, now);
 
         final List<ExpressionTerm> termNodesInFilter = new ArrayList<>();
 
@@ -271,7 +212,7 @@ public abstract class AbstractStatistics implements Statistics {
         return rolledUpStatisticEvent;
     }
 
-    private static Range<Long> extractRange(final ExpressionTerm dateTerm) {
+    private static Range<Long> extractRange(final ExpressionTerm dateTerm, final ZonedDateTime now) {
         long rangeFrom = 0;
         long rangeTo = Long.MAX_VALUE;
 
@@ -281,9 +222,10 @@ public abstract class AbstractStatistics implements Statistics {
             throw new RuntimeException("DateTime term is not a valid format, term: " + dateTerm.toString());
         }
 
-        rangeFrom = DateUtil.parseNormalDateTimeString(dateArr[0]);
+        final DateExpressionParser dateExpressionParser = new DateExpressionParser();
+        rangeFrom = dateExpressionParser.parse(dateArr[0], now).toInstant().toEpochMilli();
         // add one to make it exclusive
-        rangeTo = DateUtil.parseNormalDateTimeString(dateArr[1]) + 1;
+        rangeTo = dateExpressionParser.parse(dateArr[1], now).toInstant().toEpochMilli() + 1;
 
         final Range<Long> range = new Range<Long>(rangeFrom, rangeTo);
 
@@ -310,10 +252,6 @@ public abstract class AbstractStatistics implements Statistics {
             tagListPerms.add(tags);
         }
         return tagListPerms;
-    }
-
-    protected StatisticStoreEntity getStatisticsDataSource(final String statisticName, final String engineName) {
-        return statisticsDataSourceCache.getStatisticsDataSource(statisticName, engineName);
     }
 
     /**
@@ -344,6 +282,95 @@ public abstract class AbstractStatistics implements Statistics {
             result = RollUpBitMask.ZERO_MASK;
         }
         return result;
+    }
+
+    public static boolean isDataStoreEnabled(final String engineName, final StroomPropertyService propertyService) {
+        final String enabledEngines = propertyService
+                .getProperty(CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME);
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("%s property value: %s", CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME,
+                    enabledEngines);
+        }
+
+        boolean result = false;
+
+        if (enabledEngines != null) {
+            for (final String engine : enabledEngines.split(",")) {
+                if (engine.equals(engineName)) {
+                    result = true;
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public boolean putEvent(final StatisticEvent statisticEvent) {
+        final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(statisticEvent.getName(),
+                getEngineName());
+        return putEvent(statisticEvent, statisticsDataSource);
+    }
+
+    @Override
+    public boolean putEvents(final List<StatisticEvent> statisticEvents) {
+        // sort the list of events by name so we can send ones with the same
+        // stat name off together
+        Collections.sort(statisticEvents, new Comparator<StatisticEvent>() {
+            @Override
+            public int compare(final StatisticEvent event1, final StatisticEvent event2) {
+                return event1.getName().compareTo(event2.getName());
+            }
+        });
+
+        final List<StatisticEvent> eventsBatch = new ArrayList<>();
+        String statNameLastSeen = null;
+
+        boolean outcome = true;
+
+        for (final StatisticEvent event : statisticEvents) {
+            // we can only put a batch of events if they share the same stat
+            // name
+            if (statNameLastSeen != null && !event.getName().equals(statNameLastSeen)) {
+                outcome = outcome && putBatch(eventsBatch);
+            }
+
+            eventsBatch.add(event);
+
+            statNameLastSeen = event.getName();
+        }
+
+        // sweep up any stragglers
+        outcome = outcome && putBatch(eventsBatch);
+
+        return outcome;
+    }
+
+    private boolean putBatch(final List<StatisticEvent> eventsBatch) {
+        boolean outcome = true;
+        if (eventsBatch.size() > 0) {
+            final StatisticEvent firstEventInBatch = eventsBatch.get(0);
+            final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(firstEventInBatch.getName(),
+                    getEngineName());
+            outcome = putEvents(eventsBatch, statisticsDataSource);
+            eventsBatch.clear();
+        }
+        return outcome;
+    }
+
+    protected boolean validateStatisticDataSource(final StatisticEvent statisticEvent,
+                                                  final StatisticStoreEntity statisticsDataSource) {
+        if (statisticsDataSourceValidator != null) {
+            return statisticsDataSourceValidator.validateStatisticDataSource(statisticEvent.getName(), getEngineName(),
+                    statisticEvent.getType(), statisticsDataSource);
+        } else {
+            // no validator has been supplied so return true
+            return true;
+        }
+    }
+
+    protected StatisticStoreEntity getStatisticsDataSource(final String statisticName, final String engineName) {
+        return statisticsDataSourceCache.getStatisticsDataSource(statisticName, engineName);
     }
 
     public IndexFields getSupportedFields(final IndexFields indexFields) {
@@ -378,27 +405,6 @@ public abstract class AbstractStatistics implements Statistics {
 
     public boolean isDataStoreEnabled() {
         return isDataStoreEnabled(getEngineName(), propertyService);
-    }
-
-    public static boolean isDataStoreEnabled(final String engineName, final StroomPropertyService propertyService) {
-        final String enabledEngines = propertyService
-                .getProperty(CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME);
-
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("%s property value: %s", CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME,
-                    enabledEngines);
-        }
-
-        boolean result = false;
-
-        if (enabledEngines != null) {
-            for (final String engine : enabledEngines.split(",")) {
-                if (engine.equals(engineName)) {
-                    result = true;
-                }
-            }
-        }
-        return result;
     }
 
     public List<Set<Integer>> getFieldPositionsForBitMasks(final List<Short> maskValues) {

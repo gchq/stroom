@@ -16,8 +16,6 @@
 
 package stroom.dashboard.client.text;
 
-import java.util.List;
-
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -29,14 +27,17 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-
+import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettingsView;
-import stroom.item.client.StringListBox;
+import stroom.item.client.ItemListBox;
+import stroom.util.shared.HasDisplayValue;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class BasicTextSettingsViewImpl extends ViewImpl implements BasicTextSettingsView {
-    public interface Binder extends UiBinder<Widget, BasicTextSettingsViewImpl> {
-    }
+    private static final HasDisplayValue ANY = () -> "Any";
 
     private final Widget widget;
 
@@ -45,7 +46,7 @@ public class BasicTextSettingsViewImpl extends ViewImpl implements BasicTextSett
     @UiField
     TextBox name;
     @UiField
-    StringListBox tableId;
+    ItemListBox<HasDisplayValue> table;
     @UiField
     SimplePanel pipeline;
     @UiField
@@ -77,24 +78,34 @@ public class BasicTextSettingsViewImpl extends ViewImpl implements BasicTextSett
     }
 
     @Override
-    public void setTableIdList(final List<String> tableIdList) {
-        final String tableId = getTableId();
+    public void setTableList(final List<Component> tableList) {
+        final HasDisplayValue table = this.table.getSelectedItem();
 
-        this.tableId.clear();
-        this.tableId.addItems(tableIdList);
+        this.table.clear();
+        this.table.addItem(ANY);
+
+        final List<HasDisplayValue> newList = tableList.stream().map(e -> (HasDisplayValue) e).collect(Collectors.toList());
+        this.table.addItems(newList);
 
         // Reselect table id.
-        setTableId(tableId);
+        this.table.setSelectedItem(table);
     }
 
     @Override
-    public void setTableId(final String tableId) {
-        this.tableId.setSelected(tableId);
+    public Component getTable() {
+        if (ANY.equals(this.table.getSelectedItem())) {
+            return null;
+        }
+        return (Component) this.table.getSelectedItem();
     }
 
     @Override
-    public String getTableId() {
-        return tableId.getSelected();
+    public void setTable(final Component table) {
+        if (table == null) {
+            this.table.setSelectedItem(ANY);
+        } else {
+            this.table.setSelectedItem(table);
+        }
     }
 
     @Override
@@ -117,5 +128,8 @@ public class BasicTextSettingsViewImpl extends ViewImpl implements BasicTextSett
 
     public void onResize() {
         ((RequiresResize) widget).onResize();
+    }
+
+    public interface Binder extends UiBinder<Widget, BasicTextSettingsViewImpl> {
     }
 }

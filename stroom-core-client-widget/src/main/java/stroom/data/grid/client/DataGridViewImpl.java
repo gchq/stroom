@@ -16,8 +16,6 @@
 
 package stroom.data.grid.client;
 
-import stroom.data.pager.client.Pager;
-import stroom.widget.button.client.*;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -48,6 +46,11 @@ import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent.Handler;
 import com.google.gwt.view.client.SelectionModel;
 import com.gwtplatform.mvp.client.ViewImpl;
+import stroom.data.pager.client.Pager;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.GlyphButtonView;
+import stroom.widget.button.client.GlyphIcon;
+import stroom.widget.button.client.ImageButtonView;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.ArrayList;
@@ -589,6 +592,11 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         }
     }
 
+    @Override
+    public DefaultResources getResources() {
+        return resources;
+    }
+
     public interface Binder extends UiBinder<Widget, DataGridViewImpl<?>> {
     }
 
@@ -598,6 +606,8 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         String dataGridHeaderSelected();
 
         String dataGridResizableCell();
+
+        String dataGridCellWrapText();
 
         String resizeHandle();
 

@@ -69,6 +69,13 @@
           </g:FlowPanel>
         </g:customCell>
       </g:row>
+
+      <g:row>
+        <g:cell>Wrap Text:</g:cell>
+        <g:customCell>
+          <v:TickBox ui:field="wrap" width="100%"/>
+        </g:customCell>
+      </g:row>
     </g:Grid>
   </g:FlowPanel>
 </ui:UiBinder>

@@ -15,14 +15,14 @@
  */
 
 insert into strm_proc (ver, crt_dt, crt_user, upd_dt, upd_user, task_tp, proc_stat, fk_pipe_id) 
-values (1, curdate(), 'upgrade', curdate(), 'upgrade', 'streamProcessorTaskTester', 1, null);
+values (1, UNIX_TIMESTAMP() * 1000, 'upgrade', UNIX_TIMESTAMP() * 1000, 'upgrade', 'streamProcessorTaskTester', 1, null);
 
 -- EG 1000 records
 insert into strm_proc_filt (ver, crt_dt, crt_user, upd_dt, upd_user, dat, prior, task_tp, strm_min, strm_max, strm_min_ms, fk_strm_proc_id, proc_stat) values
-(1, curdate(), 'upgrade', curdate(), 'upgrade', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><FindStreamCriteria></FindStreamCriteria>', 
+(1, UNIX_TIMESTAMP() * 1000, 'upgrade', UNIX_TIMESTAMP() * 1000, 'upgrade', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><FindStreamCriteria></FindStreamCriteria>',
 1, 1, 0, (select min(id)+1000 from strm), null, (select id from strm_proc where task_tp = 'streamProcessorTaskTester'), 1);
 
 insert into strm_proc_filt (ver, crt_dt, crt_user, upd_dt, upd_user, dat, prior, task_tp, strm_min, strm_max, strm_min_ms, fk_strm_proc_id, proc_stat) values
-(1, curdate(), 'upgrade', curdate(), 'upgrade', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><FindStreamCriteria></FindStreamCriteria>', 
+(1, UNIX_TIMESTAMP() * 1000, 'upgrade', UNIX_TIMESTAMP() * 1000, 'upgrade', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><FindStreamCriteria></FindStreamCriteria>',
 1, 1, 0, (select max(id) from strm), null, (select id from strm_proc where task_tp = 'streamProcessorTaskTester'), 1);
 

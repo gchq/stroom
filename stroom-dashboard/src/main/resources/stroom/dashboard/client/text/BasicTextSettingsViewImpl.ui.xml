@@ -17,9 +17,9 @@
       </g:customCell>
     </g:row>
     <g:row>
-      <g:cell>Table Id:</g:cell>
+      <g:cell>Table:</g:cell>
       <g:customCell>
-        <i:StringListBox ui:field="tableId" width="100%" />
+        <i:ItemListBox ui:field="table" width="100%"/>
       </g:customCell>
     </g:row>
     <g:row>

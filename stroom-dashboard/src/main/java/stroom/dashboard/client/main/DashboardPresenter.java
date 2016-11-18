@@ -17,51 +17,72 @@
 package stroom.dashboard.client.main;
 
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
+import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.shared.*;
+import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
+import stroom.dashboard.shared.LayoutConfig;
+import stroom.dashboard.shared.Size;
+import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.SplitLayoutConfig.Direction;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
+import stroom.dashboard.shared.TabConfig;
+import stroom.dashboard.shared.TabLayoutConfig;
+import stroom.entity.client.EntityTabData;
 import stroom.entity.client.event.HasDirtyHandlers;
-import stroom.entity.client.presenter.ContentCallback;
-import stroom.entity.client.presenter.EntityEditTabPresenter;
-import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.client.event.SaveEntityEvent;
+import stroom.entity.client.event.ShowSaveAsEntityDialogEvent;
+import stroom.entity.client.presenter.EntityEditPresenter;
+import stroom.explorer.shared.DocumentType;
 import stroom.security.client.ClientSecurityContext;
+import stroom.util.client.ImageUtil;
+import stroom.util.client.RandomId;
+import stroom.util.shared.EqualsUtil;
+import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.GlyphButtonView;
+import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tab.client.presenter.Icon;
+import stroom.widget.tab.client.presenter.ImageIcon;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DashboardPresenter extends EntityEditTabPresenter<LinkTabPanelView, Dashboard>
-        implements FlexLayoutChangeHandler {
-    private static final TabData TAB = new TabDataImpl("");
+public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.DashboardView, Dashboard>
+        implements FlexLayoutChangeHandler, EntityTabData, DashboardUiHandlers {
+    private final GlyphButtonView saveButton;
+    private final GlyphButtonView saveAsButton;
     private final DashboardLayoutPresenter layoutPresenter;
     private final Provider<ComponentAddPresenter> addPresenterProvider;
     private final Components components;
     private final GlyphButtonView addButton;
+    private ButtonPanel leftButtons;
+    private ButtonPanel rightButtons;
+    private String lastLabel;
     private boolean loaded;
 
+    private String currentParams;
+
     @Inject
-    public DashboardPresenter(final EventBus eventBus, final LinkTabPanelView view,
+    public DashboardPresenter(final EventBus eventBus, final DashboardView view,
                               final DashboardLayoutPresenter layoutPresenter,
                               final Provider<ComponentAddPresenter> addPresenterProvider, final Components components,
                               final ClientSecurityContext securityContext) {
@@ -70,15 +91,49 @@ public class DashboardPresenter extends EntityEditTabPresenter<LinkTabPanelView,
         this.addPresenterProvider = addPresenterProvider;
         this.components = components;
 
+        saveButton = addButtonLeft(GlyphIcons.SAVE);
+        saveAsButton = addButtonLeft(GlyphIcons.SAVE_AS);
+        saveButton.setEnabled(false);
+        saveAsButton.setEnabled(false);
+
+        registerHandler(saveButton.addClickHandler(event -> {
+            if (saveButton.isEnabled()) {
+                SaveEntityEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
+            }
+        }));
+        registerHandler(saveAsButton.addClickHandler(event -> {
+            if (saveAsButton.isEnabled()) {
+                ShowSaveAsEntityDialogEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
+            }
+        }));
+
         layoutPresenter.setFlexLayoutChangeHandler(this);
         layoutPresenter.setComponents(components);
+        view.setContent(layoutPresenter.getView());
 
         addButton = addButtonLeft(GlyphIcons.ADD);
         addButton.setTitle("Add Component");
         addButton.setEnabled(false);
 
-        addTab(TAB);
-        selectTab(TAB);
+        view.setUiHandlers(this);
+    }
+
+    private GlyphButtonView addButtonLeft(final GlyphIcon preset) {
+        if (leftButtons == null) {
+            leftButtons = new ButtonPanel();
+            leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
+            addWidgetLeft(leftButtons);
+        }
+
+        return leftButtons.add(preset);
+    }
+
+    private void addWidgetLeft(final Widget widget) {
+        getView().addWidgetLeft(widget);
+    }
+
+    private void addWidgetRight(final Widget widget) {
+        getView().addWidgetRight(widget);
     }
 
     @Override
@@ -90,7 +145,7 @@ public class DashboardPresenter extends EntityEditTabPresenter<LinkTabPanelView,
         components.removeAll();
     }
 
-    public void onAdd(final ClickEvent event) {
+    private void onAdd(final ClickEvent event) {
         final ComponentAddPresenter presenter = addPresenterProvider.get();
         final AddSelectionHandler selectionHandler = new AddSelectionHandler(presenter);
         final HandlerRegistration handlerRegistration = presenter.addSelectionChangeHandler(selectionHandler);
@@ -106,11 +161,6 @@ public class DashboardPresenter extends EntityEditTabPresenter<LinkTabPanelView,
     }
 
     @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
-        callback.onReady(layoutPresenter);
-    }
-
-    @Override
     protected void onRead(final Dashboard dashboard) {
         if (!loaded) {
             loaded = true;
@@ -121,6 +171,12 @@ public class DashboardPresenter extends EntityEditTabPresenter<LinkTabPanelView,
 
             final DashboardConfig dashboardData = dashboard.getDashboardData();
             if (dashboardData != null) {
+                currentParams = "";
+                if (dashboardData.getParameters() != null && dashboardData.getParameters().trim().length() > 0) {
+                    currentParams = dashboardData.getParameters().trim();
+                }
+                getView().setParams(currentParams);
+
                 layoutData = dashboardData.getLayout();
                 final List<ComponentConfig> componentDataList = dashboardData.getComponents();
                 if (componentDataList != null) {
@@ -197,13 +253,14 @@ public class DashboardPresenter extends EntityEditTabPresenter<LinkTabPanelView,
         final Component component = components.add(type, componentData.getId());
         if (component != null) {
             if (component instanceof HasDirtyHandlers) {
-                ((HasDirtyHandlers) component).addDirtyHandler(new DirtyHandler() {
-                    @Override
-                    public void onDirty(final DirtyEvent event) {
-                        setDirty(true);
-                    }
-                });
+                ((HasDirtyHandlers) component).addDirtyHandler(event -> setDirty(true));
             }
+
+            // Set params on the component if it needs them.
+            if (component instanceof UsesParams) {
+                ((UsesParams) component).onParamsChanged(currentParams);
+            }
+
             component.read(componentData);
         }
 
@@ -212,7 +269,12 @@ public class DashboardPresenter extends EntityEditTabPresenter<LinkTabPanelView,
 
     @Override
     protected void onWrite(final Dashboard dashboard) {
-        final List<ComponentConfig> componentDataList = new ArrayList<ComponentConfig>(components.size());
+        String params = getView().getParams();
+        if (params != null && params.trim().length() == 0) {
+            params = null;
+        }
+
+        final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
         for (final Component component : components) {
             final ComponentConfig componentData = new ComponentConfig();
             component.write(componentData);
@@ -220,6 +282,7 @@ public class DashboardPresenter extends EntityEditTabPresenter<LinkTabPanelView,
         }
 
         final DashboardConfig dashboardData = new DashboardConfig();
+        dashboardData.setParameters(params);
         dashboardData.setComponents(componentDataList);
         dashboardData.setLayout(layoutPresenter.getLayoutData());
         dashboardData.setTabVisibility(TabVisibility.SHOW_ALL);
@@ -229,14 +292,15 @@ public class DashboardPresenter extends EntityEditTabPresenter<LinkTabPanelView,
     @Override
     protected void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
+
+        saveButton.setEnabled(!readOnly);
+        saveAsButton.setEnabled(true);
+
         addButton.setEnabled(!readOnly);
         if (!readOnly) {
-            registerHandler(addButton.addClickHandler(new ClickHandler() {
-                @Override
-                public void onClick(final ClickEvent event) {
-                    if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                        onAdd(event);
-                    }
+            registerHandler(addButton.addClickHandler(event -> {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    onAdd(event);
                 }
             }));
         }
@@ -261,22 +325,81 @@ public class DashboardPresenter extends EntityEditTabPresenter<LinkTabPanelView,
 
     @Override
     public void requestTabClose(final TabConfig tabData) {
-        ConfirmEvent.fire(this, "Are you sure you want to close this tab?", new ConfirmCallback() {
-            @Override
-            public void onResult(final boolean ok) {
-                if (ok) {
-                    layoutPresenter.closeTab(tabData);
-                    components.remove(tabData.getId(), true);
-                }
+        ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {
+            if (ok) {
+                layoutPresenter.closeTab(tabData);
+                components.remove(tabData.getId(), true);
             }
         });
+    }
+
+    @Override
+    public void onParamsChanged(final String params) {
+        String trimmed = "";
+        if (params != null && params.trim().length() > 0) {
+            trimmed = params.trim();
+        }
+
+        if (!EqualsUtil.isEquals(currentParams, trimmed)) {
+            setDirty(true);
+
+            currentParams = trimmed;
+            for (final Component component : components) {
+                if (component instanceof UsesParams) {
+                    ((UsesParams) component).onParamsChanged(trimmed);
+                }
+            }
+        }
+    }
+
+    @Override
+    public String getLabel() {
+        if (isDirty()) {
+            return "* " + getEntity().getName();
+        }
+
+        return getEntity().getName();
+    }
+
+    @Override
+    public boolean isCloseable() {
+        return true;
+    }
+
+    @Override
+    public Icon getIcon() {
+        return ImageIcon.create(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getType() + ".png");
+    }
+
+    @Override
+    public void onDirty(final boolean dirty) {
+        if (!isReadOnly()) {
+            // Only fire tab refresh if the tab has changed.
+            if (lastLabel == null || !lastLabel.equals(getLabel())) {
+                lastLabel = getLabel();
+                RefreshContentTabEvent.fire(this, this);
+                saveButton.setEnabled(dirty);
+            }
+        }
+    }
+
+    public interface DashboardView extends View, HasUiHandlers<DashboardUiHandlers> {
+        void addWidgetLeft(Widget widget);
+
+        void addWidgetRight(Widget widget);
+
+        String getParams();
+
+        void setParams(String params);
+
+        void setContent(View view);
     }
 
     private class AddSelectionHandler implements SelectionChangeEvent.Handler {
         private final ComponentAddPresenter presenter;
         private HandlerRegistration handlerRegistration;
 
-        public AddSelectionHandler(final ComponentAddPresenter presenter) {
+        AddSelectionHandler(final ComponentAddPresenter presenter) {
             this.presenter = presenter;
         }
 
@@ -289,10 +412,10 @@ public class DashboardPresenter extends EntityEditTabPresenter<LinkTabPanelView,
                     handlerRegistration.removeHandler();
                 }
 
-                String id = type.getId() + "-" + RandomId.getId(5);
+                String id = type.getId() + "-" + RandomId.createId(5);
                 // Make sure we don't duplicate ids.
                 while (components.idExists(id)) {
-                    id = type.getId() + "-" + RandomId.getId(5);
+                    id = type.getId() + "-" + RandomId.createId(5);
                 }
 
                 final ComponentConfig componentData = new ComponentConfig();
@@ -321,9 +444,8 @@ public class DashboardPresenter extends EntityEditTabPresenter<LinkTabPanelView,
                 } else if (layoutData instanceof TabLayoutConfig) {
                     // If the layout is a single item then replace it with a
                     // split layout.
-                    final SplitLayoutConfig splitLayoutData = new SplitLayoutConfig(Direction.DOWN.getDimension(),
+                    layoutData = new SplitLayoutConfig(Direction.DOWN.getDimension(),
                             layoutData, tabLayoutData);
-                    layoutData = splitLayoutData;
                 } else {
                     // If the layout is already a split then add a new component
                     // to the split.
@@ -464,7 +586,7 @@ public class DashboardPresenter extends EntityEditTabPresenter<LinkTabPanelView,
             return totalHeight;
         }
 
-        public void setHandlerRegistration(final HandlerRegistration handlerRegistration) {
+        void setHandlerRegistration(final HandlerRegistration handlerRegistration) {
             this.handlerRegistration = handlerRegistration;
         }
     }
