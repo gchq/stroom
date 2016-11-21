@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 Issue #30 : Entering stepping mode was prompting for the pipeline to step with but also auto selecting a pipeline at the same time and entering stepping immediately.
 
 ## [v5.0-beta.5] - 2016-11-17
+Updated GWT to v2.8.0.
+
 Issue #2 : The order of fields in the query editor is now alphabetical.
 
 Issue #3 : When a filter is active on a dashboard table column, a filter icon now appears to indicate this.
