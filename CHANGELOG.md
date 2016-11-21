@@ -14,6 +14,8 @@ Dashboard auto refresh is now limited to a minimum interval of 10 seconds.
 
 Issue #31 : Pipeline stepping was not including user changes immediately as parsers and XSLT filters were using cached content when they should have been ignoring the cache in stepping mode.
 
+Issue #27 : Stroom now listens to window closing events and asks the user if they really want to leave the page. This replaces the previous crude attempts to block keys that affected the history or forced a browser refresh.
+
 ## [v5.0-beta.5] - 2016-11-17
 Issue #2 : The order of fields in the query editor is now alphabetical.
 
