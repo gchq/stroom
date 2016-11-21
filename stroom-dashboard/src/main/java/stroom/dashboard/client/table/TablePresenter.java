@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.table;
 
+import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -37,10 +38,19 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.dashboard.client.main.*;
+import stroom.dashboard.client.main.AbstractComponentPresenter;
+import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.IndexLoader;
+import stroom.dashboard.client.main.ResultComponent;
+import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
-import stroom.dashboard.shared.*;
+import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.DownloadSearchResultsAction;
+import stroom.dashboard.shared.ParamUtil;
+import stroom.dashboard.shared.Row;
+import stroom.dashboard.shared.TableResult;
+import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
@@ -53,8 +63,17 @@ import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
-import stroom.query.shared.*;
+import stroom.query.shared.ComponentResultRequest;
+import stroom.query.shared.ComponentSettings;
+import stroom.query.shared.Field;
+import stroom.query.shared.Format;
 import stroom.query.shared.Format.Type;
+import stroom.query.shared.IndexConstants;
+import stroom.query.shared.IndexField;
+import stroom.query.shared.IndexFieldsMap;
+import stroom.query.shared.QueryKey;
+import stroom.query.shared.Search;
+import stroom.query.shared.TableSettings;
 import stroom.util.shared.Expander;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedObject;
@@ -76,50 +95,23 @@ import java.util.Set;
 
 public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>>
         implements HasDirtyHandlers, ResultComponent {
-    private class AddSelectionHandler implements SelectionChangeEvent.Handler {
-        private final FieldAddPresenter presenter;
-
-        public AddSelectionHandler(final FieldAddPresenter presenter) {
-            this.presenter = presenter;
-        }
-
-        @Override
-        public void onSelectionChange(final SelectionChangeEvent event) {
-            final Field field = presenter.getSelectedObject();
-            if (field != null) {
-                HidePopupEvent.fire(TablePresenter.this, presenter);
-                fieldsManager.addField(field);
-            }
-        }
-    }
-
-    private static final int MIN_EXPANDER_COL_WIDTH = 0;
-
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table");
-
+    private static final int MIN_EXPANDER_COL_WIDTH = 0;
     private final MySingleSelectionModel<Row> selectionModel;
     private final TableResultRequest tableResultRequest = new TableResultRequest(0, 100);
-
-    private final List<Column<Row, ?>> existingColumns = new ArrayList<Column<Row, ?>>();
-    private int lastExpanderColumnWidth;
-    private int currentExpanderColumnWidth;
-
-    private SearchModel currentSearchModel;
-
-    private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<HandlerRegistration>();
-
+    private final List<Column<Row, ?>> existingColumns = new ArrayList<>();
+    private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
     private final GlyphButtonView addFieldButton;
     private final GlyphButtonView downloadButton;
-
     private final Provider<FieldAddPresenter> fieldAddPresenterProvider;
-    private FieldAddPresenter fieldAddPresenter;
-
     private final DownloadPresenter downloadPresenter;
     private final ClientDispatchAsync dispatcher;
     private final TimeZones timeZones;
-
-    private boolean paused;
-
+    private final FieldsManager fieldsManager;
+    private int lastExpanderColumnWidth;
+    private int currentExpanderColumnWidth;
+    private SearchModel currentSearchModel;
+    private FieldAddPresenter fieldAddPresenter;
     // TODO : Temporary action mechanism.
     private int streamIdIndex = -1;
     private int eventIdIndex = -1;
@@ -127,11 +119,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     private String selectedEventId;
 
     private TableSettings tableSettings;
-
-    private final FieldsManager fieldsManager;
-
     private boolean ignoreRangeChange;
-
     private int[] maxResults = TableSettings.DEFAULT_MAX_RESULTS;
 
     @Inject
@@ -142,13 +130,13 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                           final Provider<TableSettingsPresenter> settingsPresenterProvider, final DownloadPresenter downloadPresenter,
                           final ClientDispatchAsync dispatcher, final ClientPropertyCache clientPropertyCache,
                           final TimeZones timeZones) {
-        super(eventBus, new DataGridViewImpl<Row>(true), settingsPresenterProvider);
+        super(eventBus, new DataGridViewImpl<>(true), settingsPresenterProvider);
         this.fieldAddPresenterProvider = fieldAddPresenterProvider;
         this.downloadPresenter = downloadPresenter;
         this.dispatcher = dispatcher;
         this.timeZones = timeZones;
 
-        selectionModel = new MySingleSelectionModel<Row>();
+        selectionModel = new MySingleSelectionModel<>();
         getView().setSelectionModel(selectionModel);
 
         // Add the 'add field' button.
@@ -359,7 +347,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     public void setData(final SharedObject result) {
         ignoreRangeChange = true;
 
-        if (!paused) {
+//        if (!paused) {
             lastExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
             currentExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
 
@@ -388,7 +376,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
 
                 selectionModel.clear();
             }
-        }
+//        }
 
         ignoreRangeChange = false;
     }
@@ -458,6 +446,16 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                     }
                 }
                 return null;
+            }
+
+            @Override
+            public String getCellStyleNames(Cell.Context context, Row object) {
+                if (field.getFormat() != null && field.getFormat().getWrap() != null && field.getFormat().getWrap()) {
+                    return super.getCellStyleNames(context, object) + " " + getView().getResources().dataGridStyle().dataGridCellWrapText();
+                }
+
+                return super.getCellStyleNames(context, object);
+
             }
         };
 
@@ -665,14 +663,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     @Override
     public void link() {
         String queryId = tableSettings.getQueryId();
-        final List<String> list = getComponents().getIdListByType(QueryPresenter.TYPE.getId());
-        if (list.size() > 0) {
-            if (queryId == null) {
-                queryId = list.get(0);
-            } else if (!list.contains(queryId)) {
-                queryId = list.get(0);
-            }
-        }
+        queryId = getComponents().validateOrGetFirstComponentId(queryId, QueryPresenter.TYPE.getId());
         tableSettings.setQueryId(queryId);
         setQueryId(queryId);
     }
@@ -744,5 +735,22 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
         }
 
         return null;
+    }
+
+    private class AddSelectionHandler implements SelectionChangeEvent.Handler {
+        private final FieldAddPresenter presenter;
+
+        public AddSelectionHandler(final FieldAddPresenter presenter) {
+            this.presenter = presenter;
+        }
+
+        @Override
+        public void onSelectionChange(final SelectionChangeEvent event) {
+            final Field field = presenter.getSelectedObject();
+            if (field != null) {
+                HidePopupEvent.fire(TablePresenter.this, presenter);
+                fieldsManager.addField(field);
+            }
+        }
     }
 }

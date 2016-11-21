@@ -37,7 +37,15 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.server.StreamTaskCreatorTransactionHelper.CreatedTasks;
-import stroom.streamtask.shared.*;
+import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
+import stroom.streamtask.shared.FindStreamTaskCriteria;
+import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamtask.shared.StreamProcessorFilter;
+import stroom.streamtask.shared.StreamProcessorFilterService;
+import stroom.streamtask.shared.StreamProcessorFilterTracker;
+import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.StreamTaskService;
+import stroom.streamtask.shared.TaskStatus;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
 import stroom.util.date.DateUtil;
@@ -52,8 +60,14 @@ import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -728,7 +742,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             }
         }
 
-        final Search search = new Search(queryData.getDataSource(), queryData.getExpression(), null, false);
+        final Search search = new Search(queryData.getDataSource(), queryData.getExpression(), null, Collections.emptyMap(), false);
 
         // Update the tracker status message.
         tracker.setStatus("Searching...");

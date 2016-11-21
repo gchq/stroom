@@ -16,7 +16,8 @@
 
 package stroom.dashboard.shared;
 
-import java.util.List;
+import stroom.util.shared.HasDisplayValue;
+import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -25,41 +26,31 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-
-import stroom.util.shared.HasDisplayValue;
-import stroom.util.shared.SharedObject;
+import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "dashboard", propOrder = { "components", "layout", "tabVisibility" })
+@XmlType(name = "dashboard", propOrder = {"parameters", "components", "layout", "tabVisibility"})
 @XmlRootElement(name = "dashboard")
 public class DashboardConfig implements SharedObject {
     private static final long serialVersionUID = -2530827581046882396L;
-
-    public enum TabVisibility implements HasDisplayValue {
-        SHOW_ALL("Show All"), HIDE_SINGLE("Hide Single Tabs"), HIDE_ALL("Hide All");
-
-        private final String displayValue;
-
-        TabVisibility(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-    }
-
+    @XmlElement(name = "parameters")
+    private String parameters;
     @XmlElementWrapper(name = "components")
     @XmlElements({ @XmlElement(name = "component", type = ComponentConfig.class) })
     private List<ComponentConfig> components;
-
     @XmlElements({ @XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
             @XmlElement(name = "tabLayout", type = TabLayoutConfig.class) })
     private LayoutConfig layout;
-
     @XmlElement(name = "tabVisibility")
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
+
+    public String getParameters() {
+        return parameters;
+    }
+
+    public void setParameters(String parameters) {
+        this.parameters = parameters;
+    }
 
     public List<ComponentConfig> getComponents() {
         return components;
@@ -83,5 +74,20 @@ public class DashboardConfig implements SharedObject {
 
     public void setTabVisibility(final TabVisibility tabVisibility) {
         this.tabVisibility = tabVisibility;
+    }
+
+    public enum TabVisibility implements HasDisplayValue {
+        SHOW_ALL("Show All"), HIDE_SINGLE("Hide Single Tabs"), HIDE_ALL("Hide All");
+
+        private final String displayValue;
+
+        TabVisibility(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
     }
 }

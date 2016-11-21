@@ -16,25 +16,25 @@
 
 package stroom.query;
 
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import stroom.dashboard.expression.Expression;
 import stroom.dashboard.expression.ExpressionParser;
 import stroom.dashboard.expression.FieldIndexMap;
 import stroom.dashboard.expression.FunctionFactory;
 import stroom.dashboard.expression.ParamFactory;
 import stroom.query.shared.Field;
-import stroom.query.shared.IndexFieldsMap;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class CompiledFields implements Iterable<CompiledField> {
     private final List<CompiledField> compiledFields;
 
-    public CompiledFields(final IndexFieldsMap indexFieldsMap, final List<Field> fields,
-            final FieldIndexMap fieldIndexMap) {
-        compiledFields = new ArrayList<CompiledField>(fields.size());
+    public CompiledFields(final List<Field> fields,
+                          final FieldIndexMap fieldIndexMap, final Map<String, String> paramMap) {
+        compiledFields = new ArrayList<>(fields.size());
 
         final ExpressionParser expressionParser = new ExpressionParser(new FunctionFactory(), new ParamFactory());
         for (final Field field : fields) {
@@ -54,7 +54,7 @@ public class CompiledFields implements Iterable<CompiledField> {
 
             CompiledFilter filter = null;
             if (field.getFilter() != null) {
-                filter = new CompiledFilter(field.getFilter());
+                filter = new CompiledFilter(field.getFilter(), paramMap);
             }
 
             final CompiledField compiledField = new CompiledField(field, groupDepth, expression, filter);

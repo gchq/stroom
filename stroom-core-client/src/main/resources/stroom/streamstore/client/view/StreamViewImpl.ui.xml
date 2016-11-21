@@ -33,7 +33,7 @@
     </g:north>
     <g:center>
       <g:MySplitLayoutPanel width="100%" height="100%">
-        <g:north size="100">
+          <g:north size="150">
           <v:ResizeSimplePanel ui:field="streamRelationList"
             styleName="{style.middle}">
           </v:ResizeSimplePanel>

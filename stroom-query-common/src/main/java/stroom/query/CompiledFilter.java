@@ -16,19 +16,20 @@
 
 package stroom.query;
 
+import stroom.query.shared.Filter;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
-
-import stroom.query.shared.Filter;
 
 public class CompiledFilter {
     private final List<Pattern> includes;
     private final List<Pattern> excludes;
 
-    public CompiledFilter(final Filter filter) {
-        includes = createPatternList(filter.getIncludes());
-        excludes = createPatternList(filter.getExcludes());
+    public CompiledFilter(final Filter filter, final Map<String, String> paramMap) {
+        includes = createPatternList(filter.getIncludes(), paramMap);
+        excludes = createPatternList(filter.getExcludes(), paramMap);
     }
 
     public boolean match(final String value) {
@@ -55,11 +56,12 @@ public class CompiledFilter {
         return match;
     }
 
-    private List<Pattern> createPatternList(final String patterns) {
+    private List<Pattern> createPatternList(final String patterns, final Map<String, String> paramMap) {
         List<Pattern> patternList = null;
         if (patterns != null && patterns.trim().length() > 0) {
-            final String[] patternArray = patterns.split("\n");
-            patternList = new ArrayList<Pattern>(patternArray.length);
+            final String replaced = KVMapUtil.replaceParameters(patterns, paramMap);
+            final String[] patternArray = replaced.split("\n");
+            patternList = new ArrayList<>(patternArray.length);
             for (final String pattern : patternArray) {
                 final String trimmed = pattern.trim();
                 if (trimmed.length() > 0) {
