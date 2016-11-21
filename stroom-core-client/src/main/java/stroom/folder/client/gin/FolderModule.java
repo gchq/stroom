@@ -16,7 +16,7 @@
 
 package stroom.folder.client.gin;
 
-import stroom.app.client.gin.PluginModule;
+import stroom.core.client.gin.PluginModule;
 import stroom.folder.client.FolderPlugin;
 import stroom.folder.client.FolderPresenter;
 import stroom.folder.client.FolderRootPlugin;

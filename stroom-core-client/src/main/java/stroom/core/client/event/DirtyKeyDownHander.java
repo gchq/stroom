@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.app.client.event;
+package stroom.core.client.event;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 
 public abstract class DirtyKeyDownHander implements KeyDownHandler {
+    private static boolean isCut(final KeyDownEvent event) {
+        return event.isControlKeyDown() && (event.getNativeKeyCode() == 'X' || event.getNativeKeyCode() == 'x');
+    }
+
+    private static boolean isPaste(final KeyDownEvent event) {
+        return event.isControlKeyDown() && (event.getNativeKeyCode() == 'V' || event.getNativeKeyCode() == 'v');
+    }
+
     @Override
     public void onKeyDown(final KeyDownEvent event) {
         final int keyCode = event.getNativeKeyCode();
@@ -32,14 +40,6 @@ public abstract class DirtyKeyDownHander implements KeyDownHandler {
             // Fire events on cut and paste.
             onDirty(event);
         }
-    }
-
-    private static boolean isCut(final KeyDownEvent event) {
-        return event.isControlKeyDown() && (event.getNativeKeyCode() == 'X' || event.getNativeKeyCode() == 'x');
-    }
-
-    private static boolean isPaste(final KeyDownEvent event) {
-        return event.isControlKeyDown() && (event.getNativeKeyCode() == 'V' || event.getNativeKeyCode() == 'v');
     }
 
     public abstract void onDirty(KeyDownEvent event);

@@ -1,11 +1,11 @@
 <module>
   <!-- Inherit the core Web Toolkit stuff. -->
   <inherits name='com.google.gwt.user.User' />
-  
-  <inherits name='com.google.gwt.json.JSON' />
+
+    <inherits name='com.google.gwt.json.JSON' />
   <inherits name="javax.validation.Validation" />
-  
-  <inherits name="stroom.query.Query" />
+
+    <inherits name="stroom.query.Query" />
   <inherits name="stroom.script.Script" />
   <inherits name="stroom.visualisation.Visualisation" />
 

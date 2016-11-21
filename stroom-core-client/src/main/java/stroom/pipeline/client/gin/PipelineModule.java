@@ -17,8 +17,7 @@
 package stroom.pipeline.client.gin;
 
 import com.google.inject.Singleton;
-
-import stroom.app.client.gin.PluginModule;
+import stroom.core.client.gin.PluginModule;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XSLTPlugin;

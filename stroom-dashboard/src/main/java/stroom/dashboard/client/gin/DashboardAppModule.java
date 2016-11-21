@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.app.client.gin;
+package stroom.dashboard.client.gin;
 
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
@@ -24,6 +24,7 @@ import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 import com.gwtplatform.mvp.client.proxy.ParameterTokenFormatter;
 import com.gwtplatform.mvp.client.proxy.PlaceManager;
 import com.gwtplatform.mvp.client.proxy.TokenFormatter;
+import stroom.core.client.gin.InactivePlaceManager;
 import stroom.dashboard.client.main.DashboardAppPresenter;
 import stroom.dashboard.client.main.DashboardAppViewImpl;
 import stroom.explorer.client.presenter.EntityTreePresenter;

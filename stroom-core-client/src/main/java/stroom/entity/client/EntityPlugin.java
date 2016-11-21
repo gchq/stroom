@@ -16,13 +16,17 @@
 
 package stroom.entity.client;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.Presenter;
+import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.app.client.ContentManager;
-import stroom.app.client.ContentManager.CloseCallback;
-import stroom.app.client.ContentManager.CloseHandler;
-import stroom.app.client.presenter.Plugin;
 import stroom.content.client.event.SelectContentTabEvent;
+import stroom.core.client.ContentManager;
+import stroom.core.client.ContentManager.CloseCallback;
+import stroom.core.client.ContentManager.CloseHandler;
+import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.ShowCreateEntityDialogEvent;
@@ -39,17 +43,11 @@ import stroom.entity.shared.NamedEntity;
 import stroom.explorer.client.event.HighlightExplorerItemEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.shared.EntityData;
-import stroom.explorer.shared.ExplorerData;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
-import stroom.util.shared.SharedList;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Presenter;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.HashMap;
 import java.util.HashSet;

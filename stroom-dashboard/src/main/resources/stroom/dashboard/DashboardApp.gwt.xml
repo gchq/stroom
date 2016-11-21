@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.5.0//EN"
         "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0/distro-source/core/src/gwt-module.dtd">
-<module rename-to='stroom'>
+<module rename-to='dashboard'>
     <!-- Inherit the core Web Toolkit stuff. -->
     <inherits name='com.google.gwt.user.User'/>
 
@@ -106,7 +106,7 @@
     <inherits name="com.gwtplatform.mvp.Mvp"/>
 
     <!-- Specify the app entry point class. -->
-    <entry-point class='stroom.app.client.App'/>
+    <entry-point class='stroom.dashboard.client.DashboardApp'/>
 
     <!-- Specify the paths for translatable code -->
     <source path='client'/>
@@ -114,7 +114,7 @@
 
     <!-- This is required for Gwt-Platform Proxy's generator -->
     <define-configuration-property name="gin.ginjector" is-multi-valued="false"/>
-    <set-configuration-property name="gin.ginjector" value="stroom.app.client.gin.AppGinjector"/>
+    <set-configuration-property name="gin.ginjector" value="stroom.dashboard.client.gin.DashboardAppGinjector"/>
     <set-configuration-property name='xsiframe.failIfScriptTag' value='FALSE'/>
 
 </module>

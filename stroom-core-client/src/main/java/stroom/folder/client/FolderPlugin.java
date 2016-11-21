@@ -19,14 +19,13 @@ package stroom.folder.client;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.ClientSecurityContext;
-import stroom.app.client.ContentManager;
+import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.entity.shared.Folder;
+import stroom.security.client.ClientSecurityContext;
 
 public class FolderPlugin extends EntityPlugin<Folder> {
     private final Provider<FolderPresenter> editorProvider;

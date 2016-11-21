@@ -16,9 +16,6 @@
 
 package stroom.statistics.client.common.presenter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.TextArea;
@@ -28,8 +25,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.app.client.event.DirtyKeyDownHander;
+import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
@@ -45,35 +41,13 @@ import stroom.statistics.shared.common.engines.FetchStatisticsEnginesAction;
 import stroom.statistics.shared.common.engines.FetchStatisticsEnginesResults;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class StatisticsDataSourceSettingsPresenter
         extends MyPresenterWidget<StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView>
         implements HasRead<StatisticStoreEntity>, HasWrite<StatisticStoreEntity>, HasDirtyHandlers,
         StatisticsDataSourceSettingsUiHandlers {
-    public interface StatisticsDataSourceSettingsView
-            extends View, HasUiHandlers<StatisticsDataSourceSettingsUiHandlers> {
-        TextArea getDescription();
-
-        String getEngineName();
-
-        void setEngineName(String engine);
-
-        StatisticType getStatisticType();
-
-        void setStatisticType(StatisticType statisticType);
-
-        void setEngineNames(List<String> names);
-
-        StatisticRollUpType getRollUpType();
-
-        void setRollUpType(StatisticRollUpType statisticRollUpType);
-
-        EventStoreTimeIntervalEnum getPrecision();
-
-        void setPrecision(EventStoreTimeIntervalEnum precision);
-
-        TickBox getEnabled();
-    }
-
     private String selectedEngine;
 
     @Inject
@@ -139,5 +113,30 @@ public class StatisticsDataSourceSettingsPresenter
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    public interface StatisticsDataSourceSettingsView
+            extends View, HasUiHandlers<StatisticsDataSourceSettingsUiHandlers> {
+        TextArea getDescription();
+
+        String getEngineName();
+
+        void setEngineName(String engine);
+
+        StatisticType getStatisticType();
+
+        void setStatisticType(StatisticType statisticType);
+
+        void setEngineNames(List<String> names);
+
+        StatisticRollUpType getRollUpType();
+
+        void setRollUpType(StatisticRollUpType statisticRollUpType);
+
+        EventStoreTimeIntervalEnum getPrecision();
+
+        void setPrecision(EventStoreTimeIntervalEnum precision);
+
+        TickBox getEnabled();
     }
 }

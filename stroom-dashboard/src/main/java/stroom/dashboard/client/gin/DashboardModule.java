@@ -17,7 +17,7 @@
 package stroom.dashboard.client.gin;
 
 import com.google.inject.Singleton;
-import stroom.app.client.gin.PluginModule;
+import stroom.core.client.gin.PluginModule;
 import stroom.dashboard.client.DashboardPlugin;
 import stroom.dashboard.client.main.ComponentRegistry;
 import stroom.dashboard.client.main.DashboardLayoutPresenter;

@@ -28,45 +28,19 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Place;
 import com.gwtplatform.mvp.client.proxy.ProxyPlace;
 import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
-
+import stroom.alert.client.event.AlertEvent;
+import stroom.app.client.NameTokens;
+import stroom.core.client.KeyboardInterceptor;
+import stroom.dispatch.client.AsyncCallbackAdaptor;
+import stroom.node.client.ClientPropertyCache;
+import stroom.node.shared.ClientProperties;
 import stroom.security.client.event.EmailResetPasswordEvent;
 import stroom.security.client.event.LoginEvent;
 import stroom.security.client.event.LoginFailedEvent;
 import stroom.security.client.event.LogoutEvent;
-import stroom.alert.client.event.AlertEvent;
-import stroom.app.client.KeyboardInterceptor;
-import stroom.app.client.NameTokens;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
-import stroom.node.client.ClientPropertyCache;
-import stroom.node.shared.ClientProperties;
 
 public class LoginPresenter extends MyPresenter<LoginPresenter.LoginView, LoginPresenter.LoginProxy>
         implements LoginUiHandlers, LoginFailedEvent.LoginFailedHandler, LogoutEvent.LogoutHandler {
-    @ProxyCodeSplit
-    @NameToken(NameTokens.LOGIN)
-    public interface LoginProxy extends ProxyPlace<LoginPresenter>, Place {
-    }
-
-    public interface LoginView extends View, HasUiHandlers<LoginUiHandlers> {
-        void setHTML(String html);
-
-        void setBuildVersion(String buildVersion);
-
-        void setBuildDate(String buildDate);
-
-        void setUpDate(String upDate);
-
-        void setNodeName(String nodeName);
-
-        String getUserName();
-
-        String getPassword();
-
-        void setPassword(String password);
-
-        void setError(String error);
-    }
-
     private boolean busy;
 
     @Inject
@@ -143,5 +117,30 @@ public class LoginPresenter extends MyPresenter<LoginPresenter.LoginView, LoginP
             }
             busy = false;
         }
+    }
+
+    @ProxyCodeSplit
+    @NameToken(NameTokens.LOGIN)
+    public interface LoginProxy extends ProxyPlace<LoginPresenter>, Place {
+    }
+
+    public interface LoginView extends View, HasUiHandlers<LoginUiHandlers> {
+        void setHTML(String html);
+
+        void setBuildVersion(String buildVersion);
+
+        void setBuildDate(String buildDate);
+
+        void setUpDate(String upDate);
+
+        void setNodeName(String nodeName);
+
+        String getUserName();
+
+        String getPassword();
+
+        void setPassword(String password);
+
+        void setError(String error);
     }
 }

@@ -14,36 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.app.client;
-
-import java.util.HashMap;
-import java.util.Map;
+package stroom.core.client;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.event.LogoutEvent;
-import stroom.security.client.event.RequestLogoutEvent;
 import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.OpenContentTabEvent;
+import stroom.security.client.event.LogoutEvent;
+import stroom.security.client.event.RequestLogoutEvent;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ContentManager implements HasHandlers {
-    public interface CloseCallback {
-        void closeTab(boolean ok);
-    }
-
-    public interface CloseHandler {
-        void onCloseRequest(CloseCallback callback);
-    }
-
     private final Map<TabData, CloseHandler> handlerMap = new HashMap<>();
-
     private final EventBus eventBus;
 
     @Inject
@@ -124,5 +114,13 @@ public class ContentManager implements HasHandlers {
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEvent(event);
+    }
+
+    public interface CloseCallback {
+        void closeTab(boolean ok);
+    }
+
+    public interface CloseHandler {
+        void onCloseRequest(CloseCallback callback);
     }
 }

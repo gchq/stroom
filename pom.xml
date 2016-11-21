@@ -987,8 +987,8 @@
     <module>stroom-statistics-server</module>
     <module>stroom-statistics-client</module>
 
-    <module>stroom-dashboard</module>
     <module>stroom-core-client</module>
+    <module>stroom-dashboard</module>
 
     <module>stroom-app-client</module>
     <module>stroom-startup</module>

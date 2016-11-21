@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.app.client.gin;
+package stroom.core.client;
 
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.menu.client.presenter.MenuKey;
 
-import stroom.app.client.presenter.Plugin;
-
-public abstract class PluginModule extends AbstractPresenterModule {
-    protected <P extends Plugin> void bindPlugin(Class<P> plugin) {
-        bind(plugin).asEagerSingleton();
-    }
+public class MenuKeys {
+    public static final MenuKey MAIN_MENU = new MenuKey("Main Menu");
+    public static final MenuKey TOOLS_MENU = new MenuKey("Tools Menu");
+    public static final MenuKey MONITORING_MENU = new MenuKey("Monitoring Menu");
+    public static final MenuKey USER_MENU = new MenuKey("User Menu");
+    public static final MenuKey HELP_MENU = new MenuKey("Help Menu");
 }

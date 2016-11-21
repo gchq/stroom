@@ -16,7 +16,14 @@
 
 package stroom.visualisation.client.presenter;
 
-import stroom.app.client.event.DirtyKeyDownHander;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.entity.client.presenter.EntitySettingsPresenter;
@@ -27,13 +34,6 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.shared.Visualisation;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public class VisualisationSettingsPresenter
         extends EntitySettingsPresenter<VisualisationSettingsPresenter.VisualisationSettingsView, Visualisation> {

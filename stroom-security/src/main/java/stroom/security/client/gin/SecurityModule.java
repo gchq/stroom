@@ -16,7 +16,8 @@
 
 package stroom.security.client.gin;
 
-import stroom.app.client.gin.PluginModule;
+import com.google.inject.Singleton;
+import stroom.core.client.gin.PluginModule;
 import stroom.entity.client.presenter.ManageEntityPresenter.ManageEntityView;
 import stroom.entity.client.view.ManageEntityViewImpl;
 import stroom.login.client.LoginManager;
@@ -47,7 +48,6 @@ import stroom.security.client.view.ResetPasswordViewImpl;
 import stroom.security.client.view.UserEditViewImpl;
 import stroom.security.client.view.UserGroupEditViewImpl;
 import stroom.security.client.view.UserListViewImpl;
-import com.google.inject.Singleton;
 
 public class SecurityModule extends PluginModule {
     @Override

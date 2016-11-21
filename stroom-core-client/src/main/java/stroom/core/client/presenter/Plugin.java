@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.app.client.presenter;
+package stroom.core.client.presenter;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HandlerContainerImpl;
-
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 
 public abstract class Plugin extends HandlerContainerImpl implements HasHandlers, BeforeRevealMenubarEvent.Handler {

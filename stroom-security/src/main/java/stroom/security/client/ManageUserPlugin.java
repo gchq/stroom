@@ -20,7 +20,7 @@ import com.google.gwt.inject.client.AsyncProvider;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.app.client.MenuKeys;
+import stroom.core.client.MenuKeys;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.entity.client.event.ShowPermissionsEntityDialogEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;

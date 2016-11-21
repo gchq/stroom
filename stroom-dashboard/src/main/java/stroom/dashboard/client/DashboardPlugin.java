@@ -19,15 +19,14 @@ package stroom.dashboard.client;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
+import stroom.core.client.ContentManager;
 import stroom.dashboard.client.main.DashboardPresenter;
 import stroom.dashboard.shared.Dashboard;
-import stroom.security.client.ClientSecurityContext;
-import stroom.app.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.entity.client.presenter.EntityEditPresenter;
+import stroom.security.client.ClientSecurityContext;
 
 public class DashboardPlugin extends EntityPlugin<Dashboard> {
     private final Provider<DashboardPresenter> editorProvider;

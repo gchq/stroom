@@ -17,6 +17,7 @@
 package stroom.app.client.gin;
 
 import stroom.about.client.AboutPlugin;
+import stroom.core.client.gin.PluginModule;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.help.client.HelpPlugin;
 

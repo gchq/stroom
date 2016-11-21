@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.app.client;
+package stroom.dashboard.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.gwtplatform.mvp.client.DelayedBindRegistry;
-import stroom.app.client.gin.DashboardAppGinjector;
+import stroom.dashboard.client.gin.DashboardAppGinjector;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.

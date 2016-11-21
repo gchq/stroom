@@ -22,28 +22,16 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.script.shared.Script;
-import stroom.security.client.ClientSecurityContext;
-import stroom.app.client.event.DirtyKeyDownHander;
+import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.EntitySettingsPresenter;
+import stroom.script.shared.Script;
+import stroom.security.client.ClientSecurityContext;
 
 public class ScriptSettingsPresenter
         extends EntitySettingsPresenter<ScriptSettingsPresenter.ScriptSettingsView, Script> {
-    public interface ScriptSettingsView extends View {
-        TextArea getDescription();
-
-        void setDependencyList(View view);
-    }
-
     private final ScriptDependencyListPresenter scriptDependencyListPresenter;
-
-    @Override
-    public String getType() {
-        return Script.ENTITY_TYPE;
-    }
 
     @Inject
     public ScriptSettingsPresenter(final EventBus eventBus, final ScriptSettingsView view,
@@ -62,6 +50,11 @@ public class ScriptSettingsPresenter
 
         registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
         view.setDependencyList(scriptDependencyListPresenter.getView());
+    }
+
+    @Override
+    public String getType() {
+        return Script.ENTITY_TYPE;
     }
 
     @Override
@@ -87,5 +80,11 @@ public class ScriptSettingsPresenter
         script.setDescription(getView().getDescription().getText().trim());
 
         scriptDependencyListPresenter.write(script);
+    }
+
+    public interface ScriptSettingsView extends View {
+        TextArea getDescription();
+
+        void setDependencyList(View view);
     }
 }

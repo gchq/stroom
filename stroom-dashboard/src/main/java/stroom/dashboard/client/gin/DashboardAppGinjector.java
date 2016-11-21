@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.app.client.gin;
+package stroom.dashboard.client.gin;
 
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
@@ -23,8 +23,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.proxy.PlaceManager;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
-import stroom.dashboard.client.gin.DashboardGinjector;
-import stroom.dashboard.client.gin.DashboardModule;
 import stroom.dashboard.client.main.DashboardAppPresenter;
 import stroom.dashboard.client.vis.gin.VisGinjector;
 import stroom.dashboard.client.vis.gin.VisModule;

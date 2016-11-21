@@ -19,15 +19,14 @@ package stroom.index.client;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.index.client.presenter.IndexPresenter;
-import stroom.index.shared.Index;
-import stroom.security.client.ClientSecurityContext;
-import stroom.app.client.ContentManager;
+import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.entity.client.presenter.EntityEditPresenter;
+import stroom.index.client.presenter.IndexPresenter;
+import stroom.index.shared.Index;
+import stroom.security.client.ClientSecurityContext;
 
 public class IndexPlugin extends EntityPlugin<Index> {
     private final Provider<IndexPresenter> editorProvider;

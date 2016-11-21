@@ -16,6 +16,7 @@
 
 package stroom.index.client.gin;
 
+import stroom.core.client.gin.PluginModule;
 import stroom.index.client.IndexPlugin;
 import stroom.index.client.presenter.IndexFieldEditPresenter;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
@@ -24,7 +25,6 @@ import stroom.index.client.presenter.IndexSettingsPresenter;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
 import stroom.index.client.view.IndexFieldEditViewImpl;
 import stroom.index.client.view.IndexSettingsViewImpl;
-import stroom.app.client.gin.PluginModule;
 
 public class IndexModule extends PluginModule {
     @Override
