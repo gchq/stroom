@@ -12,6 +12,8 @@ Issue #30 : Entering stepping mode was prompting for the pipeline to step with b
 
 Dashboard auto refresh is now limited to a minimum interval of 10 seconds.
 
+Issue #31 : Pipeline stepping was not including user changes immediately as parsers and XSLT filters were using cached content when they should have been ignoring the cache in stepping mode.
+
 ## [v5.0-beta.5] - 2016-11-17
 Issue #2 : The order of fields in the query editor is now alphabetical.
 
