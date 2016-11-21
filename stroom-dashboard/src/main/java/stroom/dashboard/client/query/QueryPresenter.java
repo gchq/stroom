@@ -97,10 +97,9 @@ import java.util.List;
 public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
         implements QueryUiHandlers, HasDirtyHandlers, UsesParams {
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query");
+    public static final int TEN_SECONDS = 10000;
     private static final long DEFAULT_TIME_LIMIT = 30L;
     private static final long DEFAULT_RECORD_LIMIT = 1000000L;
-    private static final int TEN_SECONDS = 10000;
-
     private final ExpressionTreePresenter expressionPresenter;
     private final QueryHistoryPresenter historyPresenter;
     private final QueryFavouritesPresenter favouritesPresenter;
