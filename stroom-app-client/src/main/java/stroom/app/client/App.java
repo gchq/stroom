@@ -18,8 +18,8 @@ package stroom.app.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Window;
 import com.gwtplatform.mvp.client.DelayedBindRegistry;
-
 import stroom.app.client.gin.AppGinjector;
 
 /**
@@ -32,6 +32,8 @@ public class App implements EntryPoint {
      * This is the entry point method.
      */
     public void onModuleLoad() {
+        Window.addWindowClosingHandler(event -> event.setMessage("Are you sure you want to leave Stroom?"));
+
         // This is required for Gwt-Platform proxy's generator.
         DelayedBindRegistry.bind(ginjector);
 
