@@ -39,5 +39,5 @@ Issue #28 : Dashboard component dependencies are now listed with the component n
 Intial open source release
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.5...HEAD
-[v5.0-beta.5]: https://github.com/gchq/stroom/releases/tag/v5.0-beta.5
+[v5.0-beta.5]: https://github.com/gchq/stroom/compare/v5.0-beta.4...v5.0-beta.5
 [v5.0-beta.4]: https://github.com/gchq/stroom/releases/tag/v5.0-beta.4
