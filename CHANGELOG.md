@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 Issue #30 : Entering stepping mode was prompting for the pipeline to step with but also auto selecting a pipeline at the same time and entering stepping immediately.
 
 ## [v5.0-beta.5] - 2016-11-17
-Updated GWT to v2.8.0.
-
 Issue #2 : The order of fields in the query editor is now alphabetical.
 
 Issue #3 : When a filter is active on a dashboard table column, a filter icon now appears to indicate this.
@@ -23,13 +21,19 @@ Issue #7: Dashboards are now able to query on open.
 
 Issue #8 : Dashboards are now able to re-query automatically at fixed intervals.
 
+Updated GWT to v2.8.0 and Gin to v2.1.2.
+
 Issue #12 : Dashboard queries can now evaluate relative date/time expressions such as now(), hour() etc. In addition to this the expressions also allow the addition or subtraction of durations, e.g. now - 5d.
 
 Issue #14 : Dashboard query expressions can now be parameterised with any term able to accept a user defined parameter, e.g. ${user}. Once added parameters can be changed for the entire dashboard via a text box at the top of the dashboard screen which will then execute all queries when enter is pressed or it loses focus.
 
 Issue #16 : Dashboard table filters can also accept user defined parameters, e.g. ${user}, to perform filtering when a query is executed.
 
+Fixed missing text presenter in dashboards.
+
 Issue #18 : The data dashboard component will now show data relative to the last selected table row (even if there is more than one table component on the dashboard) if the data component has not been configured to listen to row selections for a specific table component.
+
+Changed table styling to colour alternate rows, add borders between rows and increase vertical padding
 
 Issue #22 : Dashboard table columns can now be configured to wrap text via the format options.
 
