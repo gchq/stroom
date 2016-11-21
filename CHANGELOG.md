@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 Issue #30 : Entering stepping mode was prompting for the pipeline to step with but also auto selecting a pipeline at the same time and entering stepping immediately.
 
+Dashboard auto refresh is now limited to a minimum interval of 10 seconds.
+
 ## [v5.0-beta.5] - 2016-11-17
 Issue #2 : The order of fields in the query editor is now alphabetical.
 
