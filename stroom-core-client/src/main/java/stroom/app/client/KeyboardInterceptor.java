@@ -16,25 +16,19 @@
 
 package stroom.app.client;
 
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Widget;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.Widget;
-
 @Singleton
 public class KeyboardInterceptor {
-    public interface KeyTest {
-        boolean match(NativeEvent event);
-    }
-
     private final Map<KeyTest, Command> keyTests = new HashMap<>();
 
     @Inject
@@ -46,12 +40,7 @@ public class KeyboardInterceptor {
     }
 
     public void register(final Widget widget) {
-        widget.addDomHandler(new KeyDownHandler() {
-            @Override
-            public void onKeyDown(final KeyDownEvent event) {
-                handleKeyEvent(event.getNativeEvent());
-            }
-        }, KeyDownEvent.getType());
+        widget.addDomHandler(event -> handleKeyEvent(event.getNativeEvent()), KeyDownEvent.getType());
     }
 
     private void handleKeyEvent(final NativeEvent event) {
@@ -65,52 +54,13 @@ public class KeyboardInterceptor {
             }
         }
 
-        if (handled || block(event)) {
+        if (handled) {
             event.preventDefault();
             event.stopPropagation();
         }
     }
 
-    /**
-     * Block certain key presses such as F5 and backspace.
-     *
-     * @param event
-     * @return
-     */
-    private boolean block(final NativeEvent event) {
-        return blockBackspace(event) || blockF5(event);
-    }
-
-    /**
-     * Block certain key presses such as F5 and backspace.
-     *
-     * @param event
-     * @return
-     */
-    private boolean blockBackspace(final NativeEvent event) {
-        // 8 = Backspace
-        final int keyCode = event.getKeyCode();
-        final com.google.gwt.dom.client.Element target = event.getEventTarget().cast();
-        final String tagname = target.getTagName().toLowerCase();
-
-        final String contentEditable = target.getPropertyString("contentEditable");
-        final boolean editable = "true".equals(contentEditable);
-
-        return keyCode == 8 && !"input".equals(tagname) && !"textarea".equals(tagname)
-                && !("div".equals(tagname) && editable);
-
-    }
-
-    /**
-     * Block certain key presses such as F5 and backspace.
-     *
-     * @param event
-     * @return
-     */
-    private boolean blockF5(final NativeEvent event) {
-        // 116 = F5
-        final int keyCode = event.getKeyCode();
-        return keyCode == 116;
-
+    public interface KeyTest {
+        boolean match(NativeEvent event);
     }
 }
