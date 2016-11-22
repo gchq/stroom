@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+
+## [v5.0-beta.6] - 2016-11-22
 Issue #30 : Entering stepping mode was prompting for the pipeline to step with but also auto selecting a pipeline at the same time and entering stepping immediately.
 
 Dashboard auto refresh is now limited to a minimum interval of 10 seconds.
@@ -48,6 +50,7 @@ Issue #28 : Dashboard component dependencies are now listed with the component n
 ## [v5.0-beta.4] - 2016-10-03
 Intial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.6...HEAD
+[v5.0-beta.6]: https://github.com/gchq/stroom/compare/v5.0-beta.5...v5.0-beta.6
 [v5.0-beta.5]: https://github.com/gchq/stroom/compare/v5.0-beta.4...v5.0-beta.5
 [v5.0-beta.4]: https://github.com/gchq/stroom/releases/tag/v5.0-beta.4
