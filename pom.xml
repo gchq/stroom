@@ -21,7 +21,7 @@
   <artifactId>stroom</artifactId>
   <name>stroom</name>
   <description>STROOM</description>
-  <version>5.0-beta.6-SNAPSHOT</version>
+  <version>5.0-beta.6</version>
   <packaging>pom</packaging>
 
   <properties>
