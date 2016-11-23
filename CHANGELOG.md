@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+Issue #9 : Created a new implementation of the expression parser that improved expression tokenisation and deals with BODMAS rules properly.
 
 ## [v5.0-beta.6] - 2016-11-22
 Issue #30 : Entering stepping mode was prompting for the pipeline to step with but also auto selecting a pipeline at the same time and entering stepping immediately.
