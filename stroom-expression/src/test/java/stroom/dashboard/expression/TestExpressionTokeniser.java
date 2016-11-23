@@ -81,6 +81,10 @@ public class TestExpressionTokeniser extends StroomUnitTest {
         test("lessThanOrEqualTo(1, 0)");
         test("1=0");
         test("decode('fred', 'fr.+', 'freda', 'freddy')");
+
+        // Test fields with non letters.
+        test("sum(${user-id})");
+        test("sum(${user id})");
     }
 
     private void test(final String expression) throws ParseException {

@@ -18,7 +18,6 @@ package stroom.dashboard.expression;
 
 import stroom.dashboard.expression.ExpressionTokeniser.Token;
 
-import java.math.BigDecimal;
 import java.text.ParseException;
 
 public class ParamFactory {
@@ -28,22 +27,13 @@ public class ParamFactory {
         // Token should be string or number or field.
         switch (token.getType()) {
             case STRING:
-                return new StaticValueFunction(TypeConverter.unescape(value));
+                return TypeConverter.unescape(value);
 
             case NUMBER:
-//                try {
-//                    final String str = value.toString();
-//                    final double dbl = Double.parseDouble(str);
-//                    return Double.valueOf(dbl);
-//
-//                } catch (final NumberFormatException e) {
-//                    // Ignore as we will try BigDecimal parsing afterwards.
-//                }
-
-                return new StaticValueFunction(new BigDecimal(value).doubleValue());
+                return TypeConverter.getDouble(value);
 
             case FIELD:
-                final String fieldName = value.substring(2, value.length() - 2);
+                final String fieldName = value.substring(2, value.length() - 1);
                 final int fieldIndex = fieldIndexMap.create(fieldName);
                 return new Ref(value, fieldIndex);
 
