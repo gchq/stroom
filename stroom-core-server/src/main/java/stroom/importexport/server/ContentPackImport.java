@@ -63,7 +63,7 @@ public class ContentPackImport {
     private void doImport() {
         LOGGER.info("ContentPackImport started");
 
-        final Path contentPacksDir = Paths.get("/home/andy/tmp/autoImportTest/");
+        final Path contentPacksDir = Paths.get("/tmp/autoImportTest/");
 
 
         try {
