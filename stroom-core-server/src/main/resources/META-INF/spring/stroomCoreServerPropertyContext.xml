@@ -761,6 +761,14 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="false"/>
         </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.contentPackImportEnabled"/>
+            <property name="value" value="true"/>
+            <property name="description"
+                      value="If true any content packs found in ${CATALINA_BASE}/contentPackImport/ will be imported into Stroom. Only intended for use on new Stroom instances to reduce the risk of overwriting existing entities" />
+            <property name="editable" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
 
     </util:list>
 </beans>
