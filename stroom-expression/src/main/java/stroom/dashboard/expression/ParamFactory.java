@@ -16,37 +16,39 @@
 
 package stroom.dashboard.expression;
 
+import stroom.dashboard.expression.ExpressionTokeniser.Token;
+
+import java.math.BigDecimal;
 import java.text.ParseException;
 
 public class ParamFactory {
-    public Object create(final FieldIndexMap fieldIndexMap, final CharSlice slice) throws ParseException {
-        if (slice.startsWith("'") && slice.endsWith("'")) {
-            return TypeConverter.unescape(slice.toString());
+    public Object create(final FieldIndexMap fieldIndexMap, final Token token) throws ParseException {
+        final String value = token.toString();
 
-        } else {
-            final int dollar = slice.indexOf("$");
-            if (dollar != -1) {
-                final int start = slice.indexOf("{");
-                final int end = slice.indexOf("}");
-                if (dollar == 0 && start == 1 && end == slice.length() - 1) {
-                    final String fieldName = slice.substring(start + 1, end);
-                    final int fieldIndex = fieldIndexMap.create(fieldName);
-                    return new Ref(slice.toString(), fieldIndex);
+        // Token should be string or number or field.
+        switch (token.getType()) {
+            case STRING:
+                return new StaticValueFunction(TypeConverter.unescape(value));
 
-                } else {
-                    throw new ParseException("Invalid reference: '" + slice + "'", slice.getOffset());
-                }
+            case NUMBER:
+//                try {
+//                    final String str = value.toString();
+//                    final double dbl = Double.parseDouble(str);
+//                    return Double.valueOf(dbl);
+//
+//                } catch (final NumberFormatException e) {
+//                    // Ignore as we will try BigDecimal parsing afterwards.
+//                }
 
-            } else {
-                try {
-                    final String str = slice.toString();
-                    final double dbl = Double.parseDouble(str);
-                    return Double.valueOf(dbl);
+                return new StaticValueFunction(new BigDecimal(value).doubleValue());
 
-                } catch (final NumberFormatException e) {
-                    throw new ParseException("Unable to parse '" + slice + "' as number", slice.getOffset());
-                }
-            }
+            case FIELD:
+                final String fieldName = value.substring(2, value.length() - 2);
+                final int fieldIndex = fieldIndexMap.create(fieldName);
+                return new Ref(value, fieldIndex);
+
+            default:
+                throw new ParseException("Unexpected token type '" + token.getType() + "'", token.getStart());
         }
     }
 }
