@@ -17,8 +17,10 @@
 package stroom.importexport.server;
 
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.EntityActionConfirmation;
 import stroom.node.server.StroomPropertyService;
+import stroom.node.shared.GlobalProperty;
+import stroom.node.shared.GlobalPropertyService;
+import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomStartup;
 
@@ -27,8 +29,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
 @SuppressWarnings("unused")
 @Component
@@ -37,61 +38,78 @@ public class ContentPackImport {
     protected static final StroomLogger LOGGER = StroomLogger.getLogger(ContentPackImport.class);
 
     public static final String AUTO_IMPORT_ENABLED_PROP_KEY = "stroom.contentPackImportEnabled";
+    public static final String CONTENT_PACK_IMPORT_DIR = "contentPackImport";
     public static final String FAILED_DIR = "failed";
     public static final String IMPORTED_DIR = "imported";
 
     private ImportExportService importExportService;
     private StroomPropertyService stroomPropertyService;
+    private GlobalPropertyService globalPropertyService;
 
     @SuppressWarnings("unused")
     @Inject
-    public ContentPackImport(ImportExportService importExportService, StroomPropertyService stroomPropertyService) {
+    public ContentPackImport(ImportExportService importExportService, StroomPropertyService stroomPropertyService, GlobalPropertyService globalPropertyService) {
         this.importExportService = importExportService;
         this.stroomPropertyService = stroomPropertyService;
+        this.globalPropertyService = globalPropertyService;
     }
 
     @StroomStartup
-    public void startup(){
+    public void startup() {
 
-       final boolean isEnabled = stroomPropertyService.getBooleanProperty(AUTO_IMPORT_ENABLED_PROP_KEY, true);
+        final boolean isEnabled = stroomPropertyService.getBooleanProperty(AUTO_IMPORT_ENABLED_PROP_KEY, true);
 
-       if (isEnabled) {
-           doImport();
-       }
+        if (isEnabled) {
+            doImport();
+        }
     }
 
     private void doImport() {
         LOGGER.info("ContentPackImport started");
 
-        final Path contentPacksDir = Paths.get("/tmp/autoImportTest/");
+        final Optional<Path> optContentPacksDir = getContentPackBaseDir();
 
+        if (optContentPacksDir.isPresent()) {
+            final Path contentPacksDir = optContentPacksDir.get();
+            try {
+                if (!Files.isDirectory(contentPacksDir)) {
+                    LOGGER.error("Content packs directory %s doesn't exist", contentPacksDir.toAbsolutePath());
+                    return;
+                }
 
-        try {
-            if (!Files.isDirectory(contentPacksDir)){
-                throw new RuntimeException(String.format("Content packs directory %s doesn't exist", contentPacksDir.toAbsolutePath()));
+                Path importedDir = Files.createDirectories(contentPacksDir.resolve(IMPORTED_DIR));
+                Path failedDir = Files.createDirectories(contentPacksDir.resolve(FAILED_DIR));
+
+                Files.list(contentPacksDir)
+                        .filter(path -> path.toString().endsWith("zip"))
+                        .sorted()
+                        .forEachOrdered((contentPackPath) -> {
+                            boolean result = importContentPack(contentPacksDir, contentPackPath);
+                            Path destDir = result ? importedDir : failedDir;
+                            Path filename = contentPackPath.getFileName();
+                            Path destPath = destDir.resolve(filename);
+                            try {
+                                Files.move(contentPackPath, destPath);
+                            } catch (IOException e) {
+                                throw new RuntimeException(String.format("Error moving file from %s to %s",
+                                        contentPackPath.toAbsolutePath(), destPath.toAbsolutePath()));
+                            }
+                        });
+
+            } catch (IOException e) {
+                LOGGER.error("Unable to read content pack files from %s", contentPacksDir.toAbsolutePath(), e);
             }
 
-            Path importedDir = Files.createDirectories(Paths.get(contentPacksDir.toString(), IMPORTED_DIR));
-            Path failedDir = Files.createDirectories(Paths.get(contentPacksDir.toString(), FAILED_DIR));
-
-            Files.list(contentPacksDir)
-                    .filter(path -> path.toString().endsWith("zip"))
-                    .sorted()
-                    .forEachOrdered((contentPackPath) -> {
-                        boolean result = importContentPack(contentPacksDir, contentPackPath);
-                        Path destDir = result ? importedDir : failedDir;
-                        //TODO finish the move off
-                        //Files.move(contentPackPath, importedDir.resolve() )
-                    });
-
-        } catch (IOException e) {
-            LOGGER.error("Unable to read content pack files from %s", contentPacksDir.toAbsolutePath(), e );
+            //now we have imported our packs, change the prop to avoid the risk of re-importing and
+            //overwriting content
+            disableContentPackImport();
+            LOGGER.info("ContentPackImport finished");
+        } else {
+            LOGGER.error("Unable to proceed with import, no base directory found");
         }
-
-        LOGGER.info("ContentPackImport finished");
     }
 
-    private boolean importContentPack(Path parentPath, Path contentPack){
+    private boolean importContentPack(Path parentPath, Path contentPack) {
         LOGGER.info("Starting import of content pack %s", contentPack.toAbsolutePath());
 
 //        List<EntityActionConfirmation> confirmations = new ArrayList<>();
@@ -122,6 +140,33 @@ public class ContentPackImport {
 
     }
 
+
+    private void disableContentPackImport() {
+
+        GlobalProperty contextImportProp = globalPropertyService.loadByName(AUTO_IMPORT_ENABLED_PROP_KEY);
+
+        contextImportProp.setValue("false");
+
+        globalPropertyService.save(contextImportProp);
+    }
+
+    private Optional<Path> getContentPackBaseDir() {
+        Optional<Path> contentPackDir;
+
+        String catalinaBase = System.getProperty("catalina.base");
+        String userHome = System.getProperty("user.home");
+        if (catalinaBase != null) {
+            //running inside tomcat so use a subdir in there
+            contentPackDir = Optional.of(Paths.get(catalinaBase, CONTENT_PACK_IMPORT_DIR));
+
+        } else if (userHome != null) {
+            //not in tomcat so use the personal user conf dir as a base
+            contentPackDir = Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR, CONTENT_PACK_IMPORT_DIR));
+        } else {
+            contentPackDir = Optional.empty();
+        }
+        return contentPackDir;
+    }
 
 
 }
