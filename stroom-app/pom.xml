@@ -17,11 +17,11 @@
     -->
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>stroom</groupId>
-        <artifactId>stroom</artifactId>
-        <version>5.0-beta.6-SNAPSHOT</version>
-    </parent>
+  <parent>
+    <groupId>stroom</groupId>
+    <artifactId>stroom</artifactId>
+    <version>5.0-beta.7-SNAPSHOT</version>
+  </parent>
 
     <artifactId>stroom-app</artifactId>
     <name>stroom-app</name>

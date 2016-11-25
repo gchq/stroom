@@ -16,13 +16,12 @@
 
 package stroom.dashboard.expression;
 
-import java.text.ParseException;
-
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.util.date.DateUtil;
+import stroom.util.test.StroomUnitTest;
+
+import java.text.ParseException;
 
 public class TestExpressionParser extends StroomUnitTest {
     private final ExpressionParser parser = new ExpressionParser(new FunctionFactory(), new ParamFactory());
@@ -57,7 +56,6 @@ public class TestExpressionParser extends StroomUnitTest {
 		test("lessThanOrEqualTo(1, 0)");
 		test("1=0");
 		test("decode('fred', 'fr.+', 'freda', 'freddy')");
-
 	}
 
     private void test(final String expression) throws ParseException {
@@ -955,6 +953,46 @@ public class TestExpressionParser extends StroomUnitTest {
         generator.set(getVal(in));
         final Object out = generator.eval();
         Assert.assertEquals(expectedMs, out);
+    }
+
+    @Test
+    public void testBODMAS1() throws ParseException {
+        final Expression exp = createExpression("4+4/2+2");
+        final Generator generator = exp.createGenerator();
+        final Object out = generator.eval();
+
+        // Non BODMAS would evaluate as 6 or even 4 - BODMAS should be 8.
+        Assert.assertEquals(8D, out);
+    }
+
+    @Test
+    public void testBODMAS2() throws ParseException {
+        final Expression exp = createExpression("(4+4)/2+2");
+        final Generator generator = exp.createGenerator();
+        final Object out = generator.eval();
+
+        // Non BODMAS would evaluate as 6 or even 4 - BODMAS should be 6.
+        Assert.assertEquals(6D, out);
+    }
+
+    @Test
+    public void testBODMAS3() throws ParseException {
+        final Expression exp = createExpression("(4+4)/(2+2)");
+        final Generator generator = exp.createGenerator();
+        final Object out = generator.eval();
+
+        // Non BODMAS would evaluate as 6 or even 4 - BODMAS should be 2.
+        Assert.assertEquals(2D, out);
+    }
+
+    @Test
+    public void testBODMAS4() throws ParseException {
+        final Expression exp = createExpression("4+4/2+2*3");
+        final Generator generator = exp.createGenerator();
+        final Object out = generator.eval();
+
+        // Non BODMAS would evaluate as 18 - BODMAS should be 12.
+        Assert.assertEquals(12D, out);
     }
 
     private Expression createExpression(final String expression) throws ParseException {

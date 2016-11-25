@@ -96,9 +96,13 @@ import java.util.List;
 
 public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
         implements QueryUiHandlers, HasDirtyHandlers, UsesParams {
+
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query");
+    public static final int TEN_SECONDS = 10000;
+
     private static final long DEFAULT_TIME_LIMIT = 30L;
     private static final long DEFAULT_RECORD_LIMIT = 1000000L;
+
     private final ExpressionTreePresenter expressionPresenter;
     private final QueryHistoryPresenter historyPresenter;
     private final QueryFavouritesPresenter favouritesPresenter;
@@ -619,7 +623,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         if (automate.isRefresh()) {
             try {
                 final String interval = automate.getRefreshInterval();
-                final int millis = ModelStringUtil.parseDurationString(interval).intValue();
+                int millis = ModelStringUtil.parseDurationString(interval).intValue();
+
+                // Ensure that the refresh interval is not less than 10 seconds.
+                millis = Math.max(millis, TEN_SECONDS);
 
                 autoRefreshTimer = new Timer() {
                     @Override

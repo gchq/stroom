@@ -14,10 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.pool;
+package stroom.dashboard.expression;
 
-public interface PoolBean<K, V> {
-    PoolItem<K, V> borrowObject(K key, boolean usePool);
+public class Negate extends NumericFunction {
+    public static final String NAME = "negate";
+    private static final Calc CALC = new Calc();
 
-    void returnObject(PoolItem<K, V> poolItem, boolean usePool);
+    public Negate(final String name) {
+        super(name, 1, 1);
+    }
+
+    @Override
+    protected Calculator getCalculator() {
+        return CALC;
+    }
+
+    public static class Calc extends Calculator {
+        private static final long serialVersionUID = 1099553839843710283L;
+
+        @Override
+        protected double op(final double cur, final double val) {
+            return val * -1;
+        }
+    }
 }

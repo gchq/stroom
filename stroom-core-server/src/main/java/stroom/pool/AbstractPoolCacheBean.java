@@ -46,8 +46,12 @@ public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, O
     protected abstract V createValue(K key);
 
     @Override
-    public PoolItem<K, V> borrowObject(final K key) {
+    public PoolItem<K, V> borrowObject(final K key, final boolean usePool) {
         try {
+            if (!usePool) {
+                return new PoolItem<>(key, createValue(key));
+            }
+
             final ObjectPool<PoolItem<K, V>> pool = get(key);
             return pool.borrowObject();
         } catch (final Exception e) {
@@ -56,15 +60,17 @@ public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, O
     }
 
     @Override
-    public void returnObject(final PoolItem<K, V> poolItem) {
-        try {
-            final K key = poolItem.getKey();
-            final ObjectPool<PoolItem<K, V>> pool = getQuiet(key);
-            if (pool != null) {
-                pool.returnObject(poolItem);
+    public void returnObject(final PoolItem<K, V> poolItem, final boolean usePool) {
+        if (usePool) {
+            try {
+                final K key = poolItem.getKey();
+                final ObjectPool<PoolItem<K, V>> pool = getQuiet(key);
+                if (pool != null) {
+                    pool.returnObject(poolItem);
+                }
+            } catch (final Exception e) {
+                throw new RuntimeException(e.getMessage(), e);
             }
-        } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
         }
     }
 

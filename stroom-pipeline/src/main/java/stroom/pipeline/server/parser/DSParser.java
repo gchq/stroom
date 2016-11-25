@@ -16,13 +16,10 @@
 
 package stroom.pipeline.server.parser;
 
-import javax.inject.Inject;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-
 import stroom.cache.server.ParserFactoryPool;
 import stroom.cache.server.StoredParserFactory;
 import stroom.entity.shared.VersionedEntityDecorator;
@@ -43,6 +40,8 @@ import stroom.pool.PoolItem;
 import stroom.util.spring.StroomScope;
 import stroom.xml.converter.ParserFactory;
 
+import javax.inject.Inject;
+
 @Component
 @Scope(value = StroomScope.TASK)
 @ConfigurableElement(type = "DSParser", category = Category.PARSER, roles = { PipelineElementType.ROLE_PARSER,
@@ -52,7 +51,10 @@ import stroom.xml.converter.ParserFactory;
 public class DSParser extends AbstractParser {
     private final ParserFactoryPool parserFactoryPool;
     private final TextConverterService textConverterService;
-
+    private String injectedCode;
+    private boolean usePool = true;
+    private TextConverter textConverter;
+    private PoolItem<VersionedEntityDecorator<TextConverter>, StoredParserFactory> poolItem;
     @Inject
     public DSParser(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory,
             final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
@@ -60,10 +62,6 @@ public class DSParser extends AbstractParser {
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterService = textConverterService;
     }
-
-    private String injectedCode;
-    private TextConverter textConverter;
-    private PoolItem<VersionedEntityDecorator<TextConverter>, StoredParserFactory> poolItem;
 
     @Override
     protected XMLReader createReader() throws SAXException {
@@ -90,10 +88,11 @@ public class DSParser extends AbstractParser {
         // converter.
         if (injectedCode != null) {
             tc.setData(injectedCode);
+            usePool = false;
         }
 
         // Get a text converter generated parser from the pool.
-        poolItem = parserFactoryPool.borrowObject(new VersionedEntityDecorator<>(tc));
+        poolItem = parserFactoryPool.borrowObject(new VersionedEntityDecorator<>(tc), usePool);
         final StoredParserFactory storedParserFactory = poolItem.getValue();
         final StoredErrorReceiver storedErrorReceiver = storedParserFactory.getErrorReceiver();
         final ParserFactory parserFactory = storedParserFactory.getParserFactory();
@@ -118,7 +117,7 @@ public class DSParser extends AbstractParser {
         } finally {
             // Return the parser factory to the pool if we have used one.
             if (poolItem != null && parserFactoryPool != null) {
-                parserFactoryPool.returnObject(poolItem);
+                parserFactoryPool.returnObject(poolItem, usePool);
             }
         }
     }

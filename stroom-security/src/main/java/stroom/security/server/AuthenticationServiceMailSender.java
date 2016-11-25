@@ -16,46 +16,39 @@
 
 package stroom.security.server;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Required;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.stereotype.Component;
-
-import com.google.inject.Inject;
-
 import stroom.logging.AuthenticationEventLog;
 import stroom.security.shared.User;
 import stroom.servlet.HttpServletRequestHolder;
 
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class AuthenticationServiceMailSender {
+    private final MailSender mailSender;
+    private final String userDomain;
+    private final SimpleMailMessage resetPasswordTemplate;
+    private final AuthenticationEventLog eventLog;
+    private final transient HttpServletRequestHolder httpServletRequestHolder;
+
     @Inject
-    private SimpleMailMessage resetPasswordTemplate;
-    @Inject
-    private MailSender mailSender;
-    @Resource
-    private transient HttpServletRequestHolder httpServletRequestHolder;
-
-    private String smtpUserDomain;
-
-    @Resource
-    private AuthenticationEventLog eventLog;
-
-    public AuthenticationServiceMailSender(
-            @Value("#{propertyConfigurer.getProperty('stroom.smtpUserDomain')}") String smtpUserDomain,
-            MailSender mailSender, SimpleMailMessage resetPasswordTemplate,
-            HttpServletRequestHolder httpServletRequestHolder) {
-        this.smtpUserDomain = smtpUserDomain;
+    public AuthenticationServiceMailSender(final MailSender mailSender,
+                                           @Value("#{propertyConfigurer.getProperty('stroom.mail.userDomain')}") final String userDomain,
+                                           final SimpleMailMessage resetPasswordTemplate,
+                                           final AuthenticationEventLog eventLog,
+                                           final HttpServletRequestHolder httpServletRequestHolder) {
         this.mailSender = mailSender;
+        this.userDomain = userDomain;
         this.resetPasswordTemplate = resetPasswordTemplate;
+        this.eventLog = eventLog;
         this.httpServletRequestHolder = httpServletRequestHolder;
     }
 
@@ -66,7 +59,7 @@ public class AuthenticationServiceMailSender {
 
             final SimpleMailMessage mailMessage = new SimpleMailMessage();
             resetPasswordTemplate.copyTo(mailMessage);
-            mailMessage.setTo(user.getName() + "@" + smtpUserDomain);
+            mailMessage.setTo(user.getName() + "@" + userDomain);
 
             String message = mailMessage.getText();
             message = StringUtils.replace(message, "\\n", "\n");
@@ -82,21 +75,6 @@ public class AuthenticationServiceMailSender {
     }
 
     public boolean canEmailPasswordReset() {
-        return StringUtils.isNotBlank(smtpUserDomain);
-    }
-
-    @Required
-    public void setResetPasswordTemplate(final SimpleMailMessage msg) {
-        resetPasswordTemplate = msg;
-    }
-
-    @Required
-    public void setMailSender(final MailSender mailSender) {
-        this.mailSender = mailSender;
-    }
-
-    @Required
-    public void setSmtpUserDomain(final String smtpUserDomain) {
-        this.smtpUserDomain = smtpUserDomain;
+        return StringUtils.isNotBlank(userDomain);
     }
 }

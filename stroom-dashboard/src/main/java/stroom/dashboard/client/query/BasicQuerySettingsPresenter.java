@@ -100,7 +100,12 @@ public class BasicQuerySettingsPresenter
 
         try {
             final String interval = getView().getRefreshInterval();
-            ModelStringUtil.parseDurationString(interval);
+            int millis = ModelStringUtil.parseDurationString(interval).intValue();
+
+            if (millis < QueryPresenter.TEN_SECONDS) {
+                throw new NumberFormatException("Query refresh interval must be greater than or equal to 10 seconds");
+            }
+
             valid = true;
         } catch (final Exception e) {
             AlertEvent.fireError(this, e.getMessage(), null);

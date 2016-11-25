@@ -14,23 +14,28 @@
  * limitations under the License.
  */
 
-package stroom.cache.server;
+package stroom.dashboard.expression;
 
-import stroom.pool.PoolItem;
+public class Power extends NumericFunction {
+    public static final String NAME = "^";
+    public static final String ALIAS = "power";
+    private static final Calc CALC = new Calc();
 
-public class MockSchemaPool implements SchemaPool {
-    private final SchemaLoaderImpl schemaLoader;
-
-    public MockSchemaPool(final SchemaLoaderImpl schemaLoader) {
-        this.schemaLoader = schemaLoader;
+    public Power(final String name) {
+        super(name, 2, Integer.MAX_VALUE);
     }
 
     @Override
-    public PoolItem<SchemaKey, StoredSchema> borrowObject(final SchemaKey key, final boolean usePool) {
-        return new PoolItem<>(key, schemaLoader.load(key.getSchemaLanguage(), key.getData()));
+    protected Calculator getCalculator() {
+        return CALC;
     }
 
-    @Override
-    public void returnObject(final PoolItem<SchemaKey, StoredSchema> poolItem, final boolean usePool) {
+    public static class Calc extends Calculator {
+        private static final long serialVersionUID = 1099553839843710283L;
+
+        @Override
+        protected double op(final double cur, final double val) {
+            return Math.pow(cur, val);
+        }
     }
 }
