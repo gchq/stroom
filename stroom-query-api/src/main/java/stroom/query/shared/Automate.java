@@ -33,7 +33,7 @@ public class Automate extends ComponentSettings implements SharedObject {
     private boolean refresh;
 
     @XmlElement(name = "refreshInterval")
-    private int refreshInterval = 10;
+    private String refreshInterval = "10s";
 
     public Automate() {
         // Default constructor necessary for GWT serialisation.
@@ -55,11 +55,11 @@ public class Automate extends ComponentSettings implements SharedObject {
         this.refresh = refresh;
     }
 
-    public int getRefreshInterval() {
+    public String getRefreshInterval() {
         return refreshInterval;
     }
 
-    public void setRefreshInterval(final int refreshInterval) {
+    public void setRefreshInterval(final String refreshInterval) {
         this.refreshInterval = refreshInterval;
     }
 }

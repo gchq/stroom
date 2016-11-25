@@ -16,9 +16,15 @@
 
 package stroom.dashboard.client.text;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
-import stroom.dashboard.client.main.ComponentChangeEvent;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.table.TablePresenter;
@@ -38,14 +44,6 @@ import stroom.streamstore.shared.Stream;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Highlight;
 import stroom.xmleditor.client.presenter.ReadOnlyXMLEditorPresenter;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,11 +63,13 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     private Set<String> currentHighlightStrings;
     private boolean playButtonVisible;
 
+    private TablePresenter currentTablePresenter;
+
     @Inject
     public TextPresenter(final EventBus eventBus, final TextView view,
-            final Provider<TextSettingsPresenter> settingsPresenterProvider,
-            final ReadOnlyXMLEditorPresenter xmlPresenter, final ClientDispatchAsync dispatcher,
-            final ClientSecurityContext securityContext) {
+                         final Provider<TextSettingsPresenter> settingsPresenterProvider,
+                         final ReadOnlyXMLEditorPresenter xmlPresenter, final ClientDispatchAsync dispatcher,
+                         final ClientSecurityContext securityContext) {
         super(eventBus, view, settingsPresenterProvider);
         this.xmlPresenter = xmlPresenter;
         this.dispatcher = dispatcher;
@@ -81,28 +81,25 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     private void showData(final String data, final String classification, final Set<String> highlightStrings,
-            final boolean isHtml) {
+                          final boolean isHtml) {
         if (data != null) {
             final List<Highlight> highlights = getHighlights(data, highlightStrings);
 
             // Defer showing data to be sure that the data display has been made
             // visible first.
-            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-                @Override
-                public void execute() {
-                    // Determine if we should show tha play button.
-                    playButtonVisible = !isHtml
-                            && securityContext.hasAppPermission(PipelineEntity.STEPPING_PERMISSION);
+            Scheduler.get().scheduleDeferred(() -> {
+                // Determine if we should show tha play button.
+                playButtonVisible = !isHtml
+                        && securityContext.hasAppPermission(PipelineEntity.STEPPING_PERMISSION);
 
-                    // Show the play button if we have fetched input data.
-                    getView().setPlayVisible(playButtonVisible);
+                // Show the play button if we have fetched input data.
+                getView().setPlayVisible(playButtonVisible);
 
-                    getView().setClassification(classification);
-                    if (isHtml) {
-                        xmlPresenter.setHTML(data, highlights, playButtonVisible);
-                    } else {
-                        xmlPresenter.setText(data, 1, true, highlights, null, playButtonVisible);
-                    }
+                getView().setClassification(classification);
+                if (isHtml) {
+                    xmlPresenter.setHTML(data, highlights, playButtonVisible);
+                } else {
+                    xmlPresenter.setText(data, 1, true, highlights, null, playButtonVisible);
                 }
             });
         } else {
@@ -114,7 +111,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     private List<Highlight> getHighlights(final String input, final Set<String> highlightStrings) {
         // final StringBuilder output = new StringBuilder(input);
 
-        final List<Highlight> highlights = new ArrayList<Highlight>();
+        final List<Highlight> highlights = new ArrayList<>();
 
         // See if we are going to add highlights.
         if (highlightStrings != null && highlightStrings.size() > 0) {
@@ -186,57 +183,61 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     @Override
     public void setComponents(final Components components) {
         super.setComponents(components);
-        registerHandler(components.addComponentChangeHandler(new ComponentChangeEvent.Handler() {
-            @Override
-            public void onChange(final ComponentChangeEvent event) {
-                if (textSettings != null && EqualsUtil.isEquals(textSettings.getTableId(), event.getComponentId())) {
-                    update();
+        registerHandler(components.addComponentChangeHandler(event -> {
+            if (textSettings != null) {
+                final Component component = event.getComponent();
+                if (textSettings.getTableId() == null) {
+                    if (component instanceof TablePresenter) {
+                        currentTablePresenter = (TablePresenter) component;
+                        update(currentTablePresenter);
+                    }
+                } else if (EqualsUtil.isEquals(textSettings.getTableId(), event.getComponentId())) {
+                    if (component instanceof TablePresenter) {
+                        currentTablePresenter = (TablePresenter) component;
+                        update(currentTablePresenter);
+                    }
                 }
             }
         }));
     }
 
-    private void update() {
+    private void update(final TablePresenter tablePresenter) {
         showData(null, null, null, false);
         currentStreamId = null;
         currentEventId = null;
         currentHighlightStrings = null;
 
-        if (textSettings.getTableId() != null) {
-            final Component component = getComponents().get(textSettings.getTableId());
-            if (component != null) {
-                final TablePresenter tablePresenter = (TablePresenter) component;
-                final String streamId = tablePresenter.getSelectedStreamId();
-                final String eventId = tablePresenter.getSelectedEventId();
+        if (tablePresenter != null) {
+            final String streamId = tablePresenter.getSelectedStreamId();
+            final String eventId = tablePresenter.getSelectedEventId();
 
-                if (streamId != null && eventId != null) {
-                    currentStreamId = getLong(streamId);
-                    currentEventId = getLong(eventId);
-                    currentHighlightStrings = tablePresenter.getHighlights();
+            if (streamId != null && eventId != null) {
+                currentStreamId = getLong(streamId);
+                currentEventId = getLong(eventId);
+                currentHighlightStrings = tablePresenter.getHighlights();
 
-                    if (currentStreamId == null || currentEventId == null) {
-                        showData(null, null, null, false);
+                if (currentStreamId == null || currentEventId == null) {
+                    showData(null, null, null, false);
+
+                } else {
+                    final String permissionCheck = checkPermissions();
+                    if (permissionCheck != null) {
+                        showData(permissionCheck, null, null, false);
 
                     } else {
-                        final String permissionCheck = checkPermissions();
-                        if (permissionCheck != null) {
-                            showData(permissionCheck, null, null, false);
-
+                        FetchDataAction fetchDataAction;
+                        if (textSettings.getPipeline() != null) {
+                            fetchDataAction = new FetchDataWithPipelineAction(currentStreamId, currentEventId,
+                                    textSettings.getPipeline(), textSettings.isShowAsHtml());
                         } else {
-                            FetchDataAction fetchDataAction = null;
-                            if (textSettings.getPipeline() != null) {
-                                fetchDataAction = new FetchDataWithPipelineAction(currentStreamId, currentEventId,
-                                        textSettings.getPipeline(), textSettings.isShowAsHtml());
-                            } else {
-                                fetchDataAction = new FetchDataAction(currentStreamId, currentEventId,
-                                        textSettings.isShowAsHtml());
-                            }
-
-                            ensureFetchDataQueue();
-                            fetchDataQueue.add(fetchDataAction);
-                            delayedFetchDataTimer.cancel();
-                            delayedFetchDataTimer.schedule(250);
+                            fetchDataAction = new FetchDataAction(currentStreamId, currentEventId,
+                                    textSettings.isShowAsHtml());
                         }
+
+                        ensureFetchDataQueue();
+                        fetchDataQueue.add(fetchDataAction);
+                        delayedFetchDataTimer.cancel();
+                        delayedFetchDataTimer.schedule(250);
                     }
                 }
             }
@@ -269,7 +270,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     private void ensureFetchDataQueue() {
         if (fetchDataQueue == null) {
-            fetchDataQueue = new ArrayList<FetchDataAction>();
+            fetchDataQueue = new ArrayList<>();
             delayedFetchDataTimer = new Timer() {
                 @Override
                 public void run() {
@@ -315,23 +316,22 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     @Override
     public void link() {
-        String tableId = textSettings.getTableId();
-        final List<String> list = getComponents().getIdListByType(TablePresenter.TYPE.getId());
-        if (list.size() > 0) {
-            if (tableId == null) {
-                tableId = list.get(0);
-            } else if (!list.contains(tableId)) {
-                tableId = list.get(0);
-            }
+        final String tableId = textSettings.getTableId();
+        String newTableId = getComponents().validateOrGetFirstComponentId(tableId, TablePresenter.TYPE.getId());
+
+        // If we can't get the same table id then set to null so that changes to any table can be listened to.
+        if (!EqualsUtil.isEquals(tableId, newTableId)) {
+            newTableId = null;
         }
-        textSettings.setTableId(tableId);
-        update();
+
+        textSettings.setTableId(newTableId);
+        update(currentTablePresenter);
     }
 
     @Override
     public void changeSettings() {
         super.changeSettings();
-        update();
+        update(currentTablePresenter);
     }
 
     @Override

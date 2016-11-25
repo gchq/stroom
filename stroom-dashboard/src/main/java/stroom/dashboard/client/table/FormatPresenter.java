@@ -16,14 +16,11 @@
 
 package stroom.dashboard.client.table;
 
-import java.util.List;
-
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.query.shared.DateTimeFormatSettings;
 import stroom.query.shared.Field;
 import stroom.query.shared.Format;
@@ -37,49 +34,13 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import java.util.List;
+
 public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatView>implements FormatUihandlers {
-    public interface FormatView extends View, HasUiHandlers<FormatUihandlers> {
-        void setTypes(List<Type> types);
-
-        void setType(Type type);
-
-        int getDecimalPlaces();
-
-        void setDecimalPlaces(int decimalPlaces);
-
-        boolean isUseSeparator();
-
-        void setUseSeparator(boolean useSeparator);
-
-        String getPattern();
-
-        void setPattern(String pattern);
-
-        void setTimeZoneIds(List<String> timeZoneIds);
-
-        TimeZone.Use getTimeZoneUse();
-
-        void setTimeZoneUse(TimeZone.Use use);
-
-        String getTimeZoneId();
-
-        void setTimeZoneId(String timeZoneId);
-
-        Integer getTimeZoneOffsetHours();
-
-        void setTimeZoneOffsetHours(Integer timeZoneOffsetHours);
-
-        Integer getTimeZoneOffsetMinutes();
-
-        void setTimeZoneOffsetMinutes(Integer timeZoneOffsetMinutes);
-    }
-
     private final TimeZones timeZones;
-
     private Type type;
     private TablePresenter tablePresenter;
     private Field field;
-
     @Inject
     public FormatPresenter(final EventBus eventBus, final FormatView view, final TimeZones timeZones) {
         super(eventBus, view);
@@ -101,6 +62,12 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
             setNumberSettings(format.getSettings());
             setDateTimeSettings(format.getSettings());
             setType(format.getType());
+        }
+
+        if (format != null && format.getWrap() != null && format.getWrap()) {
+            getView().setWrap(true);
+        } else {
+            getView().setWrap(false);
         }
 
         final PopupSize popupSize = new PopupSize(390, 193, 390, 193, true);
@@ -143,6 +110,13 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
         } else if (Type.DATE_TIME.equals(type)) {
             format.setSettings(getDateTimeSettings());
         }
+
+        if (getView().isWrap()) {
+            format.setWrap(true);
+        } else {
+            format.setWrap(null);
+        }
+
         return format;
     }
 
@@ -205,5 +179,45 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
 
         getView().setTimeZoneOffsetHours(timeZone.getOffsetHours());
         getView().setTimeZoneOffsetMinutes(timeZone.getOffsetMinutes());
+    }
+
+    public interface FormatView extends View, HasUiHandlers<FormatUihandlers> {
+        void setTypes(List<Type> types);
+
+        void setType(Type type);
+
+        int getDecimalPlaces();
+
+        void setDecimalPlaces(int decimalPlaces);
+
+        boolean isUseSeparator();
+
+        void setUseSeparator(boolean useSeparator);
+
+        String getPattern();
+
+        void setPattern(String pattern);
+
+        void setTimeZoneIds(List<String> timeZoneIds);
+
+        TimeZone.Use getTimeZoneUse();
+
+        void setTimeZoneUse(TimeZone.Use use);
+
+        String getTimeZoneId();
+
+        void setTimeZoneId(String timeZoneId);
+
+        Integer getTimeZoneOffsetHours();
+
+        void setTimeZoneOffsetHours(Integer timeZoneOffsetHours);
+
+        Integer getTimeZoneOffsetMinutes();
+
+        void setTimeZoneOffsetMinutes(Integer timeZoneOffsetMinutes);
+
+        boolean isWrap();
+
+        void setWrap(boolean wrap);
     }
 }

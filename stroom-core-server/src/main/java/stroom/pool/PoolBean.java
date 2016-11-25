@@ -17,7 +17,7 @@
 package stroom.pool;
 
 public interface PoolBean<K, V> {
-    PoolItem<K, V> borrowObject(K key);
+    PoolItem<K, V> borrowObject(K key, boolean usePool);
 
-    void returnObject(PoolItem<K, V> poolItem);
+    void returnObject(PoolItem<K, V> poolItem, boolean usePool);
 }

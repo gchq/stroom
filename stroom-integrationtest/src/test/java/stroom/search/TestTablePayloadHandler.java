@@ -18,7 +18,6 @@ package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.dashboard.server.TableComponentResultCreator;
 import stroom.dashboard.server.format.FieldFormatter;
 import stroom.dashboard.server.format.FormatterFactory;
@@ -26,6 +25,7 @@ import stroom.dashboard.shared.ParamUtil;
 import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.TableResult;
 import stroom.dashboard.shared.TableResultRequest;
+import stroom.mapreduce.UnsafePairQueue;
 import stroom.query.CompiledDepths;
 import stroom.query.CompiledFields;
 import stroom.query.Item;
@@ -40,10 +40,11 @@ import stroom.query.shared.IndexFieldsMap;
 import stroom.query.shared.Sort;
 import stroom.query.shared.Sort.SortDirection;
 import stroom.query.shared.TableSettings;
-import stroom.mapreduce.UnsafePairQueue;
 import stroom.util.shared.SharedObject;
 import stroom.util.task.MonitorImpl;
 import stroom.util.test.StroomUnitTest;
+
+import java.util.Collections;
 
 public class TestTablePayloadHandler extends StroomUnitTest {
     @Test
@@ -66,7 +67,7 @@ public class TestTablePayloadHandler extends StroomUnitTest {
         tableSettings.addField(field);
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
-        final CompiledFields compiledFields = new CompiledFields(indexFieldsMap, tableSettings.getFields(), null);
+        final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
 
         final UnsafePairQueue<String, Item> queue = new UnsafePairQueue<>();
         final ItemMapper itemMapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),
@@ -113,7 +114,7 @@ public class TestTablePayloadHandler extends StroomUnitTest {
         tableSettings.addField(field);
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
-        final CompiledFields compiledFields = new CompiledFields(indexFieldsMap, tableSettings.getFields(), null);
+        final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
 
         final UnsafePairQueue<String, Item> queue = new UnsafePairQueue<>();
         final ItemMapper itemMapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),
@@ -156,7 +157,7 @@ public class TestTablePayloadHandler extends StroomUnitTest {
         tableSettings.addField(field);
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
-        final CompiledFields compiledFields = new CompiledFields(indexFieldsMap, tableSettings.getFields(), null);
+        final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
 
         final UnsafePairQueue<String, Item> queue = new UnsafePairQueue<>();
         final ItemMapper itemMapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),
@@ -203,7 +204,7 @@ public class TestTablePayloadHandler extends StroomUnitTest {
         tableSettings.addField(field);
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
-        final CompiledFields compiledFields = new CompiledFields(indexFieldsMap, tableSettings.getFields(), null);
+        final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
 
         final UnsafePairQueue<String, Item> queue = new UnsafePairQueue<>();
         final ItemMapper itemMapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),
@@ -251,7 +252,7 @@ public class TestTablePayloadHandler extends StroomUnitTest {
         tableSettings.addField(field);
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
-        final CompiledFields compiledFields = new CompiledFields(indexFieldsMap, tableSettings.getFields(), null);
+        final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
 
         final UnsafePairQueue<String, Item> queue = new UnsafePairQueue<>();
         final ItemMapper itemMapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),
@@ -299,7 +300,7 @@ public class TestTablePayloadHandler extends StroomUnitTest {
         tableSettings.addField(field);
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
-        final CompiledFields compiledFields = new CompiledFields(indexFieldsMap, tableSettings.getFields(), null);
+        final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
 
         final UnsafePairQueue<String, Item> queue = new UnsafePairQueue<>();
         final ItemMapper itemMapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),

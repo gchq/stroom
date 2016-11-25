@@ -26,7 +26,11 @@ import stroom.query.shared.Condition;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionTerm;
 import stroom.query.shared.Search;
-import stroom.statistics.common.*;
+import stroom.statistics.common.RolledUpStatisticEvent;
+import stroom.statistics.common.StatisticDataPoint;
+import stroom.statistics.common.StatisticDataSet;
+import stroom.statistics.common.StatisticEvent;
+import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.exception.StatisticsEventValidationException;
 import stroom.statistics.shared.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
@@ -196,7 +200,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
             rootOperator.addChild(new ExpressionTerm(tag.getTag(), Condition.EQUALS, tag.getValue()));
         }
 
-        final Search search = new Search(null, rootOperator, null, true);
+        final Search search = new Search(null, rootOperator, null);
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName(STAT_NAME);
         dataSource.setRollUpType(StatisticRollUpType.NONE);

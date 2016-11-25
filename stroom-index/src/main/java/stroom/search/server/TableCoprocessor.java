@@ -16,9 +16,10 @@
 
 package stroom.search.server;
 
-import java.util.List;
-
 import stroom.dashboard.expression.FieldIndexMap;
+import stroom.mapreduce.BlockingPairQueue;
+import stroom.mapreduce.PairQueue;
+import stroom.mapreduce.UnsafePairQueue;
 import stroom.query.CompiledDepths;
 import stroom.query.CompiledFields;
 import stroom.query.Item;
@@ -28,12 +29,11 @@ import stroom.query.Payload;
 import stroom.query.TableCoprocessorSettings;
 import stroom.query.TablePayload;
 import stroom.query.shared.Field;
-import stroom.query.shared.IndexFieldsMap;
 import stroom.query.shared.TableSettings;
-import stroom.mapreduce.BlockingPairQueue;
-import stroom.mapreduce.PairQueue;
-import stroom.mapreduce.UnsafePairQueue;
 import stroom.util.task.TaskMonitor;
+
+import java.util.List;
+import java.util.Map;
 
 public class TableCoprocessor implements Coprocessor<TableCoprocessorSettings> {
     private final PairQueue<String, Item> queue;
@@ -42,13 +42,13 @@ public class TableCoprocessor implements Coprocessor<TableCoprocessorSettings> {
     private final CompiledFields compiledFields;
     private final CompiledDepths compiledDepths;
 
-    public TableCoprocessor(final IndexFieldsMap indexFieldsMap, final TableCoprocessorSettings settings,
-            final FieldIndexMap fieldIndexMap, final TaskMonitor taskMonitor) {
+    public TableCoprocessor(final TableCoprocessorSettings settings,
+                            final FieldIndexMap fieldIndexMap, final TaskMonitor taskMonitor, final Map<String, String> paramMap) {
         final TableSettings tableSettings = settings.getTableSettings();
 
         final List<Field> fields = tableSettings.getFields();
         compiledDepths = new CompiledDepths(fields, tableSettings.showDetail());
-        compiledFields = new CompiledFields(indexFieldsMap, fields, fieldIndexMap);
+        compiledFields = new CompiledFields(fields, fieldIndexMap, paramMap);
 
         queue = new BlockingPairQueue<>(taskMonitor);
         mapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(), compiledDepths.getMaxGroupDepth());

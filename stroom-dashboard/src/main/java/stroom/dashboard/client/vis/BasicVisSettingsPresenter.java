@@ -16,9 +16,14 @@
 
 package stroom.dashboard.client.vis;
 
+import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONObject;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
-import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.SettingsPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
@@ -38,12 +43,6 @@ import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.shared.Visualisation;
 import stroom.widget.tab.client.presenter.TabData;
-import com.google.gwt.json.client.JSONArray;
-import com.google.gwt.json.client.JSONObject;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,25 +87,21 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     }
 
     @Override
-    public void onTableIdChange() {
-        updateFieldNames(getView().getTableId());
+    public void onTableChange() {
+        updateFieldNames(getView().getTable());
     }
 
-    private void updateFieldNames(final String tableId) {
+    private void updateFieldNames(final Component component) {
         fieldNames = new ArrayList<>();
         fieldNames.add("");
 
-        final Components components = getComponents();
-        if (components != null) {
-            final Component component = components.get(tableId);
-            if (component != null && component instanceof TablePresenter) {
-                final TablePresenter tablePresenter = (TablePresenter) component;
-                final List<Field> fields = tablePresenter.getSettings().getFields();
-                if (fields != null && fields.size() > 0) {
-                    for (final Field field : fields) {
-                        if (field.isVisible()) {
-                            fieldNames.add(field.getName());
-                        }
+        if (component != null && component instanceof TablePresenter) {
+            final TablePresenter tablePresenter = (TablePresenter) component;
+            final List<Field> fields = tablePresenter.getSettings().getFields();
+            if (fields != null && fields.size() > 0) {
+                for (final Field field : fields) {
+                    if (field.isVisible()) {
+                        fieldNames.add(field.getName());
                     }
                 }
             }
@@ -177,12 +172,12 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     public void read(final ComponentConfig componentData) {
         super.read(componentData);
 
-        final List<String> list = getComponents().getIdListByType(TablePresenter.TYPE.getId());
-        getView().setTableIdList(list);
+        final List<Component> list = getComponents().getComponentsByType(TablePresenter.TYPE.getId());
+        getView().setTableList(list);
 
         final VisDashboardSettings settings = (VisDashboardSettings) componentData.getSettings();
-        getView().setTableId(settings.getTableId());
-        updateFieldNames(getView().getTableId());
+        getView().setTable(getComponents().get(settings.getTableId()));
+        updateFieldNames(getView().getTable());
 
         dynamicSettings = JSONUtil.getObject(JSONUtil.parse(settings.getJSON()));
         if (dynamicSettings == null) {
@@ -205,9 +200,18 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
 
         final VisDashboardSettings settings = (VisDashboardSettings) componentData.getSettings();
 
-        settings.setTableId(getView().getTableId());
+        settings.setTableId(getTableId());
         settings.setVisualisation(getSelectedVisualisation());
         settings.setJSON(getJSON());
+    }
+
+    private String getTableId() {
+        final Component table = getView().getTable();
+        if (table == null) {
+            return null;
+        }
+
+        return table.getId();
     }
 
     private void writeDynamicSettings(final JSONObject dynamicSettings) {
@@ -231,7 +235,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         final VisDashboardSettings settings = (VisDashboardSettings) componentData.getSettings();
 
         final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(settings.getTableId(), getView().getTableId());
+        builder.append(settings.getTableId(), getTableId());
         builder.append(settings.getVisualisation(), getSelectedVisualisation());
         builder.append(settings.getJSON(), getJSON());
 
@@ -248,11 +252,11 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
 
     public interface BasicVisSettingsView
             extends BasicSettingsTabPresenter.SettingsView, HasUiHandlers<BasicVisSettingsUiHandlers> {
-        void setTableIdList(List<String> tableIdList);
+        void setTableList(List<Component> tableList);
 
-        String getTableId();
+        Component getTable();
 
-        void setTableId(String tableId);
+        void setTable(Component table);
 
         void setVisualisationView(View view);
     }

@@ -19,6 +19,7 @@ package stroom.dashboard.client.query;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
+import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.entity.shared.DocRef;
@@ -28,6 +29,7 @@ import stroom.query.shared.DataSource;
 import stroom.query.shared.QueryData;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.ModelStringUtil;
 
 public class BasicQuerySettingsPresenter
         extends BasicSettingsTabPresenter<BasicQuerySettingsPresenter.BasicQuerySettingsView> {
@@ -93,6 +95,26 @@ public class BasicQuerySettingsPresenter
     }
 
     @Override
+    public boolean validate() {
+        boolean valid = false;
+
+        try {
+            final String interval = getView().getRefreshInterval();
+            int millis = ModelStringUtil.parseDurationString(interval).intValue();
+
+            if (millis < QueryPresenter.TEN_SECONDS) {
+                throw new NumberFormatException("Query refresh interval must be greater than or equal to 10 seconds");
+            }
+
+            valid = true;
+        } catch (final Exception e) {
+            AlertEvent.fireError(this, e.getMessage(), null);
+        }
+
+        return valid;
+    }
+
+    @Override
     public boolean isDirty(final ComponentConfig componentData) {
         if (super.isDirty(componentData)) {
             return true;
@@ -125,8 +147,8 @@ public class BasicQuerySettingsPresenter
 
         void setAutoRefresh(boolean autoRefresh);
 
-        int getRefreshInterval();
+        String getRefreshInterval();
 
-        void setRefreshInterval(int refreshInterval);
+        void setRefreshInterval(String refreshInterval);
     }
 }

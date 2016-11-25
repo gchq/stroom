@@ -16,10 +16,6 @@
 
 package stroom.streamstore.client.presenter;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.cell.client.SafeHtmlCell;
@@ -36,7 +32,6 @@ import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -50,6 +45,10 @@ import stroom.util.shared.StreamLocation;
 import stroom.util.shared.Summary;
 import stroom.util.shared.TreeRow;
 import stroom.xmleditor.client.view.LeftBar;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 
 public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>> {
     private static HashSet<Severity> ALL_SEVERITIES = new HashSet<Severity>(Arrays.asList(Severity.SEVERITIES));
@@ -165,7 +164,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
                     }
 
                     final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                    builder.appendHtmlConstant("<div style=\"position:absolute;overflow:visible;font-weight:bold;\">");
+                    builder.appendHtmlConstant("<div style=\"position:absolute;top:4px;overflow:visible;font-weight:bold;\">");
                     builder.appendEscaped(sb.toString());
                     builder.appendHtmlConstant("</div>");
 

@@ -16,16 +16,15 @@
 
 package stroom.streamstore.server;
 
-import javax.annotation.Resource;
-
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.streamstore.shared.StreamType;
+import stroom.util.logging.StroomLogger;
+
+import javax.annotation.Resource;
 
 @Component
 @Transactional
@@ -36,6 +35,8 @@ public class StreamTypeServiceTransactionHelper {
     private StroomEntityManager stroomEntityManager;
 
     public void doInserts() {
+        final long now = System.currentTimeMillis();
+
         // We use SQL to insert because we need a predefined key.
         final SQLBuilder sql = new SQLBuilder(false);
 
@@ -67,7 +68,11 @@ public class StreamTypeServiceTransactionHelper {
                     sql.append(SQLNameConstants.PURPOSE);
                     sql.append(") VALUES (");
                     sql.append(streamType.getId());
-                    sql.append(",1,curdate(),curdate(),'upgrade','upgrade',");
+                    sql.append(",1,");
+                    sql.append(now);
+                    sql.append(",");
+                    sql.append(now);
+                    sql.append(",'upgrade','upgrade',");
                     sql.append("'" + streamType.getPath() + "'");
                     sql.append(",");
                     sql.append("'" + streamType.getExtension() + "'");
@@ -77,9 +82,10 @@ public class StreamTypeServiceTransactionHelper {
                     sql.append(streamType.getPpurpose());
                     sql.append(")");
                     stroomEntityManager.executeNativeUpdate(sql);
-                    sql.setLength(0);
                 } catch (final Exception ex) {
                     LOGGER.error("init() - Added initial stream type %s", streamType, ex);
+                } finally {
+                    sql.setLength(0);
                 }
             }
         }

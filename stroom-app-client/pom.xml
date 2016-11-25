@@ -1,4 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <!--
     ~ Copyright 2016 Crown Copyright
@@ -20,7 +20,7 @@
     <parent>
         <groupId>stroom</groupId>
         <artifactId>stroom</artifactId>
-        <version>5.0-beta.5-SNAPSHOT</version>
+        <version>5.0-beta.7-SNAPSHOT</version>
     </parent>
 
     <artifactId>stroom-app-client</artifactId>
@@ -229,7 +229,6 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <closureCompiler>true</closureCompiler>
                     <draftCompile>false</draftCompile>
                     <strict>true</strict>
                     <failOnError>true</failOnError>
@@ -264,7 +263,6 @@
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>gwt-maven-plugin</artifactId>
                         <configuration>
-                            <closureCompiler>false</closureCompiler>
                             <draftCompile>true</draftCompile>
                             <strict>true</strict>
                             <failOnError>true</failOnError>
@@ -286,7 +284,6 @@
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>gwt-maven-plugin</artifactId>
                         <configuration>
-                            <closureCompiler>false</closureCompiler>
                             <draftCompile>true</draftCompile>
                             <strict>true</strict>
                             <failOnError>true</failOnError>

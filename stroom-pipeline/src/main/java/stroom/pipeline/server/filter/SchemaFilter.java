@@ -16,15 +16,6 @@
 
 package stroom.pipeline.server.filter;
 
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-import java.util.regex.Pattern;
-
-import javax.inject.Inject;
-import javax.xml.XMLConstants;
-import javax.xml.validation.ValidatorHandler;
-
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -33,7 +24,6 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-
 import stroom.cache.server.SchemaKey;
 import stroom.cache.server.SchemaPool;
 import stroom.cache.server.StoredSchema;
@@ -50,6 +40,14 @@ import stroom.xmlschema.server.XMLSchemaCache;
 import stroom.xmlschema.server.XMLSchemaCache.SchemaSet;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
+
+import javax.inject.Inject;
+import javax.xml.XMLConstants;
+import javax.xml.validation.ValidatorHandler;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 /**
  * An XML filter for performing inline schema validation of XML.
@@ -69,28 +67,22 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
     private final PipelineContext pipelineContext;
-
-    private ErrorHandler errorHandler;
-
-    private Map<String, String> schemaLocations;
     private final Map<String, String> prefixes = new TreeMap<>();
+    private final CharBuffer sb = new CharBuffer(10);
+    private ErrorHandler errorHandler;
+    private Map<String, String> schemaLocations;
     private ValidatorHandler validator;
     private PoolItem<SchemaKey, StoredSchema> poolItem;
     private FindXMLSchemaCriteria schemaConstraint;
-
     private int lineNo;
     private int colNo;
     private int depth;
     private boolean inStartElement;
-
     private String schemaLanguage = XMLConstants.W3C_XML_SCHEMA_NS_URI;
     // private boolean cacheSchemas = true;
     private boolean schemaValidation = true;
-
     private boolean useOriginalLocator;
     private Locator locator;
-
-    private final CharBuffer sb = new CharBuffer(10);
 
     @Inject
     public SchemaFilter(final SchemaPool schemaPool, final XMLSchemaCache xmlSchemaCache,
@@ -611,7 +603,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
 
             // Get another schema.
             final SchemaKey schemaKey = new SchemaKey(schemaLanguage, data);
-            poolItem = schemaPool.borrowObject(schemaKey);
+            poolItem = schemaPool.borrowObject(schemaKey, true);
             final StoredSchema storedSchema = poolItem.getValue();
 
             // Replay errors generated when creating schema.
@@ -637,7 +629,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
 
     private void returnCurrentSchema() {
         if (poolItem != null) {
-            schemaPool.returnObject(poolItem);
+            schemaPool.returnObject(poolItem, true);
             poolItem = null;
         }
     }

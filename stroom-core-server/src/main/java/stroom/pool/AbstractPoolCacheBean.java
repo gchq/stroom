@@ -16,22 +16,69 @@
 
 package stroom.pool;
 
+import net.sf.ehcache.CacheManager;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
-
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import stroom.cache.AbstractCacheBean;
-import net.sf.ehcache.CacheManager;
 
 public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, ObjectPool<PoolItem<K, V>>>
         implements PoolBean<K, V> {
+    private static final int MAX_CACHE_ENTRIES = 1000000;
+
+    public AbstractPoolCacheBean(final CacheManager cacheManager, final String name) {
+        super(cacheManager, name, MAX_CACHE_ENTRIES);
+    }
+
+    @Override
+    protected ObjectPool<PoolItem<K, V>> create(final K key) {
+        final GenericObjectPoolConfig config = new GenericObjectPoolConfig();
+        config.setMaxTotal(1000);
+        config.setMaxIdle(1000);
+        config.setBlockWhenExhausted(false);
+
+        return new GenericObjectPool<>(new ObjectFactory<>(this, key), config);
+    }
+
+    protected abstract V createValue(K key);
+
+    @Override
+    public PoolItem<K, V> borrowObject(final K key, final boolean usePool) {
+        try {
+            if (!usePool) {
+                return new PoolItem<>(key, createValue(key));
+            }
+
+            final ObjectPool<PoolItem<K, V>> pool = get(key);
+            return pool.borrowObject();
+        } catch (final Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void returnObject(final PoolItem<K, V> poolItem, final boolean usePool) {
+        if (usePool) {
+            try {
+                final K key = poolItem.getKey();
+                final ObjectPool<PoolItem<K, V>> pool = getQuiet(key);
+                if (pool != null) {
+                    pool.returnObject(poolItem);
+                }
+            } catch (final Exception e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+    }
+
     private static class ObjectFactory<K, V> extends BasePooledObjectFactory<PoolItem<K, V>> {
         private final AbstractPoolCacheBean<K, V> parent;
         private final K key;
 
-        public ObjectFactory(final AbstractPoolCacheBean<K, V> parent, final K key) {
+        ObjectFactory(final AbstractPoolCacheBean<K, V> parent, final K key) {
             this.parent = parent;
             this.key = key;
         }
@@ -44,43 +91,6 @@ public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, O
         @Override
         public PooledObject<PoolItem<K, V>> wrap(final PoolItem<K, V> obj) {
             return new DefaultPooledObject<>(obj);
-        }
-    }
-
-    private static final int MAX_CACHE_ENTRIES = 1000000;
-
-    public AbstractPoolCacheBean(final CacheManager cacheManager, final String name) {
-        super(cacheManager, name, MAX_CACHE_ENTRIES);
-    }
-
-    @Override
-    protected ObjectPool<PoolItem<K, V>> create(final K key) {
-        final GenericObjectPool<PoolItem<K, V>> pool = new GenericObjectPool<>(new ObjectFactory<>(this, key));
-        return pool;
-    }
-
-    protected abstract V createValue(K key);
-
-    @Override
-    public PoolItem<K, V> borrowObject(final K key) {
-        try {
-            final ObjectPool<PoolItem<K, V>> pool = get(key);
-            return pool.borrowObject();
-        } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void returnObject(final PoolItem<K, V> poolItem) {
-        try {
-            final K key = poolItem.getKey();
-            final ObjectPool<PoolItem<K, V>> pool = getQuiet(key);
-            if (pool != null) {
-                pool.returnObject(poolItem);
-            }
-        } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
         }
     }
 }

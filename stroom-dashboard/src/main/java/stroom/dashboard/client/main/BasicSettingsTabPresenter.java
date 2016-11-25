@@ -19,20 +19,11 @@ package stroom.dashboard.client.main;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.util.shared.EqualsUtil;
 
 public class BasicSettingsTabPresenter<V extends BasicSettingsTabPresenter.SettingsView>
         extends AbstractSettingsTabPresenter<V> {
-    public interface SettingsView extends View {
-        void setId(String id);
-
-        String getName();
-
-        void setName(String name);
-    }
-
     @Inject
     public BasicSettingsTabPresenter(final EventBus eventBus, final V view) {
         super(eventBus, view);
@@ -50,7 +41,20 @@ public class BasicSettingsTabPresenter<V extends BasicSettingsTabPresenter.Setti
     }
 
     @Override
+    public boolean validate() {
+        return true;
+    }
+
+    @Override
     public boolean isDirty(final ComponentConfig componentData) {
         return !EqualsUtil.isEquals(componentData.getName(), getView().getName());
+    }
+
+    public interface SettingsView extends View {
+        void setId(String id);
+
+        String getName();
+
+        void setName(String name);
     }
 }

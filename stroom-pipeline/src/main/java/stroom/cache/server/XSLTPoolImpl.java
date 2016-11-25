@@ -16,17 +16,12 @@
 
 package stroom.cache.server;
 
-import java.util.List;
-
-import javax.inject.Inject;
-import javax.xml.transform.ErrorListener;
-import javax.xml.transform.URIResolver;
-import javax.xml.transform.stream.StreamSource;
-
-import stroom.util.logging.StroomLogger;
+import net.sf.ehcache.CacheManager;
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.XsltCompiler;
+import net.sf.saxon.s9api.XsltExecutable;
 import org.springframework.stereotype.Component;
-
-import stroom.security.Insecure;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.shared.VersionedEntityDecorator;
 import stroom.pipeline.server.DefaultLocationFactory;
@@ -39,14 +34,17 @@ import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pool.AbstractPoolCacheBean;
 import stroom.pool.PoolItem;
+import stroom.security.Insecure;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomBeanStore;
-import net.sf.ehcache.CacheManager;
-import net.sf.saxon.s9api.Processor;
-import net.sf.saxon.s9api.SaxonApiException;
-import net.sf.saxon.s9api.XsltCompiler;
-import net.sf.saxon.s9api.XsltExecutable;
+
+import javax.inject.Inject;
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.URIResolver;
+import javax.xml.transform.stream.StreamSource;
+import java.util.List;
 
 @Insecure
 @Component
@@ -67,9 +65,9 @@ public class XSLTPoolImpl extends AbstractPoolCacheBean<VersionedEntityDecorator
     @Override
     public PoolItem<VersionedEntityDecorator<XSLT>, StoredXsltExecutable> borrowConfiguredTemplate(
             final VersionedEntityDecorator<XSLT> k, final ErrorReceiver errorReceiver,
-            final LocationFactory locationFactory, final List<PipelineReference> pipelineReferences) {
+            final LocationFactory locationFactory, final List<PipelineReference> pipelineReferences, final boolean usePool) {
         // Get the item from the pool.
-        final PoolItem<VersionedEntityDecorator<XSLT>, StoredXsltExecutable> poolItem = super.borrowObject(k);
+        final PoolItem<VersionedEntityDecorator<XSLT>, StoredXsltExecutable> poolItem = super.borrowObject(k, usePool);
 
         // Configure the item.
         if (poolItem != null && poolItem.getValue() != null && poolItem.getValue().getFunctionLibrary() != null) {
@@ -81,13 +79,13 @@ public class XSLTPoolImpl extends AbstractPoolCacheBean<VersionedEntityDecorator
     }
 
     @Override
-    public void returnObject(final PoolItem<VersionedEntityDecorator<XSLT>, StoredXsltExecutable> poolItem) {
+    public void returnObject(final PoolItem<VersionedEntityDecorator<XSLT>, StoredXsltExecutable> poolItem, final boolean usePool) {
         // Reset all references to function library classes to release memory.
         if (poolItem != null && poolItem.getValue() != null && poolItem.getValue().getFunctionLibrary() != null) {
             poolItem.getValue().getFunctionLibrary().reset();
         }
 
-        super.returnObject(poolItem);
+        super.returnObject(poolItem, usePool);
     }
 
     @Override

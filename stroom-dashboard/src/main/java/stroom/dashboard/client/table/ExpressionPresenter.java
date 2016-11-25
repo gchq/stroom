@@ -17,10 +17,8 @@
 package stroom.dashboard.client.table;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -49,28 +47,11 @@ import java.util.List;
 
 public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
         implements ExpressionUiHandlers {
-    public interface ExpressionView extends View, HasUiHandlers<ExpressionUiHandlers> {
-        String getExpression();
-
-        void setExpression(String expression);
-
-        int getCursorPos();
-
-        void setCursorPos(int pos);
-
-        int getSelectionLength();
-
-        void focus();
-    }
-
     private final MenuListPresenter menuListPresenter;
     private final ClientDispatchAsync dispatcher;
-
     private List<Item> menuItems;
-
     private TablePresenter tablePresenter;
     private Field field;
-
     @Inject
     public ExpressionPresenter(final EventBus eventBus, final ExpressionView view,
                                final MenuListPresenter menuListPresenter, final ClientDispatchAsync dispatcher) {
@@ -93,12 +74,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         final PopupSize popupSize = new PopupSize(400, 78, 300, 78, 1024, 78, true);
         ShowPopupEvent.fire(tablePresenter, this, PopupType.OK_CANCEL_DIALOG, popupSize,
                 "Set Expression For '" + field.getName() + "'", this);
-        Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-            @Override
-            public void execute() {
-                getView().focus();
-            }
-        });
+        Scheduler.get().scheduleDeferred(() -> getView().focus());
     }
 
     @Override
@@ -169,7 +145,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     private List<Item> createMenuItems() {
-        final List<Item> children = new ArrayList<Item>();
+        final List<Item> children = new ArrayList<>();
         int pos = 0;
         children.add(createRowFunctons(pos++, "Row Functions..."));
         children.add(createAggregateFunctons(pos++, "Aggregate Functions..."));
@@ -177,7 +153,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     private Item createRowFunctons(final int pos, final String func) {
-        final List<Item> children = new ArrayList<Item>();
+        final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "average($)", "average("));
         children.add(createCommonSubMenuItems(item++, "ceiling"));
@@ -203,7 +179,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     private Item createAggregateFunctons(final int pos, final String func) {
-        final List<Item> children = new ArrayList<Item>();
+        final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "average($)", "average("));
         children.add(createFunction(item++, "count()", "count()"));
@@ -215,7 +191,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     private Item createCommonSubMenuItems(final int pos, final String func) {
-        final List<Item> children = new ArrayList<Item>();
+        final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, func + "($)", func + "("));
         children.add(createFunction(item++, func + "($, n)", func + "("));
@@ -229,13 +205,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     private Item createFunction(final int pos, final String text, final String func) {
-        final Item item = new IconMenuItem(pos, text, null, true, new Command() {
-            @Override
-            public void execute() {
-                addFunction(func);
-            }
-        });
-        return item;
+        return new IconMenuItem(pos, text, null, true, () -> addFunction(func));
     }
 
     private void addFunction(final String func) {
@@ -265,5 +235,19 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
             getView().setExpression(expression);
             getView().setCursorPos(expression.length());
         }
+    }
+
+    public interface ExpressionView extends View, HasUiHandlers<ExpressionUiHandlers> {
+        String getExpression();
+
+        void setExpression(String expression);
+
+        int getCursorPos();
+
+        void setCursorPos(int pos);
+
+        int getSelectionLength();
+
+        void focus();
     }
 }

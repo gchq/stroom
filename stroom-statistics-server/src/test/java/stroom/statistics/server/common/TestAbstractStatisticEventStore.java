@@ -24,9 +24,20 @@ import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
 import stroom.query.shared.ExpressionTerm;
 import stroom.query.shared.Search;
-import stroom.statistics.common.*;
+import stroom.statistics.common.CommonStatisticConstants;
+import stroom.statistics.common.FilterTermsTree;
+import stroom.statistics.common.FindEventCriteria;
+import stroom.statistics.common.RolledUpStatisticEvent;
+import stroom.statistics.common.StatisticEvent;
+import stroom.statistics.common.StatisticStoreEntityService;
+import stroom.statistics.common.StatisticTag;
+import stroom.statistics.common.TimeAgnosticStatisticEvent;
 import stroom.statistics.common.rollup.RollUpBitMask;
-import stroom.statistics.shared.*;
+import stroom.statistics.shared.CustomRollUpMask;
+import stroom.statistics.shared.StatisticField;
+import stroom.statistics.shared.StatisticRollUpType;
+import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomUnitTest;
 
@@ -281,7 +292,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
     public void testBuildCriteria_noDate() throws Exception {
         final ExpressionOperator rootOperator = new ExpressionOperator(Op.AND);
 
-        final Search search = new Search(null, rootOperator, null, true);
+        final Search search = new Search(null, rootOperator);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -299,7 +310,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         rootOperator.addChild(new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME,
                 Condition.IN_DICTIONARY, dateTerm));
 
-        final Search search = new Search(null, rootOperator, null, true);
+        final Search search = new Search(null, rootOperator);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -322,7 +333,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         rootOperator.addChild(
                 new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm));
 
-        final Search search = new Search(null, rootOperator, null, true);
+        final Search search = new Search(null, rootOperator);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -350,7 +361,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         rootOperator.addChild(
                 new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm));
 
-        final Search search = new Search(null, rootOperator, null, true);
+        final Search search = new Search(null, rootOperator);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -374,7 +385,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         rootOperator.addChild(new ExpressionTerm(null, Condition.EQUALS, "xxx"));
 
-        final Search search = new Search(null, rootOperator, null, true);
+        final Search search = new Search(null, rootOperator);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -398,7 +409,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         rootOperator.addChild(new ExpressionTerm("MyField", Condition.EQUALS, ""));
 
-        final Search search = new Search(null, rootOperator, null, true);
+        final Search search = new Search(null, rootOperator);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -425,7 +436,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         rootOperator.addChild(new ExpressionTerm("MyField", Condition.EQUALS, "xxx"));
 
-        final Search search = new Search(null, rootOperator, null, true);
+        final Search search = new Search(null, rootOperator);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
