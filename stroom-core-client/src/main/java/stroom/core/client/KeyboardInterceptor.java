@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.app.client;
+package stroom.core.client;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
