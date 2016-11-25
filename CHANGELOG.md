@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 Issue #9 : Created a new implementation of the expression parser that improved expression tokenisation and deals with BODMAS rules properly.
 
+Issue #36 : Fixed and vastly improved the configuration of email so that more options can be set allowing for the use of other email services requiring more complex configuration such as gmail.
+
 ## [v5.0-beta.6] - 2016-11-22
 Issue #30 : Entering stepping mode was prompting for the pipeline to step with but also auto selecting a pipeline at the same time and entering stepping immediately.
 
