@@ -324,7 +324,9 @@ public class StroomProperties {
     }
 
     public static void dump() {
+        System.out.println("Dumping properties object:");
         System.out.println(properties.toString());
+        System.out.println("Dumping override object:");
         System.out.println(override.toString());
     }
 

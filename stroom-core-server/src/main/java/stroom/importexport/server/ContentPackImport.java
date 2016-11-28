@@ -26,10 +26,9 @@ import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings("unused")
 @Component
@@ -54,13 +53,17 @@ public class ContentPackImport {
         this.globalPropertyService = globalPropertyService;
     }
 
-    @StroomStartup
+    //Startup with very low priority to ensure it starts after everything else
+    //in particular
+    @StroomStartup(priority = -1000)
     public void startup() {
 
         final boolean isEnabled = stroomPropertyService.getBooleanProperty(AUTO_IMPORT_ENABLED_PROP_KEY, true);
 
         if (isEnabled) {
             doImport();
+        } else {
+            LOGGER.info("Content pack import currently disabled via property: %s", AUTO_IMPORT_ENABLED_PROP_KEY);
         }
     }
 
@@ -80,21 +83,33 @@ public class ContentPackImport {
                 Path importedDir = Files.createDirectories(contentPacksDir.resolve(IMPORTED_DIR));
                 Path failedDir = Files.createDirectories(contentPacksDir.resolve(FAILED_DIR));
 
+                AtomicInteger successCounter = new AtomicInteger();
+                AtomicInteger failedCounter = new AtomicInteger();
+
                 Files.list(contentPacksDir)
                         .filter(path -> path.toString().endsWith("zip"))
                         .sorted()
                         .forEachOrdered((contentPackPath) -> {
                             boolean result = importContentPack(contentPacksDir, contentPackPath);
+                            if (result) {
+                                successCounter.incrementAndGet();
+                            } else {
+                                failedCounter.incrementAndGet();
+                            }
                             Path destDir = result ? importedDir : failedDir;
                             Path filename = contentPackPath.getFileName();
                             Path destPath = destDir.resolve(filename);
                             try {
-                                Files.move(contentPackPath, destPath);
+                                Files.move(contentPackPath, destPath, StandardCopyOption.REPLACE_EXISTING);
                             } catch (IOException e) {
                                 throw new RuntimeException(String.format("Error moving file from %s to %s",
                                         contentPackPath.toAbsolutePath(), destPath.toAbsolutePath()));
                             }
                         });
+
+                LOGGER.info("Content pack import counts - success: %s, failed: %s",
+                        successCounter.get(),
+                        failedCounter.get());
 
             } catch (IOException e) {
                 LOGGER.error("Unable to read content pack files from %s", contentPacksDir.toAbsolutePath(), e);
@@ -112,24 +127,12 @@ public class ContentPackImport {
     private boolean importContentPack(Path parentPath, Path contentPack) {
         LOGGER.info("Starting import of content pack %s", contentPack.toAbsolutePath());
 
-//        List<EntityActionConfirmation> confirmations = new ArrayList<>();
         try {
-//            importExportService.performImportWithConfirmation(contentPack.toFile(), confirmations);
+            //It is possible to import a content pack (or packs) with missing dependencies
+            //so the onus is on the person putting the file in the import directory to
+            //ensure the packs they import are complete
             importExportService.performImportWithoutConfirmation(contentPack.toFile());
 
-//            LOGGER.info("Results of import:");
-//            confirmations.stream()
-//                    .forEach(entityAction -> {
-//                        LOGGER.info("Path: %s, type: %s, entityAction: %s, action: %s, ",
-//                                entityAction.getPath(),
-//                                entityAction.getEntityType(),
-//                                entityAction.getEntityAction(),
-//                                entityAction.isAction());
-//
-//                        entityAction.getMessageList().forEach(msg -> {
-//                            LOGGER.info(msg);
-//                        });
-//                    });
             LOGGER.info("Completed import of content pack %s", contentPack.toAbsolutePath());
 
         } catch (Exception e) {
@@ -137,7 +140,6 @@ public class ContentPackImport {
             return false;
         }
         return true;
-
     }
 
 
@@ -145,7 +147,13 @@ public class ContentPackImport {
 
         GlobalProperty contextImportProp = globalPropertyService.loadByName(AUTO_IMPORT_ENABLED_PROP_KEY);
 
-        contextImportProp.setValue("false");
+        if (contextImportProp == null) {
+            contextImportProp = new GlobalProperty();
+            contextImportProp.setName(AUTO_IMPORT_ENABLED_PROP_KEY);
+            contextImportProp.setValue("false");
+        } else {
+            contextImportProp.setValue("false");
+        }
 
         globalPropertyService.save(contextImportProp);
     }
@@ -155,10 +163,10 @@ public class ContentPackImport {
 
         String catalinaBase = System.getProperty("catalina.base");
         String userHome = System.getProperty("user.home");
+
         if (catalinaBase != null) {
             //running inside tomcat so use a subdir in there
             contentPackDir = Optional.of(Paths.get(catalinaBase, CONTENT_PACK_IMPORT_DIR));
-
         } else if (userHome != null) {
             //not in tomcat so use the personal user conf dir as a base
             contentPackDir = Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR, CONTENT_PACK_IMPORT_DIR));

@@ -58,15 +58,17 @@ public class GlobalPropertyUpdater {
     public void update() {
         final GlobalProperties globalProperties = GlobalProperties.getInstance();
         final List<GlobalProperty> list = globalPropertyService.find(new FindGlobalPropertyCriteria());
-        list.stream().filter(prop -> prop.getName() != null && prop.getValue() != null).forEach(prop -> {
-            final GlobalProperty existing = globalProperties.getGlobalProperty(prop.getName());
-            if (existing != null) {
-                existing.setValue(prop.getValue());
+        list.stream()
+                .filter(prop -> prop.getName() != null && prop.getValue() != null)
+                .forEach(prop -> {
+                    final GlobalProperty existing = globalProperties.getGlobalProperty(prop.getName());
+                    if (existing != null) {
+                        existing.setValue(prop.getValue());
 
-                if (prop.getValue() != null) {
-                    StroomProperties.setProperty(prop.getName(), prop.getValue(), StroomProperties.Source.DB);
-                }
-            }
-        });
+                        if (prop.getValue() != null) {
+                            StroomProperties.setProperty(prop.getName(), prop.getValue(), StroomProperties.Source.DB);
+                        }
+                    }
+                });
     }
 }
