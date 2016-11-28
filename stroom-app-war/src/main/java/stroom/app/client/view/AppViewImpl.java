@@ -20,21 +20,20 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.app.client.presenter.AppPresenter;
 
 public class AppViewImpl extends ViewImpl implements AppPresenter.AppView {
     private final Element loadingText;
     private final Element loading;
 
-    @Override
-    public Widget asWidget() {
-        return null;
-    }
-
     public AppViewImpl() {
         loadingText = RootPanel.get("loadingText").getElement();
         loading = RootPanel.get("loading").getElement();
+    }
+
+    @Override
+    public Widget asWidget() {
+        return null;
     }
 
     @Override

@@ -16,14 +16,14 @@
 
 package stroom.app.client.gin;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.Event.Type;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.google.web.bindery.event.shared.SimpleEventBus;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RecordingEventBus extends EventBus {
     private final List<Event<?>> firedEvents = new ArrayList<>();

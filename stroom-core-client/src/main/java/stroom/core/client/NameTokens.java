@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
+package stroom.core.client;
 
-drop database if exists ${stroom.setup.db.name};
-
-create database ${stroom.setup.db.name};
-
-grant all privileges on ${stroom.setup.db.name}.* to ${stroom.jdbcDriverUsername}@localhost identified by '${stroom.jdbcDriverPassword}';
-
+public class NameTokens {
+    public static final String LOGIN = "!login";
+}

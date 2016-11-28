@@ -119,7 +119,7 @@
         <!-- WAR projects -->
         <dependency>
             <groupId>stroom</groupId>
-            <artifactId>stroom-core-war</artifactId>
+            <artifactId>stroom-app-war</artifactId>
             <version>${project.version}</version>
             <type>war</type>
         </dependency>
@@ -157,7 +157,7 @@
                     <overlays>
                         <overlay>
                             <groupId>stroom</groupId>
-                            <artifactId>stroom-core-war</artifactId>
+                            <artifactId>stroom-app-war</artifactId>
                             <type>war</type>
                             <targetPath/>
                         </overlay>

@@ -991,7 +991,7 @@
     <module>stroom-dashboard</module>
 
       <module>stroom-dashboard-war</module>
-      <module>stroom-core-war</module>
+      <module>stroom-app-war</module>
 
       <module>stroom-startup</module>
     <module>stroom-app</module>

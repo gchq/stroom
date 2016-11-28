@@ -33,75 +33,18 @@ import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.HandlerRegistrations;
-
+import stroom.core.client.StroomStyleNames;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
-import stroom.app.client.StroomStyleNames;
 import stroom.widget.tab.client.presenter.LayerContainer;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.SlideTabBar;
 
 public class TabLayout extends Composite implements RequiresResize, ProvidesResize {
-    public interface Style extends CssResource {
-        String tabLayout();
-
-        String contentOuter();
-
-        String contentInner();
-
-        String barOuter();
-
-        String barInner();
-
-        String content();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("TabLayout.css")
-        Style style();
-    }
-
-    public static class SettingsButton extends Widget {
-        public interface Style extends CssResource {
-            String settings();
-
-            String image();
-        }
-
-        public interface Resources extends ClientBundle {
-            @Source("settings.png")
-            ImageResource settings();
-
-            @Source("SettingsButton.css")
-            Style style();
-        }
-
-        private static Resources resources;
-
-        private final Element element;
-
-        public SettingsButton() {
-            if (resources == null) {
-                resources = GWT.create(Resources.class);
-                resources.style().ensureInjected();
-            }
-
-            element = DOM.createDiv();
-            element.setClassName(resources.style().settings());
-
-            final Element image = DOM.createDiv();
-            image.setClassName(resources.style().image());
-            element.appendChild(image);
-
-            setElement(element);
-        }
-    }
-
     private static Resources resources;
-
     private final TabLayoutConfig tabLayoutData;
     private final FlowPanel panel;
     private final FlowPanel contentOuter;
@@ -110,11 +53,9 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     private final SettingsButton settings;
     private final SlideTabBar tabBar;
     private final LayerContainer layerContainer;
-
+    private final HandlerRegistrations handlerRegistrations = new HandlerRegistrations();
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
     private boolean tabsVisible = true;
-
-    private final HandlerRegistrations handlerRegistrations = new HandlerRegistrations();
 
     public TabLayout(final TabLayoutConfig tabLayoutData) {
         this.tabLayoutData = tabLayoutData;
@@ -252,6 +193,60 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     private void setTabsVisibile(final boolean tabsVisible) {
         if (this.tabsVisible != tabsVisible) {
             this.tabsVisible = tabsVisible;
+        }
+    }
+
+    public interface Style extends CssResource {
+        String tabLayout();
+
+        String contentOuter();
+
+        String contentInner();
+
+        String barOuter();
+
+        String barInner();
+
+        String content();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source("TabLayout.css")
+        Style style();
+    }
+
+    public static class SettingsButton extends Widget {
+        private static Resources resources;
+        private final Element element;
+
+        public SettingsButton() {
+            if (resources == null) {
+                resources = GWT.create(Resources.class);
+                resources.style().ensureInjected();
+            }
+
+            element = DOM.createDiv();
+            element.setClassName(resources.style().settings());
+
+            final Element image = DOM.createDiv();
+            image.setClassName(resources.style().image());
+            element.appendChild(image);
+
+            setElement(element);
+        }
+
+        public interface Style extends CssResource {
+            String settings();
+
+            String image();
+        }
+
+        public interface Resources extends ClientBundle {
+            @Source("settings.png")
+            ImageResource settings();
+
+            @Source("SettingsButton.css")
+            Style style();
         }
     }
 }

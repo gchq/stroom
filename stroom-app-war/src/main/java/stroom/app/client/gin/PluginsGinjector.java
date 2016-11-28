@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.app.client;
+package stroom.app.client.gin;
 
-public final class StroomStyleNames {
-    public static final String STROOM_CONTENT = "stroom-content";
+import com.google.gwt.inject.client.AsyncProvider;
+import stroom.help.client.HelpPlugin;
 
-    private StroomStyleNames() {
-        // Utility.
-    }
+public interface PluginsGinjector {
+    AsyncProvider<HelpPlugin> getHelpPlugin();
 }

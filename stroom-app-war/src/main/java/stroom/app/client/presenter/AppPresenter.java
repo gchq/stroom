@@ -23,7 +23,6 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.annotations.ProxyStandard;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-
 import stroom.security.client.ClientSecurityContext;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskEndEvent.TaskEndHandler;
@@ -32,16 +31,6 @@ import stroom.task.client.TaskStartEvent.TaskStartHandler;
 
 public class AppPresenter extends MyPresenter<AppPresenter.AppView, AppPresenter.AppProxy>
         implements TaskStartHandler, TaskEndHandler {
-    @ProxyStandard
-    public interface AppProxy extends Proxy<AppPresenter> {
-    }
-
-    public interface AppView extends View {
-        void showWorking(final String message);
-
-        void hideWorking();
-    }
-
     private final ClientSecurityContext securityContext;
 
     @Inject
@@ -70,5 +59,15 @@ public class AppPresenter extends MyPresenter<AppPresenter.AppView, AppPresenter
     @Override
     protected void revealInParent() {
         // Do nothing as this presenter merely deals with the loading spinner.
+    }
+
+    @ProxyStandard
+    public interface AppProxy extends Proxy<AppPresenter> {
+    }
+
+    public interface AppView extends View {
+        void showWorking(final String message);
+
+        void hideWorking();
     }
 }
