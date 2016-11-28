@@ -227,7 +227,7 @@
                     <module>stroom.dashboard.DashboardApp</module>
                     <optimizationLevel>9</optimizationLevel>
                     <runTarget>dashboard.jsp</runTarget>
-                    <inplace>true</inplace>
+                    <!--<inplace>true</inplace>-->
                 </configuration>
             </plugin>
 
