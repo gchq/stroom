@@ -16,12 +16,31 @@
 
 package stroom.dashboard.expression;
 
+import stroom.dashboard.expression.ExpressionTokeniser.Token;
+import stroom.dashboard.expression.ExpressionTokeniser.Token.Type;
+
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ExpressionParser {
-	private static final String[] NUMERIC_FUNCTIONS = new String[] { "/", "*", "+", "-", "=", ">", "<", ">=", "<=" };
+    // We deliberately exclude brackets as they are treated as an unnamed function.
+    private static final Type[] BODMAS = new Type[]{
+            Type.ORDER,
+            Type.DIVISION,
+            Type.MULTIPLICATION,
+            Type.ADDITION,
+            Type.SUBTRACTION,
+    };
+
+    private static final Type[] EQUALITY = new Type[]{
+            Type.EQUALS,
+            Type.GREATER_THAN,
+            Type.GREATER_THAN_OR_EQUAL_TO,
+            Type.LESS_THAN,
+            Type.LESS_THAN_OR_EQUAL_TO
+    };
 
     private final FunctionFactory functionFactory;
     private final ParamFactory paramFactory;
@@ -31,177 +50,346 @@ public class ExpressionParser {
         this.paramFactory = paramFactory;
     }
 
-    public Expression parse(final FieldIndexMap fieldIndexMap, final String expression) throws ParseException {
-        if (expression == null || expression.trim().length() == 0) {
+    public Expression parse(final FieldIndexMap fieldIndexMap, final String input) throws ParseException {
+        if (input == null || input.trim().length() == 0) {
             return null;
         }
 
-        final CharSlice slice = new CharSlice(expression);
-        final Object[] params = getParams(fieldIndexMap, slice);
-        if (params.length == 0) {
+        // First tokenise the expression.
+        final List<Token> tokens = new ExpressionTokeniser().tokenise(input);
+
+        // Do some preliminary validation of the tokens.
+        new ExpressionValidator().validate(tokens);
+
+        // Put tokens into an object array ready to replace with functions and remove whitespace.
+        List<Object> objects = new ArrayList<>(tokens.size());
+        for (final Token token : tokens) {
+            if (!Type.WHITESPACE.equals(token.getType())) {
+                objects.add(token);
+            }
+        }
+
+        // Repeatedly scan so that innermost nested functions are created first.
+        int lastSize = 0;
+        while (objects.size() != lastSize) {
+            lastSize = objects.size();
+            objects = processObjects(objects, fieldIndexMap);
+        }
+
+        // We should have a single object.
+        if (objects.size() == 0) {
+            return null;
+        } else if (objects.size() > 1) {
+            throw new ParseException("Expected only 1 object", -1);
+        }
+
+        final Expression expression = new Expression();
+        expression.setParams(objects.toArray());
+        return expression;
+    }
+
+    private List<Object> processObjects(final List<Object> objects, final FieldIndexMap fieldIndexMap) throws ParseException {
+        Token functionStart = null;
+        int start = -1;
+        int end = -1;
+        for (int i = 0; i < objects.size(); i++) {
+            final Object object = objects.get(i);
+
+            if (object instanceof Token) {
+                final Token token = (Token) object;
+                if (Type.FUNCTION_START.equals(token.getType())) {
+                    functionStart = token;
+                    start = i;
+                } else if (Type.FUNCTION_END.equals(token.getType())) {
+                    if (functionStart == null) {
+                        throw new ParseException("Unexpected close bracket found", token.getStart());
+                    }
+
+                    end = i;
+                    final Function function = getFunction(objects, start, end, fieldIndexMap);
+
+                    // Create a new list of objects to sandwich this function.
+                    return sandwich(objects, function, start, end);
+                }
+            }
+        }
+
+        // If we got here then there are no functions left. If there are no functions left to process then we can try
+        // and turn anything that remains into a single function.
+        if (objects.size() == 1 && objects.get(0) instanceof Function) {
+            return objects;
+        }
+
+        // We should not have any comma, whitespace or unidentified tokens.
+        for (final Object object : objects) {
+            if (object instanceof Token) {
+                final Token token = (Token) object;
+                if (Type.COMMA.equals(token.getType()) || Type.WHITESPACE.equals(token.getType()) || Type.UNIDENTIFIED.equals(token.getType())) {
+                    throw new ParseException("Unexpected token found", token.getStart());
+                }
+            }
+        }
+
+        // Any content that remains must be a parameter or parameter expression.
+        final Object param = getParam(copyList(objects, 0, objects.size() - 1), fieldIndexMap);
+        return Collections.singletonList(param);
+
+    }
+
+    private Function getFunction(final List<Object> objects, final int start, final int end, final FieldIndexMap fieldIndexMap) throws ParseException {
+        // Get the function.
+        final Token functionToken = (Token) objects.get(start);
+
+        int functionStart = start + 1;
+        int functionEnd = end - 1;
+        Object[] params;
+
+        // Don't bother to try and get parameters if there can't be any.
+        if (functionStart <= functionEnd) {
+            // Process each parameter.
+            int paramStart = -1;
+            final List<Object> paramList = new ArrayList<>((functionEnd - functionStart) + 1);
+
+            // Turn comma separated tokens into parameters.
+            for (int i = functionStart; i <= functionEnd; i++) {
+                final Object object = objects.get(i);
+                if (object instanceof Token) {
+                    final Token token = (Token) object;
+                    if (Type.COMMA.equals(token.getType())) {
+                        // Ifg we haven't found a parameter from the previous token or object then this comma is unexpected.
+                        if (paramStart == -1) {
+                            throw new ParseException("Unexpected comma", token.getStart());
+                        }
+
+                        final int paramEnd = i - 1;
+                        final Object param = getParam(copyList(objects, paramStart, paramEnd), fieldIndexMap);
+                        paramList.add(param);
+
+                        paramStart = -1;
+                    } else if (paramStart == -1) {
+                        paramStart = i;
+                    }
+                } else if (paramStart == -1) {
+                    paramStart = i;
+                }
+            }
+
+            // Capture last param if there is one.
+            if (paramStart != -1) {
+                final Object param = getParam(copyList(objects, paramStart, functionEnd), fieldIndexMap);
+                paramList.add(param);
+            }
+
+            // Turn param list into an array.
+            params = paramList.toArray();
+
+        } else {
+            // There are no parameters.
+            params = new Object[0];
+        }
+
+        String functionName = functionToken.toString();
+        Function function;
+
+        if (functionName.equals("(")) {
+            // If this function just represents a bracketed section then get a Brackets function.
+            function = new Brackets();
+        } else {
+            // This is a named function so see if we can create it.
+
+            // Trim off the bracket to get the function name.
+            functionName = functionName.substring(0, functionName.length() - 1);
+
+            // Create the function.
+            function = functionFactory.create(functionName);
+        }
+
+        if (function == null) {
+            throw new ParseException("Unknown function '" + functionName + "'", functionToken.getStart());
+        }
+
+        // Set the parameters on the function.
+        function.setParams(params);
+
+        // Return the function.
+        return function;
+    }
+
+    private Object getParam(final List<Object> objects, final FieldIndexMap fieldIndexMap) throws ParseException {
+        List<Object> newObjects = objects;
+
+        // If no objects are included to create this param then return null.
+        if (newObjects.size() == 0) {
             return null;
         }
 
-        if (params.length > 1) {
-            throw new ParseException("Unexpected number of parameters", 0);
-        }
-
-        final Expression exp = new Expression();
-        exp.setParams(params);
-        return exp;
-    }
-
-    private Object[] getParams(final FieldIndexMap fieldIndexMap, final CharSlice slice) throws ParseException {
-        final List<Object> params = new ArrayList<Object>();
-        final List<CharSlice> parts = split(slice, ",");
-
-        // Parse each param.
-        for (final CharSlice part : parts) {
-            final Object param = getParam(fieldIndexMap, part);
-            params.add(param);
-        }
-
-        Object[] arr = new Object[params.size()];
-        arr = params.toArray(arr);
-
-        return arr;
-    }
-
-    private Object getParam(final FieldIndexMap fieldIndexMap, final CharSlice slice) throws ParseException {
-        Function function = null;
-
-        for (final String func : NUMERIC_FUNCTIONS) {
-            final List<CharSlice> parts = split(slice, func);
-            if (parts.size() > 1) {
-                function = functionFactory.create(func);
-                final Object[] params = new Object[parts.size()];
-                for (int i = 0; i < parts.size(); i++) {
-                    final CharSlice part = parts.get(i);
-                    final Object param = getParam(fieldIndexMap, part);
-                    params[i] = param;
-                }
-                function.setParams(params);
-
-                break;
+        // If there is only a single object then turn it into a parameter if necessary and return.
+        if (newObjects.size() == 1) {
+            final Object object = newObjects.get(0);
+            if (object instanceof Token) {
+                final Token token = (Token) object;
+                return paramFactory.create(fieldIndexMap, token);
             }
+            return object;
         }
 
-        // If we got a numeric function then this is our work done.
-        if (function != null) {
-            return function;
+        // Repeatedly try and apply BODMAS operators.
+        int lastSize = 0;
+        while (newObjects.size() > 1 && newObjects.size() != lastSize) {
+            lastSize = newObjects.size();
+            newObjects = applyBODMAS(newObjects, fieldIndexMap);
         }
 
-        // We didn't get a numeric function so try and get a named function.
-        final Object p = getFunction(fieldIndexMap, slice.trim());
-        return p;
-    }
+        // Repeatedly try and apply equality operators.
+        lastSize = 0;
+        while (newObjects.size() > 1 && newObjects.size() != lastSize) {
+            lastSize = newObjects.size();
+            newObjects = applyEquality(newObjects, fieldIndexMap);
+        }
 
-    private List<CharSlice> split(final CharSlice slice, final String delimiter) throws ParseException {
-        final List<CharSlice> parts = new ArrayList<CharSlice>();
-
-        boolean inQuote = false;
-        int bracketDepth = 0;
-        int quotePos = -1;
-        int off = 0;
-
-        for (int i = 0; i < slice.length(); i++) {
-            final char c = slice.charAt(i);
-
-            if (c == '\'') {
-                // If we are in a quote and get two quotes together then this is
-                // an escaped quote.
-                boolean escapedQuote = false;
-                if (inQuote && i + 1 < slice.length()) {
-                    if (slice.charAt(i + 1) == '\'') {
-                        escapedQuote = true;
-                        i++;
-                    }
-                }
-
-                if (!escapedQuote) {
-                    inQuote = !inQuote;
-                    quotePos = slice.getOffset() + i;
-                }
-
-            } else if (!inQuote) {
-                if (c == '(') {
-                    bracketDepth++;
-                } else if (c == ')') {
-                    bracketDepth--;
-                }
-
-                if (c == delimiter.charAt(0) && bracketDepth == 0) {
-                    parts.add(slice.subSlice(off, i));
-                    off = i + 1;
-                }
+        // If there is only a single object then turn it into a parameter if necessary and return.
+        if (newObjects.size() == 1) {
+            final Object object = newObjects.get(0);
+            if (object instanceof Token) {
+                final Token token = (Token) object;
+                return paramFactory.create(fieldIndexMap, token);
             }
+            return object;
         }
 
-        if (off < slice.length()) {
-            parts.add(slice.subSlice(off, slice.length()));
+        // So we've got more than one object and no BODMAS or equality operators to apply - this is not allowed.
+        final Object object = newObjects.get(1);
+        if (object instanceof Token) {
+            final Token token = (Token) object;
+            throw new ParseException("Unexpected token", token.getStart());
         }
 
-        if (inQuote) {
-            throw new ParseException("Unmatched quote", quotePos);
-        }
-        if (bracketDepth > 0) {
-            throw new ParseException("Unmatched brackets", slice.getOffset() + off);
-        }
-
-        return parts;
+        throw new ParseException("Unexpected '" + object.toString() + "'", -1);
     }
 
-    private Object getFunction(final FieldIndexMap fieldIndexMap, final CharSlice slice) throws ParseException {
-        Function function = null;
+    private List<Object> applyBODMAS(final List<Object> objects, final FieldIndexMap fieldIndexMap) throws ParseException {
+        // If there is more than one object then apply BODMAS rules.
+        for (final Type type : BODMAS) {
+            for (int i = 0; i < objects.size(); i++) {
+                final Object object = objects.get(i);
+                if (object instanceof Token) {
+                    final Token token = (Token) object;
+                    if (type.equals(token.getType())) {
+                        int leftParamIndex = i - 1;
+                        int rightParamIndex = i + 1;
 
-        boolean inQuote = false;
-        boolean inCurlyBraces = false;
-        for (int i = 0; i < slice.length(); i++) {
-            final char c = slice.charAt(i);
+                        // Get left param.
+                        final Object leftParam = getParam(copyList(objects, leftParamIndex, leftParamIndex), fieldIndexMap);
+                        // Get right param.
+                        final Object rightParam = getParam(copyList(objects, rightParamIndex, rightParamIndex), fieldIndexMap);
 
-            if (c == '\'') {
-                inQuote = !inQuote;
+                        // Addition and subtraction without a preceding param are allowed. In this form plus can be
+                        // ignored and minus will negate right param.
+                        if (leftParam == null && !Type.ADDITION.equals(type) && !Type.SUBTRACTION.equals(type)) {
+                            throw new ParseException("No parameter before operator", token.getStart());
+                        }
+                        if (rightParam == null) {
+                            throw new ParseException("No parameter after operator", token.getStart());
+                        }
 
-            } else if (c == '{') {
-                inCurlyBraces = true;
+                        Object param = null;
+                        if (leftParam == null) {
+                            // Ignore positive sign as it is superfluous.
+                            if (Type.ADDITION.equals(type)) {
+                                param = rightParam;
+                            }
 
-            } else if (c == '}') {
-                inCurlyBraces = false;
+                            // If there is a negative sign then negate the param.
+                            if (Type.SUBTRACTION.equals(type)) {
+                                final Negate negate = new Negate(token.toString());
+                                negate.setParams(new Object[]{rightParam});
+                                param = negate;
+                            }
+                        } else {
+                            final Function function = functionFactory.create(token.toString());
+                            function.setParams(new Object[]{leftParam, rightParam});
+                            param = function;
+                        }
 
-            } else if (!inQuote && !inCurlyBraces) {
-                if (c == '(') {
-                    final CharSlice name = slice.subSlice(0, i);
-                    final CharSlice trimmedName = name.trim();
-                    if (trimmedName.length() == 0) {
-                        function = new Brackets();
-                    } else {
-                        function = functionFactory.create(trimmedName.toString());
+                        // Return a new object list that sandwiches the new object.
+                        return sandwich(objects, param, leftParamIndex, rightParamIndex);
                     }
-
-                    if (function == null) {
-                        throw new ParseException("Unknown function '" + trimmedName.toString() + "'",
-                                slice.getOffset());
-                    }
-
-                    // Get params for this function.
-                    if (slice.length() < 2 || !slice.endsWith(")")) {
-                        throw new ParseException("Unmatched brackets", slice.getOffset());
-                    }
-
-                    final CharSlice sub = slice.subSlice(i + 1, slice.length() - 1);
-                    final Object[] params = getParams(fieldIndexMap, sub);
-                    function.setParams(params);
-
-                    break;
                 }
             }
         }
 
-        if (function != null) {
-            return function;
+        return objects;
+    }
+
+    private List<Object> applyEquality(final List<Object> objects, final FieldIndexMap fieldIndexMap) throws ParseException {
+        // If there is more than one object then apply equality rules.
+        for (final Type type : EQUALITY) {
+            for (int i = 0; i < objects.size(); i++) {
+                final Object object = objects.get(i);
+                if (object instanceof Token) {
+                    final Token token = (Token) object;
+                    if (type.equals(token.getType())) {
+                        // Get before param.
+                        final Object leftParam = getParam(copyList(objects, 0, i - 1), fieldIndexMap);
+                        // Get after param.
+                        final Object rightParam = getParam(copyList(objects, i + 1, objects.size() - 1), fieldIndexMap);
+
+                        if (leftParam == null) {
+                            throw new ParseException("No parameter before operator", token.getStart());
+                        }
+                        if (rightParam == null) {
+                            throw new ParseException("No parameter after operator", token.getStart());
+                        }
+
+                        final Function function = functionFactory.create(token.toString());
+                        function.setParams(new Object[]{leftParam, rightParam});
+                        return Collections.singletonList(function);
+                    }
+                }
+            }
         }
 
-        final Object param = paramFactory.create(fieldIndexMap, slice.trim());
-        return param;
+        return objects;
+    }
+
+    private List<Object> copyList(final List<Object> list, final int startIndex, final int endIndex) {
+        if (endIndex < startIndex) {
+            return Collections.emptyList();
+        }
+
+        if (startIndex == endIndex) {
+            return Collections.singletonList(list.get(startIndex));
+        }
+
+        final List<Object> newList = new ArrayList<>((endIndex - startIndex) + 1);
+        for (int i = startIndex; i <= endIndex; i++) {
+            newList.add(list.get(i));
+        }
+        return newList;
+    }
+
+    private List<Object> sandwich(final List<Object> list, final Object object, final int insertStart, final int insertEnd) {
+        if (insertStart <= 0 && insertEnd >= list.size() - 1) {
+            return Collections.singletonList(object);
+        }
+
+        // Make sure the insert start position will allow the new item to be added.
+        assert (insertStart < list.size() - 1);
+
+        // Add all objects that exist before the insert start position.
+        final List<Object> newList = new ArrayList<>(list.size() + 1);
+        for (int i = 0; i < insertStart; i++) {
+            newList.add(list.get(i));
+        }
+
+        // Add the object.
+        newList.add(object);
+
+        // Add all objects that exist after the insert end position.
+        for (int i = insertEnd + 1; i < list.size(); i++) {
+            newList.add(list.get(i));
+        }
+
+        return newList;
     }
 }
