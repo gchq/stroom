@@ -25,11 +25,11 @@
 
     <artifactId>stroom-dashboard</artifactId>
     <name>stroom-dashboard</name>
-    <packaging>war</packaging>
+    <!--<packaging>war</packaging>-->
 
-    <properties>
-        <webappDirectory>${project.build.directory}/${project.build.finalName}</webappDirectory>
-    </properties>
+    <!--<properties>-->
+    <!--<webappDirectory>${project.build.directory}/${project.build.finalName}</webappDirectory>-->
+    <!--</properties>-->
 
     <dependencies>
         <dependency>
@@ -55,11 +55,6 @@
         <dependency>
             <groupId>stroom</groupId>
             <artifactId>stroom-statistics-client</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>stroom</groupId>
-            <artifactId>stroom-dashboard</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -183,12 +178,6 @@
         </dependency>
         <dependency>
             <groupId>stroom</groupId>
-            <artifactId>stroom-dashboard</artifactId>
-            <version>${project.version}</version>
-            <classifier>sources</classifier>
-        </dependency>
-        <dependency>
-            <groupId>stroom</groupId>
             <artifactId>stroom-core-shared</artifactId>
             <version>${project.version}</version>
             <classifier>sources</classifier>
@@ -235,91 +224,4 @@
             <artifactId>mail</artifactId>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-
-            <!-- GWT PROJECT -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>gwt-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>test</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <draftCompile>false</draftCompile>
-                    <strict>true</strict>
-                    <!--<logLevel>TRACE</logLevel>-->
-                    <failOnError>true</failOnError>
-                    <fragmentCount>5</fragmentCount>
-                    <localWorkers>5</localWorkers>
-                    <module>stroom.dashboard.DashboardApp</module>
-                    <optimizationLevel>9</optimizationLevel>
-                    <runTarget>dashboard.jsp</runTarget>
-                </configuration>
-            </plugin>
-
-            <!-- Copy static web files before executing gwt:run -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>2.1.1</version>
-                <configuration>
-                    <packagingExcludes>WEB-INF/lib/*-sources.jar,WEB-INF/lib/mysql-connector-java-*.jar
-                    </packagingExcludes>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
-    <profiles>
-        <!-- Profiles for quick GWT compilation -->
-        <profile>
-            <id>gwt-dev</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>gwt-maven-plugin</artifactId>
-                        <configuration>
-                            <draftCompile>true</draftCompile>
-                            <strict>true</strict>
-                            <failOnError>true</failOnError>
-                            <fragmentCount>0</fragmentCount>
-                            <localWorkers>5</localWorkers>
-                            <module>stroom.dashboard.DashboardApp</module>
-                            <optimizationLevel>0</optimizationLevel>
-                            <runTarget>dashboard.jsp</runTarget>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>gwt-dev-chrome</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>gwt-maven-plugin</artifactId>
-                        <configuration>
-                            <draftCompile>true</draftCompile>
-                            <strict>true</strict>
-                            <failOnError>true</failOnError>
-                            <fragmentCount>0</fragmentCount>
-                            <localWorkers>5</localWorkers>
-                            <module>stroom.dashboard.DashboardApp</module>
-                            <optimizationLevel>0</optimizationLevel>
-                            <runTarget>dashboard.jsp</runTarget>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>

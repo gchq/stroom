@@ -990,8 +990,10 @@
     <module>stroom-core-client</module>
     <module>stroom-dashboard</module>
 
-    <module>stroom-app-client</module>
-    <module>stroom-startup</module>
+      <module>stroom-dashboard-war</module>
+      <module>stroom-core-war</module>
+
+      <module>stroom-startup</module>
     <module>stroom-app</module>
     <module>stroom-app-distribution</module>
 

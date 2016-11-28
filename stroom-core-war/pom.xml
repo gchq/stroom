@@ -23,8 +23,7 @@
         <version>5.0-beta.7-SNAPSHOT</version>
     </parent>
 
-    <artifactId>stroom-app-client</artifactId>
-    <name>stroom-app-client</name>
+    <artifactId>stroom-core-war</artifactId>
     <packaging>war</packaging>
 
     <properties>
