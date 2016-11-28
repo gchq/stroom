@@ -1,0 +1,11 @@
+/.classpath
+/.externalToolBuilders/
+/gwt-DevMode/
+/gwt-SuperDevMode/
+/gwt-unitCache/
+/.project
+/.settings/
+/target/
+/bin/
+/build/
+/war/WEB-INF/lib
