@@ -999,5 +999,7 @@
 
     <module>stroom-test-common</module>
     <module>stroom-integrationtest</module>
+
+      <module>stroom-dropwizard</module>
   </modules>
 </project>
