@@ -75,6 +75,27 @@
 
         <!-- STREAM STORE -->
         <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.streamstore.resilientReplicationCount"/>
+            <property name="value" value="1"/>
+            <property name="description"
+                      value="Set to determine how many volume locations will be used to store a single stream"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.streamstore.preferLocalVolumes"/>
+            <property name="value" value="false"/>
+            <property name="description"
+                      value="Should the stream store always attempt to write to local volumes before writing to remote ones?"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.streamstore.volumeSelector"/>
+            <property name="value" value="RoundRobin"/>
+            <property name="description"
+                      value="How should volumes be selected for use? Possible volume selectors include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', 'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') default is 'RoundRobin'"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.streamAttribute.deleteAge"/>
             <property name="value" value="30d"/>
             <property name="description"
@@ -281,6 +302,27 @@
                       value="The regular expression to use to extract user names from a certificate DN"/>
             <property name="editable" value="true"/>
         </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.daysToAccountExpiry"/>
+            <property name="value" value="90"/>
+            <property name="description"
+                      value="Number of days before we disable an account"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.daysToUnusedAccountExpiry"/>
+            <property name="value" value="30"/>
+            <property name="description"
+                      value="Number of days before we disable an unused account"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.daysToPasswordExpiry"/>
+            <property name="value" value="90"/>
+            <property name="description"
+                      value="Number of days before passwords expire"/>
+            <property name="editable" value="true"/>
+        </bean>
 
         <!-- INDEX PROPERTIES -->
         <bean class="stroom.node.shared.GlobalProperty">
@@ -396,64 +438,6 @@
             <property name="editable" value="true"/>
         </bean>
 
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.smtpHost"/>
-            <property name="value" value=""/>
-            <property name="description" value="SMTP Host name for email"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.smtpUserDomain"/>
-            <property name="value" value=""/>
-            <property name="description"
-                      value="SMTP User Domain (to append to user names)"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.daysToAccountExpiry"/>
-            <property name="value" value="90"/>
-            <property name="description"
-                      value="Number of days before we disable an account"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.daysToUnusedAccountExpiry"/>
-            <property name="value" value="30"/>
-            <property name="description"
-                      value="Number of days before we disable an unused account"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.daysToPasswordExpiry"/>
-            <property name="value" value="90"/>
-            <property name="description"
-                      value="Number of days before passwords expire"/>
-            <property name="editable" value="true"/>
-        </bean>
-
-
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.streamstore.resilientReplicationCount"/>
-            <property name="value" value="1"/>
-            <property name="description"
-                      value="Set to determine how many volume locations will be used to store a single stream"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.streamstore.preferLocalVolumes"/>
-            <property name="value" value="false"/>
-            <property name="description"
-                      value="Should the stream store always attempt to write to local volumes before writing to remote ones?"/>
-            <property name="editable" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.streamstore.volumeSelector"/>
-            <property name="value" value="RoundRobin"/>
-            <property name="description"
-                      value="How should volumes be selected for use? Possible volume selectors include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', 'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') default is 'RoundRobin'"/>
-            <property name="editable" value="true"/>
-        </bean>
-
         <!-- MAIN DATA SOURCE -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.jpaHbm2DdlAuto"/>
@@ -462,7 +446,6 @@
                       value="Set by property file to enable auto schema creation"/>
             <property name="editable" value="false"/>
         </bean>
-
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.jdbcDriverClassName"/>
             <property name="value" value="org.hsqldb.jdbcDriver"/>
@@ -500,6 +483,20 @@
             <property name="editable" value="false"/>
             <property name="password" value="true"/>
         </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.jdbcMaxPoolSize"/>
+            <property name="value" value="10"/>
+            <property name="description" value="Node Pool Size"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.showSql"/>
+            <property name="value" value="false"/>
+            <property name="description" value="Log SQL"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
 
         <!-- CACHE DATA SOURCE -->
         <bean class="stroom.node.shared.GlobalProperty">
@@ -527,27 +524,8 @@
             <property name="requireRestart" value="true"/>
             <property name="password" value="true"/>
         </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.jdbcMaxPoolSize"/>
-            <property name="value" value="10"/>
-            <property name="description" value="Node Pool Size"/>
-            <property name="editable" value="true"/>
-            <property name="requireRestart" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.showSql"/>
-            <property name="value" value="false"/>
-            <property name="description" value="Log SQL"/>
-            <property name="editable" value="true"/>
-            <property name="requireRestart" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.pageTitle"/>
-            <property name="value" value="Stroom"/>
-            <property name="description"
-                      value="The page title for Stroom shown in the browser tab"/>
-            <property name="editable" value="true"/>
-        </bean>
+
+        <!-- Entity Names -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.namePattern"/>
             <property name="value" value="^[a-zA-Z0-9_\- \.\(\)]{1,}$"/>
@@ -558,6 +536,15 @@
             <property name="name" value="stroom.feedNamePattern"/>
             <property name="value" value="^[A-Z0-9_-]{3,}$"/>
             <property name="description" value="The regex pattern for feed names"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <!-- Welcome text -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.pageTitle"/>
+            <property name="value" value="Stroom"/>
+            <property name="description"
+                      value="The page title for Stroom shown in the browser tab"/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
@@ -585,16 +572,7 @@
             <property name="requireRestart" value="true"/>
         </bean>
 
-        <!-- <bean class="stroom.node.shared.GlobalProperty"> -->
-        <!-- <property name="name" value="stroom.clusterCallUrl" /> -->
-        <!-- <property name="value" -->
-        <!-- value="https://@SERVER@:8080/stroom/clustercall.rpc" /> -->
-        <!-- <property name="description" value="URL pattern to call out to the
-          cluster" /> -->
-        <!-- <property name="editable" value="true" /> -->
-        <!-- <property name="requireRestart" value="true" /> -->
-        <!-- </bean> -->
-
+        <!-- CLUSTER COMMUNICATION -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.clusterCallUseLocal"/>
             <property name="value" value="true"/>
@@ -603,7 +581,6 @@
             <property name="editable" value="true"/>
             <property name="requireRestart" value="true"/>
         </bean>
-
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.clusterCallReadTimeout"/>
             <property name="value" value="30s"/>
@@ -612,7 +589,6 @@
             <property name="editable" value="true"/>
             <property name="requireRestart" value="true"/>
         </bean>
-
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.clusterCallIgnoreSSLHostnameVerifier"/>
             <property name="value" value="true"/>
@@ -621,7 +597,6 @@
             <property name="editable" value="true"/>
             <property name="requireRestart" value="true"/>
         </bean>
-
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.clusterResponseTimeout"/>
             <property name="value" value="30s"/>
@@ -630,7 +605,6 @@
             <property name="editable" value="true"/>
             <property name="requireRestart" value="false"/>
         </bean>
-
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name"
                       value="stroom.clusterCallCertificateRequiredFilterCn"/>
@@ -640,6 +614,7 @@
             <property name="editable" value="true"/>
         </bean>
 
+        <!-- EXPORT -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.exportCertificateRequiredFilterCn"/>
             <property name="value" value=""/>
@@ -648,6 +623,55 @@
             <property name="editable" value="true"/>
         </bean>
 
+        <!-- EMAIL -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.mail.host"/>
+            <property name="value" value=""/>
+            <property name="description" value="Email service host name, e.g. smtp.gmail.com"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.mail.port"/>
+            <property name="value" value="587"/>
+            <property name="description" value="Email service port, e.g. 587"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.mail.protocol"/>
+            <property name="value" value="smtp"/>
+            <property name="description" value="Email service protocol, e.g. smtp"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.mail.userName"/>
+            <property name="value" value=""/>
+            <property name="description" value="Email service username, e.g. XXXXX@gmail.com"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.mail.password"/>
+            <property name="value" value=""/>
+            <property name="description" value="Email service password"/>
+            <property name="editable" value="true"/>
+            <property name="password" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.mail.propertiesFile"/>
+            <property name="value" value="~/.stroom/mail.properties"/>
+            <property name="description"
+                      value="Additional mail properties can be defined in a file at the specified path, e.g. ~/.stroom/mail.properties"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.mail.userDomain"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="User Domain (to append to user names)"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <!-- UI -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.theme.background-attachment"/>
             <property name="value" value="scroll"/>

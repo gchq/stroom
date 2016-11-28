@@ -28,7 +28,13 @@ import stroom.util.web.ServletContextUtil;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class StroomProperties {
@@ -36,7 +42,7 @@ public class StroomProperties {
 
     public static final String STROOM_TEMP = "stroom.temp";
 
-    public static final String USER_CONF_DIR = ".stroom.conf.d";
+    public static final String USER_CONF_DIR = ".stroom";
     private static final String USER_CONF_PATH = USER_CONF_DIR + "/stroom.conf";
     private static final String STROOM_TMP_ENV = "STROOM_TMP";
     private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
@@ -202,7 +208,7 @@ public class StroomProperties {
     }
 
     /**
-     * Precedence: environment variables override ~/.stroom.conf.d/stroom.conf which overrides stroom.properties.
+     * Precedence: environment variables override ~/.stroom/stroom.conf which overrides stroom.properties.
      */
     private static String getProperty(final String propertyName, final String name, final Set<String> cyclicCheckSet) {
         // Ensure properties are initialised.
