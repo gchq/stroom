@@ -161,12 +161,12 @@ public class ContentPackImport {
     private Optional<Path> getContentPackBaseDir() {
         Optional<Path> contentPackDir;
 
-        String catalinaBase = System.getProperty("catalina.base");
+        String catalinaBase = System.getProperty("catalina.home");
         String userHome = System.getProperty("user.home");
 
         if (catalinaBase != null) {
             //running inside tomcat so use a subdir in there
-            contentPackDir = Optional.of(Paths.get(catalinaBase, CONTENT_PACK_IMPORT_DIR));
+            contentPackDir = Optional.of(Paths.get(catalinaBase, "..", CONTENT_PACK_IMPORT_DIR));
         } else if (userHome != null) {
             //not in tomcat so use the personal user conf dir as a base
             contentPackDir = Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR, CONTENT_PACK_IMPORT_DIR));
