@@ -1,0 +1,47 @@
+dependencies {
+    compile project(':stroom-security-api')
+    compile project(':stroom-security-api')
+    compile project(':stroom-core-client-widget')
+    compile project(':stroom-core-client')
+    compile group: 'org.apache.shiro', name: 'shiro-core', version: '1.2.6'
+    compile group: 'org.apache.shiro', name: 'shiro-web', version: '1.2.6'
+    compile group: 'org.apache.shiro', name: 'shiro-aspectj', version: '1.2.6'
+    compile group: 'org.apache.shiro', name: 'shiro-spring', version: '1.2.6'
+    compile group: 'de.svenkubiak', name: 'jBCrypt', version: '0.4.1'
+    compile group: 'javax.inject', name: 'javax.inject', version: '1'
+    compile group: 'org.springframework', name: 'spring-context-support', version: '4.2.4.RELEASE'
+    compile group: 'event-logging', name: 'event-logging', version: '3.0.0'
+    compile group: 'commons-fileupload', name: 'commons-fileupload', version: '1.2.2'
+    compile group: 'javax.mail', name: 'mail', version: '1.4.7'
+    compile group: 'com.google.inject', name: 'guice', version: '3.0'
+    compile group: 'com.google.gwt.inject', name: 'gin', version: '2.1.2'
+    compile(group: 'com.gwtplatform', name: 'gwtp-all', version: '0.7') {
+        exclude(module: 'persistence-api')
+        exclude(module: 'gwtp-crawler-service')
+    }
+    testCompile project(path: ':stroom-entities', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    compile(group: 'javax.servlet', name: 'servlet-api', version: '2.5') {
+        /* This dependency was originally in the Maven provided scope, but the project was not of type war.
+        This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
+        Please review and delete this closure when resolved. */
+    }
+    compile(group: 'com.github.gwtd3', name: 'gwt-d3-js', version: '3.4.8') {
+        /* This dependency was originally in the Maven provided scope, but the project was not of type war.
+        This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
+        Please review and delete this closure when resolved. */
+    }
+    compile(group: 'com.google.gwt', name: 'gwt-user', version: '2.8.0') {
+        /* This dependency was originally in the Maven provided scope, but the project was not of type war.
+        This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
+        Please review and delete this closure when resolved. */
+    }
+}
+
+task packageTests(type: Jar) {
+    from sourceSets.test.output
+    classifier = 'tests'
+}
+artifacts.archives packageTests

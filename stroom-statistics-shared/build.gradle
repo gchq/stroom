@@ -1,0 +1,11 @@
+
+description = 'stroom-statistics-shared'
+dependencies {
+  compile project(':stroom-statistics-api')
+}
+
+task packageTests(type: Jar) {
+  from sourceSets.test.output
+  classifier = 'tests'
+}
+artifacts.archives packageTests

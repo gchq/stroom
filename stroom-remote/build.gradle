@@ -1,0 +1,12 @@
+
+description = ''
+dependencies {
+  compile project(':stroom-util')
+    compile group: 'com.caucho', name: 'hessian', version:'4.0.38'
+}
+
+task packageTests(type: Jar) {
+  from sourceSets.test.output
+  classifier = 'tests'
+}
+artifacts.archives packageTests

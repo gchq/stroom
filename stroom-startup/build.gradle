@@ -1,0 +1,30 @@
+dependencies {
+    compile group: 'com.google.gwt', name: 'gwt-dev', version: '2.8.0'
+    compile group: 'com.google.gwt', name: 'gwt-user', version: '2.8.0'
+    compile project(':stroom-util')
+    compile project(':stroom-remote')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-core-server')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-core-client-widget')
+    compile project(':stroom-core-client')
+    compile project(':stroom-statistics-shared')
+    compile project(':stroom-statistics-api')
+    compile project(':stroom-statistics-client')
+    compile project(':stroom-statistics-server')
+    compile project(':stroom-security')
+    compile project(':stroom-security-api')
+    compile project(':stroom-security-client-api')
+    compile project(':stroom-index')
+    compile project(':stroom-dashboard')
+    compile project(':stroom-entities')
+    compile project(':stroom-query-api')
+    compile project(':stroom-app-war')
+    compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
+}
+
+task packageTests(type: Jar) {
+    from sourceSets.test.output
+    classifier = 'tests'
+}
+artifacts.archives packageTests

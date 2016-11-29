@@ -1,0 +1,32 @@
+dependencies {
+    compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
+    runtime group: 'com.google.gwt', name: 'gwt-servlet', version: '2.8.0'
+    testCompile project(':stroom-config')
+    testCompile project(':stroom-core-client')
+    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-security', configuration: 'testArtifacts')
+    testCompile project(':stroom-pipeline')
+    testCompile project(path: ':stroom-index', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-dashboard', configuration: 'testArtifacts')
+    testCompile project(':stroom-statistics-server')
+    testCompile project(':stroom-test-common')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+    testCompile project(':stroom-index')
+    testCompile project(':stroom-dashboard')
+    testCompile project(':stroom-security')
+//    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+//    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+//    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+//    compile(group: 'com.google.gwt', name: 'gwt-user', version: '2.8.0') {
+//        /* This dependency was originally in the Maven provided scope, but the project was not of type war.
+//        This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
+//        Please review and delete this closure when resolved. */
+//    }
+}
+
+task packageTests(type: Jar) {
+    from sourceSets.test.output
+    classifier = 'tests'
+}
+artifacts.archives packageTests

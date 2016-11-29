@@ -1,0 +1,12 @@
+
+description = 'stroom-statistics-api'
+dependencies {
+  compile project(':stroom-util')
+    compile group: 'org.hibernate', name: 'hibernate-core', version:'4.3.8.Final'
+}
+
+task packageTests(type: Jar) {
+  from sourceSets.test.output
+  classifier = 'tests'
+}
+artifacts.archives packageTests

@@ -1,0 +1,16 @@
+dependencies {
+  compile project(':stroom-entities')
+    compile group: 'com.google.inject', name: 'guice', version:'3.0'
+    compile group: 'com.google.gwt.inject', name: 'gin', version:'2.1.2'
+    compile(group: 'com.gwtplatform', name: 'gwtp-all', version:'0.7') {
+exclude(module: 'persistence-api')
+exclude(module: 'gwtp-crawler-service')
+    }
+    compile(group: 'com.google.gwt', name: 'gwt-user', version:'2.8.0')
+}
+
+task packageTests(type: Jar) {
+  from sourceSets.test.output
+  classifier = 'tests'
+}
+artifacts.archives packageTests

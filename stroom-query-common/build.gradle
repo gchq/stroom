@@ -1,0 +1,15 @@
+dependencies {
+  compile project(':stroom-query-api')
+  compile project(':stroom-expression')
+  compile project(':stroom-pipeline')
+  compile project(':stroom-core-server')
+  compile project(':stroom-core-shared')
+  testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+  testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+}
+
+task packageTests(type: Jar) {
+  from sourceSets.test.output
+  classifier = 'tests'
+}
+artifacts.archives packageTests

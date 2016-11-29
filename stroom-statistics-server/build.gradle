@@ -1,0 +1,27 @@
+dependencies {
+    compile project(':stroom-statistics-shared')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-query-common')
+    compile(group: 'org.apache.hbase', name: 'hbase-common', version: '1.2.1') {
+        exclude(module: 'jetty')
+        exclude(module: 'jetty-util')
+        exclude(module: 'servlet-api')
+        exclude(module: 'servlet-api-2.5')
+        exclude(module: 'jsp-2.1')
+        exclude(module: 'jsp-api-2.1')
+        exclude(module: 'jsp-api')
+        exclude(module: 'jasper-runtime')
+        exclude(module: 'jasper-compiler')
+        exclude(module: 'hsqldb')
+        exclude(module: 'xercesImpl')
+    }
+    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+}
+
+task packageTests(type: Jar) {
+    from sourceSets.test.output
+    classifier = 'tests'
+}
+artifacts.archives packageTests

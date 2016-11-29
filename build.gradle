@@ -1,0 +1,43 @@
+allprojects {
+    apply plugin: 'maven'
+
+    group = 'stroom'
+    version = '6.0-beta.1-SNAPSHOT'
+}
+
+subprojects {
+    apply plugin: 'java'
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    task packageSources(type: Jar) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+
+    }
+
+
+    configurations {
+        testArtifacts
+    }
+    task testJar (type: Jar) {
+        baseName = "${project.name}-test"
+        from sourceSets.test.output
+    }
+    artifacts {
+        testArtifacts testJar
+    }
+
+
+    artifacts.archives packageSources
+    repositories {
+        mavenLocal()
+
+        maven { url "http://repo.maven.apache.org/maven2" }
+    }
+
+    dependencies {
+        testCompile group: 'junit', name: 'junit', version: '4.12'
+        testCompile group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
+    }
+}

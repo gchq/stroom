@@ -1,0 +1,46 @@
+dependencies {
+    compile project(':stroom-core-server')
+    compile group: 'org.apache.lucene', name: 'lucene-analyzers-common', version: '4.6.1'
+    compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.40'
+    compile group: 'org.apache.lucene', name: 'lucene-queryparser', version: '4.6.1'
+    compile group: 'net.sf.saxon', name: 'Saxon-HE', version: '9.6.0-6'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.5.3'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.5.3'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.5.3'
+    compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.11'
+    compile(group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: '2.6.4') {
+        exclude(module: 'asm')
+        exclude(module: 'jetty')
+        exclude(module: 'jetty-util')
+        exclude(module: 'servlet-api')
+        exclude(module: 'servlet-api-2.5')
+        exclude(module: 'jsp-2.1')
+        exclude(module: 'jsp-api-2.1')
+        exclude(module: 'jsp-api')
+        exclude(module: 'jasper-runtime')
+        exclude(module: 'jasper-compiler')
+        exclude(module: 'xercesImpl')
+    }
+    compile(group: 'org.apache.hadoop', name: 'hadoop-common', version: '2.6.4') {
+        exclude(module: 'asm')
+        exclude(module: 'jetty')
+        exclude(module: 'jetty-util')
+        exclude(module: 'servlet-api')
+        exclude(module: 'servlet-api-2.5')
+        exclude(module: 'jsp-2.1')
+        exclude(module: 'jsp-api-2.1')
+        exclude(module: 'jsp-api')
+        exclude(module: 'jasper-runtime')
+        exclude(module: 'jasper-compiler')
+    }
+    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+//  providedCompile project(':stroom-config')
+}
+
+task packageTests(type: Jar) {
+    from sourceSets.test.output
+    classifier = 'tests'
+}
+artifacts.archives packageTests
