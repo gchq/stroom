@@ -14,17 +14,29 @@
 # limitations under the License.
 #**********************************************************************
 
-
-FROM openjdk:8
+FROM openjdk:8-alpine
 
 # IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
 ENV IN_DOCKER="true"
 
-RUN mkdir /usr/stroom-app
+#Copy the content packs in so they get imported on first run of Stroom
 ADD . /usr/stroom-app
+ADD https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101.zip /usr/stroom-app/contentPackImport/
+
 WORKDIR /usr/stroom-app
 
-RUN ./bin/setup.sh
+# update alpine and install Bash as it is not in alpine by default
+# then run setup to configure the tomcat instance
+RUN echo "http_proxy: $http_proxy" && \
+    echo "https_proxy: $https_proxy" && \
+    apk update && \
+    apk upgrade && \
+    apk add --no-cache bash && \
+    rm -rf /var/cache/apk/* && \
+    ./bin/setup.sh
 
+# export 8080 for stroom to listen on
 EXPOSE 8080
+
+# start Stroom and tail the log file
 CMD ./bin/start.sh && mkdir -p ./instance/logs && touch ./instance/logs/stroom.log && tail -f ./instance/logs/stroom.log
