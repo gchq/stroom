@@ -1,11 +1,3 @@
-
-description = ''
 dependencies {
-  compile project(':stroom-entities')
+    compile project(':stroom-entities')
 }
-
-task packageTests(type: Jar) {
-  from sourceSets.test.output
-  classifier = 'tests'
-}
-artifacts.archives packageTests

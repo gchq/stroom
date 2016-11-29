@@ -3,9 +3,3 @@ dependencies {
     compile group: 'org.hibernate', name: 'hibernate-core', version: '4.3.8.Final'
     compile group: 'javax.validation', name: 'validation-api', version: '1.1.0.Final'
 }
-
-task packageTests(type: Jar) {
-    from sourceSets.test.output
-    classifier = 'tests'
-}
-artifacts.archives packageTests

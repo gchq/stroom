@@ -22,9 +22,3 @@ dependencies {
     compile project(':stroom-app-war')
     compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
 }
-
-task packageTests(type: Jar) {
-    from sourceSets.test.output
-    classifier = 'tests'
-}
-artifacts.archives packageTests

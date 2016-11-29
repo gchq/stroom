@@ -1,30 +1,23 @@
-
 apply plugin: 'war'
 
 jar.enabled = true
-description = 'stroom-app'
-dependencies {
-  compile project(':stroom-util')
-  compile project(':stroom-entities')
-  compile project(':stroom-query-api')
-  compile project(':stroom-security')
-  compile project(':stroom-remote')
-  compile project(':stroom-core-shared')
-  compile project(':stroom-core-server')
-  compile project(':stroom-pipeline')
-  compile project(':stroom-core-client-widget')
-  compile project(':stroom-core-client')
-  compile project(':stroom-statistics-server')
-  compile project(':stroom-dashboard')
-  compile project(':stroom-app-war')
-  compile project(':stroom-dashboard-war')
-  testCompile project(':stroom-test-common')
-  testCompile project(':stroom-util')
-  providedCompile project(':stroom-config')
-}
 
-task packageTests(type: Jar) {
-  from sourceSets.test.output
-  classifier = 'tests'
+dependencies {
+    compile project(':stroom-util')
+    compile project(':stroom-entities')
+    compile project(':stroom-query-api')
+    compile project(':stroom-security')
+    compile project(':stroom-remote')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-core-server')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-core-client-widget')
+    compile project(':stroom-core-client')
+    compile project(':stroom-statistics-server')
+    compile project(':stroom-dashboard')
+    compile project(':stroom-app-war')
+    compile project(':stroom-dashboard-war')
+    testCompile project(':stroom-test-common')
+    testCompile project(':stroom-util')
+    providedCompile project(':stroom-config')
 }
-artifacts.archives packageTests

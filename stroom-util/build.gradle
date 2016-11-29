@@ -1,41 +1,35 @@
 dependencies {
-  compile project(':stroom-entities')
-    compile group: 'aopalliance', name: 'aopalliance', version:'1.0'
-    compile group: 'org.aspectj', name: 'aspectjrt', version:'1.8.9'
-    compile group: 'org.aspectj', name: 'aspectjweaver', version:'1.8.9'
-    compile group: 'cglib', name: 'cglib-nodep', version:'3.1'
-    compile group: 'org.apache.commons', name: 'commons-compress', version:'1.12'
-    compile group: 'commons-lang', name: 'commons-lang', version:'2.6'
-    compile group: 'commons-logging', name: 'commons-logging', version:'1.1.1'
-    compile group: 'org.apache.commons', name: 'commons-pool2', version:'2.4.2'
-    compile group: 'commons-io', name: 'commons-io', version:'2.5'
-    compile group: 'joda-time', name: 'joda-time', version:'2.3'
-    compile group: 'log4j', name: 'log4j', version:'1.2.17'
-    compile group: 'org.slf4j', name: 'slf4j-log4j12', version:'1.6.1'
-    compile group: 'net.sf.ehcache', name: 'ehcache-core', version:'2.6.11'
-    compile group: 'javax.inject', name: 'javax.inject', version:'1'
-    compile group: 'org.springframework', name: 'spring-context', version:'4.2.4.RELEASE'
-    compile group: 'org.springframework', name: 'spring-core', version:'4.2.4.RELEASE'
-    compile group: 'org.springframework', name: 'spring-beans', version:'4.2.4.RELEASE'
-    compile group: 'org.springframework', name: 'spring-test', version:'4.2.4.RELEASE'
-    compile group: 'org.springframework', name: 'spring-aop', version:'4.2.4.RELEASE'
-    compile group: 'org.springframework', name: 'spring-web', version:'4.2.4.RELEASE'
-    compile group: 'org.springframework', name: 'spring-webmvc', version:'4.2.4.RELEASE'
-    compile group: 'com.google.guava', name: 'guava', version:'15.0'
-    compile(group: 'javax.servlet', name: 'servlet-api', version:'2.5') {
-       /* This dependency was originally in the Maven provided scope, but the project was not of type war.
-       This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
-       Please review and delete this closure when resolved. */
+    compile project(':stroom-entities')
+    compile group: 'aopalliance', name: 'aopalliance', version: '1.0'
+    compile group: 'org.aspectj', name: 'aspectjrt', version: '1.8.9'
+    compile group: 'org.aspectj', name: 'aspectjweaver', version: '1.8.9'
+    compile group: 'cglib', name: 'cglib-nodep', version: '3.1'
+    compile group: 'org.apache.commons', name: 'commons-compress', version: '1.12'
+    compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
+    compile group: 'commons-logging', name: 'commons-logging', version: '1.1.1'
+    compile group: 'org.apache.commons', name: 'commons-pool2', version: '2.4.2'
+    compile group: 'commons-io', name: 'commons-io', version: '2.5'
+    compile group: 'joda-time', name: 'joda-time', version: '2.3'
+    compile group: 'log4j', name: 'log4j', version: '1.2.17'
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.6.1'
+    compile group: 'net.sf.ehcache', name: 'ehcache-core', version: '2.6.11'
+    compile group: 'javax.inject', name: 'javax.inject', version: '1'
+    compile group: 'org.springframework', name: 'spring-context', version: '4.2.4.RELEASE'
+    compile group: 'org.springframework', name: 'spring-core', version: '4.2.4.RELEASE'
+    compile group: 'org.springframework', name: 'spring-beans', version: '4.2.4.RELEASE'
+    compile group: 'org.springframework', name: 'spring-test', version: '4.2.4.RELEASE'
+    compile group: 'org.springframework', name: 'spring-aop', version: '4.2.4.RELEASE'
+    compile group: 'org.springframework', name: 'spring-web', version: '4.2.4.RELEASE'
+    compile group: 'org.springframework', name: 'spring-webmvc', version: '4.2.4.RELEASE'
+    compile group: 'com.google.guava', name: 'guava', version: '15.0'
+    compile(group: 'javax.servlet', name: 'servlet-api', version: '2.5') {
+        /* This dependency was originally in the Maven provided scope, but the project was not of type war.
+        This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
+        Please review and delete this closure when resolved. */
     }
-    compile(group: 'net.sourceforge.findbugs', name: 'annotations', version:'1.3.2') {
-       /* This dependency was originally in the Maven provided scope, but the project was not of type war.
-       This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
-       Please review and delete this closure when resolved. */
+    compile(group: 'net.sourceforge.findbugs', name: 'annotations', version: '1.3.2') {
+        /* This dependency was originally in the Maven provided scope, but the project was not of type war.
+        This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
+        Please review and delete this closure when resolved. */
     }
 }
-
-task packageTests(type: Jar) {
-  from sourceSets.test.output
-  classifier = 'tests'
-}
-artifacts.archives packageTests

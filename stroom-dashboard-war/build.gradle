@@ -35,9 +35,3 @@ dependencies {
     providedCompile group: 'com.github.gwtd3', name: 'gwt-d3-js', version: '3.4.8'
     providedCompile group: 'com.github.gwtd3', name: 'gwt-d3-js', version: '3.4.8', classifier: 'sources'
 }
-
-task packageTests(type: Jar) {
-    from sourceSets.test.output
-    classifier = 'tests'
-}
-artifacts.archives packageTests

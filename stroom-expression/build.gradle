@@ -1,11 +1,5 @@
 dependencies {
-  compile project(':stroom-util')
-  testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
-  testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    compile project(':stroom-util')
+    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 }
-
-task packageTests(type: Jar) {
-  from sourceSets.test.output
-  classifier = 'tests'
-}
-artifacts.archives packageTests

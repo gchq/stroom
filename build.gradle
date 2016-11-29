@@ -10,17 +10,10 @@ subprojects {
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
-    task packageSources(type: Jar) {
-        classifier = 'sources'
-        from sourceSets.main.allSource
-
-    }
-
-
     configurations {
         testArtifacts
     }
-    task testJar (type: Jar) {
+    task testJar(type: Jar) {
         baseName = "${project.name}-test"
         from sourceSets.test.output
     }
@@ -28,8 +21,19 @@ subprojects {
         testArtifacts testJar
     }
 
+    task packageTests(type: Jar) {
+        from sourceSets.test.output
+        classifier = 'tests'
+    }
+    artifacts.archives packageTests
 
+    task packageSources(type: Jar) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+
+    }
     artifacts.archives packageSources
+
     repositories {
         mavenLocal()
 

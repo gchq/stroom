@@ -38,9 +38,3 @@ dependencies {
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
 //  providedCompile project(':stroom-config')
 }
-
-task packageTests(type: Jar) {
-    from sourceSets.test.output
-    classifier = 'tests'
-}
-artifacts.archives packageTests
