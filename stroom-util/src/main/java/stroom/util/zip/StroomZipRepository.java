@@ -20,7 +20,6 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.FileSystemIterator;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.StroomLogger;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -42,38 +41,29 @@ import java.util.zip.ZipInputStream;
  * each 3 part as a dir separator.
  */
 public class StroomZipRepository {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomZipRepository.class);
-
     public static final String LOCK_EXTENSION = ".lock";
     public static final String ZIP_EXTENSION = ".zip";
     public static final String ERROR_EXTENSION = ".err";
     public static final String BAD_EXTENSION = ".bad";
-
+    // 1 hour
+    public static final int DEFAULT_LOCK_AGE_MS = 1000 * 60 * 60;
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomZipRepository.class);
     private static final Pattern ZIP_PATTERN = Pattern.compile(".*\\.zip");
-
     /**
      * Date the repository was created
      */
     private final Date createDate;
-
+    private final AtomicLong fileCount = new AtomicLong(0);
+    private final AtomicBoolean finish = new AtomicBoolean(false);
+    private final int lockDeleteAgeMs;
     /**
      * Name of the repository while open
      */
     private File baseLockDir;
-
     /**
      * Final name once finished (may be null)
      */
     private File baseResultantDir;
-
-    private final AtomicLong fileCount = new AtomicLong(0);
-
-    private final AtomicBoolean finish = new AtomicBoolean(false);
-
-    private final int lockDeleteAgeMs;
-
-    // 1 hour
-    public static final int DEFAULT_LOCK_AGE_MS = 1000 * 60 * 60;
 
     public StroomZipRepository(final String dir) {
         this(dir, false, DEFAULT_LOCK_AGE_MS);
@@ -148,8 +138,8 @@ public class StroomZipRepository {
      * Scan for a match low or high
      */
     private Long scanForMatch(final File dir, final boolean last) {
-        final List<String> fileList = new ArrayList<String>();
-        final List<String> dirList = new ArrayList<String>();
+        final List<String> fileList = new ArrayList<>();
+        final List<String> dirList = new ArrayList<>();
         buildFileLists(dir, fileList, dirList);
 
         Long bestMatchHere = null;
@@ -285,7 +275,8 @@ public class StroomZipRepository {
         }
     }
 
-    @SuppressWarnings(value = "DM_DEFAULT_ENCODING", justification = "PrintWriter does not take a charset and this is only an error message")
+    @SuppressWarnings(value = "DM_DEFAULT_ENCODING")
+    // PrintWriter does not take a charset and this is only an error message
     public void addErrorMessage(final StroomZipFile zipFile, final String msg, final boolean bad) {
         try {
             File errorFile = getErrorFile(zipFile);

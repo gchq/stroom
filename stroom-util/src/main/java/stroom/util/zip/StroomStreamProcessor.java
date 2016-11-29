@@ -16,6 +16,10 @@
 
 package stroom.util.zip;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.springframework.util.StringUtils;
 import stroom.util.cert.CertificateUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.ByteCountInputStream;
@@ -25,11 +29,6 @@ import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.Closeable;
@@ -44,15 +43,13 @@ import java.util.Map;
 import java.util.UUID;
 
 public class StroomStreamProcessor {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StroomStreamProcessor.class);
-
     private static final String ZERO_CONTENT = "0";
-
+    private static StroomLogger LOGGER = StroomLogger.getLogger(StroomStreamProcessor.class);
+    private static String hostName;
     private final HeaderMap globalHeaderMap;
     private final List<? extends StroomStreamHandler> stroomStreamHandlerList;
     private final byte[] buffer;
     private StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("StroomStreamProcessor ");
-    private static String hostName;
     private boolean appendReceivedPath = true;
 
     @SuppressWarnings({ "EI_EXPOSE_REP", "EI_EXPOSE_REP2" })
@@ -61,10 +58,6 @@ public class StroomStreamProcessor {
         this.globalHeaderMap = headerMap;
         this.buffer = buffer;
         this.stroomStreamHandlerList = stroomStreamHandlerList;
-    }
-
-    public static void setHostName(final String hostName) {
-        StroomStreamProcessor.hostName = hostName;
     }
 
     public String getHostName() {
@@ -76,6 +69,10 @@ public class StroomStreamProcessor {
             }
         }
         return hostName;
+    }
+
+    public static void setHostName(final String hostName) {
+        StroomStreamProcessor.hostName = hostName;
     }
 
     public void setAppendReceivedPath(final boolean appendReceivedPath) {

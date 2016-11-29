@@ -16,11 +16,6 @@
 
 package stroom.util.logging;
 
-import stroom.util.config.StroomProperties;
-import stroom.util.spring.StroomResourceLoaderUtil;
-import stroom.util.spring.Log4jWebConfigurer;
-import stroom.util.web.ServletContextUtil;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import org.apache.log4j.Appender;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
@@ -28,6 +23,10 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.util.ResourceUtils;
+import stroom.util.config.StroomProperties;
+import stroom.util.spring.Log4jWebConfigurer;
+import stroom.util.spring.StroomResourceLoaderUtil;
+import stroom.util.web.ServletContextUtil;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
