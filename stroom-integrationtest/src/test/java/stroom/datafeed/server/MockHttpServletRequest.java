@@ -16,6 +16,13 @@
 
 package stroom.datafeed.server;
 
+import org.springframework.stereotype.Component;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -28,29 +35,21 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Vector;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-
-import org.springframework.stereotype.Component;
-
 @Component
 public class MockHttpServletRequest implements HttpServletRequest {
-    private Map<String, String> headers = new HashMap<String, String>();
+    private Map<String, String> headers = new HashMap<>();
     private byte[] inputStreamData;
     private InputStream inputStream;
     private String queryString;
 
+    public MockHttpServletRequest() {
+    }
+
     public void resetMock() {
-        headers = new HashMap<String, String>();
+        headers = new HashMap<>();
         inputStream = null;
         inputStreamData = null;
         queryString = null;
-    }
-
-    public MockHttpServletRequest() {
     }
 
     public void addHeader(final String key, final String value) {
@@ -59,10 +58,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
     public void setInputStream(final byte[] buffer) {
         inputStreamData = buffer;
-    }
-
-    public void setInputStream(final InputStream inputStream) {
-        this.inputStream = inputStream;
     }
 
     @Override
@@ -215,6 +210,10 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
+    public void setCharacterEncoding(final String arg0) throws UnsupportedEncodingException {
+    }
+
+    @Override
     public int getContentLength() {
         return 0;
     }
@@ -234,6 +233,10 @@ public class MockHttpServletRequest implements HttpServletRequest {
         }
         return null;
 
+    }
+
+    public void setInputStream(final InputStream inputStream) {
+        this.inputStream = inputStream;
     }
 
     @Override
@@ -345,10 +348,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
     @Override
     public void setAttribute(final String arg0, final Object arg1) {
-    }
-
-    @Override
-    public void setCharacterEncoding(final String arg0) throws UnsupportedEncodingException {
     }
 
     public static class ServletInputStreamImpl extends ServletInputStream {
