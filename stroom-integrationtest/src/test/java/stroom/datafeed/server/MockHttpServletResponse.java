@@ -16,15 +16,15 @@
 
 package stroom.datafeed.server;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Locale;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.stereotype.Component;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Collection;
+import java.util.Locale;
 
 @Component
 public class MockHttpServletResponse implements HttpServletResponse {
@@ -34,6 +34,36 @@ public class MockHttpServletResponse implements HttpServletResponse {
     public void resetMock() {
         resposeCode = 0;
         sendErrorMessage = null;
+    }
+
+    @Override
+    public int getStatus() {
+        return 0;
+    }
+
+    @Override
+    public void setStatus(final int arg0) {
+        resposeCode = arg0;
+    }
+
+    @Override
+    public String getHeader(final String s) {
+        return null;
+    }
+
+    @Override
+    public Collection<String> getHeaders(final String s) {
+        return null;
+    }
+
+    @Override
+    public Collection<String> getHeaderNames() {
+        return null;
+    }
+
+    @Override
+    public void setContentLengthLong(final long l) {
+
     }
 
     @Override
@@ -107,11 +137,6 @@ public class MockHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
-    public void setStatus(final int arg0) {
-        resposeCode = arg0;
-    }
-
-    @Override
     public void setStatus(final int arg0, final String arg1) {
         resposeCode = arg0;
 
@@ -127,8 +152,16 @@ public class MockHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
+    public void setBufferSize(final int arg0) {
+    }
+
+    @Override
     public String getCharacterEncoding() {
         return null;
+    }
+
+    @Override
+    public void setCharacterEncoding(final String arg0) {
     }
 
     @Override
@@ -137,8 +170,16 @@ public class MockHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
+    public void setContentType(final String arg0) {
+    }
+
+    @Override
     public Locale getLocale() {
         return null;
+    }
+
+    @Override
+    public void setLocale(final Locale arg0) {
     }
 
     @Override
@@ -165,23 +206,7 @@ public class MockHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
-    public void setBufferSize(final int arg0) {
-    }
-
-    @Override
-    public void setCharacterEncoding(final String arg0) {
-    }
-
-    @Override
     public void setContentLength(final int arg0) {
-    }
-
-    @Override
-    public void setContentType(final String arg0) {
-    }
-
-    @Override
-    public void setLocale(final Locale arg0) {
     }
 
     public int getResponseCode() {

@@ -16,31 +16,30 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.IOException;
-
-import javax.inject.Inject;
-
+import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
-
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
+import java.io.IOException;
 
 /**
  * Joins text instances into a single text instance.
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "TextWriter", category = Category.WRITER, roles = { PipelineElementType.ROLE_TARGET,
+@ConfigurableElement(type = "TextWriter", category = Category.WRITER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_WRITER,
-        PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.TEXT)
+        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.TEXT)
 public class TextWriter extends AbstractWriter {
     private byte[] header;
     private byte[] footer;
@@ -68,17 +67,12 @@ public class TextWriter extends AbstractWriter {
     /**
      * Writes characters.
      *
-     * @param ch
-     *            An array of characters.
-     * @param start
-     *            The starting position in the array.
-     * @param length
-     *            The number of characters to use from the array.
-     * @exception org.xml.sax.SAXException
-     *                The client may throw an exception during processing.
-     *
+     * @param ch     An array of characters.
+     * @param start  The starting position in the array.
+     * @param length The number of characters to use from the array.
+     * @throws org.xml.sax.SAXException The client may throw an exception during processing.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
-     *      int, int)
+     * int, int)
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
@@ -107,19 +101,27 @@ public class TextWriter extends AbstractWriter {
 
     @PipelineProperty(description = "Header text that can be added to the output at the start.")
     public void setHeader(final String header) {
-        if (header == null) {
-            this.header = null;
-        } else {
-            this.header = header.getBytes();
+        try {
+            if (header == null) {
+                this.header = null;
+            } else {
+                this.header = StringEscapeUtils.unescapeJava(header).getBytes();
+            }
+        } catch (final Exception e) {
+            throw ProcessException.wrap(e.getMessage(), e);
         }
     }
 
     @PipelineProperty(description = "Footer text that can be added to the output at the end.")
     public void setFooter(final String footer) {
-        if (footer == null) {
-            this.footer = null;
-        } else {
-            this.footer = footer.getBytes();
+        try {
+            if (footer == null) {
+                this.footer = null;
+            } else {
+                this.footer = StringEscapeUtils.unescapeJava(footer).getBytes();
+            }
+        } catch (final Exception e) {
+            throw ProcessException.wrap(e.getMessage(), e);
         }
     }
 

@@ -16,7 +16,7 @@
 
 package stroom.statistics.shared;
 
-import stroom.dispatch.shared.Action;
+import stroom.entity.shared.Action;
 import stroom.entity.shared.ResultList;
 
 public class RollUpBitMaskPermGenerationAction extends Action<ResultList<CustomRollUpMask>> {

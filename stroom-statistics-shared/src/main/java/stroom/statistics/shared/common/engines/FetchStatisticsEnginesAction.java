@@ -16,7 +16,7 @@
 
 package stroom.statistics.shared.common.engines;
 
-import stroom.dispatch.shared.Action;
+import stroom.entity.shared.Action;
 
 public class FetchStatisticsEnginesAction extends Action<FetchStatisticsEnginesResults> {
     private static final long serialVersionUID = 7655031884804517812L;

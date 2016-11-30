@@ -24,27 +24,15 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.security.client.ClientSecurityContext;
-import stroom.app.client.event.DirtyKeyDownHander;
+import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.entity.client.presenter.EntitySettingsPresenter;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.security.client.ClientSecurityContext;
 
 public class TextConverterSettingsPresenter
         extends EntitySettingsPresenter<TextConverterSettingsPresenter.TextConverterSettingsView, TextConverter> {
-    public interface TextConverterSettingsView extends View {
-        TextArea getDescription();
-
-        ItemListBox<TextConverter.TextConverterType> getConverterType();
-    }
-
-    @Override
-    public String getType() {
-        return TextConverter.ENTITY_TYPE;
-    }
-
     @Inject
     public TextConverterSettingsPresenter(final EventBus eventBus, final TextConverterSettingsView view,
             final ClientSecurityContext securityContext) {
@@ -74,6 +62,11 @@ public class TextConverterSettingsPresenter
     }
 
     @Override
+    public String getType() {
+        return TextConverter.ENTITY_TYPE;
+    }
+
+    @Override
     protected void onRead(final TextConverter textConverter) {
         getView().getDescription().setText(textConverter.getDescription());
         getView().getConverterType().setSelectedItem(textConverter.getConverterType());
@@ -84,5 +77,11 @@ public class TextConverterSettingsPresenter
         final TextConverterType converterType = getView().getConverterType().getSelectedItem();
         textConverter.setDescription(getView().getDescription().getText().trim());
         textConverter.setConverterType(converterType);
+    }
+
+    public interface TextConverterSettingsView extends View {
+        TextArea getDescription();
+
+        ItemListBox<TextConverter.TextConverterType> getConverterType();
     }
 }

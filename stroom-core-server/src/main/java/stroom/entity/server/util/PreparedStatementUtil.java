@@ -16,6 +16,8 @@
 
 package stroom.entity.server.util;
 
+import stroom.util.logging.StroomLogger;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -25,8 +27,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.util.List;
-
-import stroom.util.logging.StroomLogger;
 
 /**
  * Utility Class
@@ -56,7 +56,7 @@ public class PreparedStatementUtil {
         }
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
+    @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static PreparedStatement prepareStatement(final Connection connection, final String sql)
             throws SQLException {
         try {

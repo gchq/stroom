@@ -16,21 +16,20 @@
 
 package stroom.streamstore.client.presenter;
 
-import java.util.ArrayList;
-
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
-
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.dispatch.shared.Action;
 import stroom.entity.client.presenter.TreeRowHandler;
+import stroom.entity.shared.Action;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.HasCriteria;
 import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.ResultList;
 import stroom.util.shared.SharedObject;
+
+import java.util.ArrayList;
 
 public class ActionDataProvider<R extends SharedObject> extends AsyncDataProvider<R> {
     private final ClientDispatchAsync dispatcher;

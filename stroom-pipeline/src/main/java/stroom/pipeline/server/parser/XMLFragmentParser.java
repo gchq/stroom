@@ -16,17 +16,11 @@
 
 package stroom.pipeline.server.parser;
 
-import java.io.IOException;
-
-import javax.inject.Inject;
-import javax.xml.parsers.SAXParserFactory;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-
 import stroom.cache.server.ParserFactoryPool;
 import stroom.cache.server.StoredParserFactory;
 import stroom.entity.shared.VersionedEntityDecorator;
@@ -37,8 +31,8 @@ import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pipeline.shared.TextConverterService;
@@ -47,6 +41,10 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
 import stroom.util.spring.StroomScope;
 import stroom.xml.converter.ParserFactory;
+
+import javax.inject.Inject;
+import javax.xml.parsers.SAXParserFactory;
+import java.io.IOException;
 
 @Component
 @Scope(value = StroomScope.TASK)
@@ -64,7 +62,10 @@ public class XMLFragmentParser extends AbstractParser {
 
     private final ParserFactoryPool parserFactoryPool;
     private final TextConverterService textConverterService;
-
+    private String injectedCode;
+    private boolean usePool = true;
+    private TextConverter textConverter;
+    private PoolItem<VersionedEntityDecorator<TextConverter>, StoredParserFactory> poolItem;
     @Inject
     public XMLFragmentParser(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory,
             final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
@@ -72,10 +73,6 @@ public class XMLFragmentParser extends AbstractParser {
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterService = textConverterService;
     }
-
-    private String injectedCode;
-    private TextConverter textConverter;
-    private PoolItem<VersionedEntityDecorator<TextConverter>, StoredParserFactory> poolItem;
 
     @Override
     protected XMLReader createReader() throws SAXException {
@@ -105,10 +102,11 @@ public class XMLFragmentParser extends AbstractParser {
         // converter.
         if (injectedCode != null) {
             tc.setData(injectedCode);
+            usePool = false;
         }
 
         // Get a text converter generated parser from the pool.
-        poolItem = parserFactoryPool.borrowObject(new VersionedEntityDecorator<>(tc));
+        poolItem = parserFactoryPool.borrowObject(new VersionedEntityDecorator<>(tc), usePool);
         final StoredParserFactory storedParserFactory = poolItem.getValue();
         final StoredErrorReceiver storedErrorReceiver = storedParserFactory.getErrorReceiver();
         final ParserFactory parserFactory = storedParserFactory.getParserFactory();
@@ -138,7 +136,7 @@ public class XMLFragmentParser extends AbstractParser {
         } finally {
             // Return the parser factory to the pool if we have used one.
             if (poolItem != null && parserFactoryPool != null) {
-                parserFactoryPool.returnObject(poolItem);
+                parserFactoryPool.returnObject(poolItem, usePool);
             }
         }
     }

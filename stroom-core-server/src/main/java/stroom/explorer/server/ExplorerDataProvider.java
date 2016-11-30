@@ -16,9 +16,6 @@
 
 package stroom.explorer.server;
 
-import java.util.Map;
-
-import stroom.explorer.shared.ExplorerData;
 import stroom.util.shared.HasType;
 
 public interface ExplorerDataProvider extends HasType {

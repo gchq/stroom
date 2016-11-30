@@ -16,7 +16,7 @@
 
 package stroom.streamstore.client.gin;
 
-import stroom.app.client.gin.PluginModule;
+import stroom.core.client.gin.PluginModule;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.streamstore.client.presenter.DataPresenter;

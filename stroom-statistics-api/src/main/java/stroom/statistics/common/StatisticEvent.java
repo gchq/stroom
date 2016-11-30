@@ -16,10 +16,9 @@
 
 package stroom.statistics.common;
 
-import java.util.List;
-
 import stroom.statistics.shared.StatisticType;
-import stroom.util.date.DateUtil;
+
+import java.util.List;
 
 /**
  * Class to hold a statistic event, ie. the count or value of something in a
@@ -32,15 +31,11 @@ public class StatisticEvent {
     /**
      * Constructor for value type events with floating point values
      *
-     * @param time
-     *            time of the event in millis since epoch
-     * @param name
-     *            the name of the event
-     * @param tagList
-     *            list of tag/value pairs that describe the event. Must be
-     *            ordered by tag name. Can be null.
-     * @param count
-     *            the count of the event, e.g. the number of desktop logons
+     * @param time    time of the event in millis since epoch
+     * @param name    the name of the event
+     * @param tagList list of tag/value pairs that describe the event. Must be
+     *                ordered by tag name. Can be null.
+     * @param count   the count of the event, e.g. the number of desktop logons
      */
     public StatisticEvent(final long timeMs, final String name, final List<StatisticTag> tagList, final long count) {
         this.timeMs = timeMs;
@@ -52,16 +47,12 @@ public class StatisticEvent {
     /**
      * Constructor for value type events with floating point values
      *
-     * @param time
-     *            time of the event in millis since epoch
-     * @param name
-     *            the name of the event
-     * @param tagList
-     *            list of tag/value pairs that describe the event. Must be
-     *            ordered by tag name. Can be null.
-     * @param value
-     *            the value of the event, e.g. the heap size in MB, bytes read,
-     *            etc.
+     * @param time    time of the event in millis since epoch
+     * @param name    the name of the event
+     * @param tagList list of tag/value pairs that describe the event. Must be
+     *                ordered by tag name. Can be null.
+     * @param value   the value of the event, e.g. the heap size in MB, bytes read,
+     *                etc.
      */
     public StatisticEvent(final long timeMs, final String name, final List<StatisticTag> tagList, final double value) {
         this.timeMs = timeMs;
@@ -102,8 +93,7 @@ public class StatisticEvent {
     }
 
     /**
-     * @param tagName
-     *            The name of the tag in a {@link StatisticTag} object
+     * @param tagName The name of the tag in a {@link StatisticTag} object
      * @return The position of the tag in the tag list (0 based)
      */
     public Integer getTagPosition(final String tagName) {
@@ -112,7 +102,7 @@ public class StatisticEvent {
 
     @Override
     public String toString() {
-        return "StatisticEvent [timeMs=" + DateUtil.createNormalDateTimeString(timeMs) + ", timeAgnosticStatisticEvent="
+        return "StatisticEvent [timeMs=" + timeMs + ", timeAgnosticStatisticEvent="
                 + timeAgnosticStatisticEvent + "]";
     }
 

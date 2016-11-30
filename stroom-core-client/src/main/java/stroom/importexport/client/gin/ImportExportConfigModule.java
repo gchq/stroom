@@ -16,7 +16,7 @@
 
 package stroom.importexport.client.gin;
 
-import stroom.app.client.gin.PluginModule;
+import stroom.core.client.gin.PluginModule;
 import stroom.importexport.client.ExportConfigPlugin;
 import stroom.importexport.client.ImportConfigPlugin;
 import stroom.importexport.client.presenter.ExportConfigPresenter;

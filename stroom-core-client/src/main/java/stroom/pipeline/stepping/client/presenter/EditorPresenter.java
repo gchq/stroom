@@ -16,8 +16,6 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import stroom.entity.shared.Entity;
-import stroom.entity.shared.EntityServiceLoadAction;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -25,14 +23,15 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.alert.client.event.AlertEvent;
-import stroom.app.client.event.DirtyKeyDownHander;
+import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.entity.shared.Entity;
+import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.entity.shared.HasData;
 import stroom.pipeline.shared.PipelineStepAction;
@@ -50,14 +49,9 @@ import stroom.xmleditor.client.presenter.ReadOnlyXMLEditorPresenter;
 import stroom.xmleditor.client.presenter.XMLEditorPresenter;
 
 public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorView>implements HasDirtyHandlers {
-    public interface EditorView extends View {
-        void setCodeView(View view);
-
-        void setInputView(View view);
-
-        void setOutputView(View view);
-    }
-
+    private final ClientDispatchAsync dispatcher;
+    private final Provider<XMLEditorPresenter> editorProvider;
+    private final Provider<ReadOnlyXMLEditorPresenter> readOnlyEditorProvider;
     private String elementId;
     private PipelineElementType elementType;
     private PipelinePropertyValue propertyValue;
@@ -65,19 +59,11 @@ public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorVie
     private boolean refreshRequired = true;
     private boolean loaded;
     private boolean dirtyCode;
-
-    private final ClientDispatchAsync dispatcher;
-
     private Entity entity;
     private Indicators codeIndicators;
-
-    private final Provider<XMLEditorPresenter> editorProvider;
-    private final Provider<ReadOnlyXMLEditorPresenter> readOnlyEditorProvider;
-
     private XMLEditorPresenter codePresenter;
     private ReadOnlyXMLEditorPresenter inputPresenter;
     private ReadOnlyXMLEditorPresenter outputPresenter;
-
     @Inject
     public EditorPresenter(final EventBus eventBus, final EditorView view,
             final Provider<XMLEditorPresenter> editorProvider,
@@ -194,20 +180,20 @@ public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorVie
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
-    public void setElementId(final String elementId) {
-        this.elementId = elementId;
-    }
-
     public String getElementId() {
         return elementId;
     }
 
-    public void setElementType(final PipelineElementType elementType) {
-        this.elementType = elementType;
+    public void setElementId(final String elementId) {
+        this.elementId = elementId;
     }
 
     public PipelineElementType getElementType() {
         return elementType;
+    }
+
+    public void setElementType(final PipelineElementType elementType) {
+        this.elementType = elementType;
     }
 
     public void setPropertyValue(final PipelinePropertyValue propertyValue) {
@@ -288,5 +274,13 @@ public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorVie
         editorPresenter.getIndicatorsOption().setOn(true);
         editorPresenter.getLineNumbersOption().setAvailable(true);
         editorPresenter.getLineNumbersOption().setOn(false);
+    }
+
+    public interface EditorView extends View {
+        void setCodeView(View view);
+
+        void setInputView(View view);
+
+        void setOutputView(View view);
     }
 }

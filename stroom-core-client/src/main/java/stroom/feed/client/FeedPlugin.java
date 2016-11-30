@@ -16,7 +16,12 @@
 
 package stroom.feed.client;
 
-import stroom.app.client.ContentManager;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
@@ -25,23 +30,13 @@ import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.shared.Feed;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.StreamType;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 public class FeedPlugin extends EntityPlugin<Feed> {
-    public interface FeedResources extends ClientBundle {
-        ImageResource eventFeed();
-    }
-
     public static final Set<String> FETCH_SET = new HashSet<String>(Arrays.asList(StreamType.ENTITY_TYPE));
-
     private final Provider<FeedPresenter> editorProvider;
 
     @Inject
@@ -65,5 +60,9 @@ public class FeedPlugin extends EntityPlugin<Feed> {
     @Override
     protected Set<String> fetchSet() {
         return FETCH_SET;
+    }
+
+    public interface FeedResources extends ClientBundle {
+        ImageResource eventFeed();
     }
 }

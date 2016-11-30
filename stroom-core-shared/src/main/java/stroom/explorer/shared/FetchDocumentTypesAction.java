@@ -16,7 +16,7 @@
 
 package stroom.explorer.shared;
 
-import stroom.dispatch.shared.Action;
+import stroom.entity.shared.Action;
 
 public class FetchDocumentTypesAction extends Action<DocumentTypes> {
     private static final long serialVersionUID = 6474393620176001033L;

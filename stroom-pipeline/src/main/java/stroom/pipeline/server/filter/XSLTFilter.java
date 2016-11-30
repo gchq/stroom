@@ -16,28 +16,20 @@
 
 package stroom.pipeline.server.filter;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.inject.Inject;
-import javax.xml.transform.ErrorListener;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.sax.SAXResult;
-import javax.xml.transform.sax.TransformerHandler;
-
-import stroom.node.server.StroomPropertyService;
-import stroom.util.logging.StroomLogger;
-import stroom.util.spring.StroomScope;
+import net.sf.saxon.Configuration;
+import net.sf.saxon.jaxp.TemplatesImpl;
+import net.sf.saxon.jaxp.TransformerImpl;
+import net.sf.saxon.s9api.XsltExecutable;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
 import stroom.cache.server.StoredXsltExecutable;
 import stroom.cache.server.XSLTPool;
 import stroom.entity.shared.StringCriteria;
 import stroom.entity.shared.VersionedEntityDecorator;
+import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
@@ -47,9 +39,9 @@ import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.writer.PathCreator;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.XSLTService;
@@ -59,11 +51,17 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pool.PoolItem;
 import stroom.util.CharBuffer;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
-import net.sf.saxon.Configuration;
-import net.sf.saxon.jaxp.TemplatesImpl;
-import net.sf.saxon.jaxp.TransformerImpl;
-import net.sf.saxon.s9api.XsltExecutable;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.sax.SAXResult;
+import javax.xml.transform.sax.TransformerHandler;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An XML filter for performing inline XSLT transformation of XML.
@@ -103,6 +101,7 @@ public class XSLTFilter extends AbstractXMLFilter {
     private boolean xsltRequired = false;
     private boolean passThrough = true;
     private String injectedCode;
+    private boolean usePool = true;
     private List<PipelineReference> pipelineReferences;
 
     private int elementCount;
@@ -215,8 +214,10 @@ public class XSLTFilter extends AbstractXMLFilter {
 
                 // If we are in stepping mode and have made code changes then we
                 // want to add them to the newly loaded XSLT.
+
                 if (injectedCode != null) {
                     xslt.setData(injectedCode);
+                    usePool = false;
                 }
 
                 // If no XSLT has been provided then don't try and get compiled
@@ -226,7 +227,7 @@ public class XSLTFilter extends AbstractXMLFilter {
                     final ErrorReceiver errorReceiver = new ErrorReceiverIdDecorator(getElementId(),
                             errorReceiverProxy);
                     poolItem = xsltPool.borrowConfiguredTemplate(new VersionedEntityDecorator<>(xslt), errorReceiver,
-                            locationFactory, pipelineReferences);
+                            locationFactory, pipelineReferences, usePool);
                     final StoredXsltExecutable storedXsltExecutable = poolItem.getValue();
                     // Get the errors.
                     final StoredErrorReceiver storedErrors = storedXsltExecutable.getErrorReceiver();
@@ -273,7 +274,7 @@ public class XSLTFilter extends AbstractXMLFilter {
     public void endProcessing() {
         try {
             if (poolItem != null) {
-                xsltPool.returnObject(poolItem);
+                xsltPool.returnObject(poolItem, usePool);
                 poolItem = null;
             }
         } finally {

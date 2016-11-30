@@ -22,22 +22,12 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.security.client.ClientSecurityContext;
-import stroom.app.client.event.DirtyKeyDownHander;
+import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.entity.client.presenter.EntitySettingsPresenter;
 import stroom.pipeline.shared.XSLT;
+import stroom.security.client.ClientSecurityContext;
 
 public class XSLTSettingsPresenter extends EntitySettingsPresenter<XSLTSettingsPresenter.XSLTSettingsView, XSLT> {
-    public interface XSLTSettingsView extends View {
-        TextArea getDescription();
-    }
-
-    @Override
-    public String getType() {
-        return XSLT.ENTITY_TYPE;
-    }
-
     @Inject
     public XSLTSettingsPresenter(final EventBus eventBus, final XSLTSettingsView view,
             final ClientSecurityContext securityContext) {
@@ -56,6 +46,11 @@ public class XSLTSettingsPresenter extends EntitySettingsPresenter<XSLTSettingsP
     }
 
     @Override
+    public String getType() {
+        return XSLT.ENTITY_TYPE;
+    }
+
+    @Override
     protected void onRead(final XSLT xslt) {
         getView().getDescription().setText(xslt.getDescription());
     }
@@ -63,5 +58,9 @@ public class XSLTSettingsPresenter extends EntitySettingsPresenter<XSLTSettingsP
     @Override
     protected void onWrite(final XSLT xslt) {
         xslt.setDescription(getView().getDescription().getText().trim());
+    }
+
+    public interface XSLTSettingsView extends View {
+        TextArea getDescription();
     }
 }

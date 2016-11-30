@@ -16,9 +16,9 @@
 
 package stroom.dashboard.expression;
 
-import java.math.BigDecimal;
-
 import stroom.util.date.DateUtil;
+
+import java.math.BigDecimal;
 
 public final class TypeConverter {
     private TypeConverter() {
@@ -35,7 +35,7 @@ public final class TypeConverter {
         }
 
         try {
-            return Double.parseDouble(obj.toString());
+            return new BigDecimal(obj.toString()).doubleValue();
         } catch (final Exception e) {
         }
 
@@ -63,12 +63,6 @@ public final class TypeConverter {
     }
 
 	public static String doubleToString(final Double dbl) {
-		// TODO : This is a temporary fix for Java 7, remove after move to Java
-		// 8.
-		if (dbl == 0D) {
-			return "0";
-		}
-
 		final BigDecimal bigDecimal = BigDecimal.valueOf(dbl);
 		return bigDecimal.stripTrailingZeros().toPlainString();
 	}

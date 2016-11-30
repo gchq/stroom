@@ -16,8 +16,6 @@
 
 package stroom.util.io;
 
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
 public class ByteSlice {
     private final byte[] array;
     private final int off;

@@ -16,7 +16,11 @@
 
 package stroom.pipeline.client;
 
-import stroom.app.client.ContentManager;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.PresenterWidget;
+import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
@@ -25,14 +29,10 @@ import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.entity.shared.DocRef;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.client.presenter.PipelinePresenter;
-import stroom.pipeline.processor.client.presenter.ProcessorPresenter;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamtask.shared.StreamProcessor;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class PipelinePlugin extends EntityPlugin<PipelineEntity> {
     private final Provider<PipelinePresenter> editorProvider;

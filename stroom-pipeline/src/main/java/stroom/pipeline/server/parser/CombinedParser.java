@@ -16,23 +16,11 @@
 
 package stroom.pipeline.server.parser;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-
-import javax.inject.Inject;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import stroom.util.xml.SAXParserFactoryFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-
 import stroom.cache.server.ParserFactoryPool;
 import stroom.cache.server.StoredParserFactory;
 import stroom.entity.shared.VersionedEntityDecorator;
@@ -43,9 +31,9 @@ import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.reader.InvalidCharFilterReader;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverterService;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -54,8 +42,18 @@ import stroom.pool.PoolItem;
 import stroom.resource.server.BOMRemovalInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.StroomScope;
+import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.xml.converter.ParserFactory;
 import stroom.xml.converter.json.JSONParserFactory;
+
+import javax.inject.Inject;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 
 @Component
 @Scope(value = StroomScope.TASK)
@@ -74,7 +72,12 @@ public class CombinedParser extends AbstractParser {
 
     private final ParserFactoryPool parserFactoryPool;
     private final TextConverterService textConverterService;
-
+    private String type;
+    private boolean fixInvalidChars = false;
+    private String injectedCode;
+    private boolean usePool = true;
+    private TextConverter textConverter;
+    private PoolItem<VersionedEntityDecorator<TextConverter>, StoredParserFactory> poolItem;
     @Inject
     public CombinedParser(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory,
             final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
@@ -82,12 +85,6 @@ public class CombinedParser extends AbstractParser {
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterService = textConverterService;
     }
-
-    private String type;
-    private boolean fixInvalidChars = false;
-    private String injectedCode;
-    private TextConverter textConverter;
-    private PoolItem<VersionedEntityDecorator<TextConverter>, StoredParserFactory> poolItem;
 
     @Override
     protected XMLReader createReader() throws SAXException {
@@ -159,10 +156,11 @@ public class CombinedParser extends AbstractParser {
         // add them to the newly loaded text converter.
         if (injectedCode != null) {
             tc.setData(injectedCode);
+            usePool = false;
         }
 
         /// Get a text converter generated parser from the pool.
-        poolItem = parserFactoryPool.borrowObject(new VersionedEntityDecorator<>(tc));
+        poolItem = parserFactoryPool.borrowObject(new VersionedEntityDecorator<>(tc), usePool);
         final StoredParserFactory storedParserFactory = poolItem.getValue();
         final StoredErrorReceiver storedErrorReceiver = storedParserFactory.getErrorReceiver();
         final ParserFactory parserFactory = storedParserFactory.getParserFactory();
@@ -212,7 +210,7 @@ public class CombinedParser extends AbstractParser {
         } finally {
             // Return the parser factory to the pool if we have used one.
             if (poolItem != null && parserFactoryPool != null) {
-                parserFactoryPool.returnObject(poolItem);
+                parserFactoryPool.returnObject(poolItem, usePool);
             }
         }
     }

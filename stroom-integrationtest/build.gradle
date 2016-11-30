@@ -1,0 +1,21 @@
+dependencies {
+    compile project(':stroom-core-server')
+    compile project(':stroom-index-server')
+    compile project(':stroom-statistics-server')
+    compile project(':stroom-dashboard-server')
+    compile project(':stroom-security-server')
+
+    // javax.el not provided as no app container in tests.
+    compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
+    compile group: 'org.glassfish.web', name: 'javax.el', version: '2.2.6'
+
+    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-index-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
+
+    // Use default DB config.
+    compile project(':stroom-config')
+}

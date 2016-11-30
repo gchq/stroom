@@ -16,8 +16,11 @@
 
 package stroom.pipeline.stepping.client;
 
-import stroom.app.client.ContentManager;
-import stroom.app.client.presenter.Plugin;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import stroom.core.client.ContentManager;
+import stroom.core.client.presenter.Plugin;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
@@ -26,15 +29,11 @@ import stroom.entity.shared.DocRef;
 import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
 import stroom.explorer.shared.ExplorerData;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
-import stroom.pipeline.stepping.shared.GetPipelineForStreamAction;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.shared.SharedLong;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
     private final Provider<ExplorerDropDownTreePresenter> pipelineSelection;
