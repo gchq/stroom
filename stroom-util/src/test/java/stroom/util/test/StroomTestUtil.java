@@ -16,16 +16,19 @@
 
 package stroom.util.test;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-
 import stroom.util.io.FileUtil;
 import stroom.util.thread.ThreadUtil;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 
 public class StroomTestUtil {
     private static final DateTimeFormatter FORMAT = DateTimeFormat.forPattern("yyyyMMdd_HHmmss_SSS")
@@ -96,5 +99,27 @@ public class StroomTestUtil {
         } catch (final IOException e) {
             // Ignore
         }
+    }
+
+    /**
+     * Similar to the unix touch cammand. Sets the last modified time to now if the file
+     * exists else, creates the file
+     * @param file
+     * @throws IOException
+     */
+    public static void touchFile(Path file) throws IOException {
+
+       if (Files.exists(file)){
+           if (!Files.isRegularFile(file)){
+               throw new RuntimeException(String.format("File %s is not a regular file", file.toAbsolutePath().toString()));
+           }
+           try {
+               Files.setLastModifiedTime(file, FileTime.from(Instant.now()));
+           } catch (IOException e) {
+               e.printStackTrace();
+           }
+       } else {
+               Files.createFile(file);
+       }
     }
 }
