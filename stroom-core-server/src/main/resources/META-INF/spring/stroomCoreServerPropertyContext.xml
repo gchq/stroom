@@ -774,7 +774,7 @@
             <property name="name" value="stroom.stats.sql.search.maxResults"/>
             <property name="value" value="100000"/>
             <property name="description"
-                      value="The maximum number of records that can be returned from the statisics DB in a single query prior to aggregation"/>
+                      value="The maximum number of records that can be returned from the statistics DB in a single query prior to aggregation"/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">

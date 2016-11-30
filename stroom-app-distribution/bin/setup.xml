@@ -83,7 +83,7 @@
     <parameter>
         <description>If no existing volumes are present a default volume will be created on application start. The volume will live in the volumes sub directory of the Stroom installation directory</description>
         <name>@@CREATE_DEFAULT_VOLUME_ON_START@@</name>
-        <value>false</value>
+        <value>true</value>
         <regEx>(true|false)</regEx>
     </parameter>
 </parameters>

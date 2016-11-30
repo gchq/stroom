@@ -50,6 +50,8 @@ import stroom.util.spring.StroomStartup;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -512,8 +514,13 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
                 if (optDefaultVolumePath.isPresent()){
                     Node node = nodeCache.getDefaultNode();
                     String pathStr = optDefaultVolumePath.get().toAbsolutePath().toString();
-                    LOGGER.info(String.format("Creating default volume in %s on node %s", pathStr, node.getName()));
-                    createVolume(pathStr, node);
+                    try {
+                        Files.createDirectories(optDefaultVolumePath.get());
+                        LOGGER.info(String.format("Creating default volume in %s on node %s", pathStr, node.getName()));
+                        createVolume(pathStr, node);
+                    } catch (IOException e) {
+                        LOGGER.error("Unable to create default volume due to an error creating directory %s", pathStr, e);
+                    }
                 } else {
                     LOGGER.info("No suitable directory to create default volume in");
                 }
@@ -535,12 +542,13 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private Optional<Path> getDefaultVolumePath() {
         Optional<Path> contentPackDir;
 
-        String catalinaBase = System.getProperty("catalina.home");
+        String catalinaHome = System.getProperty("catalina.home");
         String userHome = System.getProperty("user.home");
 
-        if (catalinaBase != null) {
+        if (catalinaHome != null) {
             //running inside tomcat so use a subdir in there
-            contentPackDir = Optional.of(Paths.get(catalinaBase, "..").resolve(DEFAULT_VOLUME_DIR));
+            Path catalinaHomePath = Paths.get(catalinaHome);
+            contentPackDir = Optional.of(catalinaHomePath.getParent().resolve(DEFAULT_VOLUME_DIR));
         } else if (userHome != null) {
             //not in tomcat so use the personal user conf dir as a base
             contentPackDir = Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(DEFAULT_VOLUME_DIR));
