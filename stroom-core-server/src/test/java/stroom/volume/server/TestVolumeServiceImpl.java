@@ -162,6 +162,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         volumeServiceImpl.startup();
 
         Assert.assertFalse(volumeServiceImpl.saveCalled);
+        Assert.assertFalse(Files.exists(DEFAULT_VOLUME_PATH));
     }
 
     @Test
@@ -171,6 +172,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         volumeServiceImpl.startup();
 
         Assert.assertFalse(volumeServiceImpl.saveCalled);
+        Assert.assertFalse(Files.exists(DEFAULT_VOLUME_PATH));
     }
 
     @Test
@@ -181,6 +183,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
         Assert.assertTrue(volumeServiceImpl.saveCalled);
         Assert.assertEquals(DEFAULT_VOLUME_PATH.toAbsolutePath().toString(),volumeServiceImpl.lastSavedVolume.getPath());
+        Assert.assertTrue(Files.exists(DEFAULT_VOLUME_PATH));
     }
 
     private void deleteDefaulVolumeDir() throws IOException {
