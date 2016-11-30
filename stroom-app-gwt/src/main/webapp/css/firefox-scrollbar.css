@@ -1,0 +1,46 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@moz-document url-prefix(http://),url-prefix(https://) {
+scrollbar {
+    -moz-appearance:none !important;
+	background: rgb(0, 255, 0) !important;
+}
+
+thumb,scrollbarbutton {
+	-moz-appearance: none !important;
+	background-color: rgb(0, 0, 255) !important;
+}
+
+thumb:hover,scrollbarbutton:hover {
+	-moz-appearance: none !important;
+	background-color: rgb(255, 0, 0) !important;
+}
+
+scrollbarbutton {
+	display: none !important;
+}
+
+scrollbar[orient="vertical"] {
+	width: 10px !important;
+	min-width: 10px !important;
+}
+
+scrollbar[orient="horizontal"] {
+	height: 10px !important;
+	min-height: 10px !important;
+}
+}

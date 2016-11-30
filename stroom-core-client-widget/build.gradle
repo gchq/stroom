@@ -1,8 +1,7 @@
 dependencies {
-    compile project(':stroom-entities')
-    compile group: 'com.google.inject', name: 'guice', version: '3.0'
+    compile project(':stroom-entity-shared')
     compile group: 'com.google.gwt.inject', name: 'gin', version: '2.1.2'
-    compile(group: 'com.gwtplatform', name: 'gwtp-all', version: '0.7') {
+    compile(group: 'com.gwtplatform', name: 'gwtp-mvp-client', version: '0.7') { /* LATEST 1.5.3 */
         exclude(module: 'persistence-api')
         exclude(module: 'gwtp-crawler-service')
     }

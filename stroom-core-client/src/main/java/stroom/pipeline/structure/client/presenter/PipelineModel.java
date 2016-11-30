@@ -16,25 +16,14 @@
 
 package stroom.pipeline.structure.client.presenter;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.google.web.bindery.event.shared.SimpleEventBus;
-
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
-import stroom.pipeline.server.factory.ElementIcons;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
@@ -45,13 +34,22 @@ import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineReference;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
+    public static final PipelineElement SOURCE_ELEMENT = new PipelineElement();
     private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType("Source", null,
             new String[] { PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS,
                     PipelineElementType.VISABILITY_SIMPLE },
             ElementIcons.STREAM);
-
-    public static final PipelineElement SOURCE_ELEMENT = new PipelineElement();
 
     static {
         SOURCE_ELEMENT.setId(SOURCE_ELEMENT_TYPE.getType());
@@ -59,23 +57,17 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         SOURCE_ELEMENT.setType(SOURCE_ELEMENT_TYPE.getType());
     }
 
+    private final EventBus eventBus = new SimpleEventBus();
     private Map<PipelineElement, List<PipelineElement>> childMap;
     private Map<PipelineElement, PipelineElement> parentMap;
     private PipelineData pipelineData;
     private List<PipelineData> baseStack;
-
     private PipelineDataMerger baseData;
     private PipelineDataMerger combinedData;
-
-    private final EventBus eventBus = new SimpleEventBus();
 
     public PipelineModel() {
         baseData = new PipelineDataMerger();
         combinedData = new PipelineDataMerger();
-    }
-
-    public void setPipelineData(final PipelineData pipelineData) {
-        this.pipelineData = pipelineData;
     }
 
     public void setBaseStack(final List<PipelineData> baseStack) {
@@ -360,6 +352,10 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 
     public PipelineData getPipelineData() {
         return pipelineData;
+    }
+
+    public void setPipelineData(final PipelineData pipelineData) {
+        this.pipelineData = pipelineData;
     }
 
     private void removeLinks(final List<PipelineLink> list, final String element) {

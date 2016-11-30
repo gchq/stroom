@@ -29,9 +29,9 @@ import stroom.entity.shared.DocRef;
 import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
 import stroom.explorer.shared.ExplorerData;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
-import stroom.pipeline.stepping.shared.GetPipelineForStreamAction;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.StreamType;
 

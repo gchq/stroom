@@ -1,7 +1,3 @@
 dependencies {
-    compile(group: 'com.google.gwt', name: 'gwt-user', version: '2.8.0') {
-        /* This dependency was originally in the Maven provided scope, but the project was not of type war.
-        This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
-        Please review and delete this closure when resolved. */
-    }
+    compile group: 'com.google.gwt', name: 'gwt-user', version: '2.8.0'
 }

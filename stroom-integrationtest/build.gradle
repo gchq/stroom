@@ -1,26 +1,21 @@
 dependencies {
+    compile project(':stroom-core-server')
+    compile project(':stroom-index-server')
+    compile project(':stroom-statistics-server')
+    compile project(':stroom-dashboard-server')
+    compile project(':stroom-security-server')
+
+    // javax.el not provided as no app container in tests.
     compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
-    runtime group: 'com.google.gwt', name: 'gwt-servlet', version: '2.8.0'
-    testCompile project(':stroom-config')
-    testCompile project(':stroom-core-client')
+    compile group: 'org.glassfish.web', name: 'javax.el', version: '2.2.6'
+
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-security', configuration: 'testArtifacts')
-    testCompile project(':stroom-pipeline')
-    testCompile project(path: ':stroom-index', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-dashboard', configuration: 'testArtifacts')
-    testCompile project(':stroom-statistics-server')
-    testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
-    testCompile project(':stroom-index')
-    testCompile project(':stroom-dashboard')
-    testCompile project(':stroom-security')
-//    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
-//    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
-//    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
-//    compile(group: 'com.google.gwt', name: 'gwt-user', version: '2.8.0') {
-//        /* This dependency was originally in the Maven provided scope, but the project was not of type war.
-//        This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
-//        Please review and delete this closure when resolved. */
-//    }
+    testCompile project(path: ':stroom-index-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
+
+    // Use default DB config.
+    compile project(':stroom-config')
 }

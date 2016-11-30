@@ -1,5 +1,0 @@
-dependencies {
-    compile project(':stroom-util')
-    compile group: 'net.sf.saxon', name: 'Saxon-HE', version: '9.6.0-6'
-    testCompile project(':stroom-util')
-}

@@ -1,0 +1,8 @@
+dependencies {
+    compile project(':stroom-util-shared')
+
+    compile group: 'org.hibernate', name: 'hibernate-core', version: '4.3.8.Final' /* LATEST 5.2.5.Final */
+//    compile group: 'org.hibernate', name: 'hibernate-entitymanager', version: '4.3.8.Final'  /* LATEST 5.2.5.Final */
+//    compile group: 'org.hibernate', name: 'hibernate-validator', version: '5.3.3.Final'
+    compile group: 'javax.validation', name: 'validation-api', version: '1.0.0.GA'
+}

@@ -16,14 +16,16 @@
 
 package stroom.pipeline.server.writer;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
@@ -39,8 +41,6 @@ import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.util.zip.HeaderMap;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;

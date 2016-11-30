@@ -16,6 +16,7 @@
 
 package stroom.folder.server;
 
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
@@ -23,12 +24,9 @@ import stroom.explorer.server.AbstractExplorerDataProvider;
 import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.ExplorerData;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.Map;
 
 @ProvidesExplorerData
 @Component

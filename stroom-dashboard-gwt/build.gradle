@@ -1,0 +1,54 @@
+buildscript {
+    repositories {
+        jcenter()
+        // Alternatively use:
+//        maven {
+//            url 'http://dl.bintray.com/steffenschaefer/maven'
+//        }
+    }
+    dependencies {
+        classpath 'de.richsource.gradle.plugins:gwt-gradle-plugin:0.6'
+    }
+}
+
+apply plugin: 'war'
+apply plugin: 'gwt'
+
+gwt {
+    gwtVersion='2.8.0'
+    modules 'stroom.dashboard.DashboardApp'
+    minHeapSize='1G'
+    maxHeapSize='4G'
+
+    compiler {
+        draftCompile = false
+        strict = true
+        fragmentCount = 5
+        localWorkers = 5
+        optimize = 9
+    }
+}
+
+jar.enabled = true
+
+dependencies {
+    compile project(':stroom-dashboard-client')
+
+    providedCompile project(path: ':stroom-dashboard-client', configuration: 'sourceArtifacts')
+    providedCompile project(path: ':stroom-dashboard-shared', configuration: 'sourceArtifacts')
+    providedCompile project(path: ':stroom-query-api', configuration: 'sourceArtifacts')
+    providedCompile project(path: ':stroom-entity-shared', configuration: 'sourceArtifacts')
+    providedCompile project(path: ':stroom-util-shared', configuration: 'sourceArtifacts')
+
+    providedCompile project(path: ':stroom-security-client', configuration: 'sourceArtifacts')
+    providedCompile project(path: ':stroom-security-shared', configuration: 'sourceArtifacts')
+    providedCompile project(path: ':stroom-security-api', configuration: 'sourceArtifacts')
+
+    providedCompile project(path: ':stroom-core-client', configuration: 'sourceArtifacts')
+    providedCompile project(path: ':stroom-security-client-api', configuration: 'sourceArtifacts')
+    providedCompile project(path: ':stroom-core-client-widget', configuration: 'sourceArtifacts')
+    providedCompile project(path: ':stroom-core-shared', configuration: 'sourceArtifacts')
+
+    providedCompile group: 'com.google.gwt.inject', name: 'gin', version: '2.1.2'
+    providedCompile group: 'com.google.gwt', name: 'gwt-dev', version: '2.8.0'
+}

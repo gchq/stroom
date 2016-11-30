@@ -1,0 +1,141 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.xsdBrowser * {
+	-moz-user-focus: ignore;
+	-moz-user-input: disabled;
+	-moz-user-select: none;
+	-webkit-user-focus: ignore;
+	-webkit-user-input: disabled;
+	-webkit-user-select: none;
+	user-focus: ignore;
+	user-input: disabled;
+	user-select: none;
+	cursor: default;
+}
+
+.xsdBrowser .bar {
+	
+}
+
+.xsdBrowser .link {
+	display: inline-block;
+	cursor: pointer;
+	padding: 2px 5px;
+	text-decoration: underline;
+}
+
+.xsdBrowser .display {
+	border: none;
+	border-right: 1px solid #c5cde2;
+	border-top: 1px solid #c5cde2;
+}
+
+.xsdBrowser .documentation {
+	border-left: 1px solid #c5cde2;
+	border-top: 1px solid #c5cde2;
+	border-bottom: 1px solid #c5cde2;
+	overflow: auto;
+	background-color: white;
+}
+
+.xsdBrowser .constraints {
+	background-color: white;
+	border-left: 1px solid #c5cde2;
+	border-top: 1px solid #c5cde2;
+}
+
+.xsdBrowser .container {
+	width: 100%;
+	height: 100%;
+	background-color: white;
+	border: 1px solid #c5cde2;
+}
+
+.xsdBrowser .content {
+	position: absolute;
+	padding: 20px;
+}
+
+.xsdBrowser .box {
+	width: 100%;
+	height: 100%;
+	border: 1px solid black;
+}
+
+.xsdBrowser .boxTitle {
+	width: 100%;
+	background: #2196F3;
+	padding: 2px;
+	border: 1px solid #2196F3;
+}
+
+.xsdBrowser .boxTitle-selected {
+	width: 100%;
+	background: #2962FF;
+	padding: 2px;
+	border: 1px solid #2962FF;
+}
+
+.xsdBrowser .boxTitle-noContent {
+}
+
+.xsdBrowser .outerBox {
+	border: 1px solid white;
+}
+
+.xsdBrowser .restrictionType {
+	font-weight: bold;
+}
+
+.xsdBrowser .padding {
+	padding: 5px;
+}
+
+.xsdBrowser .midPanel {
+	border-spacing: 5px;
+}
+
+.xsdBrowser .displayTypeBox {
+	margin-bottom: 20px;
+}
+
+.xsdBrowser .nodeTypeBox {
+	margin-bottom: 40px;
+}
+
+.xsdBrowser .marginRight {
+	margin-right: 5px;
+}
+
+.xsdBrowser .marginLeft {
+	margin-left: 5px;
+}
+
+.xsdBrowser .nodeLabel {
+	margin-right: 5px;
+	cursor: pointer;
+	white-space: nowrap;
+	text-align: left;
+}
+
+.xsdBrowser .occuranceLabel {
+	position: absolute;
+	left: 16px;
+	top: 9px;
+	font-size: 8px;
+	color: blue;
+}

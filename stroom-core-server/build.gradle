@@ -3,50 +3,41 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-security-api')
     compile project(':stroom-statistics-api')
-    compile group: 'com.caucho', name: 'hessian', version: '4.0.38'
+
+    compile group: 'org.hibernate', name: 'hibernate-core', version: '4.3.8.Final' /* LATEST 5.2.5.Final */
+    compile group: 'org.hibernate', name: 'hibernate-entitymanager', version: '4.3.8.Final'  /* LATEST 5.2.5.Final */
+    compile group: 'org.hibernate', name: 'hibernate-validator', version: '5.3.3.Final'
+//    compile group: 'javax.validation', name: 'validation-api', version: '1.0.0.GA'
+//    compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
+//    compile group: 'org.glassfish.web', name: 'javax.el', version: '2.2.6'
+
     compile(group: 'com.googlecode.ehcache-spring-annotations', name: 'ehcache-spring-annotations', version: '1.2.0') {
         exclude(module: 'guava')
     }
-    compile group: 'org.apache.commons', name: 'commons-pool2', version: '2.4.2'
     compile group: 'org.flywaydb', name: 'flyway-core', version: '4.0.3'
-    compile group: 'org.hsqldb', name: 'hsqldb', version: '2.3.2'
-    compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.40'
-    compile group: 'org.apache.lucene', name: 'lucene-core', version: '4.6.1'
-    compile group: 'org.apache.lucene', name: 'lucene-analyzers-common', version: '4.6.1'
-    compile group: 'org.apache.lucene', name: 'lucene-queryparser', version: '4.6.1'
-    compile group: 'com.mchange', name: 'c3p0', version: '0.9.5'
-    compile group: 'net.sf.saxon', name: 'Saxon-HE', version: '9.6.0-6'
-    compile group: 'javax.validation', name: 'validation-api', version: '1.1.0.Final'
-    compile group: 'javax.inject', name: 'javax.inject', version: '1'
-    compile group: 'org.springframework', name: 'spring-tx', version: '4.2.4.RELEASE'
-    compile group: 'org.springframework', name: 'spring-jdbc', version: '4.2.4.RELEASE'
-    compile group: 'org.springframework', name: 'spring-orm', version: '4.2.4.RELEASE'
-    compile group: 'org.hibernate', name: 'hibernate-core', version: '4.3.8.Final'
-    compile(group: 'org.hibernate', name: 'hibernate-entitymanager', version: '4.3.8.Final') {
-        exclude(module: 'asm')
-        exclude(module: 'cglib')
-    }
-    compile group: 'org.hibernate', name: 'hibernate-validator', version: '5.1.3.Final'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.5.3'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.5.3'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.5.3'
+    compile group: 'org.hsqldb', name: 'hsqldb', version: '2.3.4'
+
+
+    compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.40' /* LATEST 6.0.5 */
+    compile group: 'org.apache.lucene', name: 'lucene-core', version: '4.6.1' /* LATEST 6.3.0 */
+    compile group: 'org.apache.lucene', name: 'lucene-analyzers-common', version: '4.6.1' /* LATEST 6.3.0 */
+    compile group: 'org.apache.lucene', name: 'lucene-queryparser', version: '4.6.1' /* LATEST 6.3.0 */
+
+    compile group: 'com.mchange', name: 'c3p0', version: '0.9.5.2'
+    compile group: 'net.sf.saxon', name: 'Saxon-HE', version: '9.6.0-6' /* LATEST 9.7.0-12 */
+
+    compile group: 'org.springframework', name: 'spring-tx', version: '4.3.4.RELEASE'
+    compile group: 'org.springframework', name: 'spring-jdbc', version: '4.3.4.RELEASE'
+    compile group: 'org.springframework', name: 'spring-orm', version: '4.3.4.RELEASE'
+
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.5'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.8.5'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
     compile group: 'event-logging', name: 'event-logging', version: '3.0.0'
+
+    compile group: 'commons-fileupload', name: 'commons-fileupload', version: '1.3.2'
+
     testCompile project(':stroom-config')
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
-    compile(group: 'net.sourceforge.findbugs', name: 'annotations', version: '1.3.2') {
-        /* This dependency was originally in the Maven provided scope, but the project was not of type war.
-        This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
-        Please review and delete this closure when resolved. */
-    }
-    compile(group: 'javax.el', name: 'javax.el-api', version: '3.0.0') {
-        /* This dependency was originally in the Maven provided scope, but the project was not of type war.
-        This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
-        Please review and delete this closure when resolved. */
-    }
-    compile(group: 'javax.servlet', name: 'servlet-api', version: '2.5') {
-        /* This dependency was originally in the Maven provided scope, but the project was not of type war.
-        This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
-        Please review and delete this closure when resolved. */
-    }
 }

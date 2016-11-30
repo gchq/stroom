@@ -16,9 +16,20 @@
 
 package stroom.streamstore.server.fs;
 
+import event.logging.BaseAdvancedQueryItem;
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.BaseAdvancedQueryOperator.Or;
+import event.logging.TermCondition;
+import event.logging.util.EventLoggingUtil;
+import org.joda.time.DateTimeZone;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryDataLogUtil;
-import stroom.entity.server.util.*;
+import stroom.entity.server.util.EntityServiceLogUtil;
+import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseEntity;
@@ -48,11 +59,11 @@ import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamAttributeCondition;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeFieldUse;
 import stroom.streamstore.shared.StreamAttributeValue;
+import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamTypeService;
@@ -60,17 +71,9 @@ import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.zip.HeaderMap;
-import event.logging.BaseAdvancedQueryItem;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.BaseAdvancedQueryOperator.Or;
-import event.logging.TermCondition;
-import event.logging.util.EventLoggingUtil;
-import org.joda.time.DateTimeZone;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -471,7 +474,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
 //    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.UPDATE)
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
+    @SuppressWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
     public StreamTarget openStreamTarget(final Stream stream, final boolean append) {
         LOGGER.debug("openStreamTarget() " + stream);
 

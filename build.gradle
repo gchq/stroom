@@ -11,14 +11,28 @@ subprojects {
     targetCompatibility = 1.8
 
     configurations {
+        all {
+//            exclude group: 'asm', module: 'asm'
+//            exclude group: 'org.ow2.asm', module: 'asm'
+            exclude module: 'xercesImpl'
+        }
+    }
+
+    configurations {
         testArtifacts
+        sourceArtifacts
     }
     task testJar(type: Jar) {
         baseName = "${project.name}-test"
         from sourceSets.test.output
     }
+    task sources(type: Jar) {
+        baseName = "${project.name}-source"
+        from sourceSets.main.allSource
+    }
     artifacts {
         testArtifacts testJar
+        sourceArtifacts sources
     }
 
     task packageTests(type: Jar) {

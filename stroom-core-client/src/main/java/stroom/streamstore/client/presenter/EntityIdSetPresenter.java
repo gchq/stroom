@@ -16,6 +16,16 @@
 
 package stroom.streamstore.client.presenter;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.CellTable.Resources;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.table.client.CellTableView;
@@ -31,22 +41,12 @@ import stroom.entity.shared.EntityReferenceComparator;
 import stroom.entity.shared.Folder;
 import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
 import stroom.explorer.shared.ExplorerData;
-import stroom.pipeline.processor.shared.LoadEntityIdSetAction;
-import stroom.pipeline.processor.shared.SetId;
+import stroom.process.shared.LoadEntityIdSetAction;
+import stroom.process.shared.SetId;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedMap;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.CellTable.Resources;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.ArrayList;
@@ -55,14 +55,6 @@ import java.util.List;
 
 public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter.EntityIdSetView>
         implements EntityIdSetUiHandlers {
-    public interface EntityIdSetView extends View, HasUiHandlers<EntityIdSetUiHandlers> {
-        void setListView(View view);
-
-        void setAddEnabled(boolean enabled);
-
-        void setRemoveEnabled(boolean enabled);
-    }
-
     private final ExplorerDropDownTreePresenter treePresenter;
     private final EntityChoicePresenter choicePresenter;
     private final ClientDispatchAsync dispatcher;
@@ -72,7 +64,6 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
     private boolean groupedEntity;
     private List<DocRef> data;
     private boolean enabled = true;
-
     @Inject
     public EntityIdSetPresenter(final EventBus eventBus, final EntityIdSetView view,
                                 final ExplorerDropDownTreePresenter treePresenter, final EntityChoicePresenter choicePresenter,
@@ -230,6 +221,10 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
         return selectionModel.getSelectedObject();
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
 
@@ -246,7 +241,11 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
         }
     }
 
-    public boolean isEnabled() {
-        return enabled;
+    public interface EntityIdSetView extends View, HasUiHandlers<EntityIdSetUiHandlers> {
+        void setListView(View view);
+
+        void setAddEnabled(boolean enabled);
+
+        void setRemoveEnabled(boolean enabled);
     }
 }

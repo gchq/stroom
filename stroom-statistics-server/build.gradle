@@ -1,12 +1,12 @@
 dependencies {
     compile project(':stroom-statistics-shared')
     compile project(':stroom-pipeline')
-    compile project(':stroom-query-common')
-    compile(group: 'org.apache.hbase', name: 'hbase-common', version: '1.2.1') {
+    compile project(':stroom-query-common-server')
+    compile(group: 'org.apache.hbase', name: 'hbase-common', version: '1.2.1') { /* LATEST 1.2.4 */
         exclude(module: 'jetty')
         exclude(module: 'jetty-util')
         exclude(module: 'servlet-api')
-        exclude(module: 'servlet-api-2.5')
+//        exclude(module: 'servlet-api-2.5')
         exclude(module: 'jsp-2.1')
         exclude(module: 'jsp-api-2.1')
         exclude(module: 'jsp-api')
