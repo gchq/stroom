@@ -16,50 +16,43 @@
 
 package stroom.volume.server;
 
+import event.logging.BaseAdvancedQueryItem;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.node.server.StroomPropertyService;
 import stroom.node.server.NodeCache;
-import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
+import stroom.node.server.StroomPropertyService;
+import stroom.node.shared.*;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
-import stroom.node.shared.VolumeService;
-import stroom.node.shared.VolumeState;
 import stroom.security.Secured;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
 import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomStartup;
-import event.logging.BaseAdvancedQueryItem;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -82,8 +75,14 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     /**
      * How should we select volumes to use?
      */
-
     public static final String PROP_VOLUME_SELECTOR = "stroom.streamstore.volumeSelector";
+
+    /**
+     * Whether a default volume should be created on application start, but only if other volumes don't already exist
+     */
+    public static final String PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP = "stroom.volumes.createDefaultOnStart";
+
+    public static final Path DEFAULT_VOLUME_DIR = Paths.get("volumes","defaultVolume");
 
     private static final StroomLogger LOGGER = StroomLogger.getLogger(VolumeServiceImpl.class);
 
@@ -499,4 +498,56 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             SQLUtil.appendSetQuery(sql, true, alias + ".pvolumeType", criteria.getVolumeTypeSet(), false);
         }
     }
+
+    @StroomStartup(priority = -1100)
+    public void startup() {
+
+        boolean isEnabled = stroomPropertyService.getBooleanProperty(PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, false);
+
+        if (isEnabled){
+            List<Volume> existingVolumes = getCurrentState();
+            if (existingVolumes.size() == 0) {
+                Optional<Path> optDefaultVolumePath = getDefaultVolumePath();
+
+                if (optDefaultVolumePath.isPresent()){
+                    Node node = nodeCache.getDefaultNode();
+                    String pathStr = optDefaultVolumePath.get().toAbsolutePath().toString();
+                    LOGGER.info(String.format("Creating default volume in %s on node %s", pathStr, node.getName()));
+                    createVolume(pathStr, node);
+                } else {
+                    LOGGER.info("No suitable directory to create default volume in");
+                }
+            } else {
+                LOGGER.info("Existing volumes exist, won't create a default volume");
+            }
+        } else {
+            LOGGER.info("Creation of a default volume is currently disabled by property: " + PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP);
+        }
+    }
+
+    private void createVolume(final String path, final Node node) {
+        final Volume vol = new Volume();
+        vol.setPath(path);
+        vol.setNode(node);
+        save(vol);
+    }
+
+    private Optional<Path> getDefaultVolumePath() {
+        Optional<Path> contentPackDir;
+
+        String catalinaBase = System.getProperty("catalina.home");
+        String userHome = System.getProperty("user.home");
+
+        if (catalinaBase != null) {
+            //running inside tomcat so use a subdir in there
+            contentPackDir = Optional.of(Paths.get(catalinaBase, "..").resolve(DEFAULT_VOLUME_DIR));
+        } else if (userHome != null) {
+            //not in tomcat so use the personal user conf dir as a base
+            contentPackDir = Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(DEFAULT_VOLUME_DIR));
+        } else {
+            contentPackDir = Optional.empty();
+        }
+        return contentPackDir;
+    }
+
 }
