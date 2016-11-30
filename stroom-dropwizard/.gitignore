@@ -6,6 +6,6 @@
 /.project
 /.settings/
 /target/
-/bin/
 /build/
+/bin/
 /war/WEB-INF/lib
