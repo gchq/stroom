@@ -26,5 +26,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface StroomStartup {
+    //For the avoidance of doubt
+    //priority < 0 = low priority
+    //priority > 0 = high priority
     int priority() default 0;
 }
