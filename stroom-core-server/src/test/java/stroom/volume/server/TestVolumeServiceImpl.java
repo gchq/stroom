@@ -83,7 +83,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     @Before
     public void init() throws IOException {
         MockitoAnnotations.initMocks(this);
-        deleteDefaulVolumeDir();
+        deleteDefaulVolumesDir();
 
         volumeList = new ArrayList<>();
 //        volumeList.clear();
@@ -182,11 +182,11 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         volumeServiceImpl.startup();
 
         Assert.assertTrue(volumeServiceImpl.saveCalled);
-        Assert.assertEquals(DEFAULT_VOLUME_PATH.toAbsolutePath().toString(),volumeServiceImpl.lastSavedVolume.getPath());
+        Assert.assertEquals(DEFAULT_VOLUME_PATH.toAbsolutePath().toString(),volumeServiceImpl.savedVolumes.getPath());
         Assert.assertTrue(Files.exists(DEFAULT_VOLUME_PATH));
     }
 
-    private void deleteDefaulVolumeDir() throws IOException {
+    private void deleteDefaulVolumesDir() throws IOException {
         Files.deleteIfExists(DEFAULT_VOLUME_PATH);
     }
 
@@ -194,7 +194,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
         public List<Volume> volumeList = null;
         public boolean saveCalled;
-        public Volume lastSavedVolume;
+        public List<Volume> savedVolumes;
 
         public MockVolumeService(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
                                  final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
@@ -215,7 +215,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         public Volume save(Volume entity) throws RuntimeException {
             super.save(entity);
             saveCalled = true;
-            lastSavedVolume = entity;
+            savedVolumes.add(entity);
             return  entity;
         }
     };
