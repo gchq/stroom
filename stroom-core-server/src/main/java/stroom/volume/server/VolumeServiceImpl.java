@@ -558,7 +558,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             vol.setNode(node);
             //set an arbitrary default limit size of 250MB on each volume to prevent the
             //filesystem from running out of space, assuming they have 500MB free of course.
-            getDefaultVolumeLimit(path).ifPresent(bytes -> vol.setBytesLimit(bytes));
+            getDefaultVolumeLimit(path).ifPresent(vol::setBytesLimit);
             save(vol);
         } catch (IOException e) {
             LOGGER.error("Unable to create default volume due to an error creating directory %s", pathStr, e);
@@ -569,7 +569,11 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         try {
             long totalBytes = Files.getFileStore(path).getTotalSpace();
             //set an arbitrary limit of 90% of the filesystem total size to ensure we don't fill up the
-            //filesystem.  Limit can be configured from within stroom
+            //filesystem.  Limit can be configured from within stroom.
+            //Should be noted that although if you have multiple volumes on a filesystem the limit will apply
+            //to all volumes and any other data on the filesystem. I.e. once the amount of the filesystem in use
+            //is greater than the limit writes to those volumes will be prevented. See Volume.isFull() and
+            //this.updateVolumeState()
             return OptionalLong.of((long)(totalBytes * 0.9));
         } catch (IOException e) {
             LOGGER.warn("Unable to determine the total space on the filesystem for path: ", path.toAbsolutePath().toString());
