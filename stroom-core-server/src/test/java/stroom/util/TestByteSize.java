@@ -15,16 +15,38 @@
  */
 package stroom.util;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 public class TestByteSize {
 
+    private static final double ASSERT_DELTA = 0.0005;
+
     @Test
     public void testFromShortName() {
-        assertEquals(ByteSize.MEGABYTE, ByteSize.fromShortName("MB"));
-        assertEquals(ByteSize.MEGABYTE, ByteSize.fromShortName("mb"));
+        assertEquals(ByteSizeUnit.MEGABYTE, ByteSizeUnit.fromShortName("MB"));
+        assertEquals(ByteSizeUnit.MEGABYTE, ByteSizeUnit.fromShortName("mb"));
+    }
+
+    @Test
+    public void convertMbToB() {
+        double bytes = ByteSizeUnit.fromShortName("MB").convert(5, ByteSizeUnit.BYTE);
+
+        Assert.assertEquals(5* ByteSizeUnit.MEGABYTE.intBytes(), bytes, ASSERT_DELTA);
+    }
+
+    @Test
+    public void convertBToKb() {
+        double bytes = ByteSizeUnit.fromShortName("B").convert(100, ByteSizeUnit.KILOBYTE);
+
+        Assert.assertEquals((double)100 / ByteSizeUnit.KILOBYTE.intBytes(), bytes, ASSERT_DELTA);
+    }
+
+    @Test
+    public void fromBytes(){
+        Assert.assertEquals(ByteSizeUnit.KILOBYTE, ByteSizeUnit.fromBytes(1024));
     }
 
 }

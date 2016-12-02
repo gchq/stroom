@@ -20,7 +20,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public enum ByteSize {
+/**
+ * Utility class for handling byte size units such as Mb, Gb, Tb etc.
+ */
+public enum ByteSizeUnit {
     BYTE(1, "B", "bytes"),
     KILOBYTE(1024, "KB", "Kilobytes"),
     MEGABYTE(1024 * 1024, "MB", "Megabytes"),
@@ -32,44 +35,70 @@ public enum ByteSize {
     private final String shortName;
     private final String longName;
 
-    private static final Map<CaseInsensitiveString, ByteSize> shortNameToEnumMap = new HashMap<>();
-    private static final Map<Integer, ByteSize> intToEnumMap = new HashMap<>();
+    private static final Map<CaseInsensitiveString, ByteSizeUnit> shortNameToEnumMap = new HashMap<>();
+    private static final Map<Integer, ByteSizeUnit> intToEnumMap = new HashMap<>();
 
     static {
-        for (ByteSize byteSize : ByteSize.values()) {
-            shortNameToEnumMap.put(CaseInsensitiveString.fromString(byteSize.shortName), byteSize);
-            intToEnumMap.put(byteSize.intBytes(), byteSize);
+        for (ByteSizeUnit byteSizeUnit : ByteSizeUnit.values()) {
+            shortNameToEnumMap.put(CaseInsensitiveString.fromString(byteSizeUnit.shortName), byteSizeUnit);
+            intToEnumMap.put(byteSizeUnit.intBytes(), byteSizeUnit);
         }
     }
 
-    private ByteSize(final int bytes, final String shortName, final String longName) {
+    private ByteSizeUnit(final int bytes, final String shortName, final String longName) {
         this.bytes = bytes;
         this.shortName = shortName;
         this.longName = longName;
     }
 
+    /**
+     * @return The number of bytes in this byte size unit
+     */
     public long longBytes() {
         return (long) bytes;
     }
 
+    /**
+     * Converts the value from the units of this into bytes
+     */
+    public long longBytes(long fromValue) {
+        return this.bytes * fromValue;
+    }
+
+    /**
+     * @return The number of bytes in this byte size unit
+     */
     public int intBytes() {
         return bytes;
     }
 
+    /**
+     * Converts the value from the units of this into bytes
+     */
+    public int intBytes(final int fromValue) {
+        return this.bytes * fromValue;
+    }
+
+    /**
+     * @return The abbreviated form, e.g. MB or KB
+     */
     public String getShortName() {
         return shortName;
     }
 
+    /**
+     * @return The long name, e.g. Megabytes
+     */
     public String getLongName() {
         return longName;
     }
 
-    public static ByteSize fromShortName(String shortName) {
-        ByteSize val = shortNameToEnumMap.get(CaseInsensitiveString.fromString(shortName));
+    public static ByteSizeUnit fromShortName(String shortName) {
+        ByteSizeUnit val = shortNameToEnumMap.get(CaseInsensitiveString.fromString(shortName));
         if (val == null) {
-            String allShortNames = Arrays.stream(ByteSize.values())
-                    .map(byteSize -> {
-                        return byteSize.shortName;
+            String allShortNames = Arrays.stream(ByteSizeUnit.values())
+                    .map(byteSizeUnit -> {
+                        return byteSizeUnit.shortName;
                     })
                     .collect(Collectors.joining(", "));
             throw new IllegalArgumentException(String.format("ShortName [%s] is not valid. Should be one of [%s] (case insensitive).", shortName, allShortNames));
@@ -77,21 +106,27 @@ public enum ByteSize {
         return val;
     }
 
-    public static ByteSize fromBytes(final int bytes){
-        ByteSize val = intToEnumMap.get(bytes);
+    public static ByteSizeUnit fromBytes(final int bytes){
+        ByteSizeUnit val = intToEnumMap.get(bytes);
         if (val == null) {
-            throw new IllegalArgumentException(String.format("The byte value %s is not a valid value for conversion into a ByteSize unit", bytes));
+            throw new IllegalArgumentException(String.format("The byte value %s is not a valid value for conversion into a ByteSizeUnit unit", bytes));
         }
         return val;
     }
 
-    public static ByteSize fromBytes(final long bytes){
+    public static ByteSizeUnit fromBytes(final long bytes){
         return fromBytes((int) bytes);
     }
 
-    public ByteSize convert(int fromValue, final ByteSize toUnits) {
-        int bytes = toUnits.bytes / this.bytes * fromValue;
-        return ByteSize.fromBytes(bytes);
+    public double convert(double fromValue) {
+        return (fromValue * this.bytes);
+    }
+
+    /**
+     * Converts a value from one byte size unit into another, e.g. MB into KB
+     */
+    public double convert(double fromValue, final ByteSizeUnit toUnits) {
+        return (fromValue * this.bytes) / toUnits.bytes;
     }
 
     private static class CaseInsensitiveString {

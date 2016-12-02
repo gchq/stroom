@@ -48,10 +48,14 @@ import java.util.Set;
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestVolumeServiceImpl extends StroomUnitTest {
 
-    private static final Path DEFAULT_VOLUME_PATH = Paths.get(
+    private static final Path DEFAULT_VOLUMES_PATH = Paths.get(
             System.getProperty("user.home"),
             StroomProperties.USER_CONF_DIR
-    ).resolve(VolumeServiceImpl.DEFAULT_VOLUME_DIR);
+    ).resolve(VolumeServiceImpl.DEFAULT_VOLUMES_SUBDIR);
+
+    private static final Path DEFAULT_INDEX_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_INDEX_VOLUME_SUBDIR);
+    private static final Path DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
+
 
     private final Rack rack1 = Rack.create("rack1");
     private final Rack rack2 = Rack.create("rack2");
@@ -162,7 +166,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         volumeServiceImpl.startup();
 
         Assert.assertFalse(volumeServiceImpl.saveCalled);
-        Assert.assertFalse(Files.exists(DEFAULT_VOLUME_PATH));
+        Assert.assertFalse(Files.exists(DEFAULT_INDEX_VOLUME_PATH));
+        Assert.assertFalse(Files.exists(DEFAULT_STREAM_VOLUME_PATH));
     }
 
     @Test
@@ -172,7 +177,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         volumeServiceImpl.startup();
 
         Assert.assertFalse(volumeServiceImpl.saveCalled);
-        Assert.assertFalse(Files.exists(DEFAULT_VOLUME_PATH));
+        Assert.assertFalse(Files.exists(DEFAULT_INDEX_VOLUME_PATH));
+        Assert.assertFalse(Files.exists(DEFAULT_STREAM_VOLUME_PATH));
     }
 
     @Test
@@ -182,19 +188,27 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         volumeServiceImpl.startup();
 
         Assert.assertTrue(volumeServiceImpl.saveCalled);
-        Assert.assertEquals(DEFAULT_VOLUME_PATH.toAbsolutePath().toString(),volumeServiceImpl.savedVolumes.getPath());
-        Assert.assertTrue(Files.exists(DEFAULT_VOLUME_PATH));
+        //make sure both paths have been saved
+        Assert.assertEquals(2, volumeServiceImpl.savedVolumes.stream()
+                .map(vol -> vol.getPath())
+                .filter(path -> path.equals(DEFAULT_INDEX_VOLUME_PATH.toAbsolutePath().toString()) ||
+                        path.equals(DEFAULT_STREAM_VOLUME_PATH.toAbsolutePath().toString()))
+                .count());
+        Assert.assertTrue(Files.exists(DEFAULT_INDEX_VOLUME_PATH));
+        Assert.assertTrue(Files.exists(DEFAULT_STREAM_VOLUME_PATH));
     }
 
     private void deleteDefaulVolumesDir() throws IOException {
-        Files.deleteIfExists(DEFAULT_VOLUME_PATH);
+        Files.deleteIfExists(DEFAULT_INDEX_VOLUME_PATH);
+        Files.deleteIfExists(DEFAULT_STREAM_VOLUME_PATH);
+        Files.deleteIfExists(DEFAULT_VOLUMES_PATH);
     }
 
     private static class MockVolumeService  extends VolumeServiceImpl {
 
         public List<Volume> volumeList = null;
         public boolean saveCalled;
-        public List<Volume> savedVolumes;
+        public List<Volume> savedVolumes = new ArrayList<>();
 
         public MockVolumeService(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
                                  final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
