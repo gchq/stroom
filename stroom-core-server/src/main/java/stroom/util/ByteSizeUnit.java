@@ -80,6 +80,20 @@ public enum ByteSizeUnit {
     }
 
     /**
+     * Converts from a value in Bytes to a value in the unit of 'this'
+     */
+    public double unitValue(final long bytes) {
+        return (double) bytes / this.bytes;
+    }
+
+    /**
+     * Converts from a value in Bytes to a value in the unit of 'this'
+     */
+    public double unitValue(final int bytes) {
+        return (double) bytes / this.bytes;
+    }
+
+    /**
      * @return The abbreviated form, e.g. MB or KB
      */
     public String getShortName() {
@@ -116,10 +130,6 @@ public enum ByteSizeUnit {
 
     public static ByteSizeUnit fromBytes(final long bytes){
         return fromBytes((int) bytes);
-    }
-
-    public double convert(double fromValue) {
-        return (fromValue * this.bytes);
     }
 
     /**

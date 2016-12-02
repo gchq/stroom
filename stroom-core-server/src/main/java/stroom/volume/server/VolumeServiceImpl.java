@@ -41,7 +41,6 @@ import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
 import stroom.streamstore.server.fs.FileSystemUtil;
-import stroom.util.ByteSizeUnit;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
@@ -559,10 +558,22 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             vol.setNode(node);
             //set an arbitrary default limit size of 250MB on each volume to prevent the
             //filesystem from running out of space, assuming they have 500MB free of course.
-            vol.setBytesLimit(ByteSizeUnit.MEGABYTE.longBytes(250));
+            getDefaultVolumeLimit(path).ifPresent(bytes -> vol.setBytesLimit(bytes));
             save(vol);
         } catch (IOException e) {
             LOGGER.error("Unable to create default volume due to an error creating directory %s", pathStr, e);
+        }
+    }
+
+    private OptionalLong getDefaultVolumeLimit(final Path path){
+        try {
+            long totalBytes = Files.getFileStore(path).getTotalSpace();
+            //set an arbitrary limit of 90% of the filesystem total size to ensure we don't fill up the
+            //filesystem.  Limit can be configured from within stroom
+            return OptionalLong.of((long)(totalBytes * 0.9));
+        } catch (IOException e) {
+            LOGGER.warn("Unable to determine the total space on the filesystem for path: ", path.toAbsolutePath().toString());
+            return OptionalLong.empty();
         }
     }
 

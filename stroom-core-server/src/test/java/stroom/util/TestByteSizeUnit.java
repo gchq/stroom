@@ -20,7 +20,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class TestByteSize {
+public class TestByteSizeUnit {
 
     private static final double ASSERT_DELTA = 0.0005;
 
@@ -47,6 +47,11 @@ public class TestByteSize {
     @Test
     public void fromBytes(){
         Assert.assertEquals(ByteSizeUnit.KILOBYTE, ByteSizeUnit.fromBytes(1024));
+    }
+
+    @Test
+    public void unitValue(){
+        Assert.assertEquals(1, ByteSizeUnit.KILOBYTE.unitValue(1024), ASSERT_DELTA);
     }
 
 }
