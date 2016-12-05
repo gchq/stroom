@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
-Issue #40 : Auto import of content packs on Stroom startup and added default contnet packs into the docker build for Stroom.
+Issue #40 : Auto import of content packs on Stroom startup and added default content packs into the docker build for Stroom.
 
 ### Changed
 Issue #9 : Created a new implementation of the expression parser that improved expression tokenisation and deals with BODMAS rules properly.
