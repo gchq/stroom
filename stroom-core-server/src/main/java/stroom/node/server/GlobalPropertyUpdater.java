@@ -47,7 +47,9 @@ public class GlobalPropertyUpdater {
 
     @StroomStartup
     public void started() {
+        LOGGER.info("Updating StroomProperties from GlobalProperties");
         update();
+        LOGGER.info("Finished updating StroomProperties from GlobalProperties");
     }
 
     /**

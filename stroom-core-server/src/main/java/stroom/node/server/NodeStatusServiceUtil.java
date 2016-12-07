@@ -16,6 +16,14 @@
 
 package stroom.node.server;
 
+import org.springframework.stereotype.Component;
+import stroom.node.shared.RecordCountService;
+import stroom.statistics.common.StatisticEvent;
+import stroom.statistics.common.StatisticTag;
+import stroom.util.ByteSizeUnit;
+import stroom.util.io.StreamUtil;
+
+import javax.annotation.Resource;
 import java.io.FileInputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -26,22 +34,12 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.Resource;
-
-import org.springframework.stereotype.Component;
-
-import stroom.node.shared.RecordCountService;
-import stroom.statistics.common.StatisticEvent;
-import stroom.statistics.common.StatisticTag;
-import stroom.util.io.StreamUtil;
-
 /**
  * Utility class to split out the query of the node status in a separate read
  * only transaction so it queries the slave node.
  */
 @Component
 public class NodeStatusServiceUtil {
-    private static final int MEGABYTE = 1024 * 1024;
 
     @Resource
     private NodeCache nodeCache;
@@ -147,24 +145,24 @@ public class NodeStatusServiceUtil {
         final long nonHeapMax = nonHeapUsage.getMax();
 
         if (heapUsed > 0) {
-            statisticEventList.add(buildStatisticEvent("JvmHeapUsedMb", timeNow, nodeTag, (heapUsed / MEGABYTE)));
+            statisticEventList.add(buildStatisticEvent("JvmHeapUsedMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(heapUsed)));
         }
         if (heapComitted > 0) {
             statisticEventList
-                    .add(buildStatisticEvent("JvmHeapComittedMb", timeNow, nodeTag, (heapComitted / MEGABYTE)));
+                    .add(buildStatisticEvent("JvmHeapComittedMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(heapComitted)));
         }
         if (heapMax > 0) {
-            statisticEventList.add(buildStatisticEvent("JvmHeapMaxMb", timeNow, nodeTag, (heapMax / MEGABYTE)));
+            statisticEventList.add(buildStatisticEvent("JvmHeapMaxMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(heapMax)));
         }
         if (nonHeapUsed > 0) {
-            statisticEventList.add(buildStatisticEvent("JvmNonHeapUsedMb", timeNow, nodeTag, (nonHeapUsed / MEGABYTE)));
+            statisticEventList.add(buildStatisticEvent("JvmNonHeapUsedMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(nonHeapUsed)));
         }
         if (nonHeapComitted > 0) {
             statisticEventList
-                    .add(buildStatisticEvent("JvmNonHeapComittedMb", timeNow, nodeTag, (nonHeapComitted / MEGABYTE)));
+                    .add(buildStatisticEvent("JvmNonHeapComittedMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(nonHeapComitted)));
         }
         if (nonHeapMax > 0) {
-            statisticEventList.add(buildStatisticEvent("JvmNonHeapMaxMb", timeNow, nodeTag, (nonHeapMax / MEGABYTE)));
+            statisticEventList.add(buildStatisticEvent("JvmNonHeapMaxMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(nonHeapMax)));
         }
 
         // Get the current CPU stats.

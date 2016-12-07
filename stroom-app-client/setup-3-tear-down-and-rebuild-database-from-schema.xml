@@ -22,7 +22,7 @@
 		<echo>Running as user: ${user.name}</echo>
 
 		<!-- load you personal property file -->
-		<property file="../stroom-config/src/main/resources/${user.name}.properties" />
+		<property file="${user.home}/.stroom/stroom.conf" />
 
 		<property name="stroom.setup.sql.file" value="./setup-3-tear-down-and-rebuild-database-from-schema.sql" />
 		<property name="stroom.setup.sql.tempfile" value="${stroom.setup.sql.file}.temp" />

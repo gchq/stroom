@@ -16,50 +16,45 @@
 
 package stroom.volume.server;
 
+import event.logging.BaseAdvancedQueryItem;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.node.server.StroomPropertyService;
 import stroom.node.server.NodeCache;
-import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
+import stroom.node.server.StroomPropertyService;
+import stroom.node.shared.*;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
-import stroom.node.shared.VolumeService;
-import stroom.node.shared.VolumeState;
 import stroom.security.Secured;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
 import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomStartup;
-import event.logging.BaseAdvancedQueryItem;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -82,8 +77,16 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     /**
      * How should we select volumes to use?
      */
-
     public static final String PROP_VOLUME_SELECTOR = "stroom.streamstore.volumeSelector";
+
+    /**
+     * Whether a default volume should be created on application start, but only if other volumes don't already exist
+     */
+    public static final String PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP = "stroom.volumes.createDefaultOnStart";
+
+    public static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
+    public static final Path DEFAULT_INDEX_VOLUME_SUBDIR = Paths.get("defaultIndexVolume");
+    public static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
 
     private static final StroomLogger LOGGER = StroomLogger.getLogger(VolumeServiceImpl.class);
 
@@ -148,33 +151,33 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             localVolumeUse = LocalVolumeUse.PREFERRED;
         }
 
-		return getVolumeSet(node, VolumeType.PUBLIC, VolumeUseStatus.ACTIVE, null, localVolumeUse, null,
-				getResilientReplicationCount());
-	}
+        return getVolumeSet(node, VolumeType.PUBLIC, VolumeUseStatus.ACTIVE, null, localVolumeUse, null,
+                getResilientReplicationCount());
+    }
 
-	@Transactional(readOnly = true)
-	@Override
-	public Set<Volume> getIndexVolumeSet(final Node node, final Set<Volume> allowedVolumes) {
-		return getVolumeSet(node, null, null, VolumeUseStatus.ACTIVE, LocalVolumeUse.REQUIRED, allowedVolumes, 1);
-	}
+    @Transactional(readOnly = true)
+    @Override
+    public Set<Volume> getIndexVolumeSet(final Node node, final Set<Volume> allowedVolumes) {
+        return getVolumeSet(node, null, null, VolumeUseStatus.ACTIVE, LocalVolumeUse.REQUIRED, allowedVolumes, 1);
+    }
 
-	private Set<Volume> getVolumeSet(final Node node, final VolumeType volumeType, final VolumeUseStatus streamStatus,
-			final VolumeUseStatus indexStatus, final LocalVolumeUse localVolumeUse, final Set<Volume> allowedVolumes,
-			final int requiredNumber) {
-		final VolumeSelector volumeSelector = getVolumeSelector();
-		final List<Volume> allVolumeList = getCurrentState();
-		final List<Volume> freeVolumes = VolumeListUtil.removeFullVolumes(allVolumeList);
-		Set<Volume> set = Collections.emptySet();
+    private Set<Volume> getVolumeSet(final Node node, final VolumeType volumeType, final VolumeUseStatus streamStatus,
+                                     final VolumeUseStatus indexStatus, final LocalVolumeUse localVolumeUse, final Set<Volume> allowedVolumes,
+                                     final int requiredNumber) {
+        final VolumeSelector volumeSelector = getVolumeSelector();
+        final List<Volume> allVolumeList = getCurrentState();
+        final List<Volume> freeVolumes = VolumeListUtil.removeFullVolumes(allVolumeList);
+        Set<Volume> set = Collections.emptySet();
 
-		final List<Volume> filteredVolumeList = getFilteredVolumeList(freeVolumes, node, volumeType, streamStatus,
-				indexStatus, null, allowedVolumes);
-		if (filteredVolumeList.size() > 0) {
-			// Create a list of local volumes if we are set to prefer or require
-			// local.
-			List<Volume> localVolumeList = null;
-			if (localVolumeUse != null) {
-				localVolumeList = getFilteredVolumeList(freeVolumes, node, volumeType, streamStatus, indexStatus,
-						Boolean.TRUE, allowedVolumes);
+        final List<Volume> filteredVolumeList = getFilteredVolumeList(freeVolumes, node, volumeType, streamStatus,
+                indexStatus, null, allowedVolumes);
+        if (filteredVolumeList.size() > 0) {
+            // Create a list of local volumes if we are set to prefer or require
+            // local.
+            List<Volume> localVolumeList = null;
+            if (localVolumeUse != null) {
+                localVolumeList = getFilteredVolumeList(freeVolumes, node, volumeType, streamStatus, indexStatus,
+                        Boolean.TRUE, allowedVolumes);
 
                 // If we require a local volume and there are none available
                 // then return the empty set.
@@ -239,11 +242,11 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         return set;
     }
 
-	private List<Volume> getFilteredVolumeList(final List<Volume> allVolumes, final Node node,
-			final VolumeType volumeType, final VolumeUseStatus streamStatus, final VolumeUseStatus indexStatus,
-			final Boolean local, final Set<Volume> allowedVolumes) {
-		final List<Volume> list = new ArrayList<>();
-		for (final Volume volume : allVolumes) {
+    private List<Volume> getFilteredVolumeList(final List<Volume> allVolumes, final Node node,
+                                               final VolumeType volumeType, final VolumeUseStatus streamStatus, final VolumeUseStatus indexStatus,
+                                               final Boolean local, final Set<Volume> allowedVolumes) {
+        final List<Volume> list = new ArrayList<>();
+        for (final Volume volume : allVolumes) {
             if (allowedVolumes == null || allowedVolumes.contains(volume)) {
                 final Node nd = volume.getNode();
 
@@ -288,10 +291,10 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         return list;
     }
 
-	@Override
-	public void onChange(final EntityEvent event) {
-		currentVolumeState.set(null);
-	}
+    @Override
+    public void onChange(final EntityEvent event) {
+        currentVolumeState.set(null);
+    }
 
     @Override
     public void clear() {
@@ -499,4 +502,102 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             SQLUtil.appendSetQuery(sql, true, alias + ".pvolumeType", criteria.getVolumeTypeSet(), false);
         }
     }
+
+    @StroomStartup(priority = -1100)
+    public void startup() {
+
+        boolean isEnabled = stroomPropertyService.getBooleanProperty(PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, false);
+
+        if (isEnabled) {
+            List<Volume> existingVolumes = getCurrentState();
+            if (existingVolumes.size() == 0) {
+                Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
+
+                if (optDefaultVolumePath.isPresent()) {
+                    Node node = nodeCache.getDefaultNode();
+                    Path indexVolPath = optDefaultVolumePath.get().resolve(DEFAULT_INDEX_VOLUME_SUBDIR);
+                    createIndexVolume(indexVolPath, node);
+                    Path streamVolPath = optDefaultVolumePath.get().resolve(DEFAULT_STREAM_VOLUME_SUBDIR);
+                    createStreamVolume(streamVolPath, node);
+                } else {
+                    LOGGER.warn("No suitable directory to create default volumes in");
+                }
+            } else {
+                LOGGER.info("Existing volumes exist, won't create default volumes");
+            }
+        } else {
+            LOGGER.info("Creation of default volumes is currently disabled by property: " + PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP);
+        }
+    }
+
+    private void createIndexVolume(final Path path, final Node node) {
+        final Volume vol = new Volume();
+        vol.setStreamStatus(VolumeUseStatus.CLOSED);
+        vol.setIndexStatus(VolumeUseStatus.ACTIVE);
+        vol.setVolumeType(VolumeType.PRIVATE);
+        createVolume(path, node, Optional.of(vol));
+    }
+
+    private void createStreamVolume(final Path path, final Node node) {
+        final Volume vol = new Volume();
+        vol.setStreamStatus(VolumeUseStatus.ACTIVE);
+        vol.setIndexStatus(VolumeUseStatus.CLOSED);
+        vol.setVolumeType(VolumeType.PUBLIC);
+        createVolume(path, node, Optional.of(vol));
+    }
+
+    private void createVolume(final Path path, final Node node, final Optional<Volume> optVolume) {
+        String pathStr = path.toAbsolutePath().toString();
+        try {
+            Files.createDirectories(path);
+            LOGGER.info(String.format("Creating volume in %s on node %s",
+                    pathStr,
+                    node.getName()));
+            final Volume vol = optVolume.orElseGet(Volume::new);
+            vol.setPath(pathStr);
+            vol.setNode(node);
+            //set an arbitrary default limit size of 250MB on each volume to prevent the
+            //filesystem from running out of space, assuming they have 500MB free of course.
+            getDefaultVolumeLimit(path).ifPresent(vol::setBytesLimit);
+            save(vol);
+        } catch (IOException e) {
+            LOGGER.error("Unable to create volume due to an error creating directory %s", pathStr, e);
+        }
+    }
+
+    private OptionalLong getDefaultVolumeLimit(final Path path){
+        try {
+            long totalBytes = Files.getFileStore(path).getTotalSpace();
+            //set an arbitrary limit of 90% of the filesystem total size to ensure we don't fill up the
+            //filesystem.  Limit can be configured from within stroom.
+            //Should be noted that although if you have multiple volumes on a filesystem the limit will apply
+            //to all volumes and any other data on the filesystem. I.e. once the amount of the filesystem in use
+            //is greater than the limit writes to those volumes will be prevented. See Volume.isFull() and
+            //this.updateVolumeState()
+            return OptionalLong.of((long)(totalBytes * 0.9));
+        } catch (IOException e) {
+            LOGGER.warn("Unable to determine the total space on the filesystem for path: ", path.toAbsolutePath().toString());
+            return OptionalLong.empty();
+        }
+    }
+
+    private Optional<Path> getDefaultVolumesPath() {
+        Optional<Path> defaultVolumesDir;
+
+        String catalinaHome = System.getProperty("catalina.home");
+        String userHome = System.getProperty("user.home");
+
+        if (catalinaHome != null) {
+            //running inside tomcat so use a subdir in there
+            Path catalinaHomePath = Paths.get(catalinaHome);
+            defaultVolumesDir = Optional.of(catalinaHomePath.getParent().resolve(DEFAULT_VOLUMES_SUBDIR));
+        } else if (userHome != null) {
+            //not in tomcat so use the personal user conf dir as a base
+            defaultVolumesDir = Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(DEFAULT_VOLUMES_SUBDIR));
+        } else {
+            defaultVolumesDir = Optional.empty();
+        }
+        return defaultVolumesDir;
+    }
+
 }

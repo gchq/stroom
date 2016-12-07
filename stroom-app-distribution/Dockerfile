@@ -35,7 +35,11 @@ RUN echo "http_proxy: $http_proxy" && \
     apk upgrade && \
     apk add --no-cache bash && \
     rm -rf /var/cache/apk/* && \
+    mkdir -p ./volumes && \
     ./bin/setup.sh
+
+#Create Docker volume for Stroom's volumes dir
+VOLUME /usr/stroom-app/volumes/
 
 # export 8080 for stroom to listen on
 EXPOSE 8080
