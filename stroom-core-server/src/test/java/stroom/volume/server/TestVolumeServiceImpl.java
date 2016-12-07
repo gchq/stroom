@@ -16,30 +16,47 @@
 
 package stroom.volume.server;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.node.server.NodeCache;
-import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.Node;
-import stroom.node.shared.Rack;
-import stroom.node.shared.Volume;
+import stroom.node.server.StroomPropertyService;
+import stroom.node.shared.*;
 import stroom.node.shared.Volume.VolumeType;
-import stroom.node.shared.VolumeState;
+import stroom.statistics.common.StatisticsFactory;
+import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
+import stroom.util.spring.StroomBeanStore;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import javax.inject.Provider;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestVolumeServiceImpl extends StroomUnitTest {
+
+    private static final Path DEFAULT_VOLUMES_PATH = Paths.get(
+            System.getProperty("user.home"),
+            StroomProperties.USER_CONF_DIR
+    ).resolve(VolumeServiceImpl.DEFAULT_VOLUMES_SUBDIR);
+
+    private static final Path DEFAULT_INDEX_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_INDEX_VOLUME_SUBDIR);
+    private static final Path DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
+
+
     private final Rack rack1 = Rack.create("rack1");
     private final Rack rack2 = Rack.create("rack2");
 
@@ -60,30 +77,29 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
             VolumeState.create(0, 1000));
 
     private List<Volume> volumeList = null;
-    private VolumeServiceImpl volumeServiceImpl = null;
+    private MockVolumeService volumeServiceImpl = null;
+
+    final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+
+    @Mock
+    private StroomEntityManager stroomEntityManager;
 
     @Before
-    public void init() {
+    public void init() throws IOException {
+        MockitoAnnotations.initMocks(this);
+        deleteDefaulVolumesDir();
+
         volumeList = new ArrayList<>();
+//        volumeList.clear();
         volumeList.add(public1a);
         volumeList.add(public1b);
         volumeList.add(public2a);
         volumeList.add(public2b);
 
-        final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
         mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, "2");
 
-        volumeServiceImpl = new VolumeServiceImpl(null, new NodeCache(node1a), mockStroomPropertyService, null, null) {
-            @Override
-            public BaseResultList<Volume> find(final FindVolumeCriteria criteria) {
-                return BaseResultList.createUnboundedList(volumeList);
-            }
-
-            @Override
-            VolumeState saveVolumeState(final VolumeState volumeState) {
-                return volumeState;
-            }
-        };
+        volumeServiceImpl = new MockVolumeService(stroomEntityManager, new NodeCache(node1a), mockStroomPropertyService, null, null);
+        volumeServiceImpl.volumeList = volumeList;
     }
 
     @Test
@@ -142,5 +158,81 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         Assert.assertTrue(call1.contains(public1a) ^ call2.contains(public1a));
         Assert.assertTrue(call1.contains(public1b) ^ call2.contains(public1b));
     }
+
+    @Test
+    public void testStartup_Disabled(){
+        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "false");
+
+        volumeServiceImpl.startup();
+
+        Assert.assertFalse(volumeServiceImpl.saveCalled);
+        Assert.assertFalse(Files.exists(DEFAULT_INDEX_VOLUME_PATH));
+        Assert.assertFalse(Files.exists(DEFAULT_STREAM_VOLUME_PATH));
+    }
+
+    @Test
+    public void testStartup_EnabledExistingVolumes(){
+        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
+
+        volumeServiceImpl.startup();
+
+        Assert.assertFalse(volumeServiceImpl.saveCalled);
+        Assert.assertFalse(Files.exists(DEFAULT_INDEX_VOLUME_PATH));
+        Assert.assertFalse(Files.exists(DEFAULT_STREAM_VOLUME_PATH));
+    }
+
+    @Test
+    public void testStartup_EnabledNoExistingVolumes(){
+        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
+        volumeServiceImpl.volumeList.clear();
+        volumeServiceImpl.startup();
+
+        Assert.assertTrue(volumeServiceImpl.saveCalled);
+        //make sure both paths have been saved
+        Assert.assertEquals(2, volumeServiceImpl.savedVolumes.stream()
+                .map(vol -> vol.getPath())
+                .filter(path -> path.equals(DEFAULT_INDEX_VOLUME_PATH.toAbsolutePath().toString()) ||
+                        path.equals(DEFAULT_STREAM_VOLUME_PATH.toAbsolutePath().toString()))
+                .count());
+        Assert.assertTrue(Files.exists(DEFAULT_INDEX_VOLUME_PATH));
+        Assert.assertTrue(Files.exists(DEFAULT_STREAM_VOLUME_PATH));
+    }
+
+    private void deleteDefaulVolumesDir() throws IOException {
+        Files.deleteIfExists(DEFAULT_INDEX_VOLUME_PATH);
+        Files.deleteIfExists(DEFAULT_STREAM_VOLUME_PATH);
+        Files.deleteIfExists(DEFAULT_VOLUMES_PATH);
+    }
+
+    private static class MockVolumeService  extends VolumeServiceImpl {
+
+        public List<Volume> volumeList = null;
+        public boolean saveCalled;
+        public List<Volume> savedVolumes = new ArrayList<>();
+
+        public MockVolumeService(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
+                                 final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
+                                 final Provider<StatisticsFactory> factoryProvider) {
+            super(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, factoryProvider);
+        }
+        @Override
+        public BaseResultList<Volume> find(final FindVolumeCriteria criteria) {
+            return BaseResultList.createUnboundedList(volumeList);
+        }
+
+        @Override
+        VolumeState saveVolumeState(final VolumeState volumeState) {
+            return volumeState;
+        }
+
+        @Override
+        public Volume save(Volume entity) throws RuntimeException {
+            super.save(entity);
+            saveCalled = true;
+            savedVolumes.add(entity);
+            return  entity;
+        }
+    };
+
 
 }

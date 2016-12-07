@@ -22,12 +22,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Annotation to indicate that the annotated method will be called on application startup
+ * For the avoidance of doubt
+ * priority < 0 = low priority
+ * priority > 0 = high priority
+ */
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface StroomStartup {
-    //For the avoidance of doubt
-    //priority < 0 = low priority
-    //priority > 0 = high priority
     int priority() default 0;
 }

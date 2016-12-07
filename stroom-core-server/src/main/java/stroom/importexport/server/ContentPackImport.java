@@ -18,7 +18,6 @@ package stroom.importexport.server;
 
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
-import stroom.node.shared.GlobalProperty;
 import stroom.node.shared.GlobalPropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
@@ -26,7 +25,10 @@ import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,10 +38,10 @@ public class ContentPackImport {
 
     protected static final StroomLogger LOGGER = StroomLogger.getLogger(ContentPackImport.class);
 
-    public static final String AUTO_IMPORT_ENABLED_PROP_KEY = "stroom.contentPackImportEnabled";
-    public static final String CONTENT_PACK_IMPORT_DIR = "contentPackImport";
-    public static final String FAILED_DIR = "failed";
-    public static final String IMPORTED_DIR = "imported";
+    static final String AUTO_IMPORT_ENABLED_PROP_KEY = "stroom.contentPackImportEnabled";
+    static final String CONTENT_PACK_IMPORT_DIR = "contentPackImport";
+    static final String FAILED_DIR = "failed";
+    static final String IMPORTED_DIR = "imported";
 
     private ImportExportService importExportService;
     private StroomPropertyService stroomPropertyService;
@@ -47,7 +49,7 @@ public class ContentPackImport {
 
     @SuppressWarnings("unused")
     @Inject
-    public ContentPackImport(ImportExportService importExportService, StroomPropertyService stroomPropertyService, GlobalPropertyService globalPropertyService) {
+    ContentPackImport(ImportExportService importExportService, StroomPropertyService stroomPropertyService, GlobalPropertyService globalPropertyService) {
         this.importExportService = importExportService;
         this.stroomPropertyService = stroomPropertyService;
         this.globalPropertyService = globalPropertyService;
@@ -57,7 +59,6 @@ public class ContentPackImport {
     //in particular
     @StroomStartup(priority = -1000)
     public void startup() {
-
         final boolean isEnabled = stroomPropertyService.getBooleanProperty(AUTO_IMPORT_ENABLED_PROP_KEY, true);
 
         if (isEnabled) {
@@ -115,9 +116,6 @@ public class ContentPackImport {
                 LOGGER.error("Unable to read content pack files from %s", contentPacksDir.toAbsolutePath(), e);
             }
 
-            //now we have imported our packs, change the prop to avoid the risk of re-importing and
-            //overwriting content
-            disableContentPackImport();
             LOGGER.info("ContentPackImport finished");
         } else {
             LOGGER.error("Unable to proceed with import, no base directory found");
@@ -140,22 +138,6 @@ public class ContentPackImport {
             return false;
         }
         return true;
-    }
-
-
-    private void disableContentPackImport() {
-
-        GlobalProperty contextImportProp = globalPropertyService.loadByName(AUTO_IMPORT_ENABLED_PROP_KEY);
-
-        if (contextImportProp == null) {
-            contextImportProp = new GlobalProperty();
-            contextImportProp.setName(AUTO_IMPORT_ENABLED_PROP_KEY);
-            contextImportProp.setValue("false");
-        } else {
-            contextImportProp.setValue("false");
-        }
-
-        globalPropertyService.save(contextImportProp);
     }
 
     private Optional<Path> getContentPackBaseDir() {
