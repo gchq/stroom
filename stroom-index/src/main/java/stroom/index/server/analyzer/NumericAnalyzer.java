@@ -16,20 +16,14 @@
 
 package stroom.index.server.analyzer;
 
-import java.io.Reader;
-
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.util.Version;
 
-public class NumericAnalyzer extends Analyzer {
-    private final Version matchVersion;
-
-    public NumericAnalyzer(final Version matchVersion) {
-        this.matchVersion = matchVersion;
+class NumericAnalyzer extends Analyzer {
+    NumericAnalyzer() {
     }
 
     @Override
-    protected TokenStreamComponents createComponents(final String fieldName, final Reader reader) {
-        return new TokenStreamComponents(new NumericTokenizer(matchVersion, reader));
+    protected TokenStreamComponents createComponents(final String fieldName) {
+        return new TokenStreamComponents(new NumericTokenizer());
     }
 }

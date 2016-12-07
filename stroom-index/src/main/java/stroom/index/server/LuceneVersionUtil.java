@@ -17,23 +17,28 @@
 package stroom.index.server;
 
 import org.apache.lucene.util.Version;
+import stroom.util.logging.StroomLogger;
+
+import java.text.ParseException;
 
 public final class LuceneVersionUtil {
-    public static final Version CURRENT_LUCENE_VERSION = Version.LUCENE_46;
+    public static final Version CURRENT_LUCENE_VERSION = Version.LUCENE_5_5_3;
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(LuceneVersionUtil.class);
 
     private LuceneVersionUtil() {
         // Private constructor for utility class.
     }
 
     public static Version getLuceneVersion(final String indexVersion) {
-        return Version.valueOf(indexVersion);
-    }
-
-    public static String getIndexVersion(final Version luceneVersion) {
-        return luceneVersion.name();
+        try {
+            return Version.parseLeniently(indexVersion);
+        } catch (final ParseException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
     }
 
     public static String getCurrentVersion() {
-        return CURRENT_LUCENE_VERSION.name();
+        return CURRENT_LUCENE_VERSION.toString();
     }
 }

@@ -16,6 +16,32 @@
 
 package stroom.index.server;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.LongField;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.SimpleCollector;
+import org.apache.lucene.search.TermQuery;
+import stroom.index.shared.Index;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardService;
+import stroom.node.shared.Volume;
+import stroom.query.shared.IndexConstants;
+import stroom.query.shared.IndexField;
+import stroom.query.shared.IndexField.AnalyzerType;
+import stroom.query.shared.IndexFields;
+import stroom.search.server.IndexShardSearcherImpl;
+import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.util.AbstractCommandLineTool;
+import stroom.util.logging.LoggerPrintStream;
+import stroom.util.logging.StroomLogger;
+import stroom.util.shared.ModelStringUtil;
+import stroom.util.thread.ThreadUtil;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,40 +50,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
-import stroom.util.logging.StroomLogger;
-import org.apache.commons.lang.StringUtils;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.LongField;
-import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.TermQuery;
-
-import stroom.index.shared.Index;
-import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardService;
-import stroom.query.shared.IndexConstants;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexField.AnalyzerType;
-import stroom.query.shared.IndexFields;
-import stroom.search.server.IndexShardSearcherImpl;
-import stroom.node.shared.Volume;
-import stroom.streamstore.server.fs.FileSystemUtil;
-import stroom.util.AbstractCommandLineTool;
-import stroom.util.logging.LoggerPrintStream;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.thread.ThreadUtil;
-
 public class BenchmarkIndex extends AbstractCommandLineTool {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(BenchmarkIndex.class);
-
-    private IndexShard[] indexShards;
     private final List<String> docArgs = new ArrayList<>();
-
+    private IndexShard[] indexShards;
     private IndexShardService indexShardService;
     private Long nextCommit = null;
     private IndexFields indexFields;
@@ -70,6 +66,15 @@ public class BenchmarkIndex extends AbstractCommandLineTool {
     private int poolSize = 1;
     private int ramBufferMbSize = IndexShardWriterImpl.DEFAULT_RAM_BUFFER_MB_SIZE;
     private String path = System.getProperty("user.home") + "/tmp/benchmarkindex";
+
+    public static int getRandomSkewed() {
+        return (int) ((Math.exp(Math.random() * 10) * Math.exp(Math.random() * 10)) + Math.exp(Math.random() * 10));
+    }
+
+    public static void main(final String[] args) throws Exception {
+        final BenchmarkIndex benchmarkIndex = new BenchmarkIndex();
+        benchmarkIndex.doMain(args);
+    }
 
     public void setDocCount(final long docCount) {
         this.docCount = docCount;
@@ -97,10 +102,6 @@ public class BenchmarkIndex extends AbstractCommandLineTool {
 
     public void setRamBufferMbSize(final int ramBufferSize) {
         this.ramBufferMbSize = ramBufferSize;
-    }
-
-    public static int getRandomSkewed() {
-        return (int) ((Math.exp(Math.random() * 10) * Math.exp(Math.random() * 10)) + Math.exp(Math.random() * 10));
     }
 
     private Document buildDocument(final long id) {
@@ -320,17 +321,13 @@ public class BenchmarkIndex extends AbstractCommandLineTool {
             for (final IndexReader reader : readers) {
                 final List<Integer> documentIdList = new ArrayList<>();
                 final IndexSearcher searcher = new IndexSearcher(reader);
-                searcher.search(query, new Collector() {
+                searcher.search(query, new SimpleCollector() {
                     private int docBase;
 
                     @Override
-                    public void setScorer(final Scorer arg0) throws IOException {
-                        // Ignore...
-                    }
-
-                    @Override
-                    public void setNextReader(final AtomicReaderContext context) throws IOException {
-                        this.docBase = context.docBase;
+                    protected void doSetNextReader(final LeafReaderContext context) throws IOException {
+                        super.doSetNextReader(context);
+                        docBase = context.docBase;
                     }
 
                     @Override
@@ -339,8 +336,8 @@ public class BenchmarkIndex extends AbstractCommandLineTool {
                     }
 
                     @Override
-                    public boolean acceptsDocsOutOfOrder() {
-                        return true;
+                    public boolean needsScores() {
+                        return false;
                     }
                 });
 
@@ -363,10 +360,5 @@ public class BenchmarkIndex extends AbstractCommandLineTool {
 
     public String toMsNiceString(final long value) {
         return StringUtils.leftPad(ModelStringUtil.formatCsv(value), 10) + " ms";
-    }
-
-    public static void main(final String[] args) throws Exception {
-        final BenchmarkIndex benchmarkIndex = new BenchmarkIndex();
-        benchmarkIndex.doMain(args);
     }
 }

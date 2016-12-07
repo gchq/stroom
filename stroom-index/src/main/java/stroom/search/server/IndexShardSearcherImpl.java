@@ -16,33 +16,31 @@
 
 package stroom.search.server;
 
-import java.io.File;
-import java.io.IOException;
-
-import stroom.util.logging.StroomLogger;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.store.NoLockFactory;
-
 import stroom.index.server.AbstractIndexShard;
 import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.util.logging.StroomLogger;
+
+import java.io.File;
+import java.io.IOException;
 
 public class IndexShardSearcherImpl implements IndexShardSearcher {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractIndexShard.class);
 
     private final IndexShard indexShard;
-
+    private final IndexWriter indexWriter;
     /**
      * Lucene stuff
      */
     private Directory directory;
     private IndexReader indexReader;
-    private final IndexWriter indexWriter;
 
     public IndexShardSearcherImpl(final IndexShard indexShard) {
         this(indexShard, null);
@@ -84,7 +82,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
                     throw new SearchException("Index directory not found for searching: " + dir.getAbsolutePath());
                 }
 
-                directory = new NIOFSDirectory(dir, NoLockFactory.getNoLockFactory());
+                directory = new NIOFSDirectory(dir.toPath(), NoLockFactory.INSTANCE);
 
                 indexReader = DirectoryReader.open(directory);
 

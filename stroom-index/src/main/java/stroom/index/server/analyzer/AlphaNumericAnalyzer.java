@@ -16,25 +16,20 @@
 
 package stroom.index.server.analyzer;
 
-import java.io.Reader;
-
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.util.Version;
 
-public class AlphaNumericAnalyzer extends Analyzer {
-    private final Version matchVersion;
+class AlphaNumericAnalyzer extends Analyzer {
     private final boolean caseSensitive;
 
-    public AlphaNumericAnalyzer(final Version matchVersion, final boolean caseSensitive) {
-        this.matchVersion = matchVersion;
+    AlphaNumericAnalyzer(final boolean caseSensitive) {
         this.caseSensitive = caseSensitive;
     }
 
     @Override
-    protected TokenStreamComponents createComponents(final String fieldName, final Reader reader) {
+    protected TokenStreamComponents createComponents(final String fieldName) {
         if (caseSensitive) {
-            return new TokenStreamComponents(new AlphaNumericCSTokenizer(matchVersion, reader));
+            return new TokenStreamComponents(new AlphaNumericCSTokenizer());
         }
-        return new TokenStreamComponents(new AlphaNumericTokenizer(matchVersion, reader));
+        return new TokenStreamComponents(new AlphaNumericTokenizer());
     }
 }

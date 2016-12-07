@@ -16,48 +16,34 @@
 
 package stroom.search.server.shard;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.lucene.search.Query;
-import org.apache.lucene.util.Version;
-
-import stroom.search.server.ClusterSearchTask;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.search.server.ClusterSearchTask;
 import stroom.task.server.ThreadPoolImpl;
 import stroom.util.shared.ThreadPool;
 import stroom.util.shared.VoidResult;
 import stroom.util.task.ServerTask;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class IndexShardSearchTask extends ServerTask<VoidResult> {
-    public interface ResultReceiver {
-        void receive(long shardId, String[] values);
-
-        void complete(long shardId);
-    }
-
-    public interface IndexShardQueryFactory {
-        Query getQuery(Version luceneVersion);
-    }
-
     public static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stroom Search Index Shard", 5, 0, Integer.MAX_VALUE);
-
     private final ClusterSearchTask clusterSearchTask;
-    private final IndexShardQueryFactory queryFactory;
+    private final Query query;
     private final long indexShardId;
     private final String[] fieldNames;
     private final ResultReceiver resultReceiver;
     private final ErrorReceiver errorReceiver;
     private final AtomicLong hitCount;
-
     private int shardNumber;
     private int shardTotal;
 
-    public IndexShardSearchTask(final ClusterSearchTask clusterSearchTask, final IndexShardQueryFactory queryFactory,
-            final long indexShardId, final String[] fieldNames, final ResultReceiver resultReceiver,
-            final ErrorReceiver errorReceiver, final AtomicLong hitCount) {
+    public IndexShardSearchTask(final ClusterSearchTask clusterSearchTask, final Query query,
+                                final long indexShardId, final String[] fieldNames, final ResultReceiver resultReceiver,
+                                final ErrorReceiver errorReceiver, final AtomicLong hitCount) {
         super(clusterSearchTask);
         this.clusterSearchTask = clusterSearchTask;
-        this.queryFactory = queryFactory;
+        this.query = query;
         this.indexShardId = indexShardId;
         this.fieldNames = fieldNames;
         this.resultReceiver = resultReceiver;
@@ -69,8 +55,8 @@ public class IndexShardSearchTask extends ServerTask<VoidResult> {
         return clusterSearchTask;
     }
 
-    public IndexShardQueryFactory getQueryFactory() {
-        return queryFactory;
+    public Query getQuery() {
+        return query;
     }
 
     public long getIndexShardId() {
@@ -112,5 +98,11 @@ public class IndexShardSearchTask extends ServerTask<VoidResult> {
     @Override
     public ThreadPool getThreadPool() {
         return THREAD_POOL;
+    }
+
+    public interface ResultReceiver {
+        void receive(long shardId, String[] values);
+
+        void complete(long shardId);
     }
 }

@@ -49,7 +49,7 @@
     <Saxon-HE.version>9.6.0-6</Saxon-HE.version>
     <jackson.version>2.5.3</jackson.version>
     <hessian.version>4.0.38</hessian.version>
-    <lucene.version>4.6.1</lucene.version>
+    <lucene.version>5.5.3</lucene.version>
     <event-logging.version>3.0.0</event-logging.version>
 
     <!-- ***************************** -->

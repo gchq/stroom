@@ -16,18 +16,6 @@
 
 package stroom.index.server;
 
-import stroom.index.server.analyzer.AnalyzerFactory;
-import stroom.index.shared.Index;
-import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.index.shared.IndexShardService;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexField.AnalyzerType;
-import stroom.query.shared.IndexFields;
-import stroom.streamstore.server.fs.FileSystemUtil;
-import stroom.util.logging.StroomLogger;
-import stroom.util.logging.LoggerPrintStream;
-import stroom.util.shared.ModelStringUtil;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
@@ -42,10 +30,25 @@ import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.store.SimpleFSLockFactory;
 import org.apache.lucene.util.Version;
 import org.joda.time.DateTime;
+import stroom.index.server.analyzer.AnalyzerFactory;
+import stroom.index.shared.Index;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.index.shared.IndexShardService;
+import stroom.query.shared.IndexField;
+import stroom.query.shared.IndexField.AnalyzerType;
+import stroom.query.shared.IndexFields;
+import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.util.logging.LoggerPrintStream;
+import stroom.util.logging.StroomLogger;
+import stroom.util.shared.ModelStringUtil;
 
 import javax.persistence.EntityNotFoundException;
 import java.io.File;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -54,36 +57,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class IndexShardWriterImpl implements IndexShardWriter {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexShardWriterImpl.class);
-
     public static final int DEFAULT_RAM_BUFFER_MB_SIZE = 1024;
-
-    /**
-     * Used to manage the way fields are analysed.
-     */
-    private final Map<String, Analyzer> fieldAnalyzers;
-    private final PerFieldAnalyzerWrapper analyzerWrapper;
-    private volatile Index fieldIndex;
-    private final ReentrantLock fieldAnalyzerLock = new ReentrantLock();
-
-    private final IndexShardService service;
-    private volatile IndexShard indexShard;
-    private volatile int ramBufferSizeMB = DEFAULT_RAM_BUFFER_MB_SIZE;
-    private final AtomicInteger documentCount = new AtomicInteger(0);
-    private final File dir;
-
-    /**
-     * Lucene stuff
-     */
-    private volatile Directory directory;
-    private volatile IndexWriter indexWriter;
-
-    private final int maxDocumentCount;
-    private volatile int lastDocumentCount;
-    private volatile long lastCommitMs;
-    private volatile int lastCommitDocumentCount;
-    private volatile long lastCommitDurationMs;
-
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexShardWriterImpl.class);
     /**
      * When we are in debug mode we track some important info from the LUCENE
      * log so that we can report some debug info
@@ -96,6 +71,28 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         LOG_WATCH_TERMS.put("Commit Count", "startCommit()");
     }
 
+    /**
+     * Used to manage the way fields are analysed.
+     */
+    private final Map<String, Analyzer> fieldAnalyzers;
+    private final PerFieldAnalyzerWrapper analyzerWrapper;
+    private final ReentrantLock fieldAnalyzerLock = new ReentrantLock();
+    private final IndexShardService service;
+    private final AtomicInteger documentCount = new AtomicInteger(0);
+    private final File dir;
+    private final int maxDocumentCount;
+    private volatile Index fieldIndex;
+    private volatile IndexShard indexShard;
+    private volatile int ramBufferSizeMB = DEFAULT_RAM_BUFFER_MB_SIZE;
+    /**
+     * Lucene stuff
+     */
+    private volatile Directory directory;
+    private volatile IndexWriter indexWriter;
+    private volatile int lastDocumentCount;
+    private volatile long lastCommitMs;
+    private volatile int lastCommitDocumentCount;
+    private volatile long lastCommitDurationMs;
     private LoggerPrintStream loggerPrintStream;
 
     /**
@@ -119,11 +116,8 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         // Make sure the index writer is primed with the necessary analysers.
         LOGGER.debug("Updating field analysers");
 
-        // Get the Lucene version being used.
-        final Version luceneVersion = LuceneVersionUtil.getLuceneVersion(indexShard.getIndexVersion());
-
         // Setup the field analyzers.
-        final Analyzer defaultAnalyzer = AnalyzerFactory.create(luceneVersion, AnalyzerType.ALPHA_NUMERIC, false);
+        final Analyzer defaultAnalyzer = AnalyzerFactory.create(AnalyzerType.ALPHA_NUMERIC, false);
         fieldAnalyzers = new HashMap<>();
         updateFieldAnalyzers(indexFields);
         analyzerWrapper = new PerFieldAnalyzerWrapper(defaultAnalyzer, fieldAnalyzers);
@@ -189,11 +183,12 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 }
 
                 // Create lucene directory object.
-                directory = new NIOFSDirectory(dir, new SimpleFSLockFactory(dir));
+                directory = new NIOFSDirectory(dir.toPath(), SimpleFSLockFactory.INSTANCE);
 
                 // Get the Lucene version being used.
                 final Version luceneVersion = LuceneVersionUtil.getLuceneVersion(indexShard.getIndexVersion());
-                final IndexWriterConfig indexWriterConfig = new IndexWriterConfig(luceneVersion, analyzerWrapper);
+                analyzerWrapper.setVersion(luceneVersion);
+                final IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzerWrapper);
 
                 // In debug mode we do extra trace in LUCENE and we also count
                 // certain logging info like merge and flush
@@ -306,7 +301,12 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 if (dir.isDirectory() && dir.listFiles().length > 0) {
                     // The directory exists and contains files so make sure it
                     // is unlocked.
-                    new SimpleFSLockFactory(dir).clearLock(IndexWriter.WRITE_LOCK_NAME);
+                    try {
+                        final Path lockFile = dir.toPath().resolve(IndexWriter.WRITE_LOCK_NAME);
+                        Files.delete(lockFile);
+                    } catch (final InvalidPathException e) {
+                        // There is no lock file so ignore.
+                    }
 
                     // Sync the DB.
                     sync();
@@ -537,8 +537,9 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             final Version luceneVersion = LuceneVersionUtil.getLuceneVersion(indexShard.getIndexVersion());
             for (final IndexField indexField : indexFields.getIndexFields()) {
                 // Add the field analyser.
-                final Analyzer analyzer = AnalyzerFactory.create(luceneVersion, indexField.getAnalyzerType(),
+                final Analyzer analyzer = AnalyzerFactory.create(indexField.getAnalyzerType(),
                         indexField.isCaseSensitive());
+                analyzer.setVersion(luceneVersion);
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Adding field analyser for: " + indexField.getFieldName());
                 }

@@ -16,8 +16,6 @@
 
 package stroom.search.server;
 
-import org.apache.lucene.search.Query;
-import org.apache.lucene.util.Version;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.util.StringUtils;
@@ -40,7 +38,6 @@ import stroom.search.server.extraction.ExtractionTaskProducer;
 import stroom.search.server.extraction.ExtractionTaskProperties;
 import stroom.search.server.extraction.StreamMapCreator;
 import stroom.search.server.sender.SenderTask;
-import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.search.server.shard.IndexShardSearchTaskExecutor;
 import stroom.search.server.shard.IndexShardSearchTaskProducer;
 import stroom.search.server.shard.IndexShardSearchTaskProperties;
@@ -274,46 +271,8 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                     throw new SearchException("Search expression has not been set");
                 }
 
-                // Search all index shards.
-                final Map<Version, SearchExpressionQuery> queryMap = new HashMap<>();
-                final IndexShardQueryFactory queryFactory = new IndexShardQueryFactory() {
-                    @Override
-                    public Query getQuery(final Version luceneVersion) {
-                        SearchExpressionQuery searchExpressionQuery = queryMap.get(luceneVersion);
-                        if (searchExpressionQuery == null) {
-                            // Get a query for the required lucene version.
-                            searchExpressionQuery = getQuery(luceneVersion, search.getExpression(), indexFieldsMap);
-                            queryMap.put(luceneVersion, searchExpressionQuery);
-                        }
-
-                        return searchExpressionQuery.getQuery();
-                    }
-
-                    private SearchExpressionQuery getQuery(final Version version, final ExpressionOperator expression,
-                                                           final IndexFieldsMap indexFieldsMap) {
-                        SearchExpressionQuery query = null;
-                        try {
-                            final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, task.getNow());
-                            query = searchExpressionQueryBuilder.buildQuery(version, expression);
-
-                            // Make sure the query was created successfully.
-                            if (query.getQuery() == null) {
-                                throw new SearchException("Failed to build LUCENE query given expression");
-                            } else if (LOGGER.isDebugEnabled()) {
-                                LOGGER.debug("Lucence Query is " + query.toString());
-                            }
-                        } catch (final Exception e) {
-                            error(e.getMessage(), e);
-                        }
-
-                        if (query == null) {
-                            query = new SearchExpressionQuery(null, null);
-                        }
-
-                        return query;
-                    }
-                };
+                // Create the search expression query.
+                final SearchExpressionQuery searchExpressionQuery = getQuery(search.getExpression(), indexFieldsMap);
 
                 // Create a transfer list to capture stored data from the index
                 // that can be used by coprocessors.
@@ -332,7 +291,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                 // Make a task producer that will create event data extraction
                 // tasks when requested by the executor.
                 final IndexShardSearchTaskProducer indexShardSearchTaskProducer = new IndexShardSearchTaskProducer(task,
-                        storedData, indexShardSearcherCache, task.getShards(), queryFactory, storedFieldNames, this,
+                        storedData, indexShardSearcherCache, task.getShards(), searchExpressionQuery.getQuery(), storedFieldNames, this,
                         hitCount, indexShardSearchTaskProperties.getMaxThreadsPerTask());
 
                 // Add the task producer to the task executor.
@@ -386,6 +345,31 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
         } catch (final Exception pEx) {
             throw SearchException.wrap(pEx);
         }
+    }
+
+    private SearchExpressionQuery getQuery(final ExpressionOperator expression,
+                                           final IndexFieldsMap indexFieldsMap) {
+        SearchExpressionQuery query = null;
+        try {
+            final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
+                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, task.getNow());
+            query = searchExpressionQueryBuilder.buildQuery(expression);
+
+            // Make sure the query was created successfully.
+            if (query.getQuery() == null) {
+                throw new SearchException("Failed to build LUCENE query given expression");
+            } else if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Lucence Query is " + query.toString());
+            }
+        } catch (final Exception e) {
+            error(e.getMessage(), e);
+        }
+
+        if (query == null) {
+            query = new SearchExpressionQuery(null, null);
+        }
+
+        return query;
     }
 
     private void transfer(final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap,

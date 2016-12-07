@@ -16,18 +16,17 @@
 
 package stroom.index.server;
 
-import java.io.File;
-import java.io.IOException;
-
-import stroom.util.logging.StroomLogger;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.store.NoLockFactory;
 import org.apache.lucene.store.SimpleFSLockFactory;
-
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardService;
+import stroom.util.logging.StroomLogger;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Thread safe class used to govern access to a index shard. It is assumed that
@@ -40,9 +39,8 @@ public abstract class AbstractIndexShard {
      * The Data Model Object that records our location.
      */
     private final IndexShardService service;
-    private IndexShard indexShard;
     private final boolean readOnly;
-
+    private IndexShard indexShard;
     /**
      * Lucene stuff
      */
@@ -66,7 +64,7 @@ public abstract class AbstractIndexShard {
 
             try {
                 if (readOnly) {
-                    directory = new NIOFSDirectory(dir, NoLockFactory.getNoLockFactory());
+                    directory = new NIOFSDirectory(dir.toPath(), NoLockFactory.INSTANCE);
 
                 } else {
                     if (!dir.isDirectory() && !dir.mkdirs()) {
@@ -78,7 +76,7 @@ public abstract class AbstractIndexShard {
                                 + dir.isDirectory());
                     }
 
-                    directory = new NIOFSDirectory(dir, new SimpleFSLockFactory());
+                    directory = new NIOFSDirectory(dir.toPath(), SimpleFSLockFactory.INSTANCE);
 
                     // We have opened the index so update the DB object.
                     if (directory != null) {

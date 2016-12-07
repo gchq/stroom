@@ -16,8 +16,6 @@
 
 package stroom.search.server;
 
-import java.util.List;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
@@ -27,7 +25,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
@@ -39,9 +36,15 @@ import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.StreamUtil;
 
+import java.util.List;
+
 public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
     private String searchField = null;
     private String searchValue = null;
+
+    public static void main(final String[] args) throws Exception {
+        new IndexShardSearcherSimpleClient().doMain(args);
+    }
 
     public void setSearchField(final String searchField) {
         this.searchField = searchField;
@@ -71,12 +74,12 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
                 final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(indexShard);
                 System.out.println("");
                 System.out.println("Searching Index " + IndexShardUtil.getIndexDir(indexShard));
-                final SimpleCollector simpleCollector = new SimpleCollector();
+                final DocIdListCollector docIdListCollector = new DocIdListCollector();
                 indexShardSearcher.open();
                 final IndexReader reader = indexShardSearcher.getReader();
                 final IndexSearcher searcher = new IndexSearcher(reader);
-                searcher.search(query, simpleCollector);
-                for (final Integer doc : simpleCollector.getDocIdList()) {
+                searcher.search(query, docIdListCollector);
+                for (final Integer doc : docIdListCollector.getDocIdList()) {
                     System.out.println("\tFound match " + doc);
                     final Document document = reader.document(doc);
                     for (final IndexableField fieldable : document.getFields()) {
@@ -96,7 +99,7 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
                     }
                 }
 
-                if (simpleCollector.getDocIdList().size() == 0) {
+                if (docIdListCollector.getDocIdList().size() == 0) {
                     System.out.println("\tNo Matches");
                 }
                 System.out.println("");
@@ -105,9 +108,5 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
                 ex.printStackTrace();
             }
         }
-    }
-
-    public static void main(final String[] args) throws Exception {
-        new IndexShardSearcherSimpleClient().doMain(args);
     }
 }
