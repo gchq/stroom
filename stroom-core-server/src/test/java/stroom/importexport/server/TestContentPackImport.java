@@ -75,11 +75,16 @@ public class TestContentPackImport {
 
 
     @Test
-    public void testStartup_disabled(){
+    public void testStartup_disabled() throws IOException {
         ContentPackImport contentPackImport = new ContentPackImport(importExportService,stroomPropertyService, globalPropertyService);
         stroomPropertyService.setProperty(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY, "false");
+
+        StroomTestUtil.touchFile(testPack1);
+
         contentPackImport.startup();
+
         Mockito.verifyZeroInteractions(importExportService);
+        Assert.assertTrue(Files.exists(testPack1));
     }
 
     @Test
@@ -107,10 +112,11 @@ public class TestContentPackImport {
         //not a zip extension so should not be called
         Mockito.verify(importExportService,Mockito.times(0)).performImportWithoutConfirmation(testPack3.toFile());
 
-        Mockito.verify(globalPropertyService).save(globalPropArgCaptor.capture());
+        Assert.assertFalse(Files.exists(testPack1));
 
-        Assert.assertEquals("false", globalPropArgCaptor.getValue().getValue());
-
+        //File should have moved into the imported dir
+        Assert.assertFalse(Files.exists(testPack1));
+        Assert.assertTrue(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.IMPORTED_DIR).resolve(testPack1.getFileName())));
     }
 
     @Test
@@ -124,9 +130,9 @@ public class TestContentPackImport {
 
         contentPackImport.startup();
 
-        Mockito.verify(globalPropertyService).save(globalPropArgCaptor.capture());
-
-        Assert.assertEquals("false", globalPropArgCaptor.getValue().getValue());
+        //File should have moved into the failed dir
+        Assert.assertFalse(Files.exists(testPack1));
+        Assert.assertTrue(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.FAILED_DIR).resolve(testPack1.getFileName())));
     }
 
 

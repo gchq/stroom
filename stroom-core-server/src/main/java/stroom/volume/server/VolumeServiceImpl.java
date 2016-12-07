@@ -520,13 +520,13 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
                     Path streamVolPath = optDefaultVolumePath.get().resolve(DEFAULT_STREAM_VOLUME_SUBDIR);
                     createStreamVolume(streamVolPath, node);
                 } else {
-                    LOGGER.warn("No suitable directory to create default volume in");
+                    LOGGER.warn("No suitable directory to create default volumes in");
                 }
             } else {
-                LOGGER.info("Existing volumes exist, won't create a default volume");
+                LOGGER.info("Existing volumes exist, won't create default volumes");
             }
         } else {
-            LOGGER.info("Creation of a default volume is currently disabled by property: " + PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP);
+            LOGGER.info("Creation of default volumes is currently disabled by property: " + PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP);
         }
     }
 
@@ -550,7 +550,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         String pathStr = path.toAbsolutePath().toString();
         try {
             Files.createDirectories(path);
-            LOGGER.info(String.format("Creating default volume in %s on node %s",
+            LOGGER.info(String.format("Creating volume in %s on node %s",
                     pathStr,
                     node.getName()));
             final Volume vol = optVolume.orElseGet(Volume::new);
@@ -561,7 +561,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             getDefaultVolumeLimit(path).ifPresent(vol::setBytesLimit);
             save(vol);
         } catch (IOException e) {
-            LOGGER.error("Unable to create default volume due to an error creating directory %s", pathStr, e);
+            LOGGER.error("Unable to create volume due to an error creating directory %s", pathStr, e);
         }
     }
 
@@ -582,7 +582,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     private Optional<Path> getDefaultVolumesPath() {
-        Optional<Path> contentPackDir;
+        Optional<Path> defaultVolumesDir;
 
         String catalinaHome = System.getProperty("catalina.home");
         String userHome = System.getProperty("user.home");
@@ -590,14 +590,14 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         if (catalinaHome != null) {
             //running inside tomcat so use a subdir in there
             Path catalinaHomePath = Paths.get(catalinaHome);
-            contentPackDir = Optional.of(catalinaHomePath.getParent().resolve(DEFAULT_VOLUMES_SUBDIR));
+            defaultVolumesDir = Optional.of(catalinaHomePath.getParent().resolve(DEFAULT_VOLUMES_SUBDIR));
         } else if (userHome != null) {
             //not in tomcat so use the personal user conf dir as a base
-            contentPackDir = Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(DEFAULT_VOLUMES_SUBDIR));
+            defaultVolumesDir = Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(DEFAULT_VOLUMES_SUBDIR));
         } else {
-            contentPackDir = Optional.empty();
+            defaultVolumesDir = Optional.empty();
         }
-        return contentPackDir;
+        return defaultVolumesDir;
     }
 
 }
