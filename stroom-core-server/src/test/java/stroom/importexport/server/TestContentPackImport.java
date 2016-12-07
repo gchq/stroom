@@ -16,17 +16,17 @@
 
 package stroom.importexport.server;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.*;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.node.shared.GlobalProperty;
 import stroom.node.shared.GlobalPropertyService;
 import stroom.util.config.StroomProperties;
+import stroom.util.test.StroomExpectedException;
+import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomTestUtil;
 
 import java.io.IOException;
@@ -34,8 +34,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(StroomJUnit4ClassRunner.class)
 public class TestContentPackImport {
+
+    //This is needed as you can't have to RunWith annotations
+    //so this is the same as @RunWith(MockitoJUnitRunner.class)
+    @Rule
+    public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
     ImportExportService importExportService;
@@ -45,7 +50,6 @@ public class TestContentPackImport {
 
     @Captor
     ArgumentCaptor<GlobalProperty> globalPropArgCaptor;
-
 
     static Path CONTENT_PACK_DIR;
 
@@ -99,7 +103,8 @@ public class TestContentPackImport {
     @Test
     public void testStartup_enabledThreeFiles() throws IOException {
         ContentPackImport contentPackImport = new ContentPackImport(importExportService,stroomPropertyService, globalPropertyService);
-        Mockito.when(globalPropertyService.loadByName(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY)).thenReturn(null);
+        Mockito.when(globalPropertyService.loadByName(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY))
+                .thenReturn(null);
         stroomPropertyService.setProperty(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY, "true");
 
         StroomTestUtil.touchFile(testPack1);
@@ -107,10 +112,13 @@ public class TestContentPackImport {
         StroomTestUtil.touchFile(testPack3);
 
         contentPackImport.startup();
-        Mockito.verify(importExportService,Mockito.times(1)).performImportWithoutConfirmation(testPack1.toFile());
-        Mockito.verify(importExportService,Mockito.times(1)).performImportWithoutConfirmation(testPack2.toFile());
+        Mockito.verify(importExportService,Mockito.times(1))
+                .performImportWithoutConfirmation(testPack1.toFile());
+        Mockito.verify(importExportService,Mockito.times(1))
+                .performImportWithoutConfirmation(testPack2.toFile());
         //not a zip extension so should not be called
-        Mockito.verify(importExportService,Mockito.times(0)).performImportWithoutConfirmation(testPack3.toFile());
+        Mockito.verify(importExportService,Mockito.times(0))
+                .performImportWithoutConfirmation(testPack3.toFile());
 
         Assert.assertFalse(Files.exists(testPack1));
 
@@ -120,19 +128,29 @@ public class TestContentPackImport {
     }
 
     @Test
+    @StroomExpectedException(exception = RuntimeException.class)
     public void testStartup_failedImport() throws IOException {
         ContentPackImport contentPackImport = new ContentPackImport(importExportService,stroomPropertyService, globalPropertyService);
-        Mockito.when(globalPropertyService.loadByName(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY)).thenReturn(null);
-        Mockito.doThrow(new RuntimeException()).when(importExportService).performImportWithoutConfirmation(Matchers.any());
+        Mockito.when(globalPropertyService.loadByName(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY))
+                .thenReturn(null);
+
+        Mockito.doThrow(new RuntimeException("Error thrown by mock import service for test"))
+                .when(importExportService)
+                .performImportWithoutConfirmation(Matchers.any());
         stroomPropertyService.setProperty(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY, "true");
 
         StroomTestUtil.touchFile(testPack1);
 
-        contentPackImport.startup();
+            contentPackImport.startup();
 
         //File should have moved into the failed dir
         Assert.assertFalse(Files.exists(testPack1));
         Assert.assertTrue(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.FAILED_DIR).resolve(testPack1.getFileName())));
+    }
+
+    @Test
+    public void dummyTest(){
+        Assert.assertTrue(true);
     }
 
 
