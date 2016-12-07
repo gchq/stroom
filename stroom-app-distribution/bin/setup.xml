@@ -74,4 +74,10 @@
         <value>sql</value>
         <regEx>((sql),?)+</regEx>
     </parameter>
+    <parameter>
+        <description>Enables the auto import of any content packs found in ${CATALINA_BASE}/contentPackImport/ on application startup</description>
+        <name>@@CONTENT_PACK_IMPORT_ENABLED@@</name>
+        <value>true</value>
+        <regEx>(true|false)</regEx>
+    </parameter>
 </parameters>

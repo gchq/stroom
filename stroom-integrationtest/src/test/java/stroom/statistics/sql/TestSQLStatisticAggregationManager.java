@@ -16,36 +16,34 @@
 
 package stroom.statistics.sql;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.Resource;
-import javax.sql.DataSource;
-
-import stroom.util.logging.StroomLogger;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
-import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.ConnectionUtil;
+import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.statistics.common.RolledUpStatisticEvent;
 import stroom.statistics.common.StatisticEvent;
-import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.exception.StatisticsEventValidationException;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.TerminateHandler;
 import stroom.util.task.TaskMonitor;
+
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(TestSQLStatisticAggregationManager.class);
@@ -108,7 +106,8 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
             final StatisticType statisticType = StatisticType.COUNT;
             // final long startDateMs =
             // DateUtil.parseNormalDateTimeString("2015-01-01T00:00:00.000Z");
-            final long startDateMs = System.currentTimeMillis();
+            //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
+            final long startDateMs = LocalDateTime.of(2016,12,13,11,59,3).toInstant(ZoneOffset.UTC).toEpochMilli();
             final int statNameCount = 4;
             final int timesCount = 10;
             final int numberOfDifferentPrecisions = 4;
@@ -126,7 +125,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
 
             LOGGER.info("First aggregation run");
             LOGGER.info("startDate: " + DateUtil.createNormalDateTimeString(startDateMs));
-            runAggregation();
+            runAggregation(startDateMs);
 
             Assert.assertEquals(expectedCountTotal, getAggregateTotal(COL_NAME_CNT));
             Assert.assertEquals(expectedValueTotal, getAggregateTotal(COL_NAME_VAL));
@@ -156,7 +155,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
                     getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION));
 
             LOGGER.info("run aggregation again with no new data in SVS");
-            runAggregation();
+            runAggregation(startDateMs);
 
             Assert.assertEquals(expectedCountTotal, getAggregateTotal(COL_NAME_CNT));
             Assert.assertEquals(expectedValueTotal, getAggregateTotal(COL_NAME_VAL));
@@ -338,7 +337,8 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
             final StatisticType statisticType = StatisticType.VALUE;
             // final long startDateMs =
             // DateUtil.parseNormalDateTimeString("2015-01-01T00:00:00.000Z");
-            final long startDateMs = System.currentTimeMillis();
+            //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
+            final long startDateMs = LocalDateTime.of(2016,12,13,11,59,3).toInstant(ZoneOffset.UTC).toEpochMilli();
             final int statNameCount = 4;
             final int timesCount = 100;
             final int numberOfDifferentPrecisions = 3;
@@ -356,7 +356,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
 
             LOGGER.info("First aggregation run");
             LOGGER.info("startDate: " + DateUtil.createNormalDateTimeString(startDateMs));
-            runAggregation();
+            runAggregation(startDateMs);
 
             Assert.assertEquals(expectedCountTotal, getAggregateTotal(COL_NAME_CNT));
             Assert.assertEquals(expectedValueTotal, getAggregateTotal(COL_NAME_VAL));
@@ -380,7 +380,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
                     getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION));
 
             LOGGER.info("run aggregation again with no new data in SVS");
-            runAggregation();
+            runAggregation(startDateMs);
 
             Assert.assertEquals(expectedCountTotal, getAggregateTotal(COL_NAME_CNT));
             Assert.assertEquals(expectedValueTotal, getAggregateTotal(COL_NAME_VAL));
@@ -498,10 +498,11 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
             LOGGER.warn("Database is not MySQL, skipping test");
         } else {
             final StatisticType statisticType = StatisticType.VALUE;
-            // final long startDateMs =
-            // DateUtil.parseNormalDateTimeString("2015-01-01T00:00:00.000Z");
-            final long startDateMs = System.currentTimeMillis();
+            //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
+            final long startDateMs = LocalDateTime.of(2016,12,13,11,59,3).toInstant(ZoneOffset.UTC).toEpochMilli();
+            //the number of different satst names to use in the test
             final int statNameCount = 4;
+            //the number of different data points per stat name
             final int timesCount = 100;
             final int numberOfDifferentPrecisions = 3 + 1;
 
@@ -514,15 +515,17 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
 
             final LogExecutionTime time = new LogExecutionTime();
 
+            //put the data into SQL_STAT_VAL_SRC
             loadData(startDateMs, statNameCount, timesCount, statisticType);
 
             final long newStartDate = startDateMs - TimeUnit.DAYS.toMillis(200);
             LOGGER.info("Adding stats working back from: " + DateUtil.createNormalDateTimeString(newStartDate));
+            //Put some very old data in to SQL_STAT_VAL_SRC so that it will get deleted but leave behind some of the data loaded above
             fillStatValSrc(newStartDate, statNameCount, timesCount, statisticType);
 
             LOGGER.info("First aggregation run");
             LOGGER.info("startDate: " + DateUtil.createNormalDateTimeString(startDateMs));
-            runAggregation();
+            runAggregation(startDateMs);
 
             Assert.assertEquals(expectedCountTotal, getAggregateTotal(COL_NAME_CNT));
             Assert.assertEquals(expectedValueTotal, getAggregateTotal(COL_NAME_VAL));
@@ -535,6 +538,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
 
             Assert.assertEquals(expectedValueTotalByPrecision * 2,
                     getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION));
+
 
             Assert.assertEquals(expectedCountTotalByPrecision,
                     getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION));
@@ -552,7 +556,10 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
 
             final long futureDateMs = startDateMs + TimeUnit.DAYS.toMillis(2);
 
-            StroomProperties.setProperty(SQLStatisticConstants.PROP_KEY_STATS_MAX_PROCESSING_AGE, "30d", StroomProperties.Source.TEST);
+//            StroomProperties.setProperty(SQLStatisticConstants.PROP_KEY_STATS_MAX_PROCESSING_AGE, "30d", StroomProperties.Source.TEST);
+            String newPropVal = "30d";
+            StroomProperties.setOverrideProperty(SQLStatisticConstants.PROP_KEY_STATS_MAX_PROCESSING_AGE, newPropVal, StroomProperties.Source.TEST);
+            Assert.assertEquals(newPropVal, StroomProperties.getProperty(SQLStatisticConstants.PROP_KEY_STATS_MAX_PROCESSING_AGE));
 
             runAggregation(futureDateMs);
 
@@ -564,6 +571,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
 
             Assert.assertEquals(expectedValueTotalByPrecision,
                     getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION));
+
 
             Assert.assertEquals(0,
                     getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION));
@@ -606,7 +614,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
         Assert.assertEquals(statNameCount * timesCount * ++iteration,
                 getRowCount(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME));
 
-        // load of data 2 days old
+        // load of data 65 days old
         newStartDate = startDateMs - TimeUnit.DAYS.toMillis(65);
         LOGGER.info("Adding stats working back from: " + DateUtil.createNormalDateTimeString(newStartDate));
         fillStatValSrc(newStartDate, statNameCount, timesCount, statisticType);
