@@ -30,10 +30,6 @@ task gwtCompile (dependsOn: classes, type: JavaExec) {
     def outputDir = "${warDir}/dashboard"
     def module = 'stroom.dashboard.DashboardApp'
 
-    inputs.source sourceSets.main.java.srcDirs
-    inputs.dir sourceSets.main.output.resourcesDir
-    outputs.dir buildDir
-
     doFirst {
         file(outputDir).delete()
         file(gwtBuildDir).mkdirs()
@@ -83,11 +79,7 @@ task gwtDevMode (dependsOn: classes, type: JavaExec) {
     def deployDir = "${gwtBuildDir}/deploy"
     def extraDir = "${gwtBuildDir}/extra"
     def outputDir = "${warDir}/dashboard"
-    def module = 'stroom.dashboard.DashboardApp'
-
-    inputs.source sourceSets.main.java.srcDirs
-    inputs.dir sourceSets.main.output.resourcesDir
-    outputs.dir buildDir
+    def module = 'stroom.dashboard.DashboardAppSuperDevModeChrome'
 
     doFirst {
         file(outputDir).delete()
@@ -107,21 +99,21 @@ task gwtDevMode (dependsOn: classes, type: JavaExec) {
     }
 
     args =
-            [
-                    '-logLevel', 'INFO',
-                    '-workDir', workDir,
-                    '-draftCompile',                    // Speeds up compile with 25%
-                    '-XfragmentCount', '0',
-                    '-optimize', '0',
-                    '-failOnError',
-                    '-localWorkers', '5',
-                    '-incremental',
-                    '-war', warDir,
-                    '-deploy', deployDir,
-                    '-extra', extraDir,
-                    '-strict',
-                    module                              // Your GWT module
-            ]
+        [
+                '-logLevel', 'INFO',
+                '-workDir', workDir,
+                '-draftCompile',                        // Speeds up compile with 25%
+                '-XfragmentCount', '0',
+                '-optimize', '0',
+                '-failOnError',
+                '-localWorkers', '5',
+                '-incremental',
+                '-war', warDir,
+                '-deploy', deployDir,
+                '-extra', extraDir,
+                '-strict',
+                module                                  // Your GWT module
+        ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = '1G'

@@ -39,10 +39,6 @@ task gwtCompile (dependsOn: classes, type: JavaExec) {
     def outputDir = "${warDir}/stroom"
     def module = 'stroom.app.App'
 
-    inputs.source sourceSets.main.java.srcDirs
-    inputs.dir sourceSets.main.output.resourcesDir
-    outputs.dir buildDir
-
     doFirst {
         file(outputDir).delete()
         file(gwtBuildDir).mkdirs()
@@ -89,10 +85,6 @@ task gwtDevMode (dependsOn: classes, type: JavaExec) {
     def outputDir = "${warDir}/stroom"
     def module = 'stroom.app.AppSuperDevModeChrome'
 
-    inputs.source sourceSets.main.java.srcDirs
-    inputs.dir sourceSets.main.output.resourcesDir
-    outputs.dir buildDir
-
     doFirst {
         file(outputDir).delete()
         file(gwtBuildDir).mkdirs()
@@ -111,21 +103,21 @@ task gwtDevMode (dependsOn: classes, type: JavaExec) {
     }
 
     args =
-            [
-                    '-logLevel', 'INFO',
-                    '-workDir', workDir,
-                    '-draftCompile',                    // Speeds up compile with 25%
-                    '-XfragmentCount', '0',
-                    '-optimize', '0',
-                    '-failOnError',
-                    '-localWorkers', '5',
-                    '-incremental',
-                    '-war', warDir,
-                    '-deploy', deployDir,
-                    '-extra', extraDir,
-                    '-strict',
-                    module                              // Your GWT module
-            ]
+        [
+                '-logLevel', 'INFO',
+                '-workDir', workDir,
+                '-draftCompile',                        // Speeds up compile with 25%
+                '-XfragmentCount', '0',
+                '-optimize', '0',
+                '-failOnError',
+                '-localWorkers', '5',
+                '-incremental',
+                '-war', warDir,
+                '-deploy', deployDir,
+                '-extra', extraDir,
+                '-strict',
+                module                                  // Your GWT module
+        ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = '1G'
