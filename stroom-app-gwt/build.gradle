@@ -1,63 +1,135 @@
-buildscript {
-    repositories {
-        jcenter()
-        // Alternatively use:
-//        maven {
-//            url 'http://dl.bintray.com/steffenschaefer/maven'
-//        }
-    }
-    dependencies {
-        classpath 'de.richsource.gradle.plugins:gwt-gradle-plugin:0.6'
-    }
-}
-
-apply plugin: 'war'
-apply plugin: 'gwt'
-
-gwt {
-    gwtVersion='2.8.0'
-    modules 'stroom.app.App'
-    minHeapSize='1G'
-    maxHeapSize='4G'
-
-    compiler {
-        draftCompile = false
-        strict = true
-        fragmentCount = 5
-        localWorkers = 5
-        optimize = 9
-    }
-}
-
-jar.enabled = true
-
 dependencies {
     compile project(':stroom-index-client')
     compile project(':stroom-statistics-client')
     compile project(':stroom-dashboard-client')
 
-    providedCompile project(path: ':stroom-dashboard-client', configuration: 'sourceArtifacts')
-    providedCompile project(path: ':stroom-dashboard-shared', configuration: 'sourceArtifacts')
-    providedCompile project(path: ':stroom-query-api', configuration: 'sourceArtifacts')
-    providedCompile project(path: ':stroom-entity-shared', configuration: 'sourceArtifacts')
-    providedCompile project(path: ':stroom-util-shared', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-dashboard-client', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-dashboard-shared', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-query-api', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-entity-shared', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-util-shared', configuration: 'sourceArtifacts')
 
-    providedCompile project(path: ':stroom-security-client', configuration: 'sourceArtifacts')
-    providedCompile project(path: ':stroom-security-shared', configuration: 'sourceArtifacts')
-    providedCompile project(path: ':stroom-security-api', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-security-client', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-security-shared', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-security-api', configuration: 'sourceArtifacts')
 
-    providedCompile project(path: ':stroom-core-client', configuration: 'sourceArtifacts')
-    providedCompile project(path: ':stroom-security-client-api', configuration: 'sourceArtifacts')
-    providedCompile project(path: ':stroom-core-client-widget', configuration: 'sourceArtifacts')
-    providedCompile project(path: ':stroom-core-shared', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-core-client', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-security-client-api', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-core-client-widget', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-core-shared', configuration: 'sourceArtifacts')
 
-    providedCompile project(path: ':stroom-index-client', configuration: 'sourceArtifacts')
-    providedCompile project(path: ':stroom-index-shared', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-index-client', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-index-shared', configuration: 'sourceArtifacts')
 
-    providedCompile project(path: ':stroom-statistics-client', configuration: 'sourceArtifacts')
-    providedCompile project(path: ':stroom-statistics-shared', configuration: 'sourceArtifacts')
-    providedCompile project(path: ':stroom-statistics-api', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-statistics-client', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-statistics-shared', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-statistics-api', configuration: 'sourceArtifacts')
 
-    providedCompile group: 'com.google.gwt.inject', name: 'gin', version: '2.1.2'
-    providedCompile group: 'com.google.gwt', name: 'gwt-dev', version: '2.8.0'
+    compile 'com.google.gwt.inject:gin:2.1.2'
+    compile 'com.google.gwt:gwt-dev:2.8.0'
 }
+
+task gwtCompile (dependsOn: classes, type: JavaExec) {
+    ext.gwtBuildDir = "${project.buildDir}/gwt"
+    def warDir = project(':stroom-app').file("src/main/webapp")
+    def workDir = "${gwtBuildDir}/work"
+    def tmpDir = "${gwtBuildDir}/tmp"
+    def deployDir = "${gwtBuildDir}/deploy"
+    def extraDir = "${gwtBuildDir}/extra"
+    def outputDir = "${warDir}/stroom"
+    def module = 'stroom.app.App'
+
+    inputs.source sourceSets.main.java.srcDirs
+    inputs.dir sourceSets.main.output.resourcesDir
+    outputs.dir buildDir
+
+    doFirst {
+        file(outputDir).delete()
+        file(gwtBuildDir).mkdirs()
+        file(tmpDir).mkdirs()
+    }
+
+    main = 'com.google.gwt.dev.Compiler'
+
+    classpath {
+        [
+            sourceSets.main.java.srcDirs,           // Java source
+            sourceSets.main.output.resourcesDir,    // Generated resources
+            sourceSets.main.output.classesDir,      // Generated classes
+            sourceSets.main.compileClasspath,       // Deps
+        ]
+    }
+
+    args =
+        [
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-XfragmentCount', '5',
+            '-optimize', '9',
+            '-failOnError',
+            '-localWorkers', '5',
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            '-strict',
+            module                                  // Your GWT module
+        ]
+
+    minHeapSize = '1G'
+    maxHeapSize = '4G'
+}
+
+task gwtDevMode (dependsOn: classes, type: JavaExec) {
+    ext.gwtBuildDir = "${project.buildDir}/gwt"
+    def warDir = project(':stroom-app').file("src/main/webapp")
+    def workDir = "${gwtBuildDir}/work"
+    def tmpDir = "${gwtBuildDir}/tmp"
+    def deployDir = "${gwtBuildDir}/deploy"
+    def extraDir = "${gwtBuildDir}/extra"
+    def outputDir = "${warDir}/stroom"
+    def module = 'stroom.app.AppSuperDevModeChrome'
+
+    inputs.source sourceSets.main.java.srcDirs
+    inputs.dir sourceSets.main.output.resourcesDir
+    outputs.dir buildDir
+
+    doFirst {
+        file(outputDir).delete()
+        file(gwtBuildDir).mkdirs()
+        file(tmpDir).mkdirs()
+    }
+
+    main = 'com.google.gwt.dev.Compiler'
+
+    classpath {
+        [
+                sourceSets.main.java.srcDirs,           // Java source
+                sourceSets.main.output.resourcesDir,    // Generated resources
+                sourceSets.main.output.classesDir,      // Generated classes
+                sourceSets.main.compileClasspath,       // Deps
+        ]
+    }
+
+    args =
+            [
+                    '-logLevel', 'INFO',
+                    '-workDir', workDir,
+                    '-draftCompile',                    // Speeds up compile with 25%
+                    '-XfragmentCount', '0',
+                    '-optimize', '0',
+                    '-failOnError',
+                    '-localWorkers', '5',
+                    '-incremental',
+                    '-war', warDir,
+                    '-deploy', deployDir,
+                    '-extra', extraDir,
+                    '-strict',
+                    module                              // Your GWT module
+            ]
+
+    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
+    minHeapSize = '1G'
+    maxHeapSize = '4G'
+}
+
+build.dependsOn('gwtCompile')
