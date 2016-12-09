@@ -19,6 +19,7 @@ package stroom.dashboard.server.vis;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -65,7 +66,7 @@ public class VisComponentResultCreator implements ComponentResultCreator {
     }
 
     public static VisComponentResultCreator create(final VisualisationService visualisationService,
-            final ComponentResultRequest componentResultRequest) {
+                                                   final ComponentResultRequest componentResultRequest) {
         Structure structure = null;
         try {
             final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
@@ -401,7 +402,7 @@ public class VisComponentResultCreator implements ComponentResultCreator {
     }
 
     private void addValue(final Item item, final int index, final Type type, final Double[] min, final Double[] max,
-            final Double[] sum, final Object[] arr, final int i) {
+                          final Double[] sum, final Object[] arr, final int i) {
         if (index >= 0 && item.getValues().length > index) {
             final Object o = item.getValues()[index];
             if (o != null) {
@@ -520,6 +521,7 @@ public class VisComponentResultCreator implements ComponentResultCreator {
         }
     }
 
+    @JsonPropertyOrder({"key", "min", "max", "sum", "types", "keyType", "values"})
     public static class Store {
         private final Object key;
         private final String[] types;

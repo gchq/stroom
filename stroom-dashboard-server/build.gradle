@@ -26,6 +26,6 @@ dependencies {
 //    compile project(':stroom-statistics-api')
 //    compile project(':stroom-statistics-shared')
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
-//    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
 }
