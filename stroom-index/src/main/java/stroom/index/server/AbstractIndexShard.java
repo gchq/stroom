@@ -25,8 +25,9 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardService;
 import stroom.util.logging.StroomLogger;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Thread safe class used to govern access to a index shard. It is assumed that
@@ -60,23 +61,27 @@ public abstract class AbstractIndexShard {
 
     protected void open() throws IOException {
         if (directory == null) {
-            final File dir = getIndexDir();
+            final Path dir = getIndexPath();
 
             try {
                 if (readOnly) {
-                    directory = new NIOFSDirectory(dir.toPath(), NoLockFactory.INSTANCE);
+                    directory = new NIOFSDirectory(dir, NoLockFactory.INSTANCE);
 
                 } else {
-                    if (!dir.isDirectory() && !dir.mkdirs()) {
-                        throw new IOException("getDirectory() - Failed to create directory " + dir);
+                    if (!Files.isDirectory(dir)) {
+                        try {
+                            Files.createDirectories(dir);
+                        } catch (final IOException e) {
+                            throw new IOException("getDirectory() - Failed to create directory " + dir);
+                        }
                     }
 
                     if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Opening and locking index dir = " + dir.getAbsolutePath() + " exists "
-                                + dir.isDirectory());
+                        LOGGER.debug("Opening and locking index dir = " + dir.toAbsolutePath().toString() + " exists "
+                                + Files.isDirectory(dir));
                     }
 
-                    directory = new NIOFSDirectory(dir.toPath(), SimpleFSLockFactory.INSTANCE);
+                    directory = new NIOFSDirectory(dir, SimpleFSLockFactory.INSTANCE);
 
                     // We have opened the index so update the DB object.
                     if (directory != null) {
@@ -86,7 +91,7 @@ public abstract class AbstractIndexShard {
                 }
             } finally {
                 if (directory == null) {
-                    LOGGER.error("Failed to open: " + dir.getAbsolutePath());
+                    LOGGER.error("Failed to open: " + dir.toAbsolutePath().toString());
                 }
             }
         }
@@ -99,8 +104,8 @@ public abstract class AbstractIndexShard {
         }
     }
 
-    protected File getIndexDir() {
-        return IndexShardUtil.getIndexDir(indexShard);
+    protected Path getIndexPath() {
+        return IndexShardUtil.getIndexPath(indexShard);
     }
 
     protected Directory getDirectory() {

@@ -16,26 +16,26 @@
 
 package stroom.index.server;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashSet;
-
 import org.apache.lucene.document.Document;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
+import stroom.node.shared.Volume;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexFields;
 import stroom.search.server.IndexShardSearcher;
 import stroom.search.server.IndexShardSearcherImpl;
-import stroom.node.shared.Volume;
 import stroom.streamstore.server.fs.FileSystemUtil;
-import stroom.util.test.StroomUnitTest;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.HashSet;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestIndexShardIO extends StroomUnitTest {
@@ -46,6 +46,12 @@ public class TestIndexShardIO extends StroomUnitTest {
         indexFields.add(IndexField.createField("Id"));
         indexFields.add(IndexField.createField("Test"));
         indexFields.add(IndexField.createField("Id2"));
+    }
+
+    public static void main(final String[] args) {
+        for (final Object s : System.getProperties().keySet()) {
+            System.out.println(s + "=" + System.getProperty((String) s));
+        }
     }
 
     private Document buildDocument(final int id) {
@@ -72,7 +78,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         for (int i = 1; i <= 10; i++) {
@@ -102,7 +108,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(service, indexFields, index, idx1);
@@ -137,7 +143,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(service, indexFields, index, idx1);
@@ -167,7 +173,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(service, indexFields, index, idx1);
@@ -200,7 +206,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         final IndexShardWriterImpl writer = new IndexShardWriterImpl(service, indexFields, index, idx1);
@@ -236,11 +242,5 @@ public class TestIndexShardIO extends StroomUnitTest {
         // Assert.assertEquals("Expected to flush every 2048 docs...","[2048,
         // 6144, 4096, 8192]",
         // flushSet.toString());
-    }
-
-    public static void main(final String[] args) {
-        for (final Object s : System.getProperties().keySet()) {
-            System.out.println(s + "=" + System.getProperty((String) s));
-        }
     }
 }

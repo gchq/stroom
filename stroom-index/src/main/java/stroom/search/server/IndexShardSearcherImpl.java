@@ -28,8 +28,9 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.util.logging.StroomLogger;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class IndexShardSearcherImpl implements IndexShardSearcher {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractIndexShard.class);
@@ -76,13 +77,13 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
         // and use the index shard directory.
         if (indexReader == null) {
             try {
-                final File dir = IndexShardUtil.getIndexDir(indexShard);
+                final Path dir = IndexShardUtil.getIndexPath(indexShard);
 
-                if (dir == null || !dir.isDirectory()) {
-                    throw new SearchException("Index directory not found for searching: " + dir.getAbsolutePath());
+                if (dir == null || !Files.isDirectory(dir)) {
+                    throw new SearchException("Index directory not found for searching: " + dir.toAbsolutePath().toString());
                 }
 
-                directory = new NIOFSDirectory(dir.toPath(), NoLockFactory.INSTANCE);
+                directory = new NIOFSDirectory(dir, NoLockFactory.INSTANCE);
 
                 indexReader = DirectoryReader.open(directory);
 

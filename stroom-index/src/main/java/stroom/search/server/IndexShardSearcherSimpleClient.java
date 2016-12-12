@@ -73,7 +73,7 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
             try {
                 final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(indexShard);
                 System.out.println("");
-                System.out.println("Searching Index " + IndexShardUtil.getIndexDir(indexShard));
+                System.out.println("Searching Index " + IndexShardUtil.getIndexPath(indexShard));
                 final DocIdListCollector docIdListCollector = new DocIdListCollector();
                 indexShardSearcher.open();
                 final IndexReader reader = indexShardSearcher.getReader();

@@ -16,6 +16,11 @@
 
 package stroom.index.server;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import stroom.cache.CacheManagerAutoCloseable;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
@@ -28,14 +33,9 @@ import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexFields;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.concurrent.SimpleExecutor;
-import stroom.util.test.StroomUnitTest;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.CheckedLimit;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,6 +43,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestIndexShardPoolImpl2 extends StroomUnitTest {
+    public static int getRandomNumber(final int size) {
+        return (int) Math.floor((Math.random() * size));
+    }
+
     @Before
     public void before() {
         FileSystemUtil.deleteContents(new File(getCurrentTestDir(), "index"));
@@ -77,7 +81,7 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
                 indexShard.setVolume(
                         Volume.create(defaultNode, getCurrentTestDir().getAbsolutePath(), VolumeType.PUBLIC));
                 indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
-                FileSystemUtil.deleteContents(IndexShardUtil.getIndexDir(indexShard));
+                FileSystemUtil.deleteContents(IndexShardUtil.getIndexPath(indexShard));
                 return indexShard;
             }
         };
@@ -123,9 +127,5 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
-    }
-
-    public static int getRandomNumber(final int size) {
-        return (int) Math.floor((Math.random() * size));
     }
 }
