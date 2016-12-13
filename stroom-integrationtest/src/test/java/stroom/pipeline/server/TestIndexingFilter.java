@@ -18,6 +18,7 @@ package stroom.pipeline.server;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexableFieldType;
 import org.junit.Assert;
 import org.junit.Test;
 import org.xml.sax.SAXException;
@@ -157,9 +158,10 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
         final List<Document> documents = doTest("TestIndexDocumentFilter/ComplexContent.xml", indexFields);
 
         Assert.assertEquals(1, documents.size());
-        Assert.assertTrue(documents.get(0).getField("f1").fieldType().stored());
-        Assert.assertTrue(documents.get(0).getField("f1").fieldType().indexOptions().equals(IndexOptions.DOCS));
-        Assert.assertTrue(documents.get(0).getField("f1").fieldType().tokenized());
+        final IndexableFieldType fieldType = documents.get(0).getField("f1").fieldType();
+        Assert.assertTrue(fieldType.stored());
+        Assert.assertTrue(fieldType.indexOptions().equals(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS));
+        Assert.assertTrue(fieldType.tokenized());
 
         Assert.assertFalse(documents.get(0).getField("f2").fieldType().stored());
 
