@@ -1,8 +1,5 @@
 #!/bin/sh
 
-
-perl -pi -e 's/"devModeRedirectEnabled" *value="true"/"devModeRedirectEnabled" value="false"/g;' stroom-app-client/src/main/resources/stroom/app/AppSuperDevMode.gwt.xml
-
 echo "Deleting stroom-app-client/src/main/webapp/stroom"
 rm -rf ./stroom-app-client/src/main/webapp/stroom
 
