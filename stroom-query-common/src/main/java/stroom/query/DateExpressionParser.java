@@ -17,6 +17,8 @@
 package stroom.query;
 
 import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalField;
@@ -29,11 +31,11 @@ import java.util.regex.Pattern;
 public class DateExpressionParser {
     private static final Pattern DURATION_PATTERN = Pattern.compile("[+-]?[ ]*\\d+[ ]*[smhdwMy]");
 
-    public ZonedDateTime parse(final String expression, final ZonedDateTime now) {
+    public ZonedDateTime parse(final String expression, final long nowEpochMilli) {
         final char[] chars = expression.toCharArray();
         final Part[] parts = new Part[chars.length];
 
-        parseConstants(chars, parts, now);
+        parseConstants(chars, parts, nowEpochMilli);
         parseDurations(chars, parts);
 
         // Find index of any remaining date.
@@ -132,7 +134,8 @@ public class DateExpressionParser {
         return time;
     }
 
-    private void parseConstants(final char[] chars, final Part[] parts, final ZonedDateTime now) {
+    private void parseConstants(final char[] chars, final Part[] parts, final long nowEpochMilli) {
+        final ZonedDateTime now = ZonedDateTime.ofInstant(Instant.ofEpochMilli(nowEpochMilli), ZoneOffset.UTC);
         final String expression = new String(chars);
         for (final DatePoint datePoint : DatePoint.values()) {
             final String function = datePoint.getFunction();
