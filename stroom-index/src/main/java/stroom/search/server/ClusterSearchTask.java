@@ -35,11 +35,11 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
     private final IndexField[] storedFields;
     private final int resultSendFrequency;
     private final Map<Integer, CoprocessorSettings> coprocessorMap;
-    private final ZonedDateTime now;
+    private final long now;
 
     public ClusterSearchTask(final String sessionId, final String userName, final String taskName, final Search search,
                              final List<Long> shards, final Node targetNode, final IndexField[] storedFields,
-                             final int resultSendFrequency, final Map<Integer, CoprocessorSettings> coprocessorMap, final ZonedDateTime now) {
+                             final int resultSendFrequency, final Map<Integer, CoprocessorSettings> coprocessorMap, final long now) {
         super(sessionId, userName, taskName);
         this.search = search;
         this.shards = shards;
@@ -74,7 +74,7 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
         return coprocessorMap;
     }
 
-    public ZonedDateTime getNow() {
+    public long getNow() {
         return now;
     }
 }

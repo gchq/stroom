@@ -61,14 +61,14 @@ public class SearchExpressionQueryBuilder {
     private final IndexFieldsMap indexFieldsMap;
     private final DictionaryService dictionaryService;
     private final int maxBooleanClauseCount;
-    private final ZonedDateTime now;
+    private final long nowEpochMilli;
 
     public SearchExpressionQueryBuilder(final DictionaryService dictionaryService, final IndexFieldsMap indexFieldsMap,
-                                        final int maxBooleanClauseCount, final ZonedDateTime now) {
+                                        final int maxBooleanClauseCount, final long nowEpochMilli) {
         this.dictionaryService = dictionaryService;
         this.indexFieldsMap = indexFieldsMap;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
-        this.now = now;
+        this.nowEpochMilli = nowEpochMilli;
     }
 
     public SearchExpressionQuery buildQuery(final Version matchVersion, final ExpressionOperator expression) {
@@ -528,7 +528,7 @@ public class SearchExpressionQueryBuilder {
 
     private long getDate(final String fieldName, final String value) {
         try {
-            return new DateExpressionParser().parse(value, now).toInstant().toEpochMilli();
+            return new DateExpressionParser().parse(value, nowEpochMilli).toInstant().toEpochMilli();
         } catch (final Exception e) {
             throw new SearchException("Expected a standard date value for field \"" + fieldName
                     + "\" but was given string \"" + value + "\"");
