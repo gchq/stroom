@@ -30,8 +30,11 @@ task gwtCompile (dependsOn: classes, type: JavaExec) {
     def outputDir = "${warDir}/dashboard"
     def module = 'stroom.dashboard.DashboardApp'
 
+    workDir = tmpDir;
+
     doFirst {
         file(outputDir).delete()
+        file(gwtBuildDir).delete()
         file(gwtBuildDir).mkdirs()
         file(tmpDir).mkdirs()
     }
@@ -80,6 +83,8 @@ task gwtDevMode (dependsOn: classes, type: JavaExec) {
     def extraDir = "${gwtBuildDir}/extra"
     def outputDir = "${warDir}/dashboard"
     def module = 'stroom.dashboard.DashboardAppSuperDevModeChrome'
+
+    workDir = tmpDir;
 
     doFirst {
         file(outputDir).delete()

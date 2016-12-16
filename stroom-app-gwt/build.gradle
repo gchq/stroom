@@ -40,6 +40,7 @@ task gwtCompile (dependsOn: classes, type: JavaExec) {
     def module = 'stroom.app.App'
 
     doFirst {
+        file(project.buildDir).delete()
         file(outputDir).delete()
         file(gwtBuildDir).mkdirs()
         file(tmpDir).mkdirs()
