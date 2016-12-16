@@ -1,23 +1,48 @@
 apply plugin: 'war'
 
-jar.enabled = true
+//buildscript {
+//    repositories {
+//        jcenter()
+//    }
+//    dependencies {
+//        classpath "org.scaldingspoon.gradle:gradle-waroverlay-plugin:0.9.3"
+//    }
+//}
+//apply plugin: 'waroverlay'
+//
+//dependencies {
+//// ("org.jasig.cas:cas-server-webapp:3.5.2@war") {
+//
+//    runtime project(':stroom-app-gwt@war')
+//        transitive = true // setting this to true calculates transitive dependencies for addition to the target WAR
+//    }
+//
+//    runtime project(':stroom-dashboard-gwt@war')
+//    transitive = true // setting this to true calculates transitive dependencies for addition to the target WAR
+//    }
+//}
+//
+//warOverlay {
+//    includeWarJars false // whether to include the jar files in the WAR. Default is false. If false, it might be useful to set transitive to `true` for the WAR dependency so its dependencies will be calculated and added
+//}
+
+//war {
+////    // ... whatever else you may need
+////    exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
+//
+//    with project(":stroom-app-gwt").war
+//}
+
+//war.dependsOn(':stroom-app-gwt:war')
 
 dependencies {
-//    compile project(':stroom-util')
-//    compile project(':stroom-entity-shared')
-//    compile project(':stroom-query-api')
-////    compile project(':stroom-security')
-//    compile project(':stroom-remote')
-//    compile project(':stroom-core-shared')
-//    compile project(':stroom-core-server')
-//    compile project(':stroom-pipeline')
-//    compile project(':stroom-core-client-widget')
-//    compile project(':stroom-core-client')
-//    compile project(':stroom-statistics-server')
-//    compile project(':stroom-dashboard')
-//    compile project(':stroom-app-war')
-//    compile project(':stroom-dashboard-war')
-//    testCompile project(':stroom-test-common')
-//    testCompile project(':stroom-util')
-//    providedCompile project(':stroom-config')
+    compile project(':stroom-app-gwt')
+    compile project(':stroom-dashboard-gwt')
+}
+
+war {
+//    from project(':stroom-app-gwt').file("src/main/webapp")
+//    from project(':stroom-app-gwt').file("build/gwt/out")
+//    from project(':stroom-dashboard-gwt').file("src/main/webapp")
+//    from project(':stroom-dashboard-gwt').file("build/gwt/out")
 }
