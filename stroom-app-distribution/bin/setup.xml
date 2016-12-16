@@ -61,7 +61,7 @@
     <parameter>
         <description>JPA Dialect</description>
         <name>@@JPA_DIALECT@@</name>
-        <value>org.hibernate.dialect.MySQL5InnoDBDialect</value>
+        <value>org.hibernate.dialect.MySQLInnoDBDialect</value>
     </parameter>
     <parameter>
         <description>Optional tomcat JVM settings</description>
