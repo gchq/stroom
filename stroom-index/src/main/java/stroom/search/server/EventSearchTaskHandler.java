@@ -52,8 +52,8 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
     public EventRefs exec(final EventSearchTask task) {
         EventRefs eventRefs = null;
 
-        // Create a current time object.
-        final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+        // Get the current time in millis since epoch.
+        final long nowEpochMilli = System.currentTimeMillis();
 
         // Get the search.
         final Search search = task.getSearch();
@@ -69,7 +69,7 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
         // Create an asynchronous search task.
         final String searchName = "Search " + task.getSessionId();
         final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(task.getSessionId(), task.getUserId(), searchName,
-                search, node, task.getResultSendFrequency(), coprocessorMap, now);
+                search, node, task.getResultSendFrequency(), coprocessorMap, nowEpochMilli);
 
         // Create a collector to store search results.
         final EventSearchResultHandler resultHandler = new EventSearchResultHandler();

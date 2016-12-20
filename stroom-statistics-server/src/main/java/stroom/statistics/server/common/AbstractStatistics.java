@@ -56,8 +56,8 @@ public abstract class AbstractStatistics implements Statistics {
     protected static FindEventCriteria buildCriteria(final Search search, final StatisticStoreEntity dataSource) {
         LOGGER.trace(String.format("buildCriteria called for statistic %s", dataSource.getName()));
 
-        // Get now
-        final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+        // Get the current time in millis since epoch.
+        final long nowEpochMilli = System.currentTimeMillis();
 
         // object looks a bit like this
         // AND
@@ -126,7 +126,7 @@ public abstract class AbstractStatistics implements Statistics {
 
         // if we have got here then we have a single BETWEEN date term, so parse
         // it.
-        final Range<Long> range = extractRange(dateTerm, now);
+        final Range<Long> range = extractRange(dateTerm, nowEpochMilli);
 
         final List<ExpressionTerm> termNodesInFilter = new ArrayList<>();
 
@@ -212,7 +212,7 @@ public abstract class AbstractStatistics implements Statistics {
         return rolledUpStatisticEvent;
     }
 
-    private static Range<Long> extractRange(final ExpressionTerm dateTerm, final ZonedDateTime now) {
+    private static Range<Long> extractRange(final ExpressionTerm dateTerm, final long nowEpochMilli) {
         long rangeFrom = 0;
         long rangeTo = Long.MAX_VALUE;
 
@@ -223,11 +223,11 @@ public abstract class AbstractStatistics implements Statistics {
         }
 
         final DateExpressionParser dateExpressionParser = new DateExpressionParser();
-        rangeFrom = dateExpressionParser.parse(dateArr[0], now).toInstant().toEpochMilli();
+        rangeFrom = dateExpressionParser.parse(dateArr[0], nowEpochMilli).toInstant().toEpochMilli();
         // add one to make it exclusive
-        rangeTo = dateExpressionParser.parse(dateArr[1], now).toInstant().toEpochMilli() + 1;
+        rangeTo = dateExpressionParser.parse(dateArr[1], nowEpochMilli).toInstant().toEpochMilli() + 1;
 
-        final Range<Long> range = new Range<Long>(rangeFrom, rangeTo);
+        final Range<Long> range = new Range<>(rangeFrom, rangeTo);
 
         return range;
     }
