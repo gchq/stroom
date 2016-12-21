@@ -24,7 +24,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.shared.ExplorerData;
-import stroom.widget.util.client.MySingleSelectionModel;
 
 public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.EntityTreeView>
         implements EntityTreeUiHandlers {
@@ -67,7 +66,11 @@ public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.E
         return explorerTree.getTreeModel();
     }
 
-    public MySingleSelectionModel<ExplorerData> getSelectionModel() {
-        return explorerTree.getSelectionModel();
+    public void setSelectedItem(final ExplorerData selection) {
+        explorerTree.setSelectedItem(selection);
+    }
+
+    public ExplorerData getSelectedItem() {
+        return explorerTree.getSelectedItem();
     }
 }

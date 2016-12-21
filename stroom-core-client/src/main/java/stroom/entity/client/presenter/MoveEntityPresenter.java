@@ -59,7 +59,7 @@ public class MoveEntityPresenter
     public void onMove(final ShowMoveEntityDialogEvent event) {
         this.entity = event.getSelected();
 
-        entityTreePresenter.getSelectionModel().clear();
+        entityTreePresenter.setSelectedItem(null);
 
 //        if (event.getCurrentParents() != null && event.getCurrentParents().size() > 0) {
 //            ExplorerData folder = null;
@@ -80,7 +80,7 @@ public class MoveEntityPresenter
 //            entityTreePresenter.getModel().refresh();
 //        }
 
-        entityTreePresenter.getSelectionModel().setSelected(event.getSelected(), true);
+        entityTreePresenter.setSelectedItem(event.getSelected());
         entityTreePresenter.getModel().reset();
         entityTreePresenter.getModel().setEnsureVisible(event.getSelected());
         entityTreePresenter.getModel().refresh();
@@ -112,7 +112,7 @@ public class MoveEntityPresenter
     }
 
     private DocRef getFolder() {
-        final ExplorerData selected = entityTreePresenter.getSelectionModel().getSelectedObject();
+        final ExplorerData selected = entityTreePresenter.getSelectedItem();
         if (selected != null && selected instanceof EntityData) {
             return ((EntityData) selected).getDocRef();
         }

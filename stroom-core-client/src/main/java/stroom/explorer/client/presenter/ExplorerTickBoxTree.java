@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.explorer.client.presenter;
 
 import com.google.gwt.core.client.GWT;
@@ -31,7 +47,7 @@ import stroom.widget.util.client.DoubleSelectTest;
 import java.util.List;
 import java.util.Set;
 
-public class ExplorerTickBoxTree extends Composite {
+public class ExplorerTickBoxTree extends AbstractExporerTree {
     private final ExplorerTreeModel treeModel;
     private final TickBoxSelectionModel selectionModel;
     private final CellTable<ExplorerData> cellTable;
@@ -54,7 +70,7 @@ public class ExplorerTickBoxTree extends Composite {
         tickBoxClassName = explorerCell.getTickBoxClassName();
 
         final ExplorerTreeResources resources = GWT.create(ExplorerTreeResources.class);
-        cellTable = new CellTable<ExplorerData>(Integer.MAX_VALUE, resources);
+        cellTable = new CellTable<>(Integer.MAX_VALUE, resources);
         cellTable.setWidth("100%");
         cellTable.setKeyboardSelectionHandler(new MyKeyboardSelectionHandler(cellTable));
         cellTable.addColumn(new Column<ExplorerData, ExplorerData>(explorerCell) {
@@ -73,7 +89,7 @@ public class ExplorerTickBoxTree extends Composite {
 
         cellTable.getRowContainer().getStyle().setCursor(Style.Cursor.POINTER);
 
-        treeModel = new ExplorerTreeModel(cellTable, spinnerSmall, dispatcher) {
+        treeModel = new ExplorerTreeModel(this, spinnerSmall, dispatcher) {
             @Override
             protected void onDataChanged(final FetchExplorerDataResult result) {
                 super.onDataChanged(result);
@@ -96,17 +112,23 @@ public class ExplorerTickBoxTree extends Composite {
         initWidget(flowPanel);
     }
 
-    protected void select(final ExplorerData selection) {
-        final boolean doubleClick = doubleClickTest.test(selection);
-        select(selection, doubleClick);
+    @Override
+    void setData(final List<ExplorerData> rows) {
+        cellTable.setRowData(0, rows);
+        cellTable.setRowCount(rows.size(), true);
     }
 
-    protected void select(final ExplorerData selection, final boolean doubleClick) {
-        selectedItem = selection;
-        if (selection != null) {
-            ExplorerTreeSelectEvent.fire(ExplorerTickBoxTree.this, selection, doubleClick, false);
-        }
-    }
+//    protected void select(final ExplorerData selection) {
+//        final boolean doubleClick = doubleClickTest.test(selection);
+//        select(selection, doubleClick);
+//    }
+//
+//    protected void select(final ExplorerData selection, final boolean doubleClick) {
+//        selectedItem = selection;
+//        if (selection != null) {
+//            ExplorerTreeSelectEvent.fire(ExplorerTickBoxTree.this, selection, doubleClick, false);
+//        }
+//    }
 
     public void setIncludedTypeSet(final Set<String> types) {
         treeModel.setIncludedTypeSet(types);
@@ -153,7 +175,7 @@ public class ExplorerTickBoxTree extends Composite {
 
                 if (selectedItem != null) {
                     if ((button & NativeEvent.BUTTON_RIGHT) != 0) {
-                        ExplorerTreeSelectEvent.fire(ExplorerTickBoxTree.this, selectedItem, false, true);
+                        doSelect(selectedItem, false, true);
                         ShowExplorerMenuEvent.fire(ExplorerTickBoxTree.this, selectedItem, x, y);
                     }
                 }
@@ -168,16 +190,16 @@ public class ExplorerTickBoxTree extends Composite {
                         final Element element = event.getNativeEvent().getEventTarget().cast();
 
                         if (hasClassName(element, tickBoxClassName, 0, 5)) {
-                            selectionModel.setSelected(selectedItem, !selectionModel.isSelected(selectedItem));
+                            toggleSelection(selectedItem);
                             super.onCellPreview(event);
                             refresh();
 
                         } else if (HasNodeState.NodeState.LEAF.equals(selectedItem.getNodeState())) {
-                            select(selectedItem);
+                            setSelectedItemWithDoubleClickTest(selectedItem);
                             super.onCellPreview(event);
 
                         } else if (hasClassName(element, expanderClassName, 0, 1)) {
-                            select(selectedItem, false);
+                            setSelectedItem(selectedItem);
                             super.onCellPreview(event);
 
                             treeModel.toggleOpenState(selectedItem);
@@ -260,8 +282,7 @@ public class ExplorerTickBoxTree extends Composite {
             } else {
                 final ExplorerData newSelection = cellTable.getVisibleItem(index + plus);
                 if (newSelection != null) {
-                    selectionModel.setSelected(newSelection, true);
-                    selectedItem = newSelection;
+                    setSelectedItem(newSelection);
                 } else {
                     selectFirstItem();
                 }
@@ -271,10 +292,7 @@ public class ExplorerTickBoxTree extends Composite {
 
     private void selectFirstItem() {
         final ExplorerData firstItem = cellTable.getVisibleItem(0);
-        if (firstItem != null) {
-            selectionModel.setSelected(firstItem, true);
-        }
-        selectedItem = firstItem;
+        setSelectedItem(firstItem);
     }
 
     private int getItemIndex(ExplorerData item) {
@@ -293,7 +311,7 @@ public class ExplorerTickBoxTree extends Composite {
     private void selectCurrent() {
         final ExplorerData selected = getKeyBoardSelected();
         if (selected != null) {
-            select(selected);
+            setSelectedItem(selected);
         }
     }
 
@@ -304,6 +322,40 @@ public class ExplorerTickBoxTree extends Composite {
         }
 
         return null;
+    }
+
+    @Override
+    void setInitialSelectedItem(final ExplorerData selection) {
+        setSelectedItem(selection);
+    }
+
+    protected void setSelectedItem(final ExplorerData selection) {
+        doSelect(selection, false, false);
+    }
+
+    private void setSelectedItemWithDoubleClickTest(final ExplorerData selection) {
+        final boolean doubleClick = doubleClickTest.test(selection);
+        doSelect(selection, doubleClick, false);
+    }
+
+    protected void doSelect(final ExplorerData selection, final boolean doubleClick, final boolean rightClick) {
+        selectedItem = selection;
+        if (selection != null) {
+            selectionModel.setSelected(selection, true);
+//        } else {
+//            selectionModel.clear();
+        }
+        ExplorerTreeSelectEvent.fire(ExplorerTickBoxTree.this, selection, doubleClick, rightClick);
+    }
+
+    protected void toggleSelection(final ExplorerData selection) {
+        selectedItem = selection;
+        if (selection != null) {
+            selectionModel.setSelected(selection, !selectionModel.isSelected(selection));
+//        } else {
+//            selectionModel.clear();
+        }
+        ExplorerTreeSelectEvent.fire(ExplorerTickBoxTree.this, selection, false, false);
     }
 
     public ExplorerData getSelectedItem() {

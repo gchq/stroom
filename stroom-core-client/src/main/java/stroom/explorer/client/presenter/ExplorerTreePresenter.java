@@ -27,8 +27,6 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.event.*;
@@ -67,10 +65,9 @@ public class ExplorerTreePresenter
 
         explorerTree = new ExplorerTree(dispatcher) {
             @Override
-            protected void select(ExplorerData selection, boolean doubleClick) {
-                super.select(selection, doubleClick);
+            protected void doSelect(final ExplorerData selection, final boolean doubleClick, final boolean rightClick) {
+                super.doSelect(selection, doubleClick, rightClick);
                 getView().setDeleteEnabled(selection != null);
-
             }
         };
 
@@ -88,26 +85,11 @@ public class ExplorerTreePresenter
         // Register for highlight events.
         registerHandler(getEventBus().addHandler(HighlightExplorerItemEvent.getType(), this));
 
-        registerHandler(typeFilterPresenter.addDataSelectionHandler(new DataSelectionHandler<TypeFilterPresenter>() {
-            @Override
-            public void onSelection(final DataSelectionEvent<TypeFilterPresenter> event) {
-                explorerTree.setIncludedTypeSet(typeFilterPresenter.getIncludedTypes());
-            }
-        }));
+        registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(typeFilterPresenter.getIncludedTypes())));
 
         // Fire events from the explorer tree globally.
-        registerHandler(explorerTree.addSelectionHandler(new ExplorerTreeSelectEvent.Handler() {
-            @Override
-            public void onSelect(ExplorerTreeSelectEvent event) {
-                getEventBus().fireEvent(event);
-            }
-        }));
-        registerHandler(explorerTree.addContextMenuHandler(new ShowExplorerMenuEvent.Handler() {
-            @Override
-            public void onShow(ShowExplorerMenuEvent event) {
-                getEventBus().fireEvent(event);
-            }
-        }));
+        registerHandler(explorerTree.addSelectionHandler(event -> getEventBus().fireEvent(event)));
+        registerHandler(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
     }
 
 //    private void select(final ExplorerData selection) {
@@ -174,9 +156,9 @@ public class ExplorerTreePresenter
 
     @Override
     protected void revealInParent() {
-        final ExplorerData explorerData = explorerTree.getSelectionModel().getSelectedObject();
+        final ExplorerData explorerData = explorerTree.getSelectedItem();
         if (explorerData != null) {
-            explorerTree.getSelectionModel().setSelected(explorerData, false);
+            explorerTree.setSelectedItem(explorerData);
         }
 
         explorerTree.getTreeModel().refresh();
@@ -185,7 +167,7 @@ public class ExplorerTreePresenter
 
     @Override
     public void onHighlight(final HighlightExplorerItemEvent event) {
-        explorerTree.getSelectionModel().setSelected(event.getItem(), true);
+        explorerTree.setSelectedItem(event.getItem());
         explorerTree.getTreeModel().setEnsureVisible(event.getItem());
         explorerTree.getTreeModel().refresh();
     }

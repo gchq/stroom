@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.explorer.client.presenter;
 
 import com.google.gwt.core.client.GWT;
@@ -11,7 +27,6 @@ import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -29,7 +44,7 @@ import stroom.widget.util.client.MySingleSelectionModel;
 import java.util.List;
 import java.util.Set;
 
-public class ExplorerTree extends Composite {
+public class ExplorerTree extends AbstractExporerTree {
     private final ExplorerTreeModel treeModel;
     private final MySingleSelectionModel<ExplorerData> selectionModel;
     private final CellTable<ExplorerData> cellTable;
@@ -38,19 +53,19 @@ public class ExplorerTree extends Composite {
     private String expanderClassName;
     ExplorerData selectedItem;
 
-    public ExplorerTree(final ClientDispatchAsync dispatcher) {
+    ExplorerTree(final ClientDispatchAsync dispatcher) {
         final SpinnerSmall spinnerSmall = new SpinnerSmall();
         spinnerSmall.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
         spinnerSmall.getElement().getStyle().setRight(5, Style.Unit.PX);
         spinnerSmall.getElement().getStyle().setTop(5, Style.Unit.PX);
 
-        selectionModel = new MySingleSelectionModel<ExplorerData>();
+        selectionModel = new MySingleSelectionModel<>();
 
         final ExplorerCell explorerCell = new ExplorerCell();
         expanderClassName = explorerCell.getExpanderClassName();
 
         final ExplorerTreeResources resources = GWT.create(ExplorerTreeResources.class);
-        cellTable = new CellTable<ExplorerData>(Integer.MAX_VALUE, resources);
+        cellTable = new CellTable<>(Integer.MAX_VALUE, resources);
         cellTable.setWidth("100%");
         cellTable.setKeyboardSelectionHandler(new MyKeyboardSelectionHandler(cellTable));
         cellTable.addColumn(new Column<ExplorerData, ExplorerData>(explorerCell) {
@@ -78,7 +93,7 @@ public class ExplorerTree extends Composite {
 
         cellTable.getRowContainer().getStyle().setCursor(Style.Cursor.POINTER);
 
-        treeModel = new ExplorerTreeModel(cellTable, spinnerSmall, dispatcher);
+        treeModel = new ExplorerTreeModel(this, spinnerSmall, dispatcher);
 
         final ScrollPanel scrollPanel = new ScrollPanel();
         scrollPanel.setWidth("100%");
@@ -95,16 +110,10 @@ public class ExplorerTree extends Composite {
         initWidget(flowPanel);
     }
 
-    protected void select(final ExplorerData selection) {
-        final boolean doubleClick = doubleClickTest.test(selection);
-        select(selection, doubleClick);
-    }
-
-    protected void select(final ExplorerData selection, final boolean doubleClick) {
-        selectedItem = selection;
-        if (selection != null) {
-            ExplorerTreeSelectEvent.fire(ExplorerTree.this, selection, doubleClick, false);
-        }
+    @Override
+    void setData(final List<ExplorerData> rows) {
+        cellTable.setRowData(0, rows);
+        cellTable.setRowCount(rows.size(), true);
     }
 
     public void setIncludedTypeSet(final Set<String> types) {
@@ -140,7 +149,6 @@ public class ExplorerTree extends Composite {
         public void onCellPreview(CellPreviewEvent<ExplorerData> event) {
             final NativeEvent nativeEvent = event.getNativeEvent();
             final String type = nativeEvent.getType();
-            final ExplorerData selected = selectionModel.getSelectedObject();
 
             if ("mousedown".equals(type)) {
                 final int x = nativeEvent.getClientX();
@@ -153,7 +161,7 @@ public class ExplorerTree extends Composite {
                     if ((button & NativeEvent.BUTTON_RIGHT) != 0) {
 //                        selectionModel.setSelected(selectedItem, true);
                         cellTable.setKeyboardSelectedRow(event.getIndex());
-                        ExplorerTreeSelectEvent.fire(ExplorerTree.this, selectedItem, false, true);
+                        doSelect(selectedItem, false, true);
                         ShowExplorerMenuEvent.fire(ExplorerTree.this, selectedItem, x, y);
 //                        super.onCellPreview(event);
                     }
@@ -168,7 +176,7 @@ public class ExplorerTree extends Composite {
                 if (selectedItem != null) {
                     if ((button & NativeEvent.BUTTON_LEFT) != 0) {
                         if (HasNodeState.NodeState.LEAF.equals(selectedItem.getNodeState())) {
-                            select(selectedItem);
+                            setSelectedItemWithDoubleClickTest(selectedItem);
                             super.onCellPreview(event);
                         } else {
                             final Element element = event.getNativeEvent().getEventTarget().cast();
@@ -178,13 +186,13 @@ public class ExplorerTree extends Composite {
 //                                if (HasNodeState.NodeState.OPEN.equals(selectedItem.getNodeState())) {
 //                                    select(selectedItem);
 //                                }
-                                select(selectedItem, false);
+                                setSelectedItem(selectedItem);
                                 super.onCellPreview(event);
 
                                 treeModel.toggleOpenState(selectedItem);
                                 refresh();
                             } else {
-                                select(selectedItem);
+                                setSelectedItemWithDoubleClickTest(selectedItem);
                                 super.onCellPreview(event);
                             }
                         }
@@ -216,13 +224,16 @@ public class ExplorerTree extends Composite {
                 moveSelection(+1);
                 break;
             case KeyCodes.KEY_ENTER:
-                selectCurrent();
+                final ExplorerData selected = selectionModel.getSelectedObject();
+                if (selected != null) {
+                    setSelectedItemWithDoubleClickTest(selected);
+                }
                 break;
         }
     }
 
     private void setOpenState(boolean open) {
-        final ExplorerData selected = selectionModel.getSelectedObject();
+        final ExplorerData selected = selectedItem;
         if (selected != null) {
             if (open) {
                 if (!treeModel.getOpenItems().contains(selected)) {
@@ -239,7 +250,7 @@ public class ExplorerTree extends Composite {
     }
 
     private void moveSelection(int plus) {
-        ExplorerData currentSelection = selectionModel.getSelectedObject();
+        ExplorerData currentSelection = selectedItem;
         if (currentSelection == null) {
             selectFirstItem();
         } else {
@@ -249,8 +260,7 @@ public class ExplorerTree extends Composite {
             } else {
                 final ExplorerData newSelection = cellTable.getVisibleItem(index + plus);
                 if (newSelection != null) {
-                    selectionModel.setSelected(newSelection, true);
-                    selectedItem = newSelection;
+                    setSelectedItem(newSelection);
                 } else {
                     selectFirstItem();
                 }
@@ -260,10 +270,7 @@ public class ExplorerTree extends Composite {
 
     private void selectFirstItem() {
         final ExplorerData firstItem = cellTable.getVisibleItem(0);
-        if (firstItem != null) {
-            selectionModel.setSelected(firstItem, true);
-        }
-        selectedItem = firstItem;
+        setSelectedItem(firstItem);
     }
 
     private int getItemIndex(ExplorerData item) {
@@ -278,12 +285,34 @@ public class ExplorerTree extends Composite {
 
         return -1;
     }
+//
+//    private void selectCurrent() {
+//
+//    }
 
-    private void selectCurrent() {
-        final ExplorerData selected = selectionModel.getSelectedObject();
-        if (selected != null) {
-            select(selected);
+
+    @Override
+    protected void setInitialSelectedItem(final ExplorerData selection) {
+        setSelectedItem(selection);
+    }
+
+    protected void setSelectedItem(final ExplorerData selection) {
+        doSelect(selection, false, false);
+    }
+
+    private void setSelectedItemWithDoubleClickTest(final ExplorerData selection) {
+        final boolean doubleClick = doubleClickTest.test(selection);
+        doSelect(selection, doubleClick, false);
+    }
+
+    protected void doSelect(final ExplorerData selection, final boolean doubleClick, final boolean rightClick) {
+        selectedItem = selection;
+        if (selection != null) {
+            selectionModel.setSelected(selection, true);
+        } else {
+            selectionModel.clear();
         }
+        ExplorerTreeSelectEvent.fire(ExplorerTree.this, selection, doubleClick, rightClick);
     }
 
     public ExplorerData getSelectedItem() {
@@ -294,9 +323,9 @@ public class ExplorerTree extends Composite {
         return treeModel;
     }
 
-    public MySingleSelectionModel<ExplorerData> getSelectionModel() {
-        return selectionModel;
-    }
+//    public MySingleSelectionModel<ExplorerData> getSelectionModel() {
+//        return selectionModel;
+//    }
 
     public HandlerRegistration addSelectionHandler(final ExplorerTreeSelectEvent.Handler handler) {
         return addHandler(handler, ExplorerTreeSelectEvent.getType());
