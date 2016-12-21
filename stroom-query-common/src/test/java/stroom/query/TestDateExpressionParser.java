@@ -70,7 +70,7 @@ public class TestDateExpressionParser {
 
     @Test
     public void testNow() {
-        Assert.assertEquals(ZonedDateTime.parse("2015-02-03T01:22:33.056Z"), dateExpressionParser.parse("nowEpochMilli()", nowEpochMilli));
+        Assert.assertEquals(ZonedDateTime.parse("2015-02-03T01:22:33.056Z"), dateExpressionParser.parse("now()", nowEpochMilli));
     }
 
     @Test
