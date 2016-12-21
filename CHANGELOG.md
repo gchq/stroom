@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.8] - 2016-12-21
+* Issue #64 : Fixed Hessian serialisation of 'now' which was specified as a ZonedDateTime which cannot be serialised. This field is now a long representing millseconds since epoch.
+
+* Issue #62 : Task termination button is now enabled.
+
+* Issue #60 : Fixed validation of stream attributes prior to data upload to prevent null pointer exception.
+
 ## [v5.0-beta.7] - 2016-12-14
 * Issue **#9** : Created a new implementation of the expression parser that improved expression tokenisation and deals with BODMAS rules properly.
 
@@ -61,7 +68,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Intial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.8...HEAD
+[v5.0-beta.8]: https://github.com/gchq/stroom/compare/v5.0-beta.7...v5.0-beta.8
 [v5.0-beta.7]: https://github.com/gchq/stroom/compare/v5.0-beta.6...v5.0-beta.7
 [v5.0-beta.6]: https://github.com/gchq/stroom/compare/v5.0-beta.5...v5.0-beta.6
 [v5.0-beta.5]: https://github.com/gchq/stroom/compare/v5.0-beta.4...v5.0-beta.5
