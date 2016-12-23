@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+* Issue #63 : Entity selection control now shows current entity name even if it has changed since referencing entity was last saved.
+
+* Issue #70 : You can now select multiple explorer rows with ctrl and shift key modifiers and perform bulk actions such as copy, move, rename and delete.
 
 ## [v5.0-beta.8] - 2016-12-21
 * Issue #64 : Fixed Hessian serialisation of 'now' which was specified as a ZonedDateTime which cannot be serialised. This field is now a long representing millseconds since epoch.
