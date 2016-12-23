@@ -64,7 +64,7 @@ public class CreateEntityPresenter
     public void onCreate(final ShowCreateEntityDialogEvent event) {
         entityType = event.getEntityType();
 
-        entityTreePresenter.getSelectionModel().clear();
+        entityTreePresenter.setSelectedItem(null);
 
 //        if (event.getCurrentParents() != null && event.getCurrentParents().size() > 0) {
 //            ExplorerData folder = null;
@@ -84,7 +84,7 @@ public class CreateEntityPresenter
 //            entityTreePresenter.reset(null, 1);
 //        }
 
-        entityTreePresenter.getSelectionModel().setSelected(event.getSelected(), true);
+        entityTreePresenter.setSelectedItem(event.getSelected());
         entityTreePresenter.getModel().reset();
         entityTreePresenter.getModel().setEnsureVisible(event.getSelected());
         entityTreePresenter.getModel().refresh();
@@ -133,7 +133,7 @@ public class CreateEntityPresenter
     }
 
     private DocRef getFolder() {
-        final ExplorerData selected = entityTreePresenter.getSelectionModel().getSelectedObject();
+        final ExplorerData selected = entityTreePresenter.getSelectedItem();
         if (selected != null && selected instanceof EntityData) {
             return ((EntityData) selected).getDocRef();
         }

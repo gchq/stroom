@@ -24,14 +24,9 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.shared.ExplorerData;
-import stroom.widget.util.client.MySingleSelectionModel;
 
 public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.EntityTreeView>
         implements EntityTreeUiHandlers {
-    public interface EntityTreeView extends View, HasUiHandlers<EntityTreeUiHandlers> {
-        void setCellTree(Widget cellTree);
-    }
-
     private final ExplorerTree explorerTree;
 
     @Inject
@@ -40,7 +35,7 @@ public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.E
         super(eventBus, view);
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(dispatcher);
+        explorerTree = new ExplorerTree(dispatcher, false);
 
         // Add views.
         view.setCellTree(explorerTree);
@@ -67,7 +62,15 @@ public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.E
         return explorerTree.getTreeModel();
     }
 
-    public MySingleSelectionModel<ExplorerData> getSelectionModel() {
-        return explorerTree.getSelectionModel();
+    public ExplorerData getSelectedItem() {
+        return explorerTree.getSelectionModel().getSelected();
+    }
+
+    public void setSelectedItem(final ExplorerData selection) {
+        explorerTree.getSelectionModel().setSelected(selection);
+    }
+
+    public interface EntityTreeView extends View, HasUiHandlers<EntityTreeUiHandlers> {
+        void setCellTree(Widget cellTree);
     }
 }

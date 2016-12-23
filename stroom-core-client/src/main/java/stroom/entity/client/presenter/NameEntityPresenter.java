@@ -16,24 +16,28 @@
 
 package stroom.entity.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
-import stroom.entity.client.event.RenameEntityEvent;
-import stroom.entity.client.event.ShowRenameEntityDialogEvent;
-import stroom.explorer.shared.EntityData;
-import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+import stroom.alert.client.event.AlertEvent;
+import stroom.entity.client.event.RenameEntityEvent;
+import stroom.entity.client.event.ShowRenameEntityDialogEvent;
+import stroom.explorer.shared.EntityData;
+import stroom.explorer.shared.ExplorerData;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import java.util.List;
 
 public class NameEntityPresenter extends MyPresenter<NameEntityView, NameEntityPresenter.RenameEntityProxy>
         implements ShowRenameEntityDialogEvent.Handler, PopupUiHandlers {
+    private List<ExplorerData> explorerDataList;
     private EntityData entity;
 
     @Inject
@@ -45,8 +49,25 @@ public class NameEntityPresenter extends MyPresenter<NameEntityView, NameEntityP
     @ProxyEvent
     @Override
     public void onRename(final ShowRenameEntityDialogEvent event) {
-        entity = event.getEntityItem();
-        forceReveal();
+        explorerDataList = event.getExplorerDataList();
+        renameNextEntity();
+    }
+
+    private void renameNextEntity() {
+        entity = getNextEntity();
+        if (entity != null) {
+            forceReveal();
+        }
+    }
+
+    private EntityData getNextEntity() {
+        while (explorerDataList.size() > 0) {
+            final ExplorerData explorerData = explorerDataList.remove(0);
+            if (explorerData instanceof EntityData) {
+                return (EntityData) explorerData;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -79,7 +100,8 @@ public class NameEntityPresenter extends MyPresenter<NameEntityView, NameEntityP
 
     @Override
     public void onHide(final boolean autoClose, final boolean ok) {
-        // Do nothing.
+        // If there are any more entities that are to be renamed then go through the whole process again.
+        renameNextEntity();
     }
 
     @ProxyCodeSplit

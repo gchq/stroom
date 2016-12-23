@@ -16,27 +16,17 @@
 
 package stroom.entity.client.event;
 
-import java.util.List;
-
-import stroom.explorer.shared.EntityData;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-
 import stroom.explorer.shared.ExplorerData;
 
 public class ShowCreateEntityDialogEvent extends GwtEvent<ShowCreateEntityDialogEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onCreate(final ShowCreateEntityDialogEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final ExplorerData selected;
     private final String entityType;
     private final String entityDisplayType;
     private final boolean allowNullFolder;
-
     private ShowCreateEntityDialogEvent(final ExplorerData selected, final String entityType, final String entityDisplayType, final boolean allowNullFolder) {
         this.selected = selected;
         this.entityType = entityType;
@@ -51,7 +41,7 @@ public class ShowCreateEntityDialogEvent extends GwtEvent<ShowCreateEntityDialog
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
@@ -80,5 +70,9 @@ public class ShowCreateEntityDialogEvent extends GwtEvent<ShowCreateEntityDialog
 
     public boolean isAllowNullFolder() {
         return allowNullFolder;
+    }
+
+    public interface Handler extends EventHandler {
+        void onCreate(final ShowCreateEntityDialogEvent event);
     }
 }
