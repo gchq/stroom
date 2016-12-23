@@ -80,7 +80,6 @@ public class ExplorerTree extends AbstractExporerTree {
         cellTable.setSelectionModel(selectionModel);
 
         cellTable.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
-//        cellTable.sinkEvents(Event.ONKEYDOWN);
 
         cellTable.getRowContainer().getStyle().setCursor(Style.Cursor.POINTER);
 
@@ -261,6 +260,9 @@ public class ExplorerTree extends AbstractExporerTree {
             final String type = nativeEvent.getType();
 
             if ("mousedown".equals(type)) {
+                // We set focus here so that we can use the keyboard to navigate once we have focus.
+                cellTable.setFocus(true);
+
                 final int x = nativeEvent.getClientX();
                 final int y = nativeEvent.getClientY();
                 final int button = nativeEvent.getButton();
