@@ -77,8 +77,8 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
     @Override
     public SearchResultCollector createCollector(final String sessionId, final String userName, final QueryKey queryKey,
             final SearchRequest searchRequest) {
-        // Create a current time object.
-        final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+        // Get the current time in millis since epoch.
+        final long nowEpochMilli = System.currentTimeMillis();
 
         // Get the search.
         final Search search = searchRequest.getSearch();
@@ -87,7 +87,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
         final Index index = indexService.loadByUuid(search.getDataSourceRef().getUuid());
 
         // Extract highlights.
-        final Set<String> highlights = getHighlights(index, search.getExpression(), now);
+        final Set<String> highlights = getHighlights(index, search.getExpression(), nowEpochMilli);
 
         // This is a new search so begin a new asynchronous search.
         final Node node = nodeCache.getDefaultNode();
@@ -98,7 +98,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
         // Create an asynchronous search task.
         final String searchName = "Search '" + queryKey.toString() + "'";
         final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(sessionId, userName, searchName, search, node,
-                SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorMap.getMap(), now);
+                SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorMap.getMap(), nowEpochMilli);
 
         // Create a handler for search results.
         final SearchResultHandler resultHandler = new SearchResultHandler(coprocessorMap);
@@ -117,7 +117,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
      * Compiles the query, extracts terms and then returns them for use in hit
      * highlighting.
      */
-    private Set<String> getHighlights(final Index index, final ExpressionOperator expression, final ZonedDateTime now) {
+    private Set<String> getHighlights(final Index index, final ExpressionOperator expression, final long nowEpochMilli) {
         Set<String> highlights = Collections.emptySet();
 
         try {
@@ -125,7 +125,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
             final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, now);
+                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, nowEpochMilli);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
                     .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expression);
 

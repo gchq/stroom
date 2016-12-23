@@ -28,10 +28,10 @@ import java.util.Map.Entry;
 public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerData> implements HasSelection<ExplorerData> {
     // Ensure one value per key
     private final HashMap<ExplorerData, TickBoxState> stateMap = new HashMap<>();
-    private final Set<ExplorerData> stateChanges = new HashSet<ExplorerData>();
+    private final Set<ExplorerData> stateChanges = new HashSet<>();
 
     private TreeStructure treeStructure;
-    private Map<ExplorerData, Set<ExplorerData>> descendants = new HashMap<ExplorerData, Set<ExplorerData>>();
+    private Map<ExplorerData, Set<ExplorerData>> descendants = new HashMap<>();
 
     public TickBoxSelectionModel() {
         super(null);
@@ -43,7 +43,7 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerData> 
      * @return the set of selected items
      */
     public Set<ExplorerData> getSelectedSet() {
-        final Set<ExplorerData> selected = new HashSet<ExplorerData>();
+        final Set<ExplorerData> selected = new HashSet<>();
         for (final Entry<ExplorerData, TickBoxState> entry : stateMap.entrySet()) {
             if (TickBoxState.TICK.equals(entry.getValue())) {
                 selected.add(entry.getKey());
@@ -103,7 +103,7 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerData> 
         if (treeStructure != null && ancestor != null) {
             Set<ExplorerData> set = descendants.get(ancestor);
             if (set == null) {
-                set = new HashSet<ExplorerData>();
+                set = new HashSet<>();
                 descendants.put(ancestor, set);
             }
             set.add(descendant);

@@ -133,7 +133,12 @@ class ClusterCallServiceRemote implements ClusterCallService {
                 proxyMap.put(targetNode, api);
             }
 
-            result = api.call(sourceNode, targetNode, beanName, methodName, parameterTypes, args);
+            try {
+                result = api.call(sourceNode, targetNode, beanName, methodName, parameterTypes, args);
+            } catch (final Throwable t) {
+                LOGGER.error(t.getMessage(), t);
+                throw t;
+            }
         }
 
         if (LOGGER.isDebugEnabled()) {
