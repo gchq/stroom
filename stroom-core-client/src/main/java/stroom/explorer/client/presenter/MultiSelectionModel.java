@@ -19,12 +19,15 @@ package stroom.explorer.client.presenter;
 import com.google.gwt.user.cellview.client.HasSelection;
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
 
-import java.util.Collections;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class MultiSelectionModel<T> extends AbstractSelectionModel<T> implements HasSelection<T> {
-    private final Set<T> selectedItems = new HashSet<>();
+    private final Deque<T> selectedItems = new ArrayDeque<>();
     private final Set<T> changes = new HashSet<>();
 
     public MultiSelectionModel() {
@@ -32,12 +35,12 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> implements
     }
 
     /**
-     * Get the set of selected items.
+     * Get the list of selected items.
      *
-     * @return the set of selected items
+     * @return the list of selected items
      */
-    public Set<T> getSelectedSet() {
-        return Collections.unmodifiableSet(selectedItems);
+    public List<T> getSelectedItems() {
+        return new ArrayList<>(selectedItems);
     }
 
     @Override
@@ -47,21 +50,49 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> implements
 
     @Override
     public void setSelected(final T item, final boolean selected) {
-        final boolean currentState = isSelected(item);
-        if (currentState != selected) {
-            changes.add(item);
+        if (item != null) {
+            final boolean currentlySelected = isSelected(item);
+            selectedItems.remove(item);
             if (selected) {
-                selectedItems.add(item);
-            } else {
-                selectedItems.remove(item);
+                selectedItems.addFirst(item);
             }
-            fireSelectionChangeEvent();
+            if (currentlySelected != selected) {
+                changes.add(item);
+                fireSelectionChangeEvent();
+            }
         }
     }
 
     @Override
     public boolean hasSelectionChanged(final T item) {
         return changes.remove(item);
+    }
+
+    public T getSelected() {
+        return selectedItems.peekFirst();
+    }
+
+    public void setSelected(final T item) {
+        if (item == null) {
+            clear();
+
+        } else {
+            final boolean currentlySelected = isSelected(item);
+            if (!currentlySelected || selectedItems.size() != 1) {
+                // Mark changes.
+                if (currentlySelected) {
+                    selectedItems.stream().filter(t -> !t.equals(item)).forEach(changes::add);
+                } else {
+                    changes.addAll(selectedItems);
+                    changes.add(item);
+                }
+
+                selectedItems.clear();
+                selectedItems.add(item);
+
+                fireSelectionChangeEvent();
+            }
+        }
     }
 
     public void clear() {

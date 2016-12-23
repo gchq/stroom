@@ -17,23 +17,25 @@
 package stroom.explorer.shared;
 
 import stroom.dispatch.shared.Action;
-import stroom.entity.shared.DocRef;
+import stroom.util.shared.SharedMap;
 
-public class FetchExplorerPermissionsAction extends Action<ExplorerPermissions> {
+import java.util.List;
+
+public class FetchExplorerPermissionsAction extends Action<SharedMap<ExplorerData, ExplorerPermissions>> {
     private static final long serialVersionUID = 6474393620176001033L;
 
-    private DocRef docRef;
+    private List<ExplorerData> explorerDataList;
 
     public FetchExplorerPermissionsAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchExplorerPermissionsAction(final DocRef docRef) {
-        this.docRef = docRef;
+    public FetchExplorerPermissionsAction(final List<ExplorerData> explorerDataList) {
+        this.explorerDataList = explorerDataList;
     }
 
-    public DocRef getDocRef() {
-        return docRef;
+    public List<ExplorerData> getExplorerDataList() {
+        return explorerDataList;
     }
 
     @Override

@@ -19,7 +19,13 @@ package stroom.explorer.server;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.FolderService;
-import stroom.explorer.shared.*;
+import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.EntityData;
+import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.explorer.shared.FetchExplorerDataResult;
+import stroom.explorer.shared.FindExplorerDataCriteria;
 import stroom.folder.server.FolderRootExplorerDataProvider;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -27,7 +33,12 @@ import stroom.util.shared.HasNodeState;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Component
 @Scope(StroomScope.THREAD)
@@ -232,16 +243,13 @@ class ExplorerServiceImpl implements ExplorerService {
         }
 
         // Sort types by priority.
-        Collections.sort(documentTypes, new Comparator<DocumentType>() {
-            @Override
-            public int compare(final DocumentType o1, final DocumentType o2) {
-                final int comparison = Integer.compare(o1.getPriority(), o2.getPriority());
-                if (comparison != 0) {
-                    return comparison;
-                }
-
-                return o1.getType().compareTo(o2.getType());
+        Collections.sort(documentTypes, (o1, o2) -> {
+            final int comparison = Integer.compare(o1.getPriority(), o2.getPriority());
+            if (comparison != 0) {
+                return comparison;
             }
+
+            return o1.getType().compareTo(o2.getType());
         });
 
         return documentTypes;

@@ -16,35 +16,28 @@
 
 package stroom.entity.client.event;
 
-import java.util.List;
-
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-
-import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 
+import java.util.List;
+
 public class ShowMoveEntityDialogEvent extends GwtEvent<ShowMoveEntityDialogEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onMove(final ShowMoveEntityDialogEvent event);
-    }
-
     private static Type<Handler> TYPE;
+    private final List<ExplorerData> explorerDataList;
 
-    private final ExplorerData selected;
-
-    private ShowMoveEntityDialogEvent(final ExplorerData selected) {
-        this.selected = selected;
+    private ShowMoveEntityDialogEvent(final List<ExplorerData> explorerDataList) {
+        this.explorerDataList = explorerDataList;
     }
 
-    public static void fire(final HasHandlers handlers, final ExplorerData selected) {
-        handlers.fireEvent(new ShowMoveEntityDialogEvent(selected));
+    public static void fire(final HasHandlers handlers, final List<ExplorerData> explorerDataList) {
+        handlers.fireEvent(new ShowMoveEntityDialogEvent(explorerDataList));
     }
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
@@ -59,7 +52,11 @@ public class ShowMoveEntityDialogEvent extends GwtEvent<ShowMoveEntityDialogEven
         handler.onMove(this);
     }
 
-    public ExplorerData getSelected() {
-        return selected;
+    public List<ExplorerData> getExplorerDataList() {
+        return explorerDataList;
+    }
+
+    public interface Handler extends EventHandler {
+        void onMove(final ShowMoveEntityDialogEvent event);
     }
 }

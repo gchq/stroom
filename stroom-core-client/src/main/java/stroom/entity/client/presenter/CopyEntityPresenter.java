@@ -16,6 +16,14 @@
 
 package stroom.entity.client.presenter;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.entity.client.event.CopyEntityEvent;
 import stroom.entity.client.event.ShowCopyEntityDialogEvent;
@@ -30,20 +38,15 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenter;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
+
+import java.util.List;
 
 public class CopyEntityPresenter
         extends MyPresenter<CopyEntityPresenter.CopyEntityView, CopyEntityPresenter.CopyEntityProxy>
         implements ShowCopyEntityDialogEvent.Handler, PopupUiHandlers {
     private final EntityTreePresenter entityTreePresenter;
-    private ExplorerData entity;
+    private List<ExplorerData> explorerDataList;
+    private EntityData entity;
 
     @Inject
     public CopyEntityPresenter(final EventBus eventBus, final CopyEntityView view, final CopyEntityProxy proxy,
@@ -61,9 +64,14 @@ public class CopyEntityPresenter
     @ProxyEvent
     @Override
     public void onCopy(final ShowCopyEntityDialogEvent event) {
-        this.entity = event.getSelected();
+        explorerDataList = event.getExplorerDataList();
+        copyNextEntity();
+    }
 
-        entityTreePresenter.setSelectedItem(null);
+    private void copyNextEntity() {
+        entity = getNextEntity();
+        if (entity != null) {
+            entityTreePresenter.setSelectedItem(null);
 
 //        if (event.getCurrentParents() != null && event.getCurrentParents().size() > 0) {
 //            ExplorerData folder = null;
@@ -83,12 +91,23 @@ public class CopyEntityPresenter
 //            entityTreePresenter.reset(null, 1);
 //        }
 
-        entityTreePresenter.setSelectedItem(event.getSelected());
-        entityTreePresenter.getModel().reset();
-        entityTreePresenter.getModel().setEnsureVisible(event.getSelected());
-        entityTreePresenter.getModel().refresh();
+            entityTreePresenter.setSelectedItem(entity);
+            entityTreePresenter.getModel().reset();
+            entityTreePresenter.getModel().setEnsureVisible(entity);
+            entityTreePresenter.getModel().refresh();
 
-        forceReveal();
+            forceReveal();
+        }
+    }
+
+    private EntityData getNextEntity() {
+        while (explorerDataList.size() > 0) {
+            final ExplorerData explorerData = explorerDataList.remove(0);
+            if (explorerData instanceof EntityData) {
+                return (EntityData) explorerData;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -117,7 +136,7 @@ public class CopyEntityPresenter
                 AlertEvent.fireWarn(CopyEntityPresenter.this,
                         "You must provide a name for the new " + entity.getType().toLowerCase(), null);
             } else {
-                CopyEntityEvent.fire(CopyEntityPresenter.this, CopyEntityPresenter.this, ((EntityData) entity).getDocRef(),
+                CopyEntityEvent.fire(CopyEntityPresenter.this, CopyEntityPresenter.this, entity.getDocRef(),
                         folder, entityName);
             }
             // }
@@ -128,7 +147,8 @@ public class CopyEntityPresenter
 
     @Override
     public void onHide(final boolean autoClose, final boolean ok) {
-        // Do nothing.
+        // If there are any more entities that are to be copied then go through the whole process again.
+        copyNextEntity();
     }
 
     private DocRef getFolder() {

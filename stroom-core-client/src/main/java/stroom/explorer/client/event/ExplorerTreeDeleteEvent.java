@@ -20,28 +20,19 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-import stroom.explorer.shared.ExplorerData;
-
 public class ExplorerTreeDeleteEvent extends GwtEvent<ExplorerTreeDeleteEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onDelete(ExplorerTreeDeleteEvent event);
-    }
-
     private static Type<Handler> TYPE;
 
-    private final ExplorerData item;
-
-    private ExplorerTreeDeleteEvent(final ExplorerData item) {
-        this.item = item;
+    private ExplorerTreeDeleteEvent() {
     }
 
-    public static void fire(final HasHandlers source, final ExplorerData selectedItem) {
-        source.fireEvent(new ExplorerTreeDeleteEvent(selectedItem));
+    public static void fire(final HasHandlers source) {
+        source.fireEvent(new ExplorerTreeDeleteEvent());
     }
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
@@ -56,7 +47,7 @@ public class ExplorerTreeDeleteEvent extends GwtEvent<ExplorerTreeDeleteEvent.Ha
         handler.onDelete(this);
     }
 
-    public ExplorerData getItem() {
-        return item;
+    public interface Handler extends EventHandler {
+        void onDelete(ExplorerTreeDeleteEvent event);
     }
 }

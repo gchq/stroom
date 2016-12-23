@@ -25,6 +25,7 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.Folder;
+import stroom.explorer.client.event.SelectionType;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
@@ -47,8 +48,8 @@ public class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     }
 
     private void setSelectedTreeItem(final ExplorerData selectedItem,
-                                     final boolean doubleClick, final boolean fireEvents) {
-        if (doubleClick) {
+                                     final SelectionType selectionType, final boolean fireEvents) {
+        if (selectionType.isDoubleSelect()) {
             if (selectedItem == null) {
                 DataSelectionEvent.fire(this, null, true);
                 HidePopupEvent.fire(this, this);
@@ -141,6 +142,14 @@ public class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         }
     }
 
+    private EntityData getSelectedEntityData() {
+        final ExplorerData selected = explorerTree.getSelectionModel().getSelected();
+        if (selected != null && selected instanceof EntityData) {
+            return (EntityData) selected;
+        }
+        return null;
+    }
+
     private void setSelectedEntityData(final EntityData entityData) {
         if (entityData != null) {
             explorerTree.setSelectedItem(entityData);
@@ -152,18 +161,6 @@ public class ExplorerDropDownTreePresenter extends DropDownTreePresenter
             explorerTree.setSelectedItem(null);
             explorerTree.getTreeModel().refresh();
         }
-    }
-
-    private EntityData getSelectedEntityData() {
-        if (explorerTree.getSelectedItem() == null) {
-            return null;
-        }
-
-        if (explorerTree.getSelectedItem() instanceof EntityData) {
-            return (EntityData) explorerTree.getSelectedItem();
-        }
-
-        return null;
     }
 
     public void setAllowFolderSelection(final boolean allowFolderSelection) {
@@ -178,7 +175,7 @@ public class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     @Override
     public void onHideRequest(final boolean autoClose, final boolean ok) {
         if (ok) {
-            DataSelectionEvent.fire(this, explorerTree.getSelectedItem(), false);
+            DataSelectionEvent.fire(this, explorerTree.getSelectionModel().getSelected(), false);
         }
         super.onHideRequest(autoClose, ok);
     }
@@ -187,20 +184,20 @@ public class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
 
         public ExtendedExplorerTree(final ExplorerDropDownTreePresenter explorerDropDownTreePresenter, final ClientDispatchAsync dispatcher) {
-            super(dispatcher);
+            super(dispatcher, false);
             this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
         }
 
         @Override
         protected void setInitialSelectedItem(final ExplorerData selection) {
             super.setInitialSelectedItem(selection);
-            explorerDropDownTreePresenter.setSelectedTreeItem(selection, false, true);
+            explorerDropDownTreePresenter.setSelectedTreeItem(selection, new SelectionType(false, false, false), true);
         }
 
         @Override
-        protected void doSelect(final ExplorerData selection, final boolean doubleClick, final boolean rightClick) {
-            super.doSelect(selection, doubleClick, rightClick);
-            explorerDropDownTreePresenter.setSelectedTreeItem(selection, doubleClick, false);
+        protected void doSelect(final ExplorerData selection, final SelectionType selectionType) {
+            super.doSelect(selection, selectionType);
+            explorerDropDownTreePresenter.setSelectedTreeItem(selection, selectionType, false);
         }
     }
 }
