@@ -17,6 +17,7 @@
 package stroom.search.server.shard;
 
 import org.apache.lucene.search.Query;
+import org.apache.lucene.util.Version;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.search.server.ClusterSearchTask;
 import stroom.task.server.ThreadPoolImpl;
@@ -29,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class IndexShardSearchTask extends ServerTask<VoidResult> {
     public static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stroom Search Index Shard", 5, 0, Integer.MAX_VALUE);
     private final ClusterSearchTask clusterSearchTask;
-    private final Query query;
+    private final IndexShardQueryFactory queryFactory;
     private final long indexShardId;
     private final String[] fieldNames;
     private final ResultReceiver resultReceiver;
@@ -38,12 +39,12 @@ public class IndexShardSearchTask extends ServerTask<VoidResult> {
     private int shardNumber;
     private int shardTotal;
 
-    public IndexShardSearchTask(final ClusterSearchTask clusterSearchTask, final Query query,
+    public IndexShardSearchTask(final ClusterSearchTask clusterSearchTask, final IndexShardQueryFactory queryFactory,
                                 final long indexShardId, final String[] fieldNames, final ResultReceiver resultReceiver,
                                 final ErrorReceiver errorReceiver, final AtomicLong hitCount) {
         super(clusterSearchTask);
         this.clusterSearchTask = clusterSearchTask;
-        this.query = query;
+        this.queryFactory = queryFactory;
         this.indexShardId = indexShardId;
         this.fieldNames = fieldNames;
         this.resultReceiver = resultReceiver;
@@ -55,8 +56,8 @@ public class IndexShardSearchTask extends ServerTask<VoidResult> {
         return clusterSearchTask;
     }
 
-    public Query getQuery() {
-        return query;
+    public IndexShardQueryFactory getQueryFactory() {
+        return queryFactory;
     }
 
     public long getIndexShardId() {
@@ -98,6 +99,10 @@ public class IndexShardSearchTask extends ServerTask<VoidResult> {
     @Override
     public ThreadPool getThreadPool() {
         return THREAD_POOL;
+    }
+
+    public interface IndexShardQueryFactory {
+        Query getQuery(Version luceneVersion);
     }
 
     public interface ResultReceiver {

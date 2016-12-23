@@ -43,7 +43,6 @@ import stroom.query.shared.IndexField.AnalyzerType;
 import stroom.query.shared.IndexFieldType;
 import stroom.query.shared.IndexFieldsMap;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -366,16 +365,16 @@ public class SearchExpressionQueryBuilder {
     private Query getContains(final String fieldName, final String value, final IndexField indexField,
             final Version matchVersion, final Set<String> terms) {
         final Query query = getSubQuery(matchVersion, indexField, value, terms, false);
-        return modifyOccurance(query, Occur.MUST);
+        return modifyOccurrence(query, Occur.MUST);
     }
 
     private Query getIn(final String fieldName, final String value, final IndexField indexField,
             final Version matchVersion, final Set<String> terms) {
         final Query query = getSubQuery(matchVersion, indexField, value, terms, true);
-        return modifyOccurance(query, Occur.SHOULD);
+        return modifyOccurrence(query, Occur.SHOULD);
     }
 
-    private Query modifyOccurance(final Query query, final Occur occur) {
+    private Query modifyOccurrence(final Query query, final Occur occur) {
         // Change all occurs to must as we want to insist that all terms exist
         // in the matched documents.
         if (query instanceof BooleanQuery) {
@@ -532,7 +531,7 @@ public class SearchExpressionQueryBuilder {
 
     private long getDate(final String fieldName, final String value) {
         try {
-            return new DateExpressionParser().parse(value, now).toInstant().toEpochMilli();
+            return new DateExpressionParser().parse(value, nowEpochMilli).toInstant().toEpochMilli();
         } catch (final Exception e) {
             throw new SearchException("Expected a standard date value for field \"" + fieldName
                     + "\" but was given string \"" + value + "\"");

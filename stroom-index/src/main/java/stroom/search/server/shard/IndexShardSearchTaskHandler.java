@@ -21,7 +21,9 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.util.Version;
 import org.springframework.context.annotation.Scope;
+import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
 import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.errorhandler.TerminatedException;
@@ -122,8 +124,10 @@ public class IndexShardSearchTaskHandler extends AbstractTaskHandler<IndexShardS
     private void searchShard(final IndexShardSearchTask task, final IndexShardSearcher indexShardSearcher) {
         // Get the index shard that this searcher uses.
         final IndexShard indexShard = indexShardSearcher.getIndexShard();
+        // Get the Lucene version being used.
+        final Version luceneVersion = LuceneVersionUtil.getLuceneVersion(indexShard.getIndexVersion());
         // Get a query for this lucene version.
-        final Query query = task.getQuery();
+        final Query query = task.getQueryFactory().getQuery(luceneVersion);
 
         // If there is an error building the query then it will be null here.
         if (query != null) {

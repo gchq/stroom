@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.dictionary.shared.DictionaryService;
-import stroom.feed.shared.FeedService;
+import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.node.server.NodeCache;
@@ -42,8 +42,6 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Set;
 
@@ -60,20 +58,18 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
     private final DictionaryService dictionaryService;
     private final NodeCache nodeCache;
     private final TaskManager taskManager;
-    private final FeedService feedService;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
 
     private int maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
 
     @Inject
     public LuceneSearchDataSourceProvider(final IndexService indexService, final DictionaryService dictionaryService,
-            final NodeCache nodeCache, final TaskManager taskManager, final FeedService feedService,
-            final ClusterResultCollectorCache clusterResultCollectorCache) {
+                                          final NodeCache nodeCache, final TaskManager taskManager,
+                                          final ClusterResultCollectorCache clusterResultCollectorCache) {
         this.indexService = indexService;
         this.dictionaryService = dictionaryService;
         this.nodeCache = nodeCache;
         this.taskManager = taskManager;
-        this.feedService = feedService;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
     }
 
@@ -130,7 +126,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                     dictionaryService, indexFieldsMap, maxBooleanClauseCount, nowEpochMilli);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
-                    .buildQuery(expression);
+                    .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expression);
 
             highlights = query.getTerms();
         } catch (final Exception e) {
