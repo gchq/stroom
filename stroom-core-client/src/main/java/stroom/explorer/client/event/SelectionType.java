@@ -19,20 +19,44 @@ package stroom.explorer.client.event;
 public class SelectionType {
     private final boolean doubleSelect;
     private final boolean rightClick;
-    private final boolean multiSelect;
+    private final boolean allowMultiSelect;
+    private final boolean controlPressed;
+    private final boolean shiftPressed;
 
-    public SelectionType(final boolean doubleSelect, final boolean rightClick, final boolean multiSelect) {
+    public SelectionType(final boolean doubleSelect, final boolean rightClick) {
         this.doubleSelect = doubleSelect;
         this.rightClick = rightClick;
-        this.multiSelect = multiSelect;
+        this.allowMultiSelect = false;
+        this.controlPressed = false;
+        this.shiftPressed = false;
+    }
+
+    public SelectionType(final boolean doubleSelect, final boolean rightClick, final boolean allowMultiSelect, final boolean controlPressed, final boolean shiftPressed) {
+        this.doubleSelect = doubleSelect;
+        this.rightClick = rightClick;
+        this.allowMultiSelect = allowMultiSelect;
+        this.controlPressed = controlPressed;
+        this.shiftPressed = shiftPressed;
     }
 
     public boolean isDoubleSelect() {
         return doubleSelect;
     }
 
+    public boolean isAllowMultiSelect() {
+        return allowMultiSelect;
+    }
+
+    public boolean isControlPressed() {
+        return controlPressed;
+    }
+
+    public boolean isShiftPressed() {
+        return shiftPressed;
+    }
+
     public boolean isMultiSelect() {
-        return multiSelect;
+        return controlPressed || shiftPressed;
     }
 
     public boolean isRightClick() {

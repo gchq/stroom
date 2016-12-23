@@ -191,7 +191,7 @@ public class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         @Override
         protected void setInitialSelectedItem(final ExplorerData selection) {
             super.setInitialSelectedItem(selection);
-            explorerDropDownTreePresenter.setSelectedTreeItem(selection, new SelectionType(false, false, false), true);
+            explorerDropDownTreePresenter.setSelectedTreeItem(selection, new SelectionType(false, false), true);
         }
 
         @Override

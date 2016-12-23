@@ -52,6 +52,10 @@ public class ExplorerTree extends AbstractExporerTree {
     private final boolean allowMultiSelect;
     private String expanderClassName;
 
+    // Required for multiple selection using shift and control key modifiers.
+    private ExplorerData multiSelectStart;
+    private List<ExplorerData> rows;
+
     ExplorerTree(final ClientDispatchAsync dispatcher, final boolean allowMultiSelect) {
         this.allowMultiSelect = allowMultiSelect;
 
@@ -102,6 +106,7 @@ public class ExplorerTree extends AbstractExporerTree {
 
     @Override
     void setData(final List<ExplorerData> rows) {
+        this.rows = rows;
         cellTable.setRowData(0, rows);
         cellTable.setRowCount(rows.size(), true);
     }
@@ -137,7 +142,7 @@ public class ExplorerTree extends AbstractExporerTree {
                 final ExplorerData selected = selectionModel.getSelected();
                 if (selected != null) {
                     final boolean doubleClick = doubleClickTest.test(selected);
-                    doSelect(selected, new SelectionType(doubleClick, false, false));
+                    doSelect(selected, new SelectionType(doubleClick, false));
                 }
                 break;
         }
@@ -203,15 +208,39 @@ public class ExplorerTree extends AbstractExporerTree {
     }
 
     protected void setSelectedItem(final ExplorerData selection) {
-        doSelect(selection, new SelectionType(false, false, false));
+        doSelect(selection, new SelectionType(false, false));
     }
 
     protected void doSelect(final ExplorerData selection, final SelectionType selectionType) {
         if (selection == null) {
+            multiSelectStart = null;
             selectionModel.clear();
-        } else if (selectionType.isMultiSelect()) {
+        } else if (selectionType.isAllowMultiSelect() && selectionType.isShiftPressed() && multiSelectStart != null) {
+            // If control isn't pressed as well as shift then we are selecting a new range so clear.
+            if (!selectionType.isControlPressed()) {
+                selectionModel.clear();
+            }
+
+            final int index1 = rows.indexOf(multiSelectStart);
+            final int index2 = rows.indexOf(selection);
+            if (index1 != -1 && index2 != -1) {
+                final int start = Math.min(index1, index2);
+                final int end = Math.max(index1, index2);
+                for (int i = start; i <= end; i++) {
+                    selectionModel.setSelected(rows.get(i), true);
+                }
+            } else if (selectionType.isControlPressed()) {
+                multiSelectStart = selection;
+                selectionModel.setSelected(selection, !selectionModel.isSelected(selection));
+            } else {
+                multiSelectStart = selection;
+                selectionModel.setSelected(selection);
+            }
+        } else if (selectionType.isAllowMultiSelect() && selectionType.isControlPressed()) {
+            multiSelectStart = selection;
             selectionModel.setSelected(selection, !selectionModel.isSelected(selection));
         } else {
+            multiSelectStart = selection;
             selectionModel.setSelected(selection);
         }
 
@@ -271,16 +300,11 @@ public class ExplorerTree extends AbstractExporerTree {
                     cellTable.setKeyboardSelectedRow(event.getIndex());
                     ShowExplorerMenuEvent.fire(ExplorerTree.this, selectionModel, x, y);
                 } else if ((button & NativeEvent.BUTTON_LEFT) != 0) {
-                    boolean multiSelect = false;
-                    if (allowMultiSelect) {
-                        multiSelect = event.getNativeEvent().getCtrlKey();
-                    }
-
                     final ExplorerData selectedItem = event.getValue();
                     if (selectedItem != null && (button & NativeEvent.BUTTON_LEFT) != 0) {
                         if (HasNodeState.NodeState.LEAF.equals(selectedItem.getNodeState())) {
                             final boolean doubleClick = doubleClickTest.test(selectedItem);
-                            doSelect(selectedItem, new SelectionType(doubleClick, false, multiSelect));
+                            doSelect(selectedItem, new SelectionType(doubleClick, false, allowMultiSelect, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));
                             super.onCellPreview(event);
                         } else {
                             final Element element = event.getNativeEvent().getEventTarget().cast();
@@ -294,7 +318,7 @@ public class ExplorerTree extends AbstractExporerTree {
                                 refresh();
                             } else {
                                 final boolean doubleClick = doubleClickTest.test(selectedItem);
-                                doSelect(selectedItem, new SelectionType(doubleClick, false, multiSelect));
+                                doSelect(selectedItem, new SelectionType(doubleClick, false, allowMultiSelect, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));
                                 super.onCellPreview(event);
                             }
                         }
