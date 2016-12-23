@@ -8,16 +8,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
-* Issue #63 : Entity selection control now shows current entity name even if it has changed since referencing entity was last saved.
+* Issue **#63** : Entity selection control now shows current entity name even if it has changed since referencing entity was last saved.
 
-* Issue #70 : You can now select multiple explorer rows with ctrl and shift key modifiers and perform bulk actions such as copy, move, rename and delete.
+* Issue **#70** : You can now select multiple explorer rows with ctrl and shift key modifiers and perform bulk actions such as copy, move, rename and delete.
 
 ## [v5.0-beta.8] - 2016-12-21
-* Issue #64 : Fixed Hessian serialisation of 'now' which was specified as a ZonedDateTime which cannot be serialised. This field is now a long representing millseconds since epoch.
+* Issue **#64** : Fixed Hessian serialisation of 'now' which was specified as a ZonedDateTime which cannot be serialised. This field is now a long representing millseconds since epoch.
 
-* Issue #62 : Task termination button is now enabled.
+* Issue **#62** : Task termination button is now enabled.
 
-* Issue #60 : Fixed validation of stream attributes prior to data upload to prevent null pointer exception.
+* Issue **#60** : Fixed validation of stream attributes prior to data upload to prevent null pointer exception.
 
 ## [v5.0-beta.7] - 2016-12-14
 * Issue **#9** : Created a new implementation of the expression parser that improved expression tokenisation and deals with BODMAS rules properly.
@@ -46,7 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#5** : Replace() and Decode() dashboard table expression functions no longer ignore cells with null values.
 
-* Issue **#** : Dashboards are now able to query on open.
+* Issue **#7** : Dashboards are now able to query on open.
 
 * Issue **#8** : Dashboards are now able to re-query automatically at fixed intervals.
 
