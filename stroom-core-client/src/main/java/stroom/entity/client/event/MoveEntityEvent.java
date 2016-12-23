@@ -16,33 +16,35 @@
 
 package stroom.entity.client.event;
 
-import stroom.entity.shared.DocRef;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
+import stroom.explorer.shared.ExplorerData;
+
+import java.util.List;
 
 public class MoveEntityEvent extends GwtEvent<MoveEntityEvent.Handler> {
     private static Type<Handler> TYPE;
     private final PresenterWidget<?> presenter;
-    private final DocRef document;
-    private final DocRef folder;
+    private final ExplorerData folder;
+    private final List<ExplorerData> children;
 
-    private MoveEntityEvent(final PresenterWidget<?> presenter, final DocRef document,
-            final DocRef folder) {
+    private MoveEntityEvent(final PresenterWidget<?> presenter,
+                            final ExplorerData folder, final List<ExplorerData> children) {
         this.presenter = presenter;
-        this.document = document;
         this.folder = folder;
+        this.children = children;
     }
 
     public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenter,
-                            final DocRef document, final DocRef folder) {
-        handlers.fireEvent(new MoveEntityEvent(presenter, document, folder));
+                            final ExplorerData folder, final List<ExplorerData> children) {
+        handlers.fireEvent(new MoveEntityEvent(presenter, folder, children));
     }
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
@@ -61,12 +63,12 @@ public class MoveEntityEvent extends GwtEvent<MoveEntityEvent.Handler> {
         return presenter;
     }
 
-    public DocRef getDocument() {
-        return document;
+    public ExplorerData getFolder() {
+        return folder;
     }
 
-    public DocRef getFolder() {
-        return folder;
+    public List<ExplorerData> getChildren() {
+        return children;
     }
 
     public interface Handler extends EventHandler {
