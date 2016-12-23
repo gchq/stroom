@@ -204,6 +204,7 @@ public class ExplorerTree extends AbstractExporerTree {
 
     @Override
     protected void setInitialSelectedItem(final ExplorerData selection) {
+        selectionModel.clear();
         setSelectedItem(selection);
     }
 
