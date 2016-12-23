@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+* Issue **#75** : Upgraded to Lucene 5.
 
 ### Changed
 * Issue **#63** : Entity selection control now shows current entity name even if it has changed since referencing entity was last saved.
