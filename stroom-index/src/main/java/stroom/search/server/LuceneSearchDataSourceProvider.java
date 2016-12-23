@@ -21,7 +21,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.feed.shared.FeedService;
-import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.node.server.NodeCache;
@@ -30,7 +29,11 @@ import stroom.query.CoprocessorMap;
 import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
 import stroom.query.SearchResultHandler;
-import stroom.query.shared.*;
+import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.IndexFieldsMap;
+import stroom.query.shared.QueryKey;
+import stroom.query.shared.Search;
+import stroom.query.shared.SearchRequest;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
@@ -127,7 +130,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                     dictionaryService, indexFieldsMap, maxBooleanClauseCount, nowEpochMilli);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
-                    .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expression);
+                    .buildQuery(expression);
 
             highlights = query.getTerms();
         } catch (final Exception e) {

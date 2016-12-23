@@ -16,14 +16,15 @@
 
 package stroom.index.server.analyzer;
 
-import java.io.Reader;
-
 import org.apache.lucene.analysis.util.CharTokenizer;
-import org.apache.lucene.util.Version;
+import org.apache.lucene.util.AttributeFactory;
 
-public class KeywordTokenizer extends CharTokenizer {
-    public KeywordTokenizer(final Version matchVersion, final Reader in) {
-        super(matchVersion, in);
+class KeywordTokenizer extends CharTokenizer {
+    KeywordTokenizer() {
+    }
+
+    KeywordTokenizer(final AttributeFactory factory) {
+        super(factory);
     }
 
     @Override

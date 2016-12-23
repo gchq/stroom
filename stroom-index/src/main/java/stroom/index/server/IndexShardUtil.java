@@ -16,16 +16,17 @@
 
 package stroom.index.server;
 
-import java.io.File;
-
 import stroom.index.shared.IndexShard;
 import stroom.streamstore.server.fs.FileSystemUtil;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Not very OO but added here for GWT reasons.
  */
 public class IndexShardUtil {
-    public static File getIndexDir(IndexShard indexShard) {
+    public static Path getIndexPath(IndexShard indexShard) {
         StringBuilder builder = new StringBuilder();
         builder.append(indexShard.getVolume().getPath());
         builder.append(FileSystemUtil.SEPERATOR_CHAR);
@@ -36,6 +37,6 @@ public class IndexShardUtil {
         builder.append(indexShard.getPartition());
         builder.append(FileSystemUtil.SEPERATOR_CHAR);
         builder.append(indexShard.getId());
-        return new File(builder.toString());
+        return Paths.get(builder.toString());
     }
 }

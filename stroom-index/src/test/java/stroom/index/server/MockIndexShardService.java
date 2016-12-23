@@ -16,6 +16,8 @@
 
 package stroom.index.server;
 
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -29,11 +31,10 @@ import stroom.node.shared.Volume.VolumeType;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomSpringProfiles;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component("indexShardService")
@@ -52,9 +53,9 @@ public class MockIndexShardService extends MockEntityService<IndexShard, FindInd
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
         indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
         final IndexShard il = save(indexShard);
-        final File indexDir = IndexShardUtil.getIndexDir(indexShard);
-        if (indexDir.isDirectory()) {
-            FileSystemUtil.deleteContents(indexDir);
+        final Path indexPath = IndexShardUtil.getIndexPath(indexShard);
+        if (Files.isDirectory(indexPath)) {
+            FileSystemUtil.deleteContents(indexPath);
         }
         return il;
     }

@@ -16,20 +16,18 @@
 
 package stroom.search.server.shard;
 
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.SimpleCollector;
+import stroom.pipeline.server.errorhandler.TerminatedException;
+import stroom.util.logging.StroomLogger;
+import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.Monitor;
+
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import stroom.util.logging.StroomLogger;
-import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.Scorer;
-
-import stroom.pipeline.server.errorhandler.TerminatedException;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Monitor;
-
-public class IndexShardHitCollector extends Collector {
+public class IndexShardHitCollector extends SimpleCollector {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexShardHitCollector.class);
     private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
 
@@ -44,6 +42,12 @@ public class IndexShardHitCollector extends Collector {
         this.docIdStore = docIdStore;
         this.taskMonitor = taskMonitor;
         this.hitCount = hitCount;
+    }
+
+    @Override
+    protected void doSetNextReader(final LeafReaderContext context) throws IOException {
+        super.doSetNextReader(context);
+        docBase = context.docBase;
     }
 
     @Override
@@ -103,17 +107,7 @@ public class IndexShardHitCollector extends Collector {
     }
 
     @Override
-    public boolean acceptsDocsOutOfOrder() {
-        return true;
-    }
-
-    @Override
-    public void setNextReader(final AtomicReaderContext context) throws IOException {
-        this.docBase = context.docBase;
-    }
-
-    @Override
-    public void setScorer(final Scorer scorer) throws IOException {
-        // Not implemented as we don't score docs.
+    public boolean needsScores() {
+        return false;
     }
 }

@@ -23,6 +23,7 @@ import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
@@ -44,6 +45,7 @@ import stroom.query.shared.IndexFieldsMap;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -114,76 +116,78 @@ public class SearchExpressionQueryBuilder {
 
                             // Add negation to single items if required.
                             if (Occur.MUST_NOT.equals(occur)) {
-                                final BooleanQuery booleanQuery = new BooleanQuery();
-                                booleanQuery.add(child, occur);
-                                return booleanQuery;
+                                final Builder builder = new Builder();
+                                builder.add(child, occur);
+                                return builder.build();
                             }
 
                             return child;
 
                         } else {
-                            final BooleanQuery booleanQuery = new BooleanQuery();
+                            final Builder builder = new Builder();
                             for (final Query child : innerChildQueries) {
                                 if (Occur.MUST.equals(occur)) {
                                     // If this is an AND then we can collapse
                                     // down non OR child queries.
                                     if (child instanceof BooleanQuery) {
                                         final BooleanQuery innerBoolean = (BooleanQuery) child;
-                                        final BooleanQuery orTerms = new BooleanQuery();
-                                        for (final BooleanClause clause : innerBoolean.getClauses()) {
+                                        final Builder orTermsBuilder = new Builder();
+                                        for (final BooleanClause clause : innerBoolean.clauses()) {
                                             if (Occur.MUST_NOT.equals(clause.getOccur())) {
-                                                booleanQuery.add(clause.getQuery(), Occur.MUST_NOT);
+                                                builder.add(clause.getQuery(), Occur.MUST_NOT);
                                             } else if (Occur.MUST.equals(clause.getOccur())) {
-                                                booleanQuery.add(clause.getQuery(), Occur.MUST);
+                                                builder.add(clause.getQuery(), Occur.MUST);
                                             } else {
-                                                orTerms.add(clause);
+                                                orTermsBuilder.add(clause);
                                             }
                                         }
 
-                                        if (orTerms.getClauses().length > 0) {
-                                            if (orTerms.getClauses().length == 1) {
+                                        final BooleanQuery orTerms = orTermsBuilder.build();
+                                        if (orTerms.clauses().size() > 0) {
+                                            if (orTerms.clauses().size() == 1) {
                                                 // Collapse single term.
-                                                booleanQuery.add(orTerms.getClauses()[0].getQuery(), occur);
+                                                builder.add(orTerms.clauses().get(0).getQuery(), occur);
                                             } else {
-                                                booleanQuery.add(orTerms, occur);
+                                                builder.add(orTerms, occur);
                                             }
                                         }
 
                                     } else {
-                                        booleanQuery.add(child, occur);
+                                        builder.add(child, occur);
                                     }
                                 } else if (Occur.MUST_NOT.equals(occur)) {
                                     // Remove double negation.
                                     if (child instanceof BooleanQuery) {
                                         final BooleanQuery innerBoolean = (BooleanQuery) child;
-                                        final BooleanQuery orTerms = new BooleanQuery();
-                                        for (final BooleanClause clause : innerBoolean.getClauses()) {
+                                        final Builder orTermsBuilder = new Builder();
+                                        for (final BooleanClause clause : innerBoolean.clauses()) {
                                             if (Occur.MUST_NOT.equals(clause.getOccur())) {
-                                                booleanQuery.add(clause.getQuery(), Occur.MUST);
+                                                builder.add(clause.getQuery(), Occur.MUST);
                                             } else if (Occur.MUST.equals(clause.getOccur())) {
-                                                booleanQuery.add(clause.getQuery(), Occur.MUST_NOT);
+                                                builder.add(clause.getQuery(), Occur.MUST_NOT);
                                             } else {
-                                                orTerms.add(clause);
+                                                orTermsBuilder.add(clause);
                                             }
                                         }
 
-                                        if (orTerms.getClauses().length > 0) {
-                                            if (orTerms.getClauses().length == 1) {
+                                        final BooleanQuery orTerms = orTermsBuilder.build();
+                                        if (orTerms.clauses().size() > 0) {
+                                            if (orTerms.clauses().size() == 1) {
                                                 // Collapse single term.
-                                                booleanQuery.add(orTerms.getClauses()[0].getQuery(), occur);
+                                                builder.add(orTerms.clauses().get(0).getQuery(), occur);
                                             } else {
-                                                booleanQuery.add(orTerms, occur);
+                                                builder.add(orTerms, occur);
                                             }
                                         }
 
                                     } else {
-                                        booleanQuery.add(child, occur);
+                                        builder.add(child, occur);
                                     }
                                 } else {
-                                    booleanQuery.add(child, occur);
+                                    builder.add(child, occur);
                                 }
                             }
-                            return booleanQuery;
+                            return builder.build();
                         }
                     }
                 }
@@ -328,12 +332,12 @@ public class SearchExpressionQueryBuilder {
                 final long num = in[0];
                 return NumericRangeQuery.newLongRange(fieldName, num, num, true, true);
             } else {
-                final BooleanQuery inner = new BooleanQuery();
+                final Builder builder = new Builder();
                 for (final long num : in) {
                     final Query q = NumericRangeQuery.newLongRange(fieldName, num, num, true, true);
-                    inner.add(q, Occur.SHOULD);
+                    builder.add(q, Occur.SHOULD);
                 }
-                return inner;
+                return builder.build();
             }
         }
 
@@ -347,12 +351,12 @@ public class SearchExpressionQueryBuilder {
                 final long date = in[0];
                 return NumericRangeQuery.newLongRange(fieldName, date, date, true, true);
             } else {
-                final BooleanQuery inner = new BooleanQuery();
+                final Builder builder = new Builder();
                 for (final long date : in) {
                     final Query q = NumericRangeQuery.newLongRange(fieldName, date, date, true, true);
-                    inner.add(q, Occur.SHOULD);
+                    builder.add(q, Occur.SHOULD);
                 }
-                return inner;
+                return builder.build();
             }
         }
 
@@ -376,9 +380,11 @@ public class SearchExpressionQueryBuilder {
         // in the matched documents.
         if (query instanceof BooleanQuery) {
             final BooleanQuery bq = (BooleanQuery) query;
-            for (final BooleanClause bc : bq.getClauses()) {
-                bc.setOccur(occur);
+            final Builder builder = new Builder();
+            for (final BooleanClause bc : bq.clauses()) {
+                builder.add(bc.getQuery(), occur);
             }
+            return builder.build();
         }
         return query;
     }
@@ -387,7 +393,7 @@ public class SearchExpressionQueryBuilder {
             final IndexField indexField, final Version matchVersion, final Set<String> terms) {
         final String[] wordArr = loadWords(docRef);
         if (wordArr != null) {
-            final BooleanQuery dictionaryQuery = new BooleanQuery();
+            final Builder builder = new Builder();
             for (final String val : wordArr) {
                 Query query;
 
@@ -402,11 +408,11 @@ public class SearchExpressionQueryBuilder {
                 if (query != null) {
                     // Dictionary terms on one line must all exist in the
                     // matching documents so change to must.
-                    query = modifyOccurance(query, Occur.MUST);
-                    dictionaryQuery.add(query, Occur.SHOULD);
+                    query = modifyOccurrence(query, Occur.MUST);
+                    builder.add(query, Occur.SHOULD);
                 }
             }
-            return dictionaryQuery;
+            return builder.build();
         }
 
         return null;
@@ -451,9 +457,7 @@ public class SearchExpressionQueryBuilder {
         highlight = highlight.trim();
         highlight = MULTIPLE_SPACE.matcher(highlight).replaceAll(" ");
         final String[] highlights = highlight.split(" ");
-        for (final String hl : highlights) {
-            terms.add(hl);
-        }
+        Collections.addAll(terms, highlights);
 
         // If we have omitted term frequencies and positions for this field then
         // we can't expect to do a sentence match. In this case we need to
@@ -463,7 +467,7 @@ public class SearchExpressionQueryBuilder {
         if (in || !AnalyzerType.KEYWORD.equals(field.getAnalyzerType())) {
             // If the field has been analysed then we need to analyse the search
             // query to create matching terms.
-            final Analyzer analyzer = AnalyzerFactory.create(matchVersion, field.getAnalyzerType(),
+            final Analyzer analyzer = AnalyzerFactory.create(field.getAnalyzerType(),
                     field.isCaseSensitive());
 
             if (!field.isTermPositions()) {
@@ -528,7 +532,7 @@ public class SearchExpressionQueryBuilder {
 
     private long getDate(final String fieldName, final String value) {
         try {
-            return new DateExpressionParser().parse(value, nowEpochMilli).toInstant().toEpochMilli();
+            return new DateExpressionParser().parse(value, now).toInstant().toEpochMilli();
         } catch (final Exception e) {
             throw new SearchException("Expected a standard date value for field \"" + fieldName
                     + "\" but was given string \"" + value + "\"");

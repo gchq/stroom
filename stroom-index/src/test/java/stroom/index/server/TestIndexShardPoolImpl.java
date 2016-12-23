@@ -16,6 +16,15 @@
 
 package stroom.index.server;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 import stroom.cache.CacheManagerAutoCloseable;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
@@ -31,15 +40,6 @@ import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.logging.StroomLogger;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.thread.ThreadUtil;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,9 +48,15 @@ import java.util.concurrent.atomic.AtomicLong;
 @RunWith(MockitoJUnitRunner.class)
 public class TestIndexShardPoolImpl extends StroomUnitTest {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(TestIndexShardPoolImpl.class);
-
+    static AtomicLong indexShardId = new AtomicLong(0);
+    AtomicInteger indexShardsCreated = new AtomicInteger(0);
+    AtomicInteger failedThreads = new AtomicInteger(0);
     @Mock
     private NodeCache nodeCache;
+
+    public static int getRandomNumber(final int size) {
+        return (int) Math.floor((Math.random() * size));
+    }
 
     @Before
     public void init() {
@@ -88,14 +94,6 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         Assert.assertTrue("Expected 20.22 but was " + size, size >= 20 && size <= 22);
     }
 
-    public static int getRandomNumber(final int size) {
-        return (int) Math.floor((Math.random() * size));
-    }
-
-    static AtomicLong indexShardId = new AtomicLong(0);
-    AtomicInteger indexShardsCreated = new AtomicInteger(0);
-    AtomicInteger failedThreads = new AtomicInteger(0);
-
     private void doTest(final int threadSize, final int jobSize, final int numberOfIndexes,
             final int shardsPerPartition, final int maxDocumentsPerIndexShard) throws InterruptedException {
         final IndexField indexField = IndexField.createField("test");
@@ -124,7 +122,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
                 indexShard.setVolume(
                         Volume.create(defaultNode, getCurrentTestDir().getAbsolutePath(), VolumeType.PUBLIC));
                 indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
-                FileSystemUtil.deleteContents(IndexShardUtil.getIndexDir(indexShard));
+                FileSystemUtil.deleteContents(IndexShardUtil.getIndexPath(indexShard));
                 return indexShard;
             }
         };

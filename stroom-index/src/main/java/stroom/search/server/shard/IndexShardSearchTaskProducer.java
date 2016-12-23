@@ -16,20 +16,20 @@
 
 package stroom.search.server.shard;
 
+import org.apache.lucene.search.Query;
+import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.search.server.ClusterSearchTask;
+import stroom.search.server.shard.IndexShardSearchTask.ResultReceiver;
+import stroom.search.server.taskqueue.AbstractTaskProducer;
+import stroom.util.shared.Severity;
+import stroom.util.shared.Task;
+
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import stroom.search.server.ClusterSearchTask;
-import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
-import stroom.search.server.shard.IndexShardSearchTask.ResultReceiver;
-import stroom.search.server.taskqueue.AbstractTaskProducer;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.util.shared.Severity;
-import stroom.util.shared.Task;
 
 public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
     private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
@@ -44,9 +44,9 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
     private final AtomicInteger tasksCompleted = new AtomicInteger();
 
     public IndexShardSearchTaskProducer(final ClusterSearchTask clusterSearchTask,
-            final TransferList<String[]> storedData, final IndexShardSearcherCache indexShardSearcherCache,
-            final List<Long> shards, final IndexShardQueryFactory queryFactory, final String[] fieldNames,
-            final ErrorReceiver errorReceiver, final AtomicLong hitCount, final int maxThreadsPerTask) {
+                                        final TransferList<String[]> storedData, final IndexShardSearcherCache indexShardSearcherCache,
+                                        final List<Long> shards, final Query query, final String[] fieldNames,
+                                        final ErrorReceiver errorReceiver, final AtomicLong hitCount, final int maxThreadsPerTask) {
         super(maxThreadsPerTask);
         this.clusterSearchTask = clusterSearchTask;
         this.indexShardSearcherCache = indexShardSearcherCache;
@@ -74,7 +74,7 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
 
         tasksCreated = shards.size();
         for (final Long shard : shards) {
-            final IndexShardSearchTask task = new IndexShardSearchTask(clusterSearchTask, queryFactory, shard,
+            final IndexShardSearchTask task = new IndexShardSearchTask(clusterSearchTask, query, shard,
                     fieldNames, resultReceiver, errorReceiver, hitCount);
             taskQueue.add(task);
         }

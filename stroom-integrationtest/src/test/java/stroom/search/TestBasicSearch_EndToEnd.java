@@ -16,13 +16,10 @@
 
 package stroom.search;
 
-import java.util.List;
-
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
-
+import stroom.AbstractCoreIntegrationTest;
+import stroom.CommonIndexingTest;
 import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -35,8 +32,9 @@ import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionTerm;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexFieldsMap;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonIndexingTest;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Resource
@@ -193,7 +191,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
 
         final List<IndexShard> list = indexShardService.find(new FindIndexShardCriteria());
         for (final IndexShard indexShard : list) {
-            System.out.println("Using index " + IndexShardUtil.getIndexDir(indexShard));
+            System.out.println("Using index " + IndexShardUtil.getIndexPath(indexShard));
         }
     }
 }

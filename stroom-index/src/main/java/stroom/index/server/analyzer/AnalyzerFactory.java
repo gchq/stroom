@@ -20,8 +20,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.StopAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.util.Version;
-
 import stroom.query.shared.IndexField.AnalyzerType;
 
 public final class AnalyzerFactory {
@@ -29,25 +27,25 @@ public final class AnalyzerFactory {
         // Factory so private constructor.
     }
 
-    public static Analyzer create(final Version matchVersion, final AnalyzerType analyzerType,
-            final boolean caseSensitive) {
+    public static Analyzer create(final AnalyzerType analyzerType,
+                                  final boolean caseSensitive) {
         switch (analyzerType) {
         case KEYWORD:
-            return new KeywordAnalyzer(matchVersion, caseSensitive);
+            return new KeywordAnalyzer(caseSensitive);
         case ALPHA:
-            return new AlphaAnalyzer(matchVersion, caseSensitive);
+            return new AlphaAnalyzer(caseSensitive);
         case ALPHA_NUMERIC:
-            return new AlphaNumericAnalyzer(matchVersion, caseSensitive);
+            return new AlphaNumericAnalyzer(caseSensitive);
         case NUMERIC:
-            return new NumericAnalyzer(matchVersion);
+            return new NumericAnalyzer();
         case WHITESPACE:
-            return new WhitespaceAnalyzer(matchVersion);
+            return new WhitespaceAnalyzer();
         case STOP:
-            return new StopAnalyzer(matchVersion);
+            return new StopAnalyzer();
         case STANDARD:
-            return new StandardAnalyzer(matchVersion);
+            return new StandardAnalyzer();
         }
 
-        return new KeywordAnalyzer(matchVersion, true);
+        return new KeywordAnalyzer(true);
     }
 }
