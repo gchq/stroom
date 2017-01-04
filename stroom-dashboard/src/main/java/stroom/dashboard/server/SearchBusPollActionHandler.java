@@ -30,7 +30,7 @@ import stroom.query.shared.QueryData;
 import stroom.query.shared.QueryKey;
 import stroom.query.shared.Search;
 import stroom.query.shared.SearchRequest;
-import stroom.query.shared.SearchResult;
+import stroom.query.shared.SearchResponse;
 import stroom.security.SecurityContext;
 import stroom.task.cluster.ClusterResultCollector;
 import stroom.task.cluster.ClusterResultCollectorCache;
@@ -92,7 +92,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
             final String searchSessionId = action.getSessionId() + "_" + action.getApplicationInstanceId();
             final ActiveQueries searchSession = searchSessionManager.get(searchSessionId);
-            final Map<QueryKey, SearchResult> searchResultMap = new HashMap<>();
+            final Map<QueryKey, SearchResponse> searchResultMap = new HashMap<>();
 
             // First kill off any queries that are no longer required by the UI.
             searchSession.destroyUnusedQueries(action.getSearchActionMap().keySet());
@@ -102,10 +102,10 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                 final QueryKey queryKey = entry.getKey();
                 final SearchRequest searchRequest = entry.getValue();
 
-                final SearchResult searchResult = processRequest(action.getSessionId(), action.getUserId(),
+                final SearchResponse searchResponse = processRequest(action.getSessionId(), action.getUserId(),
                         searchSession, queryKey, searchRequest);
-                if (searchResult != null) {
-                    searchResultMap.put(queryKey, searchResult);
+                if (searchResponse != null) {
+                    searchResultMap.put(queryKey, searchResponse);
                 }
             }
 
@@ -115,9 +115,9 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
         }
     }
 
-    private SearchResult processRequest(final String sessionId, final String userId, final ActiveQueries activeQueries,
-                                        final QueryKey queryKey, final SearchRequest searchRequest) {
-        SearchResult result = null;
+    private SearchResponse processRequest(final String sessionId, final String userId, final ActiveQueries activeQueries,
+                                          final QueryKey queryKey, final SearchRequest searchRequest) {
+        SearchResponse result = null;
 
         try {
             // Make sure we have active queries for all current UI queries.
@@ -158,7 +158,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
         } catch (final Exception e) {
             LOGGER.debug(e.getMessage(), e);
 
-            result = new SearchResult();
+            result = new SearchResponse();
             result.setErrors(e.getMessage());
             result.setComplete(true);
         }

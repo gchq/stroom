@@ -18,6 +18,7 @@ package stroom.pipeline.shared.data;
 
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 
@@ -32,7 +33,7 @@ public class PipelineDataUtil {
     }
 
     public static PipelineProperty createProperty(final String element, final String name, final BaseEntity entity) {
-        final PipelinePropertyValue value = new PipelinePropertyValue(DocRef.create(entity));
+        final PipelinePropertyValue value = new PipelinePropertyValue(DocRefUtil.create(entity));
         final PipelineProperty property = new PipelineProperty();
         property.setElement(element);
         property.setName(name);
@@ -84,8 +85,8 @@ public class PipelineDataUtil {
         final PipelineReference pipelineReference = new PipelineReference();
         pipelineReference.setElement(element);
         pipelineReference.setName(name);
-        pipelineReference.setPipeline(DocRef.create(pipeline));
-        pipelineReference.setFeed(DocRef.create(feed));
+        pipelineReference.setPipeline(DocRefUtil.create(pipeline));
+        pipelineReference.setFeed(DocRefUtil.create(feed));
         pipelineReference.setStreamType(streamType);
         return pipelineReference;
     }

@@ -42,6 +42,7 @@ import stroom.entity.client.event.ShowRenameEntityDialogEvent;
 import stroom.entity.client.event.ShowSaveAsEntityDialogEvent;
 import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
@@ -254,7 +255,7 @@ public class EntityPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(ReloadEntityEvent.getType(), event -> {
             final EntityPlugin<?> plugin = pluginMap.get(event.getEntity().getType());
             if (plugin != null) {
-                plugin.reload(DocRef.create(event.getEntity()));
+                plugin.reload(DocRefUtil.create(event.getEntity()));
             }
         }));
 

@@ -14,30 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.util.shared;
 
-public class VisResult extends JSONResult {
-    private static final long serialVersionUID = 3826654996795750099L;
+public class ToStringBuilder {
+    private final StringBuilder sb = new StringBuilder();
 
-    private long dataPoints;
-    private String error;
-
-    public VisResult() {
-        // Default constructor necessary for GWT serialisation.
+    public void appendSuper(final String string) {
+        sb.append(string);
     }
 
-    public VisResult(final String json, final long dataPoints, final String error) {
-        super(json);
-        this.dataPoints = dataPoints;
-        this.error = error;
+    public void append(final String name, final Object o) {
+        if (sb.length() > 0) {
+            sb.append(", ");
+        }
+        sb.append(name);
+        sb.append("=");
+        sb.append(o);
     }
 
-    public String getError() {
-        return error;
-    }
-
-    @Override
     public String toString() {
-        return dataPoints + " data points";
+        return sb.toString();
     }
 }

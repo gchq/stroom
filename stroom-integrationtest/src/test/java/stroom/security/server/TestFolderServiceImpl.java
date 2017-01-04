@@ -16,16 +16,16 @@
 
 package stroom.security.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
 import stroom.util.test.FileSystemTestUtil;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 
@@ -40,8 +40,8 @@ public class TestFolderServiceImpl extends AbstractCoreIntegrationTest {
         final Folder root1 = folderService.create(null, FileSystemTestUtil.getUniqueTestString());
         final Folder root2 = folderService.create(null, FileSystemTestUtil.getUniqueTestString());
 
-        final Folder root1child1 = folderService.create(DocRef.create(root1), FileSystemTestUtil.getUniqueTestString());
-        final Folder root1child1child1 = folderService.create(DocRef.create(root1child1), FileSystemTestUtil.getUniqueTestString());
+        final Folder root1child1 = folderService.create(DocRefUtil.create(root1), FileSystemTestUtil.getUniqueTestString());
+        final Folder root1child1child1 = folderService.create(DocRefUtil.create(root1child1), FileSystemTestUtil.getUniqueTestString());
 
         FindFolderCriteria findFolderCriteria = new FindFolderCriteria();
         findFolderCriteria.getFolderIdSet().setMatchNull(Boolean.TRUE);

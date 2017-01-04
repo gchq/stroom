@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.query.shared;
 
-import stroom.query.shared.ComponentResultRequest;
-import stroom.query.shared.VisDashboardSettings;
 import stroom.util.shared.OffsetRange;
 
 public class VisResultRequest extends ComponentResultRequest {

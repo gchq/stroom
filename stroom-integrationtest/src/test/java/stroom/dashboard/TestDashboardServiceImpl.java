@@ -16,6 +16,7 @@
 
 package stroom.dashboard;
 
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
@@ -26,6 +27,7 @@ import stroom.dashboard.shared.SplitLayoutConfig.Direction;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.Res;
 import stroom.query.shared.VisDashboardSettings;
@@ -33,7 +35,6 @@ import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;
 import stroom.visualisation.shared.Visualisation;
 import stroom.visualisation.shared.VisualisationService;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ public class TestDashboardServiceImpl extends AbstractCoreIntegrationTest {
 
     @Test
     public void test() {
-        final DocRef testGroup = DocRef.create(folderService.create(null, "Test Group"));
+        final DocRef testGroup = DocRefUtil.create(folderService.create(null, "Test Group"));
 
         final VisDashboardSettings visSettings = getVisSettings(testGroup);
 
@@ -116,11 +117,11 @@ public class TestDashboardServiceImpl extends AbstractCoreIntegrationTest {
         script = scriptService.save(script);
 
         Visualisation vis = visualisationService.create(testGroup, "Test");
-        vis.setScriptRef(DocRef.create(script));
+        vis.setScriptRef(DocRefUtil.create(script));
         vis = visualisationService.save(vis);
 
         final VisDashboardSettings visSettings = new VisDashboardSettings();
-        visSettings.setVisualisation(DocRef.create(vis));
+        visSettings.setVisualisation(DocRefUtil.create(vis));
 
         return visSettings;
     }

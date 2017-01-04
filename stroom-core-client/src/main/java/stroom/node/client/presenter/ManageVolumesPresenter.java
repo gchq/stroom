@@ -16,9 +16,6 @@
 
 package stroom.node.client.presenter;
 
-import stroom.data.grid.client.DoubleClickEvent;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.EntityServiceLoadAction;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -28,12 +25,14 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
+import stroom.data.grid.client.DoubleClickEvent;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceDeleteAction;
+import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.node.client.view.WrapperView;
 import stroom.node.shared.FlushVolumeStatusAction;
 import stroom.node.shared.Volume;
@@ -49,21 +48,14 @@ import stroom.widget.util.client.MySingleSelectionModel;
 
 public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolumesPresenter.ManageVolumesProxy> {
     public static final String LIST = "LIST";
-
-    @ProxyCodeSplit
-    public interface ManageVolumesProxy extends Proxy<ManageVolumesPresenter> {
-    }
-
     private final VolumeStatusListPresenter volumeStatusListPresenter;
     private final Provider<VolumeEditPresenter> editProvider;
     private final MySingleSelectionModel<Volume> selectionModel;
     private final ClientDispatchAsync dispatcher;
-
     private final GlyphButtonView newButton;
     private final GlyphButtonView openButton;
     private final GlyphButtonView deleteButton;
     private final GlyphButtonView rescanButton;
-
     @Inject
     public ManageVolumesPresenter(final EventBus eventBus, final WrapperView view, final ManageVolumesProxy proxy,
             final VolumeStatusListPresenter volumeStatusListPresenter, final Provider<VolumeEditPresenter> editProvider,
@@ -142,7 +134,7 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
     private void open(final PopupUiHandlers popupUiHandlers) {
         final Volume volume = selectionModel.getSelectedObject();
         if (volume != null) {
-            dispatcher.execute(new EntityServiceLoadAction<Volume>(DocRef.create(volume), null),
+            dispatcher.execute(new EntityServiceLoadAction<Volume>(DocRefUtil.create(volume), null),
                     new AsyncCallbackAdaptor<Volume>() {
                         @Override
                         public void onSuccess(final Volume result) {
@@ -189,5 +181,9 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
 
     public void refresh() {
         volumeStatusListPresenter.refresh();
+    }
+
+    @ProxyCodeSplit
+    public interface ManageVolumesProxy extends Proxy<ManageVolumesPresenter> {
     }
 }

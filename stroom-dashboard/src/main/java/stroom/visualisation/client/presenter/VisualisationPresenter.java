@@ -24,7 +24,7 @@ import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.security.client.ClientSecurityContext;
 import stroom.visualisation.shared.Visualisation;
 import stroom.widget.tab.client.presenter.TabData;
@@ -73,7 +73,7 @@ public class VisualisationPresenter extends EntityEditTabPresenter<LinkTabPanelV
         if (loadCount > 1) {
             // Remove the visualisation function from the cache so dashboards
             // reload it.
-            ClearFunctionCacheEvent.fire(this, DocRef.create(visualisation));
+            ClearFunctionCacheEvent.fire(this, DocRefUtil.create(visualisation));
         }
     }
 

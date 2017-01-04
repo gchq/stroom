@@ -16,27 +16,27 @@
 
 package stroom.dashboard.shared;
 
+import stroom.query.shared.QueryKey;
+import stroom.query.shared.SearchResponse;
+import stroom.util.shared.SharedObject;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import stroom.query.shared.QueryKey;
-import stroom.query.shared.SearchResult;
-import stroom.util.shared.SharedObject;
 
 public class SearchBusPollResult implements SharedObject {
     private static final long serialVersionUID = -2964122512841756795L;
 
-    private Map<QueryKey, SearchResult> searchResultMap = new HashMap<QueryKey, SearchResult>();
+    private Map<QueryKey, SearchResponse> searchResultMap = new HashMap<QueryKey, SearchResponse>();
 
     public SearchBusPollResult() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public SearchBusPollResult(final Map<QueryKey, SearchResult> searchResultMap) {
+    public SearchBusPollResult(final Map<QueryKey, SearchResponse> searchResultMap) {
         this.searchResultMap = searchResultMap;
     }
 
-    public Map<QueryKey, SearchResult> getSearchResultMap() {
+    public Map<QueryKey, SearchResponse> getSearchResultMap() {
         return searchResultMap;
     }
 }

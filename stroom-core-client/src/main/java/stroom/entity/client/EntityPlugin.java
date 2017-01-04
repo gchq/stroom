@@ -31,6 +31,7 @@ import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceCopyAction;
 import stroom.entity.shared.EntityServiceCreateAction;
 import stroom.entity.shared.EntityServiceDeleteAction;
@@ -189,11 +190,11 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
             final E entity = presenter.getEntity();
             presenter.write(presenter.getEntity());
 
-            final DocRef oldEntityReference = DocRef.create(entity);
+            final DocRef oldEntityReference = DocRefUtil.create(entity);
 
             DocRef folder = null;
             if (entity instanceof HasFolder) {
-                folder = DocRef.create(((HasFolder) entity).getFolder());
+                folder = DocRefUtil.create(((HasFolder) entity).getFolder());
             }
 
             copy(entity, folder, name, new SaveCallback<E>() {
@@ -204,7 +205,7 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
 
                     // Create an entity item so we can open it in the editor and
                     // select it in the explorer tree.
-                    final DocRef docRef = DocRef.create(entity);
+                    final DocRef docRef = DocRefUtil.create(entity);
                     highlight(docRef);
 
                     // The entity we had open before is now effectively closed
@@ -297,7 +298,7 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
 
                 // Create an entity item so we can open it in the editor and
                 // select it in the explorer tree.
-                final DocRef item = DocRef.create(entity);
+                final DocRef item = DocRefUtil.create(entity);
                 highlight(item);
             }
         });
@@ -351,7 +352,7 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
 
                 // Create an entity item so we can open it in the editor and
                 // select it in the explorer tree.
-                final DocRef docRef = DocRef.create(entity);
+                final DocRef docRef = DocRefUtil.create(entity);
                 highlight(docRef);
 
                 if (editPresenter != null) {
@@ -411,7 +412,7 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
 
                 // Create an entity item so we can open it in the feed editor
                 // and select it in the explorer tree.
-                final DocRef docRef = DocRef.create(entity);
+                final DocRef docRef = DocRefUtil.create(entity);
                 highlight(docRef);
 
                 if (editPresenter != null) {

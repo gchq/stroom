@@ -48,9 +48,6 @@ import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DownloadSearchResultsAction;
 import stroom.dashboard.shared.ParamUtil;
-import stroom.dashboard.shared.Row;
-import stroom.dashboard.shared.TableResult;
-import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
@@ -63,6 +60,7 @@ import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
+import stroom.query.shared.ComponentResult;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.ComponentSettings;
 import stroom.query.shared.Field;
@@ -72,7 +70,10 @@ import stroom.query.shared.IndexConstants;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexFieldsMap;
 import stroom.query.shared.QueryKey;
+import stroom.query.shared.Row;
 import stroom.query.shared.Search;
+import stroom.query.shared.TableResult;
+import stroom.query.shared.TableResultRequest;
 import stroom.query.shared.TableSettings;
 import stroom.util.shared.Expander;
 import stroom.util.shared.OffsetRange;
@@ -344,7 +345,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     }
 
     @Override
-    public void setData(final SharedObject result) {
+    public void setData(final ComponentResult result) {
         ignoreRangeChange = true;
 
 //        if (!paused) {

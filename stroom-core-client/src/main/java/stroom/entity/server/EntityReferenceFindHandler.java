@@ -16,18 +16,19 @@
 
 package stroom.entity.server;
 
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.Query;
+import event.logging.Query.Advanced;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityReferenceFindAction;
 import stroom.entity.shared.ResultList;
 import stroom.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.Query;
-import event.logging.Query.Advanced;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -79,7 +80,7 @@ class EntityReferenceFindHandler
         if (resultList != null && resultList.size() > 0) {
             final List<DocRef> list = new ArrayList<>(resultList.size());
             for (final BaseEntity baseEntity : resultList) {
-                list.add(DocRef.create(baseEntity));
+                list.add(DocRefUtil.create(baseEntity));
             }
             docRefs = new BaseResultList<>(list, Long.valueOf(resultList.getStart()),
                     Long.valueOf(resultList.getSize()), (resultList.getStart() + list.size() < resultList.getSize()));

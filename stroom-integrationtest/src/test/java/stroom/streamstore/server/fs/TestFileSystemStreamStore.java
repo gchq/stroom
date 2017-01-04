@@ -16,10 +16,14 @@
 
 package stroom.streamstore.server.fs;
 
+import org.hibernate.LazyInitializationException;
+import org.joda.time.DateTime;
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.server.util.PeriodUtil;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.IdRange;
@@ -52,13 +56,9 @@ import stroom.task.server.TaskMonitorImpl;
 import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomExpectedException;
 import stroom.util.test.FileSystemTestUtil;
+import stroom.util.test.StroomExpectedException;
 import stroom.volume.server.VolumeServiceImpl;
-import org.hibernate.LazyInitializationException;
-import org.joda.time.DateTime;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.io.File;
@@ -115,7 +115,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             Folder folder = folderService.create(null, FileSystemTestUtil.getUniqueTestString());
             folder = folderService.save(folder);
 
-            sample = feedService.create(DocRef.create(folder), feedName);
+            sample = feedService.create(DocRefUtil.create(folder), feedName);
             sample.setDescription("Junit");
             sample = feedService.save(sample);
         }
@@ -565,7 +565,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         criteria.setStreamType(StreamType.REFERENCE.getName());
 
         // feed2 or feed1
-        criteria.setFeed(DocRef.create(feedService.loadByName(feed2)));
+        criteria.setFeed(DocRefUtil.create(feedService.loadByName(feed2)));
 //        criteria.getFeedIdSet().add(feedService.loadByName(feed1));
 
         // 2009 to 2010

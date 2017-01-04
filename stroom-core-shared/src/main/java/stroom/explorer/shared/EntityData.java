@@ -17,6 +17,7 @@
 package stroom.explorer.shared;
 
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.NamedEntity;
 import stroom.util.shared.SharedObject;
 
@@ -56,7 +57,7 @@ public class EntityData implements ExplorerData, SharedObject {
         if (entity == null) {
             return null;
         }
-        return new EntityData(iconUrl, DocRef.create(entity), nodeState);
+        return new EntityData(iconUrl, DocRefUtil.create(entity), nodeState);
     }
 
     public static EntityData create(final String iconUrl, final DocRef docRef, final NodeState nodeState) {

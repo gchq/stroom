@@ -16,10 +16,13 @@
 
 package stroom.index;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.Range;
 import stroom.index.server.IndexShardKeyUtil;
@@ -36,8 +39,6 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
 import stroom.util.date.DateUtil;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 
@@ -65,7 +66,7 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     public void test() {
         final Volume volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
-        final DocRef testFolder = DocRef.create(folderService.create(null, "Test Group"));
+        final DocRef testFolder = DocRefUtil.create(folderService.create(null, "Test Group"));
 
         Index index1 = indexService.create(testFolder, "Test Index 1");
         index1.getVolumes().add(volume);
@@ -112,7 +113,7 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     public void testOrderBy() {
         final Volume volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
-        final DocRef testFolder = DocRef.create(folderService.create(null, "Test Group"));
+        final DocRef testFolder = DocRefUtil.create(folderService.create(null, "Test Group"));
 
         Index index = indexService.create(testFolder, "Test Index 1");
         index.getVolumes().add(volume);

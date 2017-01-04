@@ -16,7 +16,10 @@
 
 package stroom;
 
+import org.junit.Assert;
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
 import stroom.feed.shared.Feed;
@@ -44,8 +47,6 @@ import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.zip.StroomHeaderArguments;
-import org.junit.Assert;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
@@ -85,7 +86,7 @@ public class CommonTestScenarioCreator {
         if (globalGroup == null) {
             globalGroup = folderService.create(null, "GlobalGroup");
         }
-        return DocRef.create(globalGroup);
+        return DocRefUtil.create(globalGroup);
     }
 
     public Feed createSimpleFeed() {

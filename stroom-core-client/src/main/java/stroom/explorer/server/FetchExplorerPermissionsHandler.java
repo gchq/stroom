@@ -17,6 +17,7 @@
 package stroom.explorer.server;
 
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
 import stroom.explorer.shared.DocumentType;
@@ -48,7 +49,7 @@ class FetchExplorerPermissionsHandler
         folder.setId(-1);
         folder.setUuid(FolderService.ROOT);
         folder.setName(FolderService.ROOT);
-        ROOT = DocRef.create(folder);
+        ROOT = DocRefUtil.create(folder);
     }
 
     private final ExplorerService explorerService;

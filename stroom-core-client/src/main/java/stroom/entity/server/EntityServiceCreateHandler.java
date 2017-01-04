@@ -18,6 +18,7 @@ package stroom.entity.server;
 
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceCreateAction;
@@ -61,6 +62,6 @@ class EntityServiceCreateHandler extends AbstractTaskHandler<EntityServiceCreate
             throw e;
         }
 
-        return DocRef.create(result);
+        return DocRefUtil.create(result);
     }
 }

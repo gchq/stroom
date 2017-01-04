@@ -18,7 +18,6 @@ package stroom.dashboard.shared;
 
 import stroom.entity.shared.DocRef;
 import stroom.query.shared.ComponentSettings;
-import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -27,7 +26,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "text", propOrder = { "tableId", "pipeline", "showAsHtml" })
-public class TextSettings extends ComponentSettings implements SharedObject {
+public class TextSettings extends ComponentSettings {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "tableId")

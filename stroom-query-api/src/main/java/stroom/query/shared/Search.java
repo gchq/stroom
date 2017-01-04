@@ -17,12 +17,12 @@
 package stroom.query.shared;
 
 import stroom.entity.shared.DocRef;
-import stroom.util.shared.SharedObject;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 
-public class Search implements SharedObject {
+public class Search implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
     private DocRef dataSourceRef;

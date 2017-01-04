@@ -21,6 +21,7 @@ import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.QueryKeyImpl;
 import stroom.dashboard.shared.UniqueQueryKey;
 import stroom.entity.shared.DocRef;
+import stroom.query.shared.ComponentResult;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.ComponentSettings;
 import stroom.query.shared.ExpressionItem;
@@ -29,10 +30,9 @@ import stroom.query.shared.ExpressionTerm;
 import stroom.query.shared.QueryKey;
 import stroom.query.shared.Search;
 import stroom.query.shared.SearchRequest;
-import stroom.query.shared.SearchResult;
+import stroom.query.shared.SearchResponse;
 import stroom.util.client.KVMapUtil;
 import stroom.util.client.RandomId;
-import stroom.util.shared.SharedObject;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +46,7 @@ public class SearchModel {
     private final Map<String, ResultComponent> componentMap = new HashMap<>();
     private Map<String, String> currentParameterMap;
     private ExpressionOperator currentExpression;
-    private SearchResult currentResult;
+    private SearchResponse currentResult;
     private UniqueQueryKey currentQueryKey;
     private Search currentSearch;
     private Search activeSearch;
@@ -232,14 +232,14 @@ public class SearchModel {
      *
      * @param result
      */
-    public void update(final SearchResult result) {
+    public void update(final SearchResponse result) {
         currentResult = result;
 
         for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
             final String componentId = entry.getKey();
             final ResultComponent resultComponent = entry.getValue();
             if (result.getResults() != null && result.getResults().containsKey(componentId)) {
-                final SharedObject res = result.getResults().get(componentId);
+                final ComponentResult res = result.getResults().get(componentId);
                 resultComponent.setData(res);
             }
 
@@ -316,7 +316,7 @@ public class SearchModel {
                 initialQueryKey.getQueryId(), RandomId.createDiscrimiator());
     }
 
-    public SearchResult getCurrentResult() {
+    public SearchResponse getCurrentResult() {
         return currentResult;
     }
 

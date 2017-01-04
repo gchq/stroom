@@ -41,10 +41,17 @@ import stroom.entity.client.event.ReloadEntityEvent;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
-import stroom.pipeline.shared.*;
+import stroom.pipeline.shared.FetchPipelineDataAction;
+import stroom.pipeline.shared.FetchPipelineXMLAction;
+import stroom.pipeline.shared.FetchPropertyTypesAction;
+import stroom.pipeline.shared.FetchPropertyTypesResult;
+import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineModelException;
+import stroom.pipeline.shared.SavePipelineXMLAction;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -60,7 +67,11 @@ import stroom.util.shared.SharedString;
 import stroom.util.shared.VoidResult;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
-import stroom.widget.menu.client.presenter.*;
+import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.MenuItems;
+import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
@@ -73,7 +84,11 @@ import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 import stroom.xmleditor.client.presenter.XMLEditorPresenter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStructurePresenter.PipelineStructureView>
@@ -241,7 +256,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         }
         pipelinePresenter.setSelectedEntityReference(pipelineEntity.getParentPipeline());
 
-        final FetchPipelineDataAction action = new FetchPipelineDataAction(DocRef.create(pipelineEntity));
+        final FetchPipelineDataAction action = new FetchPipelineDataAction(DocRefUtil.create(pipelineEntity));
         dispatcher.execute(action, new AsyncCallbackAdaptor<SharedList<PipelineData>>() {
             @Override
             public void onSuccess(final SharedList<PipelineData> result) {

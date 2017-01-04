@@ -19,6 +19,7 @@ package stroom.pipeline.processor.server;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
 import stroom.pipeline.processor.shared.LoadEntityIdSetAction;
 import stroom.pipeline.processor.shared.SetId;
@@ -67,7 +68,7 @@ public class LoadEntityIdSetHandler
                 if (id != null) {
                     final BaseEntity entity = genericEntityService.loadById(entityType.toString(), id);
                     if (entity != null) {
-                        entityList.add(DocRef.create(entity));
+                        entityList.add(DocRefUtil.create(entity));
                     }
                 }
             }

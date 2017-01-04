@@ -16,6 +16,8 @@
 
 package stroom.importexport.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.dashboard.shared.ComponentConfig;
@@ -26,7 +28,7 @@ import stroom.dashboard.shared.FindDashboardCriteria;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.dictionary.shared.FindDictionaryCriteria;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityActionConfirmation;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
@@ -53,8 +55,6 @@ import stroom.util.shared.ResourceKey;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
 import stroom.visualisation.shared.VisualisationService;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -122,31 +122,31 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
             final Res res = new Res();
             res.setData("Test Data");
 
-            Script script = scriptService.create(DocRef.create(group2), "Test Script");
+            Script script = scriptService.create(DocRefUtil.create(group2), "Test Script");
             script.setResource(res);
             script = scriptService.save(script);
 
-            vis = visualisationService.create(DocRef.create(group2), "Test Vis");
-            vis.setScriptRef(DocRef.create(script));
+            vis = visualisationService.create(DocRefUtil.create(group2), "Test Vis");
+            vis.setScriptRef(DocRefUtil.create(script));
             vis = visualisationService.save(vis);
             Assert.assertEquals(1, commonTestControl.countEntity(Visualisation.class));
         }
 
-        PipelineEntity pipelineEntity = pipelineEntityService.create(DocRef.create(group1), "Test Pipeline");
+        PipelineEntity pipelineEntity = pipelineEntityService.create(DocRefUtil.create(group1), "Test Pipeline");
         pipelineEntity = pipelineEntityService.save(pipelineEntity);
         Assert.assertEquals(1, commonTestControl.countEntity(PipelineEntity.class));
 
-        Index index = indexService.create(DocRef.create(group1), "Test Index");
+        Index index = indexService.create(DocRefUtil.create(group1), "Test Index");
         index = indexService.save(index);
         Assert.assertEquals(1, commonTestControl.countEntity(Index.class));
 
-        Dictionary dictionary = dictionaryService.create(DocRef.create(group1), "Test Dictionary");
+        Dictionary dictionary = dictionaryService.create(DocRefUtil.create(group1), "Test Dictionary");
         dictionary = dictionaryService.save(dictionary);
         Assert.assertEquals(1, commonTestControl.countEntity(Dictionary.class));
 
         // Create query.
         final QueryData queryData = new QueryData();
-        queryData.setDataSource(DocRef.create(index));
+        queryData.setDataSource(DocRefUtil.create(index));
         queryData.setExpression(createExpression(dictionary));
 
         final ComponentConfig query = new ComponentConfig();
@@ -158,7 +158,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         // Create table.
         final TableSettings tableSettings = new TableSettings();
         tableSettings.setExtractValues(true);
-        tableSettings.setExtractionPipeline(DocRef.create(pipelineEntity));
+        tableSettings.setExtractionPipeline(DocRefUtil.create(pipelineEntity));
 
         final ComponentConfig table = new ComponentConfig();
         table.setId("table-1234");
@@ -170,7 +170,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final VisDashboardSettings visSettings = new VisDashboardSettings();
         visSettings.setTableId("table-1234");
         visSettings.setTableSettings(tableSettings);
-        visSettings.setVisualisation(DocRef.create(vis));
+        visSettings.setVisualisation(DocRefUtil.create(vis));
 
         final ComponentConfig visualisation = new ComponentConfig();
         visualisation.setId("visualisation-1234");
@@ -188,7 +188,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final DashboardConfig dashboardData = new DashboardConfig();
         dashboardData.setComponents(components);
 
-        Dashboard dashboard = dashboardService.create(DocRef.create(group1), "Test Dashboard");
+        Dashboard dashboard = dashboardService.create(DocRefUtil.create(group1), "Test Dashboard");
         dashboard.setDashboardData(dashboardData);
         dashboard = dashboardService.save(dashboard);
         Assert.assertEquals(1, commonTestControl.countEntity(Dashboard.class));
@@ -255,13 +255,13 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final VisDashboardSettings loadedVisSettings = (VisDashboardSettings) loadedVis.getSettings();
 
         // Verify all entity references have been restored.
-        Assert.assertEquals(DocRef.create(loadedIndex), loadedQueryData.getDataSource());
-        Assert.assertEquals(DocRef.create(loadedDictionary),
+        Assert.assertEquals(DocRefUtil.create(loadedIndex), loadedQueryData.getDataSource());
+        Assert.assertEquals(DocRefUtil.create(loadedDictionary),
                 ((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDictionary());
-        Assert.assertEquals(DocRef.create(loadedPipeline), loadedTableSettings.getExtractionPipeline());
+        Assert.assertEquals(DocRefUtil.create(loadedPipeline), loadedTableSettings.getExtractionPipeline());
 
         if (!skipVisExport || skipVisCreation) {
-            Assert.assertEquals(DocRef.create(loadedVisualisation), loadedVisSettings.getVisualisation());
+            Assert.assertEquals(DocRefUtil.create(loadedVisualisation), loadedVisSettings.getVisualisation());
         } else {
             Assert.assertNotNull(loadedVisSettings.getVisualisation());
             Assert.assertNotNull(loadedVisSettings.getVisualisation().getType());
@@ -283,7 +283,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private ExpressionOperator createExpression(final Dictionary dictionary) {
         final ExpressionOperator root = new ExpressionOperator(Op.AND);
         root.addChild(new ExpressionTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z"));
-        root.addChild(new ExpressionTerm("User", Condition.IN_DICTIONARY, DocRef.create(dictionary)));
+        root.addChild(new ExpressionTerm("User", Condition.IN_DICTIONARY, DocRefUtil.create(dictionary)));
         return root;
     }
 }

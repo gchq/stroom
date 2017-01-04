@@ -17,14 +17,17 @@
 package stroom.query.shared;
 
 import stroom.entity.shared.DocRef;
-import stroom.util.shared.SharedObject;
 
-import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "query", propOrder = {"dataSource", "expression", "limits", "automate"})
 @XmlRootElement(name = "query")
-public class QueryData extends ComponentSettings implements SharedObject {
+public class QueryData extends ComponentSettings {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "dataSource")

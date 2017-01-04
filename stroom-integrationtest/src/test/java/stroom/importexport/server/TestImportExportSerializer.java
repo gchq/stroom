@@ -16,11 +16,14 @@
 
 package stroom.importexport.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityActionConfirmation;
 import stroom.entity.shared.FindFolderCriteria;
@@ -33,15 +36,13 @@ import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.streamstore.server.fs.FileSystemUtil;
-import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.test.ComparisonHelper;
+import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 import stroom.xmlschema.shared.XMLSchemaService;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.io.File;
@@ -142,11 +143,11 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     public void testPipeline() {
-        final DocRef folder = DocRef.create(folderService.create(null, FileSystemTestUtil.getUniqueTestString()));
+        final DocRef folder = DocRefUtil.create(folderService.create(null, FileSystemTestUtil.getUniqueTestString()));
         final PipelineEntity parentPipeline = pipelineEntityService.create(folder, "Parent");
 
         final PipelineEntity childPipeline = pipelineEntityService.create(folder, "Child");
-        childPipeline.setParentPipeline(DocRef.create(parentPipeline));
+        childPipeline.setParentPipeline(DocRefUtil.create(parentPipeline));
         pipelineEntityService.save(childPipeline);
 
         Assert.assertEquals(2, pipelineEntityService.find(new FindPipelineEntityCriteria()).size());

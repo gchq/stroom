@@ -28,18 +28,17 @@ import stroom.dashboard.server.SearchResultCreator;
 import stroom.dashboard.shared.BasicQueryKey;
 import stroom.dashboard.shared.ParamUtil;
 import stroom.dashboard.shared.Query;
-import stroom.dashboard.shared.Row;
-import stroom.dashboard.shared.TableResult;
-import stroom.dashboard.shared.TableResultRequest;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
+import stroom.query.shared.ComponentResult;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.ComponentSettings;
 import stroom.query.shared.Condition;
@@ -49,9 +48,12 @@ import stroom.query.shared.ExpressionTerm;
 import stroom.query.shared.Field;
 import stroom.query.shared.Format;
 import stroom.query.shared.QueryData;
+import stroom.query.shared.Row;
 import stroom.query.shared.Search;
 import stroom.query.shared.SearchRequest;
-import stroom.query.shared.SearchResult;
+import stroom.query.shared.SearchResponse;
+import stroom.query.shared.TableResult;
+import stroom.query.shared.TableResultRequest;
 import stroom.query.shared.TableSettings;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
@@ -368,7 +370,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         user.setField("UserId");
         user.setCondition(Condition.IN_DICTIONARY);
         user.setValue("users");
-        user.setDictionary(DocRef.create(dic));
+        user.setDictionary(DocRefUtil.create(dic));
 
         final ExpressionOperator and = new ExpressionOperator(Op.AND);
         and.addChild(user);
@@ -394,13 +396,13 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         final ExpressionTerm user = new ExpressionTerm();
         user.setField("UserId");
         user.setCondition(Condition.IN_DICTIONARY);
-        user.setDictionary(DocRef.create(dic1));
+        user.setDictionary(DocRefUtil.create(dic1));
 
         final ExpressionTerm command = new ExpressionTerm();
         command.setField("Command");
         command.setCondition(Condition.IN_DICTIONARY);
         command.setValue("command");
-        command.setDictionary(DocRef.create(dic2));
+        command.setDictionary(DocRefUtil.create(dic2));
 
         final ExpressionOperator and = new ExpressionOperator(Op.AND);
         and.addChild(user);
@@ -429,13 +431,13 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         user.setField("UserId");
         user.setCondition(Condition.IN_DICTIONARY);
         user.setValue("users");
-        user.setDictionary(DocRef.create(dic1));
+        user.setDictionary(DocRefUtil.create(dic1));
 
         final ExpressionTerm command = new ExpressionTerm();
         command.setField("Command");
         command.setCondition(Condition.IN_DICTIONARY);
         command.setValue("command");
-        command.setDictionary(DocRef.create(dic2));
+        command.setDictionary(DocRefUtil.create(dic2));
 
         final ExpressionOperator and = new ExpressionOperator(Op.AND);
         and.addChild(user);
@@ -476,7 +478,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
 
         final Index index = indexService.find(new FindIndexCriteria()).getFirst();
         Assert.assertNotNull("Index is null", index);
-        final DocRef dataSourceRef = DocRef.create(index);
+        final DocRef dataSourceRef = DocRefUtil.create(index);
 
         final Query query = buildQuery(dataSourceRef, expressionIn);
         final QueryData searchData = query.getQueryData();
@@ -495,9 +497,9 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
             componentResultRequests.put(componentId, tableResultRequest);
         }
 
-        SearchResult result = null;
+        SearchResponse result = null;
         boolean complete = false;
-        final Map<String, SharedObject> results = new HashMap<String, SharedObject>();
+        final Map<String, ComponentResult> results = new HashMap<>();
 
         final Search search = new Search(searchData.getDataSource(), expression, resultComponentMap);
         final SearchRequest searchRequest = new SearchRequest(search, componentResultRequests,
@@ -521,7 +523,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
                 // overwhelming the UI and transferring unnecessary data to the
                 // client.
                 if (result.getResults() != null) {
-                    for (final Entry<String, SharedObject> entry : result.getResults().entrySet()) {
+                    for (final Entry<String, ComponentResult> entry : result.getResults().entrySet()) {
                         if (entry.getValue() != null) {
                             results.put(entry.getKey(), entry.getValue());
                         }
@@ -541,7 +543,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         final Map<String, List<Row>> resultMap = new HashMap<String, List<Row>>();
         if (result != null) {
             if (results != null) {
-                for (final Entry<String, SharedObject> entry : results.entrySet()) {
+                for (final Entry<String, ComponentResult> entry : results.entrySet()) {
                     final String componentId = entry.getKey();
                     final TableResult tableResult = (TableResult) entry.getValue();
 
@@ -551,7 +553,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
                         for (int i = range.getOffset(); i < range.getLength(); i++) {
                             List<Row> values = resultMap.get(componentId);
                             if (values == null) {
-                                values = new ArrayList<Row>();
+                                values = new ArrayList<>();
                                 resultMap.put(componentId, values);
                             }
                             values.add(tableResult.getRows().get(i));
@@ -605,7 +607,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
 
         final Index index = indexService.find(new FindIndexCriteria()).getFirst();
         Assert.assertNotNull("Index is null", index);
-        final DocRef dataSourceRef = DocRef.create(index);
+        final DocRef dataSourceRef = DocRefUtil.create(index);
 
         final Query query = buildQuery(dataSourceRef, expressionIn);
         final QueryData searchData = query.getQueryData();
@@ -659,7 +661,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         tableSettings.addField(timeField);
 
         final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultPipeline();
-        tableSettings.setExtractionPipeline(DocRef.create(resultPipeline));
+        tableSettings.setExtractionPipeline(DocRefUtil.create(resultPipeline));
 
         return tableSettings;
     }

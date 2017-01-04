@@ -17,6 +17,7 @@
 package stroom.pipeline.stepping.server;
 
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
@@ -81,7 +82,7 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
                         final List<PipelineEntity> pipelines = pipelineEntityService.find(findPipelineCriteria);
                         if (pipelines != null && pipelines.size() > 0) {
                             final PipelineEntity pipelineEntity = pipelines.get(0);
-                            docRef = DocRef.create(pipelineEntity);
+                            docRef = DocRefUtil.create(pipelineEntity);
                         }
                     }
                 }
@@ -130,7 +131,7 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
         if (streamProcessor != null) {
             final PipelineEntity pipelineEntity = streamProcessor.getPipeline();
             if (pipelineEntity != null) {
-                docRef = DocRef.create(pipelineEntity);
+                docRef = DocRefUtil.create(pipelineEntity);
             }
         }
 

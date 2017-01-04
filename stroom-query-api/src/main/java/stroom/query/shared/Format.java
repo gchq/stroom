@@ -17,19 +17,19 @@
 package stroom.query.shared;
 
 import stroom.util.shared.HasDisplayValue;
-import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlType;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "format", propOrder = {"type", "settings", "wrap"})
-public class Format implements SharedObject {
+public class Format implements Serializable {
     private static final long serialVersionUID = -5380825645719299089L;
     public static List<Type> TYPES = Arrays.asList(Type.GENERAL, Type.NUMBER, Type.DATE_TIME, Type.TEXT);
     @XmlElement(name = "type")

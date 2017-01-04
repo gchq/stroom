@@ -22,13 +22,12 @@ import stroom.dashboard.server.format.FormatterFactory;
 import stroom.dashboard.server.vis.VisComponentResultCreator;
 import stroom.query.ResultStore;
 import stroom.query.SearchResultCollector;
+import stroom.query.shared.ComponentResult;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.SearchRequest;
-import stroom.query.shared.SearchResult;
+import stroom.query.shared.SearchResponse;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.SharedObject;
-import stroom.util.shared.SharedString;
 import stroom.visualisation.shared.VisualisationService;
 
 import javax.inject.Inject;
@@ -45,9 +44,9 @@ public class SearchResultCreator {
         this.visualisationService = visualisationService;
     }
 
-    public SearchResult createResult(final ActiveQuery activeQuery, final SearchRequest searchRequest) {
+    public SearchResponse createResult(final ActiveQuery activeQuery, final SearchRequest searchRequest) {
         final SearchResultCollector collector = activeQuery.getSearchResultCollector();
-        final SearchResult result = new SearchResult();
+        final SearchResponse result = new SearchResponse();
 
         // The result handler could possibly have not been set yet if the
         // AsyncSearchTask has not started execution.
@@ -64,7 +63,7 @@ public class SearchResultCreator {
 
                 // Only deliver data to components that actually want it.
                 if (componentResultRequest.wantsData()) {
-                    SharedObject componentResult = null;
+                    ComponentResult componentResult = null;
 
                     final ResultStore resultStore = collector.getResultStore(componentId);
                     if (resultStore != null) {
@@ -75,7 +74,12 @@ public class SearchResultCreator {
                                 componentResult = componentResultCreator.create(resultStore, componentResultRequest);
                             }
                         } catch (final Exception e) {
-                            componentResult = SharedString.wrap(e.getMessage());
+                            componentResult = new ComponentResult() {
+                                @Override
+                                public String toString() {
+                                    return e.getMessage();
+                                }
+                            };
                         }
                     }
 
@@ -85,7 +89,7 @@ public class SearchResultCreator {
                     if (!activeQuery.getLastResults().containsKey(componentId)) {
                         returnResult = true;
                     } else {
-                        final SharedObject lastComponentResult = activeQuery.getLastResults().get(componentId);
+                        final ComponentResult lastComponentResult = activeQuery.getLastResults().get(componentId);
                         if (!EqualsUtil.isEquals(componentResult, lastComponentResult)) {
                             //
                             // CODE TO HELP DEBUGGING.

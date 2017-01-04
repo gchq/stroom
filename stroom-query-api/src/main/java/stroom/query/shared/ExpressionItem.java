@@ -16,20 +16,18 @@
 
 package stroom.query.shared;
 
-import java.util.List;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
-
-import stroom.util.shared.SharedObject;
+import java.io.Serializable;
+import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "item", propOrder = { "enabled" })
 @XmlSeeAlso({ ExpressionOperator.class, ExpressionTerm.class })
-public abstract class ExpressionItem implements SharedObject {
+public abstract class ExpressionItem implements Serializable {
     private static final long serialVersionUID = -8483817637655853635L;
 
     @XmlElement(name = "enabled", defaultValue = "true")
@@ -39,12 +37,32 @@ public abstract class ExpressionItem implements SharedObject {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
+    /**
+     * Recursive method to populates the passed list with all enabled
+     * {@link ExpressionTerm} nodes found in the tree.
+     */
+    public static void findAllTermNodes(final ExpressionItem node, final List<ExpressionTerm> termsFound) {
+        // Don't go any further down this branch if this node is disabled.
+        if (node.enabled) {
+            if (node instanceof ExpressionTerm) {
+                final ExpressionTerm termNode = (ExpressionTerm) node;
+
+                termsFound.add(termNode);
+
+            } else if (node instanceof ExpressionOperator) {
+                for (final ExpressionItem childNode : ((ExpressionOperator) node).getChildren()) {
+                    findAllTermNodes(childNode, termsFound);
+                }
+            }
+        }
     }
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
     }
 
     public abstract void append(final StringBuilder sb, final String pad, final boolean singleLine);
@@ -72,24 +90,4 @@ public abstract class ExpressionItem implements SharedObject {
      * @return True if it is found
      */
     public abstract boolean contains(String fieldToFind);
-
-    /**
-     * Recursive method to populates the passed list with all enabled
-     * {@link ExpressionTerm} nodes found in the tree.
-     */
-    public static void findAllTermNodes(final ExpressionItem node, final List<ExpressionTerm> termsFound) {
-        // Don't go any further down this branch if this node is disabled.
-        if (node.enabled) {
-            if (node instanceof ExpressionTerm) {
-                final ExpressionTerm termNode = (ExpressionTerm) node;
-
-                termsFound.add(termNode);
-
-            } else if (node instanceof ExpressionOperator) {
-                for (final ExpressionItem childNode : ((ExpressionOperator) node).getChildren()) {
-                    findAllTermNodes(childNode, termsFound);
-                }
-            }
-        }
-    }
 }

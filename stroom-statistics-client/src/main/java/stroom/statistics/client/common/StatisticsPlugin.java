@@ -16,6 +16,10 @@
 
 package stroom.statistics.client.common;
 
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.app.client.ContentManager;
@@ -24,7 +28,7 @@ import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.entity.client.EntityTabData;
 import stroom.entity.client.presenter.EntityEditPresenter;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.node.client.ClientPropertyCache;
 import stroom.security.client.ClientSecurityContext;
 import stroom.statistics.client.common.presenter.StatisticsDataSourcePresenter;
@@ -33,10 +37,6 @@ import stroom.statistics.shared.StatisticField;
 import stroom.statistics.shared.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 import java.util.Set;
@@ -73,7 +73,7 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
                 // fields added/removed/changed
-                load(DocRef.create(entity), new LoadCallback<StatisticStoreEntity>() {
+                load(DocRefUtil.create(entity), new LoadCallback<StatisticStoreEntity>() {
                     @Override
                     public void onLoad(final StatisticStoreEntity entityFromDb) {
                         doConfirmSave(presenter, entity, entityFromDb);

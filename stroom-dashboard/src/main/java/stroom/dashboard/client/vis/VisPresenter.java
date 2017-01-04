@@ -40,21 +40,21 @@ import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.FetchVisualisationAction;
-import stroom.dashboard.shared.VisResult;
-import stroom.dashboard.shared.VisResultRequest;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRef;
+import stroom.query.shared.ComponentResult;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.ComponentSettings;
 import stroom.query.shared.VisDashboardSettings;
+import stroom.query.shared.VisResult;
+import stroom.query.shared.VisResultRequest;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.Script;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.SharedList;
-import stroom.util.shared.SharedObject;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
@@ -262,7 +262,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     @Override
-    public void setData(final SharedObject result) {
+    public void setData(final ComponentResult result) {
         if (visSettings != null && visSettings.getVisualisation() != null) {
             if (result != null && result instanceof VisResult) {
                 final VisResult visResult = (VisResult) result;

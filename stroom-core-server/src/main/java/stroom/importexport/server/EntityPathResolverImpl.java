@@ -16,13 +16,13 @@
 
 package stroom.importexport.server;
 
+import org.springframework.stereotype.Component;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.HasFolder;
 import stroom.entity.shared.NamedEntity;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Set;
@@ -97,13 +97,13 @@ public class EntityPathResolverImpl implements EntityPathResolver {
 
         final String[] pathParts = path.split("/");
         for (int i = 0; i < pathParts.length - 1; i++) {
-            folder = entityLoader.loadByName(Folder.ENTITY_TYPE, DocRef.create(folder), pathParts[i]);
+            folder = entityLoader.loadByName(Folder.ENTITY_TYPE, DocRefUtil.create(folder), pathParts[i]);
         }
 
         final String name = pathParts[pathParts.length - 1];
 
         entityLoader.getEntityService(entityType);
 
-        return (E) entityLoader.loadByName(entityType, DocRef.create(folder), name, fetchSet);
+        return (E) entityLoader.loadByName(entityType, DocRefUtil.create(folder), name, fetchSet);
     }
 }

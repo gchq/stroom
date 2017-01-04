@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
-
-import java.util.Arrays;
+package stroom.query.shared;
 
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.SharedObject;
+
+import java.util.Arrays;
 
 /**
  * Class that represents a hit in the index

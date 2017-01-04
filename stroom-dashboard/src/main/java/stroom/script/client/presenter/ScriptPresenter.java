@@ -29,7 +29,7 @@ import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
@@ -137,7 +137,7 @@ public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Sc
         if (loadCount > 1) {
             // Remove the script function from the cache so dashboards reload
             // it.
-            ClearScriptCacheEvent.fire(this, DocRef.create(script));
+            ClearScriptCacheEvent.fire(this, DocRefUtil.create(script));
 
             // This script might be used by any visualisation so clear the vis
             // function cache so that scripts are requested again if needed.
@@ -168,7 +168,7 @@ public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Sc
         if (!loadedResource) {
             final Set<String> fetchSet = new HashSet<>();
             fetchSet.add(Script.FETCH_RESOURCE);
-            final EntityServiceLoadAction<Script> action = new EntityServiceLoadAction<Script>(DocRef.create(getEntity()),
+            final EntityServiceLoadAction<Script> action = new EntityServiceLoadAction<Script>(DocRefUtil.create(getEntity()),
                     fetchSet);
             dispatcher.execute(action, new AsyncCallbackAdaptor<Script>() {
                 @Override

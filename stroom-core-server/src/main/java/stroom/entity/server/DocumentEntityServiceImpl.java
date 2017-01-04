@@ -16,11 +16,14 @@
 
 package stroom.entity.server;
 
-import stroom.entity.server.util.StroomEntityManager;
+import event.logging.BaseAdvancedQueryItem;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceException;
@@ -33,8 +36,6 @@ import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.EqualsUtil;
-import event.logging.BaseAdvancedQueryItem;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.Transient;
 import java.util.ArrayList;
@@ -471,7 +472,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 //    }
 
     private String getDocReference(BaseEntity entity) {
-        return "(" + DocRef.create(entity).toString() + ")";
+        return "(" + DocRefUtil.create(entity).toString() + ")";
     }
 
     public abstract Class<E> getEntityClass();

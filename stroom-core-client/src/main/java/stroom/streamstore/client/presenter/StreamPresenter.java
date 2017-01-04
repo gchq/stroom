@@ -16,6 +16,20 @@
 
 package stroom.streamstore.client.presenter;
 
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.AlertCallback;
@@ -30,6 +44,7 @@ import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
 import stroom.entity.shared.Folder;
@@ -60,20 +75,6 @@ import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.Arrays;
 import java.util.List;
@@ -330,7 +331,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             registerHandler(streamListUpload.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(final ClickEvent event) {
-                    streamUploadPresenter.get().show(StreamPresenter.this, DocRef.create(feedCriteria));
+                    streamUploadPresenter.get().show(StreamPresenter.this, DocRefUtil.create(feedCriteria));
                 }
             }));
         }
@@ -592,7 +593,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 //                    .getPipelineIdSet();
 //            if (entityIdSet != null) {
 //                if (entityIdSet.getSet().size() > 0) {
-//                    pipelineRef = DocRef.create(entityIdSet.getSet().iterator().next());
+//                    pipelineRef = DocRefUtil.create(entityIdSet.getSet().iterator().next());
 //                }
 //            }
 

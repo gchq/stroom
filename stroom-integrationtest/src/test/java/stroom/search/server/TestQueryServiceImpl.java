@@ -16,6 +16,8 @@
 
 package stroom.search.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardService;
@@ -26,6 +28,7 @@ import stroom.entity.server.util.BaseEntityDeProxyProcessor;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FolderService;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
@@ -36,8 +39,6 @@ import stroom.query.shared.QueryData;
 import stroom.security.shared.User;
 import stroom.security.shared.UserService;
 import stroom.util.thread.ThreadUtil;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 
@@ -65,12 +66,12 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         user = userService.createUser("testuser");
 
-        final DocRef testFolder = DocRef.create(folderService.create(null, "Test Folder"));
+        final DocRef testFolder = DocRefUtil.create(folderService.create(null, "Test Folder"));
 
         dashboard = dashboardService.create(testFolder, "Test");
 
         final Index index = indexService.create(testFolder, "Test index");
-        final DocRef dataSourceRef = DocRef.create(index);
+        final DocRef dataSourceRef = DocRefUtil.create(index);
 
         refQuery = queryService.create(null, "Ref query");
         refQuery.setDashboard(dashboard);

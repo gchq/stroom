@@ -19,6 +19,7 @@ package stroom.security.server;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceException;
@@ -171,12 +172,12 @@ public class ChangeDocumentPermissionsHandler
                 switch (cascade) {
                     case CHANGES_ONLY:
                         // We are only cascading changes so just pass on the change set.
-                        changeChildPermissions(DocRef.create(folder), changeSet, affectedDocRefs, affectedUserRefs, false);
+                        changeChildPermissions(DocRefUtil.create(folder), changeSet, affectedDocRefs, affectedUserRefs, false);
                         break;
 
                     case ALL:
                         // We are replicating the permissions of the parent folder on all children so create a change set from the parent folder.
-                        final DocumentPermissions parentPermissions = documentPermissionService.getPermissionsForDocument(DocRef.create(folder));
+                        final DocumentPermissions parentPermissions = documentPermissionService.getPermissionsForDocument(DocRefUtil.create(folder));
                         final ChangeSet<UserPermission> fullChangeSet = new ChangeSet<>();
                         for (final Map.Entry<UserRef, Set<String>> entry : parentPermissions.getUserPermissions().entrySet()) {
                             final UserRef userRef = entry.getKey();
@@ -186,7 +187,7 @@ public class ChangeDocumentPermissionsHandler
                         }
 
                         // Set child permissions to that of the parent folder after clearing all permissions from child documents.
-                        changeChildPermissions(DocRef.create(folder), fullChangeSet, affectedDocRefs, affectedUserRefs, true);
+                        changeChildPermissions(DocRefUtil.create(folder), fullChangeSet, affectedDocRefs, affectedUserRefs, true);
 
                         break;
 
@@ -204,7 +205,7 @@ public class ChangeDocumentPermissionsHandler
             final List<DocumentEntity> children = genericEntityService.findByFolder(type, folder, null);
             if (children != null && children.size() > 0) {
                 for (final DocumentEntity child : children) {
-                    final DocRef childDocRef = DocRef.create(child);
+                    final DocRef childDocRef = DocRefUtil.create(child);
                     changeDocPermissions(childDocRef, changeSet, affectedDocRefs, affectedUserRefs, clear);
 
                     if (child instanceof Folder) {

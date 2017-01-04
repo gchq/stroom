@@ -18,16 +18,11 @@ package stroom.dashboard.client.unknown;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.query.shared.ComponentResultRequest;
-import stroom.query.shared.ComponentSettings;
-import stroom.util.shared.SharedObject;
 
-public class UnknownComponentPresenter extends AbstractComponentPresenter<HTMLView>implements ResultComponent {
+public class UnknownComponentPresenter extends AbstractComponentPresenter<HTMLView> {
     private static final ComponentType TYPE = new ComponentType(99, "Unknown", "Unknown");
 
     @Inject
@@ -46,44 +41,8 @@ public class UnknownComponentPresenter extends AbstractComponentPresenter<HTMLVi
     }
 
     @Override
-    public ComponentSettings getSettings() {
-        return null;
-    }
-
-    @Override
     public void read(final ComponentConfig componentData) {
         super.read(componentData);
         getView().setHTML("<div style=\"padding:5px\">Unknown component type: " + componentData.getType() + "</div>");
-    }
-
-    @Override
-    public void changeSettings() {
-        super.changeSettings();
-
-    }
-
-    @Override
-    public ComponentResultRequest getResultRequest() {
-        return null;
-    }
-
-    @Override
-    public void reset() {
-    }
-
-    @Override
-    public void startSearch() {
-    }
-
-    @Override
-    public void endSearch() {
-    }
-
-    @Override
-    public void setWantsData(final boolean wantsData) {
-    }
-
-    @Override
-    public void setData(final SharedObject result) {
     }
 }

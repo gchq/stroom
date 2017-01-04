@@ -16,18 +16,11 @@
 
 package stroom.dashboard.server;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.dashboard.server.vis.CompiledStructure;
 import stroom.dashboard.server.vis.StructureBuilder;
 import stroom.dashboard.server.vis.VisComponentResultCreator;
-import stroom.dashboard.shared.VisResult;
 import stroom.query.Item;
 import stroom.query.Items;
 import stroom.query.ItemsArrayList;
@@ -35,7 +28,13 @@ import stroom.query.ResultStore;
 import stroom.query.shared.Field;
 import stroom.query.shared.Format;
 import stroom.query.shared.Format.Type;
+import stroom.query.shared.VisResult;
 import stroom.util.test.StroomUnitTest;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TestChartResultCreator extends StroomUnitTest {
     private static final String[] SERIES_CHOICE = new String[] { "", "Test1", "Test2" };

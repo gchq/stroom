@@ -16,9 +16,11 @@
 
 package stroom.pipeline.server.task;
 
+import org.joda.time.DateTime;
+import org.junit.Assert;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
@@ -50,17 +52,15 @@ import stroom.streamtask.shared.StreamProcessorService;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
-import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.test.ComparisonHelper;
+import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Indicators;
+import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
 import stroom.util.zip.StroomStreamProcessor;
-import stroom.util.zip.HeaderMap;
-import org.joda.time.DateTime;
-import org.junit.Assert;
 
 import javax.annotation.Resource;
 import java.io.BufferedInputStream;
@@ -340,7 +340,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         streamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE);
         streamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS);
         final SteppingTask action = new SteppingTask(null, "Test User");
-        action.setPipeline(DocRef.create(pipelineEntity));
+        action.setPipeline(DocRefUtil.create(pipelineEntity));
         action.setCriteria(streamCriteria);
 
         SteppingResult response = new SteppingResult();

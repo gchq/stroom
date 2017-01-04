@@ -17,9 +17,9 @@
 package stroom.dashboard.server;
 
 import stroom.query.ResultStore;
+import stroom.query.shared.ComponentResult;
 import stroom.query.shared.ComponentResultRequest;
-import stroom.util.shared.SharedObject;
 
 public interface ComponentResultCreator {
-    SharedObject create(ResultStore resultStore, ComponentResultRequest componentResultRequest);
+    ComponentResult create(ResultStore resultStore, ComponentResultRequest componentResultRequest);
 }

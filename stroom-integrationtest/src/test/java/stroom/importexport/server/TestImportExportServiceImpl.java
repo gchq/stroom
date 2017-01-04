@@ -16,9 +16,12 @@
 
 package stroom.importexport.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityActionConfirmation;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
@@ -30,8 +33,6 @@ import stroom.pipeline.shared.PipelineEntityService;
 import stroom.resource.server.ResourceStore;
 import stroom.util.shared.ResourceKey;
 import stroom.util.test.FileSystemTestUtil;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -58,19 +59,19 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         Folder folder1 = folderService.create(null, "Root1_" + FileSystemTestUtil.getUniqueTestString());
         folder1 = folderService.save(folder1);
-        final DocRef folder1Ref = DocRef.create(folder1);
+        final DocRef folder1Ref = DocRefUtil.create(folder1);
 
         Folder folder2 = folderService.create(null, "Root2_" + FileSystemTestUtil.getUniqueTestString());
         folder2 = folderService.save(folder2);
-        final DocRef folder2Ref = DocRef.create(folder2);
+        final DocRef folder2Ref = DocRefUtil.create(folder2);
 
         Folder folder2child1 = folderService.create(folder2Ref, "Root2_Child1_" + FileSystemTestUtil.getUniqueTestString());
         folder2child1 = folderService.save(folder2child1);
-        final DocRef folder2child1Ref = DocRef.create(folder2child1);
+        final DocRef folder2child1Ref = DocRefUtil.create(folder2child1);
 
         Folder folder2child2 = folderService.create(folder2Ref, "Root2_Child2_" + FileSystemTestUtil.getUniqueTestString());
         folder2child2 = folderService.save(folder2child2);
-        final DocRef folder2child2Ref = DocRef.create(folder2child2);
+        final DocRef folder2child2Ref = DocRefUtil.create(folder2child2);
 
         Assert.assertEquals(4, commonTestControl.countEntity(Folder.class));
 
@@ -80,7 +81,7 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         PipelineEntity tran2 = pipelineEntityService.create(folder2Ref, FileSystemTestUtil.getUniqueTestString());
         tran2.setDescription("Description");
-        tran2.setParentPipeline(DocRef.create(tran1));
+        tran2.setParentPipeline(DocRefUtil.create(tran1));
         tran2 = pipelineEntityService.save(tran2);
 
         final Feed referenceFeed = feedService.create(folder1Ref, FileSystemTestUtil.getUniqueTestString());

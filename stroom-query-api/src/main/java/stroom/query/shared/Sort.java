@@ -16,42 +16,25 @@
 
 package stroom.query.shared;
 
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HasDisplayValue;
+import stroom.util.shared.HashCodeBuilder;
+import stroom.util.shared.ToStringBuilder;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HasDisplayValue;
-import stroom.util.shared.HashCodeBuilder;
-import stroom.util.shared.SharedObject;
-import stroom.util.shared.ToStringBuilder;
+import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "sort", propOrder = { "order", "direction" })
-public class Sort implements SharedObject {
+public class Sort implements Serializable {
     private static final long serialVersionUID = 4530846367973824427L;
-
-    public enum SortDirection implements HasDisplayValue {
-        ASCENDING("Ascending"), DESCENDING("Descending");
-
-        private final String displayValue;
-
-        SortDirection(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-    }
-
     @XmlElement(name = "order")
     private int order = 1;
     @XmlElement(name = "direction")
     private SortDirection direction = SortDirection.ASCENDING;
-
     public Sort() {
         // Default constructor necessary for GWT serialisation.
     }
@@ -106,5 +89,20 @@ public class Sort implements SharedObject {
         builder.append("order", order);
         builder.append("direction", direction);
         return builder.toString();
+    }
+
+    public enum SortDirection implements HasDisplayValue {
+        ASCENDING("Ascending"), DESCENDING("Descending");
+
+        private final String displayValue;
+
+        SortDirection(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
     }
 }

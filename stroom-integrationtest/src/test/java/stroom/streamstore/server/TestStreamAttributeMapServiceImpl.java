@@ -16,9 +16,11 @@
 
 package stroom.streamstore.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.query.shared.Condition;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
@@ -31,8 +33,6 @@ import stroom.streamstore.shared.StreamAttributeKeyService;
 import stroom.streamstore.shared.StreamAttributeMapService;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -63,7 +63,7 @@ public class TestStreamAttributeMapServiceImpl extends AbstractCoreIntegrationTe
         FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
         criteria.obtainFindStreamCriteria().obtainStreamIdSet().add(md);
         criteria.obtainFindStreamCriteria().obtainAttributeConditionList()
-                .add(new StreamAttributeCondition(DocRef.create(createTimeAttributeKey), Condition.EQUALS,
+                .add(new StreamAttributeCondition(DocRefUtil.create(createTimeAttributeKey), Condition.EQUALS,
                         DateUtil.createNormalDateTimeString(md.getCreateMs())));
 
         Assert.assertEquals(1, streamAttributeMapService.find(criteria).size());
@@ -71,7 +71,7 @@ public class TestStreamAttributeMapServiceImpl extends AbstractCoreIntegrationTe
         criteria = new FindStreamAttributeMapCriteria();
         criteria.obtainFindStreamCriteria().obtainStreamIdSet().add(md);
         criteria.obtainFindStreamCriteria().obtainAttributeConditionList()
-                .add(new StreamAttributeCondition(DocRef.create(createTimeAttributeKey), Condition.EQUALS,
+                .add(new StreamAttributeCondition(DocRefUtil.create(createTimeAttributeKey), Condition.EQUALS,
                         DateUtil.createNormalDateTimeString(0L)));
 
         Assert.assertEquals(0, streamAttributeMapService.find(criteria).size());
@@ -79,14 +79,14 @@ public class TestStreamAttributeMapServiceImpl extends AbstractCoreIntegrationTe
         criteria = new FindStreamAttributeMapCriteria();
         criteria.obtainFindStreamCriteria().obtainStreamIdSet().add(md);
         criteria.obtainFindStreamCriteria().obtainAttributeConditionList().add(new StreamAttributeCondition(
-                DocRef.create(fileSizeAttributeKey), Condition.GREATER_THAN, "0"));
+                DocRefUtil.create(fileSizeAttributeKey), Condition.GREATER_THAN, "0"));
 
         Assert.assertEquals(1, streamAttributeMapService.find(criteria).size());
 
         criteria = new FindStreamAttributeMapCriteria();
         criteria.obtainFindStreamCriteria().obtainStreamIdSet().add(md);
         criteria.obtainFindStreamCriteria().obtainAttributeConditionList().add(new StreamAttributeCondition(
-                DocRef.create(fileSizeAttributeKey), Condition.BETWEEN, "0,1000000"));
+                DocRefUtil.create(fileSizeAttributeKey), Condition.BETWEEN, "0,1000000"));
 
         Assert.assertEquals(1, streamAttributeMapService.find(criteria).size());
     }

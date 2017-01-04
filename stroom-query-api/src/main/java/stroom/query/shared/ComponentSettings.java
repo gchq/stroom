@@ -20,13 +20,12 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
-
-import stroom.util.shared.SharedObject;
+import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "settings")
 @XmlSeeAlso({ QueryData.class, TableSettings.class })
-public abstract class ComponentSettings implements SharedObject {
+public abstract class ComponentSettings implements Serializable {
     private static final long serialVersionUID = 2110282486749818888L;
 
     public ComponentSettings() {

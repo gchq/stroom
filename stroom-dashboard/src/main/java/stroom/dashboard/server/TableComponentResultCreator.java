@@ -16,23 +16,24 @@
 
 package stroom.dashboard.server;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
 import stroom.dashboard.expression.Generator;
 import stroom.dashboard.server.format.FieldFormatter;
-import stroom.dashboard.shared.Row;
-import stroom.dashboard.shared.TableResult;
-import stroom.dashboard.shared.TableResultRequest;
 import stroom.query.Item;
 import stroom.query.Items;
 import stroom.query.ResultStore;
+import stroom.query.shared.ComponentResult;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.Field;
+import stroom.query.shared.Row;
+import stroom.query.shared.TableResult;
+import stroom.query.shared.TableResultRequest;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.SharedString;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class TableComponentResultCreator implements ComponentResultCreator {
     private final FieldFormatter fieldFormatter;
@@ -43,9 +44,9 @@ public class TableComponentResultCreator implements ComponentResultCreator {
     }
 
     @Override
-    public SharedObject create(final ResultStore resultStore, final ComponentResultRequest componentResultRequest) {
+    public ComponentResult create(final ResultStore resultStore, final ComponentResultRequest componentResultRequest) {
         final TableResultRequest resultRequest = (TableResultRequest) componentResultRequest;
-        final List<Row> resultList = new ArrayList<Row>();
+        final List<Row> resultList = new ArrayList<>();
         int offset = 0;
         int length = 0;
         int totalResults = 0;
@@ -65,7 +66,7 @@ public class TableComponentResultCreator implements ComponentResultCreator {
 
         final TableResult tableResult = new TableResult();
         tableResult.setRows(resultList);
-        tableResult.setResultRange(new OffsetRange<Integer>(offset, resultList.size()));
+        tableResult.setResultRange(new OffsetRange<>(offset, resultList.size()));
         tableResult.setTotalResults(totalResults);
         tableResult.setError(error);
 

@@ -16,14 +16,6 @@
 
 package stroom.dashboard.server.vis;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -32,7 +24,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-
 import stroom.dashboard.expression.Generator;
 import stroom.dashboard.expression.ObjectCompareUtil;
 import stroom.dashboard.expression.TypeConverter;
@@ -45,177 +36,33 @@ import stroom.dashboard.server.vis.CompiledStructure.Nest;
 import stroom.dashboard.server.vis.CompiledStructure.Sort;
 import stroom.dashboard.server.vis.CompiledStructure.Structure;
 import stroom.dashboard.server.vis.CompiledStructure.Values;
-import stroom.dashboard.shared.VisResult;
-import stroom.dashboard.shared.VisResultRequest;
 import stroom.query.Item;
 import stroom.query.Items;
 import stroom.query.ResultStore;
+import stroom.query.shared.ComponentResult;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.Format.Type;
 import stroom.query.shared.VisDashboardSettings;
+import stroom.query.shared.VisResult;
+import stroom.query.shared.VisResultRequest;
 import stroom.visualisation.shared.Visualisation;
 import stroom.visualisation.shared.VisualisationService;
-import stroom.util.shared.SharedObject;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class VisComponentResultCreator implements ComponentResultCreator {
-    private static class ObjectComparator implements Comparator<Object> {
-        @Override
-        public int compare(final Object o1, final Object o2) {
-            return ObjectCompareUtil.compare(o1, o2);
-        }
-    }
-
-    private static class StoreComparator extends ObjectComparator {
-        private final CompiledStructure.Direction direction;
-
-        public StoreComparator(final CompiledStructure.Direction direction) {
-            this.direction = direction;
-        }
-
-        @Override
-        public int compare(final Object o1, final Object o2) {
-            if (CompiledStructure.Direction.ASCENDING.equals(direction)) {
-                return super.compare(((Store) o1).getKey(), (((Store) o2).getKey()));
-            } else {
-                return super.compare(((Store) o2).getKey(), (((Store) o1).getKey()));
-            }
-        }
-    }
-
-    private static class ValuesComparator extends ObjectComparator {
-        private final List<Sort> sorts;
-
-        public ValuesComparator(final List<Sort> sorts) {
-            this.sorts = sorts;
-        }
-
-        @Override
-        public int compare(final Object o1, final Object o2) {
-            for (final Sort sort : sorts) {
-                final int index = sort.getIndex();
-                final Object v1 = getValue(o1, index);
-                final Object v2 = getValue(o2, index);
-
-                int result = 0;
-                if (Direction.ASCENDING.equals(sort.getDirection())) {
-                    result = super.compare(v1, v2);
-                } else {
-                    result = super.compare(v2, v1);
-                }
-
-                if (result != 0) {
-                    return result;
-                }
-            }
-
-            return 0;
-        }
-
-        private Object getValue(final Object o, final int index) {
-            final Object[] arr = (Object[]) o;
-            if (arr.length > index) {
-                return arr[index];
-            }
-            return null;
-        }
-    }
-
-    public static class Store {
-        private final Object key;
-
-        private Map<Object, Store> map;
-        private List<Object> list;
-
-        private Double[] min;
-        private Double[] max;
-        private Double[] sum;
-        private final String[] types;
-        private String keyType;
-
-        public Store(final Object key, final String keyType, final String[] types) {
-            this.key = key;
-            this.keyType = keyType;
-            this.types = types;
-        }
-
-        public Store(final Object key, final List<Object> list, final String[] types, final int len) {
-            this.key = key;
-            this.list = list;
-            this.types = types;
-            this.min = new Double[len];
-            this.max = new Double[len];
-            this.sum = new Double[len];
-        }
-
-        @JsonProperty("key")
-        public Object getKey() {
-            return key;
-        }
-
-        @JsonProperty("keyType")
-        public String getKeyType() {
-            return keyType;
-        }
-
-        @JsonProperty("values")
-        public Object getValues() {
-            if (map != null) {
-                return map.values();
-            } else if (list != null) {
-                return list;
-            }
-
-            return null;
-        }
-
-        @JsonProperty("types")
-        public String[] getTypes() {
-            return types;
-        }
-
-        @JsonProperty("min")
-        public Double[] getMin() {
-            return min;
-        }
-
-        @JsonProperty("max")
-        public Double[] getMax() {
-            return max;
-        }
-
-        @JsonProperty("sum")
-        public Double[] getSum() {
-            return sum;
-        }
-
-        @JsonIgnore
-        public Map<Object, Store> getMap() {
-            return map;
-        }
-
-        public void setMap(final Map<Object, Store> map) {
-            this.map = map;
-        }
-
-        @JsonIgnore
-        public List<Object> getList() {
-            return list;
-        }
-
-        public void add(final Object[] vals) {
-            list.add(vals);
-        }
-
-        @Override
-        public String toString() {
-            return "Store [key=" + key + ", map=" + map + ", types=" + Arrays.toString(types) + ", keyType=" + keyType
-                    + "]";
-        }
-
-    }
-
     private final Structure structure;
     private String error;
+
+    public VisComponentResultCreator(final Structure structure) {
+        this.structure = structure;
+    }
 
     public static VisComponentResultCreator create(final VisualisationService visualisationService,
             final ComponentResultRequest componentResultRequest) {
@@ -238,12 +85,8 @@ public class VisComponentResultCreator implements ComponentResultCreator {
         return new VisComponentResultCreator(structure);
     }
 
-    public VisComponentResultCreator(final Structure structure) {
-        this.structure = structure;
-    }
-
     @Override
-    public SharedObject create(final ResultStore resultStore, final ComponentResultRequest componentResultRequest) {
+    public ComponentResult create(final ResultStore resultStore, final ComponentResultRequest componentResultRequest) {
         if (error == null) {
             try {
                 // Get top level items.
@@ -613,5 +456,159 @@ public class VisComponentResultCreator implements ComponentResultCreator {
             return m1;
         }
         return m1 + m2;
+    }
+
+    private static class ObjectComparator implements Comparator<Object> {
+        @Override
+        public int compare(final Object o1, final Object o2) {
+            return ObjectCompareUtil.compare(o1, o2);
+        }
+    }
+
+    private static class StoreComparator extends ObjectComparator {
+        private final CompiledStructure.Direction direction;
+
+        public StoreComparator(final CompiledStructure.Direction direction) {
+            this.direction = direction;
+        }
+
+        @Override
+        public int compare(final Object o1, final Object o2) {
+            if (CompiledStructure.Direction.ASCENDING.equals(direction)) {
+                return super.compare(((Store) o1).getKey(), (((Store) o2).getKey()));
+            } else {
+                return super.compare(((Store) o2).getKey(), (((Store) o1).getKey()));
+            }
+        }
+    }
+
+    private static class ValuesComparator extends ObjectComparator {
+        private final List<Sort> sorts;
+
+        public ValuesComparator(final List<Sort> sorts) {
+            this.sorts = sorts;
+        }
+
+        @Override
+        public int compare(final Object o1, final Object o2) {
+            for (final Sort sort : sorts) {
+                final int index = sort.getIndex();
+                final Object v1 = getValue(o1, index);
+                final Object v2 = getValue(o2, index);
+
+                int result = 0;
+                if (Direction.ASCENDING.equals(sort.getDirection())) {
+                    result = super.compare(v1, v2);
+                } else {
+                    result = super.compare(v2, v1);
+                }
+
+                if (result != 0) {
+                    return result;
+                }
+            }
+
+            return 0;
+        }
+
+        private Object getValue(final Object o, final int index) {
+            final Object[] arr = (Object[]) o;
+            if (arr.length > index) {
+                return arr[index];
+            }
+            return null;
+        }
+    }
+
+    public static class Store {
+        private final Object key;
+        private final String[] types;
+        private Map<Object, Store> map;
+        private List<Object> list;
+        private Double[] min;
+        private Double[] max;
+        private Double[] sum;
+        private String keyType;
+
+        public Store(final Object key, final String keyType, final String[] types) {
+            this.key = key;
+            this.keyType = keyType;
+            this.types = types;
+        }
+
+        public Store(final Object key, final List<Object> list, final String[] types, final int len) {
+            this.key = key;
+            this.list = list;
+            this.types = types;
+            this.min = new Double[len];
+            this.max = new Double[len];
+            this.sum = new Double[len];
+        }
+
+        @JsonProperty("key")
+        public Object getKey() {
+            return key;
+        }
+
+        @JsonProperty("keyType")
+        public String getKeyType() {
+            return keyType;
+        }
+
+        @JsonProperty("values")
+        public Object getValues() {
+            if (map != null) {
+                return map.values();
+            } else if (list != null) {
+                return list;
+            }
+
+            return null;
+        }
+
+        @JsonProperty("types")
+        public String[] getTypes() {
+            return types;
+        }
+
+        @JsonProperty("min")
+        public Double[] getMin() {
+            return min;
+        }
+
+        @JsonProperty("max")
+        public Double[] getMax() {
+            return max;
+        }
+
+        @JsonProperty("sum")
+        public Double[] getSum() {
+            return sum;
+        }
+
+        @JsonIgnore
+        public Map<Object, Store> getMap() {
+            return map;
+        }
+
+        public void setMap(final Map<Object, Store> map) {
+            this.map = map;
+        }
+
+        @JsonIgnore
+        public List<Object> getList() {
+            return list;
+        }
+
+        public void add(final Object[] vals) {
+            list.add(vals);
+        }
+
+        @Override
+        public String toString() {
+            return "Store [key=" + key + ", map=" + map + ", types=" + Arrays.toString(types) + ", keyType=" + keyType
+                    + "]";
+        }
+
     }
 }

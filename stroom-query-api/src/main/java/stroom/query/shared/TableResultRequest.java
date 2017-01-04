@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.query.shared;
+
+import stroom.util.shared.OffsetRange;
 
 import java.util.HashSet;
 import java.util.Set;
-
-import stroom.query.shared.ComponentResultRequest;
-import stroom.query.shared.TableSettings;
-import stroom.util.shared.OffsetRange;
 
 public class TableResultRequest extends ComponentResultRequest {
     private static final long serialVersionUID = 8683770109061652092L;
@@ -54,6 +52,10 @@ public class TableResultRequest extends ComponentResultRequest {
         return openGroups;
     }
 
+    public void setOpenGroups(final Set<String> openGroups) {
+        this.openGroups = openGroups;
+    }
+
     public void setGroupOpen(final String group, final boolean open) {
         if (openGroups == null) {
             openGroups = new HashSet<String>();
@@ -72,10 +74,6 @@ public class TableResultRequest extends ComponentResultRequest {
 
     public boolean isGroupOpen(final String group) {
         return openGroups != null && openGroups.contains(group);
-    }
-
-    public void setOpenGroups(final Set<String> openGroups) {
-        this.openGroups = openGroups;
     }
 
     @Override

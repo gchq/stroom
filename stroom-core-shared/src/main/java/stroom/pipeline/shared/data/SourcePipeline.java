@@ -17,6 +17,7 @@
 package stroom.pipeline.shared.data;
 
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.util.shared.SharedObject;
 
@@ -30,7 +31,7 @@ public class SourcePipeline implements SharedObject {
     }
 
     public SourcePipeline(final PipelineEntity pipeline) {
-        this.pipeline = DocRef.create(pipeline);
+        this.pipeline = DocRefUtil.create(pipeline);
     }
 
     public DocRef getPipeline() {

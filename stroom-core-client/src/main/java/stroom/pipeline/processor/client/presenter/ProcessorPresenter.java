@@ -29,7 +29,17 @@ import stroom.data.grid.client.DoubleClickEvent;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
-import stroom.entity.shared.*;
+import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.EntityIdSet;
+import stroom.entity.shared.EntityReferenceComparator;
+import stroom.entity.shared.EntityServiceDeleteAction;
+import stroom.entity.shared.EntityServiceLoadAction;
+import stroom.entity.shared.EntityServiceSaveAction;
+import stroom.entity.shared.Folder;
+import stroom.entity.shared.NamedEntity;
+import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.processor.shared.CreateProcessorAction;
 import stroom.pipeline.processor.shared.LoadEntityIdSetAction;
@@ -500,7 +510,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
         } else {
             // Now create the processor filter using the find stream criteria.
-            dispatcher.execute(new CreateProcessorAction(DocRef.create(pipelineEntity), findStreamCriteria, false, 10),
+            dispatcher.execute(new CreateProcessorAction(DocRefUtil.create(pipelineEntity), findStreamCriteria, false, 10),
                     new AsyncCallbackAdaptor<StreamProcessorFilter>() {
                         @Override
                         public void onSuccess(final StreamProcessorFilter result) {

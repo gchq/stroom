@@ -19,7 +19,6 @@ package stroom.query.shared;
 import stroom.entity.shared.DocRef;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
-import stroom.util.shared.SharedObject;
 import stroom.util.shared.ToStringBuilder;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -35,7 +34,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "table", propOrder = { "queryId", "fields", "extractValues", "extractionPipeline", "maxResults",
         "showDetail" })
-public class TableSettings extends ComponentSettings implements SharedObject {
+public class TableSettings extends ComponentSettings {
     public static final int[] DEFAULT_MAX_RESULTS = { 1000000 };
     private static final long serialVersionUID = -2530827581046882396L;
     @XmlElement(name = "queryId")

@@ -16,19 +16,19 @@
 
 package stroom.query.shared;
 
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
+import stroom.util.shared.ToStringBuilder;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
-import stroom.util.shared.SharedObject;
-import stroom.util.shared.ToStringBuilder;
+import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "field", propOrder = { "name", "expression", "sort", "filter", "format", "group", "width", "visible" })
-public class Field implements SharedObject {
+public class Field implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 
     @XmlElement(name = "name")

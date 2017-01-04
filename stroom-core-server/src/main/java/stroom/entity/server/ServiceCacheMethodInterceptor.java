@@ -16,13 +16,6 @@
 
 package stroom.entity.server;
 
-import stroom.entity.shared.Clearable;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.Entity;
-import stroom.entity.shared.EntityService;
-import stroom.entity.shared.EntityServiceException;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 import com.googlecode.ehcache.annotations.key.ListCacheKeyGenerator;
 import com.googlecode.ehcache.annotations.key.ReadOnlyList;
 import net.sf.ehcache.Cache;
@@ -33,6 +26,14 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.framework.Advised;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
+import stroom.entity.shared.Clearable;
+import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.Entity;
+import stroom.entity.shared.EntityService;
+import stroom.entity.shared.EntityServiceException;
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
 
 import javax.annotation.Resource;
 import java.io.Serializable;
@@ -125,7 +126,7 @@ public class ServiceCacheMethodInterceptor implements MethodInterceptor, Initial
                     return null;
                 }
 
-                docRef = DocRef.create(entity);
+                docRef = DocRefUtil.create(entity);
             } else {
                 throw new EntityServiceException("Unexpected parameter type: " + method.getParameterTypes()[0].getName());
             }

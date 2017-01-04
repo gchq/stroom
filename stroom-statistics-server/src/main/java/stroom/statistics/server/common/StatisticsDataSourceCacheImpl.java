@@ -16,20 +16,21 @@
 
 package stroom.statistics.server.common;
 
-import stroom.entity.server.event.EntityEvent;
-import stroom.entity.server.event.EntityEventHandler;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.EntityAction;
-import stroom.statistics.common.FindStatisticsEntityCriteria;
-import stroom.statistics.common.StatisticStoreCache;
-import stroom.statistics.common.StatisticStoreEntityService;
-import stroom.statistics.shared.StatisticStoreEntity;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import org.springframework.stereotype.Component;
+import stroom.entity.server.event.EntityEvent;
+import stroom.entity.server.event.EntityEventHandler;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.EntityAction;
+import stroom.statistics.common.FindStatisticsEntityCriteria;
+import stroom.statistics.common.StatisticStoreCache;
+import stroom.statistics.common.StatisticStoreEntityService;
+import stroom.statistics.shared.StatisticStoreEntity;
 
 import javax.inject.Inject;
 
@@ -130,7 +131,7 @@ public class StatisticsDataSourceCacheImpl implements StatisticStoreCache, Entit
                 // it is possible multiple threads may try and do this at the
                 // same time but only the first one will
                 // manage to get it into the cache.
-                putToBothCaches(key, DocRef.create(statisticsDataSource), statisticsDataSource);
+                putToBothCaches(key, DocRefUtil.create(statisticsDataSource), statisticsDataSource);
             } else if (results.size() == 0) {
                 // not found in DB so put a null value in the cache to stop us
                 // looking in the DB again.
@@ -201,8 +202,8 @@ public class StatisticsDataSourceCacheImpl implements StatisticStoreCache, Entit
                 for (final Object key : cacheByEngineName.getKeys()) {
                     final StatisticStoreEntity statisticsDataSource = (StatisticStoreEntity) cacheByEngineName.get(key)
                             .getObjectValue();
-                    if (statisticsDataSource != null && DocRef.create(statisticsDataSource).equals(event.getDocRef())) {
-                        cacheByRef.remove(DocRef.create(statisticsDataSource));
+                    if (statisticsDataSource != null && DocRefUtil.create(statisticsDataSource).equals(event.getDocRef())) {
+                        cacheByRef.remove(DocRefUtil.create(statisticsDataSource));
                         cacheByEngineName.remove(key);
                     }
                 }

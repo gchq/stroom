@@ -16,10 +16,12 @@
 
 package stroom.feed.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.OrderBy;
@@ -31,8 +33,6 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.test.FileSystemTestUtil;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -89,7 +89,7 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         Feed fd = feedService.create(commonTestScenarioCreator.getTestFolder(), feedName);
 
-        fd = feedService.copy(fd, DocRef.create(fd.getFolder()), fd.getName() + "COPY");
+        fd = feedService.copy(fd, DocRefUtil.create(fd.getFolder()), fd.getName() + "COPY");
 
         feedService.save(fd);
     }
@@ -214,7 +214,7 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
         Folder folder = folderService.create(null, "JUNIT");
         folder = folderService.save(folder);
 
-        PipelineEntity translation1 = pipelineEntityService.create(DocRef.create(folder), "JUNIT");
+        PipelineEntity translation1 = pipelineEntityService.create(DocRefUtil.create(folder), "JUNIT");
         translation1.setDescription("Junit");
         translation1 = pipelineEntityService.save(translation1);
 

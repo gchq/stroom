@@ -16,14 +16,14 @@
 
 package stroom.query.shared;
 
+import stroom.util.shared.SharedObject;
+import stroom.util.shared.ToStringBuilder;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import stroom.util.shared.SharedObject;
-import stroom.util.shared.ToStringBuilder;
-
-public class SearchResult implements SharedObject {
+public class SearchResponse implements SharedObject {
     private static final long serialVersionUID = -2964122512841756795L;
 
     /**
@@ -43,9 +43,9 @@ public class SearchResult implements SharedObject {
      **/
     private boolean complete;
 
-    private Map<String, SharedObject> results;
+    private Map<String, ComponentResult> results;
 
-    public SearchResult() {
+    public SearchResponse() {
         // Default constructor necessary for GWT serialisation.
     }
 
@@ -82,11 +82,11 @@ public class SearchResult implements SharedObject {
         return builder.toString();
     }
 
-    public Map<String, SharedObject> getResults() {
+    public Map<String, ComponentResult> getResults() {
         return results;
     }
 
-    public void addResult(final String componentId, final SharedObject result) {
+    public void addResult(final String componentId, final ComponentResult result) {
         if (results == null) {
             results = new HashMap<>();
         }
