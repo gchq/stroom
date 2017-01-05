@@ -10,18 +10,50 @@ dependencies {
     runtime 'mysql:mysql-connector-java:5.1.40'
 }
 
-task copyLibs(type:Copy) {
-    def libDir = "src/main/dist/template/lib"
+//task copyLibs(type:Copy) {
+//    def libDir = "src/main/dist/template/lib"
+//
+//    delete libDir
+//    file(libDir).mkdirs()
+//
+//    copy {
+//        from fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')
+////        from fileTree(new File(project(':stroom-util').buildDir, 'libs')).include('*.jar').exclude('*source*', '*test*')
+//        from configurations.runtime
+//        into libDir
+//    }
+//}
 
-    delete libDir
-    file(libDir).mkdirs()
-
-    copy {
-        from fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')
+distributions {
+    main {
+        contents {
+            from (fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')) {
+                into 'template/lib'
+            }
 //        from fileTree(new File(project(':stroom-util').buildDir, 'libs')).include('*.jar').exclude('*source*', '*test*')
-        from configurations.runtime
-        into libDir
+            from (configurations.runtime) {
+                into 'template/lib'
+            }
+
+            from('src/main/dist') {
+                into ''
+            }
+        }
     }
 }
 
-distZip.dependsOn copyLibs
+//task createDistribution(type: Zip, dependsOn: build) {
+////    classifier = 'pants'
+//
+//    from (fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')) {
+//        into 'template/lib'
+//    }
+////        from fileTree(new File(project(':stroom-util').buildDir, 'libs')).include('*.jar').exclude('*source*', '*test*')
+//    from (configurations.runtime) {
+//        into 'template/lib'
+//    }
+//
+//    from('src/main/dist') {
+//        into ''
+//    }
+//}
