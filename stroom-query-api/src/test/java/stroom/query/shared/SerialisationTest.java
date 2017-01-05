@@ -3,6 +3,8 @@ package stroom.query.shared;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import stroom.entity.shared.DocRef;
+import stroom.util.shared.OffsetRange;
+import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.JAXBException;
 
@@ -15,7 +17,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 public class SerialisationTest {
 
     @Test
-    public void testJsonDeserialisation() throws IOException, JAXBException {
+    public void testSearchRequestSerialisation() throws IOException, JAXBException {
         // Given
         SearchRequest searchRequest = getSearchRequest();
         ObjectMapper mapper = new ObjectMapper();
@@ -30,6 +32,25 @@ public class SerialisationTest {
         assertThat(deserialisedSearchRequest, equalTo(searchRequest));
         assertThat(deserialisedSearchRequest.toString(), equalTo(searchRequest.toString()));
     }
+
+    @Test
+    public void testSearchResponseSerialisation() throws IOException, JAXBException {
+        // Given
+        SearchResponse searchResponse = getSearchResponse();
+        ObjectMapper mapper = new ObjectMapper();
+        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract classes
+        mapper.enableDefaultTyping();
+
+        // When
+        String serialisedSearchResponse = mapper.writeValueAsString(searchResponse);
+        SearchResponse deserialisedSearchResponse = mapper.readValue(serialisedSearchResponse, SearchResponse.class);
+
+        // Then
+        assertThat(deserialisedSearchResponse, equalTo(searchResponse));
+        assertThat(deserialisedSearchResponse.toString(), equalTo(searchResponse.toString()));
+    }
+
+
 
     private static SearchRequest getSearchRequest(){
         DocRef docRef = new DocRef();
@@ -72,6 +93,28 @@ public class SerialisationTest {
         SearchRequest searchRequest = new SearchRequest(search, componentResultRequests, "en-gb");
 
         return searchRequest;
+    }
+
+    private SearchResponse getSearchResponse() {
+        SearchResponse searchResponse = new SearchResponse();
+        Set<String> highlights = new HashSet<>();
+        highlights.add("highlight1");
+        highlights.add("highlights2");
+        searchResponse.setHighlights(highlights);
+        searchResponse.setErrors("errors");
+        searchResponse.setComplete(false);
+
+        TableResult tableResult = new TableResult();
+        tableResult.setError("tableResultError");
+        tableResult.setTotalResults(1);
+        tableResult.setResultRange(new OffsetRange<>(1, 2));
+        List<Row> rows = new ArrayList<>();
+        SharedObject[] sharedObjects = new SharedObject[1];
+        sharedObjects[0] = new TableResultRequest(3, 4);
+        rows.add(new Row("groupKey", sharedObjects, 5));
+        tableResult.setRows(rows);
+        searchResponse.addResult("componentResultKey", tableResult);
+        return searchResponse;
     }
 }
 

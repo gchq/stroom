@@ -16,10 +16,18 @@
 
 package stroom.util.shared;
 
+import javax.xml.bind.annotation.*;
+
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "offsetRange", propOrder = {"offset", "length"})
+@XmlRootElement(name = "offsetRange")
 public class OffsetRange<T extends Number> implements SharedObject {
     private static final long serialVersionUID = 5045453517852867315L;
 
+    @XmlElement
     private T offset;
+
+    @XmlElement
     private T length;
 
     public OffsetRange() {

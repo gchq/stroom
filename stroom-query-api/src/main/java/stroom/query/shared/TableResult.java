@@ -20,14 +20,25 @@ import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.OffsetRange;
 
+import javax.xml.bind.annotation.*;
 import java.util.List;
 
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "tableResult", propOrder = {"rows", "resultRange", "totalResults", "error"})
+@XmlRootElement(name = "tableResult")
 public class TableResult implements ComponentResult {
     private static final long serialVersionUID = -2964122512841756795L;
 
+    @XmlElement
     private List<Row> rows;
+
+    @XmlElement
     private OffsetRange<Integer> resultRange;
+
+    @XmlElement
     private Integer totalResults;
+
+    @XmlElement
     private String error;
 
     public TableResult() {
