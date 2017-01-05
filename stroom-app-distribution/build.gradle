@@ -1,0 +1,27 @@
+apply plugin: 'distribution'
+
+configurations.all {
+    transitive = false
+}
+
+dependencies {
+//    runtime project(path: ':stroom-app', configuration: 'war')
+    runtime project(path: ':stroom-util')
+    runtime 'mysql:mysql-connector-java:5.1.40'
+}
+
+task copyLibs(type:Copy) {
+    def libDir = "src/main/dist/template/lib"
+
+    delete libDir
+    file(libDir).mkdirs()
+
+    copy {
+        from fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')
+//        from fileTree(new File(project(':stroom-util').buildDir, 'libs')).include('*.jar').exclude('*source*', '*test*')
+        from configurations.runtime
+        into libDir
+    }
+}
+
+distZip.dependsOn copyLibs
