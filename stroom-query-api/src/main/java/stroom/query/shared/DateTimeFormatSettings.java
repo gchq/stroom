@@ -16,6 +16,9 @@
 
 package stroom.query.shared;
 
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -54,5 +57,35 @@ public class DateTimeFormatSettings implements FormatSettings {
     @Override
     public boolean isDefault() {
         return pattern == null || pattern.equals(DEFAULT_PATTERN);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DateTimeFormatSettings that = (DateTimeFormatSettings) o;
+
+        return new EqualsBuilder()
+                .append(pattern, that.pattern)
+                .append(timeZone, that.timeZone)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
+        hashCodeBuilder.append(pattern);
+        hashCodeBuilder.append(timeZone);
+        return hashCodeBuilder.toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "DateTimeFormatSettings{" +
+                "pattern='" + pattern + '\'' +
+                ", timeZone=" + timeZone +
+                '}';
     }
 }

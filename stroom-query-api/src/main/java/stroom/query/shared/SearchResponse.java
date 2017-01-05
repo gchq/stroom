@@ -16,13 +16,19 @@
 
 package stroom.query.shared;
 
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.ToStringBuilder;
 
+import javax.xml.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "searchResponse", propOrder = {"highlights", "errors", "complete", "results"})
+@XmlRootElement(name = "searchResponse")
 public class SearchResponse implements SharedObject {
     private static final long serialVersionUID = -2964122512841756795L;
 
@@ -30,19 +36,23 @@ public class SearchResponse implements SharedObject {
      * A set of strings to highlight in the UI that should correlate with the
      * search query.
      */
+    @XmlElement
     private Set<String> highlights;
 
     /**
      * Any errors that have been generated during searching.
      */
+    @XmlElement
     private String errors;
 
     /**
      * Complete means that all index shards have been searched across the
      * cluster and there are no more results to come.
      **/
+    @XmlElement
     private boolean complete;
 
+    @XmlElement
     private Map<String, ComponentResult> results;
 
     public SearchResponse() {
@@ -91,5 +101,31 @@ public class SearchResponse implements SharedObject {
             results = new HashMap<>();
         }
         results.put(componentId, result);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SearchResponse that = (SearchResponse) o;
+
+        return new EqualsBuilder()
+                .append(complete, that.complete)
+                .append(highlights, that.highlights)
+                .append(errors, that.errors)
+                .append(results, that.results)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
+        hashCodeBuilder.append(highlights);
+        hashCodeBuilder.append(errors);
+        hashCodeBuilder.append(complete);
+        hashCodeBuilder.append(results);
+        return hashCodeBuilder.toHashCode();
     }
 }

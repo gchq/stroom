@@ -28,7 +28,9 @@ import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HasDisplayValue;
+import stroom.util.shared.HashCodeBuilder;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "operator", propOrder = { "op", "children" })
@@ -162,5 +164,35 @@ public class ExpressionOperator extends ExpressionItem {
         }
 
         return hasBeenFound;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ExpressionOperator that = (ExpressionOperator) o;
+
+        return new EqualsBuilder()
+                .append(op, that.op)
+                .append(children, that.children)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
+        hashCodeBuilder.append(op);
+        hashCodeBuilder.append(children);
+        return hashCodeBuilder.toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "ExpressionOperator{" +
+                "op=" + op +
+                ", children=" + children +
+                '}';
     }
 }

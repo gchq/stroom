@@ -16,7 +16,9 @@
 
 package stroom.query.shared;
 
+import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HasDisplayValue;
+import stroom.util.shared.HashCodeBuilder;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -51,6 +53,12 @@ public class Format implements Serializable {
     public Format(final Type type, final FormatSettings settings) {
         this.type = type;
         this.settings = settings;
+    }
+
+    public Format(Type type, FormatSettings settings, Boolean wrap) {
+        this.type = type;
+        this.settings = settings;
+        this.wrap = wrap;
     }
 
     public Type getType() {
@@ -90,5 +98,38 @@ public class Format implements Serializable {
         public String getDisplayValue() {
             return displayValue;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Format format = (Format) o;
+
+        return new EqualsBuilder()
+                .append(type, format.type)
+                .append(settings, format.settings)
+                .append(wrap, format.wrap)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
+        hashCodeBuilder.append(type);
+        hashCodeBuilder.append(settings);
+        hashCodeBuilder.append(wrap);
+        return hashCodeBuilder.toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Format{" +
+                "type=" + type +
+                ", settings=" + settings +
+                ", wrap=" + wrap +
+                '}';
     }
 }

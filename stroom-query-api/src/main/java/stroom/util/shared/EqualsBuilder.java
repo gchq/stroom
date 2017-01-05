@@ -19,6 +19,7 @@ package stroom.util.shared;
 /**
  * A GWT friendly version of commons EqualsBuilder.
  */
+//TODO This doesn't support arrays of primitives.
 public class EqualsBuilder {
     private boolean isEquals = true;
 
@@ -60,6 +61,27 @@ public class EqualsBuilder {
         }
 
         isEquals = (lhs == rhs);
+        return this;
+    }
+
+    public EqualsBuilder append(int[] lhs, int[] rhs) {
+        if (isEquals == false) {
+                return this;
+            }
+        if (lhs == rhs) {
+                return this;
+            }
+        if (lhs == null || rhs == null) {
+                isEquals = false;
+                return this;
+            }
+        if (lhs.length != rhs.length) {
+                isEquals = false;
+                return this;
+            }
+        for (int i = 0; i < lhs.length && isEquals; ++i) {
+                append(lhs[i], rhs[i]);
+            }
         return this;
     }
 

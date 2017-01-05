@@ -56,6 +56,17 @@ public class Field implements Serializable {
         this.name = name;
     }
 
+    public Field(String name, String expression, Sort sort, Filter filter, Format format, Integer group, int width, boolean visible) {
+        this.name = name;
+        this.expression = expression;
+        this.sort = sort;
+        this.filter = filter;
+        this.format = format;
+        this.group = group;
+        this.width = width;
+        this.visible = visible;
+    }
+
     public String getName() {
         return name;
     }

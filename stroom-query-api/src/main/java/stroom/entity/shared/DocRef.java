@@ -16,6 +16,7 @@
 
 package stroom.entity.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.HashCodeBuilder;
@@ -108,6 +109,8 @@ public class DocRef implements Comparable<DocRef>, SharedObject, HasDisplayValue
     }
 
     @Override
+    @JsonIgnore
+    @XmlTransient
     public String getDisplayValue() {
         return name;
     }

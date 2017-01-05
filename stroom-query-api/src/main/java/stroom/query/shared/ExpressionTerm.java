@@ -17,6 +17,8 @@
 package stroom.query.shared;
 
 import stroom.entity.shared.DocRef;
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -119,5 +121,41 @@ public class ExpressionTerm extends ExpressionItem {
     @Override
     public boolean contains(final String fieldToFind) {
         return this.field.equals(fieldToFind);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ExpressionTerm that = (ExpressionTerm) o;
+
+        return new EqualsBuilder()
+                .append(field, that.field)
+                .append(condition, that.condition)
+                .append(value, that.value)
+                .append(dictionary, that.dictionary)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
+        hashCodeBuilder.append(field);
+        hashCodeBuilder.append(condition);
+        hashCodeBuilder.append(value);
+        hashCodeBuilder.append(dictionary);
+        return hashCodeBuilder.toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "ExpressionTerm{" +
+                "field='" + field + '\'' +
+                ", condition=" + condition +
+                ", value='" + value + '\'' +
+                ", dictionary=" + dictionary +
+                '}';
     }
 }

@@ -16,6 +16,10 @@
 
 package stroom.query.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -35,6 +39,14 @@ public class NumberFormatSettings implements FormatSettings {
     @XmlElement(name = "useSeparator")
     private Boolean useSeparator;
 
+    public NumberFormatSettings() {
+    }
+
+    public NumberFormatSettings(Integer decimalPlaces, Boolean useSeparator) {
+        this.decimalPlaces = decimalPlaces;
+        this.useSeparator = useSeparator;
+    }
+
     public Integer getDecimalPlaces() {
         return decimalPlaces;
     }
@@ -51,10 +63,41 @@ public class NumberFormatSettings implements FormatSettings {
         this.useSeparator = useSeparator;
     }
 
-    @XmlTransient
     @Override
+    @XmlTransient
+    @JsonIgnore
     public boolean isDefault() {
         return (decimalPlaces == null || decimalPlaces.equals(DEFAULT_DECIMAL_PLACES))
                 && (useSeparator == null || useSeparator.equals(DEFAULT_USE_SEPARATOR));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        NumberFormatSettings that = (NumberFormatSettings) o;
+
+        return new EqualsBuilder()
+                .append(decimalPlaces, that.decimalPlaces)
+                .append(useSeparator, that.useSeparator)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
+        hashCodeBuilder.append(decimalPlaces);
+        hashCodeBuilder.append(useSeparator);
+        return hashCodeBuilder.toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "NumberFormatSettings{" +
+                "decimalPlaces=" + decimalPlaces +
+                ", useSeparator=" + useSeparator +
+                '}';
     }
 }

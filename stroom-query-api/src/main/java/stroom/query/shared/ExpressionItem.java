@@ -16,6 +16,9 @@
 
 package stroom.query.shared;
 
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -90,4 +93,24 @@ public abstract class ExpressionItem implements Serializable {
      * @return True if it is found
      */
     public abstract boolean contains(String fieldToFind);
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ExpressionItem that = (ExpressionItem) o;
+
+        return new EqualsBuilder()
+                .append(enabled, that.enabled)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
+        hashCodeBuilder.append(enabled);
+        return hashCodeBuilder.toHashCode();
+    }
 }

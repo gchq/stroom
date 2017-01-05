@@ -16,16 +16,27 @@
 
 package stroom.query.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.OffsetRange;
 
+import javax.xml.bind.annotation.*;
 import java.util.HashSet;
 import java.util.Set;
 
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "tableResultRequest", propOrder = {"tableSettings", "requestedRange", "openGroups"})
 public class TableResultRequest extends ComponentResultRequest {
     private static final long serialVersionUID = 8683770109061652092L;
 
+    @XmlElement
     private TableSettings tableSettings;
+
+    @XmlElement
     private OffsetRange<Integer> requestedRange = new OffsetRange<Integer>(0, 100);
+
+    @XmlElement
     private Set<String> openGroups;
 
     public TableResultRequest() {
@@ -77,7 +88,42 @@ public class TableResultRequest extends ComponentResultRequest {
     }
 
     @Override
+    @JsonIgnore
+    @XmlTransient
     public ComponentType getComponentType() {
         return ComponentType.TABLE;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TableResultRequest that = (TableResultRequest) o;
+
+        return new EqualsBuilder()
+                .append(tableSettings, that.tableSettings)
+                .append(requestedRange, that.requestedRange)
+                .append(openGroups, that.openGroups)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
+        hashCodeBuilder .append(tableSettings);
+        hashCodeBuilder.append(requestedRange);
+        hashCodeBuilder.append(openGroups);
+        return hashCodeBuilder.toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "TableResultRequest{" +
+                "tableSettings=" + tableSettings +
+                ", requestedRange=" + requestedRange +
+                ", openGroups=" + openGroups +
+                '}';
     }
 }

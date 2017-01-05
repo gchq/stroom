@@ -40,6 +40,11 @@ public class Filter implements Serializable {
         // Default constructor necessary for GWT serialisation.
     }
 
+    public Filter(String includes, String excludes) {
+        this.includes = includes;
+        this.excludes = excludes;
+    }
+
     public String getIncludes() {
         return includes;
     }

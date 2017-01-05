@@ -16,14 +16,26 @@
 
 package stroom.query.shared;
 
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
+
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 import java.util.Map;
 
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "searchRequest", propOrder = {"search", "componentResultRequests", "dateTimeLocale"})
+@XmlRootElement(name = "searchRequest")
 public class SearchRequest implements Serializable {
     private static final long serialVersionUID = -6668626615097471925L;
 
+    @XmlElement
     private Search search;
+
+    @XmlElement
     private Map<String, ComponentResultRequest> componentResultRequests;
+
+    @XmlElement
     private String dateTimeLocale;
 
     public SearchRequest() {
@@ -47,5 +59,38 @@ public class SearchRequest implements Serializable {
 
     public String getDateTimeLocale() {
         return dateTimeLocale;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SearchRequest that = (SearchRequest) o;
+
+        return new EqualsBuilder()
+                .append(search, that.search)
+                .append(componentResultRequests, that.componentResultRequests)
+                .append(dateTimeLocale, that.dateTimeLocale)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
+        hashCodeBuilder.append(search);
+        hashCodeBuilder.append(componentResultRequests);
+        hashCodeBuilder.append(dateTimeLocale);
+        return hashCodeBuilder.toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "SearchRequest{" +
+                "search=" + search +
+                ", componentResultRequests=" + componentResultRequests +
+                ", dateTimeLocale='" + dateTimeLocale + '\'' +
+                '}';
     }
 }

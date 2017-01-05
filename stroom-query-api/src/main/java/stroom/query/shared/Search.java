@@ -17,18 +17,35 @@
 package stroom.query.shared;
 
 import stroom.entity.shared.DocRef;
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "incremental"})
 public class Search implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
+    @XmlElement
     private DocRef dataSourceRef;
+
+    @XmlElement
     private ExpressionOperator expression;
+
+    @XmlElement
     private Map<String, ComponentSettings> componentSettingsMap;
+
+    @XmlElement
     private Map<String, String> paramMap;
+
+    @XmlElement
     private boolean incremental;
 
     public Search() {
@@ -72,5 +89,44 @@ public class Search implements Serializable {
 
     public boolean isIncremental() {
         return incremental;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Search search = (Search) o;
+
+        return new EqualsBuilder()
+                .append(incremental, search.incremental)
+                .append(dataSourceRef, search.dataSourceRef)
+                .append(expression, search.expression)
+                .append(componentSettingsMap, search.componentSettingsMap)
+                .append(paramMap, search.paramMap)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
+        hashCodeBuilder.append(dataSourceRef);
+        hashCodeBuilder.append(expression);
+        hashCodeBuilder.append(componentSettingsMap);
+        hashCodeBuilder.append(paramMap);
+        hashCodeBuilder.append(incremental);
+        return hashCodeBuilder.toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Search{" +
+                "dataSourceRef=" + dataSourceRef +
+                ", expression=" + expression +
+                ", componentSettingsMap=" + componentSettingsMap +
+                ", paramMap=" + paramMap +
+                ", incremental=" + incremental +
+                '}';
     }
 }
