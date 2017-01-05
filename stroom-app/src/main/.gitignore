@@ -1,5 +1,7 @@
+/bin/
 /.classpath
 /.project
 /.settings/
 /target/
 /build/
+/gwt-unitCache/

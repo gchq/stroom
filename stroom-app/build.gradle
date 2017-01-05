@@ -1,4 +1,26 @@
 apply plugin: 'war'
+//apply plugin: 'jetty'
+apply from: 'https://raw.github.com/akhikhl/gretty/master/pluginScripts/gretty.plugin'
+
+//buildscript {
+//    repositories {
+//        jcenter()
+//        // enable this to use snapshot versions of Gretty:
+//        // maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local' }
+//    }
+//
+//    dependencies {
+//        classpath 'org.akhikhl.gretty:gretty:+'
+//    }
+//}
+//
+//repositories {
+//    jcenter()
+//    // enable this to use snapshot versions of Gretty:
+//    // maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local' }
+//}
+
+//apply plugin: 'org.akhikhl.gretty'
 
 //buildscript {
 //    repositories {
@@ -36,13 +58,34 @@ apply plugin: 'war'
 //war.dependsOn(':stroom-app-gwt:war')
 
 dependencies {
-    compile project(':stroom-app-gwt')
-    compile project(':stroom-dashboard-gwt')
+//    providedCompile project(':stroom-app-gwt')
+//    providedCompile project(':stroom-dashboard-gwt')
+
+    compile project(':stroom-core-server')
+    compile project(':stroom-index-server')
+    compile project(':stroom-statistics-server')
+    compile project(':stroom-dashboard-server')
+    compile project(':stroom-security-server')
+
+//    compile group: 'org.apache.logging.log4j', name: 'log4j-web', version: '2.7'
 }
 
-war {
+//war {
 //    from project(':stroom-app-gwt').file("src/main/webapp")
 //    from project(':stroom-app-gwt').file("build/gwt/out")
 //    from project(':stroom-dashboard-gwt').file("src/main/webapp")
 //    from project(':stroom-dashboard-gwt').file("build/gwt/out")
+//}
+
+war {
+    exclude 'WEB-INF/lib/**'
+    exclude 'WEB-INF/classes/**'
 }
+
+war.dependsOn(':stroom-app-gwt:gwtCompile', ':stroom-dashboard-gwt:gwtCompile')
+
+/* Change context path (base url). otherwise defaults to name of project */
+//appRun.contextPath = ''
+
+//jettyRunWar.contextPath = ''
+//jettyRun.contextPath = ''

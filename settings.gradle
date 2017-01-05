@@ -109,7 +109,6 @@ project(':stroom-statistics-server').projectDir = "$rootDir/stroom-statistics-se
 project(':stroom-dashboard-server').projectDir = "$rootDir/stroom-dashboard-server" as File
 
 // Package it all together.
-project(':stroom-startup').projectDir = "$rootDir/stroom-startup" as File
 project(':stroom-app').projectDir = "$rootDir/stroom-app" as File
 project(':stroom-app-distribution').projectDir = "$rootDir/stroom-app-distribution" as File
 
