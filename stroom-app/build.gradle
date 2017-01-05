@@ -1,18 +1,22 @@
 apply plugin: 'war'
 //apply plugin: 'jetty'
-apply from: 'https://raw.github.com/akhikhl/gretty/master/pluginScripts/gretty.plugin'
+//apply from: 'https://raw.github.com/akhikhl/gretty/master/pluginScripts/gretty.plugin'
 
-//buildscript {
-//    repositories {
-//        jcenter()
-//        // enable this to use snapshot versions of Gretty:
-//        // maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local' }
-//    }
-//
-//    dependencies {
-//        classpath 'org.akhikhl.gretty:gretty:+'
-//    }
-//}
+apply plugin: 'org.akhikhl.gretty'
+
+import org.akhikhl.gretty.JettyStartTask
+
+buildscript {
+    repositories {
+        jcenter()
+        // enable this to use snapshot versions of Gretty:
+        // maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local' }
+    }
+
+    dependencies {
+        classpath 'org.akhikhl.gretty:gretty:+'
+    }
+}
 //
 //repositories {
 //    jcenter()
@@ -86,6 +90,35 @@ war {
 }
 
 war.dependsOn(':stroom-app-gwt:gwtCompile', ':stroom-dashboard-gwt:gwtCompile')
+
+
+//task jettyStart
+//task('MyRun', type: jettyStart) {
+//doFirst {
+//
+//}
+//}
+
+gretty {
+    contextPath = ''
+}
+
+//task('JettyStartGWT', type: JettyStartTask) {
+//    interactive = false
+//    dependsOn(':stroom-app-gwt:gwtDevMode', ':stroom-dashboard-gwt:gwtDevMode')
+//}
+//task('JettyDebugGWT', type: JettyStartTask) {
+//    debug = true
+//    interactive = false
+//    dependsOn(':stroom-app-gwt:gwtDevMode', ':stroom-dashboard-gwt:gwtDevMode')
+//}
+
+
+
+
+//task MyRun(dependsOn: ':stroom-app-gwt:gwtCompile', ':stroom-dashboard-gwt:gwtCompile')
+
+//jettyStart {}.dependsOn(':stroom-app-gwt:gwtDevMode', ':stroom-dashboard-gwt:gwtDevMode')
 
 /* Change context path (base url). otherwise defaults to name of project */
 //appRun.contextPath = ''

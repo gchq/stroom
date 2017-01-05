@@ -17,6 +17,7 @@
 package stroom.util.logging;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 
@@ -27,13 +28,18 @@ import javax.servlet.http.HttpServlet;
 public class Log4JServlet extends HttpServlet {
     private static final long serialVersionUID = 8833402961986851281L;
 
+    private transient ServletContext servletContext;
+
     @Override
     public void init(final ServletConfig config) throws ServletException {
-        Log4JInstance.getInstance().init(config.getServletContext());
+        this.servletContext = config.getServletContext();
+        Log4JInstance.getInstance().init(servletContext);
     }
 
     @Override
     public void destroy() {
-        Log4JInstance.getInstance().destroy(getServletContext());
+        if (servletContext != null) {
+            Log4JInstance.getInstance().destroy(servletContext);
+        }
     }
 }
