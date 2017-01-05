@@ -1,5 +1,5 @@
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <!--
   ~ Copyright 2016 Crown Copyright
   ~
@@ -20,35 +20,25 @@
   <parent>
     <groupId>stroom</groupId>
     <artifactId>stroom</artifactId>
-      <version>5.0-beta.7-SNAPSHOT</version>
+    <version>5.0-beta.9-SNAPSHOT</version>
   </parent>
 
-  <artifactId>stroom-index</artifactId>
+  <artifactId>stroom-dashboard</artifactId>
 
   <dependencies>
     <dependency>
       <groupId>stroom</groupId>
-      <artifactId>stroom-security-api</artifactId>
+      <artifactId>stroom-query-api</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>stroom</groupId>
-      <artifactId>stroom-query-common</artifactId>
+      <artifactId>stroom-expression</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>stroom</groupId>
-      <artifactId>stroom-pipeline</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>stroom</groupId>
-      <artifactId>stroom-core-server</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>stroom</groupId>
-      <artifactId>stroom-core-shared</artifactId>
+      <artifactId>stroom-core-client-widget</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -56,7 +46,7 @@
       <artifactId>stroom-core-client</artifactId>
       <version>${project.version}</version>
     </dependency>
-
+    
     <dependency>
       <groupId>stroom</groupId>
       <artifactId>stroom-test-common</artifactId>
@@ -78,8 +68,42 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    
-     <!-- GWT -->
+
+    <!-- LIBS -->
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context-support</artifactId>
+    </dependency>
+
+    <!-- Event Logging -->
+	<dependency>
+	  <groupId>event-logging</groupId>
+	  <artifactId>event-logging</artifactId>
+	</dependency>
+	
+    <dependency>
+      <groupId>commons-fileupload</groupId>
+      <artifactId>commons-fileupload</artifactId>
+      <version>1.2.2</version>
+    </dependency>
+
+    <!-- Servlet API -->
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+    </dependency>
+
+    <!-- D3 -->
+    <dependency>
+      <groupId>com.github.gwtd3</groupId>
+      <artifactId>gwt-d3-js</artifactId>
+    </dependency>
+
+    <!-- GWT -->
     <dependency>
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-user</artifactId>
@@ -94,6 +118,21 @@
       <groupId>com.google.gwt.inject</groupId>
       <artifactId>gin</artifactId>
     </dependency>
-        
+
+    <!-- GWTP -->
+    <dependency>
+      <groupId>com.gwtplatform</groupId>
+      <artifactId>gwtp-all</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>javax.persistence</groupId>
+          <artifactId>persistence-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.gwtplatform</groupId>
+          <artifactId>gwtp-crawler-service</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
 </project>

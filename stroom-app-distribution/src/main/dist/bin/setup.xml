@@ -61,7 +61,7 @@
     <parameter>
         <description>JPA Dialect</description>
         <name>@@JPA_DIALECT@@</name>
-        <value>org.hibernate.dialect.MySQL5InnoDBDialect</value>
+        <value>org.hibernate.dialect.MySQLInnoDBDialect</value>
     </parameter>
     <parameter>
         <description>Optional tomcat JVM settings</description>
@@ -73,5 +73,17 @@
         <name>@@STATS_ENGINES@@</name>
         <value>sql</value>
         <regEx>((sql),?)+</regEx>
+    </parameter>
+    <parameter>
+        <description>Enables the auto import of any content packs found in ${CATALINA_BASE}/contentPackImport/ on application startup</description>
+        <name>@@CONTENT_PACK_IMPORT_ENABLED@@</name>
+        <value>true</value>
+        <regEx>(true|false)</regEx>
+    </parameter>
+    <parameter>
+        <description>If no existing volumes are present a default volume will be created on application start. The volume will live in the volumes sub directory of the Stroom installation directory</description>
+        <name>@@CREATE_DEFAULT_VOLUME_ON_START@@</name>
+        <value>true</value>
+        <regEx>(true|false)</regEx>
     </parameter>
 </parameters>

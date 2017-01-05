@@ -73,7 +73,7 @@ public class EntityDropDownCell extends DropDownCell<DocRef> {
 
     @Override
     public void showPopup(final DocRef value) {
-        explorerDropDownTreePresenter.setSelectedEntityReference(value, false);
+        explorerDropDownTreePresenter.setSelectedEntityReference(value);
         explorerDropDownTreePresenter.show();
     }
 

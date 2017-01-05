@@ -73,13 +73,13 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
             try {
                 final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(indexShard);
                 System.out.println("");
-                System.out.println("Searching Index " + IndexShardUtil.getIndexDir(indexShard));
-                final SimpleCollector simpleCollector = new SimpleCollector();
+                System.out.println("Searching Index " + IndexShardUtil.getIndexPath(indexShard));
+                final MaxHitCollector docIdListCollector = new MaxHitCollector(Integer.MAX_VALUE);
                 indexShardSearcher.open();
                 final IndexReader reader = indexShardSearcher.getReader();
                 final IndexSearcher searcher = new IndexSearcher(reader);
-                searcher.search(query, simpleCollector);
-                for (final Integer doc : simpleCollector.getDocIdList()) {
+                searcher.search(query, docIdListCollector);
+                for (final Integer doc : docIdListCollector.getDocIdList()) {
                     System.out.println("\tFound match " + doc);
                     final Document document = reader.document(doc);
                     for (final IndexableField fieldable : document.getFields()) {
@@ -99,7 +99,7 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
                     }
                 }
 
-                if (simpleCollector.getDocIdList().size() == 0) {
+                if (docIdListCollector.getDocIdList().size() == 0) {
                     System.out.println("\tNo Matches");
                 }
                 System.out.println("");

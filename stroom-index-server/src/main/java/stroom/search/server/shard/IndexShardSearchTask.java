@@ -40,8 +40,8 @@ public class IndexShardSearchTask extends ServerTask<VoidResult> {
     private int shardTotal;
 
     public IndexShardSearchTask(final ClusterSearchTask clusterSearchTask, final IndexShardQueryFactory queryFactory,
-            final long indexShardId, final String[] fieldNames, final ResultReceiver resultReceiver,
-            final ErrorReceiver errorReceiver, final AtomicLong hitCount) {
+                                final long indexShardId, final String[] fieldNames, final ResultReceiver resultReceiver,
+                                final ErrorReceiver errorReceiver, final AtomicLong hitCount) {
         super(clusterSearchTask);
         this.clusterSearchTask = clusterSearchTask;
         this.queryFactory = queryFactory;
@@ -101,13 +101,13 @@ public class IndexShardSearchTask extends ServerTask<VoidResult> {
         return THREAD_POOL;
     }
 
+    public interface IndexShardQueryFactory {
+        Query getQuery(Version luceneVersion);
+    }
+
     public interface ResultReceiver {
         void receive(long shardId, String[] values);
 
         void complete(long shardId);
-    }
-
-    public interface IndexShardQueryFactory {
-        Query getQuery(Version luceneVersion);
     }
 }

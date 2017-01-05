@@ -16,6 +16,12 @@
 
 package stroom.pipeline.server;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexableFieldType;
+import org.junit.Assert;
+import org.junit.Test;
+import org.xml.sax.SAXException;
 import stroom.AbstractProcessIntegrationTest;
 import stroom.feed.shared.Feed;
 import stroom.index.server.IndexMarshaller;
@@ -40,13 +46,9 @@ import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexField.AnalyzerType;
 import stroom.query.shared.IndexFieldType;
 import stroom.query.shared.IndexFields;
-import stroom.test.StroomProcessTestFileUtil;
 import stroom.test.PipelineTestUtil;
+import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.date.DateUtil;
-import org.apache.lucene.document.Document;
-import org.junit.Assert;
-import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import javax.annotation.Resource;
 import javax.xml.parsers.ParserConfigurationException;
@@ -89,7 +91,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
         Assert.assertEquals(3, documents.size());
         final Document doc = documents.get(0);
         Assert.assertTrue(doc.getField("sid2").fieldType().stored());
-        Assert.assertTrue(doc.getField("sid2").fieldType().indexed());
+        Assert.assertTrue(doc.getField("sid2").fieldType().indexOptions().equals(IndexOptions.DOCS));
         Assert.assertTrue(doc.getField("sid2").fieldType().omitNorms());
         Assert.assertFalse(doc.getField("sid2").fieldType().storeTermVectors());
         Assert.assertFalse(doc.getField("sid2").fieldType().storeTermVectorPositions());
@@ -156,9 +158,10 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
         final List<Document> documents = doTest("TestIndexDocumentFilter/ComplexContent.xml", indexFields);
 
         Assert.assertEquals(1, documents.size());
-        Assert.assertTrue(documents.get(0).getField("f1").fieldType().stored());
-        Assert.assertTrue(documents.get(0).getField("f1").fieldType().indexed());
-        Assert.assertTrue(documents.get(0).getField("f1").fieldType().tokenized());
+        final IndexableFieldType fieldType = documents.get(0).getField("f1").fieldType();
+        Assert.assertTrue(fieldType.stored());
+        Assert.assertTrue(fieldType.indexOptions().equals(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS));
+        Assert.assertTrue(fieldType.tokenized());
 
         Assert.assertFalse(documents.get(0).getField("f2").fieldType().stored());
 

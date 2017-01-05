@@ -16,9 +16,8 @@
 
 package stroom.search.server;
 
-import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.Scorer;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.SimpleCollector;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,13 +26,19 @@ import java.util.List;
 /**
  * Collect results until we hit the max.
  */
-public class MaxHitCollector extends Collector {
+public class MaxHitCollector extends SimpleCollector {
     private final int maxHits;
     private final List<Integer> docIdList = new ArrayList<>(100);
     private int docBase;
 
     public MaxHitCollector(final int maxHits) {
         this.maxHits = maxHits;
+    }
+
+    @Override
+    protected void doSetNextReader(final LeafReaderContext context) throws IOException {
+        super.doSetNextReader(context);
+        docBase = context.docBase;
     }
 
     @Override
@@ -47,18 +52,8 @@ public class MaxHitCollector extends Collector {
     }
 
     @Override
-    public boolean acceptsDocsOutOfOrder() {
-        return true;
-    }
-
-    @Override
-    public void setNextReader(final AtomicReaderContext context) throws IOException {
-        this.docBase = context.docBase;
-    }
-
-    @Override
-    public void setScorer(final Scorer scorer) throws IOException {
-        // Ignore.
+    public boolean needsScores() {
+        return false;
     }
 
     public List<Integer> getDocIdList() {

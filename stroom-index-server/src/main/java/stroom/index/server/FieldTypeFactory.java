@@ -18,12 +18,12 @@ package stroom.index.server;
 
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.FieldType.NumericType;
-import org.apache.lucene.index.FieldInfo.IndexOptions;
+import org.apache.lucene.index.IndexOptions;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexFieldType;
 
 public final class FieldTypeFactory {
-    public static final int DEFAULT_PRECISION_STEP = 4;
+    private static final int DEFAULT_PRECISION_STEP = 4;
 
     private FieldTypeFactory() {
         // Utility.
@@ -31,8 +31,7 @@ public final class FieldTypeFactory {
 
     public static FieldType createBasic() {
         final FieldType fieldType = new FieldType();
-        fieldType.setIndexed(true);
-        fieldType.setIndexOptions(IndexOptions.DOCS_ONLY);
+        fieldType.setIndexOptions(IndexOptions.DOCS);
         fieldType.setTokenized(true);
         fieldType.setStored(false);
         fieldType.setStoreTermVectors(false);
@@ -46,11 +45,12 @@ public final class FieldTypeFactory {
     public static FieldType create(final IndexField indexField) {
         final FieldType fieldType = new FieldType();
 
-        // Set indexed property.
-        fieldType.setIndexed(indexField.isIndexed());
-
         // Set the index options.
-        IndexOptions indexOptions = IndexOptions.DOCS_ONLY;
+        IndexOptions indexOptions = IndexOptions.NONE;
+
+        if (indexField.isIndexed()) {
+            indexOptions = IndexOptions.DOCS;
+        }
         if (indexField.isTermPositions()) {
             indexOptions = IndexOptions.DOCS_AND_FREQS_AND_POSITIONS;
         }
@@ -85,6 +85,5 @@ public final class FieldTypeFactory {
         fieldType.freeze();
 
         return fieldType;
-
     }
 }

@@ -21,7 +21,7 @@
   <artifactId>stroom</artifactId>
   <name>stroom</name>
   <description>STROOM</description>
-    <version>5.0-beta.7-SNAPSHOT</version>
+  <version>5.0-beta.9-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -49,7 +49,7 @@
     <Saxon-HE.version>9.6.0-6</Saxon-HE.version>
     <jackson.version>2.5.3</jackson.version>
     <hessian.version>4.0.38</hessian.version>
-    <lucene.version>4.6.1</lucene.version>
+      <lucene.version>5.5.3</lucene.version>
     <event-logging.version>3.0.0</event-logging.version>
 
     <!-- ***************************** -->
@@ -778,8 +778,13 @@
       <dependency>
         <groupId>org.apache.lucene</groupId>
         <artifactId>lucene-core</artifactId>
-        <version>${lucene.version}</version>
+          <version>${lucene.version}</version>
       </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-backward-codecs</artifactId>
+            <version>${lucene.version}</version>
+        </dependency>
       <dependency>
         <groupId>org.apache.lucene</groupId>
         <artifactId>lucene-analyzers-common</artifactId>
@@ -987,19 +992,15 @@
     <module>stroom-statistics-server</module>
     <module>stroom-statistics-client</module>
 
-    <module>stroom-core-client</module>
     <module>stroom-dashboard</module>
+    <module>stroom-core-client</module>
 
-      <module>stroom-dashboard-war</module>
-      <module>stroom-app-war</module>
-
-      <module>stroom-startup</module>
+    <module>stroom-app-client</module>
+    <module>stroom-startup</module>
     <module>stroom-app</module>
     <module>stroom-app-distribution</module>
 
     <module>stroom-test-common</module>
     <module>stroom-integrationtest</module>
-
-      <module>stroom-dropwizard</module>
   </modules>
 </project>

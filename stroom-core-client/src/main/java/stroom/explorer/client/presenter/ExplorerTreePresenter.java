@@ -27,11 +27,14 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.explorer.client.event.*;
+import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
+import stroom.explorer.client.event.HighlightExplorerItemEvent;
+import stroom.explorer.client.event.OpenExplorerTabEvent;
+import stroom.explorer.client.event.RefreshExplorerTreeEvent;
+import stroom.explorer.client.event.SelectionType;
+import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerData;
 import stroom.security.client.event.CurrentUserChangedEvent;
@@ -49,7 +52,7 @@ public class ExplorerTreePresenter
         implements ExplorerTreeUiHandlers, RefreshExplorerTreeEvent.Handler, HighlightExplorerItemEvent.Handler,
         CurrentUserChangedHandler, TabData {
 
-    public static final String EXPLORER = "Explorer";
+    private static final String EXPLORER = "Explorer";
 
     private final DocumentTypeCache documentTypeCache;
     private final TypeFilterPresenter typeFilterPresenter;
@@ -65,12 +68,11 @@ public class ExplorerTreePresenter
 
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(dispatcher) {
+        explorerTree = new ExplorerTree(dispatcher, true) {
             @Override
-            protected void select(ExplorerData selection, boolean doubleClick) {
-                super.select(selection, doubleClick);
-                getView().setDeleteEnabled(selection != null);
-
+            protected void doSelect(final ExplorerData selection, final SelectionType selectionType) {
+                super.doSelect(selection, selectionType);
+                getView().setDeleteEnabled(explorerTree.getSelectionModel().getSelectedItems().size() > 0);
             }
         };
 
@@ -88,40 +90,12 @@ public class ExplorerTreePresenter
         // Register for highlight events.
         registerHandler(getEventBus().addHandler(HighlightExplorerItemEvent.getType(), this));
 
-        registerHandler(typeFilterPresenter.addDataSelectionHandler(new DataSelectionHandler<TypeFilterPresenter>() {
-            @Override
-            public void onSelection(final DataSelectionEvent<TypeFilterPresenter> event) {
-                explorerTree.setIncludedTypeSet(typeFilterPresenter.getIncludedTypes());
-            }
-        }));
+        registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(typeFilterPresenter.getIncludedTypes())));
 
         // Fire events from the explorer tree globally.
-        registerHandler(explorerTree.addSelectionHandler(new ExplorerTreeSelectEvent.Handler() {
-            @Override
-            public void onSelect(ExplorerTreeSelectEvent event) {
-                getEventBus().fireEvent(event);
-            }
-        }));
-        registerHandler(explorerTree.addContextMenuHandler(new ShowExplorerMenuEvent.Handler() {
-            @Override
-            public void onShow(ShowExplorerMenuEvent event) {
-                getEventBus().fireEvent(event);
-            }
-        }));
+        registerHandler(explorerTree.addSelectionHandler(event -> getEventBus().fireEvent(event)));
+        registerHandler(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
     }
-
-//    private void select(final ExplorerData selection) {
-//        final boolean doubleClick = doubleClickTest.test(selection);
-//        onSelect(selection, doubleClick);
-//    }
-//
-//    private void onSelect(final ExplorerData selection, final boolean doubleClick) {
-//        if (selection != null) {
-//            ExplorerTreeSelectEvent.fire(ExplorerTreePresenter.this, selection, doubleClick, false);
-//        }
-//
-//        getView().setDeleteEnabled(selection != null);
-//    }
 
     @Override
     public void newItem(final Element element) {
@@ -133,8 +107,8 @@ public class ExplorerTreePresenter
 
     @Override
     public void deleteItem() {
-        if (explorerTree.getSelectedItem() != null) {
-            ExplorerTreeDeleteEvent.fire(this, explorerTree.getSelectedItem());
+        if (explorerTree.getSelectionModel().getSelectedItems().size() > 0) {
+            ExplorerTreeDeleteEvent.fire(this);
         }
     }
 
@@ -174,18 +148,13 @@ public class ExplorerTreePresenter
 
     @Override
     protected void revealInParent() {
-        final ExplorerData explorerData = explorerTree.getSelectionModel().getSelectedObject();
-        if (explorerData != null) {
-            explorerTree.getSelectionModel().setSelected(explorerData, false);
-        }
-
         explorerTree.getTreeModel().refresh();
         OpenExplorerTabEvent.fire(this, this, this);
     }
 
     @Override
     public void onHighlight(final HighlightExplorerItemEvent event) {
-        explorerTree.getSelectionModel().setSelected(event.getItem(), true);
+        explorerTree.setSelectedItem(event.getItem());
         explorerTree.getTreeModel().setEnsureVisible(event.getItem());
         explorerTree.getTreeModel().refresh();
     }

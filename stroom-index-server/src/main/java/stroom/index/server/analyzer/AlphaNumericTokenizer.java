@@ -17,13 +17,14 @@
 package stroom.index.server.analyzer;
 
 import org.apache.lucene.analysis.util.CharTokenizer;
-import org.apache.lucene.util.Version;
+import org.apache.lucene.util.AttributeFactory;
 
-import java.io.Reader;
+class AlphaNumericTokenizer extends CharTokenizer {
+    AlphaNumericTokenizer() {
+    }
 
-public class AlphaNumericTokenizer extends CharTokenizer {
-    public AlphaNumericTokenizer(final Version matchVersion, final Reader in) {
-        super(matchVersion, in);
+    AlphaNumericTokenizer(final AttributeFactory factory) {
+        super(factory);
     }
 
     @Override

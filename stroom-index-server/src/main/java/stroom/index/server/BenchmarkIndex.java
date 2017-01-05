@@ -19,13 +19,12 @@ package stroom.index.server;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.LongField;
-import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.TermQuery;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
@@ -322,17 +321,13 @@ public class BenchmarkIndex extends AbstractCommandLineTool {
             for (final IndexReader reader : readers) {
                 final List<Integer> documentIdList = new ArrayList<>();
                 final IndexSearcher searcher = new IndexSearcher(reader);
-                searcher.search(query, new Collector() {
+                searcher.search(query, new SimpleCollector() {
                     private int docBase;
 
                     @Override
-                    public void setScorer(final Scorer arg0) throws IOException {
-                        // Ignore...
-                    }
-
-                    @Override
-                    public void setNextReader(final AtomicReaderContext context) throws IOException {
-                        this.docBase = context.docBase;
+                    protected void doSetNextReader(final LeafReaderContext context) throws IOException {
+                        super.doSetNextReader(context);
+                        docBase = context.docBase;
                     }
 
                     @Override
@@ -341,8 +336,8 @@ public class BenchmarkIndex extends AbstractCommandLineTool {
                     }
 
                     @Override
-                    public boolean acceptsDocsOutOfOrder() {
-                        return true;
+                    public boolean needsScores() {
+                        return false;
                     }
                 });
 

@@ -44,13 +44,17 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.persistence.EntityNotFoundException;
-import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class IndexShardWriterImpl implements IndexShardWriter {
@@ -76,7 +80,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     private final ReentrantLock fieldAnalyzerLock = new ReentrantLock();
     private final IndexShardService service;
     private final AtomicInteger documentCount = new AtomicInteger(0);
-    private final File dir;
+    private final Path dir;
     private final int maxDocumentCount;
     private volatile Index fieldIndex;
     private volatile IndexShard indexShard;
@@ -96,28 +100,25 @@ public class IndexShardWriterImpl implements IndexShardWriter {
      * Convenience constructor used in tests.
      */
     public IndexShardWriterImpl(final IndexShardService service, final IndexFields indexFields, final Index index,
-            final IndexShard indexShard) {
+                                final IndexShard indexShard) {
         this(service, indexFields, index, indexShard, DEFAULT_RAM_BUFFER_MB_SIZE);
     }
 
     public IndexShardWriterImpl(final IndexShardService service, final IndexFields indexFields, final Index index,
-            final IndexShard indexShard, final int ramBufferSizeMB) {
+                                final IndexShard indexShard, final int ramBufferSizeMB) {
         this.service = service;
         this.indexShard = indexShard;
         this.ramBufferSizeMB = ramBufferSizeMB;
         this.maxDocumentCount = index.getMaxDocsPerShard();
 
-        // Find the index shard dir.
-        dir = IndexShardUtil.getIndexDir(indexShard);
+        // Find the index shard path.
+        dir = IndexShardUtil.getIndexPath(indexShard);
 
         // Make sure the index writer is primed with the necessary analysers.
         LOGGER.debug("Updating field analysers");
 
-        // Get the Lucene version being used.
-        final Version luceneVersion = LuceneVersionUtil.getLuceneVersion(indexShard.getIndexVersion());
-
         // Setup the field analyzers.
-        final Analyzer defaultAnalyzer = AnalyzerFactory.create(luceneVersion, AnalyzerType.ALPHA_NUMERIC, false);
+        final Analyzer defaultAnalyzer = AnalyzerFactory.create(AnalyzerType.ALPHA_NUMERIC, false);
         fieldAnalyzers = new HashMap<>();
         updateFieldAnalyzers(indexFields);
         analyzerWrapper = new PerFieldAnalyzerWrapper(defaultAnalyzer, fieldAnalyzers);
@@ -155,85 +156,101 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
         try {
             // Never open deleted index shards.
-            if (!IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
-                final long startMs = System.currentTimeMillis();
+            if (IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Opening " + indexShard);
+                    LOGGER.debug("Shard is deleted " + indexShard);
                 }
-
-                if (create) {
-                    // Make sure the index directory does not exist. If one does
-                    // then throw an exception
-                    // as we don't want to overwrite an index.
-                    if (dir.isDirectory()) {
-                        // This is a workaround for lingering .nfs files.
-                        for (final File file : dir.listFiles()) {
-                            if (file.isDirectory() || !file.getName().startsWith(".")) {
-                                throw new IndexException("Attempting to create a new index in \""
-                                        + dir.getAbsolutePath() + "\" but one already exists.");
-                            }
-                        }
-                    } else {
-                        // Try and make all required directories.
-                        if (!dir.mkdirs()) {
-                            throw new IndexException(
-                                    "Unable to create directories for new index in \"" + dir.getAbsolutePath() + "\"");
-                        }
-                    }
-                }
-
-                // Create lucene directory object.
-                directory = new NIOFSDirectory(dir, new SimpleFSLockFactory(dir));
-
-                // Get the Lucene version being used.
-                final Version luceneVersion = LuceneVersionUtil.getLuceneVersion(indexShard.getIndexVersion());
-                final IndexWriterConfig indexWriterConfig = new IndexWriterConfig(luceneVersion, analyzerWrapper);
-
-                // In debug mode we do extra trace in LUCENE and we also count
-                // certain logging info like merge and flush
-                // counts, so you can get this later using the trace method.
-                if (LOGGER.isDebugEnabled()) {
-                    loggerPrintStream = new LoggerPrintStream(LOGGER);
-                    for (final String term : LOG_WATCH_TERMS.values()) {
-                        loggerPrintStream.addWatchTerm(term);
-                    }
-                    indexWriterConfig.setInfoStream(loggerPrintStream);
-                }
-
-                // IndexWriter to use for adding data to the index.
-                indexWriter = new IndexWriter(directory, indexWriterConfig);
-
-                final LiveIndexWriterConfig liveIndexWriterConfig = indexWriter.getConfig();
-                liveIndexWriterConfig.setRAMBufferSizeMB(ramBufferSizeMB);
-
-                // TODO : We might still want to write separate segments I'm not
-                // sure on pros/cons?
-                liveIndexWriterConfig.setUseCompoundFile(false);
-                liveIndexWriterConfig.setMaxBufferedDocs(Integer.MAX_VALUE);
-
-                // Check the number of committed docs in this shard.
-                documentCount.set(indexWriter.numDocs());
-                lastDocumentCount = documentCount.get();
-                if (create) {
-                    if (lastDocumentCount != 0) {
-                        LOGGER.error("Index should be new but already contains docs: " + lastDocumentCount);
-                    }
-                } else if (indexShard.getDocumentCount() != lastDocumentCount) {
-                    LOGGER.error("Mismatch document count.  Index says " + lastDocumentCount + " DB says "
-                            + indexShard.getDocumentCount());
-                }
-
-                // We have opened the index so update the DB object.
-                setStatus(IndexShardStatus.OPEN);
-
-                // Output some debug.
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("getIndexWriter() - Opened " + indexShard + " in "
-                            + (System.currentTimeMillis() - startMs) + "ms");
-                }
-
-                success = true;
+                return false;
             }
+
+            // Don't open old index shards for writing.
+            final Version currentVersion = LuceneVersionUtil.getLuceneVersion(LuceneVersionUtil.getCurrentVersion());
+            final Version shardVersion = LuceneVersionUtil.getLuceneVersion(indexShard.getIndexVersion());
+            if (!shardVersion.equals(currentVersion)) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Shard version is different to current version " + indexShard);
+                }
+                return false;
+            }
+
+            final long startMs = System.currentTimeMillis();
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Opening " + indexShard);
+            }
+
+            if (create) {
+                // Make sure the index directory does not exist. If one does
+                // then throw an exception
+                // as we don't want to overwrite an index.
+                if (Files.isDirectory(dir)) {
+                    // This is a workaround for lingering .nfs files.
+                    Files.list(dir).forEach(file -> {
+                        if (Files.isDirectory(file) || !file.getFileName().startsWith(".")) {
+                            throw new IndexException("Attempting to create a new index in \""
+                                    + dir.toAbsolutePath().toString() + "\" but one already exists.");
+                        }
+                    });
+                } else {
+                    // Try and make all required directories.
+                    try {
+                        Files.createDirectories(dir);
+                    } catch (final IOException e) {
+                        throw new IndexException(
+                                "Unable to create directories for new index in \"" + dir.toAbsolutePath().toString() + "\"");
+                    }
+                }
+            }
+
+            // Create lucene directory object.
+            directory = new NIOFSDirectory(dir, SimpleFSLockFactory.INSTANCE);
+
+            analyzerWrapper.setVersion(shardVersion);
+            final IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzerWrapper);
+
+            // In debug mode we do extra trace in LUCENE and we also count
+            // certain logging info like merge and flush
+            // counts, so you can get this later using the trace method.
+            if (LOGGER.isDebugEnabled()) {
+                loggerPrintStream = new LoggerPrintStream(LOGGER);
+                for (final String term : LOG_WATCH_TERMS.values()) {
+                    loggerPrintStream.addWatchTerm(term);
+                }
+                indexWriterConfig.setInfoStream(loggerPrintStream);
+            }
+
+            // IndexWriter to use for adding data to the index.
+            indexWriter = new IndexWriter(directory, indexWriterConfig);
+
+            final LiveIndexWriterConfig liveIndexWriterConfig = indexWriter.getConfig();
+            liveIndexWriterConfig.setRAMBufferSizeMB(ramBufferSizeMB);
+
+            // TODO : We might still want to write separate segments I'm not
+            // sure on pros/cons?
+            liveIndexWriterConfig.setUseCompoundFile(false);
+            liveIndexWriterConfig.setMaxBufferedDocs(Integer.MAX_VALUE);
+
+            // Check the number of committed docs in this shard.
+            documentCount.set(indexWriter.numDocs());
+            lastDocumentCount = documentCount.get();
+            if (create) {
+                if (lastDocumentCount != 0) {
+                    LOGGER.error("Index should be new but already contains docs: " + lastDocumentCount);
+                }
+            } else if (indexShard.getDocumentCount() != lastDocumentCount) {
+                LOGGER.error("Mismatch document count.  Index says " + lastDocumentCount + " DB says "
+                        + indexShard.getDocumentCount());
+            }
+
+            // We have opened the index so update the DB object.
+            setStatus(IndexShardStatus.OPEN);
+
+            // Output some debug.
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("getIndexWriter() - Opened " + indexShard + " in "
+                        + (System.currentTimeMillis() - startMs) + "ms");
+            }
+
+            success = true;
         } catch (final LockObtainFailedException t) {
             LOGGER.warn(t.getMessage());
         } catch (final Throwable t) {
@@ -297,20 +314,25 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 // Mark the index as closed.
                 setStatus(IndexShardStatus.CLOSED);
 
-                if (dir.isDirectory() && dir.listFiles().length > 0) {
+                if (Files.isDirectory(dir) && Files.list(dir).count() > 0) {
                     // The directory exists and contains files so make sure it
                     // is unlocked.
-                    new SimpleFSLockFactory(dir).clearLock(IndexWriter.WRITE_LOCK_NAME);
+                    try {
+                        final Path lockFile = dir.resolve(IndexWriter.WRITE_LOCK_NAME);
+                        Files.delete(lockFile);
+                    } catch (final InvalidPathException e) {
+                        // There is no lock file so ignore.
+                    }
 
                     // Sync the DB.
                     sync();
                     success = true;
                 } else {
-                    if (!dir.isDirectory()) {
-                        throw new IndexException("Unable to find index shard directory: " + dir.getCanonicalPath());
+                    if (!Files.isDirectory(dir)) {
+                        throw new IndexException("Unable to find index shard directory: " + dir.toString());
                     } else {
                         throw new IndexException(
-                                "Unable to find any index shard data in directory: " + dir.getCanonicalPath());
+                                "Unable to find any index shard data in directory: " + dir.toString());
                     }
                 }
             } catch (final Throwable t) {
@@ -373,7 +395,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 }
 
                 // See if there are any files in the directory.
-                if (!dir.isDirectory() || FileSystemUtil.deleteDirectory(dir)) {
+                if (!Files.isDirectory(dir) || FileSystemUtil.deleteDirectory(dir)) {
                     // The directory either doesn't exist or we have
                     // successfully deleted it so delete this index
                     // shard from the database.
@@ -531,8 +553,9 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             final Version luceneVersion = LuceneVersionUtil.getLuceneVersion(indexShard.getIndexVersion());
             for (final IndexField indexField : indexFields.getIndexFields()) {
                 // Add the field analyser.
-                final Analyzer analyzer = AnalyzerFactory.create(luceneVersion, indexField.getAnalyzerType(),
+                final Analyzer analyzer = AnalyzerFactory.create(indexField.getAnalyzerType(),
                         indexField.isCaseSensitive());
+                analyzer.setVersion(luceneVersion);
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Adding field analyser for: " + indexField.getFieldName());
                 }
@@ -699,14 +722,11 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         try {
             // Update the size of the index.
             if (dir != null) {
-                final String[] files = dir.list();
-                long totalSize = 0;
-                if (files != null) {
-                    for (final String file : files) {
-                        totalSize += new File(dir, file).length();
-                    }
-                }
-                indexShard.setFileSize(totalSize);
+                final AtomicLong totalSize = new AtomicLong();
+                Files.list(dir).forEach(file -> {
+                    totalSize.addAndGet(file.toFile().length());
+                });
+                indexShard.setFileSize(totalSize.get());
             }
 
             // Only update the document count details if we have read them.

@@ -42,7 +42,8 @@ public class StroomProperties {
 
     public static final String STROOM_TEMP = "stroom.temp";
 
-    private static final String USER_CONF_PATH = ".stroom/stroom.conf";
+    public static final String USER_CONF_DIR = ".stroom";
+    private static final String USER_CONF_PATH = USER_CONF_DIR + "/stroom.conf";
     private static final String STROOM_TMP_ENV = "STROOM_TMP";
     private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
     private static final String TRACE = "TRACE";
@@ -323,7 +324,9 @@ public class StroomProperties {
     }
 
     public static void dump() {
+        System.out.println("Dumping properties object:");
         System.out.println(properties.toString());
+        System.out.println("Dumping override object:");
         System.out.println(override.toString());
     }
 

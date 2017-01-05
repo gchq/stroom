@@ -29,7 +29,6 @@ import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.event.ShowCreateEntityDialogEvent;
 import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityServiceCopyAction;
@@ -558,10 +557,10 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
     // }
     // }
 
-    protected void createEntity(final String type, final String displayType) {
-        final EntityData entityData = entityPluginEventManager.getSelectedEntityData();
-        ShowCreateEntityDialogEvent.fire(EntityPlugin.this, entityData, type, displayType, allowNullFolder());
-    }
+//    protected void createEntity(final String type, final String displayType) {
+//        final EntityData entityData = entityPluginEventManager.getSelectedEntityData();
+//        ShowCreateEntityDialogEvent.fire(EntityPlugin.this, entityData, type, displayType, allowNullFolder());
+//    }
 
     public void create(final String type, final String name, final DocRef folder,
             final CreateCallback callback) {

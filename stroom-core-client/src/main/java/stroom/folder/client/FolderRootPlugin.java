@@ -20,15 +20,16 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
-import stroom.core.client.ContentManager.CloseCallback;
 import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.entity.shared.FolderService;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
+import stroom.explorer.client.event.SelectionType;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.ExplorerData;
 import stroom.util.client.ImageUtil;
 import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
@@ -54,12 +55,12 @@ public class FolderRootPlugin extends Plugin implements TabData {
 
         // 4. Handle explorer events and open items as required.
         registerHandler(
-                getEventBus().addHandler(ExplorerTreeSelectEvent.getType(), new ExplorerTreeSelectEvent.Handler() {
-                    @Override
-                    public void onSelect(final ExplorerTreeSelectEvent event) {
-                        if (event.getSelectedItem() != null && !event.isRightClick()
-                                && FolderService.ROOT.equals(event.getSelectedItem().getType())) {
-                            if (presenter == null && event.isDoubleSelect()) {
+                getEventBus().addHandler(ExplorerTreeSelectEvent.getType(), event -> {
+                    final SelectionType selectionType = event.getSelectionType();
+                    if (!selectionType.isRightClick() && !selectionType.isMultiSelect()) {
+                        final ExplorerData selected = event.getSelectionModel().getSelected();
+                        if (selected != null && FolderService.ROOT.equals(selected.getType())) {
+                            if (presenter == null && selectionType.isDoubleSelect()) {
                                 // If the presenter is null then we haven't got
                                 // this tab open.
                                 // Create a new presenter.
@@ -67,18 +68,15 @@ public class FolderRootPlugin extends Plugin implements TabData {
                             }
 
                             if (presenter != null) {
-                                final CloseHandler closeHandler = new CloseHandler() {
-                                    @Override
-                                    public void onCloseRequest(final CloseCallback callback) {
-                                        // Give the content manager the ok to
-                                        // close the tab.
-                                        callback.closeTab(true);
+                                final CloseHandler closeHandler = callback -> {
+                                    // Give the content manager the ok to
+                                    // close the tab.
+                                    callback.closeTab(true);
 
-                                        // After we close the tab set the
-                                        // presenter back to null so
-                                        // that we can open it again.
-                                        presenter = null;
-                                    }
+                                    // After we close the tab set the
+                                    // presenter back to null so
+                                    // that we can open it again.
+                                    presenter = null;
                                 };
 
                                 contentManager.open(closeHandler, presenter, presenter);

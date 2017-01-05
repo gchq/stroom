@@ -16,8 +16,8 @@
 
 package stroom.streamstore.client.presenter;
 
+import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.presenter.AlertCallback;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
@@ -44,9 +44,10 @@ import com.gwtplatform.mvp.client.View;
 public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresenter.DataUploadView> {
     private DocRef feed;
     private StreamPresenter streamPresenter;
+
     @Inject
     public StreamUploadPresenter(final EventBus eventBus, final DataUploadView view,
-            final ClientDispatchAsync dispatcher) {
+                                 final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
 
         view.getForm().setAction(dispatcher.getImportFileURL());
@@ -55,6 +56,15 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
 
         final AbstractSubmitCompleteHandler submitCompleteHandler = new AbstractSubmitCompleteHandler("Uploading Data",
                 this) {
+            @Override
+            public void onSubmit(final SubmitEvent event) {
+                if (!valid()) {
+                    event.cancel();
+                } else {
+                    super.onSubmit(event);
+                }
+            }
+
             @Override
             protected void onSuccess(final ResourceKey resourceKey) {
                 final String fileName = getView().getFileUpload().getFilename();
@@ -84,12 +94,8 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
             }
         };
 
-        registerHandler(getForm().addSubmitHandler(submitCompleteHandler));
-        registerHandler(getForm().addSubmitCompleteHandler(submitCompleteHandler));
-    }
-
-    public FormPanel getForm() {
-        return getView().getForm();
+        registerHandler(getView().getForm().addSubmitHandler(submitCompleteHandler));
+        registerHandler(getView().getForm().addSubmitCompleteHandler(submitCompleteHandler));
     }
 
     public boolean valid() {
@@ -116,7 +122,7 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
         return true;
     }
 
-    public void submit() {
+    private void submit() {
         getView().getForm().submit();
     }
 
@@ -154,12 +160,7 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
     }
 
     private void error(final String message) {
-        AlertEvent.fireError(this, message, new AlertCallback() {
-            @Override
-            public void onClose() {
-                enableButtons();
-            }
-        });
+        AlertEvent.fireError(this, message, this::enableButtons);
     }
 
     private void disableButtons() {

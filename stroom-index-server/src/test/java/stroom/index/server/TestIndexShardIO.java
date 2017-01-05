@@ -34,6 +34,7 @@ import stroom.util.test.StroomUnitTest;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashSet;
 
 @RunWith(StroomJUnit4ClassRunner.class)
@@ -77,7 +78,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         for (int i = 1; i <= 10; i++) {
@@ -107,7 +108,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(service, indexFields, index, idx1);
@@ -142,7 +143,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(service, indexFields, index, idx1);
@@ -172,7 +173,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(service, indexFields, index, idx1);
@@ -205,7 +206,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         final IndexShardWriterImpl writer = new IndexShardWriterImpl(service, indexFields, index, idx1);

@@ -92,7 +92,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         });
 
         if (initialPipelineRef != null) {
-            chooser.setSelectedEntityReference(initialPipelineRef, false);
+            chooser.setSelectedEntityReference(initialPipelineRef);
         }
 
         chooser.show();

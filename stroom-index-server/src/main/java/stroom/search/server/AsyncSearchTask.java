@@ -34,13 +34,13 @@ public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializab
     private final Node targetNode;
     private final int resultSendFrequency;
     private final Map<Integer, CoprocessorSettings> coprocessorMap;
-    private final ZonedDateTime now;
+    private final long now;
 
     private volatile transient ClusterSearchResultCollector resultCollector;
 
     public AsyncSearchTask(final String sessionId, final String userName, final String searchName, final Search search,
                            final Node targetNode, final int resultSendFrequency,
-                           final Map<Integer, CoprocessorSettings> coprocessorMap, final ZonedDateTime now) {
+                           final Map<Integer, CoprocessorSettings> coprocessorMap, final long now) {
         super(null, sessionId, userName);
         this.searchName = searchName;
         this.search = search;
@@ -70,7 +70,7 @@ public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializab
         return coprocessorMap;
     }
 
-    public ZonedDateTime getNow() {
+    public long getNow() {
         return now;
     }
 

@@ -276,7 +276,7 @@
             <property name="name" value="stroom.maintenanceMessage"/>
             <property name="value" value=""/>
             <property name="description"
-                      value="Provide a message to prevent futher logins and alert currently logged in users about an outage."/>
+                      value="Provide a message to prevent further logins and alert currently logged in users about an outage."/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
@@ -774,7 +774,7 @@
             <property name="name" value="stroom.stats.sql.search.maxResults"/>
             <property name="value" value="100000"/>
             <property name="description"
-                      value="The maximum number of records that can be returned from the statisics DB in a single query prior to aggregation"/>
+                      value="The maximum number of records that can be returned from the statistics DB in a single query prior to aggregation"/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
@@ -784,6 +784,22 @@
                       value="The maximum age of statistics to process, i.e. any statistics with an statistic event time older than the current time minus maxProcessingAge will be silently dropped.  Leave blank to process all data."/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.contentPackImportEnabled"/>
+            <property name="value" value="true"/>
+            <property name="description"
+                      value="If true any content packs found in ${CATALINA_BASE}/contentPackImport/ will be imported into Stroom. Only intended for use on new Stroom instances to reduce the risk of overwriting existing entities" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.volumes.createDefaultOnStart"/>
+            <property name="value" value="true"/>
+            <property name="description"
+                      value="If no existing volumes are present a default volume will be created on application start. The volume will live in the volumes sub directory of the Stroom installation directory" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
         </bean>
 
     </util:list>

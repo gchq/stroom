@@ -14,17 +14,23 @@
  * limitations under the License.
  */
 
-package stroom.statistic.testshared;
+package stroom.explorer.client.presenter;
 
-import stroom.util.test.StroomUnitTest;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import com.google.gwt.user.client.ui.Composite;
+import stroom.explorer.shared.ExplorerData;
 
-import stroom.util.test.StroomJUnit4ClassRunner;
+import java.util.List;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestStatKey extends StroomUnitTest {
-    @Test
-    public void testKey() {
-    }
+public abstract class AbstractExporerTree extends Composite {
+    /**
+     * Called by the model after refresh to select the initial item.
+     * @param selection
+     */
+    abstract void setInitialSelectedItem(ExplorerData selection);
+
+    /**
+     * Called by the model on refresh to set data.
+     * @param rows
+     */
+    abstract void setData(List<ExplorerData> rows);
 }

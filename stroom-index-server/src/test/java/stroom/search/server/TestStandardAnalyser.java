@@ -22,7 +22,6 @@ import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.analysis.core.StopAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import stroom.index.server.LuceneVersionUtil;
 
 public class TestStandardAnalyser {
     public static void main(final String[] args) throws Exception {
@@ -32,15 +31,15 @@ public class TestStandardAnalyser {
     public void test() throws Exception {
         String in = "SOME-HYPHENATED-STRING";
 
-        testAnalyser(in, new StandardAnalyzer(LuceneVersionUtil.CURRENT_LUCENE_VERSION));
-        testAnalyser(in, new SimpleAnalyzer(LuceneVersionUtil.CURRENT_LUCENE_VERSION));
-        testAnalyser(in, new StopAnalyzer(LuceneVersionUtil.CURRENT_LUCENE_VERSION));
+        testAnalyser(in, new StandardAnalyzer());
+        testAnalyser(in, new SimpleAnalyzer());
+        testAnalyser(in, new StopAnalyzer());
 
         in = "user1";
 
-        testAnalyser(in, new StandardAnalyzer(LuceneVersionUtil.CURRENT_LUCENE_VERSION));
-        testAnalyser(in, new SimpleAnalyzer(LuceneVersionUtil.CURRENT_LUCENE_VERSION));
-        testAnalyser(in, new StopAnalyzer(LuceneVersionUtil.CURRENT_LUCENE_VERSION));
+        testAnalyser(in, new StandardAnalyzer());
+        testAnalyser(in, new SimpleAnalyzer());
+        testAnalyser(in, new StopAnalyzer());
     }
 
     private void testAnalyser(final String input, final Analyzer analyzer) throws Exception {
