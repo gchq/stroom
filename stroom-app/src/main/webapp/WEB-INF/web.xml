@@ -23,6 +23,12 @@
         <param-value>10000</param-value>
     </context-param>
 
+    <!-- Log4J filter -->
+    <filter>
+        <filter-name>log4jFilter</filter-name>
+        <filter-class>stroom.util.logging.Log4JFilter</filter-class>
+    </filter>
+
     <!-- Spring Security filter -->
     <filter>
         <filter-name>rejectPostFilter</filter-name>

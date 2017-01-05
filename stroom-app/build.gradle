@@ -67,6 +67,9 @@ dependencies {
     compile project(':stroom-dashboard-server')
     compile project(':stroom-security-server')
 
+    // Provide some runtime files such as stroom.properties and log4j.xml
+    providedCompile project(':stroom-config')
+
 //    compile group: 'org.apache.logging.log4j', name: 'log4j-web', version: '2.7'
 }
 
