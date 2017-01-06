@@ -1,14 +1,14 @@
 // apply plugin: 'distribution'
 //
-//configurations.all {
-//    transitive = false
-//}
-//
-//dependencies {
-////    runtime project(path: ':stroom-app', configuration: 'war')
-//    runtime project(path: ':stroom-util')
-//    runtime 'mysql:mysql-connector-java:5.1.40'
-//}
+configurations.all {
+    transitive = false
+}
+
+dependencies {
+    compile project(path: ':stroom-app')
+    compile project(path: ':stroom-util')
+    compile 'mysql:mysql-connector-java:5.1.40'
+}
 
 //task copyLibs(type:Copy) {
 //    def libDir = "src/main/dist/template/lib"
@@ -42,21 +42,24 @@
 //    }
 //}
 
-task distZip(type: Zip, dependsOn: build) {
+
+task distZip(type: Zip) {
 //    classifier = 'pants'
 
     from(fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')) {
         into 'stroom-app/lib'
     }
 
-    from(fileTree(new File(project(':stroom-util').buildDir, 'libs')).include('*.jar').exclude('*source*', '*test*')) {
-        into 'stroom-app/lib'
-    }
-//    from (configurations.runtime) {
+//    from(fileTree(new File(project(':stroom-util').buildDir, 'libs')).include('*.jar').exclude('*source*', '*test*')) {
 //        into 'stroom-app/lib'
 //    }
+    from (configurations.runtime) {
+        into 'stroom-app/lib'
+    }
 
     from('src/main/dist') {
         into 'stroom-app'
     }
 }
+
+build.finalizedBy(distZip)
