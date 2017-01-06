@@ -1,4 +1,4 @@
-//apply plugin: 'distribution'
+// apply plugin: 'distribution'
 //
 //configurations.all {
 //    transitive = false
@@ -42,14 +42,14 @@
 //    }
 //}
 
-task createDistribution(type: Zip, dependsOn: build) {
+task distZip(type: Zip, dependsOn: build) {
 //    classifier = 'pants'
 
-    from (fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')) {
+    from(fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')) {
         into 'stroom-app/lib'
     }
 
-    from (fileTree(new File(project(':stroom-util').buildDir, 'libs')).include('*.jar').exclude('*source*', '*test*')) {
+    from(fileTree(new File(project(':stroom-util').buildDir, 'libs')).include('*.jar').exclude('*source*', '*test*')) {
         into 'stroom-app/lib'
     }
 //    from (configurations.runtime) {
