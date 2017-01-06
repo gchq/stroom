@@ -21,8 +21,8 @@ import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 
 import java.sql.Connection;
@@ -36,12 +36,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConnectionUtil {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ConnectionUtil.class);
-
     public static final String JDBC_DRIVER_CLASS_NAME = "stroom.jdbcDriverClassName";
     public static final String JDBC_DRIVER_URL = "stroom.jdbcDriverUrl";
     public static final String JDBC_DRIVER_USERNAME = "stroom.jdbcDriverUsername";
     public static final String JDBC_DRIVER_PASSWORD = "stroom.jdbcDriverPassword";
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(ConnectionUtil.class);
 
     public static final Connection getConnection() throws SQLException {
         final String driverClassname = StroomProperties.getProperty(JDBC_DRIVER_CLASS_NAME);
@@ -84,7 +83,7 @@ public class ConnectionUtil {
         return hasTable;
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
+    @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static int executeUpdate(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
         LOGGER.debug(">>> %s", sql);
@@ -105,7 +104,7 @@ public class ConnectionUtil {
         }
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
+    @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static List<Long> executeInsert(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
         LOGGER.debug(">>> %s", sql);
@@ -130,7 +129,7 @@ public class ConnectionUtil {
         }
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
+    @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static Long executeQueryLongResult(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
         LOGGER.debug(">>> %s", sql);
@@ -154,7 +153,7 @@ public class ConnectionUtil {
         }
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
+    @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static BaseResultList<SummaryDataRow> executeQuerySummaryDataResult(final Connection connection,
             final String sql, final int numberKeys, final List<Object> args,
             final List<? extends HasPrimitiveValue> stats,
@@ -189,7 +188,7 @@ public class ConnectionUtil {
         }
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
+    @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static ResultSet executeQueryResultSet(final Connection connection, final String sql,
             final List<Object> args) throws SQLException {
         LOGGER.debug(">>> %s", sql);

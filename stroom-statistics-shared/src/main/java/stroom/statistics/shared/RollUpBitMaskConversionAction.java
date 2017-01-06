@@ -16,10 +16,10 @@
 
 package stroom.statistics.shared;
 
-import java.util.List;
-
-import stroom.dispatch.shared.Action;
+import stroom.entity.shared.Action;
 import stroom.entity.shared.ResultList;
+
+import java.util.List;
 
 public class RollUpBitMaskConversionAction extends Action<ResultList<CustomRollUpMaskFields>> {
     private static final long serialVersionUID = 9094030625926679727L;

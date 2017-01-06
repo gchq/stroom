@@ -17,8 +17,7 @@
 package stroom.pipeline.client.gin;
 
 import com.google.inject.Singleton;
-
-import stroom.app.client.gin.PluginModule;
+import stroom.core.client.gin.PluginModule;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XSLTPlugin;
@@ -34,9 +33,6 @@ import stroom.pipeline.client.presenter.XSLTSettingsPresenter.XSLTSettingsView;
 import stroom.pipeline.client.view.PipelineSettingsViewImpl;
 import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
 import stroom.pipeline.client.view.XSLTSettingsViewImpl;
-import stroom.pipeline.processor.client.presenter.ProcessorPresenter;
-import stroom.pipeline.processor.client.presenter.ProcessorPresenter.ProcessorView;
-import stroom.pipeline.processor.client.view.ProcessorViewImpl;
 import stroom.pipeline.stepping.client.PipelineSteppingPlugin;
 import stroom.pipeline.stepping.client.presenter.EditorPresenter;
 import stroom.pipeline.stepping.client.presenter.EditorPresenter.EditorView;
@@ -72,6 +68,9 @@ import stroom.pipeline.structure.client.view.NewPipelineReferenceViewImpl;
 import stroom.pipeline.structure.client.view.NewPropertyViewImpl;
 import stroom.pipeline.structure.client.view.PipelineStructureViewImpl;
 import stroom.pipeline.structure.client.view.PipelineTreeViewImpl;
+import stroom.process.client.presenter.ProcessorPresenter;
+import stroom.process.client.presenter.ProcessorPresenter.ProcessorView;
+import stroom.process.client.view.ProcessorViewImpl;
 import stroom.xmleditor.client.view.XMLEditorMenuPresenter;
 
 public class PipelineModule extends PluginModule {

@@ -16,16 +16,15 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.util.spring.StroomScope;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)

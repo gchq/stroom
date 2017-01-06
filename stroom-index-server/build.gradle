@@ -1,0 +1,8 @@
+dependencies {
+    compile project(':stroom-query-common-server')
+    compile project(':stroom-core-server')
+    compile project(':stroom-index-shared')
+    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+}

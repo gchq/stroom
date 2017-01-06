@@ -16,19 +16,18 @@
 
 package stroom.pipeline.server.filter;
 
-import javax.inject.Inject;
-import javax.xml.XMLConstants;
-
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.util.spring.StroomScope;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+
+import javax.inject.Inject;
+import javax.xml.XMLConstants;
 
 /**
  * An XML filter for performing inline schema validation of XML.
@@ -40,10 +39,9 @@ import stroom.xmlschema.shared.FindXMLSchemaCriteria;
         PipelineElementType.ROLE_VALIDATOR }, icon = ElementIcons.XSD)
 public class SchemaFilterSplit extends AbstractXMLFilter {
     private final SchemaFilter schemaFilter;
-
+    private final FindXMLSchemaCriteria schemaConstraint = new FindXMLSchemaCriteria();
     private String schemaLanguage = XMLConstants.W3C_XML_SCHEMA_NS_URI;
     private boolean schemaValidation = true;
-    private final FindXMLSchemaCriteria schemaConstraint = new FindXMLSchemaCriteria();
     private boolean addedSchemaFilter;
 
     @Inject
@@ -77,13 +75,13 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
     }
 
     @Override
-    public void setElementId(final String id) {
-        schemaFilter.setElementId(id);
+    public String getElementId() {
+        return schemaFilter.getElementId();
     }
 
     @Override
-    public String getElementId() {
-        return schemaFilter.getElementId();
+    public void setElementId(final String id) {
+        schemaFilter.setElementId(id);
     }
 
     @PipelineProperty(description = "The schema language that the schema is written in.", defaultValue = XMLConstants.W3C_XML_SCHEMA_NS_URI)

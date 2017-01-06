@@ -16,12 +16,12 @@
 
 package stroom.statistics.server.common.engines;
 
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.FolderService;
 import stroom.explorer.server.AbstractExplorerDataProvider;
 import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
 import stroom.explorer.shared.EntityData;
-import stroom.explorer.shared.ExplorerData;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.shared.DataSource;
 import stroom.statistics.common.CommonStatisticConstants;
@@ -29,7 +29,6 @@ import stroom.statistics.common.FindStatisticsEntityCriteria;
 import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.util.logging.StroomLogger;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -37,7 +36,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @ProvidesExplorerData

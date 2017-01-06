@@ -20,7 +20,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.app.client.MenuKeys;
+import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.presenter.ManageGlobalPropertyPresenter;
 import stroom.node.client.presenter.ManageVolumesPresenter;

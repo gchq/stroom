@@ -17,7 +17,6 @@
 package stroom.pipeline.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XSLTPlugin;
@@ -25,10 +24,10 @@ import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.client.presenter.PipelineSettingsPresenter;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.client.presenter.XSLTPresenter;
-import stroom.pipeline.processor.client.presenter.ProcessorListPresenter;
-import stroom.pipeline.processor.client.presenter.ProcessorPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
+import stroom.process.client.presenter.ProcessorListPresenter;
+import stroom.process.client.presenter.ProcessorPresenter;
 
 public interface PipelineGinjector {
     AsyncProvider<XSLTPlugin> getXSLTPlugin();

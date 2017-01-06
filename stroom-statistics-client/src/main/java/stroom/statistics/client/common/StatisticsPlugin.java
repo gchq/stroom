@@ -16,9 +16,13 @@
 
 package stroom.statistics.client.common;
 
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.app.client.ContentManager;
+import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
@@ -33,10 +37,6 @@ import stroom.statistics.shared.StatisticField;
 import stroom.statistics.shared.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 import java.util.Set;

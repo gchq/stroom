@@ -1,0 +1,31 @@
+dependencies {
+    compile project(':stroom-dashboard-shared')
+    compile project(':stroom-core-server')
+
+    compile project(':stroom-expression')
+
+    compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.15'
+
+//    compile project(':stroom-security-server')
+//    compile project(':stroom-pipeline')
+//    compile project(':stroom-index')
+//    compile project(':stroom-statistics-server')
+//    compile project(':stroom-statistics-client')
+//    compile project(':stroom-util')
+//    compile project(':stroom-security-client-api')
+//    compile project(':stroom-util-shared')
+//    compile project(':stroom-util')
+//    compile project(':stroom-entity-shared')
+//    compile project(':stroom-query-api')
+//    compile project(':stroom-core-client-widget')
+//    compile project(':stroom-core-client')
+//    compile project(':stroom-core-shared')
+//    compile project(':stroom-pipeline')
+//    compile project(':stroom-index')
+//    compile project(':stroom-statistics-client')
+//    compile project(':stroom-statistics-api')
+//    compile project(':stroom-statistics-shared')
+    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+}

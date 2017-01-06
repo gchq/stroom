@@ -25,33 +25,15 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.security.client.ClientSecurityContext;
-import stroom.app.client.event.DirtyKeyDownHander;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.entity.client.presenter.EntitySettingsPresenter;
+import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.xmlschema.shared.XMLSchema;
 
 public class XMLSchemaSettingsPresenter
         extends EntitySettingsPresenter<XMLSchemaSettingsPresenter.XMLSchemaSettingsView, XMLSchema> {
-    public interface XMLSchemaSettingsView extends View {
-        TextArea getDescription();
-
-        TextBox getNamespaceURI();
-
-        TextBox getSystemId();
-
-        TextBox getSchemaGroup();
-
-        TickBox getDeprecated();
-    }
-
-    @Override
-    public String getType() {
-        return XMLSchema.ENTITY_TYPE;
-    }
-
     @Inject
     public XMLSchemaSettingsPresenter(final EventBus eventBus, final XMLSchemaSettingsView view,
             final ClientSecurityContext securityContext) {
@@ -78,6 +60,11 @@ public class XMLSchemaSettingsPresenter
     }
 
     @Override
+    public String getType() {
+        return XMLSchema.ENTITY_TYPE;
+    }
+
+    @Override
     public void onRead(final XMLSchema xmlSchema) {
         getView().getDescription().setText(xmlSchema.getDescription());
         getView().getNamespaceURI().setText(xmlSchema.getNamespaceURI());
@@ -93,5 +80,17 @@ public class XMLSchemaSettingsPresenter
         xmlSchema.setSystemId(getView().getSystemId().getText());
         xmlSchema.setSchemaGroup(getView().getSchemaGroup().getText());
         xmlSchema.setDeprecated(getView().getDeprecated().getBooleanValue());
+    }
+
+    public interface XMLSchemaSettingsView extends View {
+        TextArea getDescription();
+
+        TextBox getNamespaceURI();
+
+        TextBox getSystemId();
+
+        TextBox getSchemaGroup();
+
+        TickBox getDeprecated();
     }
 }

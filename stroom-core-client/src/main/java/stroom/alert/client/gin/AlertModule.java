@@ -24,7 +24,7 @@ import stroom.alert.client.presenter.PromptPresenter.PromptProxy;
 import stroom.alert.client.presenter.PromptPresenter.PromptView;
 import stroom.alert.client.view.CommonAlertViewImpl;
 import stroom.alert.client.view.PromptViewImpl;
-import stroom.app.client.gin.PluginModule;
+import stroom.core.client.gin.PluginModule;
 
 public class AlertModule extends PluginModule {
     @Override

@@ -18,18 +18,17 @@ package stroom.dispatch.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window.Location;
-
+import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.presenter.AlertCallback;
-import stroom.importexport.client.presenter.ExportConfigPresenter;
 import stroom.util.shared.ResourceGeneration;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 
 public class ExportFileCompleteHandler extends AsyncCallbackAdaptor<ResourceGeneration> {
-    private final ExportConfigPresenter parent;
+    private final PresenterWidget<?> parent;
 
-    public ExportFileCompleteHandler(final ExportConfigPresenter parent) {
+    public ExportFileCompleteHandler(final PresenterWidget<?> parent) {
         this.parent = parent;
     }
 
@@ -79,7 +78,7 @@ public class ExportFileCompleteHandler extends AsyncCallbackAdaptor<ResourceGene
     private void download(final ResourceGeneration result) {
         // Change the browser location to download the zip
         // file.
-        Location.replace(GWT.getModuleBaseURL() + "../resourcestore/" + result.getResourceKey().getName() + "?UUID="
+        Location.replace(GWT.getHostPageBaseURL() + "resourcestore/" + result.getResourceKey().getName() + "?UUID="
                 + result.getResourceKey().getKey());
     }
 }

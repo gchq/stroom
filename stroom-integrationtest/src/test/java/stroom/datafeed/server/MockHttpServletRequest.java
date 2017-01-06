@@ -16,41 +16,51 @@
 
 package stroom.datafeed.server;
 
+import org.springframework.stereotype.Component;
+
+import javax.servlet.AsyncContext;
+import javax.servlet.DispatcherType;
+import javax.servlet.ReadListener;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpUpgradeHandler;
+import javax.servlet.http.Part;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.Principal;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Vector;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-
-import org.springframework.stereotype.Component;
-
 @Component
 public class MockHttpServletRequest implements HttpServletRequest {
-    private Map<String, String> headers = new HashMap<String, String>();
+    private Map<String, String> headers = new HashMap<>();
     private byte[] inputStreamData;
     private InputStream inputStream;
     private String queryString;
 
+    public MockHttpServletRequest() {
+    }
+
     public void resetMock() {
-        headers = new HashMap<String, String>();
+        headers = new HashMap<>();
         inputStream = null;
         inputStreamData = null;
         queryString = null;
-    }
-
-    public MockHttpServletRequest() {
     }
 
     public void addHeader(final String key, final String value) {
@@ -59,10 +69,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
     public void setInputStream(final byte[] buffer) {
         inputStreamData = buffer;
-    }
-
-    public void setInputStream(final InputStream inputStream) {
-        this.inputStream = inputStream;
     }
 
     @Override
@@ -164,6 +170,11 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
+    public String changeSessionId() {
+        return null;
+    }
+
+    @Override
     public HttpSession getSession(final boolean arg0) {
         return null;
     }
@@ -186,6 +197,36 @@ public class MockHttpServletRequest implements HttpServletRequest {
     @Override
     public boolean isRequestedSessionIdFromUrl() {
         return false;
+    }
+
+    @Override
+    public boolean authenticate(final HttpServletResponse httpServletResponse) throws IOException, ServletException {
+        return false;
+    }
+
+    @Override
+    public void login(final String s, final String s1) throws ServletException {
+
+    }
+
+    @Override
+    public void logout() throws ServletException {
+
+    }
+
+    @Override
+    public Collection<Part> getParts() throws IOException, ServletException {
+        return null;
+    }
+
+    @Override
+    public Part getPart(final String s) throws IOException, ServletException {
+        return null;
+    }
+
+    @Override
+    public <T extends HttpUpgradeHandler> T upgrade(final Class<T> aClass) throws IOException, ServletException {
+        return null;
     }
 
     @Override
@@ -215,7 +256,16 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
+    public void setCharacterEncoding(final String arg0) throws UnsupportedEncodingException {
+    }
+
+    @Override
     public int getContentLength() {
+        return 0;
+    }
+
+    @Override
+    public long getContentLengthLong() {
         return 0;
     }
 
@@ -236,6 +286,10 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
     }
 
+    public void setInputStream(final InputStream inputStream) {
+        this.inputStream = inputStream;
+    }
+
     @Override
     public String getLocalAddr() {
         return null;
@@ -249,6 +303,41 @@ public class MockHttpServletRequest implements HttpServletRequest {
     @Override
     public int getLocalPort() {
         return 0;
+    }
+
+    @Override
+    public ServletContext getServletContext() {
+        return null;
+    }
+
+    @Override
+    public AsyncContext startAsync() throws IllegalStateException {
+        return null;
+    }
+
+    @Override
+    public AsyncContext startAsync(final ServletRequest servletRequest, final ServletResponse servletResponse) throws IllegalStateException {
+        return null;
+    }
+
+    @Override
+    public boolean isAsyncStarted() {
+        return false;
+    }
+
+    @Override
+    public boolean isAsyncSupported() {
+        return false;
+    }
+
+    @Override
+    public AsyncContext getAsyncContext() {
+        return null;
+    }
+
+    @Override
+    public DispatcherType getDispatcherType() {
+        return null;
     }
 
     @Override
@@ -347,10 +436,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
     public void setAttribute(final String arg0, final Object arg1) {
     }
 
-    @Override
-    public void setCharacterEncoding(final String arg0) throws UnsupportedEncodingException {
-    }
-
     public static class ServletInputStreamImpl extends ServletInputStream {
         private final InputStream inputStream;
 
@@ -416,6 +501,33 @@ public class MockHttpServletRequest implements HttpServletRequest {
         @Override
         public String toString() {
             return inputStream.toString();
+        }
+
+        @Override
+        public boolean isFinished() {
+            try {
+                return inputStream.available() <= 0;
+            } catch (final IOException e) {
+                // Ignore
+            }
+
+            return true;
+        }
+
+        @Override
+        public boolean isReady() {
+            try {
+                return inputStream.available() > 0;
+            } catch (final IOException e) {
+                // Ignore
+            }
+
+            return false;
+        }
+
+        @Override
+        public void setReadListener(final ReadListener readListener) {
+
         }
     }
 }
