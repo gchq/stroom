@@ -1,116 +1,54 @@
 rootProject.name = 'stroom'
 
-// Build shared projects.
-include ':stroom-util-shared'
-include ':stroom-entity-shared'
+// Shared projects.
+include 'stroom-util-shared'
+include 'stroom-entity-shared'
 
-// Build API projects
-include ':stroom-query-api'
-include ':stroom-security-api'
-include ':stroom-statistics-api'
+// API projects
+include 'stroom-query-api'
+include 'stroom-security-api'
+include 'stroom-statistics-api'
 
-include ':stroom-core-shared'
-include ':stroom-security-shared'
-include ':stroom-index-shared'
-include ':stroom-statistics-shared'
-include ':stroom-dashboard-shared'
+// More shared projects.
+include 'stroom-core-shared'
+include 'stroom-security-shared'
+include 'stroom-index-shared'
+include 'stroom-statistics-shared'
+include 'stroom-dashboard-shared'
 
-// Build client projects
-include ':stroom-security-client-api'
-include ':stroom-core-client-widget'
-include ':stroom-core-client'
-include ':stroom-security-client'
-include ':stroom-index-client'
-include ':stroom-statistics-client'
-include ':stroom-dashboard-client'
+// Client projects
+include 'stroom-security-client-api'
+include 'stroom-core-client-widget'
+include 'stroom-core-client'
+include 'stroom-security-client'
+include 'stroom-index-client'
+include 'stroom-statistics-client'
+include 'stroom-dashboard-client'
 
-// Compile GWT code.
-include ':stroom-dashboard-gwt'
-include ':stroom-app-gwt'
+// GWT compilation projects.
+include 'stroom-dashboard-gwt'
+include 'stroom-app-gwt'
 
+// Common test project
+include 'stroom-test-common'
 
+// Server projects
+include 'stroom-config'
+include 'stroom-remote'
 
-
-
-
-// Build common test project
-include ':stroom-test-common'
-
-// Build server projects
-include ':stroom-config'
-include ':stroom-remote'
-
-include ':stroom-util'
-include ':stroom-core-server'
-include ':stroom-pipeline'
-include ':stroom-expression'
-include ':stroom-query-common-server'
-include ':stroom-security-server'
-include ':stroom-index-server'
-include ':stroom-statistics-server'
-include ':stroom-dashboard-server'
-
-
+include 'stroom-util'
+include 'stroom-core-server'
+include 'stroom-pipeline'
+include 'stroom-expression'
+include 'stroom-query-common-server'
+include 'stroom-security-server'
+include 'stroom-index-server'
+include 'stroom-statistics-server'
+include 'stroom-dashboard-server'
 
 // Package it all together.
-include ':stroom-startup'
-include ':stroom-app'
-include ':stroom-app-distribution'
+include 'stroom-app'
+include 'stroom-app-distribution'
 
-// Run integration tests.
-include ':stroom-integrationtest'
-
-
-
-
-
-// Build shared projects.
-project(':stroom-util-shared').projectDir = "$rootDir/stroom-util-shared" as File
-project(':stroom-entity-shared').projectDir = "$rootDir/stroom-entity-shared" as File
-project(':stroom-core-shared').projectDir = "$rootDir/stroom-core-shared" as File
-project(':stroom-security-shared').projectDir = "$rootDir/stroom-security-shared" as File
-project(':stroom-index-shared').projectDir = "$rootDir/stroom-index-shared" as File
-project(':stroom-statistics-shared').projectDir = "$rootDir/stroom-statistics-shared" as File
-project(':stroom-dashboard-shared').projectDir = "$rootDir/stroom-dashboard-shared" as File
-
-// Build client projects
-project(':stroom-security-client-api').projectDir = "$rootDir/stroom-security-client-api" as File
-project(':stroom-core-client-widget').projectDir = "$rootDir/stroom-core-client-widget" as File
-project(':stroom-core-client').projectDir = "$rootDir/stroom-core-client" as File
-project(':stroom-security-client').projectDir = "$rootDir/stroom-security-client" as File
-project(':stroom-index-client').projectDir = "$rootDir/stroom-index-client" as File
-project(':stroom-statistics-client').projectDir = "$rootDir/stroom-statistics-client" as File
-project(':stroom-dashboard-client').projectDir = "$rootDir/stroom-dashboard-client" as File
-
-// Compile GWT code.
-project(':stroom-dashboard-gwt').projectDir = "$rootDir/stroom-dashboard-gwt" as File
-project(':stroom-app-gwt').projectDir = "$rootDir/stroom-app-gwt" as File
-
-// Build API projects
-project(':stroom-security-api').projectDir = "$rootDir/stroom-security-api" as File
-project(':stroom-statistics-api').projectDir = "$rootDir/stroom-statistics-api" as File
-project(':stroom-query-api').projectDir = "$rootDir/stroom-query-api" as File
-
-// Build common test project
-project(':stroom-test-common').projectDir = "$rootDir/stroom-test-common" as File
-
-// Build server projects
-project(':stroom-config').projectDir = "$rootDir/stroom-config" as File
-project(':stroom-remote').projectDir = "$rootDir/stroom-remote" as File
-
-project(':stroom-util').projectDir = "$rootDir/stroom-util" as File
-project(':stroom-core-server').projectDir = "$rootDir/stroom-core-server" as File
-project(':stroom-pipeline').projectDir = "$rootDir/stroom-pipeline" as File
-project(':stroom-expression').projectDir = "$rootDir/stroom-expression" as File
-project(':stroom-query-common-server').projectDir = "$rootDir/stroom-query-common-server" as File
-project(':stroom-security-server').projectDir = "$rootDir/stroom-security-server" as File
-project(':stroom-index-server').projectDir = "$rootDir/stroom-index-server" as File
-project(':stroom-statistics-server').projectDir = "$rootDir/stroom-statistics-server" as File
-project(':stroom-dashboard-server').projectDir = "$rootDir/stroom-dashboard-server" as File
-
-// Package it all together.
-project(':stroom-app').projectDir = "$rootDir/stroom-app" as File
-project(':stroom-app-distribution').projectDir = "$rootDir/stroom-app-distribution" as File
-
-// Run integration tests.
-project(':stroom-integrationtest').projectDir = "$rootDir/stroom-integrationtest" as File
+// Integration tests.
+include 'stroom-integrationtest'
