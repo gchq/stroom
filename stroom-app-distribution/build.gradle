@@ -1,14 +1,14 @@
-apply plugin: 'distribution'
-
-configurations.all {
-    transitive = false
-}
-
-dependencies {
-//    runtime project(path: ':stroom-app', configuration: 'war')
-    runtime project(path: ':stroom-util')
-    runtime 'mysql:mysql-connector-java:5.1.40'
-}
+//apply plugin: 'distribution'
+//
+//configurations.all {
+//    transitive = false
+//}
+//
+//dependencies {
+////    runtime project(path: ':stroom-app', configuration: 'war')
+//    runtime project(path: ':stroom-util')
+//    runtime 'mysql:mysql-connector-java:5.1.40'
+//}
 
 //task copyLibs(type:Copy) {
 //    def libDir = "src/main/dist/template/lib"
@@ -24,36 +24,39 @@ dependencies {
 //    }
 //}
 
-distributions {
-    main {
-        contents {
-            from (fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')) {
-                into 'lib'
-            }
-//        from fileTree(new File(project(':stroom-util').buildDir, 'libs')).include('*.jar').exclude('*source*', '*test*')
-            from (configurations.runtime) {
-                into 'lib'
-            }
-
-            from('src/main/dist') {
-                into ''
-            }
-        }
-    }
-}
-
-//task createDistribution(type: Zip, dependsOn: build) {
-////    classifier = 'pants'
-//
-//    from (fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')) {
-//        into 'template/lib'
-//    }
+//distributions {
+//    main {
+//        contents {
+//            from (fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')) {
+//                into 'stroom-app/lib'
+//            }
 ////        from fileTree(new File(project(':stroom-util').buildDir, 'libs')).include('*.jar').exclude('*source*', '*test*')
-//    from (configurations.runtime) {
-//        into 'template/lib'
-//    }
+//            from (configurations.runtime) {
+//                into 'stroom-app/lib'
+//            }
 //
-//    from('src/main/dist') {
-//        into ''
+//            from('src/main/dist') {
+//                into 'stroom-app'
+//            }
+//        }
 //    }
 //}
+
+task createDistribution(type: Zip, dependsOn: build) {
+//    classifier = 'pants'
+
+    from (fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')) {
+        into 'stroom-app/lib'
+    }
+
+    from (fileTree(new File(project(':stroom-util').buildDir, 'libs')).include('*.jar').exclude('*source*', '*test*')) {
+        into 'stroom-app/lib'
+    }
+//    from (configurations.runtime) {
+//        into 'stroom-app/lib'
+//    }
+
+    from('src/main/dist') {
+        into 'stroom-app'
+    }
+}
