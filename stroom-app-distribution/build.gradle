@@ -28,11 +28,11 @@ distributions {
     main {
         contents {
             from (fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')) {
-                into 'template/lib'
+                into 'lib'
             }
 //        from fileTree(new File(project(':stroom-util').buildDir, 'libs')).include('*.jar').exclude('*source*', '*test*')
             from (configurations.runtime) {
-                into 'template/lib'
+                into 'lib'
             }
 
             from('src/main/dist') {
