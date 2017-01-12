@@ -18,6 +18,7 @@ package stroom.refdata;
 
 import stroom.cache.AbstractCacheBean;
 import stroom.entity.shared.Period;
+import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
@@ -54,6 +55,18 @@ public class EffectiveStreamCache extends AbstractCacheBean<EffectiveStreamKey, 
         this.internPool = internPool;
         setMaxIdleTime(10, TimeUnit.MINUTES);
         setMaxLiveTime(10, TimeUnit.MINUTES);
+    }
+
+    @Override
+    public TreeSet<EffectiveStream> get(final EffectiveStreamKey effectiveStreamKey) {
+        if (effectiveStreamKey.getFeed() == null) {
+            throw new ProcessException("No feed has been specified for reference data lookup");
+        }
+        if (effectiveStreamKey.getStreamType() == null) {
+            throw new ProcessException("No stream type has been specified for reference data lookup");
+        }
+
+        return super.get(effectiveStreamKey);
     }
 
     @Override
