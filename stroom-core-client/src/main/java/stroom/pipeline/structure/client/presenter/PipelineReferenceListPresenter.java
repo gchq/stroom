@@ -315,7 +315,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
                                 added.add(pipelineReference);
                             }
 
-                            setDirty(true);
+                            setDirty(isNew || editor.isDirty());
                             refresh();
                             HidePopupEvent.fire(PipelineReferenceListPresenter.this, editor);
                         }
