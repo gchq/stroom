@@ -19,6 +19,7 @@ package stroom.explorer.client.presenter;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
@@ -168,6 +169,9 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
             if (isSelectionAllowed(selected)) {
                 DataSelectionEvent.fire(this, selected, false);
                 super.onHideRequest(autoClose, ok);
+            } else {
+                AlertEvent.fireError(ExplorerDropDownTreePresenter.this,
+                        "You must choose a valid item.", null);
             }
         } else {
             super.onHideRequest(autoClose, ok);
