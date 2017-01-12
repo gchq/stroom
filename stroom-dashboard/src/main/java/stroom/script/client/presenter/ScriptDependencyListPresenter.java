@@ -34,7 +34,7 @@ import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.DocRefs;
-import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
+import stroom.explorer.client.presenter.EntityChooser;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.node.client.view.WrapperView;
@@ -51,7 +51,7 @@ import java.util.List;
 public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView>
         implements HasRead<Script>, HasWrite<Script>, HasDirtyHandlers {
     private final ScriptListPresenter scriptListPresenter;
-    private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
+    private final EntityChooser explorerDropDownTreePresenter;
     private final GlyphButtonView addButton;
     private final GlyphButtonView removeButton;
     private final MySingleSelectionModel<DocRef> selectionModel;
@@ -61,7 +61,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
     @Inject
     public ScriptDependencyListPresenter(final EventBus eventBus, final WrapperView view,
                                          final ScriptListPresenter scriptListPresenter,
-                                         final ExplorerDropDownTreePresenter explorerDropDownTreePresenter) {
+                                         final EntityChooser explorerDropDownTreePresenter) {
         super(eventBus, view);
         this.scriptListPresenter = scriptListPresenter;
         this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;

@@ -29,7 +29,7 @@ import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
 import stroom.entity.shared.Folder;
-import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
+import stroom.explorer.client.presenter.EntityChooser;
 import stroom.explorer.shared.ExplorerData;
 import stroom.pipeline.processor.shared.LoadEntityIdSetAction;
 import stroom.pipeline.processor.shared.SetId;
@@ -63,7 +63,7 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
         void setRemoveEnabled(boolean enabled);
     }
 
-    private final ExplorerDropDownTreePresenter treePresenter;
+    private final EntityChooser treePresenter;
     private final EntityChoicePresenter choicePresenter;
     private final ClientDispatchAsync dispatcher;
     private final StreamTypeUiManager streamTypeUiManager;
@@ -75,7 +75,7 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
 
     @Inject
     public EntityIdSetPresenter(final EventBus eventBus, final EntityIdSetView view,
-                                final ExplorerDropDownTreePresenter treePresenter, final EntityChoicePresenter choicePresenter,
+                                final EntityChooser treePresenter, final EntityChoicePresenter choicePresenter,
                                 final StreamTypeUiManager streamTypeUiManager, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.treePresenter = treePresenter;

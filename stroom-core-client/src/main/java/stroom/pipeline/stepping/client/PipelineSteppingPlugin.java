@@ -23,7 +23,7 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRef;
-import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
+import stroom.explorer.client.presenter.EntityChooser;
 import stroom.explorer.shared.ExplorerData;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
@@ -37,14 +37,14 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
-    private final Provider<ExplorerDropDownTreePresenter> pipelineSelection;
+    private final Provider<EntityChooser> pipelineSelection;
     private final Provider<SteppingContentTabPresenter> editorProvider;
     private final ContentManager contentManager;
     private final ClientDispatchAsync dispatcher;
 
     @Inject
     public PipelineSteppingPlugin(final EventBus eventBus, final Provider<SteppingContentTabPresenter> editorProvider,
-                                  final Provider<ExplorerDropDownTreePresenter> pipelineSelection, final ContentManager contentManager,
+                                  final Provider<EntityChooser> pipelineSelection, final ContentManager contentManager,
                                   final ClientDispatchAsync dispatcher) {
         super(eventBus);
         this.pipelineSelection = pipelineSelection;
@@ -78,7 +78,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
 
     private void choosePipeline(final DocRef initialPipelineRef, final long streamId, final long eventId,
                                 final StreamType childStreamType) {
-        final ExplorerDropDownTreePresenter chooser = pipelineSelection.get();
+        final EntityChooser chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Step With");
         chooser.setIncludedTypes(PipelineEntity.ENTITY_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.READ);

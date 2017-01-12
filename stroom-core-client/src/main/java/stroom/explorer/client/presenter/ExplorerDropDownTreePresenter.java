@@ -31,12 +31,13 @@ import stroom.explorer.shared.ExplorerData;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 
-public class ExplorerDropDownTreePresenter extends DropDownTreePresenter
+class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         implements HasDataSelectionHandlers<ExplorerData> {
     private final ExtendedExplorerTree explorerTree;
     private boolean allowFolderSelection;
+
     @Inject
-    public ExplorerDropDownTreePresenter(final EventBus eventBus, final DropDownTreeView view,
+    ExplorerDropDownTreePresenter(final EventBus eventBus, final DropDownTreeView view,
                                          final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         setUnselectedText("None");
@@ -47,37 +48,25 @@ public class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         view.setCellTree(explorerTree);
     }
 
-    private void setSelectedTreeItem(final ExplorerData selectedItem,
-                                     final SelectionType selectionType, final boolean fireEvents) {
-        if (selectionType.isDoubleSelect()) {
-            if (selectedItem == null) {
-                DataSelectionEvent.fire(this, null, true);
-                HidePopupEvent.fire(this, this);
-            } else {
-                // Is the selection type valid?
-                if (isSelectionAllowed(selectedItem)) {
-                    DataSelectionEvent.fire(this, selectedItem, true);
-                    HidePopupEvent.fire(this, this);
-                }
-            }
-        } else {
-            if (selectedItem == null) {
-                // Has the selected item changed to null.
-                if (fireEvents) {
-                    DataSelectionEvent.fire(this, null, false);
-                }
-            } else {
-                // Has the selected item changed.
-                if (isSelectionAllowed(selectedItem)) {
-                    if (fireEvents) {
-                        DataSelectionEvent.fire(this, selectedItem, false);
-                    }
-                }
+    protected void setSelectedTreeItem(final ExplorerData selectedItem,
+                                     final SelectionType selectionType, final boolean initial) {
+        // Is the selection type valid?
+        if (isSelectionAllowed(selectedItem)) {
+            // Drop down presenters need to know what the initial selection was so that they can update the name of their selected item properly.
+            if (initial) {
+                DataSelectionEvent.fire(this, selectedItem, false);
+            } else if (selectionType.isDoubleSelect()) {
+                DataSelectionEvent.fire(this, selectedItem, true);
+                HidePopupEvent.fire(this, this, true, true);
             }
         }
     }
 
     private boolean isSelectionAllowed(final ExplorerData selected) {
+        if (selected == null) {
+            return true;
+        }
+
         if (allowFolderSelection) {
             return true;
         }
@@ -175,9 +164,14 @@ public class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     @Override
     public void onHideRequest(final boolean autoClose, final boolean ok) {
         if (ok) {
-            DataSelectionEvent.fire(this, explorerTree.getSelectionModel().getSelected(), false);
+            final EntityData selected = getSelectedEntityData();
+            if (isSelectionAllowed(selected)) {
+                DataSelectionEvent.fire(this, selected, false);
+                super.onHideRequest(autoClose, ok);
+            }
+        } else {
+            super.onHideRequest(autoClose, ok);
         }
-        super.onHideRequest(autoClose, ok);
     }
 
     private static class ExtendedExplorerTree extends ExplorerTree {
