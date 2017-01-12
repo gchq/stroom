@@ -722,11 +722,11 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             super(streamPresenter, streamListPresenter, useCriteria, dispatcher);
         }
 
-        protected String getDeleteText(final FindStreamCriteria criteria) {
+        protected String getDeleteText(final FindStreamCriteria criteria, final boolean pastTense) {
             if (StreamStatus.DELETED.equals(criteria.obtainStatusSet().getSingleItem())) {
-                return "Un-delete";
+                return "Restore" + (pastTense ? "d" : "");
             } else {
-                return "Delete";
+                return "Delete" + (pastTense ? "d" : "");
             }
         }
 
@@ -747,7 +747,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                 AlertEvent.fireError(this, "Unable to action command on mixed status", null);
             } else {
                 ConfirmEvent.fire(this,
-                        "Are you sure you want to " + getDeleteText(deleteCriteria) + " the selected items?",
+                        "Are you sure you want to " + getDeleteText(deleteCriteria, false).toLowerCase() + " the selected items?",
                         new ConfirmCallback() {
                             @Override
                             public void onResult(final boolean confirm) {
@@ -755,7 +755,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                                     if (!deleteCriteria.getStreamIdSet().isConstrained()) {
                                         ConfirmEvent.fireWarn(DeleteStreamClickHandler.this,
                                                 "You have selected all items.  Are you sure you want to "
-                                                        + getDeleteText(deleteCriteria) + " all the selected items?",
+                                                        + getDeleteText(deleteCriteria, false).toLowerCase() + " all the selected items?",
                                                 new ConfirmCallback() {
                                                     @Override
                                                     public void onResult(final boolean confirm) {
@@ -781,12 +781,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                         @Override
                         public void onSuccess(final SharedLong result) {
                             AlertEvent.fireInfo(DeleteStreamClickHandler.this,
-                                    getDeleteText(criteria) + " " + result + " records", new AlertCallback() {
-                                        @Override
-                                        public void onClose() {
-                                            refreshList();
-                                        }
-                                    });
+                                    getDeleteText(criteria, true) + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), () -> refreshList());
                         }
                     });
         }
