@@ -5,4 +5,5 @@
 *.swp
 node_modules
 _book
-**/classes/
+.gradle/
+classes/

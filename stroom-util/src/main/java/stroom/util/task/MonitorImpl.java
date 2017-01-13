@@ -16,28 +16,23 @@
 
 package stroom.util.task;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
-
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import stroom.util.logging.LoggerUtil;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.TerminateHandler;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class MonitorImpl implements Monitor {
     private static final long serialVersionUID = 6158410874438193810L;
 
     private final Monitor parent;
-
+    private final ReentrantLock terminateHandlersLock = new ReentrantLock();
     private volatile boolean terminate;
-
     @SuppressWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
     private transient volatile List<TerminateHandler> terminateHandlers;
-
-    private final ReentrantLock terminateHandlersLock = new ReentrantLock();
-
-    @SuppressWarnings(value = "VO_VOLATILE_REFERENCE_TO_ARRAY", justification = "Private array that we don't change")
+    @SuppressWarnings(value = "VO_VOLATILE_REFERENCE_TO_ARRAY") // Private array that we don't change
     private volatile Object[] info;
 
     public MonitorImpl() {

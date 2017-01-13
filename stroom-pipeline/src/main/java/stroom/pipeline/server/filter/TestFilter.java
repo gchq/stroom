@@ -16,18 +16,6 @@
 
 package stroom.pipeline.server.filter;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
-import javax.annotation.Resource;
-import javax.xml.transform.ErrorListener;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
-
-import stroom.util.spring.StroomScope;
-import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -35,17 +23,27 @@ import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
 import stroom.entity.server.util.XMLUtil;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
+import stroom.util.spring.StroomScope;
+import stroom.util.spring.StroomSpringProfiles;
+
+import javax.annotation.Resource;
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 /**
  * A filter used to sample the output produced by SAX events at any point in the
@@ -58,11 +56,9 @@ import stroom.util.shared.Severity;
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.STREAM)
 public class TestFilter extends AbstractXMLFilter {
+    private static StroomLogger LOGGER = StroomLogger.getLogger(TestFilter.class);
     private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     private ContentHandler handler;
-
-    private static StroomLogger LOGGER = StroomLogger.getLogger(TestFilter.class);
-
     @Resource
     private ErrorReceiverProxy errorReceiverProxy;
     @Resource

@@ -16,18 +16,15 @@
 
 package stroom.pipeline.server.filter;
 
-import javax.annotation.Resource;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-
 import stroom.entity.shared.Range;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.refdata.MapStoreHolder;
@@ -37,6 +34,8 @@ import stroom.util.spring.StroomScope;
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
+
+import javax.annotation.Resource;
 
 /**
  * This XML filter captures XML content that defines key, value maps to be
@@ -54,26 +53,21 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private static final String FROM_ELEMENT = "from";
     private static final String TO_ELEMENT = "to";
     private static final String VALUE_ELEMENT = "value";
-
+    private final EventListBuilder handler = EventListBuilderFactory.createBuilder();
+    private final CharBuffer contentBuffer = new CharBuffer(20);
     @Resource
     private MapStoreHolder mapStoreHolder;
     @Resource
     private EventListInternPool internPool;
     @Resource
     private ErrorReceiverProxy errorReceiverProxy;
-
     private String map;
     private String key;
-    private final EventListBuilder handler = EventListBuilderFactory.createBuilder();
     private boolean inValue;
-
     private Long rangeFrom;
     private Long rangeTo;
-
     private boolean warnOnDuplicateKeys = false;
     private boolean overrideExistingValues = true;
-
-    private final CharBuffer contentBuffer = new CharBuffer(20);
 
     /**
      * This method looks for a post processing function. If it finds one it does

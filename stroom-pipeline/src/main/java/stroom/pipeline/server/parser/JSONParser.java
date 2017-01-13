@@ -16,21 +16,20 @@
 
 package stroom.pipeline.server.parser;
 
-import javax.inject.Inject;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.spring.StroomScope;
 import stroom.xml.converter.json.JSONParserFactory;
+
+import javax.inject.Inject;
 
 @Component
 @Scope(value = StroomScope.TASK)

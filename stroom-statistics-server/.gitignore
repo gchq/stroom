@@ -3,6 +3,7 @@
 /.project
 /.settings/
 /target/
+/build/
 /StatsTestData_Values.xml
 /StatsTestData_Counts.xml
 /StatsPurgeTestData_Counts.xml

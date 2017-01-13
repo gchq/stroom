@@ -1,0 +1,4 @@
+dependencies {
+    compile project(':stroom-index-shared')
+    compile project(':stroom-core-client')
+}

@@ -16,8 +16,6 @@
 
 package stroom.util.scheduler;
 
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -31,13 +29,11 @@ import java.util.TimeZone;
  * E.g. 0 * * Every Hour 1,30 * * Every Half Hour
  */
 public class SimpleCron {
-    private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
-
     /**
      * Token to mean ANY time matches.
      */
     public static final String CRON_ANY = "*";
-
+    private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     private final String expression;
 
     /**
@@ -261,7 +257,7 @@ public class SimpleCron {
         /**
          * Build the CRON matches
          */
-        @SuppressWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "private array ... designed to allow null")
+        @SuppressWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS") // private array ... designed to allow null
         private int[] buildMatches(final String expression) {
             int[] matches = null;
 

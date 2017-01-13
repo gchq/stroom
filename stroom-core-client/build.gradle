@@ -1,0 +1,8 @@
+dependencies {
+    compile project(':stroom-security-client-api')
+    compile project(':stroom-security-shared')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-core-client-widget')
+    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-util')
+}

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<log4j:configuration xmlns:log4j='http://jakarta.apache.org/log4j/'>
+  <appender name="STROOM" class="org.apache.log4j.RollingFileAppender">
+    <param name="File" value="${catalina.base}/logs/stroom.log"/>
+    <param name="MaxBackupIndex" value="10"/>
+    <param name="MaxFileSize" value="10MB"/>
+    <param name="Append" value="true"/>
+    <layout class="org.apache.log4j.EnhancedPatternLayout">
+      <param name="ConversionPattern" value="%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}{GMT+0} %-5p [%t] %C{2} (%F:%L) - %m%n" />
+    </layout>
+  </appender>
+
+  <appender name="EVENTS" class="event.logging.log4j.FrequencyRollingFileAppender">
+    <param name="Dir" value="${catalina.base}/logs/events"/>
+    <param name="Stem" value="events"/>
+    <param name="IntervalMinutes" value="10"/>
+    <param name="MaxFileSize" value="10"/>
+  </appender>
+
+  <logger name="stroom" additivity="false">
+    <level value="info"/>
+    <appender-ref ref="STROOM"/>
+  </logger>
+
+  <logger name="event-logger" additivity="false">
+    <level value="info"/>
+    <appender-ref ref="EVENTS"/>
+  </logger>
+
+  <root>
+    <level value="ERROR" />
+    <appender-ref ref="STROOM" />
+  </root>
+</log4j:configuration>

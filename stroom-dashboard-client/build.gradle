@@ -1,0 +1,5 @@
+dependencies {
+    compile project(':stroom-dashboard-shared')
+    compile project(':stroom-core-client')
+    compile project(':stroom-security-client')
+}

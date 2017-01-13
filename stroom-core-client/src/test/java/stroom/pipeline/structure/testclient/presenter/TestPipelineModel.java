@@ -16,6 +16,8 @@
 
 package stroom.pipeline.structure.testclient.presenter;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineModelException;
@@ -25,19 +27,13 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.test.StroomUnitTest;
-import stroom.util.test.StroomJUnit4ClassRunner;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestPipelineModel extends StroomUnitTest {
+public class TestPipelineModel {
     private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
-            new String[] { PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS }, null);
+            new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
     private static final PipelinePropertyType PROP_TYPE1 = new PipelinePropertyType(ELEM_TYPE, "TestProperty1",
             "String");
     private static final PipelinePropertyType PROP_TYPE2 = new PipelinePropertyType(ELEM_TYPE, "TestProperty2",
@@ -284,9 +280,9 @@ public class TestPipelineModel extends StroomUnitTest {
     }
 
     private void test(final List<PipelineData> baseStack, final PipelineData pipelineData, final int addedElements,
-            final int removedElements, final int addedProperties, final int removedProperties,
-            final int addedPipelineReferences, final int removedPipelineReferences, final int addedLinks,
-            final int removedLinks) throws PipelineModelException {
+                      final int removedElements, final int addedProperties, final int removedProperties,
+                      final int addedPipelineReferences, final int removedPipelineReferences, final int addedLinks,
+                      final int removedLinks) throws PipelineModelException {
         final PipelineModel pipelineModel = new PipelineModel();
         pipelineModel.setBaseStack(baseStack);
         pipelineModel.setPipelineData(pipelineData);

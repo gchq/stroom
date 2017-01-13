@@ -1,0 +1,4 @@
+dependencies {
+    compile project(':stroom-util')
+    compile group: 'com.caucho', name: 'hessian', version: '4.0.38'
+}

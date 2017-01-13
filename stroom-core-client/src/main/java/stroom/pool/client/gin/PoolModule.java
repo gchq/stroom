@@ -16,7 +16,7 @@
 
 package stroom.pool.client.gin;
 
-import stroom.app.client.gin.PluginModule;
+import stroom.core.client.gin.PluginModule;
 import stroom.pool.client.PoolMonitoringPlugin;
 import stroom.pool.client.presenter.PoolPresenter;
 import stroom.pool.client.presenter.PoolPresenter.PoolView;

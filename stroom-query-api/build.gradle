@@ -1,0 +1,7 @@
+dependencies {
+    compile project(':stroom-entity-shared')
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.5'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    testCompile 'com.fasterxml.jackson.core:jackson-databind:2.8.5'
+
+}

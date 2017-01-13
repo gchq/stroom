@@ -16,7 +16,7 @@
 
 package stroom.explorer.shared;
 
-import stroom.dispatch.shared.Action;
+import stroom.entity.shared.Action;
 import stroom.util.shared.SharedMap;
 
 import java.util.List;

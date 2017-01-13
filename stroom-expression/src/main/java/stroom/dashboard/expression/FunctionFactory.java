@@ -68,13 +68,13 @@ public class FunctionFactory {
 
         add(Power.class, Power.NAME, Power.ALIAS);
         add(Divide.class, Divide.NAME, Divide.ALIAS);
-		add(Multiply.class, Multiply.NAME, Multiply.ALIAS);
-		add(Add.class, Add.NAME, Add.ALIAS);
+        add(Multiply.class, Multiply.NAME, Multiply.ALIAS);
+        add(Add.class, Add.NAME, Add.ALIAS);
 		add(Subtract.class, Subtract.NAME, Subtract.ALIAS);
         add(Negate.class, Negate.NAME);
         add(Equals.class, Equals.NAME, Equals.ALIAS);
-		add(GreaterThan.class, GreaterThan.NAME, GreaterThan.ALIAS);
-		add(LessThan.class, LessThan.NAME, LessThan.ALIAS);
+        add(GreaterThan.class, GreaterThan.NAME, GreaterThan.ALIAS);
+        add(LessThan.class, LessThan.NAME, LessThan.ALIAS);
 		add(GreaterThanOrEqualTo.class, GreaterThanOrEqualTo.NAME, GreaterThanOrEqualTo.ALIAS);
 		add(LessThanOrEqualTo.class, LessThanOrEqualTo.NAME, LessThanOrEqualTo.ALIAS);
 

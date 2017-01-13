@@ -16,6 +16,8 @@
 
 package stroom.util;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.mutable.MutableInt;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Volume;
@@ -30,9 +32,6 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.ThreadScopeRunnable;
 import stroom.util.zip.HeaderMap;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.mutable.MutableInt;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -54,47 +53,16 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 public class StreamRestoreTool extends DatabaseTool {
-    private String deleteFile = null;
-
-    public void setDeleteFile(final String deleteFile) {
-        this.deleteFile = deleteFile;
-    }
-
     public static final int KEY_PAD = 30;
     public static final int COUNT_PAD = 10;
-
-    static class KeyCount {
-        public KeyCount(final String key) {
-            this.key = Arrays.asList(key);
-            this.count = new MutableInt();
-        }
-
-        public KeyCount(final List<String> key) {
-            this.key = key;
-            this.count = new MutableInt();
-        }
-
-        List<String> key;
-        MutableInt count;
-
-        public List<String> getKey() {
-            return key;
-        }
-
-        public MutableInt getCount() {
-            return count;
-        }
-
-        @Override
-        public String toString() {
-            return StringUtils.rightPad(getKey().toString(), KEY_PAD)
-                    + StringUtils.leftPad(ModelStringUtil.formatCsv(getCount()), COUNT_PAD);
-        }
-    }
-
+    public static final String VOLUME_PATH = "VolumePath";
+    public static final String STREAM_TYPE_PATH = "StreamTypePath";
+    public static final String FILE_NAME = "FileName";
+    public static final String FEED_ID = "FeedId";
+    public static final String DATE_PATH = "DatePath";
+    public static final String DEPTH = "Depth";
     private final BufferedReader inputReader = new BufferedReader(
             new InputStreamReader(System.in, StreamUtil.DEFAULT_CHARSET));
-
     private final SimpleConcurrentMap<String, KeyCount> streamTypeStreamCount = new SimpleConcurrentMap<String, KeyCount>() {
         @Override
         protected KeyCount initialValue(final String key) {
@@ -123,6 +91,22 @@ public class StreamRestoreTool extends DatabaseTool {
             };
         }
     };
+    public Integer autoDeleteThreshold = null;
+    private String deleteFile = null;
+    private Map<String, Long> pathStreamTypeMap = null;
+    private Map<String, Long> pathVolumeMap = null;
+    private Map<Long, String> feedIdNameMap = null;
+    private boolean mock = false;
+    private boolean inspect = false;
+    private boolean sortKey = false;
+
+    public static void main(final String[] args) throws Exception {
+        new StreamRestoreTool().doMain(args);
+    }
+
+    public void setDeleteFile(final String deleteFile) {
+        this.deleteFile = deleteFile;
+    }
 
     public String readLine(final String question) {
         try {
@@ -142,8 +126,6 @@ public class StreamRestoreTool extends DatabaseTool {
         System.exit(1);
     }
 
-    private Map<String, Long> pathStreamTypeMap = null;
-
     private Map<String, Long> getPathStreamTypeMap() throws SQLException {
         if (pathStreamTypeMap == null) {
             pathStreamTypeMap = new HashMap<>();
@@ -162,8 +144,6 @@ public class StreamRestoreTool extends DatabaseTool {
         return pathStreamTypeMap;
     }
 
-    private Map<String, Long> pathVolumeMap = null;
-
     private Map<String, Long> getPathVolumeMap() throws SQLException {
         if (pathVolumeMap == null) {
             pathVolumeMap = new HashMap<>();
@@ -180,8 +160,6 @@ public class StreamRestoreTool extends DatabaseTool {
         }
         return pathVolumeMap;
     }
-
-    private Map<Long, String> feedIdNameMap = null;
 
     private Map<Long, String> getFeedIdNameMap() throws SQLException {
         if (feedIdNameMap == null) {
@@ -336,25 +314,17 @@ public class StreamRestoreTool extends DatabaseTool {
 
     }
 
-    private boolean mock = false;
-
     public void setMock(final boolean mock) {
         this.mock = mock;
     }
-
-    private boolean inspect = false;
 
     public void setInspect(final boolean inspect) {
         this.inspect = inspect;
     }
 
-    public Integer autoDeleteThreshold = null;
-
     public void setAutoDeleteThreshold(final Integer autoDeleteThreshold) {
         this.autoDeleteThreshold = autoDeleteThreshold;
     }
-
-    private boolean sortKey = false;
 
     public void setSortKey(final boolean sortKey) {
         this.sortKey = sortKey;
@@ -369,13 +339,6 @@ public class StreamRestoreTool extends DatabaseTool {
             }
         });
     }
-
-    public static final String VOLUME_PATH = "VolumePath";
-    public static final String STREAM_TYPE_PATH = "StreamTypePath";
-    public static final String FILE_NAME = "FileName";
-    public static final String FEED_ID = "FeedId";
-    public static final String DATE_PATH = "DatePath";
-    public static final String DEPTH = "Depth";
 
     private Map<String, String> readAttributes(final String line, final String streamType, final String feedId) {
         final HashMap<String, String> rtnMap = new HashMap<>();
@@ -577,8 +540,33 @@ public class StreamRestoreTool extends DatabaseTool {
 
     }
 
-    public static void main(final String[] args) throws Exception {
-        new StreamRestoreTool().doMain(args);
+    static class KeyCount {
+        List<String> key;
+        MutableInt count;
+
+        public KeyCount(final String key) {
+            this.key = Arrays.asList(key);
+            this.count = new MutableInt();
+        }
+
+        public KeyCount(final List<String> key) {
+            this.key = key;
+            this.count = new MutableInt();
+        }
+
+        public List<String> getKey() {
+            return key;
+        }
+
+        public MutableInt getCount() {
+            return count;
+        }
+
+        @Override
+        public String toString() {
+            return StringUtils.rightPad(getKey().toString(), KEY_PAD)
+                    + StringUtils.leftPad(ModelStringUtil.formatCsv(getCount()), COUNT_PAD);
+        }
     }
 
 }

@@ -276,7 +276,7 @@
             <property name="name" value="stroom.maintenanceMessage"/>
             <property name="value" value=""/>
             <property name="description"
-                      value="Provide a message to prevent futher logins and alert currently logged in users about an outage."/>
+                      value="Provide a message to prevent further logins and alert currently logged in users about an outage."/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">

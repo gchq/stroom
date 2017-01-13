@@ -16,6 +16,15 @@
 
 package stroom.streamstore.client.presenter;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.CellTable.Resources;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.data.table.client.CellTableView;
 import stroom.data.table.client.CellTableViewImpl;
 import stroom.data.table.client.CellTableViewImpl.DisabledResources;
@@ -26,8 +35,8 @@ import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
-import stroom.pipeline.processor.shared.LoadEntityIdSetAction;
-import stroom.pipeline.processor.shared.SetId;
+import stroom.process.shared.LoadEntityIdSetAction;
+import stroom.process.shared.SetId;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedMap;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -35,15 +44,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.CellTable.Resources;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,22 +52,14 @@ import java.util.List;
 public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
         extends MyPresenterWidget<IncludeExcludeEntityIdSetPresenter.IncludeExcludeEntityIdSetView>
         implements IncludeExcludeEntityIdSetUiHandlers {
-    public interface IncludeExcludeEntityIdSetView extends View, HasUiHandlers<IncludeExcludeEntityIdSetUiHandlers> {
-        void setListView(View view);
-
-        void setEditEnabled(boolean enabled);
-    }
-
     private final IncludeExcludeEntityIdSetPopupPresenter popupPresenter;
     private final ClientDispatchAsync dispatcher;
     private CellTableView<String> list;
     private List<String> data;
     private boolean enabled = true;
-
     private String type;
     private boolean groupedEntity;
     private IncludeExcludeEntityIdSet<T> includeExcludeEntityIdSet;
-
     @Inject
     public IncludeExcludeEntityIdSetPresenter(final EventBus eventBus, final IncludeExcludeEntityIdSetView view,
                                               final IncludeExcludeEntityIdSetPopupPresenter popupPresenter, final ClientDispatchAsync dispatcher) {
@@ -186,6 +178,10 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
                 "Choose Feeds To Include And Exclude", popupUiHandlers);
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
 
@@ -201,7 +197,9 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
         }
     }
 
-    public boolean isEnabled() {
-        return enabled;
+    public interface IncludeExcludeEntityIdSetView extends View, HasUiHandlers<IncludeExcludeEntityIdSetUiHandlers> {
+        void setListView(View view);
+
+        void setEditEnabled(boolean enabled);
     }
 }
