@@ -1,0 +1,12 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<feed>
+   <createTime>1484145080763</createTime>
+   <createUser>INTERNAL_PROCESSING_USER</createUser>
+   <name>COUNT_V3</name>
+   <reference>false</reference>
+   <status>RECEIVE</status>
+   <streamType>Raw Events</streamType>
+   <updateTime>1484145154437</updateTime>
+   <updateUser>INTERNAL_PROCESSING_USER</updateUser>
+   <uuid>6193413d-3536-436c-900e-2a67b892c8b1</uuid>
+</feed>
