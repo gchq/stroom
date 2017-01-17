@@ -18,12 +18,15 @@ FROM openjdk:8-alpine
 
 # IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
 ENV IN_DOCKER="true"
+ENV STROOM_CONTENT_PACK_IMPORT_ENABLE="true"
 
 #Copy the content packs in so they get imported on first run of Stroom
 ADD . /usr/stroom-app
 ADD https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101.zip /usr/stroom-app/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v1.0/event-logging-xml-schema.zip /usr/stroom-app/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v1.0/core-xml-schemas.zip /usr/stroom-app/contentPackImport/
+ADD https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.0.2/visualisations-production-v3.0.2.zip /usr/stroom-app/contentPackImport/
+
 
 WORKDIR /usr/stroom-app
 
