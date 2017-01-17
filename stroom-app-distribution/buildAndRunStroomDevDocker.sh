@@ -1,16 +1,16 @@
 #!/bin/sh
 
-echo "Clearing out target/stroom-app"
-rm -rf ./target/stroom-app
+echo "Clearing out build/stroom-app"
+rm -rf ./build/stroom-app
 
 echo "unzipping distribution"
-distFile=target/stroom-app-distribution-*-bin.zip
+distFile=build/distributions/stroom-app-distribution-*.zip
 if [ ! -f $distFile ]; then
     echo "No distribution zip file present"
     exit 1
 fi
 
-unzip $distFile -d target
+unzip $distFile -d build
 
 #stop/remove any existing containers/images
 docker stop stroom-dev
@@ -34,7 +34,7 @@ echo "proxyArg1: $proxyArg1"
 echo "proxyArg2: $proxyArg2"
 
 
-docker build ${proxyArg1} ${proxyArg2} --tag=stroom-dev:latest target/stroom-app
+docker build ${proxyArg1} ${proxyArg2} --tag=stroom-dev:latest build/stroom-app
 
 #This command assumes that the database jdbc url, username and password are all defined in properties in ~/.stroom/stroom.conf else
 #add something like the following to the run command
