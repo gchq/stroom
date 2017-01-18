@@ -6,13 +6,16 @@ import com.sun.jersey.api.client.WebResource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.logging.StroomLogger;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
+import javax.annotation.Resource;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -25,6 +28,9 @@ public class HttpPostFilter extends TestFilter {
 
     private static final StroomLogger LOGGER = StroomLogger.getLogger(HttpPostFilter.class);
     private final Client client = Client.create();
+    @Resource
+    private ErrorReceiverProxy errorReceiverProxy;
+
     private WebResource webResource;
 
     @Override
@@ -34,16 +40,19 @@ public class HttpPostFilter extends TestFilter {
         try {
             ClientResponse response = webResource
                     .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
-                    .type(MediaType.APPLICATION_XML)
+                    .type(MediaType.APPLICATION_JSON)
                     .post(ClientResponse.class, xml);
             if (response.getStatusInfo() != Response.Status.ACCEPTED) {
-                //TODO Add stroom error handling
-                LOGGER.error("POST was not accepted by the API: {}", response);
+                String errorMessage = String.format("POST was not accepted by the API: %s", response);
+                errorReceiverProxy.log(Severity.ERROR, null, null, errorMessage, null);
+                LOGGER.error(errorMessage);
             } else {
                 LOGGER.info("POSTed document to API.");
             }
         } catch (Exception e) {
-            LOGGER.error("Unable to POST document to API: {}", e);
+            String errorMessage = String.format("Unable to POST document to API: %s", e);
+            errorReceiverProxy.log(Severity.ERROR, null, null, errorMessage, e);
+            LOGGER.error(errorMessage);
         }
     }
 
@@ -52,8 +61,9 @@ public class HttpPostFilter extends TestFilter {
         try {
             webResource = client.resource(receivingApiUrl);
         } catch (IllegalArgumentException | NullPointerException e) {
-            //TODO: Add stroom error handling
-            LOGGER.error("Unable to create an API client with this URL: {}. Exception was: {}", receivingApiUrl, e);
+            String errorMessage = String.format("Unable to create an API client with this URL: %s. Exception was: %s", receivingApiUrl, e);
+            errorReceiverProxy.log(Severity.ERROR, null, null, errorMessage, e);
+            LOGGER.error(errorMessage);
         }
     }
 }
