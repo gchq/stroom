@@ -6,8 +6,8 @@ dependencies {
     compile project(':stroom-security-server')
 
     // javax.el not provided as no app container in tests.
-    compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
-    compile group: 'org.glassfish.web', name: 'javax.el', version: '2.2.6'
+    compile 'javax.el:javax.el-api:3.0.0'
+    compile 'org.glassfish.web:javax.el:2.2.6'
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

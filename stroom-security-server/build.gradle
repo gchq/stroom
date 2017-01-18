@@ -2,13 +2,13 @@ dependencies {
     compile project(':stroom-core-server')
     compile project(':stroom-security-api')
     compile project(':stroom-security-shared')
-    compile group: 'org.apache.shiro', name: 'shiro-core', version: '1.3.2'
-    compile group: 'org.apache.shiro', name: 'shiro-web', version: '1.3.2'
-    compile group: 'org.apache.shiro', name: 'shiro-aspectj', version: '1.3.2'
-    compile group: 'org.apache.shiro', name: 'shiro-spring', version: '1.3.2'
-    compile group: 'de.svenkubiak', name: 'jBCrypt', version: '0.4.1'
-    compile group: 'javax.mail', name: 'mail', version: '1.4.7'
-    compile group: 'org.springframework', name: 'spring-context-support', version: '4.3.4.RELEASE'
+    compile 'org.apache.shiro:shiro-core:1.3.2'
+    compile 'org.apache.shiro:shiro-web:1.3.2'
+    compile 'org.apache.shiro:shiro-aspectj:1.3.2'
+    compile 'org.apache.shiro:shiro-spring:1.3.2'
+    compile 'de.svenkubiak:jBCrypt:0.4.1'
+    compile 'javax.mail:mail:1.4.7'
+    compile 'org.springframework:spring-context-support:4.3.4.RELEASE'
 
     testCompile project(path: ':stroom-entity-shared', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')

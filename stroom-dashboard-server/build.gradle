@@ -4,7 +4,7 @@ dependencies {
 
     compile project(':stroom-expression')
 
-    compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.15'
+    compile 'org.apache.poi:poi-ooxml:3.15'
 
 //    compile project(':stroom-security-server')
 //    compile project(':stroom-pipeline')

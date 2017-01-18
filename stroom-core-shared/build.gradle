@@ -1,5 +1,5 @@
 dependencies {
     compile project(':stroom-query-api')
 
-    compile group: 'com.google.gwt', name: 'gwt-servlet', version: '2.8.0'
+    compile 'com.google.gwt:gwt-servlet:2.8.0'
 }

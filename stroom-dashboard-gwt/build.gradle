@@ -16,8 +16,8 @@ dependencies {
     compile project(path: ':stroom-core-client-widget', configuration: 'sourceArtifacts')
     compile project(path: ':stroom-core-shared', configuration: 'sourceArtifacts')
 
-    compile group: 'com.google.gwt.inject', name: 'gin', version: '2.1.2'
-    compile group: 'com.google.gwt', name: 'gwt-dev', version: '2.8.0'
+    compile 'com.google.gwt.inject:gin:2.1.2'
+    compile 'com.google.gwt:gwt-dev:2.8.0'
 }
 
 task gwtCompile (dependsOn: classes, type: JavaExec) {

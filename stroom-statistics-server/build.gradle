@@ -2,7 +2,7 @@ dependencies {
     compile project(':stroom-statistics-shared')
     compile project(':stroom-pipeline')
     compile project(':stroom-query-common-server')
-    compile(group: 'org.apache.hbase', name: 'hbase-common', version: '1.2.1') { /* LATEST 1.2.4 */
+    compile('org.apache.hbase:hbase-common:1.2.1') { /* LATEST 1.2.4 */
         exclude(module: 'jetty')
         exclude(module: 'jetty-util')
         exclude(module: 'servlet-api')
