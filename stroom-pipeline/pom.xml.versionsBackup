@@ -229,5 +229,12 @@
 
       </exclusions>
     </dependency>
+
+    <!-- Using 1.x because there is a classpath conflict with 2.x -->
+    <dependency>
+      <groupId>com.sun.jersey</groupId>
+      <artifactId>jersey-client</artifactId>
+      <version>1.19</version>
+    </dependency>
   </dependencies>
 </project>

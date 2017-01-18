@@ -59,8 +59,24 @@ subprojects {
     }
 
     dependencies {
-        testCompile group: 'junit', name: 'junit', version: '4.12'
-        testCompile group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
+        testCompile 'junit:junit:4.12'
+        testCompile 'org.mockito:mockito-all:1.10.19'
     }
 }
 
+task fullBuild(type: GradleBuild) {
+    tasks = ['clean', 'build', 'gwtDevMode']
+}
+
+// Shortcut tasks
+task buildUI(type: GradleBuild) {
+    tasks = ['gwtDevMode']
+}
+
+task run(type: GradleBuild) {
+    tasks = [':stroom-app:jettyStart']
+}
+
+task setupSampleData(type: GradleBuild) {
+    tasks = [':stroom-integrationtest:setupSampleData']
+}
