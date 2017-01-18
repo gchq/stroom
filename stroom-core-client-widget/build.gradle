@@ -1,9 +1,9 @@
 dependencies {
     compile project(':stroom-entity-shared')
-    compile group: 'com.google.gwt.inject', name: 'gin', version: '2.1.2'
-    compile(group: 'com.gwtplatform', name: 'gwtp-mvp-client', version: '0.7') { /* LATEST 1.5.3 */
+    compile 'com.google.gwt.inject:gin:2.1.2'
+    compile ('com.gwtplatform:gwtp-mvp-client:.7') { /* LATEST 1.5.3 */
         exclude(module: 'persistence-api')
         exclude(module: 'gwtp-crawler-service')
     }
-    compile(group: 'com.google.gwt', name: 'gwt-user', version: '2.8.0')
+    compile 'com.google.gwt:gwt-user:2.8.0'
 }
