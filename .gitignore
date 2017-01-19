@@ -7,3 +7,5 @@ node_modules
 _book
 .gradle/
 classes/
+stroom-dashboard-gwt/hs_err_pid*.log
+stroom-app-gwt/hs_err_pid*.log

@@ -1,3 +1,13 @@
+ext {
+    gwtBuildDir = "${project.buildDir}/gwt"
+    warDir = project(':stroom-app').file("src/main/webapp")
+    outputDir = "${warDir}/stroom"
+    tmpDir = "${gwtBuildDir}/tmp"
+    workDir = "${gwtBuildDir}/work"
+    deployDir = "${gwtBuildDir}/deploy"
+    extraDir = "${gwtBuildDir}/extra"
+}
+
 dependencies {
     compile project(':stroom-index-client')
     compile project(':stroom-statistics-client')
@@ -29,22 +39,16 @@ dependencies {
     compile 'com.google.gwt:gwt-dev:2.8.0'
 }
 
-task gwtCompile (dependsOn: classes, type: JavaExec) {
-    ext.gwtBuildDir = "${project.buildDir}/gwt"
-    def warDir = project(':stroom-app').file("src/main/webapp")
-    def workDir = "${gwtBuildDir}/work"
-    def tmpDir = "${gwtBuildDir}/tmp"
-    def deployDir = "${gwtBuildDir}/deploy"
-    def extraDir = "${gwtBuildDir}/extra"
-    def outputDir = "${warDir}/stroom"
-    def module = 'stroom.app.App'
+task gwtClean {
+    println "Running gwtClean"
+    file(project.buildDir).delete()
+    file(outputDir).delete()
+    file(gwtBuildDir).mkdirs()
+    file(tmpDir).mkdirs()
+}
 
-    doFirst {
-        file(project.buildDir).delete()
-        file(outputDir).delete()
-        file(gwtBuildDir).mkdirs()
-        file(tmpDir).mkdirs()
-    }
+task gwtCompile (dependsOn: classes, type: JavaExec) {
+    def module = 'stroom.app.App'
 
     main = 'com.google.gwt.dev.Compiler'
 
@@ -77,20 +81,7 @@ task gwtCompile (dependsOn: classes, type: JavaExec) {
 }
 
 task gwtDevMode (dependsOn: classes, type: JavaExec) {
-    ext.gwtBuildDir = "${project.buildDir}/gwt"
-    def warDir = project(':stroom-app').file("src/main/webapp")
-    def workDir = "${gwtBuildDir}/work"
-    def tmpDir = "${gwtBuildDir}/tmp"
-    def deployDir = "${gwtBuildDir}/deploy"
-    def extraDir = "${gwtBuildDir}/extra"
-    def outputDir = "${warDir}/stroom"
     def module = 'stroom.app.AppSuperDevModeChrome'
-
-    doFirst {
-        file(outputDir).delete()
-        file(gwtBuildDir).mkdirs()
-        file(tmpDir).mkdirs()
-    }
 
     main = 'com.google.gwt.dev.Compiler'
 
@@ -126,20 +117,7 @@ task gwtDevMode (dependsOn: classes, type: JavaExec) {
 }
 
 task gwtSuperDevMode (dependsOn: classes, type: JavaExec) {
-    ext.gwtBuildDir = "${project.buildDir}/gwt"
-    def warDir = project(':stroom-app').file("src/main/webapp")
-    def workDir = "${gwtBuildDir}/work"
-    def tmpDir = "${gwtBuildDir}/tmp"
-    def deployDir = "${gwtBuildDir}/deploy"
-    def extraDir = "${gwtBuildDir}/extra"
-    def outputDir = "${warDir}/stroom"
     def module = 'stroom.app.AppSuperDevModeChrome'
-
-    doFirst {
-        file(outputDir).delete()
-        file(gwtBuildDir).mkdirs()
-        file(tmpDir).mkdirs()
-    }
 
     main = 'com.google.gwt.dev.DevMode'
 
@@ -171,3 +149,4 @@ task gwtSuperDevMode (dependsOn: classes, type: JavaExec) {
 }
 
 build.dependsOn('gwtCompile')
+clean.dependsOn('gwtClean')

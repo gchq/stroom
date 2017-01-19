@@ -4,6 +4,7 @@ task wrapper(type: Wrapper) {
 
 allprojects {
     apply plugin: 'maven'
+    apply plugin: 'maven-publish'
 
     group = 'stroom'
     version = '6.0-beta.1-SNAPSHOT'
@@ -79,4 +80,54 @@ task run(type: GradleBuild) {
 
 task setupSampleData(type: GradleBuild) {
     tasks = [':stroom-integrationtest:setupSampleData']
+}
+
+project(':stroom-util') {
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+}
+
+project(':stroom-util-shared') {
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+}
+
+project(':stroom-entity-shared') {
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+}
+
+project(':stroom-expression') {
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+}
+
+project(':stroom-query-api') {
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+    }
 }
