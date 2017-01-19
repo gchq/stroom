@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#88** : Pipeline reference edit dialog now correctly selects the current stream type.
 
+* Issue **#97** : Index shard partition date range creation has been improved.
+
 ## [v5.0-beta.8] - 2016-12-21
 * Issue **#64** : Fixed Hessian serialisation of 'now' which was specified as a ZonedDateTime which cannot be serialised. This field is now a long representing millseconds since epoch.
 
