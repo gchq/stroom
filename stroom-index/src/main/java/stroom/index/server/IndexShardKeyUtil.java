@@ -16,21 +16,31 @@
 
 package stroom.index.server;
 
-import java.util.Date;
-
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeFieldType;
-import org.joda.time.DateTimeZone;
-
 import stroom.index.shared.Index;
 import stroom.index.shared.Index.PartitionBy;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.concurrent.AtomicSequence;
-import stroom.util.date.DateUtil;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalField;
+import java.time.temporal.TemporalUnit;
+import java.time.temporal.WeekFields;
+import java.util.Locale;
 
 public final class IndexShardKeyUtil {
     private static final String ALL = "all";
     private static final AtomicSequence SEQUENCE = new AtomicSequence();
+
+    private static final ZoneId UTC = ZoneOffset.UTC;
+    private static final DateTimeFormatter YEAR_FORMAT = DateTimeFormatter.ofPattern("yyyy");
+    private static final DateTimeFormatter MONTH_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM");
+    private static final DateTimeFormatter DAY_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final TemporalField DAY_OF_WEEK = WeekFields.of(Locale.UK).dayOfWeek();
 
     private IndexShardKeyUtil() {
         // Utility class
@@ -50,137 +60,69 @@ public final class IndexShardKeyUtil {
 
     public static IndexShardKey createTimeBasedKey(final Index index, final long timeMs, final int shardNo) {
         String partition = ALL;
-        DateTime dateFrom = null;
-        DateTime dateTo = null;
+
+        LocalDate dateFrom = null;
+        LocalDate dateTo = null;
 
         if (index.getPartitionBy() != null && index.getPartitionSize() > 0) {
-            dateFrom = new DateTime(timeMs);
-            if (PartitionBy.YEAR.equals(index.getPartitionBy())) {
-                int year = dateFrom.get(DateTimeFieldType.year());
-                year = fix(year, index.getPartitionSize());
+            dateFrom = Instant.ofEpochMilli(timeMs).atZone(UTC).toLocalDate();
 
-                dateFrom = new DateTime(year, 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);
+            if (PartitionBy.YEAR.equals(index.getPartitionBy())) {
+                // Truncate to first day of the year.
+                dateFrom = dateFrom.withDayOfYear(1);
+                // Round down to number of years since epoch.
+                dateFrom = roundDown(dateFrom, ChronoUnit.YEARS, index.getPartitionSize());
+
                 dateTo = dateFrom.plusYears(index.getPartitionSize());
-                partition = DateUtil.createFileDateTimeString(dateFrom.getMillis());
-                partition = partition.substring(0, 4);
+                partition = dateFrom.format(YEAR_FORMAT);
 
             } else if (PartitionBy.MONTH.equals(index.getPartitionBy())) {
-                final int year = dateFrom.get(DateTimeFieldType.year());
-                int month = dateFrom.get(DateTimeFieldType.monthOfYear());
-                month = fix(month, index.getPartitionSize());
-                if (month < 1) {
-                    month = 1;
-                }
+                // Truncate to first day of the month.
+                dateFrom = dateFrom.withDayOfMonth(1);
 
-                dateFrom = new DateTime(year, 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);
-                dateFrom = dateFrom.plusMonths(month - 1);
+                // Round down to number of months since epoch.
+                dateFrom = roundDown(dateFrom, ChronoUnit.MONTHS, index.getPartitionSize());
+
                 dateTo = dateFrom.plusMonths(index.getPartitionSize());
-                partition = DateUtil.createFileDateTimeString(dateFrom.getMillis());
-                partition = partition.substring(0, 7);
+                partition = dateFrom.format(MONTH_FORMAT);
 
             } else if (PartitionBy.WEEK.equals(index.getPartitionBy())) {
-                final int year = dateFrom.get(DateTimeFieldType.year());
-                int week = dateFrom.get(DateTimeFieldType.weekOfWeekyear());
-                week = fix(week, index.getPartitionSize());
-                if (week < 1) {
-                    week = 1;
-                }
+                // Adjust to first day of the week.
+                dateFrom = dateFrom.with(DAY_OF_WEEK, 1);
 
-                dateFrom = new DateTime(year, 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);
-                dateFrom = dateFrom.plusWeeks(week - 1);
+                // Round down to number of weeks since epoch.
+                dateFrom = roundDown(dateFrom, ChronoUnit.WEEKS, index.getPartitionSize());
+
                 dateTo = dateFrom.plusWeeks(index.getPartitionSize());
-                partition = DateUtil.createFileDateTimeString(dateFrom.getMillis());
-                partition = partition.substring(0, 10);
+                partition = dateFrom.format(DAY_FORMAT);
 
             } else if (PartitionBy.DAY.equals(index.getPartitionBy())) {
-                final int year = dateFrom.get(DateTimeFieldType.year());
-                int day = dateFrom.get(DateTimeFieldType.dayOfYear());
-                day = fix(day, index.getPartitionSize());
-                if (day < 1) {
-                    day = 1;
-                }
+                // Round down to number of days since epoch.
+                dateFrom = roundDown(dateFrom, ChronoUnit.DAYS, index.getPartitionSize());
 
-                dateFrom = new DateTime(year, 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);
-                dateFrom = dateFrom.plusDays(day - 1);
                 dateTo = dateFrom.plusDays(index.getPartitionSize());
-                partition = DateUtil.createFileDateTimeString(dateFrom.getMillis());
-                partition = partition.substring(0, 10);
+                partition = dateFrom.format(DAY_FORMAT);
             }
         }
 
         Long partitionFromTime = null;
         if (dateFrom != null) {
-            partitionFromTime = dateFrom.getMillis();
+            partitionFromTime = dateFrom.atStartOfDay(UTC).toInstant().toEpochMilli();
         }
 
         Long partitionToTime = null;
         if (dateTo != null) {
-            partitionToTime = dateTo.getMillis();
+            partitionToTime = dateTo.atStartOfDay(UTC).toInstant().toEpochMilli();
         }
 
         return new IndexShardKey(index, partition, partitionFromTime, partitionToTime, shardNo);
     }
 
-    private static String getTimeBasedPartitionName(final Index index, final long timeMs) {
-        String partition = ALL;
-        if (index.getPartitionBy() != null && index.getPartitionSize() > 0) {
-            DateTime dateTime = new DateTime(timeMs);
-
-            if (PartitionBy.YEAR.equals(index.getPartitionBy())) {
-                int year = dateTime.get(DateTimeFieldType.year());
-                year = fix(year, index.getPartitionSize());
-
-                dateTime = new DateTime(year, 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);
-                partition = DateUtil.createFileDateTimeString(dateTime.getMillis());
-                partition = partition.substring(0, 4);
-
-            } else if (PartitionBy.MONTH.equals(index.getPartitionBy())) {
-                final int year = dateTime.get(DateTimeFieldType.year());
-                int month = dateTime.get(DateTimeFieldType.monthOfYear());
-                month = fix(month, index.getPartitionSize());
-                if (month < 1) {
-                    month = 1;
-                }
-
-                dateTime = new DateTime(year, 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);
-                dateTime = dateTime.plusMonths(month - 1);
-                partition = DateUtil.createFileDateTimeString(dateTime.getMillis());
-                partition = partition.substring(0, 7);
-
-            } else if (PartitionBy.WEEK.equals(index.getPartitionBy())) {
-                final int year = dateTime.get(DateTimeFieldType.year());
-                int week = dateTime.get(DateTimeFieldType.weekOfWeekyear());
-                week = fix(week, index.getPartitionSize());
-                if (week < 1) {
-                    week = 1;
-                }
-
-                dateTime = new DateTime(year, 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);
-                dateTime = dateTime.plusWeeks(week - 1);
-                partition = DateUtil.createFileDateTimeString(dateTime.getMillis());
-                partition = partition.substring(0, 10);
-
-            } else if (PartitionBy.DAY.equals(index.getPartitionBy())) {
-                final int year = dateTime.get(DateTimeFieldType.year());
-                int day = dateTime.get(DateTimeFieldType.dayOfYear());
-                day = fix(day, index.getPartitionSize());
-                if (day < 1) {
-                    day = 1;
-                }
-
-                dateTime = new DateTime(year, 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);
-                dateTime = dateTime.plusDays(day - 1);
-                partition = DateUtil.createFileDateTimeString(dateTime.getMillis());
-                partition = partition.substring(0, 10);
-            }
-        }
-
-        return partition;
-    }
-
-    private static int fix(int value, final int partitionSize) {
-        value = value / partitionSize;
-        value = value * partitionSize;
-        return value;
+    private static LocalDate roundDown(final LocalDate dateTime, final TemporalUnit temporalUnit, final int size) {
+        LocalDate epoch = LocalDate.ofEpochDay(0);
+        long count = temporalUnit.between(epoch, dateTime);
+        long round = count / size * size;
+        long diff = round - count;
+        return dateTime.plus(diff, temporalUnit);
     }
 }
