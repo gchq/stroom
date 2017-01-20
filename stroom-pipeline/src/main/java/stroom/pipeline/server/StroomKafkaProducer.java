@@ -65,7 +65,7 @@ public class StroomKafkaProducer {
 
             producer.flush();
         } else {
-            throw new RuntimeException("Kafka is not properly configured!");
+            errorReceiverProxy.log(Severity.ERROR, null, null, "Kafka is not properly configured.", null);
         }
     }
 
