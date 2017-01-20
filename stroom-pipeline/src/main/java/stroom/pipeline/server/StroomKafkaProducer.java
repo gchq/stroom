@@ -4,17 +4,15 @@ import com.google.common.base.Strings;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.util.config.StroomProperties;
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.util.logging.StroomLogger;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * A singleton responsible for sending records to Kafka.
@@ -53,26 +51,21 @@ public class StroomKafkaProducer {
         }
     }
 
-    public void send(ProducerRecord<String, String> record) {
+    public void send(ProducerRecord<String, String> record, ErrorReceiverProxy errorReceiverProxy) {
         if (producer != null) {
-            try {
-                producer.send(record, this::sendCallback).get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
+
+            producer.send(record, (recordMetadata, exception) -> {
+                if (exception != null) {
+                    String errorMessage = "Unable to send record to Kafka: " + exception.getMessage();
+                    LOGGER.error(errorMessage);
+                    errorReceiverProxy.log(Severity.ERROR, null, null, errorMessage, exception);
+                }
+                LOGGER.trace("Record send to Kafka");
+            });
+
             producer.flush();
         } else {
             throw new RuntimeException("Kafka is not properly configured!");
-        }
-    }
-
-    // TODO: Get this information back to the ErrorReceivingProxy?
-    // TODO: Anything to do if it's successful?
-    private void sendCallback(RecordMetadata recordMetadata, Exception e) {
-        if (e != null) {
-            LOGGER.error("There was an error sending a record to Kafka: " + e);
         }
     }
 

@@ -42,7 +42,7 @@ public class KafkaProducerFilter extends TestFilter {
         super.endDocument();
         ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, recordKey, getOutput());
         try{
-            stroomKafkaProducer.send(newRecord);
+            stroomKafkaProducer.send(newRecord, errorReceiverProxy);
         }
         catch(RuntimeException e){
             errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", e);
