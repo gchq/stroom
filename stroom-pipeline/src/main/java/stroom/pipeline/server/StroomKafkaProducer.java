@@ -71,7 +71,7 @@ public class StroomKafkaProducer {
     // TODO: Get this information back to the ErrorReceivingProxy?
     // TODO: Anything to do if it's successful?
     private void sendCallback(RecordMetadata recordMetadata, Exception e) {
-        if (e == null) {
+        if (e != null) {
             LOGGER.error("There was an error sending a record to Kafka: " + e);
         }
     }
