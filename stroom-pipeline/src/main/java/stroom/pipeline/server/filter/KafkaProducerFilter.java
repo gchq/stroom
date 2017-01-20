@@ -10,6 +10,7 @@ import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
@@ -24,6 +25,8 @@ import javax.inject.Inject;
 public class KafkaProducerFilter extends TestFilter {
     @Resource
     private ErrorReceiverProxy errorReceiverProxy;
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(KafkaProducerFilter.class);
+
 
     private StroomKafkaProducer stroomKafkaProducer;
     private String recordKey;
