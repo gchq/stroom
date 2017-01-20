@@ -26,6 +26,10 @@
             <id>streamAppender</id>
             <type>StreamAppender</type>
          </element>
+         <element>
+            <id>kafkaProducerFilter</id>
+            <type>KafkaProducerFilter</type>
+         </element>
       </add>
    </elements>
    <properties>
@@ -73,6 +77,20 @@
                <string>Events</string>
             </value>
          </property>
+         <property>
+            <element>kafkaProducerFilter</element>
+            <name>recordKey</name>
+            <value>
+               <string>statistics</string>
+            </value>
+         </property>
+         <property>
+            <element>kafkaProducerFilter</element>
+            <name>topic</name>
+            <value>
+               <string>statistics</string>
+            </value>
+         </property>
       </add>
    </properties>
    <links>
@@ -88,6 +106,10 @@
          <link>
             <from>xsltFilter</from>
             <to>xmlWriter</to>
+         </link>
+         <link>
+            <from>xsltFilter</from>
+            <to>kafkaProducerFilter</to>
          </link>
          <link>
             <from>splitFilter</from>

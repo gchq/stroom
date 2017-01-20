@@ -27,10 +27,10 @@ import javax.ws.rs.core.Response;
 public class HttpPostFilter extends TestFilter {
 
     private static final StroomLogger LOGGER = StroomLogger.getLogger(HttpPostFilter.class);
-    private final Client client = Client.create();
     @Resource
     private ErrorReceiverProxy errorReceiverProxy;
 
+    private final Client client = Client.create();
     private WebResource webResource;
 
     @Override

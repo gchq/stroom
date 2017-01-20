@@ -27,6 +27,7 @@ dependencies {
     }
     //Using 1.x because there is a classpath conflict with 2.x
     compile 'com.sun.jersey:jersey-client:1.19'
+    compile 'org.apache.kafka:kafka-clients:0.10.1.0'
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
