@@ -1,0 +1,14 @@
+dependencies {
+    compile project(':stroom-query-api')
+    compile project(':stroom-expression')
+
+    // TODO : Replace JODA time with Java 8 time classes.
+    compile 'joda-time:joda-time:2.9.6'
+
+    compile 'org.slf4j:slf4j-api:1.7.22'
+
+    // Jackson
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.8.6'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.8.6'
+}
