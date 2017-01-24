@@ -18,7 +18,7 @@ package stroom.db.migration.mysql;
 
 import stroom.db.migration.EntityReferenceReplacer;
 import stroom.entity.server.ObjectMarshaller;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.util.logging.StroomLogger;
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
 
