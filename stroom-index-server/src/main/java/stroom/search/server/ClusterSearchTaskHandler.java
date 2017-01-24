@@ -23,17 +23,16 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.util.StringUtils;
 import stroom.dashboard.expression.FieldIndexMap;
 import stroom.dictionary.shared.DictionaryService;
-import stroom.entity.shared.DocRef;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
 import stroom.pipeline.server.errorhandler.TerminatedException;
-import stroom.query.shared.CoprocessorSettings;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFieldsMap;
-import stroom.query.shared.Search;
+import stroom.query.CoprocessorSettings;
+import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.Param;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.server.extraction.ExtractionTaskExecutor;
 import stroom.search.server.extraction.ExtractionTaskProducer;
@@ -62,6 +61,7 @@ import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -138,13 +138,13 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                 taskMonitor.info("Initialising...");
 
                 this.task = task;
-                final Search search = task.getSearch();
+                final stroom.query.api.Query query = task.getQuery();
 
                 try {
                     final long frequency = task.getResultSendFrequency();
 
                     // Reload the index.
-                    index = indexService.loadByUuid(search.getDataSourceRef().getUuid());
+                    index = indexService.loadByUuid(query.getDataSource().getUuid());
 
                     // Make sure we have a search index.
                     if (index == null) {
@@ -198,8 +198,15 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                                 fieldIndexMap = extractionFieldIndexMap;
                             }
 
+                            // Create a parameter map.
+                            final Map<String, String> paramMap = Collections.emptyMap();
+                            if (query.getParams() != null) {
+                                for (final Param param : query.getParams()) {
+                                    paramMap.put(param.getKey(), param.getValue());
+                                }
+                            }
                             final Coprocessor<?> coprocessor = coprocessorFactory.create(
-                                    coprocessorSettings, fieldIndexMap, search.getParamMap(), taskMonitor);
+                                    coprocessorSettings, fieldIndexMap, paramMap, taskMonitor);
 
                             if (coprocessor != null) {
                                 coprocessorMap.put(coprocessorId, coprocessor);
@@ -229,7 +236,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                     taskManager.execAsync(senderTask);
 
                     taskMonitor.info("Searching...");
-                    search(task, search, storedFieldNames, filterStreams, indexFieldsMap, extractionFieldIndexMap,
+                    search(task, query, storedFieldNames, filterStreams, indexFieldsMap, extractionFieldIndexMap,
                             extractionCoprocessorsMap);
 
                 } catch (final Throwable t) {
@@ -258,19 +265,19 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
         }
     }
 
-    private void search(final ClusterSearchTask task, final Search search, final String[] storedFieldNames,
+    private void search(final ClusterSearchTask task, final stroom.query.api.Query query, final String[] storedFieldNames,
                         final boolean filterStreams, final IndexFieldsMap indexFieldsMap,
                         final FieldIndexMap extractionFieldIndexMap,
                         final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Incoming search request:\n" + search.getExpression().toString());
+            LOGGER.debug("Incoming search request:\n" + query.getExpression().toString());
         }
 
         try {
             if (extractionCoprocessorsMap != null && extractionCoprocessorsMap.size() > 0
                     && task.getShards().size() > 0) {
                 // Make sure we are searching a specific index.
-                if (search.getExpression() == null) {
+                if (query.getExpression() == null) {
                     throw new SearchException("Search expression has not been set");
                 }
 
@@ -282,7 +289,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                         SearchExpressionQuery searchExpressionQuery = queryMap.get(luceneVersion);
                         if (searchExpressionQuery == null) {
                             // Get a query for the required lucene version.
-                            searchExpressionQuery = getQuery(luceneVersion, search.getExpression(), indexFieldsMap);
+                            searchExpressionQuery = getQuery(luceneVersion, query.getExpression(), indexFieldsMap);
                             queryMap.put(luceneVersion, searchExpressionQuery);
                         }
 

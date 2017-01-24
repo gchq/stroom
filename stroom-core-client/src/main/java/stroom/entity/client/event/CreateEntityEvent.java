@@ -16,7 +16,7 @@
 
 package stroom.entity.client.event;
 
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;

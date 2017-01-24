@@ -22,9 +22,9 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionModel;
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.widget.htree.client.CellRenderer2;
 import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.Dimension;
@@ -138,7 +138,7 @@ public final class ExpressionItemRenderer implements CellRenderer2<ExpressionIte
     public String getText(final ExpressionItem item) {
         if (item instanceof ExpressionOperator) {
             final ExpressionOperator operator = (ExpressionOperator) item;
-            return operator.getType().getDisplayValue();
+            return operator.getOp().getDisplayValue();
         } else if (item instanceof ExpressionTerm) {
             final ExpressionTerm term = (ExpressionTerm) item;
             final StringBuilder sb = new StringBuilder();

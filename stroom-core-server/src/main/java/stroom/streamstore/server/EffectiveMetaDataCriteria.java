@@ -16,7 +16,7 @@
 
 package stroom.streamstore.server;
 
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.Period;
 
 import java.io.Serializable;

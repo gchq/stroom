@@ -16,7 +16,7 @@
 
 package stroom.pipeline.shared.data;
 
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.util.shared.SharedObject;

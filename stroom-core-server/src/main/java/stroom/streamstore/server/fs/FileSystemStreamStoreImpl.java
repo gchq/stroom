@@ -35,7 +35,6 @@ import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
-import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.PageRequest;
@@ -48,7 +47,9 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.query.shared.Condition;
+import stroom.query.api.DocRef;
+import stroom.query.api.EntityDocRef;
+import stroom.query.api.ExpressionTerm;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -343,7 +344,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
      * Open a existing stream source.
      * </p>
      *
-     * @param streamId        The stream id to open a stream source for.
+     * @param streamId  The stream id to open a stream source for.
      * @param anyStatus Used to specify if this method will return stream sources that
      *                  are logically deleted or locked. If false only unlocked stream
      *                  sources will be returned, null otherwise.
@@ -966,23 +967,30 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
         if (criteria.getAttributeConditionList() != null) {
             for (int i = 0; i < criteria.getAttributeConditionList().size(); i++) {
-                sql.append(" JOIN ");
-                sql.append(StreamAttributeValue.TABLE_NAME);
-                sql.append(" SAV");
-                sql.append(i, false);
-                sql.append(" ON (S.");
-                sql.append(Stream.ID);
-                sql.append(" = SAV");
-                sql.append(i, false);
-                sql.append(".");
-                sql.append(StreamAttributeValue.STREAM_ID);
-                sql.append(" AND SAV");
-                sql.append(i, false);
-                sql.append(".");
-                sql.append(StreamAttributeValue.STREAM_ATTRIBUTE_KEY_ID);
-                sql.append(" = ");
-                sql.arg(criteria.getAttributeConditionList().get(i).getStreamAttributeKey().getId());
-                sql.append(")");
+                final StreamAttributeCondition streamAttributeCondition = criteria.getAttributeConditionList().get(i);
+                final DocRef streamAttributeKey = streamAttributeCondition.getStreamAttributeKey();
+
+                if (streamAttributeKey instanceof EntityDocRef) {
+                    final EntityDocRef entityDocRef = (EntityDocRef) streamAttributeKey;
+
+                    sql.append(" JOIN ");
+                    sql.append(StreamAttributeValue.TABLE_NAME);
+                    sql.append(" SAV");
+                    sql.append(i, false);
+                    sql.append(" ON (S.");
+                    sql.append(Stream.ID);
+                    sql.append(" = SAV");
+                    sql.append(i, false);
+                    sql.append(".");
+                    sql.append(StreamAttributeValue.STREAM_ID);
+                    sql.append(" AND SAV");
+                    sql.append(i, false);
+                    sql.append(".");
+                    sql.append(StreamAttributeValue.STREAM_ATTRIBUTE_KEY_ID);
+                    sql.append(" = ");
+                    sql.arg(entityDocRef.getId());
+                    sql.append(")");
+                }
             }
         }
 
@@ -1295,30 +1303,30 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 //            if (doneOne) {
 //                sql.append(" UNION");
 //            }
-            sql.append(" (SELECT ");
-            sql.append(feed.getId());
-            sql.append(", ");
-            sql.append("MAX(");
-            sql.append(Stream.EFFECTIVE_MS);
-            sql.append(") FROM ");
-            sql.append(Stream.TABLE_NAME);
-            sql.append(" WHERE ");
-            sql.append(Stream.EFFECTIVE_MS);
-            sql.append(" < ");
-            sql.arg(criteria.getEffectivePeriod().getFrom());
-            sql.append(" AND ");
-            sql.append(Stream.STATUS);
-            sql.append(" = ");
-            sql.arg(StreamStatus.UNLOCKED.getPrimitiveValue());
-            sql.append(" AND ");
-            sql.append(StreamType.FOREIGN_KEY);
-            sql.append(" = ");
-            sql.arg(streamType.getId());
-            sql.append(" AND ");
-            sql.append(Feed.FOREIGN_KEY);
-            sql.append(" = ");
-            sql.arg(feed.getId());
-            sql.append(")");
+        sql.append(" (SELECT ");
+        sql.append(feed.getId());
+        sql.append(", ");
+        sql.append("MAX(");
+        sql.append(Stream.EFFECTIVE_MS);
+        sql.append(") FROM ");
+        sql.append(Stream.TABLE_NAME);
+        sql.append(" WHERE ");
+        sql.append(Stream.EFFECTIVE_MS);
+        sql.append(" < ");
+        sql.arg(criteria.getEffectivePeriod().getFrom());
+        sql.append(" AND ");
+        sql.append(Stream.STATUS);
+        sql.append(" = ");
+        sql.arg(StreamStatus.UNLOCKED.getPrimitiveValue());
+        sql.append(" AND ");
+        sql.append(StreamType.FOREIGN_KEY);
+        sql.append(" = ");
+        sql.arg(streamType.getId());
+        sql.append(" AND ");
+        sql.append(Feed.FOREIGN_KEY);
+        sql.append(" = ");
+        sql.arg(feed.getId());
+        sql.append(")");
 //
 //            doneOne = true;
 //        }
@@ -1500,7 +1508,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         }
     }
 
-    private void appendCondition(final List<BaseAdvancedQueryItem> items, final String name, final Condition condition,
+    private void appendCondition(final List<BaseAdvancedQueryItem> items, final String name, final ExpressionTerm.Condition condition,
                                  final String value) {
         switch (condition) {
             case CONTAINS:

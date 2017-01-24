@@ -18,12 +18,11 @@ package stroom.dashboard.expression;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.util.test.StroomUnitTest;
 
 import java.text.ParseException;
 import java.util.List;
 
-public class TestExpressionTokeniser extends StroomUnitTest {
+public class TestExpressionTokeniser {
     @Test
     public void testBasic() throws ParseException {
         // Test string tokenisation.

@@ -16,8 +16,6 @@
 
 package stroom.query.client;
 
-import java.util.List;
-
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -25,21 +23,22 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.IndexField;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
+import stroom.datasource.api.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.util.client.MySingleSelectionModel;
+
+import java.util.List;
 
 public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePresenter.ExpressionTreeView>
         implements HasRead<ExpressionOperator>, HasWrite<ExpressionOperator>, HasDataSelectionHandlers<ExpressionItem>,
@@ -49,7 +48,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
         void setSelectionModel(MySingleSelectionModel<ExpressionItem> selectionModel);
 
-        void setFields(List<IndexField> fields);
+        void setFields(List<DataSourceField> fields);
 
         void endEditing();
 
@@ -62,7 +61,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
     @Inject
     public ExpressionTreePresenter(final EventBus eventBus, final ExpressionTreeView view,
-            final ClientDispatchAsync dispatcher) {
+                                   final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         selectionModel = new MySingleSelectionModel<>();
         view.setSelectionModel(selectionModel);
@@ -73,12 +72,9 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         super.onBind();
 
         if (selectionModel != null) {
-            registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-                @Override
-                public void onSelectionChange(final SelectionChangeEvent event) {
-                    DataSelectionEvent.fire(ExpressionTreePresenter.this, selectionModel.getSelectedObject(), false);
-                    getView().refresh();
-                }
+            registerHandler(selectionModel.addSelectionChangeHandler(event -> {
+                DataSelectionEvent.fire(ExpressionTreePresenter.this, selectionModel.getSelectedObject(), false);
+                getView().refresh();
             }));
         }
     }
@@ -91,8 +87,8 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         return selectionModel.addSelectionChangeHandler(handler);
     }
 
-    public void setFields(final List<IndexField> indexFields) {
-        getView().setFields(indexFields);
+    public void setFields(final List<DataSourceField> fields) {
+        getView().setFields(fields);
     }
 
     @Override
@@ -110,7 +106,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
         final ExpressionOperator r = new ExpressionModel().getExpressionFromTree(tree);
         if (r != null) {
-            root.setType(r.getType());
+            root.setOp(r.getOp());
             root.setChildren(r.getChildren());
         }
     }
@@ -127,7 +123,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         if (selectionModel != null) {
             final ExpressionItem selectedItem = selectionModel.getSelectedObject();
             if (selectedItem != null) {
-                selectedItem.setEnabled(!selectedItem.isEnabled());
+                selectedItem.setEnabled(!selectedItem.enabled());
 
                 fireDirty();
 

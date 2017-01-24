@@ -16,9 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.shared.ComponentSettings;
-import stroom.query.shared.QueryData;
-import stroom.query.shared.TableSettings;
 import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -35,8 +32,10 @@ public class TabConfig implements SharedObject {
     @XmlElement(name = "id")
     private String id;
 
-    @XmlElements({ @XmlElement(name = "query", type = QueryData.class),
-            @XmlElement(name = "table", type = TableSettings.class) })
+    @XmlElements({ @XmlElement(name = "query", type = QueryComponentSettings.class),
+            @XmlElement(name = "table", type = TableComponentSettings.class),
+            @XmlElement(name = "vis", type = VisComponentSettings.class),
+            @XmlElement(name = "text", type = TextComponentSettings.class)})
     private ComponentSettings settings;
 
     private transient TabLayoutConfig parent;

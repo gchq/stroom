@@ -16,9 +16,9 @@
 
 package stroom.search.server.extraction;
 
+import stroom.index.shared.IndexConstants;
+import stroom.index.shared.IndexField;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.query.shared.IndexConstants;
-import stroom.query.shared.IndexField;
 import stroom.search.server.Event;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
@@ -46,7 +46,7 @@ public class StreamMapCreator {
     private Map<Long, Stream> fiteredStreamCache;
 
     public StreamMapCreator(final IndexField[] storedFields, final ErrorReceiver errorReceiver,
-            final StreamStore streamStore, final SecurityContext securityContext) {
+                            final StreamStore streamStore, final SecurityContext securityContext) {
         this.errorReceiver = errorReceiver;
         this.streamStore = streamStore;
         this.securityContext = securityContext;

@@ -16,15 +16,15 @@
 
 package stroom.query.client;
 
-import java.util.List;
-
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+
+import java.util.List;
 
 public class ExpressionModel {
     public DefaultTreeForTreeLayout<ExpressionItem> getTreeFromExpression(final ExpressionOperator expression) {
-        final DefaultTreeForTreeLayout<ExpressionItem> tree = new DefaultTreeForTreeLayout<ExpressionItem>(expression);
+        final DefaultTreeForTreeLayout<ExpressionItem> tree = new DefaultTreeForTreeLayout<>(expression);
         addChildrenToTree(tree, expression);
         return tree;
     }
@@ -40,9 +40,9 @@ public class ExpressionModel {
     }
 
     private void addChildrenToTree(final DefaultTreeForTreeLayout<ExpressionItem> tree,
-            final ExpressionOperator parent) {
+                                   final ExpressionOperator parent) {
         if (parent != null) {
-            final List<ExpressionItem> children = parent.getChildren();
+            final ExpressionItem[] children = parent.getChildren();
             if (children != null) {
                 for (final ExpressionItem child : children) {
                     tree.addChild(parent, child);
@@ -55,16 +55,13 @@ public class ExpressionModel {
     }
 
     private void addChildrenFromTree(final DefaultTreeForTreeLayout<ExpressionItem> tree,
-            final ExpressionOperator parent) {
-        if (parent.getChildren() != null) {
-            parent.getChildren().clear();
-        }
+                                     final ExpressionOperator parent) {
+        parent. clear();
 
         final List<ExpressionItem> children = tree.getChildren(parent);
-
         if (children != null) {
             for (final ExpressionItem child : children) {
-                parent.addChild(child);
+                parent.add(child);
                 if (child instanceof ExpressionOperator) {
                     addChildrenFromTree(tree, (ExpressionOperator) child);
                 }

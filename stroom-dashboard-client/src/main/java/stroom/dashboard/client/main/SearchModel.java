@@ -18,19 +18,19 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TimeZones;
+import stroom.dashboard.shared.ComponentResult;
+import stroom.dashboard.shared.ComponentResultRequest;
+import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.QueryKey;
 import stroom.dashboard.shared.QueryKeyImpl;
+import stroom.dashboard.shared.Search;
+import stroom.dashboard.shared.SearchRequest;
+import stroom.dashboard.shared.SearchResponse;
 import stroom.dashboard.shared.UniqueQueryKey;
-import stroom.entity.shared.DocRef;
-import stroom.query.shared.ComponentResult;
-import stroom.query.shared.ComponentResultRequest;
-import stroom.query.shared.ComponentSettings;
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.QueryKey;
-import stroom.query.shared.Search;
-import stroom.query.shared.SearchRequest;
-import stroom.query.shared.SearchResponse;
+import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.util.client.KVMapUtil;
 import stroom.util.client.RandomId;
 
@@ -53,7 +53,7 @@ public class SearchModel {
     private Mode mode = Mode.INACTIVE;
 
     public SearchModel(final SearchBus searchBus, final QueryPresenter queryPresenter, final IndexLoader indexLoader,
-            final TimeZones timeZones) {
+                       final TimeZones timeZones) {
         this.searchBus = searchBus;
         this.queryPresenter = queryPresenter;
         this.indexLoader = indexLoader;
@@ -97,28 +97,27 @@ public class SearchModel {
     public void search(final ExpressionOperator expression, final String params, final boolean incremental) {
         // Toggle the request mode or start a new search.
         switch (mode) {
-        case ACTIVE:
-            // Tell every component not to want data.
-            setWantsData(false);
-            setMode(Mode.PAUSED);
-            break;
-        case INACTIVE:
-            reset();
-            startNewSearch(expression, params, incremental);
-            break;
-        case PAUSED:
-            // Tell every component that it should want data.
-            setWantsData(true);
-            setMode(Mode.ACTIVE);
-            break;
+            case ACTIVE:
+                // Tell every component not to want data.
+                setWantsData(false);
+                setMode(Mode.PAUSED);
+                break;
+            case INACTIVE:
+                reset();
+                startNewSearch(expression, params, incremental);
+                break;
+            case PAUSED:
+                // Tell every component that it should want data.
+                setWantsData(true);
+                setMode(Mode.ACTIVE);
+                break;
         }
     }
 
     /**
      * Begin executing a new search using the supplied query expression.
      *
-     * @param expression
-     *            The expression to search with.
+     * @param expression The expression to search with.
      */
     private void startNewSearch(final ExpressionOperator expression, final String params, final boolean incremental) {
         final Map<String, ComponentSettings> resultComponentMap = createResultComponentMap();

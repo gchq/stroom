@@ -27,11 +27,12 @@ import org.springframework.aop.framework.Advised;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.Clearable;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityService;
 import stroom.entity.shared.EntityServiceException;
+import stroom.query.api.EntityDocRef;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
@@ -112,9 +113,9 @@ public class ServiceCacheMethodInterceptor implements MethodInterceptor, Initial
 
         if (method.getParameterTypes().length >= 1) {
             if (long.class.isAssignableFrom(method.getParameterTypes()[0])) {
-                docRef = new DocRef();
+                docRef = new EntityDocRef();
                 docRef.setType(type);
-                docRef.setId((Long) invocation.getArguments()[0]);
+                ((EntityDocRef)docRef).setId((Long) invocation.getArguments()[0]);
             } else if (String.class.isAssignableFrom(method.getParameterTypes()[0])) {
                 docRef = new DocRef();
                 docRef.setType(type);

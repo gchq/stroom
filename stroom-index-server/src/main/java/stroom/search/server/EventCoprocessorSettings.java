@@ -16,8 +16,8 @@
 
 package stroom.search.server;
 
-import stroom.entity.shared.DocRef;
-import stroom.query.shared.CoprocessorSettings;
+import stroom.query.CoprocessorSettings;
+import stroom.query.api.DocRef;
 
 public class EventCoprocessorSettings implements CoprocessorSettings {
     private static final long serialVersionUID = -4916050910828000494L;
@@ -32,7 +32,7 @@ public class EventCoprocessorSettings implements CoprocessorSettings {
     }
 
     public EventCoprocessorSettings(final EventRef minEvent, final EventRef maxEvent, final long maxStreams,
-            final long maxEvents, final long maxEventsPerStream) {
+                                    final long maxEvents, final long maxEventsPerStream) {
         this.minEvent = minEvent;
         this.maxEvent = maxEvent;
         this.maxStreams = maxStreams;

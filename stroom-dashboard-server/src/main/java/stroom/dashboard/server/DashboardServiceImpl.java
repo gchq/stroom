@@ -22,12 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardService;
 import stroom.dashboard.shared.FindDashboardCriteria;
-import stroom.dashboard.shared.Query;
+import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
@@ -93,7 +93,7 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
         // Delete associated queries first.
         final SQLBuilder sql = new SQLBuilder();
         sql.append("DELETE FROM ");
-        sql.append(Query.TABLE_NAME);
+        sql.append(QueryEntity.TABLE_NAME);
         sql.append(" WHERE ");
         sql.append(Dashboard.FOREIGN_KEY);
         sql.append(" = ");

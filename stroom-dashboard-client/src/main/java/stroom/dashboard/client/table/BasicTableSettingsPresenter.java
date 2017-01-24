@@ -23,10 +23,10 @@ import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.shared.TableSettings;
+import stroom.dashboard.shared.TableComponentSettings;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsBuilder;
 
@@ -106,7 +106,7 @@ public class BasicTableSettingsPresenter
         final List<Component> list = getComponents().getComponentsByType(QueryPresenter.TYPE.getId());
         setQueryList(list);
 
-        final TableSettings settings = (TableSettings) componentData.getSettings();
+        final TableComponentSettings settings = (TableComponentSettings) componentData.getSettings();
         setQueryId(settings.getQueryId());
         setExtractValues(settings.extractValues());
         setPipeline(settings.getExtractionPipeline());
@@ -118,7 +118,7 @@ public class BasicTableSettingsPresenter
     public void write(final ComponentConfig componentData) {
         super.write(componentData);
 
-        final TableSettings settings = (TableSettings) componentData.getSettings();
+        final TableComponentSettings settings = (TableComponentSettings) componentData.getSettings();
         settings.setQueryId(getQueryId());
         settings.setExtractValues(extractValues());
         settings.setExtractionPipeline(getPipeline());
@@ -132,7 +132,7 @@ public class BasicTableSettingsPresenter
             return true;
         }
 
-        final TableSettings settings = (TableSettings) componentData.getSettings();
+        final TableComponentSettings settings = (TableComponentSettings) componentData.getSettings();
 
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(settings.getQueryId(), getQueryId());

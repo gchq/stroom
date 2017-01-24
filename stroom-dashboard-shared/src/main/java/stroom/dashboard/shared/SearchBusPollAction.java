@@ -17,8 +17,6 @@
 package stroom.dashboard.shared;
 
 import stroom.entity.shared.Action;
-import stroom.query.shared.QueryKey;
-import stroom.query.shared.SearchRequest;
 
 import java.util.Map;
 

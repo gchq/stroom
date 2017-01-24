@@ -18,7 +18,7 @@ package stroom.index.server;
 
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.LongField;
-import stroom.query.shared.IndexField;
+import stroom.index.shared.IndexField;
 
 public class FieldFactory {
     public static LongField create(final IndexField indexField, final long initialValue) {

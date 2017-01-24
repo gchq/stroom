@@ -29,7 +29,7 @@ import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
-import stroom.query.shared.IndexConstants;
+import stroom.index.shared.IndexConstants;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
@@ -58,7 +58,7 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
     public void run() {
         // Boot up spring
         final ApplicationContext appContext = new ClassPathXmlApplicationContext(
-                new String[] { "classpath:META-INF/spring/stroomCoreServerContext.xml" });
+                new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml"});
 
         final Query query = new TermQuery(new Term(searchField, searchValue));
 

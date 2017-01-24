@@ -18,7 +18,6 @@ package stroom.search.server.extraction;
 
 import net.sf.ehcache.CacheException;
 import org.springframework.context.annotation.Scope;
-import stroom.entity.shared.DocRef;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
@@ -37,6 +36,7 @@ import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.query.api.DocRef;
 import stroom.search.server.SearchException;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamSource;
@@ -79,11 +79,11 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
 
     @Inject
     public ExtractionTaskHandler(final StreamStore streamStore, final FeedService feedService,
-            final FeedHolder feedHolder, final CurrentUserHolder currentUserHolder, final StreamHolder streamHolder,
-            final PipelineHolder pipelineHolder, final ErrorReceiverProxy errorReceiverProxy,
-            final PipelineFactory pipelineFactory,
-            @Named("cachedPipelineEntityService") final PipelineEntityService pipelineEntityService,
-            final PipelineDataCache pipelineDataCache, final TaskMonitor taskMonitor, final SecurityContext securityContext) {
+                                 final FeedHolder feedHolder, final CurrentUserHolder currentUserHolder, final StreamHolder streamHolder,
+                                 final PipelineHolder pipelineHolder, final ErrorReceiverProxy errorReceiverProxy,
+                                 final PipelineFactory pipelineFactory,
+                                 @Named("cachedPipelineEntityService") final PipelineEntityService pipelineEntityService,
+                                 final PipelineDataCache pipelineDataCache, final TaskMonitor taskMonitor, final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.feedHolder = feedHolder;
@@ -185,7 +185,7 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
      * that were successfully extracted.
      */
     private long processData(final long streamId, final long[] eventIds, final PipelineEntity pipelineEntity,
-            final Pipeline pipeline) {
+                             final Pipeline pipeline) {
         final ErrorReceiver errorReceiver = (severity, location, elementId, message, e) -> {
             task.getErrorReceiver().log(severity, location, elementId, message, e);
             throw ProcessException.wrap(message, e);
@@ -243,7 +243,7 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
      * We do this one by one
      */
     private void extract(final PipelineEntity pipelineEntity, final Pipeline pipeline, final StreamSource source,
-            final RASegmentInputStream segmentInputStream, final long count) {
+                         final RASegmentInputStream segmentInputStream, final long count) {
         if (source != null && segmentInputStream != null) {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Reading " + count + " segments from stream " + source.getStream().getId());

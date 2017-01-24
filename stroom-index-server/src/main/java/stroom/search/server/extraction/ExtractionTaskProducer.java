@@ -17,8 +17,8 @@
 package stroom.search.server.extraction;
 
 import stroom.dashboard.expression.FieldIndexMap;
-import stroom.entity.shared.DocRef;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.query.api.DocRef;
 import stroom.search.server.ClusterSearchTask;
 import stroom.search.server.Coprocessor;
 import stroom.search.server.Event;

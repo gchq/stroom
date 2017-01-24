@@ -46,10 +46,24 @@ import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentResult;
+import stroom.dashboard.shared.ComponentResultRequest;
+import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.dashboard.shared.DownloadSearchResultsAction;
-import stroom.dashboard.shared.ParamUtil;
+import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.Format;
+import stroom.dashboard.shared.Format.Type;
+import stroom.dashboard.shared.IndexConstants;
+import stroom.dashboard.shared.QueryKey;
+import stroom.dashboard.shared.Row;
+import stroom.dashboard.shared.Search;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.dashboard.shared.TableResult;
+import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
+import stroom.datasource.api.DataSourceField;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteHandler;
@@ -60,23 +74,9 @@ import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
-import stroom.query.shared.ComponentResult;
-import stroom.query.shared.ComponentResultRequest;
-import stroom.query.shared.ComponentSettings;
-import stroom.query.shared.Field;
-import stroom.query.shared.Format;
-import stroom.query.shared.Format.Type;
-import stroom.query.shared.IndexConstants;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFieldsMap;
-import stroom.query.shared.QueryKey;
-import stroom.query.shared.Row;
-import stroom.query.shared.Search;
-import stroom.query.shared.TableResult;
-import stroom.query.shared.TableResultRequest;
-import stroom.query.shared.TableSettings;
 import stroom.util.shared.Expander;
 import stroom.util.shared.OffsetRange;
+import stroom.util.shared.ParamUtil;
 import stroom.util.shared.SharedObject;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
@@ -119,9 +119,9 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     private String selectedStreamId;
     private String selectedEventId;
 
-    private TableSettings tableSettings;
+    private TableComponentSettings tableSettings;
     private boolean ignoreRangeChange;
-    private int[] maxResults = TableSettings.DEFAULT_MAX_RESULTS;
+    private int[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
 
     @Inject
     public TablePresenter(final EventBus eventBus, final MenuListPresenter menuListPresenter,
@@ -240,9 +240,9 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                 for (final String indexFieldName : currentSearchModel.getIndexLoader().getIndexFieldNames()) {
                     final Field field = new Field(indexFieldName);
                     field.setExpression(ParamUtil.makeParam(indexFieldName));
-                    final IndexField indexField = getIndexFieldsMap().get(indexFieldName);
+                    final DataSourceField indexField = getIndexFieldsMap().get(indexFieldName);
                     if (indexField != null) {
-                        switch (indexField.getFieldType()) {
+                        switch (indexField.getType()) {
                             case DATE_FIELD:
                                 field.setFormat(new Format(Type.DATE_TIME));
                                 break;
@@ -349,34 +349,34 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
         ignoreRangeChange = true;
 
 //        if (!paused) {
-            lastExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
-            currentExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
+        lastExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
+        currentExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
 
-            if (result != null && result instanceof TableResult) {
-                // Don't refresh the table unless the results have changed.
-                final TableResult tableResult = (TableResult) result;
-                final List<Row> values = tableResult.getRows();
-                final OffsetRange<Integer> valuesRange = tableResult.getResultRange();
+        if (result != null && result instanceof TableResult) {
+            // Don't refresh the table unless the results have changed.
+            final TableResult tableResult = (TableResult) result;
+            final List<Row> values = tableResult.getRows();
+            final OffsetRange<Integer> valuesRange = tableResult.getResultRange();
 
-                // Only set data in the table if we have got some results and
-                // they have changed.
-                if (valuesRange.getOffset() == 0 || values.size() > 0) {
-                    updateColumns();
-                    getView().setRowData(valuesRange.getOffset(), values);
-                    getView().setRowCount(tableResult.getTotalResults(), true);
-                }
-
-                // Enable download of current results.
-                downloadButton.setEnabled(true);
-            } else {
-                // Disable download of current results.
-                downloadButton.setEnabled(false);
-
-                getView().setRowData(0, new ArrayList<Row>());
-                getView().setRowCount(0, true);
-
-                selectionModel.clear();
+            // Only set data in the table if we have got some results and
+            // they have changed.
+            if (valuesRange.getOffset() == 0 || values.size() > 0) {
+                updateColumns();
+                getView().setRowData(valuesRange.getOffset(), values);
+                getView().setRowCount(tableResult.getTotalResults(), true);
             }
+
+            // Enable download of current results.
+            downloadButton.setEnabled(true);
+        } else {
+            // Disable download of current results.
+            downloadButton.setEnabled(false);
+
+            getView().setRowData(0, new ArrayList<Row>());
+            getView().setRowCount(0, true);
+
+            selectionModel.clear();
+        }
 //        }
 
         ignoreRangeChange = false;
@@ -557,9 +557,9 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
 
     private int ensureHiddenField(final String indexFieldName) {
         // Now add new hidden field.
-        final IndexFieldsMap indexFieldsMap = getIndexFieldsMap();
-        if (indexFieldsMap != null) {
-            final IndexField indexField = indexFieldsMap.get(indexFieldName);
+        final DataSourceFieldsMap dataSourceFieldsMap = getIndexFieldsMap();
+        if (dataSourceFieldsMap != null) {
+            final DataSourceField indexField = dataSourceFieldsMap.get(indexFieldName);
             if (indexField != null) {
                 final Field field = new Field(indexFieldName);
                 field.setExpression(ParamUtil.makeParam(indexFieldName));
@@ -571,10 +571,10 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
         return tableSettings.getFields().size() - 1;
     }
 
-    public IndexFieldsMap getIndexFieldsMap() {
+    public DataSourceFieldsMap getIndexFieldsMap() {
         if (currentSearchModel != null && currentSearchModel.getIndexLoader() != null
-                && currentSearchModel.getIndexLoader().getIndexFieldsMap() != null) {
-            return currentSearchModel.getIndexLoader().getIndexFieldsMap();
+                && currentSearchModel.getIndexLoader().getDataSourceFieldsMap() != null) {
+            return currentSearchModel.getIndexLoader().getDataSourceFieldsMap();
         }
 
         return null;
@@ -706,18 +706,18 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     }
 
     @Override
-    public TableSettings getSettings() {
+    public TableComponentSettings getSettings() {
         ComponentSettings settings = getComponentData().getSettings();
-        if (settings == null || !(settings instanceof TableSettings)) {
+        if (settings == null || !(settings instanceof TableComponentSettings)) {
             settings = createSettings();
             getComponentData().setSettings(settings);
         }
 
-        return (TableSettings) settings;
+        return (TableComponentSettings) settings;
     }
 
     private ComponentSettings createSettings() {
-        final TableSettings tableSettings = new TableSettings();
+        final TableComponentSettings tableSettings = new TableComponentSettings();
 
         int[] arr = null;
         if (maxResults != null && maxResults.length > 0) {

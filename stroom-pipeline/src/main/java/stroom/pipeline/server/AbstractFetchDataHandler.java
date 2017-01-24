@@ -18,7 +18,7 @@ package stroom.pipeline.server;
 
 import stroom.cache.server.XSLTPool;
 import stroom.entity.server.util.XMLUtil;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;

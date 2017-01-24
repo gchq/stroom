@@ -17,7 +17,7 @@
 package stroom.pipeline.shared.data;
 
 import stroom.entity.shared.Copyable;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.util.shared.CompareBuilder;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;

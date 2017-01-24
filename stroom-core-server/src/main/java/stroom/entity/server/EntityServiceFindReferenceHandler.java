@@ -17,7 +17,7 @@
 package stroom.entity.server;
 
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.EntityServiceFindReferenceAction;
 import stroom.entity.shared.ResultList;
 import stroom.task.server.AbstractTaskHandler;

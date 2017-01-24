@@ -29,7 +29,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import stroom.dashboard.shared.Dashboard;
-import stroom.dashboard.shared.Query;
+import stroom.dashboard.shared.QueryEntity;
 import stroom.index.server.IndexShardWriterCache;
 import stroom.index.server.IndexShardWriterImpl;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -136,7 +136,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         deleteEntity(StreamAttributeValue.class);
         deleteEntity(Stream.class);
 
-        deleteEntity(Query.class);
+        deleteEntity(QueryEntity.class);
         deleteEntity(Dashboard.class);
         deleteEntity(Visualisation.class);
         deleteEntity(Script.class);

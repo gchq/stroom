@@ -16,6 +16,8 @@
 
 package stroom.entity.shared;
 
+import stroom.query.api.DocRef;
+
 public interface BaseEntityAdaptor {
     DocRef marshal(BaseEntity entity) throws Exception;
 

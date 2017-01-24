@@ -17,20 +17,19 @@
 package stroom.search.server;
 
 import stroom.node.shared.Node;
-import stroom.query.shared.CoprocessorSettings;
-import stroom.query.shared.Search;
+import stroom.query.CoprocessorSettings;
+import stroom.query.api.Query;
 import stroom.util.shared.VoidResult;
 import stroom.util.task.ServerTask;
 
 import java.io.Serializable;
-import java.time.ZonedDateTime;
 import java.util.Map;
 
 public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializable {
     private static final long serialVersionUID = -1305243739417365803L;
 
     private final String searchName;
-    private final Search search;
+    private final Query query;
     private final Node targetNode;
     private final int resultSendFrequency;
     private final Map<Integer, CoprocessorSettings> coprocessorMap;
@@ -38,12 +37,12 @@ public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializab
 
     private volatile transient ClusterSearchResultCollector resultCollector;
 
-    public AsyncSearchTask(final String sessionId, final String userName, final String searchName, final Search search,
+    public AsyncSearchTask(final String sessionId, final String userName, final String searchName, final Query query,
                            final Node targetNode, final int resultSendFrequency,
                            final Map<Integer, CoprocessorSettings> coprocessorMap, final long now) {
         super(null, sessionId, userName);
         this.searchName = searchName;
-        this.search = search;
+        this.query = query;
         this.targetNode = targetNode;
         this.resultSendFrequency = resultSendFrequency;
         this.coprocessorMap = coprocessorMap;
@@ -54,12 +53,12 @@ public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializab
         return searchName;
     }
 
-    public Node getTargetNode() {
-        return targetNode;
+    public Query getQuery() {
+        return query;
     }
 
-    public Search getSearch() {
-        return search;
+    public Node getTargetNode() {
+        return targetNode;
     }
 
     public int getResultSendFrequency() {

@@ -17,7 +17,7 @@
 package stroom.dashboard.server;
 
 import stroom.query.SearchResultCollector;
-import stroom.query.shared.ComponentResult;
+import stroom.dashboard.shared.ComponentResult;
 
 import java.util.HashMap;
 import java.util.Map;

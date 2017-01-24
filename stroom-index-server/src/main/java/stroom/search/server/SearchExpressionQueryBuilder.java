@@ -31,17 +31,16 @@ import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.util.Version;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
-import stroom.entity.shared.DocRef;
 import stroom.index.server.analyzer.AnalyzerFactory;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexField.AnalyzerType;
+import stroom.index.shared.IndexFieldType;
 import stroom.query.DateExpressionParser;
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexField.AnalyzerType;
-import stroom.query.shared.IndexFieldType;
-import stroom.query.shared.IndexFieldsMap;
+import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -89,7 +88,7 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Query getQuery(final Version matchVersion, final ExpressionItem item, final Set<String> terms) {
-        if (item.isEnabled()) {
+        if (item.enabled()) {
             if (item instanceof ExpressionTerm) {
                 // Create queries for single terms.
                 final ExpressionTerm term = (ExpressionTerm) item;
@@ -235,91 +234,91 @@ public class SearchExpressionQueryBuilder {
         // Create a query based on the field type and condition.
         if (indexField.getFieldType().isNumeric()) {
             switch (condition) {
-            case EQUALS:
-                final Long num1 = getNumber(fieldName, value);
-                return NumericRangeQuery.newLongRange(fieldName, num1, num1, true, true);
-            case CONTAINS:
-                final Long num2 = getNumber(fieldName, value);
-                return NumericRangeQuery.newLongRange(fieldName, num2, num2, true, true);
-            case GREATER_THAN:
-                return NumericRangeQuery.newLongRange(fieldName, getNumber(fieldName, value), Long.MAX_VALUE, false,
-                        true);
-            case GREATER_THAN_OR_EQUAL_TO:
-                return NumericRangeQuery.newLongRange(fieldName, getNumber(fieldName, value), Long.MAX_VALUE, true,
-                        true);
-            case LESS_THAN:
-                return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getNumber(fieldName, value), true,
-                        false);
-            case LESS_THAN_OR_EQUAL_TO:
-                return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getNumber(fieldName, value), true,
-                        true);
-            case BETWEEN:
-                final long[] between = getNumbers(fieldName, value);
-                if (between.length != 2) {
-                    throw new SearchException("2 numbers needed for between query");
-                }
-                if (between[0] >= between[1]) {
-                    throw new SearchException("From number must lower than to number");
-                }
-                return NumericRangeQuery.newLongRange(fieldName, between[0], between[1], true, true);
-            case IN:
-                return getNumericIn(fieldName, value);
-            case IN_DICTIONARY:
-                return getDictionary(fieldName, dictionary, indexField, matchVersion, terms);
-            default:
-                throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldType().getDisplayValue() + " field type");
+                case EQUALS:
+                    final Long num1 = getNumber(fieldName, value);
+                    return NumericRangeQuery.newLongRange(fieldName, num1, num1, true, true);
+                case CONTAINS:
+                    final Long num2 = getNumber(fieldName, value);
+                    return NumericRangeQuery.newLongRange(fieldName, num2, num2, true, true);
+                case GREATER_THAN:
+                    return NumericRangeQuery.newLongRange(fieldName, getNumber(fieldName, value), Long.MAX_VALUE, false,
+                            true);
+                case GREATER_THAN_OR_EQUAL_TO:
+                    return NumericRangeQuery.newLongRange(fieldName, getNumber(fieldName, value), Long.MAX_VALUE, true,
+                            true);
+                case LESS_THAN:
+                    return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getNumber(fieldName, value), true,
+                            false);
+                case LESS_THAN_OR_EQUAL_TO:
+                    return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getNumber(fieldName, value), true,
+                            true);
+                case BETWEEN:
+                    final long[] between = getNumbers(fieldName, value);
+                    if (between.length != 2) {
+                        throw new SearchException("2 numbers needed for between query");
+                    }
+                    if (between[0] >= between[1]) {
+                        throw new SearchException("From number must lower than to number");
+                    }
+                    return NumericRangeQuery.newLongRange(fieldName, between[0], between[1], true, true);
+                case IN:
+                    return getNumericIn(fieldName, value);
+                case IN_DICTIONARY:
+                    return getDictionary(fieldName, dictionary, indexField, matchVersion, terms);
+                default:
+                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                            + indexField.getFieldType().getDisplayValue() + " field type");
             }
         } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
             switch (condition) {
-            case EQUALS:
-                final Long date1 = getDate(fieldName, value);
-                return NumericRangeQuery.newLongRange(fieldName, date1, date1, true, true);
-            case CONTAINS:
-                final Long date2 = getDate(fieldName, value);
-                return NumericRangeQuery.newLongRange(fieldName, date2, date2, true, true);
-            case GREATER_THAN:
-                return NumericRangeQuery.newLongRange(fieldName, 8, getDate(fieldName, value), Long.MAX_VALUE, false,
-                        true);
-            case GREATER_THAN_OR_EQUAL_TO:
-                return NumericRangeQuery.newLongRange(fieldName, 8, getDate(fieldName, value), Long.MAX_VALUE, true,
-                        true);
-            case LESS_THAN:
-                return NumericRangeQuery.newLongRange(fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
-                        false);
-            case LESS_THAN_OR_EQUAL_TO:
-                return NumericRangeQuery.newLongRange(fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
-                        true);
-            case BETWEEN:
-                final long[] between = getDates(fieldName, value);
-                if (between.length != 2) {
-                    throw new SearchException("2 dates needed for between query");
-                }
-                if (between[0] >= between[1]) {
-                    throw new SearchException("From date must occur before to date");
-                }
-                return NumericRangeQuery.newLongRange(fieldName, 8, between[0], between[1], true, true);
-            case IN:
-                return getDateIn(fieldName, value);
-            case IN_DICTIONARY:
-                return getDictionary(fieldName, dictionary, indexField, matchVersion, terms);
-            default:
-                throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldType().getDisplayValue() + " field type");
+                case EQUALS:
+                    final Long date1 = getDate(fieldName, value);
+                    return NumericRangeQuery.newLongRange(fieldName, date1, date1, true, true);
+                case CONTAINS:
+                    final Long date2 = getDate(fieldName, value);
+                    return NumericRangeQuery.newLongRange(fieldName, date2, date2, true, true);
+                case GREATER_THAN:
+                    return NumericRangeQuery.newLongRange(fieldName, 8, getDate(fieldName, value), Long.MAX_VALUE, false,
+                            true);
+                case GREATER_THAN_OR_EQUAL_TO:
+                    return NumericRangeQuery.newLongRange(fieldName, 8, getDate(fieldName, value), Long.MAX_VALUE, true,
+                            true);
+                case LESS_THAN:
+                    return NumericRangeQuery.newLongRange(fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
+                            false);
+                case LESS_THAN_OR_EQUAL_TO:
+                    return NumericRangeQuery.newLongRange(fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
+                            true);
+                case BETWEEN:
+                    final long[] between = getDates(fieldName, value);
+                    if (between.length != 2) {
+                        throw new SearchException("2 dates needed for between query");
+                    }
+                    if (between[0] >= between[1]) {
+                        throw new SearchException("From date must occur before to date");
+                    }
+                    return NumericRangeQuery.newLongRange(fieldName, 8, between[0], between[1], true, true);
+                case IN:
+                    return getDateIn(fieldName, value);
+                case IN_DICTIONARY:
+                    return getDictionary(fieldName, dictionary, indexField, matchVersion, terms);
+                default:
+                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                            + indexField.getFieldType().getDisplayValue() + " field type");
             }
         } else {
             switch (condition) {
-            case EQUALS:
-                return getSubQuery(matchVersion, indexField, value, terms, false);
-            case CONTAINS:
-                return getContains(fieldName, value, indexField, matchVersion, terms);
-            case IN:
-                return getIn(fieldName, value, indexField, matchVersion, terms);
-            case IN_DICTIONARY:
-                return getDictionary(fieldName, dictionary, indexField, matchVersion, terms);
-            default:
-                throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldType().getDisplayValue() + " field type");
+                case EQUALS:
+                    return getSubQuery(matchVersion, indexField, value, terms, false);
+                case CONTAINS:
+                    return getContains(fieldName, value, indexField, matchVersion, terms);
+                case IN:
+                    return getIn(fieldName, value, indexField, matchVersion, terms);
+                case IN_DICTIONARY:
+                    return getDictionary(fieldName, dictionary, indexField, matchVersion, terms);
+                default:
+                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                            + indexField.getFieldType().getDisplayValue() + " field type");
             }
         }
     }
@@ -363,13 +362,13 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Query getContains(final String fieldName, final String value, final IndexField indexField,
-            final Version matchVersion, final Set<String> terms) {
+                              final Version matchVersion, final Set<String> terms) {
         final Query query = getSubQuery(matchVersion, indexField, value, terms, false);
         return modifyOccurrence(query, Occur.MUST);
     }
 
     private Query getIn(final String fieldName, final String value, final IndexField indexField,
-            final Version matchVersion, final Set<String> terms) {
+                        final Version matchVersion, final Set<String> terms) {
         final Query query = getSubQuery(matchVersion, indexField, value, terms, true);
         return modifyOccurrence(query, Occur.SHOULD);
     }
@@ -389,7 +388,7 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Query getDictionary(final String fieldName, final DocRef docRef,
-            final IndexField indexField, final Version matchVersion, final Set<String> terms) {
+                                final IndexField indexField, final Version matchVersion, final Set<String> terms) {
         final String[] wordArr = loadWords(docRef);
         if (wordArr != null) {
             final Builder builder = new Builder();
@@ -432,14 +431,14 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Occur getOccur(final ExpressionOperator operator) {
-        if (operator.getType() != null) {
-            switch (operator.getType()) {
-            case AND:
-                return Occur.MUST;
-            case OR:
-                return Occur.SHOULD;
-            case NOT:
-                return Occur.MUST_NOT;
+        if (operator.getOp() != null) {
+            switch (operator.getOp()) {
+                case AND:
+                    return Occur.MUST;
+                case OR:
+                    return Occur.SHOULD;
+                case NOT:
+                    return Occur.MUST_NOT;
             }
         }
 
@@ -510,10 +509,10 @@ public class SearchExpressionQueryBuilder {
     }
 
     private boolean hasChildren(final ExpressionOperator operator) {
-        if (operator != null && operator.isEnabled() && operator.getChildren() != null
-                && operator.getChildren().size() > 0) {
+        if (operator != null && operator.enabled() && operator.getChildren() != null
+                && operator.getChildren().length > 0) {
             for (final ExpressionItem child : operator.getChildren()) {
-                if (child.isEnabled()) {
+                if (child.enabled()) {
                     if (child instanceof ExpressionOperator) {
                         final ExpressionOperator childOperator = (ExpressionOperator) child;
                         if (hasChildren(childOperator)) {

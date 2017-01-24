@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Before;

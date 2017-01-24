@@ -16,6 +16,9 @@
 
 package stroom.entity.shared;
 
+import stroom.query.api.DocRef;
+import stroom.util.shared.SharedObject;
+
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.Collection;
@@ -24,8 +27,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 @XmlRootElement(name = "docs")
-public class DocRefs implements Iterable<DocRef>, Serializable {
-    private Set<DocRef> set = new TreeSet<DocRef>();
+public class DocRefs implements Iterable<DocRef>, SharedObject, Serializable {
+    private Set<DocRef> set = new TreeSet<>();
 
     public DocRefs() {
         // Default constructor necessary for GWT serialisation.

@@ -19,5 +19,5 @@ package stroom.dashboard.shared;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.FindService;
 
-public interface QueryService extends DocumentEntityService<Query>, FindService<Query, FindQueryCriteria> {
+public interface QueryService extends DocumentEntityService<QueryEntity>, FindService<QueryEntity, FindQueryCriteria> {
 }

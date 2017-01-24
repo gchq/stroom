@@ -19,16 +19,16 @@ package stroom.dashboard.server;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.shared.FindQueryCriteria;
-import stroom.dashboard.shared.Query;
+import stroom.dashboard.shared.QueryEntity;
 import stroom.dashboard.shared.QueryService;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.util.spring.StroomSpringProfiles;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component("queryService")
-public class MockQueryService extends MockDocumentEntityService<Query, FindQueryCriteria> implements QueryService {
+public class MockQueryService extends MockDocumentEntityService<QueryEntity, FindQueryCriteria> implements QueryService {
     @Override
-    public Class<Query> getEntityClass() {
-        return Query.class;
+    public Class<QueryEntity> getEntityClass() {
+        return QueryEntity.class;
     }
 }

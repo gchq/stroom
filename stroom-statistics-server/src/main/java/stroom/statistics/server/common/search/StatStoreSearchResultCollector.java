@@ -16,7 +16,9 @@
 
 package stroom.statistics.server.common.search;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -96,20 +98,8 @@ public class StatStoreSearchResultCollector implements SearchResultCollector {
         errors.add(error);
     }
 
-    @Override
-    public synchronized String getErrors() {
-        final StringBuilder sb = new StringBuilder();
-        for (final String error : errors) {
-            sb.append(error);
-            sb.append("\n");
-        }
-
-        // Remove last new line.
-        if (sb.length() > 0) {
-            sb.setLength(sb.length() - 1);
-        }
-
-        return sb.toString();
+    public synchronized List<String> getErrors() {
+        return new ArrayList<>(errors);
     }
 
     @Override

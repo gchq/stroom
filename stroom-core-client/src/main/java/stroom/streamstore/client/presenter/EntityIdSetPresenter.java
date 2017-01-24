@@ -34,7 +34,9 @@ import stroom.data.table.client.CellTableViewImpl.DisabledResources;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.SharedDocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
@@ -43,6 +45,7 @@ import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
 import stroom.explorer.shared.ExplorerData;
 import stroom.process.shared.LoadEntityIdSetAction;
 import stroom.process.shared.SetId;
+import stroom.query.api.EntityDocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.SharedList;
@@ -139,24 +142,24 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
         if (entityIdSet != null && entityIdSet.getSet() != null) {
             // Load the entities.
             final SetId key = new SetId(type, type);
-            final SharedMap<SetId, EntityIdSet<?>> loadMap = new SharedMap<SetId, EntityIdSet<?>>();
+            final SharedMap<SetId, EntityIdSet<?>> loadMap = new SharedMap<>();
             loadMap.put(key, entityIdSet);
             final LoadEntityIdSetAction action = new LoadEntityIdSetAction(loadMap);
-            dispatcher.execute(action, new AsyncCallbackAdaptor<SharedMap<SetId, SharedList<DocRef>>>() {
+            dispatcher.execute(action, new AsyncCallbackAdaptor<SharedMap<SetId, DocRefs>>() {
                 @Override
-                public void onSuccess(final SharedMap<SetId, SharedList<DocRef>> result) {
-                    final SharedList<DocRef> list = result.get(key);
-                    if (list != null) {
-                        Collections.sort(list, new EntityReferenceComparator());
-                        data = list;
+                public void onSuccess(final SharedMap<SetId, DocRefs> result) {
+                    final DocRefs docRefs = result.get(key);
+                    if (docRefs != null) {
+                        data = new ArrayList<>(docRefs.getDoc());
+                        Collections.sort(data, new EntityReferenceComparator());
                     } else {
-                        data = new ArrayList<DocRef>();
+                        data = new ArrayList<>();
                     }
                     refresh();
                 }
             });
         } else {
-            this.data = new ArrayList<DocRef>();
+            this.data = new ArrayList<>();
             refresh();
         }
 
@@ -179,7 +182,9 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
     public <T extends BaseEntity> void write(final EntityIdSet<T> entityIdSet) {
         entityIdSet.clear();
         for (final DocRef docRef : data) {
-            entityIdSet.add(docRef.getId());
+            if (docRef != null && docRef instanceof EntityDocRef) {
+                entityIdSet.add(((EntityDocRef)docRef).getId());
+            }
         }
     }
 

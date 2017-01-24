@@ -17,7 +17,7 @@
 package stroom.security.shared;
 
 import stroom.entity.shared.Action;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.VoidResult;
 

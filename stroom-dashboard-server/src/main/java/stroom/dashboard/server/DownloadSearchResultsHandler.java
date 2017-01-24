@@ -28,8 +28,8 @@ import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.logging.SearchEventLog;
 import stroom.query.ResultStore;
-import stroom.query.shared.Field;
-import stroom.query.shared.Search;
+import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.Search;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
@@ -100,7 +100,7 @@ public class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSe
             throw EntityServiceExceptionUtil.create(ex);
         }
 
-        return new ResourceGeneration(resourceKey, new ArrayList<String>());
+        return new ResourceGeneration(resourceKey, new ArrayList<>());
     }
 
     private void download(final ActiveQuery activeQuery, final String componentId, final File file,

@@ -25,6 +25,8 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.index.server.CachedIndexService.CachedIndex;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexShardKey;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -37,9 +39,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFieldType;
-import stroom.query.shared.IndexFieldsMap;
+import stroom.search.server.IndexFieldsMap;
 import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.StroomLogger;
@@ -53,8 +53,8 @@ import javax.annotation.Resource;
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "IndexingFilter", category = Category.FILTER, roles = { PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE }, icon = ElementIcons.INDEX)
+@ConfigurableElement(type = "IndexingFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
+        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.INDEX)
 public class IndexingFilter extends AbstractXMLFilter {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexingFilter.class);
 
@@ -121,8 +121,7 @@ public class IndexingFilter extends AbstractXMLFilter {
     /**
      * Sets the locator to use when reporting errors.
      *
-     * @param locator
-     *            The locator to use.
+     * @param locator The locator to use.
      */
     @Override
     public void setDocumentLocator(final Locator locator) {

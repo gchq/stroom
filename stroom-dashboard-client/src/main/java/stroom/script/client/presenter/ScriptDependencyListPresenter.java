@@ -32,7 +32,7 @@ import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
 import stroom.explorer.shared.EntityData;
@@ -159,10 +159,10 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
     private void refresh() {
         if (scripts != null) {
             final List<DocRef> list = new ArrayList<DocRef>(scripts.getDoc());
-            Collections.sort(list);
+            Collections.sort(list, DocRef::compareTo);
             scriptListPresenter.setData(list);
         } else {
-            scriptListPresenter.setData(new ArrayList<DocRef>());
+            scriptListPresenter.setData(new ArrayList<>());
         }
     }
 

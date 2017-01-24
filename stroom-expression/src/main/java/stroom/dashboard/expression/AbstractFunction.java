@@ -18,8 +18,6 @@ package stroom.dashboard.expression;
 
 import java.text.ParseException;
 
-import javax.validation.ValidationException;
-
 public abstract class AbstractFunction implements Function, Appendable {
     final String name;
     final int minParams;
@@ -36,7 +34,7 @@ public abstract class AbstractFunction implements Function, Appendable {
     @Override
     public void setParams(final Object[] params) throws ParseException {
         if (params.length < minParams || params.length > maxParams) {
-            throw new ValidationException("Invalid number of parameters supplied for '" + name + "' + function");
+            throw new ExpressionException("Invalid number of parameters supplied for '" + name + "' + function");
         }
 
         this.params = params;

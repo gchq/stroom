@@ -16,7 +16,8 @@
 
 package stroom.pipeline.stepping.client.event;
 
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.SharedDocRef;
+import stroom.query.api.DocRef;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -34,10 +35,10 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
     private final Long eventId;
     private final Long childStreamId;
     private final StreamType childStreamType;
-    private final DocRef pipelineRef;
+    private final SharedDocRef pipelineRef;
 
     private BeginPipelineSteppingEvent(final Long streamId, final Long eventId, final Long childStreamId,
-            final StreamType childStreamType, final DocRef pipelineRef) {
+            final StreamType childStreamType, final SharedDocRef pipelineRef) {
         this.streamId = streamId;
         this.eventId = eventId;
         this.childStreamId = childStreamId;
@@ -46,7 +47,7 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
     }
 
     public static void fire(final HasHandlers source, final Long streamId, final Long eventId, final Long childStreamId,
-            final StreamType childStreamType, final DocRef pipelineRef) {
+            final StreamType childStreamType, final SharedDocRef pipelineRef) {
         source.fireEvent(new BeginPipelineSteppingEvent(streamId, eventId, childStreamId, childStreamType, pipelineRef));
     }
 
@@ -83,7 +84,7 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
         return childStreamType;
     }
 
-    public DocRef getPipelineRef() {
+    public SharedDocRef getPipelineRef() {
         return pipelineRef;
     }
 }

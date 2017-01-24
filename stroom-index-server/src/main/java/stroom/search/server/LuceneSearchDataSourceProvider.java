@@ -24,25 +24,30 @@ import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.node.server.NodeCache;
+import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;
 import stroom.query.CoprocessorMap;
+import stroom.query.QueryKey;
 import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
 import stroom.query.SearchResultHandler;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.IndexFieldsMap;
-import stroom.query.shared.QueryKey;
-import stroom.query.shared.Search;
-import stroom.query.shared.SearchRequest;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.Query;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.TableSettings;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
+import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 @Component
@@ -60,8 +65,6 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
     private final TaskManager taskManager;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
 
-    private int maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
-
     @Inject
     public LuceneSearchDataSourceProvider(final IndexService indexService, final DictionaryService dictionaryService,
                                           final NodeCache nodeCache, final TaskManager taskManager,
@@ -75,32 +78,37 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
 
     @Override
     public SearchResultCollector createCollector(final String sessionId, final String userName, final QueryKey queryKey,
-            final SearchRequest searchRequest) {
+                                                 final SearchRequest searchRequest) {
         // Get the current time in millis since epoch.
         final long nowEpochMilli = System.currentTimeMillis();
 
         // Get the search.
-        final Search search = searchRequest.getSearch();
+        final Query query = searchRequest.getQuery();
 
         // Load the index.
-        final Index index = indexService.loadByUuid(search.getDataSourceRef().getUuid());
+        final Index index = indexService.loadByUuid(query.getDataSource().getUuid());
 
         // Extract highlights.
-        final Set<String> highlights = getHighlights(index, search.getExpression(), nowEpochMilli);
+        final Set<String> highlights = getHighlights(index, query.getExpression(), nowEpochMilli);
 
         // This is a new search so begin a new asynchronous search.
         final Node node = nodeCache.getDefaultNode();
 
         // Create a coprocessor map.
-        final CoprocessorMap coprocessorMap = new CoprocessorMap(search.getComponentSettingsMap());
+        final Map<String, TableSettings> settingsMap = new HashMap<>();
+        for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
+            settingsMap.put(resultRequest.getComponentId(), resultRequest.getTableSettings());
+        }
+
+        final CoprocessorMap coprocessorMap = new CoprocessorMap(settingsMap);
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + queryKey.toString() + "'";
-        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(sessionId, userName, searchName, search, node,
+        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(sessionId, userName, searchName, query, node,
                 SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorMap.getMap(), nowEpochMilli);
 
         // Create a handler for search results.
-        final SearchResultHandler resultHandler = new SearchResultHandler(coprocessorMap);
+        final SearchResultHandler resultHandler = new SearchResultHandler(coprocessorMap, getDefaultTrimSizes());
 
         // Create the search result collector.
         final ClusterSearchResultCollector searchResultCollector = ClusterSearchResultCollector.create(taskManager,
@@ -110,6 +118,24 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
         asyncSearchTask.setResultCollector(searchResultCollector);
 
         return searchResultCollector;
+    }
+
+    private Integer[] getDefaultTrimSizes() {
+        try {
+            final String value = StroomProperties.getProperty(ClientProperties.MAX_RESULTS);
+            if (value != null) {
+                final String[] parts = value.split(",");
+                final Integer[] arr = new Integer[parts.length];
+                for (int i = 0; i < arr.length; i++) {
+                    arr[i] = Integer.valueOf(parts[i].trim());
+                }
+                return arr;
+            }
+        } catch (final Exception e) {
+            LOGGER.warn(e.getMessage());
+        }
+
+        return null;
     }
 
     /**
@@ -124,7 +150,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
             final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, nowEpochMilli);
+                    dictionaryService, indexFieldsMap, getMaxBooleanClauseCount(), nowEpochMilli);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
                     .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expression);
 
@@ -141,12 +167,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
         return ENTITY_TYPE;
     }
 
-    @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}")
-    public void setMaxBooleanClauseCount(final String maxBooleanClauseCount) {
-        try {
-            this.maxBooleanClauseCount = ModelStringUtil.parseNumberStringAsInt(maxBooleanClauseCount);
-        } catch (final NumberFormatException e) {
-            LOGGER.error(e, e);
-        }
+    public int getMaxBooleanClauseCount() {
+        return StroomProperties.getIntProperty("stroom.search.maxBooleanClauseCount", DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
     }
 }

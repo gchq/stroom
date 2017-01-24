@@ -16,7 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.shared.QueryKey;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.SharedObject;

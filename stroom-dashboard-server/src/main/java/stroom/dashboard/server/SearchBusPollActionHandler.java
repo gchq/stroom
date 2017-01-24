@@ -18,7 +18,7 @@ package stroom.dashboard.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.Dashboard;
-import stroom.dashboard.shared.Query;
+import stroom.dashboard.shared.QueryEntity;
 import stroom.dashboard.shared.QueryKeyImpl;
 import stroom.dashboard.shared.QueryService;
 import stroom.dashboard.shared.SearchBusPollAction;
@@ -26,11 +26,13 @@ import stroom.dashboard.shared.SearchBusPollResult;
 import stroom.logging.SearchEventLog;
 import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
-import stroom.query.shared.QueryData;
-import stroom.query.shared.QueryKey;
-import stroom.query.shared.Search;
-import stroom.query.shared.SearchRequest;
-import stroom.query.shared.SearchResponse;
+import stroom.query.api.Param;
+import stroom.query.api.Query;
+import stroom.streamstore.shared.QueryData;
+import stroom.dashboard.shared.QueryKey;
+import stroom.dashboard.shared.Search;
+import stroom.dashboard.shared.SearchRequest;
+import stroom.dashboard.shared.SearchResponse;
 import stroom.security.SecurityContext;
 import stroom.task.cluster.ClusterResultCollector;
 import stroom.task.cluster.ClusterResultCollectorCache;
@@ -206,15 +208,23 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
                 // Add this search to the history so the user can get back to
                 // this search again.
-                final QueryData queryData = new QueryData();
-                queryData.setDataSource(search.getDataSourceRef());
-                queryData.setExpression(search.getExpression());
+                Param[] params;
+                if (search.getParamMap() != null && search.getParamMap().size() > 0) {
+                    params = new Param[search.getParamMap().size()];
+                    int i = 0;
+                    for (final Entry<String, String> entry : search.getParamMap().entrySet()) {
+                        params[i++] = new Param(entry.getKey(), entry.getValue());
+                    }
+                } else {
+                    params = null;
+                }
 
-                final Query query = queryService.create(null, "History");
+                final Query query = new Query(search.getDataSourceRef(), search.getExpression(), params);
+                final QueryEntity queryEntity = queryService.create(null, "History");
 
-                query.setDashboard(Dashboard.createStub(queryKeyImpl.getDashboardId()));
-                query.setQueryData(queryData);
-                queryService.save(query);
+                queryEntity.setDashboard(Dashboard.createStub(queryKeyImpl.getDashboardId()));
+                queryEntity.setQuery(query);
+                queryService.save(queryEntity);
             }
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);

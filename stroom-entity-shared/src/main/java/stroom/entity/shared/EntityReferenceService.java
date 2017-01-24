@@ -16,6 +16,8 @@
 
 package stroom.entity.shared;
 
+import stroom.query.api.DocRef;
+
 public interface EntityReferenceService<E extends BaseEntity> {
-    BaseResultList<DocRef> findReference(E entity);
+    BaseResultList<SharedDocRef> findReference(E entity);
 }

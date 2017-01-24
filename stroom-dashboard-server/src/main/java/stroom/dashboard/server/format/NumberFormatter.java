@@ -17,8 +17,8 @@
 package stroom.dashboard.server.format;
 
 import stroom.dashboard.expression.TypeConverter;
-import stroom.query.shared.FormatSettings;
-import stroom.query.shared.NumberFormatSettings;
+import stroom.dashboard.shared.FormatSettings;
+import stroom.dashboard.shared.NumberFormatSettings;
 
 public class NumberFormatter implements Formatter {
     private final NumberFormatSettings numberFormatSettings;

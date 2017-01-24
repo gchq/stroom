@@ -19,11 +19,11 @@ package stroom.statistics.server.common;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.node.server.MockStroomPropertyService;
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.Search;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.Query;
 import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.FilterTermsTree;
 import stroom.statistics.common.FindEventCriteria;
@@ -292,12 +292,12 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
     public void testBuildCriteria_noDate() throws Exception {
         final ExpressionOperator rootOperator = new ExpressionOperator(Op.AND);
 
-        final Search search = new Search(null, rootOperator);
+        final Query query = new Query(null, rootOperator);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(search, dataSource);
+        AbstractStatistics.buildCriteria(query, dataSource);
 
     }
 
@@ -307,15 +307,15 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         final String dateTerm = "2000-01-01T00:00:00.000Z,2010-01-01T00:00:00.000Z";
 
-        rootOperator.addChild(new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME,
+        rootOperator.add(new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME,
                 Condition.IN_DICTIONARY, dateTerm));
 
-        final Search search = new Search(null, rootOperator);
+        final Query query = new Query(null, rootOperator);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(search, dataSource);
+        AbstractStatistics.buildCriteria(query, dataSource);
 
     }
 
@@ -330,15 +330,15 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         final String dateTerm = fromDateStr + "," + toDateStr;
 
-        rootOperator.addChild(
+        rootOperator.add(
                 new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm));
 
-        final Search search = new Search(null, rootOperator);
+        final Query query = new Query(null, rootOperator);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(search, dataSource);
+        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(query, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals(fromDate, criteria.getPeriod().getFrom().longValue());
@@ -358,15 +358,15 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         final String dateTerm = fromDateStr;
 
-        rootOperator.addChild(
+        rootOperator.add(
                 new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm));
 
-        final Search search = new Search(null, rootOperator);
+        final Query query = new Query(null, rootOperator);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(search, dataSource);
+        AbstractStatistics.buildCriteria(query, dataSource);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -380,17 +380,17 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         final String dateTerm = fromDateStr + "," + toDateStr;
 
-        rootOperator.addChild(
+        rootOperator.add(
                 new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm));
 
-        rootOperator.addChild(new ExpressionTerm(null, Condition.EQUALS, "xxx"));
+        rootOperator.add(new ExpressionTerm(null, Condition.EQUALS, "xxx"));
 
-        final Search search = new Search(null, rootOperator);
+        final Query query = new Query(null, rootOperator);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(search, dataSource);
+        AbstractStatistics.buildCriteria(query, dataSource);
     }
 
     @Test
@@ -404,17 +404,17 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         final String dateTerm = fromDateStr + "," + toDateStr;
 
-        rootOperator.addChild(
+        rootOperator.add(
                 new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm));
 
-        rootOperator.addChild(new ExpressionTerm("MyField", Condition.EQUALS, ""));
+        rootOperator.add(new ExpressionTerm("MyField", Condition.EQUALS, ""));
 
-        final Search search = new Search(null, rootOperator);
+        final Query query = new Query(null, rootOperator);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(search, dataSource);
+        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(query, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals("[MyField=]", criteria.getFilterTermsTree().toString());
@@ -431,17 +431,17 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         final String dateTerm = fromDateStr + "," + toDateStr;
 
-        rootOperator.addChild(
+        rootOperator.add(
                 new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm));
 
-        rootOperator.addChild(new ExpressionTerm("MyField", Condition.EQUALS, "xxx"));
+        rootOperator.add(new ExpressionTerm("MyField", Condition.EQUALS, "xxx"));
 
-        final Search search = new Search(null, rootOperator);
+        final Query query = new Query(null, rootOperator);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(search, dataSource);
+        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(query, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals(fromDate, criteria.getPeriod().getFrom().longValue());

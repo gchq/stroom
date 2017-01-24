@@ -29,7 +29,7 @@ import stroom.entity.server.util.BaseEntityUtil;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.server.util.XMLUtil;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;

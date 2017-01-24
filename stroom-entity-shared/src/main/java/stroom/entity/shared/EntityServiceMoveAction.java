@@ -16,6 +16,8 @@
 
 package stroom.entity.shared;
 
+import stroom.query.api.DocRef;
+
 public class EntityServiceMoveAction<E extends Entity> extends AbstractEntityAction<E> {
     private static final long serialVersionUID = 800905016214418723L;
     private DocRef folder;

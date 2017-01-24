@@ -16,8 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.shared.Field;
-
 public interface HasFieldRef {
     Field getRefField();
 }

@@ -17,7 +17,7 @@
 package stroom.streamstore.shared;
 
 import stroom.entity.shared.Action;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.util.shared.ResourceKey;
 
 public class UploadDataAction extends Action<ResourceKey> {

@@ -22,17 +22,21 @@ import stroom.entity.shared.HasLoadByUuid;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.query.api.DocRef;
+import stroom.query.api.EntityDocRef;
 
 @Component
 @Transactional(readOnly = true)
 public class ServiceCacheMethodInterceptorTransactionHelper {
     public Object transaction_getEntity(final EntityService<?> entityService,
                                         final ServiceCacheMethodInterceptor.EntityIdKey entityKey) {
-        if (entityKey.docRef.getId() != null && entityService instanceof HasLoadById) {
+        DocRef docRef = entityKey.docRef;
+
+        if (docRef instanceof EntityDocRef && ((EntityDocRef) docRef).getId() != null && entityService instanceof HasLoadById) {
             if (entityKey.fetchSet == null) {
-                return ((HasLoadById) entityService).loadById(entityKey.docRef.getId());
+                return ((HasLoadById) entityService).loadById(((EntityDocRef) docRef).getId());
             } else {
-                return ((HasLoadById) entityService).loadById(entityKey.docRef.getId(), entityKey.fetchSet);
+                return ((HasLoadById) entityService).loadById(((EntityDocRef) docRef).getId(), entityKey.fetchSet);
             }
         }
 

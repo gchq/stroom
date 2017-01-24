@@ -25,6 +25,9 @@ import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardService;
 import stroom.dashboard.shared.FindDashboardCriteria;
+import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.dictionary.shared.FindDictionaryCriteria;
@@ -41,13 +44,10 @@ import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.QueryData;
-import stroom.query.shared.TableSettings;
-import stroom.query.shared.VisDashboardSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.resource.server.ResourceStore;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;
@@ -145,18 +145,18 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         Assert.assertEquals(1, commonTestControl.countEntity(Dictionary.class));
 
         // Create query.
-        final QueryData queryData = new QueryData();
-        queryData.setDataSource(DocRefUtil.create(index));
-        queryData.setExpression(createExpression(dictionary));
+        final QueryComponentSettings queryComponentSettings = new QueryComponentSettings();
+        queryComponentSettings.setDataSource(DocRefUtil.create(index));
+        queryComponentSettings.setExpression(createExpression(dictionary));
 
         final ComponentConfig query = new ComponentConfig();
         query.setId("query-1234");
         query.setName("Query");
         query.setType("query");
-        query.setSettings(queryData);
+        query.setSettings(queryComponentSettings);
 
         // Create table.
-        final TableSettings tableSettings = new TableSettings();
+        final TableComponentSettings tableSettings = new TableComponentSettings();
         tableSettings.setExtractValues(true);
         tableSettings.setExtractionPipeline(DocRefUtil.create(pipelineEntity));
 
@@ -167,7 +167,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         table.setSettings(tableSettings);
 
         // Create visualisation.
-        final VisDashboardSettings visSettings = new VisDashboardSettings();
+        final VisComponentSettings visSettings = new VisComponentSettings();
         visSettings.setTableId("table-1234");
         visSettings.setTableSettings(tableSettings);
         visSettings.setVisualisation(DocRefUtil.create(vis));
@@ -248,16 +248,16 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final Dashboard loadedDashboard = dashboardService.find(new FindDashboardCriteria()).getFirst();
         final List<ComponentConfig> loadedComponents = loadedDashboard.getDashboardData().getComponents();
         final ComponentConfig loadedQuery = loadedComponents.get(0);
-        final QueryData loadedQueryData = (QueryData) loadedQuery.getSettings();
+        final QueryComponentSettings loadedQueryData = (QueryComponentSettings) loadedQuery.getSettings();
         final ComponentConfig loadedTable = loadedComponents.get(1);
-        final TableSettings loadedTableSettings = (TableSettings) loadedTable.getSettings();
+        final TableComponentSettings loadedTableSettings = (TableComponentSettings) loadedTable.getSettings();
         final ComponentConfig loadedVis = loadedComponents.get(2);
-        final VisDashboardSettings loadedVisSettings = (VisDashboardSettings) loadedVis.getSettings();
+        final VisComponentSettings loadedVisSettings = (VisComponentSettings) loadedVis.getSettings();
 
         // Verify all entity references have been restored.
         Assert.assertEquals(DocRefUtil.create(loadedIndex), loadedQueryData.getDataSource());
         Assert.assertEquals(DocRefUtil.create(loadedDictionary),
-                ((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDictionary());
+                ((ExpressionTerm) loadedQueryData.getExpression().getChildren()[1]).getDictionary());
         Assert.assertEquals(DocRefUtil.create(loadedPipeline), loadedTableSettings.getExtractionPipeline());
 
         if (!skipVisExport || skipVisCreation) {
@@ -282,8 +282,8 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
     private ExpressionOperator createExpression(final Dictionary dictionary) {
         final ExpressionOperator root = new ExpressionOperator(Op.AND);
-        root.addChild(new ExpressionTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z"));
-        root.addChild(new ExpressionTerm("User", Condition.IN_DICTIONARY, DocRefUtil.create(dictionary)));
+        root.add(new ExpressionTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z"));
+        root.add(new ExpressionTerm("User", Condition.IN_DICTIONARY, DocRefUtil.create(dictionary)));
         return root;
     }
 }

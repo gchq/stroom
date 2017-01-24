@@ -22,7 +22,8 @@ import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.SharedDocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.EntityReferenceFindAction;
 import stroom.entity.shared.ResultList;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
@@ -70,11 +71,11 @@ public class NewPipelineReferencePresenter
         findStreamTypeCriteria.obtainPurpose().add(Purpose.PROCESSED);
         findStreamTypeCriteria.obtainPurpose().add(Purpose.CONTEXT);
         dispatcher.execute(new EntityReferenceFindAction<>(findStreamTypeCriteria),
-                new AsyncCallbackAdaptor<ResultList<DocRef>>() {
+                new AsyncCallbackAdaptor<ResultList<SharedDocRef>>() {
                     @Override
-                    public void onSuccess(final ResultList<DocRef> result) {
+                    public void onSuccess(final ResultList<SharedDocRef> result) {
                         if (result != null && result.size() > 0) {
-                            for (final DocRef docRef : result) {
+                            for (final SharedDocRef docRef : result) {
                                 streamTypesWidget.addItem(docRef.getName());
                             }
                         }

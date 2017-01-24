@@ -16,7 +16,7 @@
 
 package stroom.importexport.server;
 
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;

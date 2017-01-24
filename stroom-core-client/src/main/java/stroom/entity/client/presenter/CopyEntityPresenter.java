@@ -27,7 +27,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.entity.client.event.CopyEntityEvent;
 import stroom.entity.client.event.ShowCopyEntityDialogEvent;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.Folder;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.EntityData;

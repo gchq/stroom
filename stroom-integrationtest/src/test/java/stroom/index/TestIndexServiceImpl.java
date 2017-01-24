@@ -21,14 +21,14 @@ import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.server.util.BaseEntityDeProxyProcessor;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FolderService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFields;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFields;
 
 import javax.annotation.Resource;
 

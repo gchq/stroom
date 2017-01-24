@@ -24,6 +24,7 @@ import stroom.util.spring.StroomBeanStore;
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @Component
 public class SearchDataSourceProviderRegistry implements InitializingBean {
@@ -42,10 +43,15 @@ public class SearchDataSourceProviderRegistry implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        for (final String beanName : stroomBeanStore.getStroomBeanByType(SearchDataSourceProvider.class)) {
-            final Object bean = stroomBeanStore.getBean(beanName);
-            final SearchDataSourceProvider dataSourceProvider = (SearchDataSourceProvider) bean;
-            providers.put(dataSourceProvider.getEntityType(), dataSourceProvider);
+        final Set<String> beanNames = stroomBeanStore.getStroomBeanByType(SearchDataSourceProvider.class);
+        if (beanNames != null) {
+            for (final String beanName : beanNames) {
+                final Object bean = stroomBeanStore.getBean(beanName);
+                if (bean != null) {
+                    final SearchDataSourceProvider dataSourceProvider = (SearchDataSourceProvider) bean;
+                    providers.put(dataSourceProvider.getEntityType(), dataSourceProvider);
+                }
+            }
         }
     }
 }

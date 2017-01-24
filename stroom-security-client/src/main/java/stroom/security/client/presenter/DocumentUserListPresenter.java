@@ -18,11 +18,13 @@ package stroom.security.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.query.api.DocRef;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserRef;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class DocumentUserListPresenter extends AbstractUserListPresenter {
@@ -82,7 +84,7 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
             }
         }
 
-        Collections.sort(users);
+        Collections.sort(users, Comparator.comparing(DocRef::getName));
 
         getDataGridView().setRowData(0, users);
         getDataGridView().setRowCount(users.size());

@@ -16,26 +16,25 @@
 
 package stroom.query.client;
 
-import java.util.List;
-
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
-import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.IndexField;
+import stroom.datasource.api.DataSourceField;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.DraggableTreePanel;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.util.client.MySingleSelectionModel;
 
-public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers>implements ExpressionTreeView {
+import java.util.List;
+
+public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers> implements ExpressionTreeView {
     private final ExpressionTreePanel treePanel;
     private final DraggableTreePanel<ExpressionItem> layoutPanel;
     private MySingleSelectionModel<ExpressionItem> selectionModel;
@@ -97,7 +96,7 @@ public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandl
     }
 
     @Override
-    public void setFields(final List<IndexField> fields) {
+    public void setFields(final List<DataSourceField> fields) {
         treePanel.setFields(fields);
     }
 

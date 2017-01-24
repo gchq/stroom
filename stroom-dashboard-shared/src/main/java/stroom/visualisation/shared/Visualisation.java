@@ -17,7 +17,7 @@
 package stroom.visualisation.shared;
 
 import stroom.entity.shared.Copyable;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;

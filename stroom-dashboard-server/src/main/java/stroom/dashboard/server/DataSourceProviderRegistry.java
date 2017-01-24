@@ -18,9 +18,8 @@ package stroom.dashboard.server;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.DocRef;
-import stroom.query.shared.DataSource;
-import stroom.query.shared.DataSourceProvider;
+import stroom.datasource.api.DataSource;
+import stroom.query.api.DocRef;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.annotation.Resource;
@@ -50,7 +49,7 @@ public class DataSourceProviderRegistry implements InitializingBean {
         for (final String beanName : stroomBeanStore.getStroomBeanByType(DataSourceProvider.class)) {
             final Object bean = stroomBeanStore.getBean(beanName);
             final DataSourceProvider dataSourceProvider = (DataSourceProvider) bean;
-            providers.put(dataSourceProvider.getEntityType(), dataSourceProvider);
+            providers.put(dataSourceProvider.getType(), dataSourceProvider);
         }
     }
 }

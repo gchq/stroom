@@ -22,13 +22,24 @@ import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonIndexingTest;
 import stroom.dashboard.server.ActiveQuery;
-import stroom.dashboard.server.QueryMarshaller;
+import stroom.dashboard.server.QueryEntityMarshaller;
 import stroom.dashboard.server.SearchDataSourceProviderRegistry;
 import stroom.dashboard.server.SearchResultCreator;
 import stroom.dashboard.shared.BasicQueryKey;
-import stroom.dashboard.shared.ParamUtil;
-import stroom.dashboard.shared.Query;
-import stroom.entity.shared.DocRef;
+import stroom.dashboard.shared.ComponentResult;
+import stroom.dashboard.shared.ComponentResultRequest;
+import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.Format;
+import stroom.util.shared.ParamUtil;
+import stroom.dashboard.shared.QueryEntity;
+import stroom.dashboard.shared.Row;
+import stroom.dashboard.shared.Search;
+import stroom.dashboard.shared.SearchRequest;
+import stroom.dashboard.shared.SearchResponse;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.dashboard.shared.TableResult;
+import stroom.dashboard.shared.TableResultRequest;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
@@ -36,22 +47,11 @@ import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
-import stroom.query.shared.ComponentResult;
-import stroom.query.shared.ComponentResultRequest;
-import stroom.query.shared.ComponentSettings;
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.Field;
-import stroom.query.shared.Format;
-import stroom.query.shared.QueryData;
-import stroom.query.shared.Row;
-import stroom.query.shared.Search;
-import stroom.query.shared.SearchRequest;
-import stroom.query.shared.SearchResponse;
-import stroom.query.shared.TableResult;
-import stroom.query.shared.TableResultRequest;
-import stroom.query.shared.TableSettings;
+import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.Query;
 import stroom.search.server.LuceneSearchDataSourceProvider;
 import stroom.task.server.TaskManager;
 import stroom.util.logging.StroomLogger;
@@ -74,7 +74,7 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
     @Resource
     private IndexService indexService;
     @Resource
-    private QueryMarshaller queryMarshaller;
+    private QueryEntityMarshaller queryEntityMarshaller;
     @Resource
     private SearchDataSourceProviderRegistry searchDataSourceProviderRegistry;
     @Resource
@@ -109,38 +109,38 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
         fldCount.setExpression("count()");
         fldCount.setFormat(new Format(Format.Type.NUMBER));
 
-        final TableSettings tableSettings = new TableSettings();
+        final TableComponentSettings tableSettings = new TableComponentSettings();
         tableSettings.addField(fldText);
         tableSettings.addField(fldCount);
 
         final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultTextPipeline();
         tableSettings.setExtractionPipeline(DocRefUtil.create(resultPipeline));
 
-        final Query query = buildQuery(dataSourceRef, "user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
-        final QueryData searchData = query.getQueryData();
-        final ExpressionOperator expression = searchData.getExpression();
+        final QueryEntity queryEntity = buildQuery(dataSourceRef, "user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
+        final Query query = queryEntity.getQuery();
+        final ExpressionOperator expression = query.getExpression();
 
-        final Map<String, ComponentSettings> resultComponentMap = new HashMap<String, ComponentSettings>();
+        final Map<String, ComponentSettings> resultComponentMap = new HashMap<>();
         resultComponentMap.put(componentId, tableSettings);
 
         final TableResultRequest tableResultRequest = new TableResultRequest();
         tableResultRequest.setTableSettings(tableSettings);
         tableResultRequest.setWantsData(true);
-        final Map<String, ComponentResultRequest> componentResultRequests = new HashMap<String, ComponentResultRequest>();
+        final Map<String, ComponentResultRequest> componentResultRequests = new HashMap<>();
         componentResultRequests.put(componentId, tableResultRequest);
 
         SearchResponse result = null;
         boolean complete = false;
         final Map<String, ComponentResult> results = new HashMap<>();
 
-        final Search search = new Search(searchData.getDataSource(), expression, resultComponentMap);
+        final Search search = new Search(query.getDataSource(), expression, resultComponentMap);
         final SearchRequest searchRequest = new SearchRequest(search, componentResultRequests,
                 DateTimeZone.UTC.getID());
 
         final SearchDataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
                 .getProvider(LuceneSearchDataSourceProvider.ENTITY_TYPE);
         final SearchResultCollector searchResultCollector = dataSourceProvider.createCollector(null, null,
-                new BasicQueryKey(query.getName()), searchRequest);
+                new BasicQueryKey(queryEntity.getName()), searchRequest);
         final ActiveQuery activeQuery = new ActiveQuery(searchResultCollector);
 
         // Start asynchronous search execution.
@@ -211,9 +211,9 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
         Assert.assertEquals("Value does not have expected word count", 4, count);
     }
 
-    private Query buildQuery(final DocRef dataSourceRef, final String user, final String from,
-            final String to) {
-        Query query = new Query();
+    private QueryEntity buildQuery(final DocRef dataSourceRef, final String user, final String from,
+                                   final String to) {
+        QueryEntity queryEntity = new QueryEntity();
 
         final ExpressionTerm userId = new ExpressionTerm();
         userId.setField("UserId");
@@ -226,15 +226,13 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
         eventTime.setValue(from + "," + to);
 
         final ExpressionOperator operator = new ExpressionOperator();
-        operator.addChild(userId);
-        operator.addChild(eventTime);
+        operator.add(userId);
+        operator.add(eventTime);
 
-        final QueryData queryData = new QueryData();
-        queryData.setExpression(operator);
-        queryData.setDataSource(dataSourceRef);
-        query.setQueryData(queryData);
-        query = queryMarshaller.marshal(query);
+        final Query query = new Query(dataSourceRef, operator);
+        queryEntity.setQuery(query);
+        queryEntity = queryEntityMarshaller.marshal(queryEntity);
 
-        return query;
+        return queryEntity;
     }
 }

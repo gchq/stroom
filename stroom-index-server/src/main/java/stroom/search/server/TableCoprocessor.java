@@ -28,8 +28,8 @@ import stroom.query.ItemPartitioner;
 import stroom.query.Payload;
 import stroom.query.TableCoprocessorSettings;
 import stroom.query.TablePayload;
-import stroom.query.shared.Field;
-import stroom.query.shared.TableSettings;
+import stroom.query.api.Field;
+import stroom.query.api.TableSettings;
 import stroom.util.task.TaskMonitor;
 
 import java.util.List;
@@ -46,7 +46,7 @@ public class TableCoprocessor implements Coprocessor<TableCoprocessorSettings> {
                             final FieldIndexMap fieldIndexMap, final TaskMonitor taskMonitor, final Map<String, String> paramMap) {
         final TableSettings tableSettings = settings.getTableSettings();
 
-        final List<Field> fields = tableSettings.getFields();
+        final Field[] fields = tableSettings.getFields();
         compiledDepths = new CompiledDepths(fields, tableSettings.showDetail());
         compiledFields = new CompiledFields(fields, fieldIndexMap, paramMap);
 

@@ -19,7 +19,7 @@ package stroom.index.server;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.EntityMarshaller;
 import stroom.index.shared.Index;
-import stroom.query.shared.IndexFields;
+import stroom.index.shared.IndexFields;
 
 @Component
 public class IndexMarshaller extends EntityMarshaller<Index, IndexFields> {

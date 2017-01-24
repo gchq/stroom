@@ -16,7 +16,8 @@
 
 package stroom.pipeline.server.stepping;
 
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.SharedDocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
 import stroom.feed.shared.Feed;
@@ -36,7 +37,7 @@ import javax.inject.Inject;
 import java.util.List;
 
 @TaskHandlerBean(task = GetPipelineForStreamAction.class)
-public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStreamAction, DocRef> {
+public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStreamAction, SharedDocRef> {
     private final StreamStore streamStore;
     private final PipelineEntityService pipelineEntityService;
     private final FeedService feedService;
@@ -49,8 +50,8 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
     }
 
     @Override
-    public DocRef exec(final GetPipelineForStreamAction action) {
-        DocRef docRef = null;
+    public SharedDocRef exec(final GetPipelineForStreamAction action) {
+        SharedDocRef docRef = null;
 
         // First try and get the pipeline from the selected child stream.
         Stream childStream = getStream(action.getChildStreamId());
@@ -122,8 +123,8 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
         return null;
     }
 
-    private DocRef getPipeline(final Stream stream) {
-        DocRef docRef = null;
+    private SharedDocRef getPipeline(final Stream stream) {
+        SharedDocRef docRef = null;
 
         // So we have got the stream so try and get the first pipeline that was
         // used to produce children for this stream.

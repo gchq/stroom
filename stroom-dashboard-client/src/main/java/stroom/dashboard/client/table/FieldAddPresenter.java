@@ -29,7 +29,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.table.client.CellTableView;
 import stroom.data.table.client.CellTableViewImpl;
 import stroom.data.table.client.CellTableViewImpl.HoverResources;
-import stroom.query.shared.Field;
+import stroom.dashboard.shared.Field;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.List;

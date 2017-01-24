@@ -43,7 +43,8 @@ import stroom.dispatch.client.ExportFileCompleteHandler;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.SharedDocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
@@ -586,7 +587,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         if (streamId != null) {
             // Try and get a pipeline id to use as a starting point for
             // stepping.
-            DocRef pipelineRef = null;
+            SharedDocRef pipelineRef = null;
 
             // TODO : Fix by making entity id sets docref sets.
 //            final EntityIdSet<PipelineEntity> entityIdSet = findStreamAttributeMapCriteria.obtainFindStreamCriteria()

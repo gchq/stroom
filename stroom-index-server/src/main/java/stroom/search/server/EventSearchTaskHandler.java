@@ -19,8 +19,8 @@ package stroom.search.server;
 import org.springframework.context.annotation.Scope;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
-import stroom.query.shared.CoprocessorSettings;
-import stroom.query.shared.Search;
+import stroom.query.CoprocessorSettings;
+import stroom.query.api.Query;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -29,8 +29,6 @@ import stroom.util.spring.StroomScope;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,7 +54,7 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
         final long nowEpochMilli = System.currentTimeMillis();
 
         // Get the search.
-        final Search search = task.getSearch();
+        final Query query = task.getQuery();
 
         // Get the current node.
         final Node node = nodeCache.getDefaultNode();
@@ -69,7 +67,7 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
         // Create an asynchronous search task.
         final String searchName = "Search " + task.getSessionId();
         final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(task.getSessionId(), task.getUserId(), searchName,
-                search, node, task.getResultSendFrequency(), coprocessorMap, nowEpochMilli);
+                query, node, task.getResultSendFrequency(), coprocessorMap, nowEpochMilli);
 
         // Create a collector to store search results.
         final EventSearchResultHandler resultHandler = new EventSearchResultHandler();

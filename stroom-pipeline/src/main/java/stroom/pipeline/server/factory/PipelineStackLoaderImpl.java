@@ -16,7 +16,7 @@
 
 package stroom.pipeline.server.factory;
 
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.util.logging.StroomLogger;

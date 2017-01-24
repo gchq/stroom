@@ -25,7 +25,8 @@ import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.SharedDocRef;
+import stroom.query.api.DocRef;
 import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
 import stroom.explorer.shared.ExplorerData;
 import stroom.pipeline.shared.PipelineEntity;
@@ -64,9 +65,9 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                 // If we don't have a pipeline id then try to guess one for the
                 // supplied stream.
                 dispatcher.execute(new GetPipelineForStreamAction(event.getStreamId(), event.getChildStreamId()),
-                        new AsyncCallbackAdaptor<DocRef>() {
+                        new AsyncCallbackAdaptor<SharedDocRef>() {
                             @Override
-                            public void onSuccess(final DocRef result) {
+                            public void onSuccess(final SharedDocRef result) {
                                 choosePipeline(result, event.getStreamId(), event.getEventId(),
                                         event.getChildStreamType());
                             }
@@ -75,7 +76,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         }
     }
 
-    private void choosePipeline(final DocRef initialPipelineRef, final long streamId, final long eventId,
+    private void choosePipeline(final SharedDocRef initialPipelineRef, final long streamId, final long eventId,
                                 final StreamType childStreamType) {
         final ExplorerDropDownTreePresenter chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Step With");

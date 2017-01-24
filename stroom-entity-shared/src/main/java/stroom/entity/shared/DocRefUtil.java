@@ -16,6 +16,7 @@
 
 package stroom.entity.shared;
 
+import stroom.query.api.EntityDocRef;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasType;
 
@@ -24,7 +25,7 @@ public final class DocRefUtil {
         // Utility class.
     }
 
-    public static DocRef create(final Entity entity) {
+    public static SharedDocRef create(final Entity entity) {
         if (entity == null) {
             return null;
         }
@@ -61,6 +62,6 @@ public final class DocRefUtil {
             // Ignore, we might get an exception getting some fields on lazy hibernate objects.
         }
 
-        return new DocRef(type, id, uuid, name);
+        return new EntityDocRef(type, id, uuid, name);
     }
 }

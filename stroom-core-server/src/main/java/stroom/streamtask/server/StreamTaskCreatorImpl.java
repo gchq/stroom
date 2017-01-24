@@ -22,9 +22,8 @@ import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.Node;
-import stroom.query.shared.Limits;
-import stroom.query.shared.QueryData;
-import stroom.query.shared.Search;
+import stroom.query.api.DocRef;
+import stroom.query.api.Query;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
@@ -34,6 +33,8 @@ import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.Limits;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.server.StreamTaskCreatorTransactionHelper.CreatedTasks;
@@ -742,13 +743,13 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             }
         }
 
-        final Search search = new Search(queryData.getDataSource(), queryData.getExpression(), null, Collections.emptyMap(), false);
+        final Query query = new Query(queryData.getDataSource(), queryData.getExpression());
 
         // Update the tracker status message.
         tracker.setStatus("Searching...");
         final StreamProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(null, filter.getUpdateUser(), findStreamCriteria, search,
+        final EventSearchTask eventSearchTask = new EventSearchTask(null, filter.getUpdateUser(), findStreamCriteria, query,
                 minEvent, maxEvent, maxStreams, maxEvents, maxEventsPerStream, POLL_INTERVAL_MS);
         taskManager.execAsync(eventSearchTask, new TaskCallbackAdaptor<EventRefs>() {
             @Override

@@ -20,14 +20,14 @@ import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardService;
 import stroom.node.shared.Node;
 import stroom.query.ResultHandler;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.Search;
+import stroom.query.api.Query;
 import stroom.security.SecurityContext;
 import stroom.task.cluster.ClusterDispatchAsync;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
@@ -99,10 +99,10 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // to.
                     final Set<Node> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
                     taskMonitor.info(task.getSearchName() + " - initialising");
-                    final Search search = task.getSearch();
+                    final Query query = task.getQuery();
 
                     // Reload the index.
-                    final Index index = indexService.loadByUuid(search.getDataSourceRef().getUuid());
+                    final Index index = indexService.loadByUuid(query.getDataSource().getUuid());
 
                     // Get an array of stored index fields that will be used for
                     // getting stored data.
@@ -148,7 +148,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                         if (targetNodes.contains(node)) {
                             final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task.getSessionId(),
-                                    task.getUserId(), "Cluster Search", search, shards, sourceNode, storedFields,
+                                    task.getUserId(), "Cluster Search", query, shards, sourceNode, storedFields,
                                     task.getResultSendFrequency(), task.getCoprocessorMap(), task.getNow());
                             dispatcher.execAsync(clusterSearchTask, resultCollector, sourceNode,
                                     Collections.singleton(node));

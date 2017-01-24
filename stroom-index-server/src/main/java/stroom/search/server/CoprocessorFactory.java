@@ -18,8 +18,8 @@ package stroom.search.server;
 
 import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.FieldIndexMap;
+import stroom.query.CoprocessorSettings;
 import stroom.query.TableCoprocessorSettings;
-import stroom.query.shared.CoprocessorSettings;
 import stroom.util.task.TaskMonitor;
 
 import java.util.Map;

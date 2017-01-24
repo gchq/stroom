@@ -40,12 +40,12 @@ import stroom.dashboard.server.vis.CompiledStructure.Values;
 import stroom.query.Item;
 import stroom.query.Items;
 import stroom.query.ResultStore;
-import stroom.query.shared.ComponentResult;
-import stroom.query.shared.ComponentResultRequest;
-import stroom.query.shared.Format.Type;
-import stroom.query.shared.VisDashboardSettings;
-import stroom.query.shared.VisResult;
-import stroom.query.shared.VisResultRequest;
+import stroom.dashboard.shared.ComponentResult;
+import stroom.dashboard.shared.ComponentResultRequest;
+import stroom.dashboard.shared.Format.Type;
+import stroom.dashboard.shared.VisComponentSettings;
+import stroom.dashboard.shared.VisResult;
+import stroom.dashboard.shared.VisResultRequest;
 import stroom.visualisation.shared.Visualisation;
 import stroom.visualisation.shared.VisualisationService;
 
@@ -71,7 +71,7 @@ public class VisComponentResultCreator implements ComponentResultCreator {
         try {
             final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
 
-            final VisDashboardSettings visDashboardSettings = visResultRequest.getVisDashboardSettings();
+            final VisComponentSettings visDashboardSettings = visResultRequest.getVisDashboardSettings();
             final Visualisation visualisation = visualisationService
                     .loadByUuid(visDashboardSettings.getVisualisation().getUuid());
             if (visualisation != null) {

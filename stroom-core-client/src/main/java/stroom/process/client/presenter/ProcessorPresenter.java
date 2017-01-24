@@ -30,7 +30,8 @@ import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefs;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
@@ -47,16 +48,17 @@ import stroom.process.shared.LoadEntityIdSetAction;
 import stroom.process.shared.SetId;
 import stroom.process.shared.StreamProcessorFilterRow;
 import stroom.process.shared.StreamProcessorRow;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.QueryData;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.StreamFilterPresenter;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
@@ -73,7 +75,9 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MySingleSelectionModel;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
         implements HasRead<BaseEntity> {
@@ -235,15 +239,9 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     dispatcher.execute(new EntityServiceLoadAction<NamedEntity>(dataSourceRef, null), new AsyncCallbackAdaptor<NamedEntity>() {
                         @Override
                         public void onSuccess(final NamedEntity result) {
-                            final ExpressionTerm ds = new ExpressionTerm();
-                            ds.setField("Data Source");
-                            ds.setCondition(Condition.EQUALS);
-                            ds.setValue(result.getName());
-
                             final ExpressionOperator operator = new ExpressionOperator(Op.AND);
-                            operator.addChild(ds);
-                            operator.addChild(expression);
-
+                            operator.addTerm("Data Source", Condition.EQUALS, result.getName());
+                            operator.add(expression);
                             expressionPresenter.read(operator);
                         }
                     });
@@ -268,55 +266,57 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 }
                 entitySetMap.put(streamTypeSetId, findStreamCriteria.getStreamTypeIdSet());
 
-                // Load entities.
-                dispatcher.execute(new LoadEntityIdSetAction(entitySetMap),
-                        new AsyncCallbackAdaptor<SharedMap<SetId, SharedList<DocRef>>>() {
-                            @Override
-                            public void onSuccess(final SharedMap<SetId, SharedList<DocRef>> result) {
-                                final SharedList<DocRef> folders = result.get(folderSetId);
-                                final SharedList<DocRef> feedsInclude = result.get(feedIncludeSetId);
-                                final SharedList<DocRef> feedsExclude = result.get(feedExcludeSetId);
-                                final SharedList<DocRef> streamTypes = result.get(streamTypeSetId);
+                    // Load entities.
+                    dispatcher.execute(new LoadEntityIdSetAction(entitySetMap),
+                            new AsyncCallbackAdaptor<SharedMap<SetId, DocRefs>>() {
+                                @Override
+                                public void onSuccess(final SharedMap<SetId, DocRefs> result) {
+                                    final DocRefs folders = result.get(folderSetId);
+                                    final DocRefs feedsInclude = result.get(feedIncludeSetId);
+                                    final DocRefs feedsExclude = result.get(feedExcludeSetId);
+                                    final DocRefs streamTypes = result.get(streamTypeSetId);
 
-                                final ExpressionOperator operator = new ExpressionOperator(Op.AND);
-                                addEntityListTerm(operator, folders, "Folder");
-                                addEntityListTerm(operator, feedsInclude, "Feed");
+                                    final ExpressionOperator operator = new ExpressionOperator(Op.AND);
+                                    addEntityListTerm(operator, folders, "Folder");
+                                    addEntityListTerm(operator, feedsInclude, "Feed");
 
-                                if (feedsExclude != null && feedsExclude.size() > 0) {
-                                    final ExpressionOperator not = new ExpressionOperator(Op.NOT);
-                                    addEntityListTerm(not, feedsExclude, "Feed");
-                                    operator.addChild(not);
+                                    if (feedsExclude != null && feedsExclude.iterator().hasNext()) {
+                                        final ExpressionOperator not = new ExpressionOperator(Op.NOT);
+                                        addEntityListTerm(not, feedsExclude, "Feed");
+                                        operator.add(not);
+                                    }
+
+                                    addEntityListTerm(operator, streamTypes, "Stream Type");
+                                    addIdTerm(operator, findStreamCriteria.getStreamIdSet(), "Stream Id");
+                                    addIdTerm(operator, findStreamCriteria.getParentStreamIdSet(), "Parent Stream Id");
+                                    addPeriodTerm(operator, findStreamCriteria.getCreatePeriod(), "Creation time");
+                                    addPeriodTerm(operator, findStreamCriteria.getEffectivePeriod(), "Effective time");
+
+                                    expressionPresenter.read(operator);
                                 }
-
-                                addEntityListTerm(operator, streamTypes, "Stream Type");
-                                addIdTerm(operator, findStreamCriteria.getStreamIdSet(), "Stream Id");
-                                addIdTerm(operator, findStreamCriteria.getParentStreamIdSet(), "Parent Stream Id");
-                                addPeriodTerm(operator, findStreamCriteria.getCreatePeriod(), "Creation time");
-                                addPeriodTerm(operator, findStreamCriteria.getEffectivePeriod(), "Effective time");
-
-                                expressionPresenter.read(operator);
-                            }
-                        });
+                            });
+                }
             }
         }
-    }
 
-    private void addEntityListTerm(final ExpressionOperator operator, final SharedList<DocRef> entities,
+    private void addEntityListTerm(final ExpressionOperator operator, final DocRefs entities,
                                    final String label) {
-        if (entities != null && entities.size() > 0) {
-            if (entities.size() > 1) {
+        if (entities != null) {
+            final List<DocRef> list = new ArrayList<>(entities.getDoc());
+
+            if (list.size() > 1) {
                 final ExpressionOperator or = new ExpressionOperator(Op.OR);
 
-                Collections.sort(entities, new EntityReferenceComparator());
-                for (final DocRef entity : entities) {
+                Collections.sort(list, new EntityReferenceComparator());
+                for (final DocRef entity : list) {
                     addEntity(or, entity, label);
                 }
 
-                if (or.getChildren() != null && or.getChildren().size() > 0) {
-                    operator.addChild(or);
+                if (or.getChildren() != null && or.getChildren().length > 0) {
+                    operator.add(or);
                 }
-            } else {
-                final DocRef entity = entities.get(0);
+            } else if (list.size() > 0) {
+                final DocRef entity = list.get(0);
                 addEntity(operator, entity, label);
             }
         }
@@ -328,7 +328,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             term.setField(label);
             term.setCondition(Condition.EQUALS);
             term.setValue(entity.getName());
-            operator.addChild(term);
+            operator.add(term);
         }
     }
 
@@ -354,7 +354,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             }
             term.setValue(sb.toString());
 
-            operator.addChild(term);
+            operator.add(term);
         }
     }
 
@@ -379,7 +379,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
             term.setValue(sb.toString());
 
-            operator.addChild(term);
+            operator.add(term);
         }
     }
 

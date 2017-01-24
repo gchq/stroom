@@ -24,9 +24,9 @@ import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.query.shared.QueryKey;
-import stroom.query.shared.SearchRequest;
-import stroom.query.shared.SearchResponse;
+import stroom.dashboard.shared.QueryKey;
+import stroom.dashboard.shared.SearchRequest;
+import stroom.dashboard.shared.SearchResponse;
 import stroom.security.client.event.LogoutEvent;
 
 import java.util.HashMap;

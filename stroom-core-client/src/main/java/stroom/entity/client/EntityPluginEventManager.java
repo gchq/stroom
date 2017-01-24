@@ -41,7 +41,7 @@ import stroom.entity.client.event.ShowPermissionsEntityDialogEvent;
 import stroom.entity.client.event.ShowRenameEntityDialogEvent;
 import stroom.entity.client.event.ShowSaveAsEntityDialogEvent;
 import stroom.entity.client.presenter.EntityEditPresenter;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;

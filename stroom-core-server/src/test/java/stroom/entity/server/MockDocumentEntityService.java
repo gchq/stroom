@@ -18,13 +18,14 @@ package stroom.entity.server;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
+import stroom.query.api.EntityDocRef;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,9 +62,9 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     private void setFolder(final E entity, final DocRef folderRef) throws RuntimeException {
         // TODO : Remove this when document entities no longer reference a folder.
         Folder folder = null;
-        if (folderRef != null && folderRef.getId() != null) {
+        if (folderRef != null && folderRef instanceof EntityDocRef && ((EntityDocRef)folderRef).getId() != null) {
             folder = new Folder();
-            folder.setId(folderRef.getId());
+            folder.setId(((EntityDocRef)folderRef).getId());
         }
         entity.setFolder(folder);
 

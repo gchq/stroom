@@ -16,7 +16,9 @@
 
 package stroom.entity.shared;
 
-public class EntityServiceCreateAction extends Action<DocRef> {
+import stroom.query.api.DocRef;
+
+public class EntityServiceCreateAction extends Action<SharedDocRef> {
     private static final long serialVersionUID = 800905016214418723L;
 
     private String type;

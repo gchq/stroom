@@ -16,7 +16,7 @@
 
 package stroom.dashboard.server;
 
-import stroom.query.shared.QueryKey;
+import stroom.dashboard.shared.QueryKey;
 
 import java.util.Iterator;
 import java.util.Map.Entry;

@@ -19,12 +19,10 @@ package stroom.explorer.client.presenter;
 import stroom.cell.dropdowntree.client.DropDownCell;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import com.google.inject.Inject;
-
-import java.util.Set;
 
 public class EntityDropDownCell extends DropDownCell<DocRef> {
     private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;

@@ -25,11 +25,10 @@ import stroom.query.Item;
 import stroom.query.Items;
 import stroom.query.ItemsArrayList;
 import stroom.query.ResultStore;
-import stroom.query.shared.Field;
-import stroom.query.shared.Format;
-import stroom.query.shared.Format.Type;
-import stroom.query.shared.VisResult;
-import stroom.util.test.StroomUnitTest;
+import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.Format;
+import stroom.dashboard.shared.Format.Type;
+import stroom.dashboard.shared.VisResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;

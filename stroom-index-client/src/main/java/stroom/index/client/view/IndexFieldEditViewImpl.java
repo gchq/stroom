@@ -23,9 +23,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
+import stroom.index.shared.IndexField.AnalyzerType;
+import stroom.index.shared.IndexFieldType;
 import stroom.item.client.ItemListBox;
-import stroom.query.shared.IndexField.AnalyzerType;
-import stroom.query.shared.IndexFieldType;
 import stroom.widget.tickbox.client.view.TickBox;
 
 public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditView {
@@ -44,6 +44,7 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
     ItemListBox<AnalyzerType> analyser;
     @UiField
     TickBox caseSensitive;
+
     @Inject
     public IndexFieldEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);

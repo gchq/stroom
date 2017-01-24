@@ -17,7 +17,7 @@
 package stroom.script.shared;
 
 import stroom.entity.shared.Action;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.util.shared.SharedList;
 
 import java.util.Set;

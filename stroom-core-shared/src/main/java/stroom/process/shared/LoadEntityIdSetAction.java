@@ -17,12 +17,14 @@
 package stroom.process.shared;
 
 import stroom.entity.shared.Action;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.SharedDocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.EntityIdSet;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedMap;
 
-public class LoadEntityIdSetAction extends Action<SharedMap<SetId, SharedList<DocRef>>> {
+public class LoadEntityIdSetAction extends Action<SharedMap<SetId, DocRefs>> {
     private static final long serialVersionUID = -1773544031158236156L;
 
     private SharedMap<SetId, EntityIdSet<?>> entitySetMap;

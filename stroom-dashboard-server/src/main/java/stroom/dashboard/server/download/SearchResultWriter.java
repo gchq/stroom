@@ -21,7 +21,7 @@ import stroom.dashboard.server.SampleGenerator;
 import stroom.query.Item;
 import stroom.query.Items;
 import stroom.query.ResultStore;
-import stroom.query.shared.Field;
+import stroom.dashboard.shared.Field;
 
 import java.io.IOException;
 import java.util.List;

@@ -17,7 +17,8 @@
 package stroom.entity.server;
 
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.SharedDocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
@@ -30,7 +31,7 @@ import stroom.task.server.TaskHandlerBean;
 import javax.annotation.Resource;
 
 @TaskHandlerBean(task = EntityServiceCreateAction.class)
-class EntityServiceCreateHandler extends AbstractTaskHandler<EntityServiceCreateAction, DocRef> {
+class EntityServiceCreateHandler extends AbstractTaskHandler<EntityServiceCreateAction, SharedDocRef> {
     @Resource
     private EntityServiceBeanRegistry beanRegistry;
     @Resource
@@ -38,7 +39,7 @@ class EntityServiceCreateHandler extends AbstractTaskHandler<EntityServiceCreate
 
     @SuppressWarnings("unchecked")
     @Override
-    public DocRef exec(final EntityServiceCreateAction action) {
+    public SharedDocRef exec(final EntityServiceCreateAction action) {
         final Object bean = beanRegistry.getEntityService(action.getType());
         if (bean == null) {
             throw new EntityServiceException("No entity service can be found");

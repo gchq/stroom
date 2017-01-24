@@ -27,8 +27,8 @@ import stroom.dashboard.server.vis.VisSettings.Data;
 import stroom.dashboard.server.vis.VisSettings.Nest;
 import stroom.dashboard.server.vis.VisSettings.Structure;
 import stroom.dashboard.server.vis.VisSettings.Tab;
-import stroom.query.shared.Field;
-import stroom.query.shared.Format.Type;
+import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.Format.Type;
 
 import java.util.HashMap;
 import java.util.List;

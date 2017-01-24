@@ -20,6 +20,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonIndexingTest;
+import stroom.dashboard.shared.DataSourceFieldsMap;
+import stroom.datasource.api.DataSourceField;
+import stroom.datasource.api.DataSourceField.DataSourceFieldType;
 import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -27,11 +30,10 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFieldsMap;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.search.server.IndexDataSourceFieldUtil;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -55,9 +57,9 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         final Index index = indexService.find(new FindIndexCriteria()).getFirst();
 
         // Create a map of index fields keyed by name.
-        final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
-        final IndexField expected = IndexField.createField("Action");
-        final IndexField actual = indexFieldsMap.get("Action");
+        final DataSourceFieldsMap dataSourceFieldsMap = new DataSourceFieldsMap(IndexDataSourceFieldUtil.getDataSourceFields(index));
+        final DataSourceField expected = new DataSourceField(DataSourceFieldType.FIELD, "Action");
+        final DataSourceField actual = dataSourceFieldsMap.get("Action");
 
         Assert.assertEquals("Expected to index action", expected, actual);
     }
@@ -69,7 +71,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         content1.setValue("user5");
 
         final ExpressionOperator expression = new ExpressionOperator();
-        expression.addChild(content1);
+        expression.add(content1);
 
         test(expression, 1, 5);
     }
@@ -92,10 +94,10 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         content4.setValue("deviceGroup");
 
         final ExpressionOperator expression = new ExpressionOperator();
-        expression.addChild(content1);
-        expression.addChild(content2);
-        expression.addChild(content3);
-        expression.addChild(content4);
+        expression.add(content1);
+        expression.add(content2);
+        expression.add(content3);
+        expression.add(content4);
 
         test(expression, 1, 23);
     }
@@ -121,14 +123,14 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         content5.setValue("user5");
 
         final ExpressionOperator innerAndCondition = new ExpressionOperator();
-        innerAndCondition.addChild(content1);
-        innerAndCondition.addChild(content2);
-        innerAndCondition.addChild(content3);
-        innerAndCondition.addChild(content4);
+        innerAndCondition.add(content1);
+        innerAndCondition.add(content2);
+        innerAndCondition.add(content3);
+        innerAndCondition.add(content4);
 
         final ExpressionOperator expression = new ExpressionOperator();
-        expression.addChild(innerAndCondition);
-        expression.addChild(content5);
+        expression.add(innerAndCondition);
+        expression.add(content5);
 
         test(expression, 1, 5);
     }
@@ -140,7 +142,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         content.setValue("user1");
 
         final ExpressionOperator andCondition = new ExpressionOperator();
-        andCondition.addChild(content);
+        andCondition.add(content);
 
         // Check there are 4 events.
         test(andCondition, 1, 4);
@@ -149,7 +151,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         final ExpressionTerm content2 = new ExpressionTerm();
         content2.setField("HostName");
         content2.setValue("e6sm01");
-        andCondition.addChild(content2);
+        andCondition.add(content2);
 
         // There should be two events.
         test(andCondition, 1, 2);
@@ -160,13 +162,13 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         content3.setValue("user6");
 
         final ExpressionOperator orCondition = new ExpressionOperator(ExpressionOperator.Op.OR);
-        orCondition.addChild(content3);
+        orCondition.add(content3);
 
         // There should be two events.
         test(orCondition, 1, 2);
 
         // Add the and to the or.
-        orCondition.addChild(andCondition);
+        orCondition.add(andCondition);
 
         // There should be four events.
         test(orCondition, 1, 4);
@@ -180,7 +182,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         dateRange.setValue("2007-08-18T13:21:48.000Z,2007-08-18T13:23:49.000Z");
 
         final ExpressionOperator expression = new ExpressionOperator();
-        expression.addChild(dateRange);
+        expression.add(dateRange);
 
         test(expression, 1, 2);
     }

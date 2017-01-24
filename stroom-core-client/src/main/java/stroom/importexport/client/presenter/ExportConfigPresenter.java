@@ -26,6 +26,7 @@ import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.importexport.shared.ExportConfigAction;
+import stroom.query.api.EntityDocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
@@ -105,7 +106,7 @@ public class ExportConfigPresenter
                 if (dataItem instanceof EntityData) {
                     final EntityData entityData = (EntityData) dataItem;
                     if (Folder.ENTITY_TYPE.equals(entityData.getType())) {
-                        criteria.getFolderIdSet().add(entityData.getDocRef().getId());
+                        criteria.getFolderIdSet().add(((EntityDocRef)entityData.getDocRef()).getId());
                     }
                 } else {
                     // It must be the root folder that is selected

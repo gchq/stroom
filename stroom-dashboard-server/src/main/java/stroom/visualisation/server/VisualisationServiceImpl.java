@@ -22,7 +22,7 @@ import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.security.SecurityContext;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;

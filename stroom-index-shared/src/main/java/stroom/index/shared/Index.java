@@ -22,8 +22,6 @@ import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.node.shared.Volume;
-import stroom.query.shared.DataSource;
-import stroom.query.shared.IndexFields;
 import stroom.util.shared.HasDisplayValue;
 
 import javax.persistence.Column;
@@ -41,8 +39,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "IDX", uniqueConstraints = @UniqueConstraint(columnNames = { "FK_FOLDER_ID", "NAME" }) )
-public class Index extends DocumentEntity implements DataSource {
+@Table(name = "IDX", uniqueConstraints = @UniqueConstraint(columnNames = {"FK_FOLDER_ID", "NAME"}))
+public class Index extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.INDEX;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String TABLE_NAME_INDEX_VOLUME = TABLE_NAME + SEP + SQLNameConstants.VOLUME;
@@ -82,7 +80,7 @@ public class Index extends DocumentEntity implements DataSource {
     }
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = TABLE_NAME_INDEX_VOLUME, joinColumns = @JoinColumn(name = Index.FOREIGN_KEY) , inverseJoinColumns = @JoinColumn(name = Volume.FOREIGN_KEY) )
+    @JoinTable(name = TABLE_NAME_INDEX_VOLUME, joinColumns = @JoinColumn(name = Index.FOREIGN_KEY), inverseJoinColumns = @JoinColumn(name = Volume.FOREIGN_KEY))
     public Set<Volume> getVolumes() {
         return volumes;
     }
@@ -165,7 +163,6 @@ public class Index extends DocumentEntity implements DataSource {
 
     @Transient
     @XmlTransient
-    @Override
     public IndexFields getIndexFieldsObject() {
         return indexFieldsObject;
     }

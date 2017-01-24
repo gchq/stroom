@@ -19,9 +19,7 @@ package stroom.dashboard.expression;
 import org.junit.Assert;
 import org.junit.Test;
 
-import stroom.util.test.StroomUnitTest;
-
-public class TestTypeConverter extends StroomUnitTest {
+public class TestTypeConverter {
     @Test
     public void testDoubleToString() {
         test("123456789", 123456789D);

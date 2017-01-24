@@ -32,6 +32,7 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -163,31 +164,22 @@ public class ClusterSearchResultCollector implements SearchResultCollector, Clus
     }
 
     @Override
-    public String getErrors() {
-        final StringBuilder sb = new StringBuilder();
+    public List<String> getErrors() {
+        final List<String> err = new ArrayList<>();
         for (final Entry<Node, Set<String>> entry : errors.entrySet()) {
             final Node node = entry.getKey();
             final Set<String> errors = entry.getValue();
 
             if (errors.size() > 0) {
-                sb.append("Node: ");
-                sb.append(node.getName());
-                sb.append("\n");
+                err.add("Node: " + node.getName());
 
                 for (final String error : errors) {
-                    sb.append("\t");
-                    sb.append(error);
-                    sb.append("\n");
+                    err.add("\t" + error);
                 }
             }
         }
 
-        // Remove last new line.
-        if (sb.length() > 0) {
-            sb.setLength(sb.length() - 1);
-        }
-
-        return sb.toString();
+        return err;
     }
 
     @Override

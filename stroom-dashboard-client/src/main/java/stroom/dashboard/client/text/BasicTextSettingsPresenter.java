@@ -23,8 +23,8 @@ import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.TextSettings;
-import stroom.entity.shared.DocRef;
+import stroom.dashboard.shared.TextComponentSettings;
+import stroom.query.api.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.shared.DocumentPermissionNames;
@@ -75,7 +75,7 @@ public class BasicTextSettingsPresenter
         final List<Component> list = getComponents().getComponentsByType(TablePresenter.TYPE.getId());
         setTableList(list);
 
-        final TextSettings settings = (TextSettings) componentData.getSettings();
+        final TextComponentSettings settings = (TextComponentSettings) componentData.getSettings();
         setTableId(settings.getTableId());
         setPipeline(settings.getPipeline());
         setShowAsHtml(settings.isShowAsHtml());
@@ -85,7 +85,7 @@ public class BasicTextSettingsPresenter
     public void write(final ComponentConfig componentData) {
         super.write(componentData);
 
-        final TextSettings settings = (TextSettings) componentData.getSettings();
+        final TextComponentSettings settings = (TextComponentSettings) componentData.getSettings();
         settings.setTableId(getTableId());
         settings.setPipeline(getPipeline());
         settings.setShowAsHtml(isShowAsHtml());
@@ -110,7 +110,7 @@ public class BasicTextSettingsPresenter
             return true;
         }
 
-        final TextSettings settings = (TextSettings) componentData.getSettings();
+        final TextComponentSettings settings = (TextComponentSettings) componentData.getSettings();
 
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(settings.getTableId(), getTableId());

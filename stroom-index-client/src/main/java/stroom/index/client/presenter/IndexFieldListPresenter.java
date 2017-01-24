@@ -38,8 +38,8 @@ import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.index.shared.Index;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFields;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFields;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -65,7 +65,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     @Inject
     public IndexFieldListPresenter(final EventBus eventBus,
                                    final IndexFieldEditPresenter indexFieldEditPresenter) {
-        super(eventBus, new DataGridViewImpl<IndexField>(true));
+        super(eventBus, new DataGridViewImpl<>(true));
         this.indexFieldEditPresenter = indexFieldEditPresenter;
 
         selectionModel = (MySingleSelectionModel<IndexField>) getView().getSelectionModel();

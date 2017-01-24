@@ -42,13 +42,13 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
-import stroom.query.shared.ComponentResult;
-import stroom.query.shared.ComponentResultRequest;
-import stroom.query.shared.ComponentSettings;
-import stroom.query.shared.VisDashboardSettings;
-import stroom.query.shared.VisResult;
-import stroom.query.shared.VisResultRequest;
+import stroom.query.api.DocRef;
+import stroom.dashboard.shared.ComponentResult;
+import stroom.dashboard.shared.ComponentResultRequest;
+import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.VisComponentSettings;
+import stroom.dashboard.shared.VisResult;
+import stroom.dashboard.shared.VisResultRequest;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.Script;
@@ -76,7 +76,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private final VisResultRequest visResultRequest = new VisResultRequest(0, MAX_RESULTS);
     private final VisPane visPane;
     private final VisFrame visFrame;
-    private VisDashboardSettings visSettings;
+    private VisComponentSettings visSettings;
     private VisFunction currentFunction;
     private VisFunction loadedFunction;
     private SearchModel currentSearchModel;
@@ -327,7 +327,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
         // Turn JSON settings into an object.
         JSONObject settingsObject = null;
-        final VisDashboardSettings visDashboardSettings = getSettings();
+        final VisComponentSettings visDashboardSettings = getSettings();
         if (visDashboardSettings != null && visDashboardSettings.getJSON() != null) {
             try {
                 settingsObject = JSONUtil.getObject(JSONUtil.parse(visDashboardSettings.getJSON()));
@@ -559,18 +559,18 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     @Override
-    public VisDashboardSettings getSettings() {
+    public VisComponentSettings getSettings() {
         ComponentSettings settings = getComponentData().getSettings();
-        if (settings == null || !(settings instanceof VisDashboardSettings)) {
+        if (settings == null || !(settings instanceof VisComponentSettings)) {
             settings = createSettings();
             getComponentData().setSettings(settings);
         }
 
-        return (VisDashboardSettings) settings;
+        return (VisComponentSettings) settings;
     }
 
     private ComponentSettings createSettings() {
-        return new VisDashboardSettings();
+        return new VisComponentSettings();
     }
 
     @Override

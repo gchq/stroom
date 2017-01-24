@@ -16,7 +16,7 @@
 
 package stroom.dashboard.server.vis;
 
-import stroom.query.shared.Format.Type;
+import stroom.dashboard.shared.Format.Type;
 
 public class CompiledStructure {
     public enum Direction {
