@@ -5,4 +5,6 @@ dependencies {
 //    compile 'org.hibernate:hibernate-entitymanager:4.3.8.Final'  /* LATEST 5.2.5.Final */
 //    compile 'org.hibernate:hibernate-validator:5.3.3.Final'
     compile 'javax.validation:validation-api:1.0.0.GA'
+
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
 }

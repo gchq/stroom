@@ -1,5 +1,6 @@
 dependencies {
-    compile project(':stroom-query-common-server')
+    compile project(':stroom-query-common')
+    compile project(':stroom-pipeline')
     compile project(':stroom-core-server')
     compile project(':stroom-index-shared')
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
