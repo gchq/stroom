@@ -6,6 +6,7 @@ import com.sun.jersey.api.client.WebResource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
+import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
@@ -16,6 +17,7 @@ import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -24,14 +26,19 @@ import javax.ws.rs.core.Response;
 @ConfigurableElement(type = "HttpPostFilter", category = PipelineElementType.Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS,
         PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.STREAM)
-public class HttpPostFilter extends TestFilter {
-
+public class HttpPostFilter extends AbstractSamplingFilter {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(HttpPostFilter.class);
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
+
+    private final ErrorReceiverProxy errorReceiverProxy;
 
     private final Client client = Client.create();
     private WebResource webResource;
+
+    @Inject
+    public HttpPostFilter(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory) {
+        super(errorReceiverProxy, locationFactory);
+        this.errorReceiverProxy = errorReceiverProxy;
+    }
 
     @Override
     public void endDocument() throws SAXException {
