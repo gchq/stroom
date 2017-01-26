@@ -18,8 +18,6 @@ package stroom.query;
 
 import stroom.query.api.Field;
 
-import java.util.List;
-
 public class CompiledDepths {
     private final int maxGroupDepth;
     private final int maxDepth;

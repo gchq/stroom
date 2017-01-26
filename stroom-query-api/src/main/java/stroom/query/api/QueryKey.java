@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"uuid", "sessionId", "userId"})
-@XmlType(name = "QueryKey", propOrder = { "uuid", "sessionId", "userId"})
+@XmlType(name = "QueryKey", propOrder = {"uuid", "sessionId", "userId"})
 public class QueryKey implements Serializable {
     private static final long serialVersionUID = -3222989872764402068L;
 

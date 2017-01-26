@@ -37,14 +37,14 @@ public class FormatterFactory {
         }
 
         switch (type) {
-        case TEXT:
-            return StringFormatter.create();
-        case NUMBER:
-            return NumberFormatter.create(field.getFormat().getNumberFormat());
-        case DATE_TIME:
-            return DateTimeFormatter.create(field.getFormat().getDateTimeFormat(), dateTimeLocale);
-        default:
-            return Unformatted.create();
+            case TEXT:
+                return StringFormatter.create();
+            case NUMBER:
+                return NumberFormatter.create(field.getFormat().getNumberFormat());
+            case DATE_TIME:
+                return DateTimeFormatter.create(field.getFormat().getDateTimeFormat(), dateTimeLocale);
+            default:
+                return Unformatted.create();
         }
     }
 }

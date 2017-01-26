@@ -19,18 +19,8 @@ package stroom.dashboard.expression;
 import java.time.LocalDateTime;
 
 public class FloorHour extends RoundDate {
-    public static class Calc extends RoundDateCalculator {
-        private static final long serialVersionUID = -5893918049538006730L;
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            return dateTime.withMinute(0);
-        }
-    }
-
     public static final String NAME = "floorHour";
     private static final Calc CALC = new Calc();
-
     public FloorHour(final String name) {
         super(name);
     }
@@ -38,5 +28,14 @@ public class FloorHour extends RoundDate {
     @Override
     protected RoundCalculator getCalculator() {
         return CALC;
+    }
+
+    public static class Calc extends RoundDateCalculator {
+        private static final long serialVersionUID = -5893918049538006730L;
+
+        @Override
+        protected LocalDateTime adjust(final LocalDateTime dateTime) {
+            return dateTime.withMinute(0);
+        }
     }
 }

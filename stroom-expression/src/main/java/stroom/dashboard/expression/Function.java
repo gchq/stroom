@@ -22,11 +22,9 @@ public interface Function {
     /**
      * Set the parameters that this function will use.
      *
-     * @param params
-     *            The parameters that this function will use.
-     * @throws ParseException
-     *             If any parameters are illegal/unexpected then throw an
-     *             exception.
+     * @param params The parameters that this function will use.
+     * @throws ParseException If any parameters are illegal/unexpected then throw an
+     *                        exception.
      */
     void setParams(Object[] params) throws ParseException;
 
@@ -52,7 +50,7 @@ public interface Function {
      * parameters used going to aggregate data.
      *
      * @return True if this function is an aggregating function or any child
-     *         parameters used will aggregate data.
+     * parameters used will aggregate data.
      */
     boolean hasAggregate();
 }

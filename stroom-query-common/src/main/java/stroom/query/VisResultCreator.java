@@ -20,11 +20,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import stroom.dashboard.expression.Generator;
 import stroom.dashboard.expression.ObjectCompareUtil;
 import stroom.dashboard.expression.TypeConverter;
-import stroom.query.api.Result;
-import stroom.query.api.ResultRequest;
 import stroom.query.api.Format.Type;
 import stroom.query.api.Key;
 import stroom.query.api.Node;
+import stroom.query.api.Result;
+import stroom.query.api.ResultRequest;
 import stroom.query.api.VisResult;
 import stroom.query.api.VisResultRequest;
 
@@ -151,7 +151,7 @@ public class VisResultCreator implements ResultCreator {
             }
 
             // Apply sorting and trimming if required.
-            Object[][] values =  sort(store, structure);
+            Object[][] values = sort(store, structure);
 
             return new Node(null, null, values, store.min, store.max, store.sum);
         }

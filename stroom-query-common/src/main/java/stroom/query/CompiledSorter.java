@@ -67,7 +67,7 @@ public class CompiledSorter implements Serializable, Comparator<Item> {
         }
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public int compare(final Item o1, final Item o2) {
         for (final CompiledSort compiledSort : compiledSorts) {

@@ -25,7 +25,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
-@JsonPropertyOrder({"type","id", "uuid", "name"})
+@JsonPropertyOrder({"type", "id", "uuid", "name"})
 @XmlType(name = "DocRef", propOrder = {"type", "id", "uuid", "name"})
 @XmlRootElement(name = "doc")
 public class DocRef implements HasDisplayValue, Serializable {

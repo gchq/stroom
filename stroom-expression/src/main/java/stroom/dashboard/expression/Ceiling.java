@@ -17,6 +17,22 @@
 package stroom.dashboard.expression;
 
 public class Ceiling extends AbstractRoundingFunction {
+    public static final String NAME = "ceiling";
+
+    public Ceiling(final String name) {
+        super(name);
+    }
+
+    @Override
+    protected RoundCalculator createCalculator(final Double decimalPlaces) {
+        if (decimalPlaces == null) {
+            return new NumericCeiling();
+        }
+
+        final Double multiplier = Double.valueOf(Math.pow(10D, decimalPlaces));
+        return new DecimalPlaceCeiling(multiplier);
+    }
+
     private static class NumericCeiling implements RoundCalculator {
         private static final long serialVersionUID = -2414316545075369054L;
 
@@ -39,21 +55,5 @@ public class Ceiling extends AbstractRoundingFunction {
         public Double calc(final Double value) {
             return Double.valueOf(Math.ceil(value * multiplier) / multiplier);
         }
-    }
-
-    public static final String NAME = "ceiling";
-
-    public Ceiling(final String name) {
-        super(name);
-    }
-
-    @Override
-    protected RoundCalculator createCalculator(final Double decimalPlaces) {
-        if (decimalPlaces == null) {
-            return new NumericCeiling();
-        }
-
-        final Double multiplier = Double.valueOf(Math.pow(10D, decimalPlaces));
-        return new DecimalPlaceCeiling(multiplier);
     }
 }

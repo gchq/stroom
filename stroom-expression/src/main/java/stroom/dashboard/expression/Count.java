@@ -17,6 +17,27 @@
 package stroom.dashboard.expression;
 
 public class Count extends AbstractFunction {
+    public static final String NAME = "count";
+
+    public Count(final String name) {
+        super(name, 0, 0);
+    }
+
+    @Override
+    public Generator createGenerator() {
+        return new Gen();
+    }
+
+    @Override
+    public boolean isAggregate() {
+        return true;
+    }
+
+    @Override
+    public boolean hasAggregate() {
+        return isAggregate();
+    }
+
     private static class Gen extends AbstractNoChildGenerator {
         private static final long serialVersionUID = 9222017471352363944L;
 
@@ -38,26 +59,5 @@ public class Count extends AbstractFunction {
             count += countGen.count;
             super.merge(generator);
         }
-    }
-
-    public static final String NAME = "count";
-
-    public Count(final String name) {
-        super(name, 0, 0);
-    }
-
-    @Override
-    public Generator createGenerator() {
-        return new Gen();
-    }
-
-    @Override
-    public boolean isAggregate() {
-        return true;
-    }
-
-    @Override
-    public boolean hasAggregate() {
-        return isAggregate();
     }
 }

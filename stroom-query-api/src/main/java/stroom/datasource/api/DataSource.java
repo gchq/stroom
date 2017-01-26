@@ -22,7 +22,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.List;
 
 @JsonPropertyOrder({"fields"})
 @XmlType(name = "DataSource", propOrder = "fields")

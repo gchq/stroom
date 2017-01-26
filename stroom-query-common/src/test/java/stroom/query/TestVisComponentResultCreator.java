@@ -98,7 +98,7 @@ public class TestVisComponentResultCreator {
 
     @Test
     public void testAll() throws IOException {
-         Files.list(TEST_DIR).forEach(f -> {
+        Files.list(TEST_DIR).forEach(f -> {
             if (Files.isDirectory(f)) {
                 testDir(f);
             }

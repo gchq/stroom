@@ -19,10 +19,6 @@ package stroom.query;
 import java.util.Comparator;
 
 public interface Items<E> extends Iterable<E> {
-    interface RemoveHandler<E> {
-        void onRemove(E item);
-    }
-
     boolean add(E item);
 
     boolean remove(E item);
@@ -30,4 +26,8 @@ public interface Items<E> extends Iterable<E> {
     int size();
 
     void trim(int size, Comparator<E> comparator, RemoveHandler<E> removeHandler);
+
+    interface RemoveHandler<E> {
+        void onRemove(E item);
+    }
 }

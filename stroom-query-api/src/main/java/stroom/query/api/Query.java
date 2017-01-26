@@ -24,8 +24,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
 
 @JsonPropertyOrder({"dataSource", "expression", "params"})
 @XmlType(name = "Query", propOrder = {"dataSource", "expression", "params"})

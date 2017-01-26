@@ -17,6 +17,22 @@
 package stroom.dashboard.expression;
 
 public class Round extends AbstractRoundingFunction {
+    public static final String NAME = "round";
+
+    public Round(final String name) {
+        super(name);
+    }
+
+    @Override
+    protected RoundCalculator createCalculator(final Double decimalPlaces) {
+        if (decimalPlaces == null) {
+            return new NumericRound();
+        }
+
+        final Double multiplier = Double.valueOf(Math.pow(10D, decimalPlaces));
+        return new DecimalPlaceRound(multiplier);
+    }
+
     private static class NumericRound implements RoundCalculator {
         private static final long serialVersionUID = -2414316545075369054L;
 
@@ -39,21 +55,5 @@ public class Round extends AbstractRoundingFunction {
         public Double calc(final Double value) {
             return Double.valueOf(Math.round(value * multiplier) / multiplier);
         }
-    }
-
-    public static final String NAME = "round";
-
-    public Round(final String name) {
-        super(name);
-    }
-
-    @Override
-    protected RoundCalculator createCalculator(final Double decimalPlaces) {
-        if (decimalPlaces == null) {
-            return new NumericRound();
-        }
-
-        final Double multiplier = Double.valueOf(Math.pow(10D, decimalPlaces));
-        return new DecimalPlaceRound(multiplier);
     }
 }

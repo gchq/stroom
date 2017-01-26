@@ -19,11 +19,8 @@ package stroom.query.api;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
-import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
@@ -36,8 +33,8 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = ExpressionOperator.class, name = "operator"),
         @JsonSubTypes.Type(value = ExpressionTerm.class, name = "term")
 })
-@XmlType(name = "ExpressionItem", propOrder = { "enabled" })
-@XmlSeeAlso({ ExpressionOperator.class, ExpressionTerm.class })
+@XmlType(name = "ExpressionItem", propOrder = {"enabled"})
+@XmlSeeAlso({ExpressionOperator.class, ExpressionTerm.class})
 public abstract class ExpressionItem implements Serializable {
     private static final long serialVersionUID = -8483817637655853635L;
 

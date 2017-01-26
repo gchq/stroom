@@ -27,7 +27,7 @@ public class ItemMapper extends MapperBase<Object, String[], String, Item> {
     private final int maxGroupDepth;
 
     public ItemMapper(final OutputCollector<String, Item> outputCollector, final CompiledFields fields,
-            final int maxDepth, final int maxGroupDepth) {
+                      final int maxDepth, final int maxGroupDepth) {
         super(outputCollector);
         this.fields = fields;
         this.maxDepth = maxDepth;
@@ -41,7 +41,7 @@ public class ItemMapper extends MapperBase<Object, String[], String, Item> {
     }
 
     private void addItem(final String[] values, final String parentKey, final Generator[] parentGenerators,
-            final int depth, final int maxDepth, final int maxGroupDepth, final OutputCollector<String, Item> output) {
+                         final int depth, final int maxDepth, final int maxGroupDepth, final OutputCollector<String, Item> output) {
         // Process list into fields.
         final Generator[] generators = new Generator[fields.size()];
 

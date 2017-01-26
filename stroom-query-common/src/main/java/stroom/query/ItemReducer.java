@@ -48,7 +48,7 @@ public class ItemReducer implements Reducer<String, Item, String, Item> {
     }
 
     private Object combine(final int groupDepth, final int maxDepth, final Object existingValue,
-            final Object addedValue, final int depth) {
+                           final Object addedValue, final int depth) {
         Object output = null;
 
         if (maxDepth >= depth) {

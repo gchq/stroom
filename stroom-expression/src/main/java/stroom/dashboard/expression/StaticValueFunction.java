@@ -19,24 +19,8 @@ package stroom.dashboard.expression;
 import java.text.ParseException;
 
 public class StaticValueFunction implements Function, Appendable {
-    private static class Gen extends AbstractNoChildGenerator {
-        private static final long serialVersionUID = -7551073465232523106L;
-
-        private final Object value;
-
-        public Gen(final Object value) {
-            this.value = value;
-        }
-
-        @Override
-        public Object eval() {
-            return value;
-        }
-    }
-
     private final Object value;
     private final Generator gen;
-
     public StaticValueFunction(final Object value) {
         this.value = value;
         this.gen = new Gen(value);
@@ -72,5 +56,20 @@ public class StaticValueFunction implements Function, Appendable {
     @Override
     public boolean hasAggregate() {
         return false;
+    }
+
+    private static class Gen extends AbstractNoChildGenerator {
+        private static final long serialVersionUID = -7551073465232523106L;
+
+        private final Object value;
+
+        public Gen(final Object value) {
+            this.value = value;
+        }
+
+        @Override
+        public Object eval() {
+            return value;
+        }
     }
 }

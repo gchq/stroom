@@ -20,6 +20,27 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class CountGroups extends AbstractFunction {
+    public static final String NAME = "countGroups";
+
+    public CountGroups(final String name) {
+        super(name, 0, 0);
+    }
+
+    @Override
+    public Generator createGenerator() {
+        return new Gen();
+    }
+
+    @Override
+    public boolean isAggregate() {
+        return true;
+    }
+
+    @Override
+    public boolean hasAggregate() {
+        return isAggregate();
+    }
+
     private static class Gen extends AbstractNoChildGenerator {
         private static final long serialVersionUID = -9130548669643582369L;
 
@@ -52,26 +73,5 @@ public class CountGroups extends AbstractFunction {
             childGroups.addAll(countGen.childGroups);
             super.merge(generator);
         }
-    }
-
-    public static final String NAME = "countGroups";
-
-    public CountGroups(final String name) {
-        super(name, 0, 0);
-    }
-
-    @Override
-    public Generator createGenerator() {
-        return new Gen();
-    }
-
-    @Override
-    public boolean isAggregate() {
-        return true;
-    }
-
-    @Override
-    public boolean hasAggregate() {
-        return isAggregate();
     }
 }

@@ -35,18 +35,6 @@ import stroom.util.shared.ParamUtil;
 import java.util.Collections;
 
 public class TestTablePayloadHandler {
-    private static class Terminatable implements HasTerminate {
-        @Override
-        public void terminate() {
-
-        }
-
-        @Override
-        public boolean isTerminated() {
-            return false;
-        }
-    }
-
     @Test
     public void basicTest() {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
@@ -345,6 +333,18 @@ public class TestTablePayloadHandler {
                 }
             }
             lastValue = value;
+        }
+    }
+
+    private static class Terminatable implements HasTerminate {
+        @Override
+        public void terminate() {
+
+        }
+
+        @Override
+        public boolean isTerminated() {
+            return false;
         }
     }
 }

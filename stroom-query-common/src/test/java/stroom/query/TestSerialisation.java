@@ -8,10 +8,30 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.query.api.*;
+import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.Field;
+import stroom.query.api.Filter;
+import stroom.query.api.Format;
+import stroom.query.api.Key;
+import stroom.query.api.Node;
+import stroom.query.api.NumberFormat;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.Param;
+import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
+import stroom.query.api.Result;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.Row;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchResponse;
+import stroom.query.api.Sort;
+import stroom.query.api.TableResult;
+import stroom.query.api.TableResultRequest;
+import stroom.query.api.TableSettings;
+import stroom.query.api.VisResult;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -30,9 +50,46 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class TestSerialisation {
+    private static SearchRequest getSearchRequest() {
+        DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
+
+        ExpressionOperator expressionOperator = new ExpressionOperator(Op.AND);
+        expressionOperator.addTerm("field1", Condition.EQUALS, "value1");
+        expressionOperator.addOperator(Op.AND);
+        expressionOperator.addTerm("field2", Condition.BETWEEN, "value2");
+
+        TableSettings tableSettings = new TableSettings();
+        tableSettings.setQueryId("someQueryId");
+        tableSettings.setFields(new Field[]{
+                new Field("name1", "expression1",
+                        new Sort(1, Sort.SortDirection.ASCENDING),
+                        new Filter("include1", "exclude1"),
+                        new Format(new NumberFormat(1, false)), 1),
+                new Field("name2", "expression2",
+                        new Sort(2, Sort.SortDirection.DESCENDING),
+                        new Filter("include2", "exclude2"),
+                        new Format(new NumberFormat(2, true)), 2)
+        });
+        tableSettings.setExtractValues(false);
+        tableSettings.setExtractionPipeline(new DocRef("docRefType2", "docRefUuid2", "docRefName2"));
+        tableSettings.setMaxResults(new Integer[]{1, 2});
+        tableSettings.setShowDetail(false);
+
+//        Map<String, TableSettings> componentSettingsMap = new HashMap<>();
+//        componentSettingsMap.put("componentSettingsMapKey", tableSettings);
+
+        final Param[] params = new Param[]{new Param("param1", "val1"), new Param("param2", "val2")};
+        final Query query = new Query(docRef, expressionOperator, params);
+
+        final ResultRequest[] resultRequests = new ResultRequest[]{new TableResultRequest("componentX", tableSettings, 1, 100)};
+
+        SearchRequest searchRequest = new SearchRequest(new QueryKey("1234"), query, resultRequests, "en-gb");
+
+        return searchRequest;
+    }
+
     @Test
     public void testPolymorphic() throws IOException, JAXBException {
         final List<Base> list = new ArrayList<>();
@@ -66,7 +123,6 @@ public class TestSerialisation {
     public void testSearchResponseSerialisation() throws IOException, JAXBException {
         test(getSearchResponse(), SearchResponse.class, "testSearchResponseSerialisation");
     }
-
 
     private <T> void test(final T objIn, final Class<T> type, final String testName) throws IOException, JAXBException {
         testJSON(objIn, type, testName);
@@ -140,44 +196,6 @@ public class TestSerialisation {
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
-    }
-
-    private static SearchRequest getSearchRequest() {
-        DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
-
-        ExpressionOperator expressionOperator = new ExpressionOperator(Op.AND);
-        expressionOperator.addTerm("field1", Condition.EQUALS, "value1");
-        expressionOperator.addOperator(Op.AND);
-        expressionOperator.addTerm("field2", Condition.BETWEEN, "value2");
-
-        TableSettings tableSettings = new TableSettings();
-        tableSettings.setQueryId("someQueryId");
-        tableSettings.setFields(new Field[]{
-                new Field("name1", "expression1",
-                        new Sort(1, Sort.SortDirection.ASCENDING),
-                        new Filter("include1", "exclude1"),
-                        new Format(new NumberFormat(1, false)), 1),
-                new Field("name2", "expression2",
-                        new Sort(2, Sort.SortDirection.DESCENDING),
-                        new Filter("include2", "exclude2"),
-                        new Format(new NumberFormat(2, true)), 2)
-        });
-        tableSettings.setExtractValues(false);
-        tableSettings.setExtractionPipeline(new DocRef("docRefType2", "docRefUuid2", "docRefName2"));
-        tableSettings.setMaxResults(new Integer[]{1, 2});
-        tableSettings.setShowDetail(false);
-
-//        Map<String, TableSettings> componentSettingsMap = new HashMap<>();
-//        componentSettingsMap.put("componentSettingsMapKey", tableSettings);
-
-        final Param[] params = new Param[]{new Param("param1", "val1"), new Param("param2", "val2")};
-        final Query query = new Query(docRef, expressionOperator, params);
-
-        final ResultRequest[] resultRequests = new ResultRequest[]{new TableResultRequest("componentX", tableSettings, 1, 100)};
-
-        SearchRequest searchRequest = new SearchRequest(new QueryKey("1234"), query, resultRequests, "en-gb");
-
-        return searchRequest;
     }
 
     private SearchResponse getSearchResponse() {

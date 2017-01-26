@@ -20,74 +20,70 @@ import java.io.Serializable;
 import java.text.ParseException;
 
 public class UpperCase extends AbstractFunction implements Serializable {
-	private static class Gen extends AbstractSingleChildGenerator {
-		private static final long serialVersionUID = 8153777070911899616L;
+    public static final String NAME = "upperCase";
+    private static final long serialVersionUID = -305845496003936297L;
+    private Generator gen;
+    private Function function = null;
+    private boolean hasAggregate;
+    public UpperCase(final String name) {
+        super(name, 1, 1);
+    }
 
+    @Override
+    public void setParams(final Object[] params) throws ParseException {
+        super.setParams(params);
 
-		public Gen(final Generator childGenerator) {
-			super(childGenerator);
-
-		}
-
-		@Override
-		public void set(final String[] values) {
-			childGenerator.set(values);
-		}
-
-		@Override
-		public Object eval() {
-			final Object val = childGenerator.eval();
-			if (val != null) {
-				return TypeConverter.getString(val).toUpperCase();
-			}
-
-			return null;
-		}
-	}
-
-	
-
-	private static final long serialVersionUID = -305845496003936297L;
-	public static final String NAME = "upperCase";
-
-	private Generator gen;
-	private Function function = null;
-	private boolean hasAggregate;
-
-	public UpperCase(final String name) {
-		super(name, 1, 1);
-	}
-
-	@Override
-	public void setParams(final Object[] params) throws ParseException {
-		super.setParams(params);
-
-		final Object param = params[0];
-		if (param instanceof Function) {
-			function = (Function) param;
-			hasAggregate = function.hasAggregate();
-		} else {
-			/*
+        final Object param = params[0];
+        if (param instanceof Function) {
+            function = (Function) param;
+            hasAggregate = function.hasAggregate();
+        } else {
+            /*
 			 * Optimise replacement of static input in case user does something
 			 * stupid.
 			 */
-			gen = new StaticValueFunction(param.toString().toUpperCase()).createGenerator();
-			hasAggregate = false;
-		}
-	}
+            gen = new StaticValueFunction(param.toString().toUpperCase()).createGenerator();
+            hasAggregate = false;
+        }
+    }
 
-	@Override
-	public Generator createGenerator() {
-		if (gen != null) {
-			return gen;
-		}
+    @Override
+    public Generator createGenerator() {
+        if (gen != null) {
+            return gen;
+        }
 
-		final Generator childGenerator = function.createGenerator();
-		return new Gen(childGenerator);
-	}
+        final Generator childGenerator = function.createGenerator();
+        return new Gen(childGenerator);
+    }
 
-	@Override
-	public boolean hasAggregate() {
-		return hasAggregate;
-	}
+    @Override
+    public boolean hasAggregate() {
+        return hasAggregate;
+    }
+
+    private static class Gen extends AbstractSingleChildGenerator {
+        private static final long serialVersionUID = 8153777070911899616L;
+
+
+        public Gen(final Generator childGenerator) {
+            super(childGenerator);
+
+        }
+
+        @Override
+        public void set(final String[] values) {
+            childGenerator.set(values);
+        }
+
+        @Override
+        public Object eval() {
+            final Object val = childGenerator.eval();
+            if (val != null) {
+                return TypeConverter.getString(val).toUpperCase();
+            }
+
+            return null;
+        }
+    }
 }

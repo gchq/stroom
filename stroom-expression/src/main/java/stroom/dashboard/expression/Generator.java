@@ -22,8 +22,7 @@ public interface Generator extends Serializable, Comparable<Object> {
     /**
      * For countGroups() we need to know what child keys are used.
      *
-     * @param group
-     *            The key of a chld group.
+     * @param group The key of a chld group.
      */
     void addChildKey(String group);
 
@@ -31,8 +30,7 @@ public interface Generator extends Serializable, Comparable<Object> {
      * Set values that can be used to source whatever data is required by value
      * references using the Ref - ${} construct.
      *
-     * @param values
-     *            The current data values to pick data from.
+     * @param values The current data values to pick data from.
      */
     void set(String[] values);
 
@@ -49,8 +47,7 @@ public interface Generator extends Serializable, Comparable<Object> {
      * min generator take the min value from the supplied min generator and
      * compute a new min for this generator.
      *
-     * @param generator
-     *            The generator to merge with this one.
+     * @param generator The generator to merge with this one.
      */
     void merge(Generator generator);
 }

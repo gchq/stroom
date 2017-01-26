@@ -19,11 +19,8 @@ package stroom.query.api;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 @JsonPropertyOrder({"componentId", "fetchData", "tableSettings", "requestedRange", "openGroups"})
 @XmlType(name = "TableResultRequest", propOrder = {"tableSettings", "requestedRange", "openGroups"})

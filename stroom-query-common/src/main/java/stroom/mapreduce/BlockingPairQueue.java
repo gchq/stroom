@@ -30,11 +30,9 @@ public class BlockingPairQueue<K, V> implements PairQueue<K, V> {
     private static final int MAX_SIZE = 1000000;
 
     private final HasTerminate monitor;
-
-    private volatile List<Pair<K, V>> queue;
     private final AtomicInteger size = new AtomicInteger();
     private final ReentrantLock lock = new ReentrantLock();
-
+    private volatile List<Pair<K, V>> queue;
     private transient Iterator<Pair<K, V>> emptyIter;
 
     public BlockingPairQueue(final HasTerminate monitor) {

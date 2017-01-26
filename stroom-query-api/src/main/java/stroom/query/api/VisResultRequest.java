@@ -22,7 +22,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
 import java.util.Arrays;
-import java.util.Map;
 
 @JsonPropertyOrder({"componentId", "fetchData", "tableSettings", "structure", "params"})
 @XmlType(name = "VisResultRequest", propOrder = {"tableSettings", "structure", "params"})
