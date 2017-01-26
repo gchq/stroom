@@ -30,7 +30,7 @@ public final class DateUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(DateUtil.class);
     private static final String NULL = "NULL";
     private static final DateTimeFormatter FILE_TIME_STROOM_TIME_FORMATTER = DateTimeFormatter
-            .ofPattern("yyyy-MM-dd'T'HH#mm#ss,SSS'Z'").withZone(ZoneOffset.UTC);
+            .ofPattern("yyyy-MM-dd'T'HH'#'mm'#'ss,SSS'Z'").withZone(ZoneOffset.UTC);
     private static final String GMT_BST_GUESS = "GMT/BST";
     private static final ZoneId EUROPE_LONDON_TIME_ZONE = ZoneId.of("Europe/London");
 
