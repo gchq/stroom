@@ -1,14 +1,10 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <xmlSchema>
-   <createTime>1484142077545</createTime>
-   <createUser>INTERNAL_PROCESSING_USER</createUser>
    <deprecated>false</deprecated>
    <description/>
    <name>statistics v3.0</name>
    <namespaceURI>statistics:3</namespaceURI>
    <schemaGroup>STATISTICS</schemaGroup>
    <systemId>file://statistics-v3.0.xsd</systemId>
-   <updateTime>1484142118767</updateTime>
-   <updateUser>INTERNAL_PROCESSING_USER</updateUser>
    <uuid>3e395049-5151-406d-9a0a-122c204ae079</uuid>
 </xmlSchema>
