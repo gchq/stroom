@@ -16,17 +16,16 @@
 
 package stroom.dashboard.expression;
 
-import org.joda.time.DateTime;
+import java.time.LocalDateTime;
 
 public class CeilingYear extends RoundDate {
     public static class Calc extends RoundDateCalculator {
         private static final long serialVersionUID = -5893918049538006730L;
 
         @Override
-        protected DateTime adjust(final DateTime dateTime) {
-            DateTime result = new DateTime(dateTime.getYear(), 1, 1, 0, 0, 0, 0);
-            if (dateTime.getMillisOfSecond() > 0 || dateTime.getSecondOfMinute() > 0 || dateTime.getMinuteOfHour() > 0
-                    || dateTime.getHourOfDay() > 0 || dateTime.getDayOfMonth() > 1 || dateTime.getMonthOfYear() > 1) {
+        protected LocalDateTime adjust(final LocalDateTime dateTime) {
+            LocalDateTime result = dateTime.withMonth(1);
+            if (dateTime.isAfter(result)) {
                 result = result.plusYears(1);
             }
             return result;

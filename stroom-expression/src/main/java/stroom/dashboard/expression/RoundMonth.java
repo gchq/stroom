@@ -16,18 +16,16 @@
 
 package stroom.dashboard.expression;
 
-import org.joda.time.DateTime;
+import java.time.LocalDateTime;
 
 public class RoundMonth extends RoundDate {
     public static class Calc extends RoundDateCalculator {
         private static final long serialVersionUID = -5893918049538006730L;
 
         @Override
-        protected DateTime adjust(final DateTime dateTime) {
-            DateTime result = new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), 1, 0, 0, 0, 0);
-            if (dateTime.getDayOfMonth() > 15 || (dateTime.getDayOfMonth() == 15
-                    && (dateTime.getMillisOfSecond() > 0 || dateTime.getSecondOfMinute() > 0
-                            || dateTime.getMinuteOfHour() > 0 || dateTime.getHourOfDay() > 0))) {
+        protected LocalDateTime adjust(final LocalDateTime dateTime) {
+            LocalDateTime result = dateTime.withDayOfMonth(1);
+            if (dateTime.isAfter(result.plusDays(15))) {
                 result = result.plusMonths(1);
             }
             return result;

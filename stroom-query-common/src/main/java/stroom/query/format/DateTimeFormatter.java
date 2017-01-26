@@ -16,38 +16,44 @@
 
 package stroom.query.format;
 
-import org.joda.time.DateTimeZone;
 import stroom.dashboard.expression.DateUtil;
 import stroom.dashboard.expression.TypeConverter;
 import stroom.query.api.DateTimeFormat;
 import stroom.query.api.TimeZone;
 
-public class DateTimeFormatter implements Formatter {
-    private final org.joda.time.format.DateTimeFormatter format;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
-    private DateTimeFormatter(final org.joda.time.format.DateTimeFormatter format) {
+public class DateTimeFormatter implements Formatter {
+    private final java.time.format.DateTimeFormatter format;
+    private final ZoneId zone;
+
+    private DateTimeFormatter(final java.time.format.DateTimeFormatter format, final ZoneId zone) {
         this.format = format;
+        this.zone = zone;
     }
 
     public static DateTimeFormatter create(final DateTimeFormat dateTimeFormat, final String dateTimeLocale) {
-        org.joda.time.format.DateTimeFormatter format = null;
+        java.time.format.DateTimeFormatter format = null;
+        ZoneId zone = ZoneOffset.UTC;
 
         if (dateTimeFormat != null) {
             String pattern = dateTimeFormat.getPattern();
             if (pattern != null && pattern.trim().length() > 0) {
                 final TimeZone timeZone = dateTimeFormat.getTimeZone();
-                DateTimeZone zone = DateTimeZone.UTC;
 
                 if (timeZone != null) {
                     if (TimeZone.Use.UTC.equals(timeZone.getUse())) {
-                        zone = DateTimeZone.UTC;
+                        zone = ZoneOffset.UTC;
                     } else if (TimeZone.Use.LOCAL.equals(timeZone.getUse())) {
                         pattern = pattern.replaceAll("'Z'", "Z");
-                        zone = DateTimeZone.getDefault();
+                        zone = ZoneId.systemDefault();
 
                         try {
                             if (dateTimeLocale != null) {
-                                zone = DateTimeZone.forID(dateTimeLocale);
+                                zone = ZoneId.of(dateTimeLocale);
                             }
                         } catch (final IllegalArgumentException e) {
                             // The client time zone was not recognised so we'll
@@ -56,19 +62,19 @@ public class DateTimeFormatter implements Formatter {
 
                     } else if (TimeZone.Use.ID.equals(timeZone.getUse())) {
                         pattern = pattern.replaceAll("'Z'", "Z");
-                        zone = DateTimeZone.forID(timeZone.getId());
+                        zone = ZoneId.of(timeZone.getId());
                     } else if (TimeZone.Use.OFFSET.equals(timeZone.getUse())) {
                         pattern = pattern.replaceAll("'Z'", "Z");
-                        zone = DateTimeZone.forOffsetHoursMinutes(getInt(timeZone.getOffsetHours()),
+                        zone = ZoneOffset.ofHoursMinutes(getInt(timeZone.getOffsetHours()),
                                 getInt(timeZone.getOffsetMinutes()));
                     }
                 }
 
-                format = org.joda.time.format.DateTimeFormat.forPattern(pattern).withZone(zone);
+                format = java.time.format.DateTimeFormatter.ofPattern(pattern);
             }
         }
 
-        return new DateTimeFormatter(format);
+        return new DateTimeFormatter(format, zone);
     }
 
     private static int getInt(final Integer i) {
@@ -92,7 +98,7 @@ public class DateTimeFormatter implements Formatter {
                 return DateUtil.createNormalDateTimeString(millis);
             }
 
-            return format.print(millis);
+            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(millis), zone).format(format);
         }
         return value.toString();
     }

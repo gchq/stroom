@@ -16,15 +16,15 @@
 
 package stroom.dashboard.expression;
 
-import org.joda.time.DateTime;
+import java.time.LocalDateTime;
 
 public class FloorMonth extends RoundDate {
     public static class Calc extends RoundDateCalculator {
         private static final long serialVersionUID = -5893918049538006730L;
 
         @Override
-        protected DateTime adjust(final DateTime dateTime) {
-            return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), 1, 0, 0, 0, 0);
+        protected LocalDateTime adjust(final LocalDateTime dateTime) {
+            return dateTime.withDayOfMonth(1);
         }
     }
 

@@ -1,6 +1,3 @@
 dependencies {
-    // TODO : Replace JODA time with Java 8 time classes.
-    compile 'joda-time:joda-time:2.9.6'
-
     compile 'org.slf4j:slf4j-api:1.7.22'
 }
