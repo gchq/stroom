@@ -16,14 +16,13 @@
 
 package stroom.entity.server;
 
-import stroom.entity.shared.EntityService;
-import stroom.entity.shared.HasLoadById;
-import stroom.entity.shared.HasLoadByUuid;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.entity.shared.EntityService;
+import stroom.entity.shared.HasLoadById;
+import stroom.entity.shared.HasLoadByUuid;
 import stroom.query.api.DocRef;
-import stroom.query.api.EntityDocRef;
 
 @Component
 @Transactional(readOnly = true)
@@ -32,11 +31,11 @@ public class ServiceCacheMethodInterceptorTransactionHelper {
                                         final ServiceCacheMethodInterceptor.EntityIdKey entityKey) {
         DocRef docRef = entityKey.docRef;
 
-        if (docRef instanceof EntityDocRef && ((EntityDocRef) docRef).getId() != null && entityService instanceof HasLoadById) {
+        if (docRef.getId() != null && entityService instanceof HasLoadById) {
             if (entityKey.fetchSet == null) {
-                return ((HasLoadById) entityService).loadById(((EntityDocRef) docRef).getId());
+                return ((HasLoadById) entityService).loadById(docRef.getId());
             } else {
-                return ((HasLoadById) entityService).loadById(((EntityDocRef) docRef).getId(), entityKey.fetchSet);
+                return ((HasLoadById) entityService).loadById(docRef.getId(), entityKey.fetchSet);
             }
         }
 

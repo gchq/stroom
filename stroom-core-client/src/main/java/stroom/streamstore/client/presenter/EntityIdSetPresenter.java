@@ -34,10 +34,8 @@ import stroom.data.table.client.CellTableViewImpl.DisabledResources;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.SharedDocRef;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
 import stroom.entity.shared.Folder;
@@ -45,10 +43,9 @@ import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
 import stroom.explorer.shared.ExplorerData;
 import stroom.process.shared.LoadEntityIdSetAction;
 import stroom.process.shared.SetId;
-import stroom.query.api.EntityDocRef;
+import stroom.query.api.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedMap;
 import stroom.widget.util.client.MySingleSelectionModel;
 
@@ -67,6 +64,7 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
     private boolean groupedEntity;
     private List<DocRef> data;
     private boolean enabled = true;
+
     @Inject
     public EntityIdSetPresenter(final EventBus eventBus, final EntityIdSetView view,
                                 final ExplorerDropDownTreePresenter treePresenter, final EntityChoicePresenter choicePresenter,
@@ -182,8 +180,8 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
     public <T extends BaseEntity> void write(final EntityIdSet<T> entityIdSet) {
         entityIdSet.clear();
         for (final DocRef docRef : data) {
-            if (docRef != null && docRef instanceof EntityDocRef) {
-                entityIdSet.add(((EntityDocRef)docRef).getId());
+            if (docRef != null) {
+                entityIdSet.add(docRef.getId());
             }
         }
     }

@@ -17,10 +17,9 @@
 package stroom.entity.server;
 
 import stroom.entity.shared.BaseEntity;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.logging.EntityEventLog;
-import stroom.query.api.EntityDocRef;
+import stroom.query.api.DocRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 
@@ -49,8 +48,8 @@ class EntityServiceLoadHandler
                     result = entityService.loadByUuid(docRef.getType(), docRef.getUuid(), action.getFetchSet());
                 }
 
-                if (result == null && docRef instanceof EntityDocRef && ((EntityDocRef) docRef).getId() != null) {
-                    result = entityService.loadById(docRef.getType(), ((EntityDocRef) docRef).getId(), action.getFetchSet());
+                if (result == null && docRef.getId() != null) {
+                    result = entityService.loadById(docRef.getType(), docRef.getId(), action.getFetchSet());
                 }
             }
 

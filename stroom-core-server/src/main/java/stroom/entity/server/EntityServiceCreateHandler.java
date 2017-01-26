@@ -17,13 +17,12 @@
 package stroom.entity.server;
 
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.SharedDocRef;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceCreateAction;
 import stroom.entity.shared.EntityServiceException;
+import stroom.entity.shared.SharedDocRef;
 import stroom.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -63,6 +62,6 @@ class EntityServiceCreateHandler extends AbstractTaskHandler<EntityServiceCreate
             throw e;
         }
 
-        return DocRefUtil.create(result);
+        return SharedDocRef.create(DocRefUtil.create(result));
     }
 }

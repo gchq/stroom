@@ -20,18 +20,23 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.HasDisplayValue;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
-@JsonPropertyOrder({"type", "uuid", "name"})
-@XmlType(name = "doc", propOrder = {"type", "uuid", "name"})
+@JsonPropertyOrder({"type","id", "uuid", "name"})
+@XmlType(name = "DocRef", propOrder = {"type", "id", "uuid", "name"})
+@XmlRootElement(name = "doc")
 public class DocRef implements HasDisplayValue, Serializable {
     private static final long serialVersionUID = -2121399789820829359L;
 
     protected String type;
     protected String uuid;
     protected String name;
+
+    @Deprecated
+    protected Long id;
 
     public DocRef() {
     }
@@ -69,6 +74,21 @@ public class DocRef implements HasDisplayValue, Serializable {
 
     public void setName(final String name) {
         this.name = name;
+    }
+
+    @Deprecated
+    public Long getId() {
+        return id;
+    }
+
+    @Deprecated
+    public void setId(final Long value) {
+        this.id = value;
+
+        // All equality is done on uuid so ensure uuid is set to id even if the entity doesn't have a uuid field.
+        if (uuid == null && value != null) {
+            uuid = String.valueOf(value);
+        }
     }
 
     @XmlTransient

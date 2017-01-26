@@ -30,4 +30,14 @@ public class SharedDocRef extends DocRef implements SharedObject {
     public SharedDocRef(final String type, String uuid, final String name) {
         super(type, uuid, name);
     }
+
+    public static SharedDocRef create(final DocRef docRef) {
+        if (docRef == null) {
+            return null;
+        }
+
+        final SharedDocRef sharedDocRef =  new SharedDocRef(docRef.getType(), docRef.getUuid(), docRef.getName());
+        sharedDocRef.setId(docRef.getId());
+        return sharedDocRef;
+    }
 }

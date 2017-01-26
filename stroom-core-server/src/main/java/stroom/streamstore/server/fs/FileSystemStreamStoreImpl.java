@@ -48,7 +48,6 @@ import stroom.node.shared.VolumeService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.query.api.DocRef;
-import stroom.query.api.EntityDocRef;
 import stroom.query.api.ExpressionTerm;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
@@ -970,27 +969,23 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                 final StreamAttributeCondition streamAttributeCondition = criteria.getAttributeConditionList().get(i);
                 final DocRef streamAttributeKey = streamAttributeCondition.getStreamAttributeKey();
 
-                if (streamAttributeKey instanceof EntityDocRef) {
-                    final EntityDocRef entityDocRef = (EntityDocRef) streamAttributeKey;
-
-                    sql.append(" JOIN ");
-                    sql.append(StreamAttributeValue.TABLE_NAME);
-                    sql.append(" SAV");
-                    sql.append(i, false);
-                    sql.append(" ON (S.");
-                    sql.append(Stream.ID);
-                    sql.append(" = SAV");
-                    sql.append(i, false);
-                    sql.append(".");
-                    sql.append(StreamAttributeValue.STREAM_ID);
-                    sql.append(" AND SAV");
-                    sql.append(i, false);
-                    sql.append(".");
-                    sql.append(StreamAttributeValue.STREAM_ATTRIBUTE_KEY_ID);
-                    sql.append(" = ");
-                    sql.arg(entityDocRef.getId());
-                    sql.append(")");
-                }
+                sql.append(" JOIN ");
+                sql.append(StreamAttributeValue.TABLE_NAME);
+                sql.append(" SAV");
+                sql.append(i, false);
+                sql.append(" ON (S.");
+                sql.append(Stream.ID);
+                sql.append(" = SAV");
+                sql.append(i, false);
+                sql.append(".");
+                sql.append(StreamAttributeValue.STREAM_ID);
+                sql.append(" AND SAV");
+                sql.append(i, false);
+                sql.append(".");
+                sql.append(StreamAttributeValue.STREAM_ATTRIBUTE_KEY_ID);
+                sql.append(" = ");
+                sql.arg(streamAttributeKey.getId());
+                sql.append(")");
             }
         }
 
