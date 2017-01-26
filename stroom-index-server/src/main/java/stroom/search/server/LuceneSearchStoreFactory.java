@@ -16,8 +16,6 @@
 
 package stroom.search.server;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.index.server.LuceneVersionUtil;
@@ -27,13 +25,11 @@ import stroom.node.server.NodeCache;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;
 import stroom.query.CoprocessorMap;
-import stroom.query.QueryKey;
-import stroom.query.SearchDataSourceProvider;
-import stroom.query.SearchResultCollector;
+import stroom.query.Store;
 import stroom.query.SearchResultHandler;
-import stroom.query.api.ResultRequest;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Query;
+import stroom.query.api.ResultRequest;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.TableSettings;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
@@ -41,8 +37,6 @@ import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -51,10 +45,9 @@ import java.util.Map;
 import java.util.Set;
 
 @Component
-@Scope(StroomScope.PROTOTYPE)
-public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider {
+public class LuceneSearchStoreFactory {
     public static final String ENTITY_TYPE = Index.ENTITY_TYPE;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(LuceneSearchDataSourceProvider.class);
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(LuceneSearchStoreFactory.class);
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
 
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
@@ -66,9 +59,9 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
     private final ClusterResultCollectorCache clusterResultCollectorCache;
 
     @Inject
-    public LuceneSearchDataSourceProvider(final IndexService indexService, final DictionaryService dictionaryService,
-                                          final NodeCache nodeCache, final TaskManager taskManager,
-                                          final ClusterResultCollectorCache clusterResultCollectorCache) {
+    public LuceneSearchStoreFactory(final IndexService indexService, final DictionaryService dictionaryService,
+                                    final NodeCache nodeCache, final TaskManager taskManager,
+                                    final ClusterResultCollectorCache clusterResultCollectorCache) {
         this.indexService = indexService;
         this.dictionaryService = dictionaryService;
         this.nodeCache = nodeCache;
@@ -76,9 +69,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
         this.clusterResultCollectorCache = clusterResultCollectorCache;
     }
 
-    @Override
-    public SearchResultCollector createCollector(final String sessionId, final String userName, final QueryKey queryKey,
-                                                 final SearchRequest searchRequest) {
+    public Store create(final SearchRequest searchRequest) {
         // Get the current time in millis since epoch.
         final long nowEpochMilli = System.currentTimeMillis();
 
@@ -103,8 +94,8 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
         final CoprocessorMap coprocessorMap = new CoprocessorMap(settingsMap);
 
         // Create an asynchronous search task.
-        final String searchName = "Search '" + queryKey.toString() + "'";
-        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(sessionId, userName, searchName, query, node,
+        final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
+        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(searchRequest.getKey().getSessionId(), searchRequest.getKey().getUserId(), searchName, query, node,
                 SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorMap.getMap(), nowEpochMilli);
 
         // Create a handler for search results.
@@ -116,6 +107,9 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
 
         // Tell the task where results will be collected.
         asyncSearchTask.setResultCollector(searchResultCollector);
+
+        // Start asynchronous search execution.
+        searchResultCollector.start();
 
         return searchResultCollector;
     }
@@ -160,11 +154,6 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
         }
 
         return highlights;
-    }
-
-    @Override
-    public String getEntityType() {
-        return ENTITY_TYPE;
     }
 
     public int getMaxBooleanClauseCount() {

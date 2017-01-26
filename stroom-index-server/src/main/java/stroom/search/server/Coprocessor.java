@@ -16,8 +16,6 @@
 
 package stroom.search.server;
 
-import stroom.query.CoprocessorSettings;
-
-public interface Coprocessor<S extends CoprocessorSettings> extends PayloadFactory {
+public interface Coprocessor extends PayloadFactory {
     void receive(String[] values);
 }

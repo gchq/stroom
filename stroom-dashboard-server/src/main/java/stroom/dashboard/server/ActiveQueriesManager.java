@@ -27,14 +27,17 @@ import javax.inject.Inject;
 public class ActiveQueriesManager extends AbstractCacheBean<String, ActiveQueries> {
     private static final int MAX_ACTIVE_QUERIES = 10000;
 
+    private final DataSourceProviderRegistry dataSourceProviderRegistry;
+
     @Inject
-    public ActiveQueriesManager(final CacheManager cacheManager) {
+    public ActiveQueriesManager(final CacheManager cacheManager, final DataSourceProviderRegistry dataSourceProviderRegistry) {
         super(cacheManager, "Active Queries", MAX_ACTIVE_QUERIES);
+        this.dataSourceProviderRegistry = dataSourceProviderRegistry;
     }
 
     @Override
     protected ActiveQueries create(final String key) {
-        return new ActiveQueries();
+        return new ActiveQueries(dataSourceProviderRegistry);
     }
 
     @Override

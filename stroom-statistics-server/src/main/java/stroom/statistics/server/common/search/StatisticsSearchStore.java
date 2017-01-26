@@ -16,16 +16,15 @@
 
 package stroom.statistics.server.common.search;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import stroom.query.CoprocessorMap.CoprocessorKey;
 import stroom.query.Payload;
 import stroom.query.ResultHandler;
-import stroom.query.ResultStore;
-import stroom.query.SearchResultCollector;
+import stroom.query.Data;
+import stroom.query.Store;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskTerminatedException;
@@ -33,22 +32,21 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 
-public class StatStoreSearchResultCollector implements SearchResultCollector {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StatStoreSearchResultCollector.class);
+public class StatisticsSearchStore implements Store {
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(StatisticsSearchStore.class);
 
     private final TaskManager taskManager;
     private final Task<VoidResult> task;
     private final ResultHandler resultHandler;
     private final Set<String> errors = new HashSet<>();
 
-    public StatStoreSearchResultCollector(final TaskManager taskManager, final Task<VoidResult> task,
-            final ResultHandler resultHandler) {
+    public StatisticsSearchStore(final TaskManager taskManager, final Task<VoidResult> task,
+                                 final ResultHandler resultHandler) {
         this.taskManager = taskManager;
         this.task = task;
         this.resultHandler = resultHandler;
     }
 
-    @Override
     public void start() {
         // Start asynchronous search execution.
         taskManager.execAsync(task, new TaskCallback<VoidResult>() {
@@ -83,14 +81,14 @@ public class StatStoreSearchResultCollector implements SearchResultCollector {
         return resultHandler.isComplete();
     }
 
-    public void handle(final Map<Integer, Payload> payloadMap) {
+    public void handle(final Map<CoprocessorKey, Payload> payloadMap) {
         if (payloadMap != null) {
             resultHandler.handle(payloadMap, task);
         }
     }
 
     @Override
-    public ResultStore getResultStore(final String componentId) {
+    public Data getData(final String componentId) {
         return resultHandler.getResultStore(componentId);
     }
 
@@ -98,12 +96,16 @@ public class StatStoreSearchResultCollector implements SearchResultCollector {
         errors.add(error);
     }
 
-    public synchronized List<String> getErrors() {
-        return new ArrayList<>(errors);
+    public synchronized String[] getErrors() {
+        if (errors == null || errors.size() == 0) {
+            return null;
+        }
+
+        return errors.toArray(new String[errors.size()]);
     }
 
     @Override
-    public Set<String> getHighlights() {
+    public String[] getHighlights() {
         return null;
     }
 

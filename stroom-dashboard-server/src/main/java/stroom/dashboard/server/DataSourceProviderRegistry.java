@@ -23,23 +23,25 @@ import stroom.query.api.DocRef;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
 public class DataSourceProviderRegistry implements InitializingBean {
-    private final Map<String, DataSourceProvider> providers = new HashMap<String, DataSourceProvider>();
+    private final Map<String, DataSourceProvider> providers = new HashMap<>();
 
-    @Resource
-    private StroomBeanStore stroomBeanStore;
+    private final StroomBeanStore stroomBeanStore;
 
-    public DataSource getDataSource(final DocRef dataSourceRef) {
+    @Inject
+    public DataSourceProviderRegistry(final StroomBeanStore stroomBeanStore) {
+        this.stroomBeanStore = stroomBeanStore;
+    }
+
+    public DataSourceProvider getDataSourceProvider(final DocRef dataSourceRef) {
         if (dataSourceRef != null && dataSourceRef.getType() != null) {
             final DataSourceProvider provider = providers.get(dataSourceRef.getType());
-            if (provider != null && dataSourceRef.getUuid() != null) {
-                final DataSource dataSource = provider.getDataSource(dataSourceRef.getUuid());
-                return dataSource;
-            }
+            return provider;
         }
         return null;
     }

@@ -32,7 +32,7 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = TableResultRequest.class, name = "table"),
         @JsonSubTypes.Type(value = VisResultRequest.class, name = "vis")
 })
-@XmlType(name = "resultRequest", propOrder = {"componentId", "fetchData"})
+@XmlType(name = "ResultRequest", propOrder = {"componentId", "fetchData"})
 public abstract class ResultRequest implements Serializable {
     private static final long serialVersionUID = -7455554742243923562L;
 

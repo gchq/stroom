@@ -27,7 +27,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 @JsonPropertyOrder({"groupKey", "values", "depth"})
-@XmlType(name = "row", propOrder = {"groupKey", "values", "depth"})
+@XmlType(name = "Row", propOrder = {"groupKey", "values", "depth"})
 public class Row implements Serializable {
     private static final long serialVersionUID = 4379892306375080112L;
 

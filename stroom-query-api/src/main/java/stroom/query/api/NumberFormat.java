@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"decimalPlaces", "useSeparator"})
-@XmlType(name = "numberFormat", propOrder = {"decimalPlaces", "useSeparator"})
+@XmlType(name = "NumberFormat", propOrder = {"decimalPlaces", "useSeparator"})
 public class NumberFormat implements Serializable {
     private static final long serialVersionUID = 9145624653060319801L;
 

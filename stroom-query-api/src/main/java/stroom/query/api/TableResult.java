@@ -24,7 +24,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.util.Arrays;
 
 @JsonPropertyOrder({"componentId", "rows", "resultRange", "totalResults", "error"})
-@XmlType(name = "tableResult", propOrder = {"rows", "resultRange", "totalResults", "error"})
+@XmlType(name = "TableResult", propOrder = {"rows", "resultRange", "totalResults", "error"})
 public class TableResult extends Result {
     private static final long serialVersionUID = -2964122512841756795L;
 

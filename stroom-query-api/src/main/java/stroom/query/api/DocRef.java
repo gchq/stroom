@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"type", "uuid", "name"})
-@XmlType(name = "docRef", propOrder = {"type", "uuid", "name"})
+@XmlType(name = "DocRef", propOrder = {"type", "uuid", "name"})
 public class DocRef implements Serializable {
     private static final long serialVersionUID = -2121399789820829359L;
 

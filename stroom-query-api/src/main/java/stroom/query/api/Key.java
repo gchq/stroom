@@ -8,7 +8,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"type", "value"})
-@XmlType(name = "key", propOrder = {"type", "value"})
+@XmlType(name = "Key", propOrder = {"type", "value"})
 public class Key implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;
 

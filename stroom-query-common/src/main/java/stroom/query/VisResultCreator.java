@@ -35,15 +35,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class VisComponentResultCreator implements ComponentResultCreator {
+public class VisResultCreator implements ResultCreator {
     private final CompiledStructure.Structure structure;
     private String error;
 
-    public VisComponentResultCreator(final CompiledStructure.Structure structure) {
+    public VisResultCreator(final CompiledStructure.Structure structure) {
         this.structure = structure;
     }
 
-    public static VisComponentResultCreator create(final ResultRequest resultRequest) {
+    public static VisResultCreator create(final ResultRequest resultRequest) {
         CompiledStructure.Structure structure;
         try {
             final VisResultRequest visResultRequest = (VisResultRequest) resultRequest;
@@ -54,15 +54,15 @@ public class VisComponentResultCreator implements ComponentResultCreator {
             throw new RuntimeException(e.getMessage());
         }
 
-        return new VisComponentResultCreator(structure);
+        return new VisResultCreator(structure);
     }
 
     @Override
-    public Result create(final ResultStore resultStore, final ResultRequest resultRequest) {
+    public Result create(final Data data, final ResultRequest resultRequest) {
         if (error == null) {
             try {
                 // Get top level items.
-                final Items<Item> items = resultStore.getChildMap().get(null);
+                final Items<Item> items = data.getChildMap().get(null);
                 final Node node = create(items);
 
                 int dataPoints = 0;

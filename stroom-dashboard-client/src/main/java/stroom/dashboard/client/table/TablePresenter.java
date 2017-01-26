@@ -55,7 +55,7 @@ import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Format;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.IndexConstants;
-import stroom.dashboard.shared.QueryKey;
+import stroom.query.api.QueryKey;
 import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;

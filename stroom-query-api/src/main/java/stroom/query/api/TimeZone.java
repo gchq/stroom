@@ -24,7 +24,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"use", "id", "offsetHours", "offsetMinutes"})
-@XmlType(name = "timeZone", propOrder = {"use", "id", "offsetHours", "offsetMinutes"})
+@XmlType(name = "TimeZone", propOrder = {"use", "id", "offsetHours", "offsetMinutes"})
 public class TimeZone implements Serializable {
     private static final long serialVersionUID = 1200175661441813029L;
 

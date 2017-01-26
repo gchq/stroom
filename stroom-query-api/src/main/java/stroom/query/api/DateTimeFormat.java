@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"pattern", "timeZone"})
-@XmlType(name = "dateTimeFormat", propOrder = {"pattern", "timeZone"})
+@XmlType(name = "DateTimeFormat", propOrder = {"pattern", "timeZone"})
 public class DateTimeFormat implements Serializable {
     private static final long serialVersionUID = 9145624653060319801L;
 

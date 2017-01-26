@@ -26,7 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @JsonPropertyOrder({"type", "numberFormat", "dateTimeFormat"})
-@XmlType(name = "format", propOrder = {"type", "numberFormat", "dateTimeFormat"})
+@XmlType(name = "Format", propOrder = {"type", "numberFormat", "dateTimeFormat"})
 public class Format implements Serializable {
     private static final long serialVersionUID = -5380825645719299089L;
 

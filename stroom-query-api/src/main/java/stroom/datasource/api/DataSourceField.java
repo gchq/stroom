@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @JsonPropertyOrder({"type", "name", "queryable", "conditions"})
-@XmlType(name = "dataSourceField", propOrder = {"type", "name", "queryable", "conditions"})
+@XmlType(name = "DataSourceField", propOrder = {"type", "name", "queryable", "conditions"})
 public class DataSourceField implements Serializable, HasDisplayValue {
     private static final long serialVersionUID = 1272545271946712570L;
 

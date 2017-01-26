@@ -35,7 +35,7 @@ import stroom.util.task.TaskMonitor;
 import java.util.List;
 import java.util.Map;
 
-public class TableCoprocessor implements Coprocessor<TableCoprocessorSettings> {
+public class TableCoprocessor implements Coprocessor {
     private final PairQueue<String, Item> queue;
     private final ItemMapper mapper;
 

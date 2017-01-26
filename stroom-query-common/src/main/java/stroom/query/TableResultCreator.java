@@ -33,42 +33,44 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class TableComponentResultCreator implements ComponentResultCreator {
+public class TableResultCreator implements ResultCreator {
     private final FieldFormatter fieldFormatter;
     private volatile Field[] latestFields;
 
-    public TableComponentResultCreator(final FieldFormatter fieldFormatter) {
+    public TableResultCreator(final FieldFormatter fieldFormatter) {
         this.fieldFormatter = fieldFormatter;
     }
 
     @Override
-    public Result create(final ResultStore resultStore, final ResultRequest componentResultRequest) {
+    public Result create(final Data data, final ResultRequest componentResultRequest) {
         final TableResultRequest resultRequest = (TableResultRequest) componentResultRequest;
         final List<Row> resultList = new ArrayList<>();
         int offset = 0;
-        int length = 0;
+        int length = Integer.MAX_VALUE;
         int totalResults = 0;
         String error = null;
 
         try {
             final OffsetRange range = resultRequest.getRequestedRange();
+            if (range != null) {
+                offset = range.getOffset().intValue();
+                length = range.getLength().intValue();
+            }
 
             Set<String> openGroups = Collections.emptySet();
             if (resultRequest.getOpenGroups() != null) {
                 openGroups = Arrays.stream(resultRequest.getOpenGroups()).collect(Collectors.toSet());
             }
 
-            offset = range.getOffset().intValue();
-            length = range.getLength().intValue();
             latestFields = resultRequest.getTableSettings().getFields();
-            totalResults = addTableResults(resultStore, latestFields, offset, length, openGroups, resultList, null, 0,
+            totalResults = addTableResults(data, latestFields, offset, length, openGroups, resultList, null, 0,
                     0);
         } catch (final Exception e) {
             error = e.getMessage();
         }
 
-        final TableResult tableResult = new TableResult();
-        tableResult.setRows((Row[]) resultList.toArray());
+        final TableResult tableResult = new TableResult(componentResultRequest.getComponentId());
+        tableResult.setRows(resultList.toArray(new Row[resultList.size()]));
         tableResult.setResultRange(new OffsetRange(offset, resultList.size()));
         tableResult.setTotalResults(totalResults);
         tableResult.setError(error);
@@ -76,12 +78,12 @@ public class TableComponentResultCreator implements ComponentResultCreator {
         return tableResult;
     }
 
-    private int addTableResults(final ResultStore resultStore, final Field[] fields, final int offset,
+    private int addTableResults(final Data data, final Field[] fields, final int offset,
                                 final int length, final Set<String> openGroups, final List<Row> resultList, final String parentKey,
                                 final int depth, final int position) {
         int pos = position;
         // Get top level items.
-        final Items<Item> items = resultStore.getChildMap().get(parentKey);
+        final Items<Item> items = data.getChildMap().get(parentKey);
         if (items != null) {
             for (final Item item : items) {
                 if (pos >= offset && resultList.size() < length) {
@@ -118,7 +120,7 @@ public class TableComponentResultCreator implements ComponentResultCreator {
 
                 // Add child results if a node is open.
                 if (item.getGroupKey() != null && openGroups != null && openGroups.contains(item.getGroupKey())) {
-                    pos = addTableResults(resultStore, fields, offset, length, openGroups, resultList,
+                    pos = addTableResults(data, fields, offset, length, openGroups, resultList,
                             item.getGroupKey(), depth + 1, pos);
                 }
             }

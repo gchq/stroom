@@ -33,7 +33,7 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = TableResult.class, name = "table"),
         @JsonSubTypes.Type(value = VisResult.class, name = "vis")
 })
-@XmlType(name = "result", propOrder = "componentId")
+@XmlType(name = "Result", propOrder = "componentId")
 @XmlSeeAlso({ TableResult.class, VisResult.class })
 public abstract class Result implements Serializable {
     private static final long serialVersionUID = -7455554742243923562L;

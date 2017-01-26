@@ -1,4 +1,7 @@
 {
+  "key" : {
+    "uuid" : "1234"
+  },
   "query" : {
     "dataSource" : {
       "type" : "docRefType",

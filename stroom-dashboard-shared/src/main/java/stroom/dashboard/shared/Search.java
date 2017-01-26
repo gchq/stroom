@@ -47,7 +47,7 @@ public class Search implements Serializable {
     private Map<String, String> paramMap;
 
     @XmlElement
-    private boolean incremental;
+    private Boolean incremental;
 
     public Search() {
         // Default constructor necessary for GWT serialisation.
@@ -64,7 +64,7 @@ public class Search implements Serializable {
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
                   final Map<String, ComponentSettings> componentSettingsMap, final Map<String, String> paramMap,
-                  final boolean incremental) {
+                  final Boolean incremental) {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
@@ -88,7 +88,7 @@ public class Search implements Serializable {
         return paramMap;
     }
 
-    public boolean isIncremental() {
+    public Boolean getIncremental() {
         return incremental;
     }
 

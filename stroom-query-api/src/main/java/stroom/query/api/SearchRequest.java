@@ -17,6 +17,7 @@
 package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import sun.security.jgss.spnego.NegTokenInit;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -27,12 +28,13 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
-@JsonPropertyOrder({"query", "resultRequests", "dateTimeLocale", "incremental"})
+@JsonPropertyOrder({"key", "query", "resultRequests", "dateTimeLocale", "incremental"})
 @XmlRootElement(name = "searchRequest")
-@XmlType(name = "searchRequest", propOrder = {"query", "resultRequests", "dateTimeLocale", "incremental"})
+@XmlType(name = "SearchRequest", propOrder = {"key", "query", "resultRequests", "dateTimeLocale", "incremental"})
 public class SearchRequest implements Serializable {
     private static final long serialVersionUID = -6668626615097471925L;
 
+    private QueryKey key;
     private Query query;
     private ResultRequest[] resultRequests;
     private String dateTimeLocale;
@@ -41,11 +43,21 @@ public class SearchRequest implements Serializable {
     public SearchRequest() {
     }
 
-    public SearchRequest(final Query query, final ResultRequest[] resultRequests,
+    public SearchRequest(final QueryKey key, final Query query, final ResultRequest[] resultRequests,
                          final String dateTimeLocale) {
+        this.key = key;
         this.query = query;
         this.resultRequests = resultRequests;
         this.dateTimeLocale = dateTimeLocale;
+    }
+
+    @XmlElement
+    public QueryKey getKey() {
+        return key;
+    }
+
+    public void setKey(final QueryKey key) {
+        this.key = key;
     }
 
     @XmlElement
@@ -99,6 +111,7 @@ public class SearchRequest implements Serializable {
 
         final SearchRequest that = (SearchRequest) o;
 
+        if (key != null ? !key.equals(that.key) : that.key != null) return false;
         if (query != null ? !query.equals(that.query) : that.query != null) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(resultRequests, that.resultRequests)) return false;
@@ -109,7 +122,8 @@ public class SearchRequest implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = query != null ? query.hashCode() : 0;
+        int result = key != null ? key.hashCode() : 0;
+        result = 31 * result + (query != null ? query.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(resultRequests);
         result = 31 * result + (dateTimeLocale != null ? dateTimeLocale.hashCode() : 0);
         result = 31 * result + (incremental != null ? incremental.hashCode() : 0);
@@ -119,7 +133,8 @@ public class SearchRequest implements Serializable {
     @Override
     public String toString() {
         return "SearchRequest{" +
-                "query=" + query +
+                "key=" + key +
+                ", query=" + query +
                 ", resultRequests=" + Arrays.toString(resultRequests) +
                 ", dateTimeLocale='" + dateTimeLocale + '\'' +
                 ", incremental=" + incremental +

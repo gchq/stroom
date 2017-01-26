@@ -82,13 +82,13 @@ public class TestTablePayloadHandler {
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
                 tableSettings.showDetail(), new Integer[]{50}, new Integer[]{50});
         payloadHandler.addQueue(queue, new Terminatable());
-        final ResultStore resultStore = payloadHandler.getResultStore();
+        final Data data = payloadHandler.getData();
 
         // Make sure we only get 50 results.
         final TableResultRequest tableResultRequest = new TableResultRequest("componentX", tableSettings, 0, 3000);
         tableResultRequest.setTableSettings(tableSettings);
-        final TableComponentResultCreator tableComponentResultCreator = new TableComponentResultCreator(fieldFormatter);
-        final TableResult searchResult = (TableResult) tableComponentResultCreator.create(resultStore,
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
+        final TableResult searchResult = (TableResult) tableComponentResultCreator.create(data,
                 tableResultRequest);
         Assert.assertEquals(50, searchResult.getTotalResults().intValue());
     }
@@ -129,11 +129,11 @@ public class TestTablePayloadHandler {
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
                 tableSettings.showDetail(), new Integer[]{50}, new Integer[]{50});
         payloadHandler.addQueue(queue, new Terminatable());
-        final ResultStore resultStore = payloadHandler.getResultStore();
+        final Data data = payloadHandler.getData();
 
         final TableResultRequest tableResultRequest = new TableResultRequest("componentX", tableSettings, 0, 3000);
         tableResultRequest.setTableSettings(tableSettings);
-        checkResults(resultStore, tableResultRequest, 0);
+        checkResults(data, tableResultRequest, 0);
     }
 
     @Test
@@ -172,11 +172,11 @@ public class TestTablePayloadHandler {
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
                 tableSettings.showDetail(), new Integer[]{50}, new Integer[]{50});
         payloadHandler.addQueue(queue, new Terminatable());
-        final ResultStore resultStore = payloadHandler.getResultStore();
+        final Data data = payloadHandler.getData();
 
         final TableResultRequest tableResultRequest = new TableResultRequest("componentX", tableSettings, 0, 3000);
         tableResultRequest.setTableSettings(tableSettings);
-        checkResults(resultStore, tableResultRequest, 0);
+        checkResults(data, tableResultRequest, 0);
     }
 
     @Test
@@ -219,11 +219,11 @@ public class TestTablePayloadHandler {
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
                 tableSettings.showDetail(), new Integer[]{50}, new Integer[]{50});
         payloadHandler.addQueue(queue, new Terminatable());
-        final ResultStore resultStore = payloadHandler.getResultStore();
+        final Data data = payloadHandler.getData();
 
         final TableResultRequest tableResultRequest = new TableResultRequest("componentX", tableSettings, 0, 3000);
         tableResultRequest.setTableSettings(tableSettings);
-        checkResults(resultStore, tableResultRequest, 0);
+        checkResults(data, tableResultRequest, 0);
     }
 
     @Test
@@ -266,11 +266,11 @@ public class TestTablePayloadHandler {
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
                 tableSettings.showDetail(), new Integer[]{50}, new Integer[]{50});
         payloadHandler.addQueue(queue, new Terminatable());
-        final ResultStore resultStore = payloadHandler.getResultStore();
+        final Data data = payloadHandler.getData();
 
         final TableResultRequest tableResultRequest = new TableResultRequest("componentX", tableSettings, 0, 3000);
         tableResultRequest.setTableSettings(tableSettings);
-        checkResults(resultStore, tableResultRequest, 1);
+        checkResults(data, tableResultRequest, 1);
     }
 
     @Test
@@ -313,22 +313,22 @@ public class TestTablePayloadHandler {
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
                 tableSettings.showDetail(), new Integer[]{50}, new Integer[]{50});
         payloadHandler.addQueue(queue, new Terminatable());
-        final ResultStore resultStore = payloadHandler.getResultStore();
+        final Data data = payloadHandler.getData();
 
         final TableResultRequest tableResultRequest = new TableResultRequest("componentX", tableSettings, 0, 3000);
         tableResultRequest.setTableSettings(tableSettings);
-        checkResults(resultStore, tableResultRequest, 1);
+        checkResults(data, tableResultRequest, 1);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private void checkResults(final ResultStore resultStore, final TableResultRequest tableResultRequest,
+    private void checkResults(final Data data, final TableResultRequest tableResultRequest,
                               final int sortCol) {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
 
         // Make sure we only get 2000 results.
-        final TableComponentResultCreator tableComponentResultCreator = new TableComponentResultCreator(fieldFormatter);
-        final TableResult searchResult = (TableResult) tableComponentResultCreator.create(resultStore,
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
+        final TableResult searchResult = (TableResult) tableComponentResultCreator.create(data,
                 tableResultRequest);
 
         Assert.assertTrue(searchResult.getTotalResults().intValue() <= 50);

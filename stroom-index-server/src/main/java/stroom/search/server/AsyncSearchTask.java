@@ -17,6 +17,7 @@
 package stroom.search.server;
 
 import stroom.node.shared.Node;
+import stroom.query.CoprocessorMap.CoprocessorKey;
 import stroom.query.CoprocessorSettings;
 import stroom.query.api.Query;
 import stroom.util.shared.VoidResult;
@@ -32,14 +33,14 @@ public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializab
     private final Query query;
     private final Node targetNode;
     private final int resultSendFrequency;
-    private final Map<Integer, CoprocessorSettings> coprocessorMap;
+    private final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap;
     private final long now;
 
     private volatile transient ClusterSearchResultCollector resultCollector;
 
     public AsyncSearchTask(final String sessionId, final String userName, final String searchName, final Query query,
                            final Node targetNode, final int resultSendFrequency,
-                           final Map<Integer, CoprocessorSettings> coprocessorMap, final long now) {
+                           final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap, final long now) {
         super(null, sessionId, userName);
         this.searchName = searchName;
         this.query = query;
@@ -65,7 +66,7 @@ public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializab
         return resultSendFrequency;
     }
 
-    public Map<Integer, CoprocessorSettings> getCoprocessorMap() {
+    public Map<CoprocessorKey, CoprocessorSettings> getCoprocessorMap() {
         return coprocessorMap;
     }
 

@@ -21,42 +21,31 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonIndexingTest;
-import stroom.dashboard.server.ActiveQuery;
-import stroom.dashboard.server.QueryEntityMarshaller;
-import stroom.dashboard.server.SearchDataSourceProviderRegistry;
-import stroom.dashboard.server.SearchResultCreator;
-import stroom.dashboard.shared.BasicQueryKey;
-import stroom.dashboard.shared.ComponentResult;
-import stroom.dashboard.shared.ComponentResultRequest;
-import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.Format;
-import stroom.util.shared.ParamUtil;
-import stroom.dashboard.shared.QueryEntity;
-import stroom.dashboard.shared.Row;
-import stroom.dashboard.shared.Search;
-import stroom.dashboard.shared.SearchRequest;
-import stroom.dashboard.shared.SearchResponse;
-import stroom.dashboard.shared.TableComponentSettings;
-import stroom.dashboard.shared.TableResult;
-import stroom.dashboard.shared.TableResultRequest;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.SearchDataSourceProvider;
-import stroom.query.SearchResultCollector;
 import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.Field;
+import stroom.query.api.Format;
+import stroom.query.api.OffsetRange;
 import stroom.query.api.Query;
-import stroom.search.server.LuceneSearchDataSourceProvider;
-import stroom.task.server.TaskManager;
+import stroom.query.api.QueryKey;
+import stroom.query.api.Result;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.Row;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchResponse;
+import stroom.query.api.TableResult;
+import stroom.query.api.TableResultRequest;
+import stroom.query.api.TableSettings;
+import stroom.search.server.SearchService;
 import stroom.util.config.StroomProperties;
-import stroom.util.shared.OffsetRange;
-import stroom.util.shared.SharedObject;
+import stroom.util.shared.ParamUtil;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
@@ -64,7 +53,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.UUID;
 
 public class TestEventSearch extends AbstractCoreIntegrationTest {
     private static boolean doneSetup;
@@ -73,13 +62,7 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
     @Resource
     private IndexService indexService;
     @Resource
-    private QueryEntityMarshaller queryEntityMarshaller;
-    @Resource
-    private SearchDataSourceProviderRegistry searchDataSourceProviderRegistry;
-    @Resource
-    private TaskManager taskManager;
-    @Resource
-    private SearchResultCreator searchResultCreator;
+    private SearchService searchService;
 
     @Override
     public void onBefore() {
@@ -104,7 +87,7 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         test(expressionIn, expectResultCount, compoentIds, true);
     }
 
-    private void test(final ExpressionOperator expressionIn, final int expectResultCount, final String[] compoentIds,
+    private void test(final ExpressionOperator expressionIn, final int expectResultCount, final String[] componentIds,
                       final boolean extractValues) {
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
         StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
@@ -114,85 +97,58 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         Assert.assertNotNull("Index is null", index);
         final DocRef dataSourceRef = DocRefUtil.create(index);
 
-        final QueryEntity queryEntity = buildQuery(dataSourceRef, expressionIn);
-        final Query query = queryEntity.getQuery();
-        final ExpressionOperator expression = query.getExpression();
+        final ResultRequest[] resultRequests = new ResultRequest[componentIds.length];
 
-        final Map<String, ComponentSettings> resultComponentMap = new HashMap<>();
-        final Map<String, ComponentResultRequest> componentResultRequests = new HashMap<>();
-        for (final String componentId : compoentIds) {
-            final TableComponentSettings tableSettings = createTableSettings(index);
+        for (int i = 0; i < componentIds.length; i++) {
+            final String componentId = componentIds[i];
+
+            final TableSettings tableSettings = createTableSettings(index);
             tableSettings.setExtractValues(extractValues);
-            resultComponentMap.put(componentId, tableSettings);
 
             final TableResultRequest tableResultRequest = new TableResultRequest();
+            tableResultRequest.setComponentId(componentId);
             tableResultRequest.setTableSettings(tableSettings);
-            tableResultRequest.setWantsData(true);
-            componentResultRequests.put(componentId, tableResultRequest);
+            tableResultRequest.setFetchData(true);
+            resultRequests[i] = tableResultRequest;
         }
 
-        SearchResponse result = null;
-        boolean complete = false;
-        final Map<String, ComponentResult> results = new HashMap<>();
+        final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
+        final Query query = new Query(dataSourceRef, expressionIn);
+        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, DateTimeZone.UTC.getID());
 
-        final Search search = new Search(query.getDataSource(), expression, resultComponentMap);
-        final SearchRequest searchRequest = new SearchRequest(search, componentResultRequests,
-                DateTimeZone.UTC.getID());
-
-        final SearchDataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
-                .getProvider(LuceneSearchDataSourceProvider.ENTITY_TYPE);
-        final SearchResultCollector searchResultCollector = dataSourceProvider.createCollector(null, null,
-                new BasicQueryKey(queryEntity.getName()), searchRequest);
-        final ActiveQuery activeQuery = new ActiveQuery(searchResultCollector);
-
-        // Start asynchronous search execution.
-        searchResultCollector.start();
+        SearchResponse searchResponse = searchService.search(searchRequest);
 
         try {
-            while (!complete) {
-                result = searchResultCreator.createResult(activeQuery, searchRequest);
-                // We need to remember results when they are returned as search
-                // will no longer return duplicate results to prevent us
-                // overwhelming the UI and transferring unnecessary data to the
-                // client.
-                if (result.getResults() != null) {
-                    for (final Entry<String, ComponentResult> entry : result.getResults().entrySet()) {
-                        if (entry.getValue() != null) {
-                            results.put(entry.getKey(), entry.getValue());
-                        }
-                    }
-                }
+            while (!searchResponse.complete()) {
+                searchResponse = searchService.search(searchRequest);
 
-                complete = result.isComplete();
-
-                if (!complete) {
+                if (!searchResponse.complete()) {
                     ThreadUtil.sleep(1000);
                 }
             }
         } finally {
-            searchResultCollector.destroy();
+            searchService.terminate(queryKey);
         }
 
         final Map<String, List<Row>> rows = new HashMap<>();
-        if (result != null) {
-            for (final Entry<String, ComponentResult> entry : results.entrySet()) {
-                final String componentId = entry.getKey();
-                final TableResult tableResult = (TableResult) entry.getValue();
+        if (searchResponse != null) {
+            for (final Result result : searchResponse.getResults()) {
+                final String componentId = result.getComponentId();
+                final TableResult tableResult = (TableResult) result;
 
                 if (tableResult.getResultRange() != null && tableResult.getRows() != null) {
-                    final OffsetRange<Integer> range = tableResult.getResultRange();
+                    final OffsetRange range = tableResult.getResultRange();
 
-                    for (int i = range.getOffset(); i < range.getLength(); i++) {
+                    for (long i = range.getOffset(); i < range.getLength(); i++) {
                         List<Row> values = rows.get(componentId);
                         if (values == null) {
                             values = new ArrayList<>();
                             rows.put(componentId, values);
                         }
-                        values.add(tableResult.getRows().get(i));
+                        values.add(tableResult.getRows()[(int) i]);
                     }
                 }
             }
-            complete = result.isComplete();
         }
 
         // // Output the hits.
@@ -204,7 +160,7 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         if (expectResultCount == 0) {
             Assert.assertEquals(0, rows.size());
         } else {
-            Assert.assertEquals(compoentIds.length, rows.size());
+            Assert.assertEquals(componentIds.length, rows.size());
         }
 
         for (final List<Row> values : rows.values()) {
@@ -220,13 +176,12 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
                 Assert.assertNotNull("No results found", firstResult);
 
                 if (extractValues) {
-                    final SharedObject time = firstResult.getValues()[1];
+                    final String time = firstResult.getValues()[1];
                     Assert.assertNotNull("Incorrect heading", time);
                     Assert.assertEquals("Incorrect number of hits found", expectResultCount, values.size());
                     boolean found = false;
                     for (final Row hit : values) {
-                        final SharedObject obj = hit.getValues()[1];
-                        final String str = obj.toString();
+                        final String str = hit.getValues()[1];
                         if ("2007-03-18T14:34:41.000Z".equals(str)) {
                             found = true;
                         }
@@ -237,8 +192,8 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         }
     }
 
-    private TableComponentSettings createTableSettings(final Index index) {
-        final TableComponentSettings tableSettings = new TableComponentSettings();
+    private TableSettings createTableSettings(final Index index) {
+        final TableSettings tableSettings = new TableSettings();
 
         final Field idField = new Field("Id");
         idField.setExpression(ParamUtil.makeParam("StreamId"));
@@ -253,15 +208,6 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         tableSettings.setExtractionPipeline(DocRefUtil.create(resultPipeline));
 
         return tableSettings;
-    }
-
-    private QueryEntity buildQuery(final DocRef dataSourceRef, final ExpressionOperator expression) {
-        final Query query = new Query(dataSourceRef, expression);
-        QueryEntity queryEntity = new QueryEntity();
-        queryEntity.setQuery(query);
-        queryEntity = queryEntityMarshaller.marshal(queryEntity);
-
-        return queryEntity;
     }
 
     private ExpressionOperator buildExpression(final String userField, final String userTerm, final String from,

@@ -16,12 +16,28 @@
 
 package stroom.query;
 
-import stroom.dashboard.shared.QueryKey;
-import stroom.dashboard.shared.SearchRequest;
+import java.util.Map;
 
-public interface SearchDataSourceProvider {
-    SearchResultCollector createCollector(String sessionId, String userName, QueryKey queryKey,
-            SearchRequest searchRequest);
+public class Data {
+    private final Map<String, Items<Item>> childMap;
+    private final long size;
+    private final long totalSize;
 
-    String getEntityType();
+    public Data(final Map<String, Items<Item>> childMap, final long size, final long totalSize) {
+        this.childMap = childMap;
+        this.size = size;
+        this.totalSize = totalSize;
+    }
+
+    public Map<String, Items<Item>> getChildMap() {
+        return childMap;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public long getTotalSize() {
+        return totalSize;
+    }
 }

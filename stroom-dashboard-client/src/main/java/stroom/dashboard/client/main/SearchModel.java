@@ -21,18 +21,16 @@ import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.QueryKey;
-import stroom.dashboard.shared.QueryKeyImpl;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.dashboard.shared.UniqueQueryKey;
+import stroom.dashboard.shared.SharedQueryKey;
 import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
+import stroom.query.api.QueryKey;
 import stroom.util.client.KVMapUtil;
-import stroom.util.client.RandomId;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +45,8 @@ public class SearchModel {
     private Map<String, String> currentParameterMap;
     private ExpressionOperator currentExpression;
     private SearchResponse currentResult;
-    private UniqueQueryKey currentQueryKey;
+    private DashboardUUID dashboardUUID;
+    private SharedQueryKey currentQueryKey;
     private Search currentSearch;
     private Search activeSearch;
     private Mode mode = Mode.INACTIVE;
@@ -132,9 +131,7 @@ public class SearchModel {
                 replaceExpressionParameters(copy, currentParameterMap);
                 currentExpression = copy;
 
-                currentQueryKey = new UniqueQueryKey(currentQueryKey.getDashboardId(),
-                        currentQueryKey.getDashboardName(), currentQueryKey.getQueryId(),
-                        RandomId.createDiscrimiator());
+                currentQueryKey = new SharedQueryKey(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
                 currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, incremental);
                 activeSearch = currentSearch;
 
@@ -309,10 +306,10 @@ public class SearchModel {
         return indexLoader;
     }
 
-    public void setInitialQueryKey(final QueryKeyImpl initialQueryKey) {
+    public void setDashboardUUID(final DashboardUUID dashboardUUID) {
+        this.dashboardUUID = dashboardUUID;
         destroy();
-        currentQueryKey = new UniqueQueryKey(initialQueryKey.getDashboardId(), initialQueryKey.getDashboardName(),
-                initialQueryKey.getQueryId(), RandomId.createDiscrimiator());
+        currentQueryKey = new SharedQueryKey(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
     }
 
     public SearchResponse getCurrentResult() {

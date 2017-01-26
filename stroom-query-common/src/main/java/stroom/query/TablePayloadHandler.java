@@ -23,12 +23,10 @@ import stroom.mapreduce.PairQueue;
 import stroom.mapreduce.Reader;
 import stroom.mapreduce.Source;
 import stroom.mapreduce.UnsafePairQueue;
-import stroom.query.Items.RemoveHandler;
 import stroom.query.api.Field;
 import stroom.util.shared.HasTerminate;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,7 +43,7 @@ public class TablePayloadHandler implements PayloadHandler {
     private final AtomicBoolean merging = new AtomicBoolean();
 
     private volatile PairQueue<String, Item> currentQueue;
-    private volatile ResultStore resultStore;
+    private volatile Data data;
 
     public TablePayloadHandler(final Field[] fields, final boolean showDetails, final Integer[] storeTrimSizes, final Integer[] defaultStoreTrimSizes) {
         this.compiledSorter = new CompiledSorter(fields);
@@ -193,7 +191,7 @@ public class TablePayloadHandler implements PayloadHandler {
         }
 
         // Update the result store reference to point at this new store.
-        this.resultStore = resultStoreCreator.create(size, totalResults.get());
+        this.data = resultStoreCreator.create(size, totalResults.get());
 
         // Give back the remaining queue items ready for the next result.
         return remaining;
@@ -202,15 +200,15 @@ public class TablePayloadHandler implements PayloadHandler {
     @Override
     public boolean shouldTerminateSearch() {
         if (!compiledSorter.hasSort() && !compiledDepths.hasGroupBy()) {
-            if (resultStore != null && resultStore.getTotalSize() >= storeTrimSizes[0]) {
+            if (data != null && data.getTotalSize() >= storeTrimSizes[0]) {
                 return true;
             }
         }
         return false;
     }
 
-    public ResultStore getResultStore() {
-        return resultStore;
+    public Data getData() {
+        return data;
     }
 
     private static class ResultStoreCreator implements Reader<String, Item> {
@@ -222,8 +220,8 @@ public class TablePayloadHandler implements PayloadHandler {
             childMap = new HashMap<>();
         }
 
-        public ResultStore create(final long size, final long totalSize) {
-            return new ResultStore(childMap, size, totalSize);
+        public Data create(final long size, final long totalSize) {
+            return new Data(childMap, size, totalSize);
         }
 
         @Override

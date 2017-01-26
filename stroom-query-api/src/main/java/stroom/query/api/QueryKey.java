@@ -21,40 +21,49 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.Map;
 
-@JsonPropertyOrder({"key", "value"})
-@XmlType(name = "Param", propOrder = {"key", "value"})
-public class Param implements Serializable {
-    private static final long serialVersionUID = 9055582579670841979L;
+@JsonPropertyOrder({"uuid", "sessionId", "userId"})
+@XmlType(name = "QueryKey", propOrder = { "uuid", "sessionId", "userId"})
+public class QueryKey implements Serializable {
+    private static final long serialVersionUID = -3222989872764402068L;
 
-    private String key;
-    private String value;
+    private String uuid;
+    private String sessionId;
+    private String userId;
 
-    public Param() {
+    public QueryKey() {
+        // Default constructor necessary for GWT serialisation.
     }
 
-    public Param(final String key, final String value) {
-        this.key = key;
-        this.value = value;
-    }
-
-    @XmlElement
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
+    public QueryKey(final String uuid) {
+        this.uuid = uuid;
     }
 
     @XmlElement
-    public String getValue() {
-        return value;
+    public String getUuid() {
+        return uuid;
     }
 
-    public void setValue(final String value) {
-        this.value = value;
+    public void setUuid(final String uuid) {
+        this.uuid = uuid;
+    }
+
+    @XmlElement
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(final String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    @XmlElement
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(final String userId) {
+        this.userId = userId;
     }
 
     @Override
@@ -62,24 +71,18 @@ public class Param implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final Param param = (Param) o;
+        final QueryKey queryKey = (QueryKey) o;
 
-        if (key != null ? !key.equals(param.key) : param.key != null) return false;
-        return value != null ? value.equals(param.value) : param.value == null;
+        return uuid.equals(queryKey.uuid);
     }
 
     @Override
     public int hashCode() {
-        int result = key != null ? key.hashCode() : 0;
-        result = 31 * result + (value != null ? value.hashCode() : 0);
-        return result;
+        return uuid.hashCode();
     }
 
     @Override
     public String toString() {
-        return "Param{" +
-                "key='" + key + '\'' +
-                ", value='" + value + '\'' +
-                '}';
+        return uuid;
     }
 }

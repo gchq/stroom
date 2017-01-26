@@ -16,10 +16,18 @@
 
 package stroom.dashboard.server;
 
+import stroom.query.api.DocRef;
 import stroom.datasource.api.DataSource;
+import stroom.query.api.QueryKey;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchResponse;
 
 public interface DataSourceProvider {
-    DataSource getDataSource(String uuid);
+    DataSource getDataSource(DocRef docRef);
+
+    SearchResponse search(SearchRequest request);
+
+    void terminate(QueryKey queryKey);
 
     String getType();
 }

@@ -16,7 +16,24 @@
 
 package stroom.dashboard.shared;
 
-import java.io.Serializable;
+import stroom.query.api.QueryKey;
+import stroom.util.shared.SharedObject;
 
-public interface QueryKey extends Serializable {
+public class SharedQueryKey extends QueryKey implements SharedObject {
+    private static final long serialVersionUID = -3222989872764402068L;
+
+    private long dashboardId;
+
+    public SharedQueryKey() {
+        // Default constructor necessary for GWT serialisation.
+    }
+
+    public SharedQueryKey(final String uuid, final long dashboardId) {
+        super(uuid);
+        this.dashboardId = dashboardId;
+    }
+
+    public long getDashboardId() {
+        return dashboardId;
+    }
 }

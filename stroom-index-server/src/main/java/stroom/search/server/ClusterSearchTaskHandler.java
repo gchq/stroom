@@ -29,6 +29,7 @@ import stroom.index.shared.IndexService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
 import stroom.pipeline.server.errorhandler.TerminatedException;
+import stroom.query.CoprocessorMap.CoprocessorKey;
 import stroom.query.CoprocessorSettings;
 import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionOperator;
@@ -170,8 +171,8 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                     // coprocessors need us to extract data.
                     boolean filterStreams = false;
 
-                    Map<Integer, Coprocessor<?>> coprocessorMap = null;
-                    Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap = null;
+                    Map<CoprocessorKey, Coprocessor> coprocessorMap = null;
+                    Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap = null;
 
                     final FieldIndexMap extractionFieldIndexMap = new FieldIndexMap(true);
 
@@ -186,8 +187,8 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                         coprocessorMap = new HashMap<>();
                         extractionCoprocessorsMap = new HashMap<>();
 
-                        for (final Entry<Integer, CoprocessorSettings> entry : task.getCoprocessorMap().entrySet()) {
-                            final Integer coprocessorId = entry.getKey();
+                        for (final Entry<CoprocessorKey, CoprocessorSettings> entry : task.getCoprocessorMap().entrySet()) {
+                            final CoprocessorKey coprocessorId = entry.getKey();
                             final CoprocessorSettings coprocessorSettings = entry.getValue();
 
                             // Figure out where the fields required by this
@@ -205,7 +206,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                                     paramMap.put(param.getKey(), param.getValue());
                                 }
                             }
-                            final Coprocessor<?> coprocessor = coprocessorFactory.create(
+                            final Coprocessor coprocessor = coprocessorFactory.create(
                                     coprocessorSettings, fieldIndexMap, paramMap, taskMonitor);
 
                             if (coprocessor != null) {
@@ -220,7 +221,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                                     filterStreams = true;
                                 }
 
-                                Set<Coprocessor<?>> extractionCoprocessors = extractionCoprocessorsMap.get(pipelineRef);
+                                Set<Coprocessor> extractionCoprocessors = extractionCoprocessorsMap.get(pipelineRef);
                                 if (extractionCoprocessors == null) {
                                     extractionCoprocessors = new HashSet<>();
                                     extractionCoprocessorsMap.put(pipelineRef, extractionCoprocessors);
@@ -268,7 +269,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
     private void search(final ClusterSearchTask task, final stroom.query.api.Query query, final String[] storedFieldNames,
                         final boolean filterStreams, final IndexFieldsMap indexFieldsMap,
                         final FieldIndexMap extractionFieldIndexMap,
-                        final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap) {
+                        final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Incoming search request:\n" + query.getExpression().toString());
         }
@@ -395,12 +396,12 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
         }
     }
 
-    private void transfer(final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap,
+    private void transfer(final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap,
                           final IndexShardSearchTaskProducer indexShardSearchTaskProducer) {
         // If we aren't required to filter streams and aren't using pipelines to
         // feed data to coprocessors then just do a simple data transfer to the
         // coprocessors.
-        final Set<Coprocessor<?>> coprocessors = extractionCoprocessorsMap.get(null);
+        final Set<Coprocessor> coprocessors = extractionCoprocessorsMap.get(null);
         boolean complete = false;
         List<String[]> list = null;
 
@@ -432,7 +433,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                         throw new TerminatedException();
                     }
 
-                    for (final Coprocessor<?> coprocessor : coprocessors) {
+                    for (final Coprocessor coprocessor : coprocessors) {
                         coprocessor.receive(values);
                     }
                 }

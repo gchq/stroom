@@ -36,7 +36,7 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = ExpressionOperator.class, name = "operator"),
         @JsonSubTypes.Type(value = ExpressionTerm.class, name = "term")
 })
-@XmlType(name = "expressionItem", propOrder = { "enabled" })
+@XmlType(name = "ExpressionItem", propOrder = { "enabled" })
 @XmlSeeAlso({ ExpressionOperator.class, ExpressionTerm.class })
 public abstract class ExpressionItem implements Serializable {
     private static final long serialVersionUID = -8483817637655853635L;
@@ -83,7 +83,13 @@ public abstract class ExpressionItem implements Serializable {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
+        append(sb, "", true);
+        return sb.toString().trim();
+    }
+
+    public String toMultiLineString() {
+        final StringBuilder sb = new StringBuilder();
         append(sb, "", false);
-        return sb.toString();
+        return sb.toString().trim();
     }
 }

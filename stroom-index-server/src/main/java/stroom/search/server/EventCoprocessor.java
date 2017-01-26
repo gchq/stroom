@@ -22,7 +22,7 @@ import stroom.query.Payload;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-public class EventCoprocessor implements Coprocessor<EventCoprocessorSettings> {
+public class EventCoprocessor implements Coprocessor {
     private final EventRef minEvent;
     private final long maxStreams;
     private final long maxEvents;

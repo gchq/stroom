@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @JsonPropertyOrder({"componentId", "fetchData", "tableSettings", "requestedRange", "openGroups"})
-@XmlType(name = "tableResultRequest", propOrder = {"tableSettings", "requestedRange", "openGroups"})
+@XmlType(name = "TableResultRequest", propOrder = {"tableSettings", "requestedRange", "openGroups"})
 public class TableResultRequest extends ResultRequest {
     private static final long serialVersionUID = 8683770109061652092L;
 

@@ -25,7 +25,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"offset", "length"})
-@XmlType(name = "offsetRange", propOrder = {"offset", "length"})
+@XmlType(name = "OffsetRange", propOrder = {"offset", "length"})
 public class OffsetRange implements Serializable {
     private static final long serialVersionUID = 5045453517852867315L;
 

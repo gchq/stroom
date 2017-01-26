@@ -32,6 +32,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.DashboardUUID;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.SearchBus;
 import stroom.dashboard.client.main.SearchModel;
@@ -43,7 +44,7 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.dashboard.shared.QueryComponentSettings;
-import stroom.dashboard.shared.QueryKeyImpl;
+import stroom.dashboard.shared.SharedQueryKey;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.datasource.api.DataSourceField;
@@ -505,9 +506,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
         // Create and register the search model.
         final Dashboard dashboard = getComponents().getDashboard();
-        final QueryKeyImpl initialQueryKey = new QueryKeyImpl(dashboard.getId(), dashboard.getName(),
-                getComponentData().getId());
-        searchModel.setInitialQueryKey(initialQueryKey);
+        final DashboardUUID dashboardUUID = new DashboardUUID(dashboard.getId(), dashboard.getName(), getComponentData().getId());
+        searchModel.setDashboardUUID(dashboardUUID);
 
         // Read data source.
         loadDataSource(queryComponentSettings.getDataSource());

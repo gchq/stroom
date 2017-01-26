@@ -142,10 +142,10 @@ public class SearchEventLogImpl implements SearchEventLog {
             return null;
         }
 
-        final DataSource dataSource = dataSourceProviderRegistry.getDataSource(docRef);
-        if (dataSource == null) {
-            return null;
-        }
+//        final DataSource dataSource = dataSourceProviderRegistry.getDataSource(docRef);
+//        if (dataSource == null) {
+//            return null;
+//        }
 
         return docRef.getName();
     }

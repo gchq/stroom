@@ -18,6 +18,8 @@ package stroom.search.server;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardService;
@@ -35,6 +37,7 @@ import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Query;
 import stroom.security.shared.User;
 import stroom.security.shared.UserService;
@@ -43,6 +46,8 @@ import stroom.util.thread.ThreadUtil;
 import javax.annotation.Resource;
 
 public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
+    private static Logger LOGGER = LoggerFactory.getLogger(TestQueryServiceImpl.class);
+
     @Resource
     private DashboardService dashboardService;
     @Resource
@@ -84,17 +89,16 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         final ExpressionOperator root = new ExpressionOperator();
         root.setOp(Op.OR);
+        root.addTerm("Some field", Condition.CONTAINS, "Some value");
 
-        final ExpressionTerm content = new ExpressionTerm();
-        content.setField("Some field");
-        content.setValue("Some value");
-
-        root.add(content);
+        LOGGER.info(root.toString());
 
         testQuery = queryService.create(null, "Test query");
         testQuery.setDashboard(dashboard);
         testQuery.setQuery(new Query(dataSourceRef, root));
         testQuery = queryService.save(testQuery);
+
+        LOGGER.info(testQuery.getQuery().toString());
     }
 
     @Test
@@ -119,11 +123,9 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         final StringBuilder sb = new StringBuilder();
         sb.append("<expression>\n");
-        sb.append("    <enabled>true</enabled>\n");
         sb.append("    <op>OR</op>\n");
         sb.append("    <children>\n");
         sb.append("        <term>\n");
-        sb.append("            <enabled>true</enabled>\n");
         sb.append("            <field>Some field</field>\n");
         sb.append("            <condition>CONTAINS</condition>\n");
         sb.append("            <value>Some value</value>\n");
@@ -187,6 +189,6 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         Assert.assertEquals("Test query", query.getName());
         root = query.getQuery().getExpression();
-        Assert.assertEquals(0, root.getChildren().length);
+        Assert.assertNull(root.getChildren());
     }
 }

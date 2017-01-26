@@ -45,7 +45,13 @@ class FetchExpressionFieldsHandler extends AbstractTaskHandler<FetchDataSourceFi
             // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
             securityContext.elevatePermissions();
 
-            final DataSource dataSource = dataSourceProviderRegistry.getDataSource(action.getDataSourceRef());
+            final DataSourceProvider dataSourceProvider = dataSourceProviderRegistry.getDataSourceProvider(action.getDataSourceRef());
+
+            if (dataSourceProvider == null) {
+                return null;
+            }
+
+            final DataSource dataSource = dataSourceProvider.getDataSource(action.getDataSourceRef());
 
             if (dataSource == null) {
                 return null;

@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @JsonPropertyOrder({"fields"})
-@XmlType(name = "dataSource", propOrder = "fields")
+@XmlType(name = "DataSource", propOrder = "fields")
 public class DataSource implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;
 

@@ -16,10 +16,13 @@
 
 package stroom.dashboard.server;
 
-import stroom.query.ResultStore;
-import stroom.dashboard.shared.ComponentResult;
-import stroom.dashboard.shared.ComponentResultRequest;
+import org.junit.Test;
+import stroom.dashboard.shared.SearchRequest;
 
-public interface ComponentResultCreator {
-    ComponentResult create(ResultStore resultStore, ComponentResultRequest componentResultRequest);
+public class TestMapper {
+    @Test
+    public void testRequest() {
+        final Mapper mapper = new Mapper();
+        mapper.mapRequest(new SearchRequest());
+    }
 }

@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"key", "limit", "nest", "values"})
-@XmlType(name = "visNest", propOrder = {"key", "limit", "nest", "values"})
+@XmlType(name = "VisNest", propOrder = {"key", "limit", "nest", "values"})
 public class VisNest implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;
 

@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.query;
+package stroom.dashboard.server;
 
-import stroom.query.api.Result;
-import stroom.query.api.ResultRequest;
+import org.modelmapper.ModelMapper;
+import stroom.query.api.SearchRequest;
 
-public interface ComponentResultCreator {
-    Result create(ResultStore resultStore, ResultRequest resultRequest);
+public class Mapper {
+    public SearchRequest mapRequest(final stroom.dashboard.shared.SearchRequest in) {
+        final ModelMapper modelMapper = new ModelMapper();
+        SearchRequest out = modelMapper.map(in, SearchRequest.class);
+        return out;
+    }
 }

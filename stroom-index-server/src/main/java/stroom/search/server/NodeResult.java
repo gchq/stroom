@@ -16,6 +16,7 @@
 
 package stroom.search.server;
 
+import stroom.query.CoprocessorMap.CoprocessorKey;
 import stroom.query.Payload;
 import stroom.util.shared.SharedObject;
 
@@ -25,20 +26,20 @@ import java.util.Map;
 public class NodeResult implements SharedObject {
     private static final long serialVersionUID = -6092749103483061802L;
 
-    private Map<Integer, Payload> payloadMap;
+    private Map<CoprocessorKey, Payload> payloadMap;
     private List<String> errors;
     private boolean complete;
 
     public NodeResult() {
     }
 
-    public NodeResult(final Map<Integer, Payload> payloadMap, final List<String> errors, final boolean complete) {
+    public NodeResult(final Map<CoprocessorKey, Payload> payloadMap, final List<String> errors, final boolean complete) {
         this.payloadMap = payloadMap;
         this.errors = errors;
         this.complete = complete;
     }
 
-    public Map<Integer, Payload> getPayloadMap() {
+    public Map<CoprocessorKey, Payload> getPayloadMap() {
         return payloadMap;
     }
 

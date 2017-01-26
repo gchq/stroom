@@ -26,11 +26,10 @@ import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 @JsonPropertyOrder({"op", "children"})
-@XmlType(name = "expressionOperator", propOrder = {"op", "children"})
+@XmlType(name = "ExpressionOperator", propOrder = {"op", "children"})
 public class ExpressionOperator extends ExpressionItem {
     private static final long serialVersionUID = 6602004424564268512L;
 
@@ -59,7 +58,7 @@ public class ExpressionOperator extends ExpressionItem {
             @XmlElement(name = "term", type = ExpressionTerm.class)
     })
     public ExpressionItem[] getChildren() {
-        if (children == null) {
+        if (children == null || children.size() == 0) {
             return null;
         }
         return children.toArray(new ExpressionItem[children.size()]);
@@ -67,7 +66,7 @@ public class ExpressionOperator extends ExpressionItem {
 
     public void setChildren(final ExpressionItem[] children) {
         if (children != null && children.length > 0) {
-            this.children = Arrays.asList(children);
+            this.children = new ArrayList<>(Arrays.asList(children));
         } else {
             this.children = null;
         }
@@ -110,7 +109,6 @@ public class ExpressionOperator extends ExpressionItem {
                 children = null;
             }
         }
-
         return this;
     }
 
@@ -121,7 +119,6 @@ public class ExpressionOperator extends ExpressionItem {
                 children = null;
             }
         }
-
         return this;
     }
 
@@ -169,8 +166,6 @@ public class ExpressionOperator extends ExpressionItem {
     @Override
     public void append(final StringBuilder sb, final String pad, final boolean singleLine) {
         if (enabled()) {
-            final String padding = pad + "  ";
-
             if (!singleLine && sb.length() > 0) {
                 sb.append("\n");
                 sb.append(pad);
@@ -183,20 +178,24 @@ public class ExpressionOperator extends ExpressionItem {
             }
 
             if (children != null) {
+                final String padding = pad + "  ";
                 for (final ExpressionItem expressionItem : children) {
-                    expressionItem.append(sb, padding, singleLine);
+                    if (expressionItem.enabled()) {
+                        if (!singleLine) {
+                            sb.append("\n");
+                            sb.append(pad);
+                        }
 
-                    if (singleLine) {
-                        sb.append(", ");
-                    } else {
-                        sb.append("\n");
+                        expressionItem.append(sb, padding, singleLine);
+
+                        if (singleLine) {
+                            sb.append(", ");
+                        }
                     }
                 }
 
                 if (singleLine) {
                     sb.setLength(sb.length() - ", ".length());
-                } else {
-                    sb.setLength(sb.length() - "\n".length());
                 }
             }
 

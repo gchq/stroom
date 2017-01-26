@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import stroom.query.api.QueryKey;
 import stroom.util.shared.SharedObject;
 
 import java.util.HashMap;

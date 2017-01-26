@@ -16,11 +16,9 @@
 
 package stroom.query;
 
-import stroom.query.api.SearchRequest;
+import stroom.query.api.Result;
+import stroom.query.api.ResultRequest;
 
-public interface SearchDataSourceProvider {
-    SearchResultCollector createCollector(String sessionId, String userName, QueryKey queryKey,
-            SearchRequest searchRequest);
-
-    String getEntityType();
+public interface ResultCreator {
+    Result create(Data data, ResultRequest resultRequest);
 }

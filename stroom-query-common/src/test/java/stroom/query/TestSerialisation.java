@@ -1,7 +1,5 @@
 package stroom.query;
 
-
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -10,31 +8,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.query.api.Param;
-import stroom.query.api.Result;
-import stroom.query.api.ResultRequest;
-import stroom.query.api.DocRef;
-import stroom.query.api.ExpressionItem;
-import stroom.query.api.ExpressionOperator;
+import stroom.query.api.*;
 import stroom.query.api.ExpressionOperator.Op;
-import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.query.api.Field;
-import stroom.query.api.Filter;
-import stroom.query.api.Format;
-import stroom.query.api.Key;
-import stroom.query.api.Node;
-import stroom.query.api.NumberFormat;
-import stroom.query.api.OffsetRange;
-import stroom.query.api.Row;
-import stroom.query.api.Query;
-import stroom.query.api.SearchRequest;
-import stroom.query.api.SearchResponse;
-import stroom.query.api.Sort;
-import stroom.query.api.TableResult;
-import stroom.query.api.TableResultRequest;
-import stroom.query.api.TableSettings;
-import stroom.query.api.VisResult;
+import stroom.query.api.QueryKey;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -52,10 +29,8 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
 public class TestSerialisation {
     @Test
@@ -195,20 +170,20 @@ public class TestSerialisation {
 //        Map<String, TableSettings> componentSettingsMap = new HashMap<>();
 //        componentSettingsMap.put("componentSettingsMapKey", tableSettings);
 
-        final Param[] params = new Param[] {new Param("param1", "val1"), new Param("param2", "val2")};
+        final Param[] params = new Param[]{new Param("param1", "val1"), new Param("param2", "val2")};
         final Query query = new Query(docRef, expressionOperator, params);
 
-        final ResultRequest[] resultRequests = new ResultRequest[] {new TableResultRequest("componentX", tableSettings, 1, 100)};
+        final ResultRequest[] resultRequests = new ResultRequest[]{new TableResultRequest("componentX", tableSettings, 1, 100)};
 
-        SearchRequest searchRequest = new SearchRequest(query, resultRequests, "en-gb");
+        SearchRequest searchRequest = new SearchRequest(new QueryKey("1234"), query, resultRequests, "en-gb");
 
         return searchRequest;
     }
 
     private SearchResponse getSearchResponse() {
         SearchResponse searchResponse = new SearchResponse();
-        searchResponse.setHighlights(new String[] {"highlight1", "highlight2"});
-        searchResponse.setErrors(new String[] {"some error"});
+        searchResponse.setHighlights(new String[]{"highlight1", "highlight2"});
+        searchResponse.setErrors(new String[]{"some error"});
         searchResponse.setComplete(false);
 
         TableResult tableResult = new TableResult("table-1234");
@@ -222,7 +197,7 @@ public class TestSerialisation {
         Row[] arr = new Row[rows.size()];
         arr = rows.toArray(arr);
         tableResult.setRows(arr);
-        searchResponse.setResults(new Result[] {tableResult, getVisResult1(), getVisResult2()});
+        searchResponse.setResults(new Result[]{tableResult, getVisResult1(), getVisResult2()});
 
         return searchResponse;
     }
@@ -401,8 +376,8 @@ public class TestSerialisation {
     @XmlRootElement(name = "lst")
     public static class Lst {
         @XmlElementWrapper(name = "list")
-        @XmlElements({ @XmlElement(name = "sub1", type = Sub1.class),
-                @XmlElement(name = "sub2", type = Sub2.class) })
+        @XmlElements({@XmlElement(name = "sub1", type = Sub1.class),
+                @XmlElement(name = "sub2", type = Sub2.class)})
         private List<Base> list;
 
         public Lst() {
@@ -436,9 +411,9 @@ public class TestSerialisation {
     @XmlRootElement(name = "multi")
     public static class Multi {
         @XmlElementWrapper(name = "list")
-        @XmlElements({ @XmlElement(name = "double", type = Double.class),
+        @XmlElements({@XmlElement(name = "double", type = Double.class),
                 @XmlElement(name = "int", type = Integer.class),
-                @XmlElement(name = "string", type = String.class) })
+                @XmlElement(name = "string", type = String.class)})
         private List<Object> list;
 
         public Multi() {

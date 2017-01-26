@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"id", "sort"})
-@XmlType(name = "visField", propOrder = {"id", "sort"})
+@XmlType(name = "VisField", propOrder = {"id", "sort"})
 public class VisField implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;
 

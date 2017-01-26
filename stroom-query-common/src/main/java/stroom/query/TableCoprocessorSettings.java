@@ -34,7 +34,7 @@ public class TableCoprocessorSettings implements CoprocessorSettings {
 
     @Override
     public boolean extractValues() {
-        return tableSettings.getExtractValues();
+        return tableSettings.extractValues();
     }
 
     @Override

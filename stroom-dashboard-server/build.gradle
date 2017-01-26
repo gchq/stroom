@@ -6,6 +6,8 @@ dependencies {
 
     compile 'org.apache.poi:poi-ooxml:3.15'
 
+    compile 'org.modelmapper:modelmapper:0.7.5'
+    
 //    compile project(':stroom-security-server')
 //    compile project(':stroom-pipeline')
 //    compile project(':stroom-index')

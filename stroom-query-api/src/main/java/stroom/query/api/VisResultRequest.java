@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.Map;
 
 @JsonPropertyOrder({"componentId", "fetchData", "tableSettings", "structure", "params"})
-@XmlType(name = "visResultRequest", propOrder = {"tableSettings", "structure", "params"})
+@XmlType(name = "VisResultRequest", propOrder = {"tableSettings", "structure", "params"})
 public class VisResultRequest extends ResultRequest {
     static final long serialVersionUID = 8683770109061652092L;
 

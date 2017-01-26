@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 @JsonPropertyOrder({"field", "condition", "value", "dictionary"})
-@XmlType(name = "expressionTerm", propOrder = { "field", "condition", "value", "dictionary" })
+@XmlType(name = "ExpressionTerm", propOrder = { "field", "condition", "value", "dictionary" })
 public class ExpressionTerm extends ExpressionItem {
     private static final long serialVersionUID = 9035311895540457146L;
 
@@ -126,7 +126,9 @@ public class ExpressionTerm extends ExpressionItem {
         if (enabled()) {
             sb.append(field);
             sb.append(" ");
-            sb.append(condition.getDisplayValue());
+            if (condition != null) {
+                sb.append(condition.getDisplayValue());
+            }
             sb.append(" ");
             if (Condition.IN_DICTIONARY.equals(condition)) {
                 if (dictionary != null) {

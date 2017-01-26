@@ -28,7 +28,7 @@ import java.util.Arrays;
 
 @JsonPropertyOrder({"highlights", "errors", "complete", "results"})
 @XmlRootElement(name = "searchResponse")
-@XmlType(name = "searchResponse", propOrder = {"highlights", "errors", "complete", "results"})
+@XmlType(name = "SearchResponse", propOrder = {"highlights", "errors", "complete", "results"})
 public class SearchResponse implements Serializable {
     private static final long serialVersionUID = -2964122512841756795L;
 

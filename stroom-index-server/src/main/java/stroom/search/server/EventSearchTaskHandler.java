@@ -19,6 +19,7 @@ package stroom.search.server;
 import org.springframework.context.annotation.Scope;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
+import stroom.query.CoprocessorMap.CoprocessorKey;
 import stroom.query.CoprocessorSettings;
 import stroom.query.api.Query;
 import stroom.task.cluster.ClusterResultCollectorCache;
@@ -61,8 +62,8 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
 
         final EventCoprocessorSettings settings = new EventCoprocessorSettings(task.getMinEvent(), task.getMaxEvent(),
                 task.getMaxStreams(), task.getMaxEvents(), task.getMaxEventsPerStream());
-        final Map<Integer, CoprocessorSettings> coprocessorMap = new HashMap<>();
-        coprocessorMap.put(0, settings);
+        final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap = new HashMap<>();
+        coprocessorMap.put(new CoprocessorKey(0, new String[] {"eventCoprocessor"}), settings);
 
         // Create an asynchronous search task.
         final String searchName = "Search " + task.getSessionId();

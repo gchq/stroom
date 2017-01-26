@@ -26,7 +26,7 @@ import java.util.Map;
 
 @Component
 public class CoprocessorFactory {
-    public Coprocessor<?> create(final CoprocessorSettings settings,
+    public Coprocessor create(final CoprocessorSettings settings,
                                  final FieldIndexMap fieldIndexMap, final Map<String, String> paramMap, final TaskMonitor taskMonitor) {
         if (settings instanceof TableCoprocessorSettings) {
             final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;

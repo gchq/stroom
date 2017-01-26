@@ -16,36 +16,31 @@
 
 package stroom.dashboard.server.download;
 
-import stroom.dashboard.expression.Generator;
-import stroom.dashboard.server.SampleGenerator;
-import stroom.query.Item;
-import stroom.query.Items;
-import stroom.query.ResultStore;
 import stroom.dashboard.shared.Field;
 
 import java.io.IOException;
 import java.util.List;
 
 public class SearchResultWriter {
-    private final ResultStore resultStore;
-    private final List<Field> fields;
-    private final SampleGenerator sampleGenerator;
-    public SearchResultWriter(final ResultStore resultStore, final List<Field> fields,
-            final SampleGenerator sampleGenerator) {
-        this.resultStore = resultStore;
-        this.fields = fields;
-        this.sampleGenerator = sampleGenerator;
-    }
+//    private final ResultStore resultStore;
+//    private final List<Field> fields;
+//    private final SampleGenerator sampleGenerator;
+//    public SearchResultWriter(final ResultStore resultStore, final List<Field> fields,
+//            final SampleGenerator sampleGenerator) {
+//        this.resultStore = resultStore;
+//        this.fields = fields;
+//        this.sampleGenerator = sampleGenerator;
+//    }
 
     public void write(final Target target) throws IOException {
         // Start writing.
         target.start();
 
-        // Write heading.
-        writeHeadings(fields, target);
+//        // Write heading.
+//        writeHeadings(fields, target);
 
-        // Write content.
-        writeContent(resultStore, fields, sampleGenerator, target);
+//        // Write content.
+//        writeContent(resultStore, fields, sampleGenerator, target);
 
         // End writing.
         target.end();
@@ -62,41 +57,43 @@ public class SearchResultWriter {
         target.endLine();
     }
 
-    private void writeContent(final ResultStore resultStore, final List<Field> fields,
-            final SampleGenerator sampleGenerator, final Target target) throws IOException {
-        final Items<Item> items = resultStore.getChildMap().get(null);
-        if (items != null) {
-            for (final Item item : items) {
-                if (sampleGenerator.includeResult()) {
-                    target.startLine();
-                    for (int i = 0; i < fields.size(); i++) {
-                        final Field field = fields.get(i);
-                        if (field.isVisible()) {
-                            Object val = null;
 
-                            if (item.getValues().length > i) {
-                                final Object o = item.getValues()[i];
-                                val = o;
-
-                                if (o != null) {
-                                    // Convert all values into fully resolved
-                                    // objects evaluating functions where
-                                    // necessary.
-                                    if (o instanceof Generator) {
-                                        final Generator generator = (Generator) o;
-                                        val = generator.eval();
-                                    }
-                                }
-                            }
-
-                            target.writeValue(field, val);
-                        }
-                    }
-                    target.endLine();
-                }
-            }
-        }
-    }
+    // TODO : RESTOR
+//    private void writeContent(final ResultStore resultStore, final List<Field> fields,
+//            final SampleGenerator sampleGenerator, final Target target) throws IOException {
+//        final Items<Item> items = resultStore.getChildMap().get(null);
+//        if (items != null) {
+//            for (final Item item : items) {
+//                if (sampleGenerator.includeResult()) {
+//                    target.startLine();
+//                    for (int i = 0; i < fields.size(); i++) {
+//                        final Field field = fields.get(i);
+//                        if (field.isVisible()) {
+//                            Object val = null;
+//
+//                            if (item.getValues().length > i) {
+//                                final Object o = item.getValues()[i];
+//                                val = o;
+//
+//                                if (o != null) {
+//                                    // Convert all values into fully resolved
+//                                    // objects evaluating functions where
+//                                    // necessary.
+//                                    if (o instanceof Generator) {
+//                                        final Generator generator = (Generator) o;
+//                                        val = generator.eval();
+//                                    }
+//                                }
+//                            }
+//
+//                            target.writeValue(field, val);
+//                        }
+//                    }
+//                    target.endLine();
+//                }
+//            }
+//        }
+//    }
 
     public interface Target {
         void start() throws IOException;

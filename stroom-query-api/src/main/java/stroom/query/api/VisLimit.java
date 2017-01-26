@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"enabled", "size"})
-@XmlType(name = "visLimit", propOrder = {"enabled", "size"})
+@XmlType(name = "VisLimit", propOrder = {"enabled", "size"})
 public class VisLimit implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;
 

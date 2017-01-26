@@ -18,53 +18,77 @@ package stroom.query;
 
 import stroom.query.api.TableSettings;
 
+import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class CoprocessorMap {
-    private final Map<String, Integer> componentIdToCoprocessorIdMap = new HashMap<String, Integer>();
-    private final Map<Integer, CoprocessorSettings> map = new HashMap<Integer, CoprocessorSettings>();
+    private final Map<String, CoprocessorKey> componentIdToCoprocessorKeyMap = new HashMap<>();
+    private final Map<CoprocessorKey, CoprocessorSettings> map = new HashMap<>();
 
     public CoprocessorMap(final Map<String, TableSettings> settingsMap) {
-        int idSeq = 0;
-
-        final Map<TableSettings, Integer> settingsIdMap = new HashMap<>();
+        // Group common settings.
+        final Map<TableSettings, Set<String>> groupMap = new HashMap<>();
         for (final Entry<String, TableSettings> entry : settingsMap.entrySet()) {
             final String componentId = entry.getKey();
             final TableSettings tableSettings = entry.getValue();
-//            final TableSettings tableSettings = getTableSettings(componentSettings);
             if (tableSettings != null) {
-                Integer id = settingsIdMap.get(tableSettings);
-                if (id == null) {
-                    id = idSeq;
-                    settingsIdMap.put(tableSettings, id);
-                    idSeq++;
+                Set<String> set = groupMap.computeIfAbsent(tableSettings, k -> new HashSet<>());
+                set.add(componentId);
+            }
+        }
 
-                    final CoprocessorSettings tableCoprocessorSettings = new TableCoprocessorSettings(tableSettings);
-                    map.put(id, tableCoprocessorSettings);
-                }
-                componentIdToCoprocessorIdMap.put(componentId, id);
+        int i = 0;
+        for (final Entry<TableSettings, Set<String>> entry : groupMap.entrySet()) {
+            final TableSettings tableSettings = entry.getKey();
+            final Set<String> componentIds = entry.getValue();
+            final CoprocessorKey key = new CoprocessorKey(i++, componentIds.toArray(new String[componentIds.size()]));
+            map.put(key, new TableCoprocessorSettings(tableSettings));
+            for (String componentId : componentIds) {
+                componentIdToCoprocessorKeyMap.put(componentId, key);
             }
         }
     }
 
-//    private TableSettings getTableSettings(final ComponentSettings componentSettings) {
-//        TableSettings tableSettings = null;
-//        if (componentSettings instanceof TableSettings) {
-//            tableSettings = (TableSettings) componentSettings;
-//        } else if (componentSettings instanceof VisDashboardSettings) {
-//            tableSettings = ((VisDashboardSettings) componentSettings).getTableSettings();
-//        }
-//
-//        return tableSettings;
-//    }
-
-    public Integer getCoprocessorId(final String componentId) {
-        return componentIdToCoprocessorIdMap.get(componentId);
+    public CoprocessorKey getCoprocessorKey(final String componentId) {
+        return componentIdToCoprocessorKeyMap.get(componentId);
     }
 
-    public Map<Integer, CoprocessorSettings> getMap() {
+    public Map<CoprocessorKey, CoprocessorSettings> getMap() {
         return map;
+    }
+
+    public static class CoprocessorKey implements Serializable {
+        private int id;
+        private String[] componentIds;
+
+        public CoprocessorKey(final int id, final String[] componentIds) {
+            this.id = id;
+            this.componentIds = componentIds;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            final CoprocessorKey that = (CoprocessorKey) o;
+
+            return id == that.id;
+        }
+
+        @Override
+        public int hashCode() {
+            return Integer.hashCode(id);
+        }
+
+        @Override
+        public String toString() {
+            return Arrays.toString(componentIds);
+        }
     }
 }

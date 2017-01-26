@@ -27,7 +27,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 @JsonPropertyOrder({"key", "nodes", "values", "min", "max", "sum"})
-@XmlType(name = "node", propOrder = {"key", "nodes", "XMLValues", "min", "max", "sum"})
+@XmlType(name = "Node", propOrder = {"key", "nodes", "XMLValues", "min", "max", "sum"})
 public class Node implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;
 

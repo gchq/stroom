@@ -26,7 +26,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.util.Arrays;
 
 @JsonPropertyOrder({"componentId", "types", "nodes", "values", "min", "max", "sum", "size", "error"})
-@XmlType(name = "visResult", propOrder = {"types", "nodes", "XMLValues", "min", "max", "sum", "size", "error"})
+@XmlType(name = "VisResult", propOrder = {"types", "nodes", "XMLValues", "min", "max", "sum", "size", "error"})
 public class VisResult extends Result {
     private static final long serialVersionUID = 3826654996795750099L;
 

@@ -28,22 +28,18 @@ import java.util.List;
 
 @JsonPropertyOrder({"queryId", "fields", "extractValues", "extractionPipeline", "maxResults",
         "showDetail"})
-@XmlType(name = "tableSettings", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
+@XmlType(name = "TableSettings", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
 public class TableSettings implements Serializable {
     private static final long serialVersionUID = -2530827581046882396L;
 
     private String queryId;
-    private Field[] fields;
+    private List<Field> fields;
     private Boolean extractValues;
     private DocRef extractionPipeline;
     private Integer[] maxResults;
     private Boolean showDetail;
 
     public TableSettings() {
-    }
-
-    public TableSettings(final Field[] fields) {
-        this.fields = fields;
     }
 
     @XmlElement
@@ -58,34 +54,42 @@ public class TableSettings implements Serializable {
     @XmlElementWrapper(name = "fields")
     @XmlElement(name = "field")
     public Field[] getFields() {
-        return fields;
+        if (fields == null || fields.size() == 0) {
+            return null;
+        }
+        return fields.toArray(new Field[fields.size()]);
     }
 
     public void setFields(final Field[] fields) {
-        this.fields = fields;
+        if (fields != null && fields.length > 0) {
+            this.fields = new ArrayList<>(Arrays.asList(fields));
+        } else {
+            this.fields = null;
+        }
     }
 
-//    public void addField(final Field field) {
-//        if (fields == null) {
-//            fields = new ArrayList<>();
-//        }
-//
-//        fields.add(field);
-//    }
-//
-//    public void addField(final int index, final Field field) {
-//        if (fields == null) {
-//            fields = new ArrayList<>();
-//        }
-//
-//        fields.add(index, field);
-//    }
-//
-//    public void removeField(final Field field) {
-//        if (fields != null) {
-//            fields.remove(field);
-//        }
-//    }
+    public void addField(final Field field) {
+        if (fields == null) {
+            fields = new ArrayList<>();
+        }
+        fields.add(field);
+    }
+
+    public void addField(final int index, final Field field) {
+        if (fields == null) {
+            fields = new ArrayList<>();
+        }
+        fields.add(index, field);
+    }
+
+    public void removeField(final Field field) {
+        if (fields != null) {
+            fields.remove(field);
+            if (fields.size() == 0) {
+                fields = null;
+            }
+        }
+    }
 
     @XmlElement
     public Boolean getExtractValues() {
@@ -123,7 +127,7 @@ public class TableSettings implements Serializable {
     }
 
     public void setMaxResults(final Integer[] maxResults) {
-         this.maxResults = maxResults;
+        this.maxResults = maxResults;
     }
 
     @XmlElement
@@ -154,8 +158,7 @@ public class TableSettings implements Serializable {
         final TableSettings that = (TableSettings) o;
 
         if (queryId != null ? !queryId.equals(that.queryId) : that.queryId != null) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(fields, that.fields)) return false;
+        if (fields != null ? !fields.equals(that.fields) : that.fields != null) return false;
         if (extractValues != null ? !extractValues.equals(that.extractValues) : that.extractValues != null)
             return false;
         if (extractionPipeline != null ? !extractionPipeline.equals(that.extractionPipeline) : that.extractionPipeline != null)
@@ -168,7 +171,7 @@ public class TableSettings implements Serializable {
     @Override
     public int hashCode() {
         int result = queryId != null ? queryId.hashCode() : 0;
-        result = 31 * result + Arrays.hashCode(fields);
+        result = 31 * result + (fields != null ? fields.hashCode() : 0);
         result = 31 * result + (extractValues != null ? extractValues.hashCode() : 0);
         result = 31 * result + (extractionPipeline != null ? extractionPipeline.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(maxResults);
@@ -180,7 +183,7 @@ public class TableSettings implements Serializable {
     public String toString() {
         return "TableSettings{" +
                 "queryId='" + queryId + '\'' +
-                ", fields=" + Arrays.toString(fields) +
+                ", fields=" + fields +
                 ", extractValues=" + extractValues +
                 ", extractionPipeline=" + extractionPipeline +
                 ", maxResults=" + Arrays.toString(maxResults) +

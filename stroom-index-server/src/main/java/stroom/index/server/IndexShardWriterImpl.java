@@ -721,11 +721,15 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     private synchronized void refreshEntity() {
         try {
             // Update the size of the index.
-            if (dir != null) {
+            if (dir != null && Files.isDirectory(dir)) {
                 final AtomicLong totalSize = new AtomicLong();
-                Files.list(dir).forEach(file -> {
-                    totalSize.addAndGet(file.toFile().length());
-                });
+                try {
+                    Files.list(dir).forEach(file -> {
+                        totalSize.addAndGet(file.toFile().length());
+                    });
+                } catch (final IOException e) {
+                    LOGGER.error(e.getMessage());
+                }
                 indexShard.setFileSize(totalSize.get());
             }
 

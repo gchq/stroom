@@ -16,15 +16,7 @@
 
 package stroom.query;
 
-import java.util.List;
-import java.util.Set;
-
-public interface SearchResultCollector {
-    /**
-     * Start searching.
-     */
-    void start();
-
+public interface Store {
     /**
      * Stop searching and destroy any stored data.
      */
@@ -39,29 +31,27 @@ public interface SearchResultCollector {
     boolean isComplete();
 
     /**
-     * Get the current result store that is being populated for the specified
-     * component id.
+     * Get the current data that is available for the specified component.
      *
-     * @param componentId
-     *            The id of the component that results are being populated for.
+     * @param componentId The id of the component that results are being populated for.
      * @return A store of current search results for the specified component.
      */
-    ResultStore getResultStore(String componentId);
+    Data getData(String componentId);
 
     /**
      * Gets a list of strings containing all errors that have occurred so far during the
      * current search.
      *
      * @return A string containing all errors that have occurred so far during
-     *         the current search.
+     * the current search.
      */
-    List<String> getErrors();
+    String[] getErrors();
 
     /**
      * Get any search query highlights that can be extracted from the query.
      *
      * @return A set of strings found in the query that could be highlighted in
-     *         the UI to show where the query terms have been found.
+     * the UI to show where the query terms have been found.
      */
-    Set<String> getHighlights();
+    String[] getHighlights();
 }

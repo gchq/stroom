@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"includes", "excludes"})
-@XmlType(name = "filter", propOrder = {"includes", "excludes"})
+@XmlType(name = "Filter", propOrder = {"includes", "excludes"})
 public class Filter implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 

@@ -17,6 +17,7 @@
 package stroom.query;
 
 import stroom.mapreduce.UnsafePairQueue;
+import stroom.query.CoprocessorMap.CoprocessorKey;
 import stroom.query.api.TableSettings;
 import stroom.util.shared.HasTerminate;
 
@@ -27,27 +28,28 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SearchResultHandler implements ResultHandler {
     private final CoprocessorMap coprocessorMap;
-    private final Map<Integer, TablePayloadHandler> handlerMap = new HashMap<>();
+    private final Map<CoprocessorKey, TablePayloadHandler> handlerMap = new HashMap<>();
     private final AtomicBoolean complete = new AtomicBoolean();
 
     public SearchResultHandler(final CoprocessorMap coprocessorMap, final Integer[] defaultStoreTrimSizes) {
         this.coprocessorMap = coprocessorMap;
 
-        for (final Entry<Integer, CoprocessorSettings> entry : coprocessorMap.getMap().entrySet()) {
+        for (final Entry<CoprocessorKey, CoprocessorSettings> entry : coprocessorMap.getMap().entrySet()) {
+            final CoprocessorKey coprocessorKey = entry.getKey();
             final CoprocessorSettings coprocessorSettings = entry.getValue();
             if (coprocessorSettings instanceof TableCoprocessorSettings) {
-                final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) entry.getValue();
+                final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) coprocessorSettings;
                 final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
-                handlerMap.put(entry.getKey(), new TablePayloadHandler(tableSettings.getFields(),
-                        tableSettings.getShowDetail(), tableSettings.getMaxResults(), defaultStoreTrimSizes));
+                handlerMap.put(coprocessorKey, new TablePayloadHandler(tableSettings.getFields(),
+                        tableSettings.showDetail(), tableSettings.getMaxResults(), defaultStoreTrimSizes));
             }
         }
     }
 
     @Override
-    public void handle(final Map<Integer, Payload> payloadMap, final HasTerminate hasTerminate) {
+    public void handle(final Map<CoprocessorKey, Payload> payloadMap, final HasTerminate hasTerminate) {
         if (payloadMap != null) {
-            for (final Entry<Integer, Payload> entry : payloadMap.entrySet()) {
+            for (final Entry<CoprocessorKey, Payload> entry : payloadMap.entrySet()) {
                 final Payload payload = entry.getValue();
                 if (payload instanceof TablePayload) {
                     final TablePayload tablePayload = (TablePayload) payload;
@@ -63,12 +65,12 @@ public class SearchResultHandler implements ResultHandler {
     }
 
     public TablePayloadHandler getPayloadHandler(final String componentId) {
-        final Integer coprocessorId = coprocessorMap.getCoprocessorId(componentId);
-        if (coprocessorId == null) {
+        final CoprocessorKey coprocessorKey = coprocessorMap.getCoprocessorKey(componentId);
+        if (coprocessorKey == null) {
             return null;
         }
 
-        return handlerMap.get(coprocessorId);
+        return handlerMap.get(coprocessorKey);
     }
 
     @Override
@@ -98,10 +100,10 @@ public class SearchResultHandler implements ResultHandler {
     }
 
     @Override
-    public ResultStore getResultStore(final String componentId) {
+    public Data getResultStore(final String componentId) {
         final TablePayloadHandler tablePayloadHandler = getPayloadHandler(componentId);
         if (tablePayloadHandler != null) {
-            return tablePayloadHandler.getResultStore();
+            return tablePayloadHandler.getData();
         }
         return null;
     }
