@@ -6,6 +6,7 @@
     <inherits name="javax.validation.Validation"/>
 
     <inherits name="stroom.query.Query"/>
+    <inherits name="stroom.datasource.DataSource"/>
     <inherits name="stroom.script.Script"/>
     <inherits name="stroom.visualisation.Visualisation"/>
 
