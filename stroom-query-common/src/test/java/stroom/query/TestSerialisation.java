@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.query.api.DateTimeFormat;
 import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -31,6 +32,7 @@ import stroom.query.api.Sort;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableResultRequest;
 import stroom.query.api.TableSettings;
+import stroom.query.api.TimeZone;
 import stroom.query.api.VisResult;
 
 import javax.xml.bind.JAXBContext;
@@ -70,7 +72,7 @@ public class TestSerialisation {
                 new Field("name2", "expression2",
                         new Sort(2, Sort.SortDirection.DESCENDING),
                         new Filter("include2", "exclude2"),
-                        new Format(new NumberFormat(2, true)), 2)
+                        new Format(createDateTimeFormat()), 2)
         });
         tableSettings.setExtractValues(false);
         tableSettings.setExtractionPipeline(new DocRef("docRefType2", "docRefUuid2", "docRefName2"));
@@ -88,6 +90,16 @@ public class TestSerialisation {
         SearchRequest searchRequest = new SearchRequest(new QueryKey("1234"), query, resultRequests, "en-gb");
 
         return searchRequest;
+    }
+
+    private static DateTimeFormat createDateTimeFormat() {
+        final TimeZone timeZone = TimeZone.fromOffset(2, 30);
+
+        final DateTimeFormat dateTimeFormat = new DateTimeFormat();
+        dateTimeFormat.setPattern("yyyy-MM-dd'T'HH:mm:ss");
+        dateTimeFormat.setTimeZone(timeZone);
+
+        return dateTimeFormat;
     }
 
     @Test

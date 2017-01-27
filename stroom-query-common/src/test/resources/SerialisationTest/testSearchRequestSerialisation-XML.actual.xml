@@ -76,11 +76,15 @@
                             <excludes>exclude2</excludes>
                         </filter>
                         <format>
-                            <type>NUMBER</type>
-                            <numberFormat>
-                                <decimalPlaces>2</decimalPlaces>
-                                <useSeparator>true</useSeparator>
-                            </numberFormat>
+                            <type>DATE_TIME</type>
+                            <dateTimeFormat>
+                                <pattern>yyyy-MM-dd'T'HH:mm:ss</pattern>
+                                <timeZone>
+                                    <use>OFFSET</use>
+                                    <offsetHours>2</offsetHours>
+                                    <offsetMinutes>30</offsetMinutes>
+                                </timeZone>
+                            </dateTimeFormat>
                         </format>
                         <group>2</group>
                     </field>

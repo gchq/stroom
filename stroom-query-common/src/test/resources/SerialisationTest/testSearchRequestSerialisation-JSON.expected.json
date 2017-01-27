@@ -70,10 +70,14 @@
           "excludes" : "exclude2"
         },
         "format" : {
-          "type" : "NUMBER",
-          "numberFormat" : {
-            "decimalPlaces" : 2,
-            "useSeparator" : true
+          "type" : "DATE_TIME",
+          "dateTimeFormat" : {
+            "pattern" : "yyyy-MM-dd'T'HH:mm:ss",
+            "timeZone" : {
+              "use" : "OFFSET",
+              "offsetHours" : 2,
+              "offsetMinutes" : 30
+            }
           }
         },
         "group" : 2
