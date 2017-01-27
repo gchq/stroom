@@ -25,40 +25,45 @@ import stroom.query.api.DocRef;
 import stroom.query.api.QueryKey;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchResponse;
+import stroom.search.server.SearchResultCreatorManager.Key;
 
 import javax.inject.Inject;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
+@Path("/index")
 public class SearchService {
-    private final LuceneSearchStoreFactory luceneSearchStoreFactory;
+    private final SearchResultCreatorManager searchResultCreatorManager;
     private final IndexService indexService;
 
-    // TODO : Replace this with a proper cache. Also add possibility of terminating searches.
-    private Map<QueryKey, SearchResponseCreator> searchResultCreatorCache = new ConcurrentHashMap<>();
-
     @Inject
-    public SearchService(final LuceneSearchStoreFactory luceneSearchStoreFactory, final IndexService indexService) {
-        this.luceneSearchStoreFactory = luceneSearchStoreFactory;
+    public SearchService(final SearchResultCreatorManager searchResultCreatorManager, final IndexService indexService) {
+        this.searchResultCreatorManager = searchResultCreatorManager;
         this.indexService = indexService;
     }
 
+    @POST
+    @Path("/dataSource")
     public DataSource getDataSource(final DocRef docRef) {
         final Index index = indexService.loadByUuid(docRef.getUuid());
         return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index));
     }
 
+    @POST
+    @Path("/search")
     public SearchResponse search(final SearchRequest request) {
-        final SearchResponseCreator searchResponseCreator = searchResultCreatorCache.computeIfAbsent(request.getKey(), k -> new SearchResponseCreator(luceneSearchStoreFactory.create(request)));
+//        final SearchResponseCreator searchResponseCreator = searchResultCreatorCache.computeIfAbsent(request.getKey(), k -> new SearchResponseCreator(luceneSearchStoreFactory.create(request)));
 
+        final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.get(new Key(request));
         return searchResponseCreator.create(request);
     }
 
-    public void terminate(final QueryKey queryKey) {
-        final SearchResponseCreator searchResponseCreator = searchResultCreatorCache.remove(queryKey);
-        if (searchResponseCreator != null) {
-            searchResponseCreator.destroy();
-        }
+    @POST
+    @Path("/destroy")
+    public void destroy(final QueryKey queryKey) {
+        searchResultCreatorManager.remove(new Key(queryKey));
     }
 }
