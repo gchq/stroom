@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dataSource>
+    <fields>
+        <field>
+            <type>FIELD</type>
+            <name>field1</name>
+            <queryable>true</queryable>
+            <conditions>
+                <condition>EQUALS</condition>
+                <condition>CONTAINS</condition>
+            </conditions>
+        </field>
+        <field>
+            <type>NUMERIC_FIELD</type>
+            <name>field2</name>
+            <queryable>true</queryable>
+            <conditions>
+                <condition>EQUALS</condition>
+            </conditions>
+        </field>
+    </fields>
+</dataSource>

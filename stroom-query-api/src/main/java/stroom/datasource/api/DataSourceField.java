@@ -6,9 +6,11 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.shared.HasDisplayValue;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
+import java.util.Arrays;
 
 @JsonPropertyOrder({"type", "name", "queryable", "conditions"})
 @XmlType(name = "DataSourceField", propOrder = {"type", "name", "queryable", "conditions"})
@@ -59,7 +61,8 @@ public class DataSourceField implements Serializable, HasDisplayValue {
         this.name = name;
     }
 
-    @XmlElement
+    @XmlElementWrapper(name = "conditions")
+    @XmlElement(name = "condition")
     public Condition[] getConditions() {
         return conditions;
     }
@@ -91,14 +94,15 @@ public class DataSourceField implements Serializable, HasDisplayValue {
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof DataSourceField)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
 
         final DataSourceField that = (DataSourceField) o;
 
         if (type != that.type) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (queryable != null ? !queryable.equals(that.queryable) : that.queryable != null) return false;
-        return conditions != null ? conditions.equals(that.conditions) : that.conditions == null;
+        // Probably incorrect - comparing Object[] arrays with Arrays.equals
+        return Arrays.equals(conditions, that.conditions);
     }
 
     @Override
@@ -106,17 +110,17 @@ public class DataSourceField implements Serializable, HasDisplayValue {
         int result = type != null ? type.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (queryable != null ? queryable.hashCode() : 0);
-        result = 31 * result + (conditions != null ? conditions.hashCode() : 0);
+        result = 31 * result + Arrays.hashCode(conditions);
         return result;
     }
 
     @Override
     public String toString() {
-        return "ExpressionField{" +
+        return "DataSourceField{" +
                 "type=" + type +
                 ", name='" + name + '\'' +
                 ", queryable=" + queryable +
-                ", conditions=" + conditions +
+                ", conditions=" + Arrays.toString(conditions) +
                 '}';
     }
 

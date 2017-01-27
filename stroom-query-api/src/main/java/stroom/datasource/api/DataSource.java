@@ -19,12 +19,15 @@ package stroom.datasource.api;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 import java.util.Arrays;
 
 @JsonPropertyOrder({"fields"})
 @XmlType(name = "DataSource", propOrder = "fields")
+@XmlRootElement(name = "dataSource")
 public class DataSource implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;
 
@@ -37,7 +40,8 @@ public class DataSource implements Serializable {
         this.fields = fields;
     }
 
-    @XmlElement
+    @XmlElementWrapper(name = "fields")
+    @XmlElement(name = "field")
     public DataSourceField[] getFields() {
         return fields;
     }

@@ -19,6 +19,7 @@ package stroom.query.api;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
 import java.util.Arrays;
 
@@ -63,7 +64,8 @@ public class TableResultRequest extends ResultRequest {
         requestedRange = new OffsetRange(offset, length);
     }
 
-    @XmlElement
+    @XmlElementWrapper(name = "openGroups")
+    @XmlElement(name = "key")
     public String[] getOpenGroups() {
         return openGroups;
     }

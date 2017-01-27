@@ -8,6 +8,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.datasource.api.DataSource;
+import stroom.datasource.api.DataSourceField;
+import stroom.datasource.api.DataSourceField.DataSourceFieldType;
 import stroom.query.api.DateTimeFormat;
 import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionOperator;
@@ -54,6 +57,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TestSerialisation {
+    private static DataSource getDataSource() {
+        final DataSourceField field1 = new DataSourceField();
+        field1.setType(DataSourceFieldType.FIELD);
+        field1.setName("field1");
+        field1.setConditions(new Condition[] {Condition.EQUALS, Condition.CONTAINS});
+        field1.setQueryable(true);
+
+        final DataSourceField field2 = new DataSourceField();
+        field2.setType(DataSourceFieldType.NUMERIC_FIELD);
+        field2.setName("field2");
+        field2.setConditions(new Condition[] {Condition.EQUALS});
+        field2.setQueryable(true);
+
+        final DataSourceField[] fields = new DataSourceField[] {field1, field2};
+        final DataSource dataSource = new DataSource(fields);
+
+        return dataSource;
+    }
+
     private static SearchRequest getSearchRequest() {
         DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
 
@@ -124,6 +146,11 @@ public class TestSerialisation {
         final Multi multi = new Multi(list);
 
         test(multi, Multi.class, "testPolymorphic2");
+    }
+
+    @Test
+    public void testDataSourceSerialisation() throws IOException, JAXBException {
+        test(getDataSource(), DataSource.class, "testDataSourceSerialisation");
     }
 
     @Test
