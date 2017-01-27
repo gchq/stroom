@@ -17,10 +17,12 @@
 package stroom.dashboard.expression;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class RoundSecond extends RoundDate {
     public static final String NAME = "roundSecond";
     private static final Calc CALC = new Calc();
+
     public RoundSecond(final String name) {
         super(name);
     }
@@ -35,7 +37,7 @@ public class RoundSecond extends RoundDate {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.withNano(0);
+            LocalDateTime result = dateTime.truncatedTo(ChronoUnit.SECONDS);
             if (dateTime.isAfter(result.plusNanos(500000000))) {
                 result = result.plusSeconds(1);
             }

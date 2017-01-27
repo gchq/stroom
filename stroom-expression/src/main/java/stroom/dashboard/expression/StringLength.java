@@ -25,6 +25,7 @@ public class StringLength extends AbstractFunction implements Serializable {
     private Generator gen;
     private Function function = null;
     private boolean hasAggregate;
+
     public StringLength(final String name) {
         super(name, 1, 1);
     }
@@ -39,7 +40,7 @@ public class StringLength extends AbstractFunction implements Serializable {
             hasAggregate = function.hasAggregate();
         } else {
             /*
-			 * Optimise replacement of static input in case user does something
+             * Optimise replacement of static input in case user does something
 			 * stupid.
 			 */
             gen = new StaticValueFunction(Double.valueOf(param.toString().length())).createGenerator();

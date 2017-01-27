@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 public class CeilingDay extends RoundDate {
     public static final String NAME = "ceilingDay";
     private static final Calc CALC = new Calc();
+
     public CeilingDay(final String name) {
         super(name);
     }
@@ -35,7 +36,7 @@ public class CeilingDay extends RoundDate {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.withHour(0);
+            LocalDateTime result = dateTime.toLocalDate().atStartOfDay();
             if (dateTime.isAfter(result)) {
                 result = result.plusDays(1);
             }

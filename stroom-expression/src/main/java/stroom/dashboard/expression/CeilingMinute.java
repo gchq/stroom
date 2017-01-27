@@ -17,10 +17,12 @@
 package stroom.dashboard.expression;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class CeilingMinute extends RoundDate {
     public static final String NAME = "ceilingMinute";
     private static final Calc CALC = new Calc();
+
     public CeilingMinute(final String name) {
         super(name);
     }
@@ -35,7 +37,7 @@ public class CeilingMinute extends RoundDate {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.withSecond(0);
+            LocalDateTime result = dateTime.truncatedTo(ChronoUnit.MINUTES);
             if (dateTime.isAfter(result)) {
                 result = result.plusMinutes(1);
             }

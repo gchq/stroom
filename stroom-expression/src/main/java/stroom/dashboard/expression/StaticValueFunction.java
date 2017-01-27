@@ -21,6 +21,7 @@ import java.text.ParseException;
 public class StaticValueFunction implements Function, Appendable {
     private final Object value;
     private final Generator gen;
+
     public StaticValueFunction(final Object value) {
         this.value = value;
         this.gen = new Gen(value);

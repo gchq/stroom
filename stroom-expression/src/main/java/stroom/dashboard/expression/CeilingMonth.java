@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 public class CeilingMonth extends RoundDate {
     public static final String NAME = "ceilingMonth";
     private static final Calc CALC = new Calc();
+
     public CeilingMonth(final String name) {
         super(name);
     }
@@ -35,7 +36,7 @@ public class CeilingMonth extends RoundDate {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.withDayOfMonth(1);
+            LocalDateTime result = dateTime.toLocalDate().withDayOfMonth(1).atStartOfDay();
             if (dateTime.isAfter(result)) {
                 result = result.plusMonths(1);
             }

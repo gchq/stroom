@@ -20,6 +20,7 @@ public class Average extends AbstractManyChildFunction implements AggregateFunct
     public static final String NAME = "average";
     public static final String ALIAS = "mean";
     private final Add.Calc calculator = new Add.Calc();
+
     public Average(final String name) {
         super(name, 1, Integer.MAX_VALUE);
     }

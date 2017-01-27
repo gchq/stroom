@@ -17,10 +17,12 @@
 package stroom.dashboard.expression;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class FloorHour extends RoundDate {
     public static final String NAME = "floorHour";
     private static final Calc CALC = new Calc();
+
     public FloorHour(final String name) {
         super(name);
     }
@@ -35,7 +37,7 @@ public class FloorHour extends RoundDate {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            return dateTime.withMinute(0);
+            return dateTime.truncatedTo(ChronoUnit.HOURS);
         }
     }
 }

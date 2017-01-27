@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 public class CeilingYear extends RoundDate {
     public static final String NAME = "ceilingYear";
     private static final Calc CALC = new Calc();
+
     public CeilingYear(final String name) {
         super(name);
     }
@@ -35,10 +36,11 @@ public class CeilingYear extends RoundDate {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.withMonth(1);
+            LocalDateTime result = dateTime.toLocalDate().withDayOfYear(1).atStartOfDay();
             if (dateTime.isAfter(result)) {
                 result = result.plusYears(1);
             }
+
             return result;
         }
     }

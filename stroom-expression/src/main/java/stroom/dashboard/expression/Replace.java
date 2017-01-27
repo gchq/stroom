@@ -29,6 +29,7 @@ public class Replace extends AbstractFunction implements Serializable {
     private Generator gen;
     private Function function = null;
     private boolean hasAggregate;
+
     public Replace(final String name) {
         super(name, 3, 3);
     }

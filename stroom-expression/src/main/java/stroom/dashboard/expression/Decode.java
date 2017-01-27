@@ -29,6 +29,7 @@ public class Decode extends AbstractFunction implements Serializable {
     private SerializablePattern[] test;
     private String[] result;
     private String otherwise;
+
     public Decode(final String name) {
         super(name, 4, Integer.MAX_VALUE);
     }

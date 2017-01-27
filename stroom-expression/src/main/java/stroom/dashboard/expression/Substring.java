@@ -27,6 +27,7 @@ public class Substring extends AbstractFunction implements Serializable {
     private boolean hasAggregate;
     private Double startPos;
     private Double endPos;
+
     public Substring(final String name) {
         super(name, 3, 3);
     }
@@ -52,10 +53,7 @@ public class Substring extends AbstractFunction implements Serializable {
             function = (Function) param;
             hasAggregate = function.hasAggregate();
         } else {
-            /*
-			 * Optimise replacement of static input in case user does something
-			 * stupid.
-			 */
+            // Optimise replacement of static input in case user does something stupid.
             int len = endPos.intValue();
             if (endPos >= param.toString().length()) {
                 len = param.toString().length();

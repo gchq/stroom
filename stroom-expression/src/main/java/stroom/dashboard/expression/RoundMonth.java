@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 public class RoundMonth extends RoundDate {
     public static final String NAME = "roundMonth";
     private static final Calc CALC = new Calc();
+
     public RoundMonth(final String name) {
         super(name);
     }
@@ -35,7 +36,7 @@ public class RoundMonth extends RoundDate {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.withDayOfMonth(1);
+            LocalDateTime result = dateTime.toLocalDate().withDayOfMonth(1).atStartOfDay();
             if (dateTime.isAfter(result.plusDays(15))) {
                 result = result.plusMonths(1);
             }

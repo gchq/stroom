@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 public class FloorMonth extends RoundDate {
     public static final String NAME = "floorMonth";
     private static final Calc CALC = new Calc();
+
     public FloorMonth(final String name) {
         super(name);
     }
@@ -35,7 +36,7 @@ public class FloorMonth extends RoundDate {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            return dateTime.withDayOfMonth(1);
+            return dateTime.toLocalDate().withDayOfMonth(1).atStartOfDay();
         }
     }
 }
