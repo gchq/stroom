@@ -122,7 +122,7 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
                 }
             }
         } finally {
-            searchService.terminate(queryKey);
+            searchService.destroy(queryKey);
         }
 
         final List<Row> values = new ArrayList<>();

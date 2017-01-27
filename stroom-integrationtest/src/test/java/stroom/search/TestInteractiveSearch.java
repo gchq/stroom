@@ -495,7 +495,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
                 }
             }
         } finally {
-            searchService.terminate(queryKey);
+            searchService.destroy(queryKey);
         }
 
         final Map<String, List<Row>> rows = new HashMap<>();
