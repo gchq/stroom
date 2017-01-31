@@ -18,6 +18,7 @@ package stroom.dashboard.server;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.stereotype.Component;
 import stroom.dashboard.server.vis.VisSettings;
 import stroom.dashboard.server.vis.VisSettings.Nest;
 import stroom.dashboard.server.vis.VisSettings.Structure;
@@ -63,6 +64,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
+@Component
 public class SearchRequestMapper {
 //    private static Param[] convert(final Map<String, String> paramMap) {
 //        if (paramMap == null || paramMap.size() == 0) {

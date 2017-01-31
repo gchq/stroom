@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.util.spring;
 
-import stroom.query.api.DocRef;
-import stroom.datasource.api.DataSource;
-import stroom.query.api.QueryKey;
-import stroom.query.api.SearchRequest;
-import stroom.query.api.SearchResponse;
+import org.springframework.web.context.ContextLoaderListener;
+import stroom.util.thread.ThreadScopeRunnable;
 
-public interface DataSourceProvider {
-    DataSource getDataSource(DocRef docRef);
+import javax.servlet.ServletContextEvent;
 
-    SearchResponse search(SearchRequest request);
-
-    Boolean destroy(QueryKey queryKey);
-
-    String getType();
+public class MyContextLoaderListener extends ContextLoaderListener {
+    @Override
+    public void contextInitialized(final ServletContextEvent event) {
+        new ThreadScopeRunnable() {
+            @Override
+            protected void exec() {
+                MyContextLoaderListener.super.contextInitialized(event);
+            }
+        }.run();
+    }
 }

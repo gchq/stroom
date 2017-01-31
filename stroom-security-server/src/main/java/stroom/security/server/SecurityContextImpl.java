@@ -16,6 +16,9 @@
 
 package stroom.security.server;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTCreationException;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.UnavailableSecurityManagerException;
 import org.apache.shiro.session.InvalidSessionException;
@@ -43,6 +46,7 @@ import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,6 +54,9 @@ import java.util.Set;
 @Profile(SecurityConfiguration.PROD_SECURITY)
 @Scope(value = StroomScope.PROTOTYPE, proxyMode = ScopedProxyMode.INTERFACES)
 class SecurityContextImpl implements SecurityContext {
+    public static final String ISSUER = "stroom";
+    public static final String SECRET = "some-secret";
+
     private static final StroomLogger LOGGER = StroomLogger.getLogger(SecurityContextImpl.class);
     private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", "INTERNAL_PROCESSING_USER", false);
     private final UserPermissionsCache userPermissionCache;
@@ -69,7 +76,7 @@ class SecurityContextImpl implements SecurityContext {
     public void pushUser(final String name) {
         UserRef userRef = INTERNAL_PROCESSING_USER;
         if (name != null && !"INTERNAL_PROCESSING_USER".equals(name)) {
-            userRef = userService.getUserByName(name);
+            userRef = userService.getUserRefByName(name);
         }
 
         if (userRef == null) {
@@ -130,6 +137,19 @@ class SecurityContextImpl implements SecurityContext {
             return null;
         }
         return userRef.getName();
+    }
+
+    @Override
+    public String getToken() {
+        try {
+            return JWT.create().withIssuer(ISSUER).withSubject(getUserId()).sign(Algorithm.HMAC256(SECRET));
+        } catch (final JWTCreationException e) {
+            LOGGER.error(e.getMessage(), e);
+        } catch (final UnsupportedEncodingException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        return null;
     }
 
     @Override

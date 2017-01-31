@@ -44,6 +44,7 @@ import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
+import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
@@ -147,7 +148,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         // Create query.
         final QueryComponentSettings queryComponentSettings = new QueryComponentSettings();
         queryComponentSettings.setDataSource(DocRefUtil.create(index));
-        queryComponentSettings.setExpression(createExpression(dictionary));
+        queryComponentSettings.setExpression(createExpression(dictionary).build());
 
         final ComponentConfig query = new ComponentConfig();
         query.setId("query-1234");
@@ -280,10 +281,10 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         Assert.assertEquals(0, commonTestControl.countEntity(Dashboard.class));
     }
 
-    private ExpressionOperator createExpression(final Dictionary dictionary) {
-        final ExpressionOperator root = new ExpressionOperator(Op.AND);
-        root.add(new ExpressionTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z"));
-        root.add(new ExpressionTerm("User", Condition.IN_DICTIONARY, DocRefUtil.create(dictionary)));
+    private ExpressionBuilder createExpression(final Dictionary dictionary) {
+        final ExpressionBuilder root = new ExpressionBuilder(Op.AND);
+        root.addTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z");
+        root.addTerm("User", Condition.IN_DICTIONARY, DocRefUtil.create(dictionary));
         return root;
     }
 }

@@ -22,6 +22,7 @@ import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
+import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
@@ -192,15 +193,15 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     }
 
     private StatisticDataSet doSearch(final List<StatisticTag> searchTags, final ExpressionOperator.Op op) {
-        final ExpressionOperator rootOperator = new ExpressionOperator(op);
+        final ExpressionBuilder rootOperator = new ExpressionBuilder(op);
         rootOperator
-                .add(new ExpressionTerm(StatisticStoreEntity.FIELD_NAME_DATE_TIME, Condition.BETWEEN, DATE_RANGE));
+                .addTerm(StatisticStoreEntity.FIELD_NAME_DATE_TIME, Condition.BETWEEN, DATE_RANGE);
 
         for (final StatisticTag tag : searchTags) {
-            rootOperator.add(new ExpressionTerm(tag.getTag(), Condition.EQUALS, tag.getValue()));
+            rootOperator.addTerm(tag.getTag(), Condition.EQUALS, tag.getValue());
         }
 
-        final Query query = new Query(null, rootOperator, null);
+        final Query query = new Query(null, rootOperator.build(), null);
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName(STAT_NAME);
         dataSource.setRollUpType(StatisticRollUpType.NONE);

@@ -48,6 +48,7 @@ import stroom.process.shared.LoadEntityIdSetAction;
 import stroom.process.shared.SetId;
 import stroom.process.shared.StreamProcessorFilterRow;
 import stroom.process.shared.StreamProcessorRow;
+import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -239,10 +240,10 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     dispatcher.execute(new EntityServiceLoadAction<NamedEntity>(dataSourceRef, null), new AsyncCallbackAdaptor<NamedEntity>() {
                         @Override
                         public void onSuccess(final NamedEntity result) {
-                            final ExpressionOperator operator = new ExpressionOperator(Op.AND);
-                            operator.addTerm("Data Source", Condition.EQUALS, result.getName());
-                            operator.add(expression);
-                            expressionPresenter.read(operator);
+                            final ExpressionBuilder builder = new ExpressionBuilder(Op.AND);
+                            builder.addTerm("Data Source", Condition.EQUALS, result.getName());
+                            builder.addOperator(expression);
+                            expressionPresenter.read(builder.build());
                         }
                     });
                 } else {
@@ -276,14 +277,13 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                                     final DocRefs feedsExclude = result.get(feedExcludeSetId);
                                     final DocRefs streamTypes = result.get(streamTypeSetId);
 
-                                    final ExpressionOperator operator = new ExpressionOperator(Op.AND);
+                                    final ExpressionBuilder operator = new ExpressionBuilder(Op.AND);
                                     addEntityListTerm(operator, folders, "Folder");
                                     addEntityListTerm(operator, feedsInclude, "Feed");
 
                                     if (feedsExclude != null && feedsExclude.iterator().hasNext()) {
-                                        final ExpressionOperator not = new ExpressionOperator(Op.NOT);
+                                        final ExpressionBuilder not = operator.addOperator(Op.NOT);
                                         addEntityListTerm(not, feedsExclude, "Feed");
-                                        operator.add(not);
                                     }
 
                                     addEntityListTerm(operator, streamTypes, "Stream Type");
@@ -292,29 +292,26 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                                     addPeriodTerm(operator, findStreamCriteria.getCreatePeriod(), "Creation time");
                                     addPeriodTerm(operator, findStreamCriteria.getEffectivePeriod(), "Effective time");
 
-                                    expressionPresenter.read(operator);
+                                    expressionPresenter.read(operator.build());
                                 }
                             });
                 }
             }
         }
 
-    private void addEntityListTerm(final ExpressionOperator operator, final DocRefs entities,
+    private void addEntityListTerm(final ExpressionBuilder operator, final DocRefs entities,
                                    final String label) {
         if (entities != null) {
             final List<DocRef> list = new ArrayList<>(entities.getDoc());
 
             if (list.size() > 1) {
-                final ExpressionOperator or = new ExpressionOperator(Op.OR);
+                final ExpressionBuilder or = operator.addOperator(Op.OR);
 
                 Collections.sort(list, new EntityReferenceComparator());
                 for (final DocRef entity : list) {
                     addEntity(or, entity, label);
                 }
 
-                if (or.getChildren() != null && or.getChildren().length > 0) {
-                    operator.add(or);
-                }
             } else if (list.size() > 0) {
                 final DocRef entity = list.get(0);
                 addEntity(operator, entity, label);
@@ -322,24 +319,17 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    private void addEntity(final ExpressionOperator operator, final DocRef entity, final String label) {
+    private void addEntity(final ExpressionBuilder operator, final DocRef entity, final String label) {
         if (entity != null) {
-            final ExpressionTerm term = new ExpressionTerm();
-            term.setField(label);
-            term.setCondition(Condition.EQUALS);
-            term.setValue(entity.getName());
-            operator.add(term);
+            operator.addTerm(label, Condition.EQUALS, entity.getName());
         }
     }
 
-    private void addIdTerm(final ExpressionOperator operator, final EntityIdSet<?> entities, final String label) {
+    private void addIdTerm(final ExpressionBuilder operator, final EntityIdSet<?> entities, final String label) {
         if (entities != null && entities.size() > 0) {
-            final ExpressionTerm term = new ExpressionTerm();
-            term.setField(label);
+            Condition condition = Condition.EQUALS;
             if (entities.size() > 1) {
-                term.setCondition(Condition.IN);
-            } else {
-                term.setCondition(Condition.EQUALS);
+                condition = Condition.IN;
             }
 
             final StringBuilder sb = new StringBuilder();
@@ -352,34 +342,30 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             if (sb.length() > 0) {
                 sb.setLength(sb.length() - 1);
             }
-            term.setValue(sb.toString());
 
-            operator.add(term);
+            operator.addTerm(label, condition, sb.toString());
         }
     }
 
-    private void addPeriodTerm(final ExpressionOperator operator, final Period period, final String label) {
+    private void addPeriodTerm(final ExpressionBuilder operator, final Period period, final String label) {
         if (period != null && (period.getFrom() != null || period.getTo() != null)) {
-            final ExpressionTerm term = new ExpressionTerm();
-            term.setField(label);
+            Condition condition = null;
 
             final StringBuilder sb = new StringBuilder();
             if (period.getFrom() != null && period.getTo() != null) {
-                term.setCondition(Condition.BETWEEN);
+                condition = Condition.BETWEEN;
                 sb.append(ClientDateUtil.createDateTimeString(period.getFrom()));
                 sb.append(" and ");
                 sb.append(ClientDateUtil.createDateTimeString(period.getTo()));
             } else if (period.getFrom() != null) {
-                term.setCondition(Condition.GREATER_THAN);
+                condition = Condition.GREATER_THAN;
                 sb.append(ClientDateUtil.createDateTimeString(period.getFrom()));
             } else if (period.getTo() != null) {
-                term.setCondition(Condition.LESS_THAN);
+                condition = Condition.LESS_THAN;
                 sb.append(ClientDateUtil.createDateTimeString(period.getTo()));
             }
 
-            term.setValue(sb.toString());
-
-            operator.add(term);
+            operator.addTerm(label, condition, sb.toString());
         }
     }
 

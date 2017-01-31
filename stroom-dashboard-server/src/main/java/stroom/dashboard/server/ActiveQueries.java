@@ -45,10 +45,12 @@ public class ActiveQueries {
             if (keys == null || !keys.contains(queryKey)) {
                 // Terminate the associated search task.
                 final DataSourceProvider dataSourceProvider = dataSourceProviderRegistry.getDataSourceProvider(activeQuery.getDocRef());
-                dataSourceProvider.terminate(queryKey);
+                final Boolean success = dataSourceProvider.destroy(queryKey);
 
-                // Remove the collector from the available searches as it is no longer required by the UI.
-                iterator.remove();
+                if (Boolean.TRUE.equals(success)) {
+                    // Remove the collector from the available searches as it is no longer required by the UI.
+                    iterator.remove();
+                }
             }
         }
     }

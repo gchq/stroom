@@ -29,6 +29,7 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
@@ -48,7 +49,7 @@ import stroom.query.api.TableSettings;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
-import stroom.search.server.SearchService;
+import stroom.search.server.SearchResource;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
@@ -75,7 +76,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
     @Resource
     private TaskManager taskManager;
     @Resource
-    private SearchService searchService;
+    private SearchResource searchService;
 
     @Override
     protected boolean doSingleSetup() {
@@ -88,14 +89,14 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void positiveCaseInsensitiveTest() {
-        final ExpressionOperator expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
         test(expression, 5);
     }
 
     @Test
     public void positiveCaseInsensitiveTestMultiComponent() {
-        final ExpressionOperator expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
         final String[] compoentIds = new String[]{"table-1", "table-2"};
         test(expression, 5, compoentIds, true);
@@ -106,7 +107,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void positiveCaseInsensitiveTestWithoutExtraction() {
-        final ExpressionOperator expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
         final String[] compoentIds = new String[]{"table-1"};
         test(expression, 5, compoentIds, false);
@@ -117,7 +118,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void positiveCaseInsensitiveTest2() {
-        final ExpressionOperator expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
         test(expression, 25);
     }
@@ -127,7 +128,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void negativeCaseSensitiveTest() {
-        final ExpressionOperator expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "e0567");
         test(expression, 0);
     }
@@ -137,7 +138,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void negativeCaseSensitiveTest2() {
-        final ExpressionOperator expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "e0567");
         test(expression, 0);
     }
@@ -147,7 +148,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void positiveCaseSensitiveTest() {
-        final ExpressionOperator expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567");
         test(expression, 25);
     }
@@ -157,7 +158,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void positiveCaseSensitiveTest2() {
-        final ExpressionOperator expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567");
         test(expression, 5);
     }
@@ -167,7 +168,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void positiveCaseSensitiveTest3() {
-        final ExpressionOperator expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567");
         test(expression, 5);
     }
@@ -177,7 +178,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void positiveAnalysedFieldTest() {
-        final ExpressionOperator expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command", "msg");
         test(expression, 4);
     }
@@ -187,7 +188,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void positiveAnalysedFieldTestWithLeadingWildcard() {
-        final ExpressionOperator expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command", "*msg");
         test(expression, 4);
     }
@@ -197,7 +198,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void negativeAnalysedFieldTest() {
-        final ExpressionOperator expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command", "msg foobar");
         test(expression, 0);
     }
@@ -207,7 +208,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void positiveAnalysedFieldTestWithIn() {
-        final ExpressionOperator expression = buildInExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildInExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command", "msg foo bar");
         test(expression, 4);
     }
@@ -217,7 +218,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void negativeKeywordFieldTest() {
-        final ExpressionOperator expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command (Keyword)", "foo");
         test(expression, 0);
     }
@@ -227,7 +228,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void positiveKeywordFieldTest() {
-        final ExpressionOperator expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command (Keyword)", "msg=foo bar");
         test(expression, 4);
     }
@@ -237,7 +238,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void positiveKeywordFieldTestWithLeadingWildcard() {
-        final ExpressionOperator expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command (Keyword)", "*foo bar");
         test(expression, 4);
     }
@@ -247,16 +248,9 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void notEqualsTest() {
-        final ExpressionTerm eventTime = new ExpressionTerm();
-        eventTime.setField("EventTime");
-        eventTime.setCondition(Condition.EQUALS);
-        eventTime.setValue("2007-08-18T13:50:56.000Z");
-        final ExpressionOperator not = new ExpressionOperator(Op.NOT);
-        not.add(eventTime);
-
-        final ExpressionOperator expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567");
-        expression.add(not);
+        expression.addOperator(Op.NOT).addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z");
         test(expression, 24);
     }
 
@@ -265,23 +259,12 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void notEqualsTest2() {
-        final ExpressionTerm eventTime1 = new ExpressionTerm();
-        eventTime1.setField("EventTime");
-        eventTime1.setCondition(Condition.EQUALS);
-        eventTime1.setValue("2007-08-18T13:50:56.000Z");
-        final ExpressionTerm eventTime2 = new ExpressionTerm();
-        eventTime2.setField("EventTime");
-        eventTime2.setCondition(Condition.EQUALS);
-        eventTime2.setValue("2007-01-18T13:56:42.000Z");
-        final ExpressionOperator or = new ExpressionOperator(Op.OR);
-        or.add(eventTime1);
-        or.add(eventTime2);
-        final ExpressionOperator not = new ExpressionOperator(Op.NOT);
-        not.add(or);
-
-        final ExpressionOperator expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567");
-        expression.add(not);
+        final ExpressionBuilder not = expression.addOperator(Op.NOT);
+        final ExpressionBuilder or = not.addOperator(Op.OR);
+        or.addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z");
+        or.addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z");
         test(expression, 23);
     }
 
@@ -290,23 +273,12 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void notEqualsTest3() {
-        final ExpressionTerm eventTime1 = new ExpressionTerm();
-        eventTime1.setField("EventTime");
-        eventTime1.setCondition(Condition.EQUALS);
-        eventTime1.setValue("2007-08-18T13:50:56.000Z");
-        final ExpressionTerm user = new ExpressionTerm();
-        user.setField("UserId");
-        user.setCondition(Condition.EQUALS);
-        user.setValue("user4");
-        final ExpressionOperator and = new ExpressionOperator(Op.AND);
-        and.add(eventTime1);
-        and.add(user);
-        final ExpressionOperator not = new ExpressionOperator(Op.NOT);
-        not.add(and);
-
-        final ExpressionOperator expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567");
-        expression.add(not);
+        final ExpressionBuilder not = expression.addOperator(Op.NOT);
+        final ExpressionBuilder and = not.addOperator(Op.AND);
+        and.addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z");
+        and.addTerm("UserId", Condition.EQUALS, "user4");
         test(expression, 24);
     }
 
@@ -315,30 +287,14 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void notEqualsTest4() {
-        final ExpressionTerm eventTime1 = new ExpressionTerm();
-        eventTime1.setField("EventTime");
-        eventTime1.setCondition(Condition.EQUALS);
-        eventTime1.setValue("2007-08-18T13:50:56.000Z");
-        final ExpressionTerm eventTime2 = new ExpressionTerm();
-        eventTime2.setField("EventTime");
-        eventTime2.setCondition(Condition.EQUALS);
-        eventTime2.setValue("2007-01-18T13:56:42.000Z");
-        final ExpressionTerm user = new ExpressionTerm();
-        user.setField("UserId");
-        user.setCondition(Condition.EQUALS);
-        user.setValue("user4");
-        final ExpressionOperator and = new ExpressionOperator(Op.AND);
-        and.add(eventTime1);
-        and.add(user);
-        final ExpressionOperator or = new ExpressionOperator(Op.OR);
-        or.add(and);
-        or.add(eventTime2);
-        final ExpressionOperator not = new ExpressionOperator(Op.NOT);
-        not.add(or);
-
-        final ExpressionOperator expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567");
-        expression.add(not);
+        final ExpressionBuilder not = expression.addOperator(Op.NOT);
+        final ExpressionBuilder or = not.addOperator(Op.OR);
+        final ExpressionBuilder and = or.addOperator(Op.AND);
+        and.addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z");
+        and.addTerm("UserId", Condition.EQUALS, "user4");
+        or.addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z");
         test(expression, 23);
     }
 
@@ -351,14 +307,8 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         dic.setData("user1\nuser2\nuser5");
         dic = dictionaryService.save(dic);
 
-        final ExpressionTerm user = new ExpressionTerm();
-        user.setField("UserId");
-        user.setCondition(Condition.IN_DICTIONARY);
-        user.setValue("users");
-        user.setDictionary(DocRefUtil.create(dic));
-
-        final ExpressionOperator and = new ExpressionOperator(Op.AND);
-        and.add(user);
+        final ExpressionBuilder and = new ExpressionBuilder(Op.AND);
+        and.addTerm("UserId", Condition.IN_DICTIONARY, DocRefUtil.create(dic));
 
         test(and, 15);
 
@@ -378,20 +328,9 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         dic2.setData("msg");
         dic2 = dictionaryService.save(dic2);
 
-        final ExpressionTerm user = new ExpressionTerm();
-        user.setField("UserId");
-        user.setCondition(Condition.IN_DICTIONARY);
-        user.setDictionary(DocRefUtil.create(dic1));
-
-        final ExpressionTerm command = new ExpressionTerm();
-        command.setField("Command");
-        command.setCondition(Condition.IN_DICTIONARY);
-        command.setValue("command");
-        command.setDictionary(DocRefUtil.create(dic2));
-
-        final ExpressionOperator and = new ExpressionOperator(Op.AND);
-        and.add(user);
-        and.add(command);
+        final ExpressionBuilder and = new ExpressionBuilder(Op.AND);
+        and.addTerm("UserId", Condition.IN_DICTIONARY, DocRefUtil.create(dic1));
+        and.addTerm("Command", Condition.IN_DICTIONARY, DocRefUtil.create(dic2));
 
         test(and, 10);
 
@@ -412,21 +351,9 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         dic2.setData("msg foo bar");
         dic2 = dictionaryService.save(dic2);
 
-        final ExpressionTerm user = new ExpressionTerm();
-        user.setField("UserId");
-        user.setCondition(Condition.IN_DICTIONARY);
-        user.setValue("users");
-        user.setDictionary(DocRefUtil.create(dic1));
-
-        final ExpressionTerm command = new ExpressionTerm();
-        command.setField("Command");
-        command.setCondition(Condition.IN_DICTIONARY);
-        command.setValue("command");
-        command.setDictionary(DocRefUtil.create(dic2));
-
-        final ExpressionOperator and = new ExpressionOperator(Op.AND);
-        and.add(user);
-        and.add(command);
+        final ExpressionBuilder and = new ExpressionBuilder(Op.AND);
+        and.addTerm("UserId", Condition.IN_DICTIONARY, DocRefUtil.create(dic1));
+        and.addTerm("Command", Condition.IN_DICTIONARY, DocRefUtil.create(dic2));
 
         test(and, 10);
 
@@ -439,23 +366,23 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void testBug173() {
-        final ExpressionOperator expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "use*5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Command", "!");
         test(expression, 5);
     }
 
-    private void test(final ExpressionOperator expressionIn, final int expectResultCount) {
+    private void test(final ExpressionBuilder expressionIn, final int expectResultCount) {
         final String[] componentIds = new String[]{"table-1"};
         test(expressionIn, expectResultCount, componentIds, true);
     }
 
-    private void test(final ExpressionOperator expressionIn, final int expectResultCount, final String[] componentIds,
+    private void test(final ExpressionBuilder expressionIn, final int expectResultCount, final String[] componentIds,
                       final boolean extractValues) {
         testInteractive(expressionIn, expectResultCount, componentIds, extractValues);
         testEvents(expressionIn, expectResultCount);
     }
 
-    private void testInteractive(final ExpressionOperator expressionIn, final int expectResultCount,
+    private void testInteractive(final ExpressionBuilder expressionIn, final int expectResultCount,
                                  final String[] componentIds, final boolean extractValues) {
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
         StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
@@ -481,7 +408,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         }
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final Query query = new Query(dataSourceRef, expressionIn);
+        final Query query = new Query(dataSourceRef, expressionIn.build());
         final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, DateTimeZone.UTC.getID());
 
         SearchResponse searchResponse = searchService.search(searchRequest);
@@ -554,7 +481,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void testEvents(final ExpressionOperator expressionIn, final int expectResultCount) {
+    private void testEvents(final ExpressionBuilder expressionIn, final int expectResultCount) {
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
         StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
         StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
@@ -563,7 +490,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         Assert.assertNotNull("Index is null", index);
         final DocRef dataSourceRef = DocRefUtil.create(index);
 
-        final Query query = new Query(dataSourceRef, expressionIn);
+        final Query query = new Query(dataSourceRef, expressionIn.build());
 
         final CountDownLatch complete = new CountDownLatch(1);
 
@@ -617,52 +544,21 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         return tableSettings;
     }
 
-    private ExpressionOperator buildExpression(final String userField, final String userTerm, final String from,
-                                               final String to, final String wordsField, final String wordsTerm) {
-        final ExpressionTerm userId = new ExpressionTerm();
-        userId.setField(userField);
-        userId.setCondition(Condition.CONTAINS);
-        userId.setValue(userTerm);
-
-        final ExpressionTerm eventTime = new ExpressionTerm();
-        eventTime.setField("EventTime");
-        eventTime.setCondition(Condition.BETWEEN);
-        eventTime.setValue(from + "," + to);
-
-        final ExpressionTerm words = new ExpressionTerm();
-        words.setField(wordsField);
-        words.setCondition(Condition.CONTAINS);
-        words.setValue(wordsTerm);
-
-        final ExpressionOperator operator = new ExpressionOperator();
-        operator.add(userId);
-        operator.add(eventTime);
-        operator.add(words);
-
+    private ExpressionBuilder buildExpression(final String userField, final String userTerm, final String from,
+                                              final String to, final String wordsField, final String wordsTerm) {
+        final ExpressionBuilder operator = new ExpressionBuilder();
+        operator.addTerm(userField, Condition.CONTAINS, userTerm);
+        operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
+        operator.addTerm(wordsField, Condition.CONTAINS, wordsTerm);
         return operator;
     }
 
-    private ExpressionOperator buildInExpression(final String userField, final String userTerm, final String from,
-                                                 final String to, final String wordsField, final String wordsTerm) {
-        final ExpressionTerm userId = new ExpressionTerm();
-        userId.setField(userField);
-        userId.setCondition(Condition.CONTAINS);
-        userId.setValue(userTerm);
-
-        final ExpressionTerm eventTime = new ExpressionTerm();
-        eventTime.setField("EventTime");
-        eventTime.setCondition(Condition.BETWEEN);
-        eventTime.setValue(from + "," + to);
-
-        final ExpressionTerm words = new ExpressionTerm();
-        words.setField(wordsField);
-        words.setCondition(Condition.IN);
-        words.setValue(wordsTerm);
-
-        final ExpressionOperator operator = new ExpressionOperator();
-        operator.add(userId);
-        operator.add(eventTime);
-        operator.add(words);
+    private ExpressionBuilder buildInExpression(final String userField, final String userTerm, final String from,
+                                                final String to, final String wordsField, final String wordsTerm) {
+        final ExpressionBuilder operator = new ExpressionBuilder();
+        operator.addTerm(userField, Condition.CONTAINS, userTerm);
+        operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
+        operator.addTerm(wordsField, Condition.IN, wordsTerm);
 
         return operator;
     }

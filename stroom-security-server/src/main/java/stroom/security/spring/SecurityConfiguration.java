@@ -29,6 +29,7 @@ import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import stroom.security.server.DBRealm;
+import stroom.security.server.JWTAuthenticationFilter;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
@@ -67,7 +68,13 @@ public class SecurityConfiguration {
         shiroFilter.setSecurityManager(securityManager());
         shiroFilter.setLoginUrl("/login.html");
         shiroFilter.setSuccessUrl("/stroom.jsp");
-        shiroFilter.getFilterChainDefinitionMap().put("/**/secure/*", "authc, roles[USER]");
+        shiroFilter.getFilters().put("jwtFilter", new JWTAuthenticationFilter());
+//        shiroFilter.getFilterChainDefinitionMap().put("/**/secure/*", "authc, roles[USER]");
+        shiroFilter.getFilterChainDefinitionMap().put("/rest/*", "jwtFilter");
+        shiroFilter.getFilterChainDefinitionMap().put("/rest/**/*", "jwtFilter");
+        shiroFilter.getFilterChainDefinitionMap().put("/index", "jwtFilter");
+        shiroFilter.getFilterChainDefinitionMap().put("/index/*", "jwtFilter");
+        shiroFilter.getFilterChainDefinitionMap().put("/**/rest/*", "jwtFilter");
         return (AbstractShiroFilter) shiroFilter.getObject();
     }
 

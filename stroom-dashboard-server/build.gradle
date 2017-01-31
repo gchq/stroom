@@ -5,6 +5,11 @@ dependencies {
     compile project(':stroom-expression')
 
     compile 'org.apache.poi:poi-ooxml:3.15'
+
+    // Jersey Client
+    compile 'org.glassfish.jersey.core:jersey-client:2.25.1'
+
+//    compile 'org.glassfish.jersey.core:jersey-jetty-connector:2.25.1'
     
 //    compile project(':stroom-security-server')
 //    compile project(':stroom-pipeline')

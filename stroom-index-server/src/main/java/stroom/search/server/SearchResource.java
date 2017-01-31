@@ -28,24 +28,29 @@ import stroom.query.api.SearchResponse;
 import stroom.search.server.SearchResultCreatorManager.Key;
 
 import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @Path("/index")
-public class SearchService {
+public class SearchResource {
     private final SearchResultCreatorManager searchResultCreatorManager;
     private final IndexService indexService;
 
     @Inject
-    public SearchService(final SearchResultCreatorManager searchResultCreatorManager, final IndexService indexService) {
+    public SearchResource(final SearchResultCreatorManager searchResultCreatorManager, final IndexService indexService) {
         this.searchResultCreatorManager = searchResultCreatorManager;
         this.indexService = indexService;
     }
 
     @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/dataSource")
     public DataSource getDataSource(final DocRef docRef) {
         final Index index = indexService.loadByUuid(docRef.getUuid());
@@ -53,6 +58,8 @@ public class SearchService {
     }
 
     @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/search")
     public SearchResponse search(final SearchRequest request) {
 //        final SearchResponseCreator searchResponseCreator = searchResultCreatorCache.computeIfAbsent(request.getKey(), k -> new SearchResponseCreator(luceneSearchStoreFactory.create(request)));
@@ -62,6 +69,8 @@ public class SearchService {
     }
 
     @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/destroy")
     public void destroy(final QueryKey queryKey) {
         searchResultCreatorManager.remove(new Key(queryKey));

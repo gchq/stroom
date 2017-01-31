@@ -27,6 +27,7 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
@@ -42,7 +43,7 @@ import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableResultRequest;
 import stroom.query.api.TableSettings;
-import stroom.search.server.SearchService;
+import stroom.search.server.SearchResource;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ParamUtil;
 import stroom.util.thread.ThreadUtil;
@@ -60,7 +61,7 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
     @Resource
     private IndexService indexService;
     @Resource
-    private SearchService searchService;
+    private SearchResource searchService;
 
     @Override
     public void onBefore() {
@@ -96,8 +97,8 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
         final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultTextPipeline();
         tableSettings.setExtractionPipeline(DocRefUtil.create(resultPipeline));
 
-        final ExpressionOperator expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
-        final Query query = new Query(dataSourceRef, expression);
+        final ExpressionBuilder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
+        final Query query = new Query(dataSourceRef, expression.build());
 
         final TableResultRequest tableResultRequest = new TableResultRequest();
         tableResultRequest.setComponentId(componentId);
@@ -163,21 +164,11 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
         Assert.assertEquals("Value does not have expected word count", 4, count);
     }
 
-    private ExpressionOperator buildExpression(final String user, final String from,
-                             final String to) {
-        final ExpressionTerm userId = new ExpressionTerm();
-        userId.setField("UserId");
-        userId.setCondition(Condition.CONTAINS);
-        userId.setValue(user);
-
-        final ExpressionTerm eventTime = new ExpressionTerm();
-        eventTime.setField("EventTime");
-        eventTime.setCondition(Condition.BETWEEN);
-        eventTime.setValue(from + "," + to);
-
-        final ExpressionOperator operator = new ExpressionOperator();
-        operator.add(userId);
-        operator.add(eventTime);
+    private ExpressionBuilder buildExpression(final String user, final String from,
+                                              final String to) {
+        final ExpressionBuilder operator = new ExpressionBuilder();
+        operator.addTerm("UserId", Condition.CONTAINS, user);
+        operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
 
         return operator;
     }

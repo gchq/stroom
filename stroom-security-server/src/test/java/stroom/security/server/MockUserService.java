@@ -55,17 +55,22 @@ public class MockUserService extends MockEntityService<User, FindUserCriteria> i
     }
 
     @Override
+    public User loadByUuidInsecure(final String uuid) {
+        return loadByUuid(uuid);
+    }
+
+    @Override
     public Class<User> getEntityClass() {
         return User.class;
     }
 
     @Override
-    public UserRef getUserByName(final String name) {
+    public UserRef getUserRefByName(final String name) {
         return null;
     }
 
     @Override
-    public UserRef getUserGroupByName(final String name) {
+    public UserRef getUserGroupRefByName(final String name) {
         return null;
     }
 

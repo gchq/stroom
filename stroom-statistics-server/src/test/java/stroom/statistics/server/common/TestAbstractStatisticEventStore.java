@@ -19,6 +19,7 @@ package stroom.statistics.server.common;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.node.server.MockStroomPropertyService;
+import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
@@ -290,9 +291,9 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testBuildCriteria_noDate() throws Exception {
-        final ExpressionOperator rootOperator = new ExpressionOperator(Op.AND);
+        final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
 
-        final Query query = new Query(null, rootOperator);
+        final Query query = new Query(null, rootOperator.build());
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -303,14 +304,14 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testBuildCriteria_invalidDateCondition() throws Exception {
-        final ExpressionOperator rootOperator = new ExpressionOperator(Op.AND);
+        final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
 
         final String dateTerm = "2000-01-01T00:00:00.000Z,2010-01-01T00:00:00.000Z";
 
-        rootOperator.add(new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME,
-                Condition.IN_DICTIONARY, dateTerm));
+        rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME,
+                Condition.IN_DICTIONARY, dateTerm);
 
-        final Query query = new Query(null, rootOperator);
+        final Query query = new Query(null, rootOperator.build());
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -321,7 +322,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
     @Test
     public void testBuildCriteria_validDateTerm() throws Exception {
-        final ExpressionOperator rootOperator = new ExpressionOperator(Op.AND);
+        final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
         final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
@@ -330,10 +331,9 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         final String dateTerm = fromDateStr + "," + toDateStr;
 
-        rootOperator.add(
-                new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm));
+        rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
-        final Query query = new Query(null, rootOperator);
+        final Query query = new Query(null, rootOperator.build());
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -351,17 +351,16 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
     @Test(expected = RuntimeException.class)
     public void testBuildCriteria_invalidDateTermOnlyOneDate() throws Exception {
-        final ExpressionOperator rootOperator = new ExpressionOperator(Op.AND);
+        final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
         final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
 
         final String dateTerm = fromDateStr;
 
-        rootOperator.add(
-                new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm));
+        rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
-        final Query query = new Query(null, rootOperator);
+        final Query query = new Query(null, rootOperator.build());
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -371,7 +370,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testBuildCriteria_validDateTermOtherTermMissingFieldName() throws Exception {
-        final ExpressionOperator rootOperator = new ExpressionOperator(Op.AND);
+        final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
         final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
@@ -380,12 +379,10 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         final String dateTerm = fromDateStr + "," + toDateStr;
 
-        rootOperator.add(
-                new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm));
+        rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
+        rootOperator.addTerm(null, Condition.EQUALS, "xxx");
 
-        rootOperator.add(new ExpressionTerm(null, Condition.EQUALS, "xxx"));
-
-        final Query query = new Query(null, rootOperator);
+        final Query query = new Query(null, rootOperator.build());
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -395,7 +392,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
     @Test
     public void testBuildCriteria_validDateTermOtherTermMissingFieldValue() throws Exception {
-        final ExpressionOperator rootOperator = new ExpressionOperator(Op.AND);
+        final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
         final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
@@ -404,12 +401,10 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         final String dateTerm = fromDateStr + "," + toDateStr;
 
-        rootOperator.add(
-                new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm));
+        rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
+        rootOperator.addTerm("MyField", Condition.EQUALS, "");
 
-        rootOperator.add(new ExpressionTerm("MyField", Condition.EQUALS, ""));
-
-        final Query query = new Query(null, rootOperator);
+        final Query query = new Query(null, rootOperator.build());
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
@@ -422,7 +417,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
     @Test
     public void testBuildCriteria_validDateTermAndOtherTerm() throws Exception {
-        final ExpressionOperator rootOperator = new ExpressionOperator(Op.AND);
+        final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
         final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
@@ -431,12 +426,11 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         final String dateTerm = fromDateStr + "," + toDateStr;
 
-        rootOperator.add(
-                new ExpressionTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm));
+        rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
-        rootOperator.add(new ExpressionTerm("MyField", Condition.EQUALS, "xxx"));
+        rootOperator.addTerm("MyField", Condition.EQUALS, "xxx");
 
-        final Query query = new Query(null, rootOperator);
+        final Query query = new Query(null, rootOperator.build());
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");

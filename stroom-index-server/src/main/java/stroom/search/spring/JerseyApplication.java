@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.search.spring;
 
-import stroom.query.api.DocRef;
-import stroom.datasource.api.DataSource;
-import stroom.query.api.QueryKey;
-import stroom.query.api.SearchRequest;
-import stroom.query.api.SearchResponse;
 
-public interface DataSourceProvider {
-    DataSource getDataSource(DocRef docRef);
+import org.glassfish.jersey.server.ResourceConfig;
+import stroom.search.server.HelloResource;
+import stroom.search.server.SearchResource;
 
-    SearchResponse search(SearchRequest request);
 
-    Boolean destroy(QueryKey queryKey);
-
-    String getType();
+public class JerseyApplication extends ResourceConfig {
+    public JerseyApplication() {
+        register(HelloResource.class);
+        register(SearchResource.class);
+    }
 }

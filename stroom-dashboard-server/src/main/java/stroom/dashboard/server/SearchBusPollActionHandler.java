@@ -17,40 +17,28 @@
 package stroom.dashboard.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.Dashboard;
-import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.dashboard.shared.SharedQueryKey;
 import stroom.dashboard.shared.QueryService;
+import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
-import stroom.dashboard.shared.Sort;
-import stroom.dashboard.shared.TableComponentSettings;
-import stroom.dashboard.shared.TableResultRequest;
-import stroom.dashboard.shared.VisResultRequest;
+import stroom.dashboard.shared.SearchRequest;
+import stroom.dashboard.shared.SearchResponse;
+import stroom.dashboard.shared.SharedQueryKey;
 import stroom.logging.SearchEventLog;
 import stroom.query.api.DocRef;
 import stroom.query.api.Param;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
-import stroom.dashboard.shared.Search;
-import stroom.dashboard.shared.SearchRequest;
-import stroom.dashboard.shared.SearchResponse;
-import stroom.query.api.ResultRequest;
-import stroom.query.api.TableSettings;
 import stroom.security.SecurityContext;
-import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.logging.StroomLogger;
-import stroom.util.shared.OffsetRange;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -63,7 +51,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
     private final SearchEventLog searchEventLog;
     private final DataSourceProviderRegistry searchDataSourceProviderRegistry;
     private final ActiveQueriesManager searchSessionManager;
-    private final ClusterResultCollectorCache clusterResultCollectorCache;
+    private final SearchRequestMapper searchRequestMapper;
     private final SecurityContext securityContext;
 
     @Inject
@@ -71,12 +59,13 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                                final SearchEventLog searchEventLog,
                                final DataSourceProviderRegistry searchDataSourceProviderRegistry,
                                final ActiveQueriesManager searchSessionManager,
-                               final ClusterResultCollectorCache clusterResultCollectorCache, final SecurityContext securityContext) {
+                               final SearchRequestMapper searchRequestMapper,
+                               final SecurityContext securityContext) {
         this.queryService = queryService;
         this.searchEventLog = searchEventLog;
         this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
         this.searchSessionManager = searchSessionManager;
-        this.clusterResultCollectorCache = clusterResultCollectorCache;
+        this.searchRequestMapper = searchRequestMapper;
         this.securityContext = securityContext;
     }
 
@@ -170,10 +159,14 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
             if (dataSourceProvider == null) {
                 throw new RuntimeException(
-                    "No search provider found for '" + dataSourceRef.getType() + "' data source");
+                        "No search provider found for '" + dataSourceRef.getType() + "' data source");
             }
 
-//            result = dataSourceProvider.search(mapRequest(searchRequest));
+            stroom.query.api.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
+            stroom.query.api.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
+
+            // TODO : Write response mapping code.
+            // result = mapResponse(searchResponse);
 
             if (newSearch) {
                 // Log this search action for the current user.

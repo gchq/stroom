@@ -34,6 +34,7 @@ import stroom.entity.shared.FolderService;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
@@ -87,15 +88,14 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         // the test.
         ThreadUtil.sleep(1000);
 
-        final ExpressionOperator root = new ExpressionOperator();
-        root.setOp(Op.OR);
+        final ExpressionBuilder root = new ExpressionBuilder(Op.OR);
         root.addTerm("Some field", Condition.CONTAINS, "Some value");
 
         LOGGER.info(root.toString());
 
         testQuery = queryService.create(null, "Test query");
         testQuery.setDashboard(dashboard);
-        testQuery.setQuery(new Query(dataSourceRef, root));
+        testQuery.setQuery(new Query(dataSourceRef, root.build()));
         testQuery = queryService.save(testQuery);
 
         LOGGER.info(testQuery.getQuery().toString());
@@ -178,17 +178,17 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         queryService.save(query);
     }
 
-    @Test
-    public void testDeleteKids() {
-        QueryEntity query = queryService.loadById(testQuery.getId());
-        ExpressionOperator root = query.getQuery().getExpression();
-        root.remove(0);
-        queryService.save(query);
-
-        query = queryService.loadById(testQuery.getId());
-
-        Assert.assertEquals("Test query", query.getName());
-        root = query.getQuery().getExpression();
-        Assert.assertNull(root.getChildren());
-    }
+//    @Test
+//    public void testDeleteKids() {
+//        QueryEntity query = queryService.loadById(testQuery.getId());
+//        ExpressionOperator root = query.getQuery().getExpression();
+//        root.remove(0);
+//        queryService.save(query);
+//
+//        query = queryService.loadById(testQuery.getId());
+//
+//        Assert.assertEquals("Test query", query.getName());
+//        root = query.getQuery().getExpression();
+//        Assert.assertNull(root.getChildren());
+//    }
 }

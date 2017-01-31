@@ -55,6 +55,10 @@ public class MyCredentialsMatcher implements CredentialsMatcher {
             return info != null;
         }
 
+        if (token instanceof JWTAuthenticationToken) {
+            return info != null;
+        }
+
         return false;
     }
 }

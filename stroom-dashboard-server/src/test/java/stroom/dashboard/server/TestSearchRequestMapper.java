@@ -38,6 +38,7 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.TimeZone;
 import stroom.entity.shared.SharedDocRef;
 import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
@@ -67,7 +68,7 @@ public class TestSearchRequestMapper {
     private static SearchRequest getSearchRequest() {
         DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
 
-        ExpressionOperator expressionOperator = new ExpressionOperator(Op.AND);
+        ExpressionBuilder expressionOperator = new ExpressionBuilder(Op.AND);
         expressionOperator.addTerm("field1", Condition.EQUALS, "value1");
         expressionOperator.addOperator(Op.AND);
         expressionOperator.addTerm("field2", Condition.BETWEEN, "value2");
@@ -94,7 +95,7 @@ public class TestSearchRequestMapper {
         paramMap.put("param1", "val1");
         paramMap.put("param2", "val2");
 
-        final Search search = new Search(docRef, expressionOperator, componentSettingsMap, paramMap, true);
+        final Search search = new Search(docRef, expressionOperator.build(), componentSettingsMap, paramMap, true);
 
         final Map<String, ComponentResultRequest> componentResultRequestMap = new HashMap<>();
         for (final Entry<String, ComponentSettings> entry : componentSettingsMap.entrySet()) {

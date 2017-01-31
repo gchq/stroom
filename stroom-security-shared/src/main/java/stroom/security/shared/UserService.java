@@ -26,9 +26,11 @@ import java.util.List;
 public interface UserService extends EntityService<User>, FindService<User, FindUserCriteria>, HasLoadByUuid<User>, ProvidesNamePattern {
     String INITIAL_ADMIN_ACCOUNT = "admin";
 
-    UserRef getUserByName(String name);
+    UserRef getUserRefByName(String name);
 
-    UserRef getUserGroupByName(String name);
+    UserRef getUserGroupRefByName(String name);
+
+    User loadByUuidInsecure(String uuid);
 
     List<UserRef> findUsersInGroup(UserRef userGroup);
 

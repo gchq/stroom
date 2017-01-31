@@ -13,6 +13,7 @@ import stroom.datasource.api.DataSourceField;
 import stroom.datasource.api.DataSourceField.DataSourceFieldType;
 import stroom.query.api.DateTimeFormat;
 import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
@@ -79,10 +80,10 @@ public class TestSerialisation {
     private static SearchRequest getSearchRequest() {
         DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
 
-        ExpressionOperator expressionOperator = new ExpressionOperator(Op.AND);
-        expressionOperator.addTerm("field1", Condition.EQUALS, "value1");
-        expressionOperator.addOperator(Op.AND);
-        expressionOperator.addTerm("field2", Condition.BETWEEN, "value2");
+        ExpressionBuilder expressionBuilder = new ExpressionBuilder();
+        expressionBuilder.addTerm("field1", Condition.EQUALS, "value1");
+        expressionBuilder.addOperator(Op.AND);
+        expressionBuilder.addTerm("field2", Condition.BETWEEN, "value2");
 
         TableSettings tableSettings = new TableSettings();
         tableSettings.setQueryId("someQueryId");
@@ -105,7 +106,7 @@ public class TestSerialisation {
 //        componentSettingsMap.put("componentSettingsMapKey", tableSettings);
 
         final Param[] params = new Param[]{new Param("param1", "val1"), new Param("param2", "val2")};
-        final Query query = new Query(docRef, expressionOperator, params);
+        final Query query = new Query(docRef, expressionBuilder.build(), params);
 
         final ResultRequest[] resultRequests = new ResultRequest[]{new TableResultRequest("componentX", tableSettings, 1, 100)};
 

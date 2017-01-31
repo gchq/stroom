@@ -16,6 +16,7 @@
 
 package stroom.visualisation.server;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
@@ -24,12 +25,14 @@ import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.query.api.DocRef;
 import stroom.security.SecurityContext;
+import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
 import stroom.visualisation.shared.VisualisationService;
 
 import javax.inject.Inject;
 
+@Profile(StroomSpringProfiles.PROD)
 @Component("visualisationService")
 @Transactional
 public class VisualisationServiceImpl extends DocumentEntityServiceImpl<Visualisation, FindVisualisationCriteria>

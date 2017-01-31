@@ -17,6 +17,7 @@
 package stroom.statistics.common;
 
 import org.junit.Test;
+import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -64,31 +65,23 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
         // ----NOT (op3)
         // ---- term4field=term4value
 
-        final ExpressionTerm term4 = buildTerm("term4field", "term4value", Condition.EQUALS);
-        final ExpressionTerm term3 = buildTerm("term3field", "term3value", Condition.EQUALS);
-        final ExpressionTerm term2 = buildTerm("term2field", "term2value", Condition.EQUALS);
-
         final String term1value1 = "term1value1";
         final String term1value2 = "term1value2";
         final String term1value3 = "term1value3";
 
-        final ExpressionTerm term1 = buildTerm("term1field", term1value1 + "," + term1value2 + "," + term1value3,
-                Condition.IN);
+        final ExpressionBuilder and = new ExpressionBuilder(Op.AND);
+        and.addTerm("term1field", Condition.IN, term1value1 + "," + term1value2 + "," + term1value3);
+        and.addTerm("term2field", Condition.EQUALS, "term2value");
+        final ExpressionBuilder or = and.addOperator(Op.OR);
+        or.addTerm("term3field", Condition.EQUALS, "term3value");
+        final ExpressionBuilder not = or.addOperator(Op.NOT);
+        not.addTerm("term4field", Condition.EQUALS, "term4value");
 
-        final ExpressionOperator op3 = new ExpressionOperator(Op.NOT);
-        op3.add(term4);
-
-        final ExpressionOperator op2 = new ExpressionOperator(Op.OR);
-        op2.add(term2).add(term3).add(op3);
-
-        final ExpressionOperator op1 = new ExpressionOperator(Op.AND);
-        op1.add(term1).add(op2);
-
-        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(op1);
+        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build());
 
         final OperatorNode newOp1 = (OperatorNode) filterTermsTree.getRootNode();
 
-        assertEquals(op1.getOp().toString(), newOp1.getFilterOperationMode().toString());
+        assertEquals(and.build().getOp().toString(), newOp1.getFilterOperationMode().toString());
 
         final OperatorNode newTerm1OpNode = (OperatorNode) newOp1.getChildren().get(0);
         assertEquals(Op.OR.toString(), newTerm1OpNode.getFilterOperationMode().toString());
@@ -98,39 +91,38 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
         final TermNode newTerm1SubTerm2 = (TermNode) newTerm1OpNode.getChildren().get(1);
         final TermNode newTerm1SubTerm3 = (TermNode) newTerm1OpNode.getChildren().get(2);
 
-        assertEquals(term1.getField(), newTerm1SubTerm1.getTag());
+        assertEquals("term1field", newTerm1SubTerm1.getTag());
         assertEquals(term1value1, newTerm1SubTerm1.getValue());
-        assertEquals(term1.getField(), newTerm1SubTerm2.getTag());
+        assertEquals("term1field", newTerm1SubTerm2.getTag());
         assertEquals(term1value2, newTerm1SubTerm2.getValue());
-        assertEquals(term1.getField(), newTerm1SubTerm3.getTag());
+        assertEquals("term1field", newTerm1SubTerm3.getTag());
         assertEquals(term1value3, newTerm1SubTerm3.getValue());
 
         final OperatorNode newOp2 = (OperatorNode) newOp1.getChildren().get(1);
 
-        assertEquals(op2.getOp().toString(), newOp2.getFilterOperationMode().toString());
+        assertEquals(or.build().getOp().toString(), newOp2.getFilterOperationMode().toString());
 
         final TermNode newTerm2 = (TermNode) newOp2.getChildren().get(0);
         final TermNode newTerm3 = (TermNode) newOp2.getChildren().get(1);
         final OperatorNode newOp3 = (OperatorNode) newOp2.getChildren().get(2);
 
-        assertEquals(term2.getField(), newTerm2.getTag());
-        assertEquals(term2.getValue(), newTerm2.getValue());
-        assertEquals(term3.getField(), newTerm3.getTag());
-        assertEquals(term3.getValue(), newTerm3.getValue());
-        assertEquals(op3.getOp().toString(), newOp3.getFilterOperationMode().toString());
+        assertEquals("term2field", newTerm2.getTag());
+        assertEquals("term2field", newTerm2.getValue());
+        assertEquals("term3field", newTerm3.getTag());
+        assertEquals("term3field", newTerm3.getValue());
+        assertEquals(or.build().getOp().toString(), newOp3.getFilterOperationMode().toString());
 
         final TermNode newTerm4 = (TermNode) newOp3.getChildren().get(0);
-        assertEquals(term4.getField(), newTerm4.getTag());
-        assertEquals(term4.getValue(), newTerm4.getValue());
+        assertEquals("term4field", newTerm4.getTag());
+        assertEquals("term4field", newTerm4.getValue());
     }
 
     @Test
     public void testEmptyExpressionTree() {
         // AND (op1)
+        final ExpressionBuilder op1 = new ExpressionBuilder(Op.AND);
 
-        final ExpressionOperator op1 = new ExpressionOperator(Op.AND);
-
-        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(op1);
+        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(op1.build());
 
     }
 
@@ -144,14 +136,11 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
         // --term1 - datetime equals 123456789
         // --term2 - field1 between 1 and 2
 
-        final ExpressionTerm term1 = buildTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, "123456789",
-                Condition.EQUALS);
-        final ExpressionTerm term2 = buildTerm("term2field", "1,2", Condition.BETWEEN);
+        final ExpressionBuilder and = new ExpressionBuilder(Op.AND);
+        and.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.EQUALS, "123456789");
+        and.addTerm("term2field", Condition.BETWEEN, "1,2");
 
-        final ExpressionOperator op1 = new ExpressionOperator(Op.AND);
-        op1.add(term1).add(term2);
-
-        FilterTermsTreeBuilder.convertExpresionItemsTree(op1, fieldBlackList);
+        FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);
     }
 
     @Test
@@ -160,14 +149,11 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
         // --term1 - datetime between 1 and 2
         // --term2 - field1 equals 123456789
 
-        final ExpressionTerm term1 = buildTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, "1,2",
-                Condition.BETWEEN);
-        final ExpressionTerm term2 = buildTerm("term2field", "123456789", Condition.EQUALS);
+        final ExpressionBuilder and = new ExpressionBuilder(Op.AND);
+        and.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
+        and.addTerm("term2field", Condition.EQUALS, "123456789");
 
-        final ExpressionOperator op1 = new ExpressionOperator(Op.AND);
-        op1.add(term1).add(term2);
-
-        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(op1, fieldBlackList);
+        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);
 
         // if we get here without an exception then it has worked as planned
         assertTrue(filterTermsTree != null);
@@ -176,14 +162,11 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
 
     @Test
     public void testInConditionOneValue() {
-        final ExpressionTerm term1 = buildTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, "1,2",
-                Condition.BETWEEN);
-        final ExpressionTerm term2 = buildTerm("term1field", "123456789", Condition.IN);
+        final ExpressionBuilder and = new ExpressionBuilder(Op.AND);
+        and.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
+        and.addTerm("term1field", Condition.IN, "123456789");
 
-        final ExpressionOperator op1 = new ExpressionOperator(Op.AND);
-        op1.add(term1).add(term2);
-
-        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(op1, fieldBlackList);
+        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);
 
         final TermNode term2Node = (TermNode) filterTermsTree.getRootNode();
 
@@ -194,26 +177,15 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
 
     @Test
     public void testInConditionNoValue() {
-        final ExpressionTerm term1 = buildTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, "1,2",
-                Condition.BETWEEN);
-        final ExpressionTerm term2 = buildTerm("term1field", null, Condition.IN);
+        final ExpressionBuilder and = new ExpressionBuilder(Op.AND);
+        and.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
+        and.addTerm("term1field", Condition.IN, "");
 
-        final ExpressionOperator op1 = new ExpressionOperator(Op.AND);
-        op1.add(term1).add(term2);
-
-        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(op1, fieldBlackList);
+        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);
 
         final TermNode term2Node = (TermNode) filterTermsTree.getRootNode();
 
         assertEquals("term1field", term2Node.getTag());
         assertEquals(null, term2Node.getValue());
-    }
-
-    private static ExpressionTerm buildTerm(final String field, final String value, final Condition condition) {
-        final ExpressionTerm term = new ExpressionTerm();
-        term.setCondition(condition);
-        term.setField(field);
-        term.setValue(value);
-        return term;
     }
 }

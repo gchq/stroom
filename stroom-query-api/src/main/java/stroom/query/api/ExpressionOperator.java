@@ -17,16 +17,12 @@
 package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.shared.HasDisplayValue;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlType;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @JsonPropertyOrder({"op", "children"})
 @XmlType(name = "ExpressionOperator", propOrder = {"op", "children"})
@@ -34,13 +30,15 @@ public class ExpressionOperator extends ExpressionItem {
     private static final long serialVersionUID = 6602004424564268512L;
 
     private Op op = Op.AND;
-    private List<ExpressionItem> children;
+    private ExpressionItem[] children;
 
     public ExpressionOperator() {
     }
 
-    public ExpressionOperator(final Op op) {
+    public ExpressionOperator(final Boolean enabled, final Op op, final ExpressionItem[] children) {
+        super(enabled);
         this.op = op;
+        this.children = children;
     }
 
     @XmlElement(name = "op")
@@ -58,89 +56,11 @@ public class ExpressionOperator extends ExpressionItem {
             @XmlElement(name = "term", type = ExpressionTerm.class)
     })
     public ExpressionItem[] getChildren() {
-        if (children == null || children.size() == 0) {
-            return null;
-        }
-        return children.toArray(new ExpressionItem[children.size()]);
+        return children;
     }
 
     public void setChildren(final ExpressionItem[] children) {
-        if (children != null && children.length > 0) {
-            this.children = new ArrayList<>(Arrays.asList(children));
-        } else {
-            this.children = null;
-        }
-    }
-
-    public ExpressionOperator addOperator(final Op op) {
-        final ExpressionOperator expressionOperator = new ExpressionOperator(op);
-        add(expressionOperator);
-        return expressionOperator;
-    }
-
-    public ExpressionOperator addTerm(final String field, final Condition condition, final String value) {
-        final ExpressionTerm expressionTerm = new ExpressionTerm(field, condition, value);
-        add(expressionTerm);
-        return this;
-    }
-
-    public ExpressionOperator addTerm(final String field, final Condition condition, final DocRef dictionary) {
-        final ExpressionTerm expressionTerm = new ExpressionTerm(field, condition, dictionary);
-        add(expressionTerm);
-        return this;
-    }
-
-    public ExpressionOperator add(final ExpressionItem item) {
-        if (item != null) {
-            if (children == null) {
-                children = new ArrayList<>();
-            }
-
-            children.add(item);
-        }
-
-        return this;
-    }
-
-    public ExpressionOperator remove(final ExpressionItem item) {
-        if (children != null) {
-            children.remove(item);
-            if (children.size() == 0) {
-                children = null;
-            }
-        }
-        return this;
-    }
-
-    public ExpressionOperator remove(final int index) {
-        if (children != null) {
-            children.remove(index);
-            if (children.size() == 0) {
-                children = null;
-            }
-        }
-        return this;
-    }
-
-    public ExpressionOperator clear() {
-        children = null;
-        return this;
-    }
-
-    private <T extends ExpressionOperator> T copyTo(T dest) {
-        dest = super.copyTo(dest);
-        ((ExpressionOperator) dest).op = op;
-        if (children != null) {
-            for (final ExpressionItem child : children) {
-                dest.add(child.copy());
-            }
-        }
-        return dest;
-    }
-
-    @Override
-    public ExpressionOperator copy() {
-        return copyTo(new ExpressionOperator());
+        this.children = children;
     }
 
     @Override

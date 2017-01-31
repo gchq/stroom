@@ -40,6 +40,13 @@ public abstract class ExpressionItem implements Serializable {
 
     private Boolean enabled;
 
+    public ExpressionItem() {
+    }
+
+    public ExpressionItem(final Boolean enabled) {
+        this.enabled = enabled;
+    }
+
     @XmlElement
     public Boolean getEnabled() {
         return enabled;
@@ -53,12 +60,12 @@ public abstract class ExpressionItem implements Serializable {
         return enabled == null || enabled;
     }
 
-    public abstract ExpressionItem copy();
-
-    <T extends ExpressionItem> T copyTo(T dest) {
-        ((ExpressionItem) dest).enabled = enabled;
-        return dest;
-    }
+//    public abstract ExpressionItem copy();
+//
+//    <T extends ExpressionItem> T copyTo(T dest) {
+//        ((ExpressionItem) dest).enabled = enabled;
+//        return dest;
+//    }
 
     @Override
     public boolean equals(final Object o) {

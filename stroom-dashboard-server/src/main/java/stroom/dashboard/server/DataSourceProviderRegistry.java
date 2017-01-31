@@ -16,42 +16,50 @@
 
 package stroom.dashboard.server;
 
-import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.datasource.api.DataSource;
 import stroom.query.api.DocRef;
-import stroom.util.spring.StroomBeanStore;
+import stroom.security.SecurityContext;
+import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
-public class DataSourceProviderRegistry implements InitializingBean {
-    private final Map<String, DataSourceProvider> providers = new HashMap<>();
+@Scope(StroomScope.PROTOTYPE)
+public class DataSourceProviderRegistry {//implements InitializingBean {
+//    private final Map<String, DataSourceProvider> providers = new HashMap<>();
+//
+//    private final StroomBeanStore stroomBeanStore;
+//
 
-    private final StroomBeanStore stroomBeanStore;
+    private final  SecurityContext securityContext;
 
     @Inject
-    public DataSourceProviderRegistry(final StroomBeanStore stroomBeanStore) {
-        this.stroomBeanStore = stroomBeanStore;
+    public DataSourceProviderRegistry(final SecurityContext securityContext) {
+        this.securityContext = securityContext;
     }
+
+    //    @Inject
+//    public DataSourceProviderRegistry(final StroomBeanStore stroomBeanStore) {
+//        this.stroomBeanStore = stroomBeanStore;
+//    }
 
     public DataSourceProvider getDataSourceProvider(final DocRef dataSourceRef) {
-        if (dataSourceRef != null && dataSourceRef.getType() != null) {
-            final DataSourceProvider provider = providers.get(dataSourceRef.getType());
-            return provider;
-        }
-        return null;
+        return new RemoteDataSourceProvider(securityContext);
+//
+//        if (dataSourceRef != null && dataSourceRef.getType() != null) {
+//            final DataSourceProvider provider = providers.get(dataSourceRef.getType());
+//            return provider;
+//        }
+//        return null;
     }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        for (final String beanName : stroomBeanStore.getStroomBeanByType(DataSourceProvider.class)) {
-            final Object bean = stroomBeanStore.getBean(beanName);
-            final DataSourceProvider dataSourceProvider = (DataSourceProvider) bean;
-            providers.put(dataSourceProvider.getType(), dataSourceProvider);
-        }
-    }
+//
+//    @Override
+//    public void afterPropertiesSet() throws Exception {
+//        for (final String beanName : stroomBeanStore.getStroomBeanByType(DataSourceProvider.class)) {
+//            final Object bean = stroomBeanStore.getBean(beanName);
+//            final DataSourceProvider dataSourceProvider = (DataSourceProvider) bean;
+//            providers.put(dataSourceProvider.getType(), dataSourceProvider);
+//        }
+//    }
 }

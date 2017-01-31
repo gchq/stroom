@@ -36,14 +36,18 @@ public class ExpressionTerm extends ExpressionItem {
     }
 
     public ExpressionTerm(final String field, final Condition condition, final String value) {
-        this.field = field;
-        this.condition = condition;
-        this.value = value;
+        this(null, field, condition, value, null);
     }
 
     public ExpressionTerm(final String field, final Condition condition, final DocRef dictionary) {
+        this(null, field, condition, null, dictionary);
+    }
+
+    public ExpressionTerm(final Boolean enabled, final String field, final Condition condition, final String value, final DocRef dictionary) {
+        super(enabled);
         this.field = field;
         this.condition = condition;
+        this.value = value;
         this.dictionary = dictionary;
     }
 
@@ -83,19 +87,19 @@ public class ExpressionTerm extends ExpressionItem {
         this.dictionary = dictionary;
     }
 
-    private <T extends ExpressionTerm> T copyTo(T dest) {
-        dest = super.copyTo(dest);
-        ((ExpressionTerm) dest).condition = condition;
-        ((ExpressionTerm) dest).field = field;
-        ((ExpressionTerm) dest).value = value;
-        ((ExpressionTerm) dest).dictionary = dictionary;
-        return dest;
-    }
-
-    @Override
-    public ExpressionTerm copy() {
-        return copyTo(new ExpressionTerm());
-    }
+//    private <T extends ExpressionTerm> T copyTo(T dest) {
+//        dest = super.copyTo(dest);
+//        ((ExpressionTerm) dest).condition = condition;
+//        ((ExpressionTerm) dest).field = field;
+//        ((ExpressionTerm) dest).value = value;
+//        ((ExpressionTerm) dest).dictionary = dictionary;
+//        return dest;
+//    }
+//
+//    @Override
+//    public ExpressionTerm copy() {
+//        return copyTo(new ExpressionTerm());
+//    }
 
     @Override
     public boolean equals(final Object o) {

@@ -27,6 +27,7 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
@@ -43,7 +44,7 @@ import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableResultRequest;
 import stroom.query.api.TableSettings;
-import stroom.search.server.SearchService;
+import stroom.search.server.SearchResource;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.ParamUtil;
 import stroom.util.thread.ThreadUtil;
@@ -62,7 +63,7 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
     @Resource
     private IndexService indexService;
     @Resource
-    private SearchService searchService;
+    private SearchResource searchService;
 
     @Override
     public void onBefore() {
@@ -77,17 +78,17 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void positiveCaseInsensitiveTest() {
-        final ExpressionOperator expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
         test(expression, 5);
     }
 
-    private void test(final ExpressionOperator expressionIn, final int expectResultCount) {
+    private void test(final ExpressionBuilder expressionIn, final int expectResultCount) {
         final String[] compoentIds = new String[]{"table-1"};
         test(expressionIn, expectResultCount, compoentIds, true);
     }
 
-    private void test(final ExpressionOperator expressionIn, final int expectResultCount, final String[] componentIds,
+    private void test(final ExpressionBuilder expressionIn, final int expectResultCount, final String[] componentIds,
                       final boolean extractValues) {
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
         StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
@@ -113,7 +114,7 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         }
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final Query query = new Query(dataSourceRef, expressionIn);
+        final Query query = new Query(dataSourceRef, expressionIn.build());
         final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, DateTimeZone.UTC.getID());
 
         SearchResponse searchResponse = searchService.search(searchRequest);
@@ -210,27 +211,12 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         return tableSettings;
     }
 
-    private ExpressionOperator buildExpression(final String userField, final String userTerm, final String from,
+    private ExpressionBuilder buildExpression(final String userField, final String userTerm, final String from,
                                                final String to, final String wordsField, final String wordsTerm) {
-        final ExpressionTerm userId = new ExpressionTerm();
-        userId.setField(userField);
-        userId.setCondition(Condition.CONTAINS);
-        userId.setValue(userTerm);
-
-        final ExpressionTerm eventTime = new ExpressionTerm();
-        eventTime.setField("EventTime");
-        eventTime.setCondition(Condition.BETWEEN);
-        eventTime.setValue(from + "," + to);
-
-        final ExpressionTerm words = new ExpressionTerm();
-        words.setField(wordsField);
-        words.setCondition(Condition.CONTAINS);
-        words.setValue(wordsTerm);
-
-        final ExpressionOperator operator = new ExpressionOperator();
-        operator.add(userId);
-        operator.add(eventTime);
-        operator.add(words);
+        final ExpressionBuilder operator = new ExpressionBuilder();
+        operator.addTerm(userField, Condition.CONTAINS, userTerm);
+        operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
+        operator.addTerm(wordsField, Condition.CONTAINS, wordsTerm);
 
         return operator;
     }

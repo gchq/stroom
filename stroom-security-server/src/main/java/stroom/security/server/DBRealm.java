@@ -74,12 +74,17 @@ public class DBRealm extends AuthenticatingRealm {
     @Override
     public boolean supports(final AuthenticationToken token) {
         return token != null
-                && (token instanceof UsernamePasswordToken || token instanceof CertificateAuthenticationToken);
+                && (token instanceof JWTAuthenticationToken || token instanceof UsernamePasswordToken || token instanceof CertificateAuthenticationToken);
     }
 
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token)
             throws AuthenticationException {
+        if (token instanceof JWTAuthenticationToken) {
+            final JWTAuthenticationToken jwtAuthenticationToken = (JWTAuthenticationToken) token;
+            return authenticateWithJWT(jwtAuthenticationToken);
+        }
+
         if (token instanceof CertificateAuthenticationToken) {
             final CertificateAuthenticationToken certificateAuthenticationToken = (CertificateAuthenticationToken) token;
             return authenticateWithCertificate(certificateAuthenticationToken);
@@ -91,6 +96,27 @@ public class DBRealm extends AuthenticatingRealm {
         }
 
         throw new AuthenticationException("Token type '" + token.getClass().getSimpleName() + "' is not supported");
+    }
+
+    private AuthenticationInfo authenticateWithJWT(final JWTAuthenticationToken token)
+            throws AuthenticationException {
+        String userId = null;
+        if (token != null && token.getUserId() != null) {
+            userId = token.getUserId().toString();
+        }
+
+        final User user = loadUserByUsername(userId);
+
+        if (StringUtils.hasText(userId) && user == null) {
+            throw new EntityServiceException(userId + " does not exist");
+        }
+
+        if (user != null) {
+            check(user);
+            return new SimpleAuthenticationInfo(user, user.getPasswordHash(), getName());
+        }
+
+        return null;
     }
 
     private AuthenticationInfo authenticateWithCertificate(final CertificateAuthenticationToken token)
@@ -192,7 +218,7 @@ public class DBRealm extends AuthenticatingRealm {
             createOrRefreshAdminUserGroup();
         }
 
-        UserRef userRef = userService.getUserByName(username);
+        UserRef userRef = userService.getUserRefByName(username);
         User user = null;
         if (userRef == null) {
             // The requested system user does not exist.
@@ -202,7 +228,7 @@ public class DBRealm extends AuthenticatingRealm {
         }
 
         if (userRef != null) {
-            user = userService.loadByUuid(userRef.getUuid());
+            user = userService.loadByUuidInsecure(userRef.getUuid());
         }
 
 //        // If the requested user doesn't exist then return null.
@@ -225,7 +251,7 @@ public class DBRealm extends AuthenticatingRealm {
         // Ensure all perms have been created
         userAppPermissionService.init();
 
-        UserRef userRef = userService.getUserByName(UserService.INITIAL_ADMIN_ACCOUNT);
+        UserRef userRef = userService.getUserRefByName(UserService.INITIAL_ADMIN_ACCOUNT);
         if (userRef == null) {
             User user = new User();
             user.setName(UserService.INITIAL_ADMIN_ACCOUNT);

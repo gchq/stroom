@@ -19,6 +19,7 @@ package stroom.test;
 import stroom.cluster.server.ClusterNodeManagerImpl;
 import stroom.cluster.server.MockClusterNodeManager;
 import stroom.dashboard.server.MockQueryService;
+import stroom.dashboard.server.MockVisualisationService;
 import stroom.datafeed.server.MockHeaderMapFactory;
 import stroom.datafeed.server.MockHttpServletRequest;
 import stroom.datafeed.server.MockHttpServletResponse;
@@ -132,6 +133,7 @@ import org.springframework.context.annotation.FilterType;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockTaskFactory.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockTaskHandler.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockTextConverterService.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockVisualisationService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockVolumeService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockXMLSchemaService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockXSLTService.class),

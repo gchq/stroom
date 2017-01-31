@@ -101,6 +101,13 @@ war.dependsOn(':stroom-app-gwt:gwtCompile', ':stroom-dashboard-gwt:gwtCompile')
 
 gretty {
     contextPath = ''
+
+    jvmArgs = ['-Djava.net.preferIPv4Stack=true']
+//    if (System.properties['org.eclipse.jetty.annotations.maxWait'] != null) {
+//        jvmArgs.add('-Dorg.eclipse.jetty.annotations.maxWait=' + System.properties['org.eclipse.jetty.annotations.maxWait'])
+//    }
+
+    jvmArgs.add('-Dorg.eclipse.jetty.annotations.maxWait=120')
 }
 
 //task('JettyStartGWT', type: JettyStartTask) {
