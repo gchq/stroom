@@ -164,9 +164,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
             stroom.query.api.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
             stroom.query.api.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
-
-            // TODO : Write response mapping code.
-            // result = mapResponse(searchResponse);
+            result = new SearchResponseMapper().mapResponse(searchResponse);
 
             if (newSearch) {
                 // Log this search action for the current user.
