@@ -24,6 +24,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DateTimeFormatSettings;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Filter;
@@ -60,7 +61,7 @@ public class TestSearchRequestMapper {
     @Test
     public void testRequest() throws Exception {
         final SearchRequestMapper mapper = new SearchRequestMapper(new MockVisualisationService());
-        final stroom.query.api.SearchRequest result = mapper.mapRequest(new QueryKey("test"), getSearchRequest());
+        final stroom.query.api.SearchRequest result = mapper.mapRequest(new DashboardQueryKey("test", 1), getSearchRequest());
 
         test(result, stroom.query.api.SearchRequest.class, "testRequest");
     }

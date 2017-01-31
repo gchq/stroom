@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
@@ -41,7 +42,7 @@ public class SearchBus {
 
     private final ClientDispatchAsync dispatcher;
 
-    private final Map<QueryKey, SearchModel> activeSearchMap = new HashMap<>();
+    private final Map<DashboardQueryKey, SearchModel> activeSearchMap = new HashMap<>();
     private final Timer pollingTimer;
     private int delayMillis = DEFAULT_POLL_INTERVAL;
     private boolean forcePoll;
@@ -74,11 +75,11 @@ public class SearchBus {
         pollingTimer.cancel();
     }
 
-    public void put(final QueryKey queryKey, final SearchModel searchModel) {
+    public void put(final DashboardQueryKey queryKey, final SearchModel searchModel) {
         activeSearchMap.put(queryKey, searchModel);
     }
 
-    public void remove(final QueryKey queryKey) {
+    public void remove(final DashboardQueryKey queryKey) {
         activeSearchMap.remove(queryKey);
     }
 
@@ -97,9 +98,9 @@ public class SearchBus {
 
     private void doPoll() {
         polling = true;
-        final Map<QueryKey, SearchRequest> searchActionMap = new HashMap<>();
-        for (final Entry<QueryKey, SearchModel> entry : activeSearchMap.entrySet()) {
-            final QueryKey queryKey = entry.getKey();
+        final Map<DashboardQueryKey, SearchRequest> searchActionMap = new HashMap<>();
+        for (final Entry<DashboardQueryKey, SearchModel> entry : activeSearchMap.entrySet()) {
+            final DashboardQueryKey queryKey = entry.getKey();
             final SearchModel searchModel = entry.getValue();
             final SearchRequest searchAction = searchModel.getRequest();
             searchActionMap.put(queryKey, searchAction);
@@ -109,9 +110,9 @@ public class SearchBus {
         dispatcher.execute(action, false, new AsyncCallbackAdaptor<SearchBusPollResult>() {
             @Override
             public void onSuccess(final SearchBusPollResult result) {
-                final Map<QueryKey, SearchResponse> searchResultMap = result.getSearchResultMap();
-                for (final Entry<QueryKey, SearchResponse> entry : searchResultMap.entrySet()) {
-                    final QueryKey queryKey = entry.getKey();
+                final Map<DashboardQueryKey, SearchResponse> searchResultMap = result.getSearchResultMap();
+                for (final Entry<DashboardQueryKey, SearchResponse> entry : searchResultMap.entrySet()) {
+                    final DashboardQueryKey queryKey = entry.getKey();
                     final SearchResponse searchResponse = entry.getValue();
                     final SearchModel searchModel = activeSearchMap.get(queryKey);
                     if (searchModel != null) {

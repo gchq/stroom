@@ -16,13 +16,17 @@
 
 package stroom.dashboard.server;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.server.vis.VisSettings;
 import stroom.dashboard.server.vis.VisSettings.Nest;
 import stroom.dashboard.server.vis.VisSettings.Structure;
 import stroom.dashboard.shared.ComponentResultRequest;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DateTimeFormatSettings;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Filter;
@@ -136,13 +140,13 @@ public class SearchRequestMapper {
         this.visualisationService = visualisationService;
     }
 
-    public stroom.query.api.SearchRequest mapRequest(final QueryKey queryKey, final stroom.dashboard.shared.SearchRequest searchRequest) {
+    public stroom.query.api.SearchRequest mapRequest(final DashboardQueryKey queryKey, final stroom.dashboard.shared.SearchRequest searchRequest) {
         if (searchRequest == null) {
             return null;
         }
 
         final stroom.query.api.SearchRequest copy = new stroom.query.api.SearchRequest();
-        copy.setKey(queryKey);
+        copy.setKey(new QueryKey(queryKey.getUuid()));
         copy.setQuery(mapQuery(searchRequest));
         copy.setResultRequests(mapResultRequests(searchRequest));
         copy.setDateTimeLocale(searchRequest.getDateTimeLocale());
@@ -379,8 +383,12 @@ public class SearchRequestMapper {
                 return null;
             }
 
-            ObjectMapper objectMapper = new ObjectMapper();
-            final VisSettings visSettings = objectMapper.readValue(visualisation.getSettings(), VisSettings.class);
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
+            mapper.setSerializationInclusion(Include.NON_NULL);
+
+            final VisSettings visSettings = mapper.readValue(visualisation.getSettings(), VisSettings.class);
             if (visSettings != null && visSettings.getData() != null) {
 
 

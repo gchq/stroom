@@ -44,7 +44,6 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.dashboard.shared.QueryComponentSettings;
-import stroom.dashboard.shared.SharedQueryKey;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.datasource.api.DataSourceField;

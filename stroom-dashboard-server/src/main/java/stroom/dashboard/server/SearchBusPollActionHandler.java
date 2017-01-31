@@ -25,7 +25,7 @@ import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.dashboard.shared.SharedQueryKey;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.logging.SearchEventLog;
 import stroom.query.api.DocRef;
 import stroom.query.api.Param;
@@ -80,7 +80,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                         "Only the following search queries should be active for session '");
                 sb.append(action.getSessionId());
                 sb.append("'\n");
-                for (final QueryKey queryKey : action.getSearchActionMap().keySet()) {
+                for (final DashboardQueryKey queryKey : action.getSearchActionMap().keySet()) {
                     sb.append("\t");
                     sb.append(queryKey.toString());
                 }
@@ -89,21 +89,21 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
             final String searchSessionId = action.getSessionId() + "_" + action.getApplicationInstanceId();
             final ActiveQueries searchSession = searchSessionManager.get(searchSessionId);
-            final Map<QueryKey, SearchResponse> searchResultMap = new HashMap<>();
+            final Map<DashboardQueryKey, SearchResponse> searchResultMap = new HashMap<>();
 
-            // Fix query keys so they have session and user info.
-            for (final Entry<QueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
-                final QueryKey queryKey = entry.getKey();
-                queryKey.setSessionId(action.getSessionId());
-                queryKey.setUserId(action.getUserId());
-            }
+//            // Fix query keys so they have session and user info.
+//            for (final Entry<DashboardQueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
+//                final QueryKey queryKey = entry.getKey().getQueryKey();
+//                queryKey.setSessionId(action.getSessionId());
+//                queryKey.setUserId(action.getUserId());
+//            }
 
             // Kill off any queries that are no longer required by the UI.
             searchSession.destroyUnusedQueries(action.getSearchActionMap().keySet());
 
             // Get query results for every active query.
-            for (final Entry<QueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
-                final QueryKey queryKey = entry.getKey();
+            for (final Entry<DashboardQueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
+                final DashboardQueryKey queryKey = entry.getKey();
 
                 final SearchRequest searchRequest = entry.getValue();
 
@@ -121,7 +121,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
         }
     }
 
-    private SearchResponse processRequest(final ActiveQueries activeQueries, final QueryKey queryKey, final SearchRequest searchRequest) {
+    private SearchResponse processRequest(final ActiveQueries activeQueries, final DashboardQueryKey queryKey, final SearchRequest searchRequest) {
         SearchResponse result = null;
 
         boolean newSearch = false;
@@ -188,35 +188,29 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
         return result;
     }
 
-    private void storeSearchHistory(final QueryKey queryKey, final Search search) {
+    private void storeSearchHistory(final DashboardQueryKey queryKey, final Search search) {
         try {
-            if (queryKey instanceof SharedQueryKey) {
-                final SharedQueryKey queryKeyImpl = (SharedQueryKey) queryKey;
-
-                // Add this search to the history so the user can get back to
-                // this search again.
-                Param[] params;
-                if (search.getParamMap() != null && search.getParamMap().size() > 0) {
-                    params = new Param[search.getParamMap().size()];
-                    int i = 0;
-                    for (final Entry<String, String> entry : search.getParamMap().entrySet()) {
-                        params[i++] = new Param(entry.getKey(), entry.getValue());
-                    }
-                } else {
-                    params = null;
+            // Add this search to the history so the user can get back to
+            // this search again.
+            Param[] params;
+            if (search.getParamMap() != null && search.getParamMap().size() > 0) {
+                params = new Param[search.getParamMap().size()];
+                int i = 0;
+                for (final Entry<String, String> entry : search.getParamMap().entrySet()) {
+                    params[i++] = new Param(entry.getKey(), entry.getValue());
                 }
-
-                final Query query = new Query(search.getDataSourceRef(), search.getExpression(), params);
-                final QueryEntity queryEntity = queryService.create(null, "History");
-
-                queryEntity.setDashboard(Dashboard.createStub(queryKeyImpl.getDashboardId()));
-                queryEntity.setQuery(query);
-                queryService.save(queryEntity);
+            } else {
+                params = null;
             }
+
+            final Query query = new Query(search.getDataSourceRef(), search.getExpression(), params);
+            final QueryEntity queryEntity = queryService.create(null, "History");
+
+            queryEntity.setDashboard(Dashboard.createStub(queryKey.getDashboardId()));
+            queryEntity.setQuery(query);
+            queryService.save(queryEntity);
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
-
-
 }

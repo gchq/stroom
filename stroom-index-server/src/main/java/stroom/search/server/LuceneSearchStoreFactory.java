@@ -25,14 +25,15 @@ import stroom.node.server.NodeCache;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;
 import stroom.query.CoprocessorMap;
-import stroom.query.Store;
 import stroom.query.SearchResultHandler;
+import stroom.query.Store;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Query;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.TableSettings;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
+import stroom.security.SecurityContext;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
 import stroom.util.config.StroomProperties;
@@ -57,16 +58,18 @@ public class LuceneSearchStoreFactory {
     private final NodeCache nodeCache;
     private final TaskManager taskManager;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
+    private final SecurityContext securityContext;
 
     @Inject
     public LuceneSearchStoreFactory(final IndexService indexService, final DictionaryService dictionaryService,
                                     final NodeCache nodeCache, final TaskManager taskManager,
-                                    final ClusterResultCollectorCache clusterResultCollectorCache) {
+                                    final ClusterResultCollectorCache clusterResultCollectorCache, final SecurityContext securityContext) {
         this.indexService = indexService;
         this.dictionaryService = dictionaryService;
         this.nodeCache = nodeCache;
         this.taskManager = taskManager;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
+        this.securityContext = securityContext;
     }
 
     public Store create(final SearchRequest searchRequest) {
@@ -95,7 +98,7 @@ public class LuceneSearchStoreFactory {
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
-        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(searchRequest.getKey().getSessionId(), searchRequest.getKey().getUserId(), searchName, query, node,
+        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(null, securityContext.getUserId(), searchName, query, node,
                 SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorMap.getMap(), nowEpochMilli);
 
         // Create a handler for search results.

@@ -16,18 +16,17 @@
 
 package stroom.dashboard.server;
 
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.query.api.DocRef;
-import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ActiveQueries {
-    private final ConcurrentHashMap<QueryKey, ActiveQuery> activeQueries = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<DashboardQueryKey, ActiveQuery> activeQueries = new ConcurrentHashMap<>();
 
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
 
@@ -35,17 +34,17 @@ public class ActiveQueries {
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
     }
 
-    public void destroyUnusedQueries(final Set<QueryKey> keys) {
+    public void destroyUnusedQueries(final Set<DashboardQueryKey> keys) {
         // Kill off any searches that are no longer required by the UI.
-        Iterator<Entry<QueryKey, ActiveQuery>> iterator = activeQueries.entrySet().iterator();
+        Iterator<Entry<DashboardQueryKey, ActiveQuery>> iterator = activeQueries.entrySet().iterator();
         while (iterator.hasNext()) {
-            final Entry<QueryKey, ActiveQuery> entry = iterator.next();
-            final QueryKey queryKey = entry.getKey();
+            final Entry<DashboardQueryKey, ActiveQuery> entry = iterator.next();
+            final DashboardQueryKey queryKey = entry.getKey();
             final ActiveQuery activeQuery = entry.getValue();
             if (keys == null || !keys.contains(queryKey)) {
                 // Terminate the associated search task.
                 final DataSourceProvider dataSourceProvider = dataSourceProviderRegistry.getDataSourceProvider(activeQuery.getDocRef());
-                final Boolean success = dataSourceProvider.destroy(queryKey);
+                final Boolean success = dataSourceProvider.destroy(new QueryKey(queryKey.getUuid()));
 
                 if (Boolean.TRUE.equals(success)) {
                     // Remove the collector from the available searches as it is no longer required by the UI.
@@ -55,11 +54,11 @@ public class ActiveQueries {
         }
     }
 
-    public ActiveQuery getExistingQuery(final QueryKey queryKey) {
+    public ActiveQuery getExistingQuery(final DashboardQueryKey queryKey) {
         return activeQueries.get(queryKey);
     }
 
-    public ActiveQuery addNewQuery(final QueryKey queryKey, final DocRef docRef) {
+    public ActiveQuery addNewQuery(final DashboardQueryKey queryKey, final DocRef docRef) {
         final ActiveQuery activeQuery = new ActiveQuery(docRef);
         final ActiveQuery existing = activeQueries.put(queryKey, activeQuery);
         if (existing != null) {

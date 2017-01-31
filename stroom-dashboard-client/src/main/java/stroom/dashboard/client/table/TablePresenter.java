@@ -49,6 +49,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.dashboard.shared.DownloadSearchResultsAction;
 import stroom.dashboard.shared.Field;
@@ -302,7 +303,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     private void download() {
         if (currentSearchModel != null) {
             final Search search = currentSearchModel.getActiveSearch();
-            final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
+            final DashboardQueryKey queryKey = currentSearchModel.getCurrentQueryKey();
             if (search != null && queryKey != null) {
                 final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                     @Override
