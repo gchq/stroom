@@ -27,6 +27,7 @@ import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -83,7 +84,7 @@ public class ExplorerTree extends AbstractExporerTree {
         cellTable.setLoadingIndicator(null);
         cellTable.setSelectionModel(selectionModel);
 
-        cellTable.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
+        cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
 
         cellTable.getRowContainer().getStyle().setCursor(Style.Cursor.POINTER);
 
