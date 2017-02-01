@@ -58,23 +58,23 @@ public class FilterTermsTreeBuilder {
     }
 
     private static PrintableNode convertNode(final ExpressionItem oldNode, final Set<String> fieldBlackList) {
-        PrintableNode newNode;
+        PrintableNode newNode = null;
 
         if (oldNode.isEnabled()) {
             if (oldNode instanceof ExpressionTerm) {
                 final ExpressionTerm termNode = (ExpressionTerm) oldNode;
-                newNode = convertTermNode(termNode, fieldBlackList);
+                if (termNode.getValue() != null && termNode.getValue().length() > 0) {
+                    newNode = convertTermNode(termNode, fieldBlackList);
+                }
             } else if (oldNode instanceof ExpressionOperator) {
                 newNode = convertOperatorNode((ExpressionOperator) oldNode, fieldBlackList);
             } else {
                 throw new RuntimeException("Node is of a type that we don't expect: " + oldNode.getClass().getName());
             }
-        } else {
-            // the node is disabled so just return null rather than including it
-            // in the new tree
-            newNode = null;
         }
 
+        // the node is disabled so just return null rather than including it
+        // in the new tree
         return newNode;
     }
 

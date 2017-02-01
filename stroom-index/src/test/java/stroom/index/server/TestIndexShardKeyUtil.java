@@ -44,27 +44,34 @@ public class TestIndexShardKeyUtil extends StroomUnitTest {
         Assert.assertEquals("2013", getPartition(PartitionBy.YEAR, 1, millis));
         Assert.assertEquals("2013-03", getPartition(PartitionBy.MONTH, 1, millis));
         Assert.assertEquals("2013-03-07", getPartition(PartitionBy.DAY, 1, millis));
-        Assert.assertEquals("2013-03-05", getPartition(PartitionBy.WEEK, 1, millis));
+        Assert.assertEquals("2013-03-04", getPartition(PartitionBy.WEEK, 1, millis));
 
-        Assert.assertEquals("2013", getPartition(PartitionBy.YEAR, 3, millis));
-        Assert.assertEquals("2013-03", getPartition(PartitionBy.MONTH, 3, millis));
+        Assert.assertEquals("2012", getPartition(PartitionBy.YEAR, 3, millis));
+        Assert.assertEquals("2013-01", getPartition(PartitionBy.MONTH, 3, millis));
         Assert.assertEquals("2013-03-07", getPartition(PartitionBy.DAY, 3, millis));
-        Assert.assertEquals("2013-02-26", getPartition(PartitionBy.WEEK, 3, millis));
+        Assert.assertEquals("2013-02-18", getPartition(PartitionBy.WEEK, 3, millis));
 
         Assert.assertEquals("2010", getPartition(PartitionBy.YEAR, 5, millis));
-        Assert.assertEquals("2013-01", getPartition(PartitionBy.MONTH, 5, millis));
+        Assert.assertEquals("2012-12", getPartition(PartitionBy.MONTH, 5, millis));
         Assert.assertEquals("2013-03-06", getPartition(PartitionBy.DAY, 5, millis));
-        Assert.assertEquals("2013-03-05", getPartition(PartitionBy.WEEK, 5, millis));
+        Assert.assertEquals("2013-02-18", getPartition(PartitionBy.WEEK, 5, millis));
 
-        Assert.assertEquals("2007", getPartition(PartitionBy.YEAR, 9, millis));
-        Assert.assertEquals("2013-01", getPartition(PartitionBy.MONTH, 9, millis));
+        Assert.assertEquals("2006", getPartition(PartitionBy.YEAR, 9, millis));
+        Assert.assertEquals("2012-10", getPartition(PartitionBy.MONTH, 9, millis));
         Assert.assertEquals("2013-03-04", getPartition(PartitionBy.DAY, 9, millis));
-        Assert.assertEquals("2013-02-26", getPartition(PartitionBy.WEEK, 9, millis));
+        Assert.assertEquals("2013-02-18", getPartition(PartitionBy.WEEK, 9, millis));
 
         Assert.assertEquals("2010", getPartition(PartitionBy.YEAR, 10, millis));
-        Assert.assertEquals("2013-01", getPartition(PartitionBy.MONTH, 10, millis));
-        Assert.assertEquals("2013-03-01", getPartition(PartitionBy.DAY, 10, millis));
-        Assert.assertEquals("2013-03-05", getPartition(PartitionBy.WEEK, 10, millis));
+        Assert.assertEquals("2012-07", getPartition(PartitionBy.MONTH, 10, millis));
+        Assert.assertEquals("2013-03-06", getPartition(PartitionBy.DAY, 10, millis));
+        Assert.assertEquals("2013-02-18", getPartition(PartitionBy.WEEK, 10, millis));
+    }
+
+    @Test
+    public void testTimeBased2() {
+        final String date = "2017-01-01T11:30:44.000Z";
+        final long millis = DateUtil.parseNormalDateTimeString(date);
+        Assert.assertEquals("2016-12-26", getPartition(PartitionBy.WEEK, 1, millis));
     }
 
     private String getPartition(final PartitionBy partitionBy, final int partitionSize, final long millis) {
