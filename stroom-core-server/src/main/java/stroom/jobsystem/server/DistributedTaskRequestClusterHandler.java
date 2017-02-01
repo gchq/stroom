@@ -101,6 +101,7 @@ public class DistributedTaskRequestClusterHandler
             try {
                 callback.onSuccess(response);
             } catch (final Throwable t) {
+                // If we couldn't return the tasks for any reason then abandon them.
                 abandonTasks(node, tasksToReturn);
             }
         } catch (final Throwable t) {
