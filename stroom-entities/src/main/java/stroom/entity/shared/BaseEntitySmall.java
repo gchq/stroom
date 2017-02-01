@@ -31,10 +31,12 @@ public abstract class BaseEntitySmall extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = ID, columnDefinition = NORMAL_KEY_DEF)
     @XmlTransient
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(final long id) {
         this.id = id;
     }
