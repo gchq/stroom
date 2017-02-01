@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+
+## [v5.0-beta.9] - 2017-02-01
 * Issue **#63** : Entity selection control now shows current entity name even if it has changed since referencing entity was last saved.
 
 * Issue **#70** : You can now select multiple explorer rows with ctrl and shift key modifiers and perform bulk actions such as copy, move, rename and delete.
@@ -101,7 +103,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Intial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.9...HEAD
+[v5.0-beta.9]: https://github.com/gchq/stroom/compare/v5.0-beta.8...v5.0-beta.9
 [v5.0-beta.8]: https://github.com/gchq/stroom/compare/v5.0-beta.7...v5.0-beta.8
 [v5.0-beta.7]: https://github.com/gchq/stroom/compare/v5.0-beta.6...v5.0-beta.7
 [v5.0-beta.6]: https://github.com/gchq/stroom/compare/v5.0-beta.5...v5.0-beta.6
