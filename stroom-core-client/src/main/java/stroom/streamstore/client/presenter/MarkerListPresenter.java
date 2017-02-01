@@ -163,8 +163,9 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
                         }
                     }
 
+                    // Make summery items bold.
                     final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                    builder.appendHtmlConstant("<div style=\"position:absolute;top:4px;overflow:visible;font-weight:bold;\">");
+                    builder.appendHtmlConstant("<div style=\"font-weight:bold;\">");
                     builder.appendEscaped(sb.toString());
                     builder.appendHtmlConstant("</div>");
 
@@ -245,6 +246,13 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
         } else {
             getView().setRowData(start, markers);
             getView().setRowCount(count);
+
+            // Make summary rows span multiple columns.
+            for (int i = 0; i < markers.size(); i++) {
+                if (markers.get(i) instanceof Summary) {
+                    getView().getRowElement(i).getCells().getItem(2).setColSpan(5);
+                }
+            }
         }
     }
 

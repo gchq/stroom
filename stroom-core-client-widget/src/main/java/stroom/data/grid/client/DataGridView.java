@@ -17,6 +17,7 @@
 package stroom.data.grid.client;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
@@ -63,4 +64,6 @@ public interface DataGridView<R> extends View, HasData<R> {
     void setRefreshing(boolean refreshing);
 
     DataGridViewImpl.DefaultResources getResources();
+
+    TableRowElement getRowElement(int row);
 }

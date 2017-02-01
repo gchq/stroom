@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
@@ -595,6 +596,11 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     @Override
     public DefaultResources getResources() {
         return resources;
+    }
+
+    @Override
+    public TableRowElement getRowElement(final int row) {
+        return dataGrid.getRowElement(row);
     }
 
     public interface Binder extends UiBinder<Widget, DataGridViewImpl<?>> {
