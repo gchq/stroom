@@ -21,7 +21,7 @@ import stroom.util.shared.HasDisplayValue;
 public enum SupportedRetentionAge implements HasDisplayValue {
     RT_FOREVER("Forever", null), RT_1("1 Day", 1), RT_2("2 Days", 2), RT_4("4 Days", 4), RT_7("1 Week", 7), RT_31(
             "1 Month", 31), RT_93("3 Months", 93), RT_182("6 Months", 182), RT_365("1 Year", 365), RT_730("2 Years",
-                    730), RT_1095("3 Years", 1095), RT_1460("4 Years", 1460), RT_1825("5 Years", 1825);
+                    730), RT_1095("3 Years", 1095), RT_1460("4 Years", 1460), RT_1825("5 Years", 1825), RT_3650("10 Years", 3650);
 
     private final String displayValue;
     private final Integer days;
