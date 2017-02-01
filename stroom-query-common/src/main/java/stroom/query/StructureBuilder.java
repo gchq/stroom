@@ -19,10 +19,10 @@ package stroom.query;
 import stroom.query.api.Field;
 import stroom.query.api.Format.Type;
 import stroom.query.api.Param;
+import stroom.query.api.Sort;
 import stroom.query.api.VisField;
 import stroom.query.api.VisLimit;
 import stroom.query.api.VisNest;
-import stroom.query.api.VisSort;
 import stroom.query.api.VisStructure;
 import stroom.query.api.VisValues;
 
@@ -33,19 +33,12 @@ public class StructureBuilder {
     //    private final Map<String, Control> controls = new HashMap<String, Control>();
     private final Field[] fields;
     private final VisStructure structure;
-    private final Map<String, String> settings;
 
-    public StructureBuilder(final VisStructure structure, final Param[] params, final Field[] fields)
+    public StructureBuilder(final VisStructure structure, final Field[] fields)
             throws Exception {
         this.fields = fields;
         this.structure = structure;
-        this.settings = new HashMap<>();
 
-        if (params != null) {
-            for (final Param param : params) {
-                settings.put(param.getKey(), param.getValue());
-            }
-        }
 
 //        final ObjectMapper mapper = new ObjectMapper();
 //        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -96,11 +89,10 @@ public class StructureBuilder {
         }
 
         final CompiledStructure.Field key = buildField(0, structure.getKey());
-        final CompiledStructure.Limit limit = buildLimit(structure.getLimit());
         final CompiledStructure.Nest nest = buildNest(structure.getNest());
         final CompiledStructure.Values values = buildValues(structure.getValues());
 
-        return new CompiledStructure.Nest(key, limit, nest, values);
+        return new CompiledStructure.Nest(key, structure.getLimit(), nest, values);
     }
 
     private CompiledStructure.Values buildValues(final VisValues structure) {
@@ -109,53 +101,42 @@ public class StructureBuilder {
         }
 
         final CompiledStructure.Field fields[] = buildFields(structure.getFields());
-        final CompiledStructure.Limit limit = buildLimit(structure.getLimit());
 
-        return new CompiledStructure.Values(fields, limit);
+        return new CompiledStructure.Values(fields, structure.getLimit());
     }
 
-    private CompiledStructure.Sort buildSort(final int index, final VisSort sort) {
+    private CompiledStructure.Sort buildSort(final int index, final Sort sort) {
         if (sort == null) {
             return null;
         }
 
-        final String enabledString = resolveValue(settings, sort.getEnabled());
-        final String priorityString = resolveValue(settings, sort.getPriority());
-        final String directionString = resolveValue(settings, sort.getDirection());
-
-        final Boolean enabled = getBoolean(enabledString);
-        final Integer priority = getInteger(priorityString);
-        final CompiledStructure.Direction direction = getDirection(directionString);
-
-        if (!enabled) {
-            return null;
-        }
+        final Integer priority = sort.getOrder();
 
         int p = -1;
         if (priority != null) {
             p = priority;
         }
 
-        return new CompiledStructure.Sort(index, p, direction);
+        return new CompiledStructure.Sort(index, p, sort.getDirection());
     }
 
-    private CompiledStructure.Limit buildLimit(final VisLimit limit) {
-        if (limit == null) {
-            return null;
-        }
-
-        final String enabledString = resolveValue(settings, limit.getEnabled());
-        final String sizeString = resolveValue(settings, limit.getSize());
-
-        final Boolean enabled = getBoolean(enabledString);
-        final Integer size = getInteger(sizeString);
-
-        if (!enabled || size == null) {
-            return null;
-        }
-
-        return new CompiledStructure.Limit(size);
-    }
+//    private CompiledStructure.Limit buildLimit(final VisLimit limit) {
+//        if (limit == null) {
+//            return null;
+//        }
+//
+//        final String enabledString = resolveValue(settings, limit.getEnabled());
+//        final String sizeString = resolveValue(settings, limit.getSize());
+//
+//        final Boolean enabled = getBoolean(enabledString);
+//        final Integer size = getInteger(sizeString);
+//
+//        if (!enabled || size == null) {
+//            return null;
+//        }
+//
+//        return new CompiledStructure.Limit(size);
+//    }
 
     private CompiledStructure.Field[] buildFields(final VisField[] fields) {
         if (fields == null) {
@@ -190,13 +171,13 @@ public class StructureBuilder {
         return Boolean.valueOf(string);
     }
 
-    private CompiledStructure.Direction getDirection(final String string) {
-        if (string != null && string.equalsIgnoreCase(CompiledStructure.Direction.DESCENDING.toString())) {
-            return CompiledStructure.Direction.DESCENDING;
-        }
-
-        return CompiledStructure.Direction.ASCENDING;
-    }
+//    private CompiledStructure.Direction getDirection(final String string) {
+//        if (string != null && string.equalsIgnoreCase(CompiledStructure.Direction.DESCENDING.toString())) {
+//            return CompiledStructure.Direction.DESCENDING;
+//        }
+//
+//        return CompiledStructure.Direction.ASCENDING;
+//    }
 
     private boolean isReference(final String value) {
         return value != null && value.startsWith("${") && value.endsWith("}");
@@ -223,8 +204,8 @@ public class StructureBuilder {
 //
 //            fieldName = getSetting(settings, id);
 //        }
-
-        fieldName = resolveValue(settings, fieldName);
+//
+//        fieldName = resolveValue(settings, fieldName);
 
         final int fieldIndex = getFieldIndex(fields, fieldName);
 

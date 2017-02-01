@@ -97,16 +97,12 @@ public class TableSettings implements Serializable {
     }
 
     public void setExtractValues(final Boolean extractValues) {
-        if (extractValues != null && extractValues) {
-            this.extractValues = null;
-        } else {
-            this.extractValues = Boolean.FALSE;
-        }
+        this.extractValues = extractValues;
     }
 
     public boolean extractValues() {
         if (extractValues == null) {
-            return true;
+            return false;
         }
         return extractValues;
     }

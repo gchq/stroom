@@ -23,14 +23,13 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
 import java.util.Arrays;
 
-@JsonPropertyOrder({"componentId", "fetchData", "tableSettings", "structure", "params"})
-@XmlType(name = "VisResultRequest", propOrder = {"tableSettings", "structure", "params"})
+@JsonPropertyOrder({"componentId", "fetchData", "tableSettings", "structure"})
+@XmlType(name = "VisResultRequest", propOrder = {"tableSettings", "structure"})
 public class VisResultRequest extends ResultRequest {
     static final long serialVersionUID = 8683770109061652092L;
 
     private TableSettings tableSettings;
     private VisStructure structure;
-    private Param[] params;
 
     public VisResultRequest() {
     }
@@ -58,16 +57,6 @@ public class VisResultRequest extends ResultRequest {
         this.structure = structure;
     }
 
-    @XmlElementWrapper(name = "params")
-    @XmlElement(name = "param")
-    public Param[] getParams() {
-        return params;
-    }
-
-    public void setParams(final Param[] params) {
-        this.params = params;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -78,9 +67,7 @@ public class VisResultRequest extends ResultRequest {
 
         if (tableSettings != null ? !tableSettings.equals(that.tableSettings) : that.tableSettings != null)
             return false;
-        if (structure != null ? !structure.equals(that.structure) : that.structure != null) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(params, that.params);
+        return structure != null ? structure.equals(that.structure) : that.structure == null;
     }
 
     @Override
@@ -88,7 +75,6 @@ public class VisResultRequest extends ResultRequest {
         int result = super.hashCode();
         result = 31 * result + (tableSettings != null ? tableSettings.hashCode() : 0);
         result = 31 * result + (structure != null ? structure.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(params);
         return result;
     }
 
@@ -97,7 +83,6 @@ public class VisResultRequest extends ResultRequest {
         return "VisResultRequest{" +
                 "tableSettings=" + tableSettings +
                 ", structure=" + structure +
-                ", params=" + Arrays.toString(params) +
                 '}';
     }
 }

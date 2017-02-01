@@ -17,12 +17,10 @@
 package stroom.query;
 
 import stroom.query.api.Format.Type;
+import stroom.query.api.Sort.SortDirection;
+import stroom.query.api.VisLimit;
 
 public class CompiledStructure {
-    public enum Direction {
-        ASCENDING, DESCENDING
-    }
-
     public static class FieldRef {
         private final Type type;
         private final int index;
@@ -41,24 +39,24 @@ public class CompiledStructure {
         }
     }
 
-    public static class Limit {
-        private final int size;
-
-        public Limit(final int size) {
-            this.size = size;
-        }
-
-        public int getSize() {
-            return size;
-        }
-    }
+//    public static class Limit {
+//        private final int size;
+//
+//        public Limit(final int size) {
+//            this.size = size;
+//        }
+//
+//        public int getSize() {
+//            return size;
+//        }
+//    }
 
     public static class Sort {
         private final int index;
         private final int priority;
-        private final Direction direction;
+        private final SortDirection direction;
 
-        public Sort(final int index, final int priority, final Direction direction) {
+        public Sort(final int index, final int priority, final SortDirection direction) {
             this.index = index;
             this.priority = priority;
             this.direction = direction;
@@ -72,7 +70,7 @@ public class CompiledStructure {
             return priority;
         }
 
-        public Direction getDirection() {
+        public SortDirection getDirection() {
             return direction;
         }
     }
@@ -97,9 +95,9 @@ public class CompiledStructure {
 
     public static class Values {
         private final Field[] fields;
-        private final Limit limit;
+        private final VisLimit limit;
 
-        public Values(final Field[] fields, final Limit limit) {
+        public Values(final Field[] fields, final VisLimit limit) {
             this.fields = fields;
             this.limit = limit;
         }
@@ -108,18 +106,18 @@ public class CompiledStructure {
             return fields;
         }
 
-        public Limit getLimit() {
+        public VisLimit getLimit() {
             return limit;
         }
     }
 
     public static class Nest {
         private final Field key;
-        private final Limit limit;
+        private final VisLimit limit;
         private final Nest nest;
         private final Values values;
 
-        public Nest(final Field key, final Limit limit, final Nest nest, final Values values) {
+        public Nest(final Field key, final VisLimit limit, final Nest nest, final Values values) {
             this.key = key;
             this.limit = limit;
             this.nest = nest;
@@ -130,7 +128,7 @@ public class CompiledStructure {
             return key;
         }
 
-        public Limit getLimit() {
+        public VisLimit getLimit() {
             return limit;
         }
 

@@ -179,7 +179,12 @@ public class SearchResponseMapper {
             return null;
         }
 
-        return Arrays.asList(values);
+        final List<Object> list = new ArrayList<>();
+        for (final Object[] vals : values) {
+            list.add(vals);
+        }
+
+        return list;
     }
 
     public static class Store {
@@ -273,5 +278,6 @@ public class SearchResponseMapper {
             return "Store [key=" + key + ", map=" + map + ", types=" + Arrays.toString(types) + ", keyType=" + keyType
                     + "]";
         }
+
     }
 }

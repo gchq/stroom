@@ -72,7 +72,8 @@ public class SearchResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/destroy")
-    public void destroy(final QueryKey queryKey) {
+    public Boolean destroy(final QueryKey queryKey) {
         searchResultCreatorManager.remove(new Key(queryKey));
+        return Boolean.TRUE;
     }
 }

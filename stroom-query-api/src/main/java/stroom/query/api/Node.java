@@ -17,6 +17,7 @@
 package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -105,6 +106,7 @@ public class Node implements Serializable {
 
     @XmlElementWrapper(name = "min")
     @XmlElement(name = "val")
+    @JsonProperty("min")
     public Double[] getMin() {
         return min;
     }
@@ -115,6 +117,7 @@ public class Node implements Serializable {
 
     @XmlElementWrapper(name = "max")
     @XmlElement(name = "val")
+    @JsonProperty("max")
     public Double[] getMax() {
         return max;
     }
@@ -125,6 +128,7 @@ public class Node implements Serializable {
 
     @XmlElementWrapper(name = "sum")
     @XmlElement(name = "val")
+    @JsonProperty("sum")
     public Double[] getSum() {
         return sum;
     }

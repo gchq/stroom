@@ -17,6 +17,7 @@
 package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -36,18 +37,18 @@ public class VisResult extends Result {
     private Double[] min;
     private Double[] max;
     private Double[] sum;
-    private long size;
+    private Long size;
     private String error;
 
     public VisResult() {
     }
 
     public VisResult(final String error) {
-        this.size = 0;
+        this.size = 0L;
         this.error = error;
     }
 
-    public VisResult(final String componentId, final String[] types, final Node[] nodes, final Object[][] values, final Double[] min, final Double[] max, final Double[] sum, final long size, final String error) {
+    public VisResult(final String componentId, final String[] types, final Node[] nodes, final Object[][] values, final Double[] min, final Double[] max, final Double[] sum, final Long size, final String error) {
         super(componentId);
         this.types = types;
         this.nodes = nodes;
@@ -115,6 +116,7 @@ public class VisResult extends Result {
 
     @XmlElementWrapper(name = "min")
     @XmlElement(name = "val")
+    @JsonProperty("min")
     public Double[] getMin() {
         return min;
     }
@@ -125,6 +127,7 @@ public class VisResult extends Result {
 
     @XmlElementWrapper(name = "max")
     @XmlElement(name = "val")
+    @JsonProperty("max")
     public Double[] getMax() {
         return max;
     }
@@ -135,6 +138,7 @@ public class VisResult extends Result {
 
     @XmlElementWrapper(name = "sum")
     @XmlElement(name = "val")
+    @JsonProperty("sum")
     public Double[] getSum() {
         return sum;
     }
@@ -144,11 +148,11 @@ public class VisResult extends Result {
     }
 
     @XmlElement
-    public long getSize() {
+    public Long getSize() {
         return size;
     }
 
-    public void setSize(final long size) {
+    public void setSize(final Long size) {
         this.size = size;
     }
 
@@ -164,11 +168,11 @@ public class VisResult extends Result {
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof VisResult)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
 
         final VisResult visResult = (VisResult) o;
 
-        if (size != visResult.size) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(types, visResult.types)) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
@@ -180,18 +184,20 @@ public class VisResult extends Result {
         if (!Arrays.equals(max, visResult.max)) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(sum, visResult.sum)) return false;
+        if (size != null ? !size.equals(visResult.size) : visResult.size != null) return false;
         return error != null ? error.equals(visResult.error) : visResult.error == null;
     }
 
     @Override
     public int hashCode() {
-        int result = Arrays.hashCode(types);
+        int result = super.hashCode();
+        result = 31 * result + Arrays.hashCode(types);
         result = 31 * result + Arrays.hashCode(nodes);
         result = 31 * result + Arrays.deepHashCode(values);
         result = 31 * result + Arrays.hashCode(min);
         result = 31 * result + Arrays.hashCode(max);
         result = 31 * result + Arrays.hashCode(sum);
-        result = 31 * result + (int) (size ^ (size >>> 32));
+        result = 31 * result + (size != null ? size.hashCode() : 0);
         result = 31 * result + (error != null ? error.hashCode() : 0);
         return result;
     }

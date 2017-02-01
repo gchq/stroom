@@ -28,23 +28,23 @@ import java.io.Serializable;
 public class Sort implements Serializable {
     private static final long serialVersionUID = 4530846367973824427L;
 
-    private int order;
+    private Integer order;
     private SortDirection direction;
 
     public Sort() {
     }
 
-    public Sort(final int order, final SortDirection direction) {
+    public Sort(final Integer order, final SortDirection direction) {
         this.order = order;
         this.direction = direction;
     }
 
     @XmlElement
-    public int getOrder() {
+    public Integer getOrder() {
         return order;
     }
 
-    public void setOrder(final int order) {
+    public void setOrder(final Integer order) {
         this.order = order;
     }
 
@@ -60,17 +60,17 @@ public class Sort implements Serializable {
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof Sort)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
 
         final Sort sort = (Sort) o;
 
-        if (order != sort.order) return false;
+        if (order != null ? !order.equals(sort.order) : sort.order != null) return false;
         return direction == sort.direction;
     }
 
     @Override
     public int hashCode() {
-        int result = order;
+        int result = order != null ? order.hashCode() : 0;
         result = 31 * result + (direction != null ? direction.hashCode() : 0);
         return result;
     }

@@ -25,6 +25,8 @@ import stroom.query.api.Key;
 import stroom.query.api.Node;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
+import stroom.query.api.Sort.SortDirection;
+import stroom.query.api.VisLimit;
 import stroom.query.api.VisResult;
 import stroom.query.api.VisResultRequest;
 
@@ -47,8 +49,7 @@ public class VisResultCreator implements ResultCreator {
         CompiledStructure.Structure structure;
         try {
             final VisResultRequest visResultRequest = (VisResultRequest) resultRequest;
-            final StructureBuilder structureBuilder = new StructureBuilder(visResultRequest.getStructure(),
-                    visResultRequest.getParams(), visResultRequest.getTableSettings().getFields());
+            final StructureBuilder structureBuilder = new StructureBuilder(visResultRequest.getStructure(), visResultRequest.getTableSettings().getFields());
             structure = structureBuilder.create();
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage());
@@ -65,7 +66,7 @@ public class VisResultCreator implements ResultCreator {
                 final Items<Item> items = data.getChildMap().get(null);
                 final Node node = create(items);
 
-                int dataPoints = 0;
+                long dataPoints = 0;
                 if (items != null && items.size() > 0) {
                     dataPoints = items.size();
                 }
@@ -324,14 +325,14 @@ public class VisResultCreator implements ResultCreator {
         return arr;
     }
 
-    private void trimList(final List<Object[]> list, final CompiledStructure.Limit limit) {
-        if (list != null && limit != null) {
-            final int l = limit.getSize();
-            while (list.size() > l) {
-                list.remove(list.size() - 1);
-            }
-        }
-    }
+//    private void trimList(final List<Object[]> list, final VisLimit limit) {
+//        if (list != null && limit != null) {
+//            final int l = limit.getSize();
+//            while (list.size() > l) {
+//                list.remove(list.size() - 1);
+//            }
+//        }
+//    }
 
     private void addNest(final CompiledStructure.Nest structure, final Store parent, final Item item) {
         Key key = null;
@@ -491,15 +492,15 @@ public class VisResultCreator implements ResultCreator {
 //    }
 
     private static class NodeComparator implements Comparator<Node> {
-        private final CompiledStructure.Direction direction;
+        private final SortDirection direction;
 
-        NodeComparator(final CompiledStructure.Direction direction) {
+        NodeComparator(final SortDirection direction) {
             this.direction = direction;
         }
 
         @Override
         public int compare(final Node o1, final Node o2) {
-            if (CompiledStructure.Direction.ASCENDING.equals(direction)) {
+            if (SortDirection.ASCENDING.equals(direction)) {
                 return ObjectCompareUtil.compare(o1.getKey().getValue(), o2.getKey().getValue());
             } else {
                 return ObjectCompareUtil.compare(o2.getKey().getValue(), o1.getKey().getValue());
@@ -530,7 +531,7 @@ public class VisResultCreator implements ResultCreator {
                 final Object v2 = getValue(o2, index);
 
                 int result;
-                if (CompiledStructure.Direction.ASCENDING.equals(sort.getDirection())) {
+                if (SortDirection.ASCENDING.equals(sort.getDirection())) {
                     result = super.compare(v1, v2);
                 } else {
                     result = super.compare(v2, v1);

@@ -22,63 +22,48 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
-@JsonPropertyOrder({"enabled", "size"})
-@XmlType(name = "VisLimit", propOrder = {"enabled", "size"})
+@JsonPropertyOrder({"size"})
+@XmlType(name = "VisLimit", propOrder = {"size"})
 public class VisLimit implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;
 
-    private String enabled;
-    private String size;
+    private Integer size;
 
     public VisLimit() {
     }
 
-    public VisLimit(final String enabled, final String size) {
-        this.enabled = enabled;
+    public VisLimit(final Integer size) {
         this.size = size;
     }
 
     @XmlElement
-    public String getEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(final String enabled) {
-        this.enabled = enabled;
-    }
-
-    @XmlElement
-    public String getSize() {
+    public Integer getSize() {
         return size;
     }
 
-    public void setSize(final String size) {
+    public void setSize(final Integer size) {
         this.size = size;
     }
 
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof VisLimit)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
 
         final VisLimit visLimit = (VisLimit) o;
 
-        if (enabled != null ? !enabled.equals(visLimit.enabled) : visLimit.enabled != null) return false;
         return size != null ? size.equals(visLimit.size) : visLimit.size == null;
     }
 
     @Override
     public int hashCode() {
-        int result = enabled != null ? enabled.hashCode() : 0;
-        result = 31 * result + (size != null ? size.hashCode() : 0);
-        return result;
+        return size != null ? size.hashCode() : 0;
     }
 
     @Override
     public String toString() {
         return "VisLimit{" +
-                "enabled='" + enabled + '\'' +
-                ", size='" + size + '\'' +
+                "size=" + size +
                 '}';
     }
 }

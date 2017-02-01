@@ -69,7 +69,7 @@ public class TestSearchResponseMapper {
         data[5] = new Object[]{"test5", 0.33, 3244, "this5"};
         data[6] = new Object[]{"test6", 34.66, 44, "this6"};
         data[7] = new Object[]{"test7", 2.33, 74, "this7"};
-        VisResult visResult = new VisResult("vis-1234", new String[]{"string", "double", "integer", "string"}, null, data, null, null, null, 200, "visResultError");
+        VisResult visResult = new VisResult("vis-1234", new String[]{"string", "double", "integer", "string"}, null, data, null, null, null, 200L, "visResultError");
 
         return visResult;
     }
@@ -93,7 +93,7 @@ public class TestSearchResponseMapper {
         nodes[0] = new Node(new Key("string", "key1"), innerNodes, null, null, null, null);
         nodes[1] = new Node(new Key("string", "key2"), null, data, null, null, null);
 
-        VisResult visResult = new VisResult("vis-5555", new String[]{"string", "double", "integer", "string"}, nodes, null, null, null, null, 200, "visResultError");
+        VisResult visResult = new VisResult("vis-5555", new String[]{"string", "double", "integer", "string"}, nodes, null, null, null, null, 200L, "visResultError");
 
         return visResult;
     }
