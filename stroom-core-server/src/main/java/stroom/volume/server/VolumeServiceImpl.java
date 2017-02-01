@@ -402,8 +402,6 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     @Override
     public Volume save(final Volume entity) throws RuntimeException {
         if (!entity.isPersistent()) {
-            FileSystemUtil.mkdirs(null, new File(entity.getPath()));
-
             VolumeState volumeState = entity.getVolumeState();
             if (volumeState == null) {
                 volumeState = new VolumeState();
