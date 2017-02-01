@@ -529,7 +529,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         if (streamListPresenter.getResultList() == null || streamListPresenter.getResultList().size() == 0) {
             return false;
         }
-        return !(selectedIdSet == null || selectedIdSet.isMatchNothing());
+        return selectedIdSet != null && (Boolean.TRUE.equals(selectedIdSet.getMatchAll()) || selectedIdSet.size() > 0);
     }
 
     public void setStreamListSelectableEnabled(final EntityIdSet<Stream> streamIdSet, final StreamStatus streamStatus) {
@@ -540,8 +540,9 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
         if (streamListDelete != null) {
             streamListDelete
-                    .setEnabled(someSelected && isSelectedAllOfStatus(getCriteria().obtainStatusSet().getSingleItem(),
-                            streamListPresenter, streamIdSet, StreamStatus.LOCKED, StreamStatus.UNLOCKED));
+                    .setEnabled(someSelected);
+            // && isSelectedAllOfStatus(getCriteria().obtainStatusSet().getSingleItem(),
+//                            streamListPresenter, streamIdSet, StreamStatus.LOCKED, StreamStatus.UNLOCKED));
         }
         if (streamListProcess != null) {
             streamListProcess.setEnabled(someSelected);
@@ -780,6 +781,9 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                     new AsyncCallbackAdaptor<SharedLong>() {
                         @Override
                         public void onSuccess(final SharedLong result) {
+                            getStreamListPresenter().getSelectedEntityIdSet().clear();
+                            getStreamListPresenter().getSelectedEntityIdSet().setMatchAll(false);
+
                             AlertEvent.fireInfo(DeleteStreamClickHandler.this,
                                     getDeleteText(criteria, true) + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), () -> refreshList());
                         }
