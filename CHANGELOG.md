@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#86** : The stream delete button is now re-enabled when new items are selected for deletion.
 
+* Issue **#81** : No exception will now be thrown if a client rejects a response for an EntityEvent.
+
 ## [v5.0-beta.8] - 2016-12-21
 * Issue **#64** : Fixed Hessian serialisation of 'now' which was specified as a ZonedDateTime which cannot be serialised. This field is now a long representing millseconds since epoch.
 
