@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#87** : Fixed explorer scrolling to the top by disabling keyboard selection.
 
-* Issue **#104** : 'Query' no longer appers as an item that a user can allow 'create' on for permissions within a folder.
+* Issue **#104** : 'Query' no longer appears as an item that a user can allow 'create' on for permissions within a folder.
 
 * Issue **#103** : Added 10 years as a supported data retention age.
 
