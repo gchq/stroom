@@ -75,7 +75,7 @@ public class UserRefDataProvider
             // dataProvider.addChangeDataHandler(changeDataHandler);
             // }
             // pendingChangeHandlers.clear();
-            dataProvider.addDataDisplay(view);
+            dataProvider.addDataDisplay(view.getDataDisplay());
 
         } else {
             dataProvider.refresh();

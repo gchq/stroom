@@ -31,7 +31,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerTickBoxCell;
 import stroom.explorer.shared.ExplorerData;
@@ -39,6 +38,7 @@ import stroom.explorer.shared.FetchExplorerDataResult;
 import stroom.util.shared.HasNodeState;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.DoubleSelectTest;
+import stroom.widget.util.client.MultiSelectEvent;
 
 import java.util.List;
 
@@ -283,8 +283,8 @@ public class ExplorerTickBoxTree extends AbstractExporerTree {
 //        ExplorerTreeSelectEvent.fire(ExplorerTickBoxTree.this, selection, doubleClick, rightClick);
 //    }
 
-    public HandlerRegistration addSelectionHandler(final ExplorerTreeSelectEvent.Handler handler) {
-        return addHandler(handler, ExplorerTreeSelectEvent.getType());
+    public HandlerRegistration addSelectionHandler(final MultiSelectEvent.Handler handler) {
+        return addHandler(handler, MultiSelectEvent.getType());
     }
 //
 //    public ExplorerData getSelectedItem() {

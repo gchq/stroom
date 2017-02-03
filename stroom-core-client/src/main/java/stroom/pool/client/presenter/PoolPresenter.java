@@ -16,13 +16,12 @@
 
 package stroom.pool.client.presenter;
 
-import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.pool.shared.PoolRow;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
+import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.pool.shared.PoolRow;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.tab.client.presenter.Icon;
 
@@ -38,7 +37,7 @@ public class PoolPresenter extends ContentTabPresenter<PoolPresenter.PoolView> {
 
     @Inject
     public PoolPresenter(final EventBus eventBus, final PoolView view, final PoolListPresenter poolListPresenter,
-            final PoolNodeListPresenter poolNodeListPresenter, final ClientDispatchAsync dispatcher) {
+                         final PoolNodeListPresenter poolNodeListPresenter, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.poolListPresenter = poolListPresenter;
         this.poolNodeListPresenter = poolNodeListPresenter;
@@ -52,12 +51,9 @@ public class PoolPresenter extends ContentTabPresenter<PoolPresenter.PoolView> {
         super.onBind();
 
         registerHandler(
-                poolListPresenter.getSelectionModel().addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-                    @Override
-                    public void onSelectionChange(final SelectionChangeEvent event) {
-                        final PoolRow row = poolListPresenter.getSelectionModel().getSelectedObject();
-                        poolNodeListPresenter.read(row);
-                    }
+                poolListPresenter.getSelectionModel().addSelectionHandler(event -> {
+                    final PoolRow row = poolListPresenter.getSelectionModel().getSelected();
+                    poolNodeListPresenter.read(row);
                 }));
     }
 

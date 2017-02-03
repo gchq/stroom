@@ -137,7 +137,7 @@ public class PoolNodeListPresenter extends MyPresenterWidget<DataGridView<PoolNo
 
             if (dataProvider == null) {
                 dataProvider = new ActionDataProvider<PoolNodeRow>(dispatcher, action);
-                dataProvider.addDataDisplay(getView());
+                dataProvider.addDataDisplay(getView().getDataDisplay());
             }
 
             dataProvider.refresh();

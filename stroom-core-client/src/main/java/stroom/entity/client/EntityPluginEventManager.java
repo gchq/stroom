@@ -48,7 +48,6 @@ import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.client.presenter.MultiSelectionModel;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.EntityData;
@@ -75,6 +74,7 @@ import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.ImageIcon;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -96,7 +96,7 @@ public class EntityPluginEventManager extends Plugin {
     private final Map<String, EntityPlugin<?>> pluginMap = new HashMap<>();
     private final KeyboardInterceptor keyboardInterceptor;
     private TabData selectedTab;
-    private MultiSelectionModel<ExplorerData> selectionModel = new MultiSelectionModel<>();
+    private MultiSelectionModel<ExplorerData> selectionModel;
 
     @Inject
     public EntityPluginEventManager(final EventBus eventBus,
@@ -234,8 +234,8 @@ public class EntityPluginEventManager extends Plugin {
 
         // 10. Handle entity delete events.
         registerHandler(getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
-            if (selectionModel.getSelectedItems().size() > 0) {
-                fetchPermissions(selectionModel.getSelectedItems(), new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
+            if (getSelectedItems().size() > 0) {
+                fetchPermissions(getSelectedItems(), new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
                     @Override
                     public void onSuccess(final SharedMap<ExplorerData, ExplorerPermissions> documentPermissionMap) {
                         documentTypeCache.fetch(new AsyncCallbackAdaptor<DocumentTypes>() {
@@ -263,8 +263,8 @@ public class EntityPluginEventManager extends Plugin {
         // Not handled as it is done directly.
 
         registerHandler(getEventBus().addHandler(ShowNewMenuEvent.getType(), event -> {
-            if (selectionModel.getSelectedItems().size() == 1) {
-                final ExplorerData primarySelection = selectionModel.getSelected();
+            if (getSelectedItems().size() == 1) {
+                final ExplorerData primarySelection = getPrimarySelection();
                 getNewMenuItems(primarySelection, new AsyncCallbackAdaptor<List<Item>>() {
                     @Override
                     public void onSuccess(final List<Item> children) {
@@ -278,11 +278,12 @@ public class EntityPluginEventManager extends Plugin {
             }
         }));
         registerHandler(getEventBus().addHandler(ShowExplorerMenuEvent.getType(), event -> {
-            final boolean singleSelection = selectionModel.getSelectedItems().size() == 1;
-            final ExplorerData primarySelection = selectionModel.getSelected();
+            final List<ExplorerData> selectedItems = getSelectedItems();
+            final boolean singleSelection = selectedItems.size() == 1;
+            final ExplorerData primarySelection = getPrimarySelection();
 
-            if (selectionModel.getSelectedItems().size() > 0) {
-                fetchPermissions(selectionModel.getSelectedItems(), new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
+            if (selectedItems.size() > 0) {
+                fetchPermissions(selectedItems, new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
                     @Override
                     public void onSuccess(final SharedMap<ExplorerData, ExplorerPermissions> documentPermissionMap) {
                         documentTypeCache.fetch(new AsyncCallbackAdaptor<DocumentTypes>() {
@@ -326,10 +327,11 @@ public class EntityPluginEventManager extends Plugin {
         event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU, new SimpleParentMenuItem(1, "Item", null) {
             @Override
             public void getChildren(final AsyncCallback<List<Item>> callback) {
-                final boolean singleSelection = selectionModel.getSelectedItems().size() == 1;
-                final ExplorerData primarySelection = selectionModel.getSelected();
+                final List<ExplorerData> selectedItems = getSelectedItems();
+                final boolean singleSelection = selectedItems.size() == 1;
+                final ExplorerData primarySelection = getPrimarySelection();
 
-                fetchPermissions(selectionModel.getSelectedItems(), new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
+                fetchPermissions(selectedItems, new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
                     @Override
                     public void onSuccess(final SharedMap<ExplorerData, ExplorerPermissions> documentPermissionMap) {
                         documentTypeCache.fetch(new AsyncCallbackAdaptor<DocumentTypes>() {
@@ -602,5 +604,21 @@ public class EntityPluginEventManager extends Plugin {
         }
 
         return false;
+    }
+
+    private List<ExplorerData> getSelectedItems() {
+        if (selectionModel == null) {
+            return Collections.emptyList();
+        }
+
+        return selectionModel.getSelectedItems();
+    }
+
+    private ExplorerData getPrimarySelection() {
+        if (selectionModel == null) {
+            return null;
+        }
+
+        return selectionModel.getSelected();
     }
 }

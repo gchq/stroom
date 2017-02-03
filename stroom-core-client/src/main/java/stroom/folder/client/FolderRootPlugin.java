@@ -26,7 +26,6 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.entity.shared.FolderService;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
-import stroom.explorer.client.event.SelectionType;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerData;
@@ -34,6 +33,7 @@ import stroom.util.client.ImageUtil;
 import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.SelectionType;
 
 public class FolderRootPlugin extends Plugin implements TabData {
     private final ContentManager contentManager;

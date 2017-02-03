@@ -14,28 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.event;
+package stroom.widget.util.client;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.explorer.shared.ExplorerData;
-import stroom.widget.util.client.MultiSelectionModel;
 
-public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handler> {
+public class MultiSelectEvent extends GwtEvent<MultiSelectEvent.Handler> {
     private static Type<Handler> TYPE;
-    private final MultiSelectionModel<ExplorerData> selectionModel;
-    private final int x;
-    private final int y;
+    private final SelectionType selectionType;
 
-    private ShowExplorerMenuEvent(final MultiSelectionModel<ExplorerData> selectionModel, final int x, final int y) {
-        this.selectionModel = selectionModel;
-        this.x = x;
-        this.y = y;
+    private MultiSelectEvent(final SelectionType selectionType) {
+        this.selectionType = selectionType;
     }
 
-    public static void fire(final HasHandlers handlers, final MultiSelectionModel<ExplorerData> selectionModel, final int x, final int y) {
-        handlers.fireEvent(new ShowExplorerMenuEvent(selectionModel, x, y));
+    public static void fire(final HasHandlers source, final SelectionType selectionType) {
+        source.fireEvent(new MultiSelectEvent(selectionType));
     }
 
     public static Type<Handler> getType() {
@@ -52,22 +46,14 @@ public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handle
 
     @Override
     protected void dispatch(final Handler handler) {
-        handler.onShow(this);
+        handler.onSelect(this);
     }
 
-    public MultiSelectionModel<ExplorerData> getSelectionModel() {
-        return selectionModel;
-    }
-
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
+    public SelectionType getSelectionType() {
+        return selectionType;
     }
 
     public interface Handler extends EventHandler {
-        void onShow(ShowExplorerMenuEvent event);
+        void onSelect(MultiSelectEvent event);
     }
 }

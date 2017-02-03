@@ -16,6 +16,16 @@
 
 package stroom.pipeline.processor.client.presenter;
 
+import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.cell.client.ImageResourceCell;
+import com.google.gwt.cell.client.NumberCell;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
@@ -57,22 +67,11 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
-import com.google.gwt.cell.client.FieldUpdater;
-import com.google.gwt.cell.client.ImageResourceCell;
-import com.google.gwt.cell.client.NumberCell;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
 
 public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<SharedObject>>
         implements Refreshable, HasRead<BaseEntity> {
     private final ActionDataProvider<SharedObject> dataProvider;
-    private final MySingleSelectionModel<SharedObject> selectionModel = new MySingleSelectionModel<SharedObject>();
     private final TooltipPresenter tooltipPresenter;
     private final Resources resources;
     private final ClientSecurityContext securityContext;
@@ -86,14 +85,12 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
 
     @Inject
     public ProcessorListPresenter(final EventBus eventBus, final TooltipPresenter tooltipPresenter,
-            final ClientDispatchAsync dispatcher, final Resources resources,
-            final ClientSecurityContext securityContext) {
+                                  final ClientDispatchAsync dispatcher, final Resources resources,
+                                  final ClientSecurityContext securityContext) {
         super(eventBus, new DataGridViewImpl<SharedObject>(true));
         this.resources = resources;
         this.tooltipPresenter = tooltipPresenter;
         this.securityContext = securityContext;
-
-        getView().setSelectionModel(selectionModel);
 
         action = new FetchProcessorAction();
         dataProvider = new ActionDataProvider<SharedObject>(dispatcher, action) {
@@ -104,13 +101,13 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             }
         };
 
-        streamProcessorSaveQueue = new SaveQueue<StreamProcessor>(dispatcher);
-        streamProcessorFilterSaveQueue = new SaveQueue<StreamProcessorFilter>(dispatcher);
+        streamProcessorSaveQueue = new SaveQueue<>(dispatcher);
+        streamProcessorFilterSaveQueue = new SaveQueue<>(dispatcher);
 
         addColumns();
 
         // Handle use of the expander column.
-        dataProvider.setTreeRowHandler(new TreeRowHandler<SharedObject>(action, getView(), expanderColumn));
+        dataProvider.setTreeRowHandler(new TreeRowHandler<>(action, getView(), expanderColumn));
     }
 
     private boolean allowUpdate() {
@@ -120,20 +117,22 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     private void onChangeData(final ResultList<SharedObject> data) {
         resultList = data;
 
+        SharedObject selected = getView().getSelectionModel().getSelected();
+
         if (nextSelection != null) {
             for (final SharedObject row : resultList) {
                 if (row instanceof StreamProcessorFilterRow) {
                     if (nextSelection.equals(((StreamProcessorFilterRow) row).getEntity())) {
-                        selectionModel.setSelected(row, true);
+                        getView().getSelectionModel().setSelected(row);
                         break;
                     }
                 }
             }
             nextSelection = null;
 
-        } else if (selectionModel.getSelectedObject() != null) {
-            if (!resultList.contains(selectionModel.getSelectedObject())) {
-                selectionModel.setSelected(selectionModel.getSelectedObject(), false);
+        } else if (selected != null) {
+            if (!resultList.contains(selected)) {
+                getView().getSelectionModel().setSelected(selected, false);
             }
         }
     }
@@ -346,17 +345,17 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                                     .getStreamProcessor();
                             streamProcessorFilterSaveQueue
                                     .save(new EntitySaveTask<StreamProcessorFilter>(streamProcessorFilterRow) {
-                                @Override
-                                protected void setValue(final StreamProcessorFilter entity) {
-                                    entity.setPriority(value.intValue());
-                                }
+                                        @Override
+                                        protected void setValue(final StreamProcessorFilter entity) {
+                                            entity.setPriority(value.intValue());
+                                        }
 
-                                @Override
-                                protected void setEntity(final StreamProcessorFilter entity) {
-                                    entity.setStreamProcessor(streamProcessor);
-                                    super.setEntity(entity);
-                                }
-                            });
+                                        @Override
+                                        protected void setEntity(final StreamProcessorFilter entity) {
+                                            entity.setStreamProcessor(streamProcessor);
+                                            super.setEntity(entity);
+                                        }
+                                    });
                         }
                     }
                 }
@@ -436,17 +435,17 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                                     .getStreamProcessor();
                             streamProcessorFilterSaveQueue
                                     .save(new EntitySaveTask<StreamProcessorFilter>(streamProcessorFilterRow) {
-                                @Override
-                                protected void setValue(final StreamProcessorFilter entity) {
-                                    entity.setEnabled(value.toBoolean());
-                                }
+                                        @Override
+                                        protected void setValue(final StreamProcessorFilter entity) {
+                                            entity.setEnabled(value.toBoolean());
+                                        }
 
-                                @Override
-                                protected void setEntity(final StreamProcessorFilter entity) {
-                                    entity.setStreamProcessor(streamProcessor);
-                                    super.setEntity(entity);
-                                }
-                            });
+                                        @Override
+                                        protected void setEntity(final StreamProcessorFilter entity) {
+                                            entity.setStreamProcessor(streamProcessor);
+                                            super.setEntity(entity);
+                                        }
+                                    });
                         } else if (row instanceof StreamProcessorRow) {
                             final StreamProcessorRow streamProcessorRow = (StreamProcessorRow) row;
                             final PipelineEntity pipelineEntity = streamProcessorRow.getEntity().getPipeline();
@@ -474,8 +473,12 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
         getView().addEndColumn(new EndColumn<SharedObject>());
     }
 
-    public MySingleSelectionModel<SharedObject> getSelectionModel() {
-        return selectionModel;
+//    public HandlerRegistration addSelectionHandler(DataGridSelectEvent.Handler handler) {
+//        return getView().addSelectionHandler(handler);
+//    }
+
+    public MultiSelectionModel<SharedObject> getSelectionModel() {
+        return getView().getSelectionModel();
     }
 
     @Override
@@ -486,7 +489,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     private void doDataDisplay() {
         if (!doneDataDisplay) {
             doneDataDisplay = true;
-            dataProvider.addDataDisplay(getView());
+            dataProvider.addDataDisplay(getView().getDataDisplay());
         } else {
             dataProvider.refresh();
         }

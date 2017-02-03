@@ -16,13 +16,9 @@
 
 package stroom.index.client.presenter;
 
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
@@ -32,8 +28,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.AlertCallback;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
@@ -46,11 +40,15 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
-import stroom.index.shared.*;
+import stroom.index.shared.CloseIndexShardAction;
+import stroom.index.shared.DeleteIndexShardAction;
+import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.FlushIndexShardAction;
+import stroom.index.shared.Index;
+import stroom.index.shared.IndexShard;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.streamstore.client.presenter.ActionDataProvider;
-import stroom.streamstore.client.presenter.InterceptingSelectionChangeHandler;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 import stroom.widget.button.client.GlyphButtonView;
@@ -62,7 +60,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
-import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -82,9 +79,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private final TooltipPresenter tooltipPresenter;
     private final ClientDispatchAsync dispatcher;
     private ActionDataProvider<IndexShard> dataProvider;
-    private final MySingleSelectionModel<IndexShard> selectionModel = new MySingleSelectionModel<>();
     private ResultList<IndexShard> resultList = null;
-    private final InterceptingSelectionChangeHandler interceptingSelectionChangeHandler = new InterceptingSelectionChangeHandler();
     private final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
     private final ImageButtonView buttonFlush;
     private final ImageButtonView buttonClose;
@@ -94,11 +89,10 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     @Inject
     public IndexShardPresenter(final EventBus eventBus, final Resources resources,
                                final TooltipPresenter tooltipPresenter, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<IndexShard>(false));
+        super(eventBus, new DataGridViewImpl<>(false));
         this.tooltipPresenter = tooltipPresenter;
         this.dispatcher = dispatcher;
 
-        getView().setSelectionModel(selectionModel);
         buttonFlush = getView().addButton("Flush Selected Shards", resources.flush(), resources.flushDisabled(), false);
         buttonClose = getView().addButton("Close Selected Shards", resources.close(), resources.closeDisabled(), false);
         buttonDelete = getView().addButton(GlyphIcons.DELETE);
@@ -110,29 +104,19 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(selectionModel.addSelectionChangeHandler(interceptingSelectionChangeHandler));
-        registerHandler(buttonFlush.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
-                    flush();
-                }
+        registerHandler(buttonFlush.addClickHandler(event -> {
+            if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
+                flush();
             }
         }));
-        registerHandler(buttonClose.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
-                    close();
-                }
+        registerHandler(buttonClose.addClickHandler(event -> {
+            if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
+                close();
             }
         }));
-        registerHandler(buttonDelete.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
-                    delete();
-                }
+        registerHandler(buttonDelete.addClickHandler(event -> {
+            if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
+                delete();
             }
         }));
     }
@@ -158,7 +142,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         addCommitDurationColumn();
         addCommitCountColumn();
         addVersionColumn();
-        getView().addEndColumn(new EndColumn<IndexShard>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private void addSelectedColumn() {
@@ -189,39 +173,33 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         getView().addColumn(column, header, 15);
 
         // Add Handlers
-        header.setUpdater(new ValueUpdater<TickBoxState>() {
-            @Override
-            public void update(final TickBoxState value) {
-                if (value.equals(TickBoxState.UNTICK)) {
-                    criteria.getIndexShardSet().clear();
-                    criteria.getIndexShardSet().setMatchAll(false);
-                } else if (value.equals(TickBoxState.TICK)) {
-                    criteria.getIndexShardSet().clear();
-                    criteria.getIndexShardSet().setMatchAll(true);
-                }
-
-                if (dataProvider != null) {
-                    dataProvider.updateRowData(dataProvider.getRanges()[0].getStart(), resultList);
-                }
-
-                enableButtons();
+        header.setUpdater(value -> {
+            if (value.equals(TickBoxState.UNTICK)) {
+                criteria.getIndexShardSet().clear();
+                criteria.getIndexShardSet().setMatchAll(false);
+            } else if (value.equals(TickBoxState.TICK)) {
+                criteria.getIndexShardSet().clear();
+                criteria.getIndexShardSet().setMatchAll(true);
             }
+
+            if (dataProvider != null) {
+                dataProvider.updateRowData(dataProvider.getRanges()[0].getStart(), resultList);
+            }
+
+            enableButtons();
         });
-        column.setFieldUpdater(new FieldUpdater<IndexShard, TickBoxState>() {
-            @Override
-            public void update(final int index, final IndexShard row, final TickBoxState value) {
-                if (value.toBoolean()) {
-                    criteria.getIndexShardSet().add(row);
-                } else {
-                    // De-selecting one and currently matching all ?
-                    if (Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) {
-                        criteria.getIndexShardSet().setMatchAll(false);
-                        criteria.getIndexShardSet().addAll(getResultStreamIdSet());
-                    }
-                    criteria.getIndexShardSet().remove(row);
+        column.setFieldUpdater((index, row, value) -> {
+            if (value.toBoolean()) {
+                criteria.getIndexShardSet().add(row);
+            } else {
+                // De-selecting one and currently matching all ?
+                if (Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) {
+                    criteria.getIndexShardSet().setMatchAll(false);
+                    criteria.getIndexShardSet().addAll(getResultStreamIdSet());
                 }
-                enableButtons();
+                criteria.getIndexShardSet().remove(row);
             }
+            enableButtons();
         });
     }
 
@@ -405,7 +383,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                     onChangeData(data);
                 }
             };
-            dataProvider.addDataDisplay(getView());
+            dataProvider.addDataDisplay(getView().getDataDisplay());
         }
     }
 
@@ -418,39 +396,31 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             }
         }
 
-        if (selectionModel.getSelectedObject() != null) {
-            if (!resultList.contains(selectionModel.getSelectedObject())) {
-                selectionModel.setSelected(selectionModel.getSelectedObject(), false);
-            }
-        }
+//        IndexShard selected = getView().getSelectionModel().getSelected();
+//        if (selected != null) {
+//            if (!resultList.contains(selected)) {
+//                getView().getSelectionModel().clear();
+//            }
+//        }
     }
 
     private void flush() {
         if (Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) {
-            ConfirmEvent.fire(this, "Are you sure you want to flush the selected index shards?", new ConfirmCallback() {
-                @Override
-                public void onResult(final boolean result) {
-                    if (result) {
-                        ConfirmEvent.fire(IndexShardPresenter.this,
-                                "You have selected to flush all filtered index shards! Are you absolutely sure you want to do this?",
-                                new ConfirmCallback() {
-                                    @Override
-                                    public void onResult(final boolean result) {
-                                        if (result) {
-                                            doFlush();
-                                        }
-                                    }
-                                });
-                    }
+            ConfirmEvent.fire(this, "Are you sure you want to flush the selected index shards?", result -> {
+                if (result) {
+                    ConfirmEvent.fire(IndexShardPresenter.this,
+                            "You have selected to flush all filtered index shards! Are you absolutely sure you want to do this?",
+                            result1 -> {
+                                if (result1) {
+                                    doFlush();
+                                }
+                            });
                 }
             });
         } else if (criteria.getIndexShardSet().isConstrained()) {
-            ConfirmEvent.fire(this, "Are you sure you want to flush the selected index shards?", new ConfirmCallback() {
-                @Override
-                public void onResult(final boolean result) {
-                    if (result) {
-                        doFlush();
-                    }
+            ConfirmEvent.fire(this, "Are you sure you want to flush the selected index shards?", result -> {
+                if (result) {
+                    doFlush();
                 }
             });
 
@@ -461,30 +431,21 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
     private void close() {
         if (Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) {
-            ConfirmEvent.fire(this, "Are you sure you want to close the selected index shards?", new ConfirmCallback() {
-                @Override
-                public void onResult(final boolean result) {
-                    if (result) {
-                        ConfirmEvent.fire(IndexShardPresenter.this,
-                                "You have selected to close all filtered index shards! Are you absolutely sure you want to do this?",
-                                new ConfirmCallback() {
-                                    @Override
-                                    public void onResult(final boolean result) {
-                                        if (result) {
-                                            doClose();
-                                        }
-                                    }
-                                });
-                    }
+            ConfirmEvent.fire(this, "Are you sure you want to close the selected index shards?", result -> {
+                if (result) {
+                    ConfirmEvent.fire(IndexShardPresenter.this,
+                            "You have selected to close all filtered index shards! Are you absolutely sure you want to do this?",
+                            result1 -> {
+                                if (result1) {
+                                    doClose();
+                                }
+                            });
                 }
             });
         } else if (criteria.getIndexShardSet().isConstrained()) {
-            ConfirmEvent.fire(this, "Are you sure you want to close the selected index shards?", new ConfirmCallback() {
-                @Override
-                public void onResult(final boolean result) {
-                    if (result) {
-                        doClose();
-                    }
+            ConfirmEvent.fire(this, "Are you sure you want to close the selected index shards?", result -> {
+                if (result) {
+                    doClose();
                 }
             });
 
@@ -496,31 +457,22 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private void delete() {
         if (Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) {
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected index shards?",
-                    new ConfirmCallback() {
-                        @Override
-                        public void onResult(final boolean result) {
-                            if (result) {
-                                ConfirmEvent.fire(IndexShardPresenter.this,
-                                        "You have selected to delete all filtered index shards! Are you absolutely sure you want to do this?",
-                                        new ConfirmCallback() {
-                                            @Override
-                                            public void onResult(final boolean result) {
-                                                if (result) {
-                                                    doDelete();
-                                                }
-                                            }
-                                        });
-                            }
+                    result -> {
+                        if (result) {
+                            ConfirmEvent.fire(IndexShardPresenter.this,
+                                    "You have selected to delete all filtered index shards! Are you absolutely sure you want to do this?",
+                                    result1 -> {
+                                        if (result1) {
+                                            doDelete();
+                                        }
+                                    });
                         }
                     });
         } else if (criteria.getIndexShardSet().isConstrained()) {
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected index shards?",
-                    new ConfirmCallback() {
-                        @Override
-                        public void onResult(final boolean result) {
-                            if (result) {
-                                doDelete();
-                            }
+                    result -> {
+                        if (result) {
+                            doDelete();
                         }
                     });
 
@@ -536,12 +488,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             public void onSuccess(final VoidResult result) {
                 AlertEvent.fireInfo(IndexShardPresenter.this,
                         "Selected index shards will be flushed. Please be patient as this may take some time.",
-                        new AlertCallback() {
-                            @Override
-                            public void onClose() {
-                                refresh();
-                            }
-                        });
+                        () -> refresh());
             }
         });
     }
@@ -553,12 +500,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             public void onSuccess(final VoidResult result) {
                 AlertEvent.fireInfo(IndexShardPresenter.this,
                         "Selected index shards will be closed. Please be patient as this may take some time.",
-                        new AlertCallback() {
-                            @Override
-                            public void onClose() {
-                                refresh();
-                            }
-                        });
+                        () -> refresh());
             }
         });
     }
@@ -570,12 +512,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             public void onSuccess(final VoidResult result) {
                 AlertEvent.fireInfo(IndexShardPresenter.this,
                         "Selected index shards will be deleted. Please be patient as this may take some time.",
-                        new AlertCallback() {
-                            @Override
-                            public void onClose() {
-                                refresh();
-                            }
-                        });
+                        () -> refresh());
             }
         });
     }

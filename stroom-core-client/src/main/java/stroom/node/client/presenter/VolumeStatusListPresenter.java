@@ -17,6 +17,7 @@
 package stroom.node.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -33,19 +34,19 @@ import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.util.client.BorderUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.customdatebox.client.ClientDateUtil;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
 
 public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Volume>> {
-    private final MySingleSelectionModel<Volume> selectionModel;
+//    private final SelectionModel<Volume> selectionModel;
 
     private final ActionDataProvider<Volume> dataProvider;
 
     @Inject
     public VolumeStatusListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<Volume>(true));
-
-        selectionModel = new MySingleSelectionModel<Volume>();
-        getView().setSelectionModel(selectionModel);
+        super(eventBus, new DataGridViewImpl<Volume>(true, true));
+//
+//        selectionModel = new MySingleSelectionModel<>();
+//        getView().setSelectionModel(selectionModel);
 
         // Add a border to the list.
         BorderUtil.addBorder(getWidget().getElement());
@@ -55,9 +56,10 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
         final EntityServiceFindAction<FindVolumeCriteria, Volume> action = new EntityServiceFindAction<FindVolumeCriteria, Volume>(
                 new FindVolumeCriteria());
         dataProvider = new ActionDataProvider<Volume>(dispatcher, action);
-        dataProvider.addDataDisplay(getView());
+        dataProvider.addDataDisplay(getView().getDataDisplay());
         dataProvider.refresh();
     }
+
 
     /**
      * Add the columns to the table.
@@ -183,9 +185,17 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
         return string;
     }
 
-    public MySingleSelectionModel<Volume> getSelectionModel() {
-        return selectionModel;
+//    public HandlerRegistration addSelectionHandler(DataGridSelectEvent.Handler handler) {
+//        return getView().addSelectionHandler(handler);
+//    }
+
+    public MultiSelectionModel<Volume> getSelectionModel() {
+        return getView().getSelectionModel();
     }
+//
+//    public void setSelectionModel(final SelectionModel<Volume> selectionModel) {
+//        getView().setSelectionModel(selectionModel);
+//    }
 
     public void refresh() {
         dataProvider.refresh();

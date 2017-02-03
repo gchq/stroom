@@ -24,13 +24,18 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.HasData;
+import com.google.gwt.view.client.HasRows;
 import com.gwtplatform.mvp.client.View;
 import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.util.client.MultiSelectEvent;
+import stroom.widget.util.client.MultiSelectionModel;
 
-public interface DataGridView<R> extends View, HasData<R> {
+import java.util.List;
+
+public interface DataGridView<R> extends View, HasRows {
     void addColumn(Column<R, ?> column, String name, int width);
 
     void addColumn(Column<R, ?> column, String name);
@@ -51,8 +56,6 @@ public interface DataGridView<R> extends View, HasData<R> {
 
     GlyphButtonView addButton(GlyphIcon preset);
 
-    HandlerRegistration addDoubleClickHandler(DoubleClickEvent.Handler handler);
-
     HandlerRegistration addColumnSortHandler(ColumnSortEvent.Handler handler);
 
     void resizeTableToFitColumns();
@@ -66,4 +69,10 @@ public interface DataGridView<R> extends View, HasData<R> {
     DataGridViewImpl.DefaultResources getResources();
 
     TableRowElement getRowElement(int row);
+
+    void setRowData(int start, List<? extends R> values);
+
+    HasData<R> getDataDisplay();
+
+    MultiSelectionModel<R> getSelectionModel();
 }

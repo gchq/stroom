@@ -19,8 +19,6 @@ package stroom.security.client.presenter;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent.Handler;
-import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandlers;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.info.client.FACell;
@@ -32,11 +30,10 @@ import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
 
-public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserListView> implements HasSelectionChangedHandlers, UserListUiHandlers {
+public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserListView> implements UserListUiHandlers {
     private final DataGridView<UserRef> dataGridView;
-    private final MySingleSelectionModel<UserRef> selectionModel;
 
     public AbstractUserListPresenter(final EventBus eventBus, final UserListView userListView) {
         super(eventBus, userListView);
@@ -44,9 +41,6 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
         dataGridView = new DataGridViewImpl<UserRef>(true);
         userListView.setDatGridView(dataGridView);
         userListView.setUiHandlers(this);
-
-        selectionModel = new MySingleSelectionModel<UserRef>();
-        dataGridView.setSelectionModel(selectionModel);
 
         // Icon
         dataGridView.addColumn(new Column<UserRef, GlyphIcon>(new FACell()) {
@@ -85,17 +79,8 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
 
     }
 
-    public UserRef getSelectedItem() {
-        return selectionModel.getSelectedObject();
-    }
-
-    public void setSelectedItem(final UserRef row, final boolean selected) {
-        selectionModel.setSelected(row, selected);
-    }
-
-    @Override
-    public com.google.gwt.event.shared.HandlerRegistration addSelectionChangeHandler(final Handler handler) {
-        return dataGridView.getSelectionModel().addSelectionChangeHandler(handler);
+    public MultiSelectionModel<UserRef> getSelectionModel() {
+        return dataGridView.getSelectionModel();
     }
 
     public DataGridView<UserRef> getDataGridView() {

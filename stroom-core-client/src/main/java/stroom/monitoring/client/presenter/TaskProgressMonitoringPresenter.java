@@ -94,7 +94,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                 onChangeData(data);
             }
         };
-        dataProvider.addDataDisplay(getView());
+        dataProvider.addDataDisplay(getView().getDataDisplay());
 
         initTableColumns();
     }

@@ -19,13 +19,13 @@ package stroom.explorer.client.presenter;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.explorer.client.event.SelectionType;
 import stroom.explorer.shared.ExplorerData;
+import stroom.widget.util.client.SelectionType;
 
 public class EntityChooser extends ExplorerDropDownTreePresenter {
     @Inject
     EntityChooser(final EventBus eventBus, final DropDownTreeView view,
-                                  final ClientDispatchAsync dispatcher) {
+                  final ClientDispatchAsync dispatcher) {
         super(eventBus, view, dispatcher);
     }
 

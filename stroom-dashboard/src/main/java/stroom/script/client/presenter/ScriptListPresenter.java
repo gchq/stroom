@@ -27,19 +27,14 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRef;
 import stroom.util.client.BorderUtil;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;
 
 public class ScriptListPresenter extends MyPresenterWidget<DataGridView<DocRef>> {
-    private final MySingleSelectionModel<DocRef> selectionModel;
-
     @Inject
     public ScriptListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<DocRef>(true));
-
-        selectionModel = new MySingleSelectionModel<DocRef>();
-        getView().setSelectionModel(selectionModel);
+        super(eventBus, new DataGridViewImpl<DocRef>(true, true));
 
         // Add a border to the list.
         BorderUtil.addBorder(getWidget().getElement());
@@ -67,7 +62,7 @@ public class ScriptListPresenter extends MyPresenterWidget<DataGridView<DocRef>>
         getView().setRowCount(scripts.size());
     }
 
-    public MySingleSelectionModel<DocRef> getSelectionModel() {
-        return selectionModel;
+    public MultiSelectionModel<DocRef> getSelectionModel() {
+        return getView().getSelectionModel();
     }
 }

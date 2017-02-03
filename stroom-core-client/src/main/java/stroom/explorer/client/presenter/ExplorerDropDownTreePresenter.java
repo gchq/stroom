@@ -26,11 +26,11 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.Folder;
-import stroom.explorer.client.event.SelectionType;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.util.client.SelectionType;
 
 class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         implements HasDataSelectionHandlers<ExplorerData> {
@@ -39,7 +39,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
 
     @Inject
     ExplorerDropDownTreePresenter(final EventBus eventBus, final DropDownTreeView view,
-                                         final ClientDispatchAsync dispatcher) {
+                                  final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         setUnselectedText("None");
 
@@ -50,7 +50,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     }
 
     protected void setSelectedTreeItem(final ExplorerData selectedItem,
-                                     final SelectionType selectionType, final boolean initial) {
+                                       final SelectionType selectionType, final boolean initial) {
         // Is the selection type valid?
         if (isSelectionAllowed(selectedItem)) {
             // Drop down presenters need to know what the initial selection was so that they can update the name of their selected item properly.

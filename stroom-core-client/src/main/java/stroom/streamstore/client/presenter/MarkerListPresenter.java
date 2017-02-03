@@ -46,6 +46,7 @@ import stroom.util.shared.Summary;
 import stroom.util.shared.TreeRow;
 import stroom.xmleditor.client.view.LeftBar;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -242,7 +243,8 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
     public void setData(final List<Marker> markers, final int start, final int count) {
         if (markers == null) {
             // Reset visible range.
-            getView().setVisibleRangeAndClearData(new Range(0, 100), false);
+            getView().setRowData(0, new ArrayList<>());
+            getView().setRowCount(0);
         } else {
             getView().setRowData(start, markers);
             getView().setRowCount(count);
