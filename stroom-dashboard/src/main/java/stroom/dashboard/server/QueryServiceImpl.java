@@ -87,6 +87,11 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
     }
 
     @Override
+    protected void checkUpdatePermission(final Query entity) {
+        // Ignore.
+    }
+
+    @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindQueryCriteria criteria) {
         CriteriaLoggingUtil.appendEntityIdSet(items, "dashboardIdSet", criteria.getDashboardIdSet());
         super.appendCriteria(items, criteria);
@@ -106,8 +111,8 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
         protected void appendBasicCriteria(final SQLBuilder sql, final String alias, final FindQueryCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
-            if (criteria.getNameCriteria() != null) {
-                SQLUtil.appendValueQuery(sql, alias + ".name", criteria.getNameCriteria());
+            if (criteria.getFavourite() != null) {
+                SQLUtil.appendValueQuery(sql, alias + ".favourite", criteria.getFavourite());
             }
 
             SQLUtil.appendSetQuery(sql, true, alias + ".dashboard", criteria.getDashboardIdSet());

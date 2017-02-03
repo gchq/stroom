@@ -69,7 +69,7 @@ public class QueryCell extends AbstractCell<Query> {
     @Override
     public void render(final Context context, final Query value, final SafeHtmlBuilder sb) {
         if (value != null) {
-            if (value.getName() != null && value.getName().length() > 0) {
+            if (value.isFavourite()) {
                 sb.append(template.favouritesLayout(resources.style().outer(), resources.style().expression(),
                         value.getName()));
 

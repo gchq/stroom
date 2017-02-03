@@ -41,6 +41,9 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.DoubleSelectEvent;
 import stroom.widget.util.client.MySingleSelectionModel;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresenter.QueryHistoryView> {
     public interface QueryHistoryView extends View {
         CellList<Query> getCellList();
@@ -101,13 +104,10 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
     }
 
     private void refresh(final boolean showAfterRefresh) {
-        final StringCriteria nameCriteria = new StringCriteria();
-        nameCriteria.setMatchNull(true);
-
         final FindQueryCriteria criteria = new FindQueryCriteria();
         criteria.obtainDashboardIdSet().add(currentDashboardId);
         criteria.setOrderBy(FindQueryCriteria.ORDER_BY_TIME, OrderByDirection.DESCENDING);
-        criteria.setNameCriteria(nameCriteria);
+        criteria.setFavourite(false);
         criteria.setPageRequest(new PageRequest(0L, 100));
 
         final EntityServiceFindAction<FindQueryCriteria, Query> action = new EntityServiceFindAction<>(criteria);
@@ -115,8 +115,22 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
             @Override
             public void onSuccess(final ResultList<Query> result) {
                 selectionModel.clear();
-                getView().getCellList().setRowData(result);
-                getView().getCellList().setRowCount(result.size(), true);
+
+                String lastExpression = null;
+                final List<Query> dedupedList = new ArrayList<>(result.getSize());
+                for (final Query query : result) {
+                    if (query != null && query.getQueryData() != null && query.getQueryData().getExpression() != null) {
+                        final String expression = query.getQueryData().getExpression().toString();
+                        if (lastExpression == null || !lastExpression.equals(expression)) {
+                            dedupedList.add(query);
+                        }
+
+                        lastExpression = expression;
+                    }
+                }
+
+                getView().getCellList().setRowData(dedupedList);
+                getView().getCellList().setRowCount(dedupedList.size(), true);
 
                 if (showAfterRefresh) {
                     final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {

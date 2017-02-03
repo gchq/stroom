@@ -518,7 +518,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
     }
 
-    protected final void checkUpdatePermission(final E entity) {
+    protected void checkUpdatePermission(final E entity) {
         if (!entity.isPersistent()) {
             throw new EntityServiceException("You cannot update an entity that has not been created");
         }

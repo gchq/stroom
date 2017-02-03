@@ -20,14 +20,14 @@ import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.OrderBy;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.entity.shared.StringCriteria;
 
 public class FindQueryCriteria extends FindDocumentEntityCriteria {
     public static final OrderBy ORDER_BY_TIME = new OrderBy("Time", "createTime", Query.CREATE_TIME);
     public static final OrderBy ORDER_BY_NAME = new OrderBy("Name", "name", SQLNameConstants.NAME);
     private static final long serialVersionUID = -4421720204507720754L;
+
     private EntityIdSet<Dashboard> dashboardIdSet;
-    private StringCriteria nameCriteria;
+    private Boolean favourite;
 
     public FindQueryCriteria() {
         // Default constructor necessary for GWT serialisation.
@@ -47,17 +47,17 @@ public class FindQueryCriteria extends FindDocumentEntityCriteria {
 
     public EntityIdSet<Dashboard> obtainDashboardIdSet() {
         if (dashboardIdSet == null) {
-            dashboardIdSet = new EntityIdSet<Dashboard>();
+            dashboardIdSet = new EntityIdSet<>();
         }
 
         return dashboardIdSet;
     }
 
-    public StringCriteria getNameCriteria() {
-        return nameCriteria;
+    public Boolean getFavourite() {
+        return favourite;
     }
 
-    public void setNameCriteria(final StringCriteria nameCriteria) {
-        this.nameCriteria = nameCriteria;
+    public void setFavourite(final Boolean favourite) {
+        this.favourite = favourite;
     }
 }
