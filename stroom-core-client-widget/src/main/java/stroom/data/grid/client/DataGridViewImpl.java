@@ -1,17 +1,19 @@
 /*
- * Copyright 2016 Crown Copyright
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2017 Crown Copyright
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package stroom.data.grid.client;
@@ -180,8 +182,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         e.getStyle().setPropertyPx("minHeight", 5);
 
         if (supportsSelection) {
-            dataGrid.setKeyboardSelectionHandler(new MyKeyboardSelectionHandler(dataGrid));
-
             final MultiSelectionModelImpl<R> multiSelectionModel = new MultiSelectionModelImpl<R>() {
                 @Override
                 public HandlerRegistration addSelectionHandler(final MultiSelectEvent.Handler handler) {
@@ -194,10 +194,10 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                 }
             };
 
-            dataGrid.setSelectionModel(multiSelectionModel);
+            dataGrid.setSelectionModel(multiSelectionModel, new MySelectionEventManager(dataGrid));
             selectionModel = multiSelectionModel;
-
             dataGrid.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
+
             dataGrid.getRowContainer().getStyle().setCursor(Cursor.POINTER);
         } else {
             selectionModel = null;
@@ -751,8 +751,8 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         }
     }
 
-    private class MyKeyboardSelectionHandler extends AbstractCellTable.CellTableKeyboardSelectionHandler<R> {
-        MyKeyboardSelectionHandler(AbstractCellTable<R> table) {
+    private class MySelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<R> {
+        MySelectionEventManager(AbstractCellTable<R> table) {
             super(table);
         }
 
