@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#113** : User names are now validated against a regex specified by the 'stroom.security.userNamePattern' property.
 
+* Issue **#116** : Rename is now only possible when a single explorer item is selected.
+
 ## [v5.0-beta.9] - 2017-02-01
 * Issue **#63** : Entity selection control now shows current entity name even if it has changed since referencing entity was last saved.
 
