@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#91** : Only CombinedParser was allowing code to be injected during stepping. Now DSParser and XMLFragmentParser support code injection during stepping.
 
+* Issue **#107** : The UI now only shows new pipeline element items on the 'Add' menu that are allowed children of the selected element.
+
 ## [v5.0-beta.9] - 2017-02-01
 * Issue **#63** : Entity selection control now shows current entity name even if it has changed since referencing entity was last saved.
 
