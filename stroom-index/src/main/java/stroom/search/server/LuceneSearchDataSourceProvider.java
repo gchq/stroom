@@ -1,17 +1,19 @@
 /*
- * Copyright 2016 Crown Copyright
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2017 Crown Copyright
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package stroom.search.server;
@@ -87,7 +89,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
         final Index index = indexService.loadByUuid(search.getDataSourceRef().getUuid());
 
         // Extract highlights.
-        final Set<String> highlights = getHighlights(index, search.getExpression(), nowEpochMilli);
+        final Set<String> highlights = getHighlights(index, search.getExpression(), search.getDateTimeLocale(), nowEpochMilli);
 
         // This is a new search so begin a new asynchronous search.
         final Node node = nodeCache.getDefaultNode();
@@ -117,7 +119,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
      * Compiles the query, extracts terms and then returns them for use in hit
      * highlighting.
      */
-    private Set<String> getHighlights(final Index index, final ExpressionOperator expression, final long nowEpochMilli) {
+    private Set<String> getHighlights(final Index index, final ExpressionOperator expression, final String timeZoneId, final long nowEpochMilli) {
         Set<String> highlights = Collections.emptySet();
 
         try {
@@ -125,7 +127,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
             final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, nowEpochMilli);
+                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, timeZoneId, nowEpochMilli);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
                     .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expression);
 
