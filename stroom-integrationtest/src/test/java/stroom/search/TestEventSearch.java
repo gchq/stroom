@@ -226,7 +226,7 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
                     for (final Row hit : values) {
                         final SharedObject obj = hit.getValues()[1];
                         final String str = obj.toString();
-                        if ("2007-03-18T14:34:41.000Z".equals(str)) {
+                        if ("2007-03-18T14:34:41.000".equals(str)) {
                             found = true;
                         }
                     }
