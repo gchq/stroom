@@ -1,27 +1,22 @@
 /*
- * Copyright 2016 Crown Copyright
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2017 Crown Copyright
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package stroom.widget.menu.client.presenter;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -29,11 +24,17 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-
 import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.CellTableViewImpl;
 import stroom.data.table.client.CellTableViewImpl.MenuResources;
+import stroom.data.table.client.ScrollableCellTableViewImpl;
 import stroom.widget.popup.client.event.HidePopupEvent;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public abstract class MenuPresenter extends MyPresenterWidget<CellTableView<Item>> {
     private static final MenuResources MENU_RESOURCES = GWT.create(MenuResources.class);
@@ -43,7 +44,7 @@ public abstract class MenuPresenter extends MyPresenterWidget<CellTableView<Item
 
     @Inject
     public MenuPresenter(final EventBus eventBus) {
-        super(eventBus, new CellTableViewImpl<Item>(false, MENU_RESOURCES));
+        super(eventBus, new ScrollableCellTableViewImpl<Item>(false, MENU_RESOURCES));
         final Column<Item, Item> iconColumn = new Column<Item, Item>(new MenuItemCell(this)) {
             @Override
             public Item getValue(final Item item) {
@@ -52,8 +53,6 @@ public abstract class MenuPresenter extends MyPresenterWidget<CellTableView<Item
         };
         getView().addColumn(iconColumn);
         getView().setSkipRowHoverCheck(true);
-
-        getView().asWidget().getElement().getStyle().setProperty("minWidth", "100px");
     }
 
     public void setData(final List<Item> items) {
