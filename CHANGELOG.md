@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.10] - 2017-02-07
+
 * Issue **#109** : Added packetSize="65536" property to AJP connector in server.xml template.
 
 * Issue **#100** : Various list of items in stroom now allow multi selection for add/remove purposes.
@@ -131,7 +133,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Intial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.10...HEAD
+[v5.0-beta.10]: https://github.com/gchq/stroom/compare/v5.0-beta.9...v5.0-beta.10
 [v5.0-beta.9]: https://github.com/gchq/stroom/compare/v5.0-beta.8...v5.0-beta.9
 [v5.0-beta.8]: https://github.com/gchq/stroom/compare/v5.0-beta.7...v5.0-beta.8
 [v5.0-beta.7]: https://github.com/gchq/stroom/compare/v5.0-beta.6...v5.0-beta.7
