@@ -16,25 +16,28 @@
 
 package stroom.pipeline.stepping.client;
 
-import stroom.app.client.ContentManager;
-import stroom.app.client.presenter.Plugin;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
-import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
-import stroom.explorer.shared.ExplorerData;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
-import stroom.pipeline.stepping.shared.GetPipelineForStreamAction;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.streamstore.shared.StreamType;
-import stroom.util.shared.SharedLong;
+
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.core.client.ContentManager;
+import stroom.core.client.presenter.Plugin;
+import stroom.dispatch.client.AsyncCallbackAdaptor;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.shared.DocRef;
+import stroom.entity.shared.EntityServiceFindAction;
+import stroom.entity.shared.ResultList;
+import stroom.explorer.client.presenter.EntityChooser;
+import stroom.feed.shared.Feed;
+import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
+import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
+import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
+import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamAttributeMap;
+import stroom.streamstore.shared.StreamType;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
     private final Provider<EntityChooser> pipelineSelection;
@@ -100,29 +103,6 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                         }
                     }
                 });
-
-
-//                final EntityServiceLoadAction<Stream> streamEntityServiceLoadAction = new EntityServiceLoadAction<>(DocRef.create(Stream.createStub(streamId)), SetUtil.toSet(Feed.ENTITY_TYPE));
-//                dispatcher.execute(streamEntityServiceLoadAction, new AsyncCallbackAdaptor<Stream>() {
-//                    @Override
-//                    public void onSuccess(final Stream result) {
-//                        if (result != null) {
-//                            openEditor(pipeline, result, eventId, childStreamType);
-//                        }
-//                    }
-//                });
-//
-//                final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-//                findStreamCriteria.obtainStreamIdSet().add(streamId);
-//                final EntityServiceFindAction<FindStreamCriteria, Stream> entityServiceFindAction = new EntityServiceFindAction<>(findStreamCriteria);
-//                dispatcher.execute(entityServiceFindAction, new AsyncCallbackAdaptor<ResultList<Stream>>() {
-//                    @Override
-//                    public void onSuccess(final ResultList<Stream> result) {
-//                        if (result != null && result.size() == 1) {
-//                            openEditor(pipeline, result.get(0), eventId, childStreamType);
-//                        }
-//                    }
-//                });
             }
         });
 

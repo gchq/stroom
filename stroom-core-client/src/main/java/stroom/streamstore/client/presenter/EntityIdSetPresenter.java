@@ -16,27 +16,6 @@
 
 package stroom.streamstore.client.presenter;
 
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.CellTableViewImpl;
-import stroom.data.table.client.CellTableViewImpl.DefaultResources;
-import stroom.data.table.client.CellTableViewImpl.DisabledResources;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.EntityReferenceComparator;
-import stroom.entity.shared.Folder;
-import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
-import stroom.explorer.shared.ExplorerData;
-import stroom.pipeline.processor.shared.LoadEntityIdSetAction;
-import stroom.pipeline.processor.shared.SetId;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.streamstore.shared.StreamType;
-import stroom.util.shared.SharedList;
-import stroom.util.shared.SharedMap;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.CellTable.Resources;
@@ -47,6 +26,28 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.data.client.event.DataSelectionEvent;
+import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
+import stroom.data.table.client.CellTableView;
+import stroom.data.table.client.CellTableViewImpl;
+import stroom.data.table.client.CellTableViewImpl.DefaultResources;
+import stroom.data.table.client.CellTableViewImpl.DisabledResources;
+import stroom.dispatch.client.AsyncCallbackAdaptor;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.EntityIdSet;
+import stroom.entity.shared.EntityReferenceComparator;
+import stroom.entity.shared.Folder;
+import stroom.explorer.client.presenter.EntityChooser;
+import stroom.explorer.shared.ExplorerData;
+import stroom.process.shared.LoadEntityIdSetAction;
+import stroom.process.shared.SetId;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.streamstore.shared.StreamType;
+import stroom.util.shared.SharedList;
+import stroom.util.shared.SharedMap;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.ArrayList;
@@ -55,14 +56,6 @@ import java.util.List;
 
 public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter.EntityIdSetView>
         implements EntityIdSetUiHandlers {
-    public interface EntityIdSetView extends View, HasUiHandlers<EntityIdSetUiHandlers> {
-        void setListView(View view);
-
-        void setAddEnabled(boolean enabled);
-
-        void setRemoveEnabled(boolean enabled);
-    }
-
     private final EntityChooser treePresenter;
     private final EntityChoicePresenter choicePresenter;
     private final ClientDispatchAsync dispatcher;
@@ -148,7 +141,7 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
         if (entityIdSet != null && entityIdSet.getSet() != null) {
             // Load the entities.
             final SetId key = new SetId(type, type);
-            final SharedMap<SetId, EntityIdSet<?>> loadMap = new SharedMap<SetId, EntityIdSet<?>>();
+            final SharedMap<SetId, EntityIdSet<?>> loadMap = new SharedMap<>();
             loadMap.put(key, entityIdSet);
             final LoadEntityIdSetAction action = new LoadEntityIdSetAction(loadMap);
             dispatcher.execute(action, new AsyncCallbackAdaptor<SharedMap<SetId, SharedList<DocRef>>>() {
@@ -159,13 +152,13 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
                         Collections.sort(list, new EntityReferenceComparator());
                         data = list;
                     } else {
-                        data = new ArrayList<DocRef>();
+                        data = new ArrayList<>();
                     }
                     refresh();
                 }
             });
         } else {
-            this.data = new ArrayList<DocRef>();
+            this.data = new ArrayList<>();
             refresh();
         }
 

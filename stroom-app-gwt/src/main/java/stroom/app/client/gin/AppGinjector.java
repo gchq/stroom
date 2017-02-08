@@ -75,16 +75,16 @@ import stroom.widget.popup.client.gin.PopupModule;
 import stroom.xmlschema.client.gin.XMLSchemaGinjector;
 import stroom.xmlschema.client.gin.XMLSchemaModule;
 
-@GinModules({ ClientDispatchModule.class, AppModule.class, PopupModule.class, AlertModule.class, WelcomeModule.class,
+@GinModules({ClientDispatchModule.class, AppModule.class, PopupModule.class, AlertModule.class, WelcomeModule.class,
         SecurityModule.class, EntityModule.class, PluginsModule.class, FolderModule.class, TaskModule.class,
         QueryModule.class, StreamStoreModule.class, FeedModule.class, PipelineModule.class, DictionaryModule.class,
         XMLSchemaModule.class, MonitoringModule.class, CacheModule.class, IndexModule.class,
         StatisticsModule.class, DashboardModule.class, VisModule.class, ScriptModule.class, VisualisationModule.class,
-        ImportExportConfigModule.class })
+        ImportExportConfigModule.class})
 public interface AppGinjector
         extends Ginjector, PopupGinjector, AlertGinjector, WelcomeGinjector, SecurityGinjector, EntityGinjector,
         PluginsGinjector, FolderGinjector, TaskGinjector, StreamStoreGinjector, FeedGinjector, PipelineGinjector,
-        DictionaryGinjector, XMLSchemaGinjector, MonitoringGinjector, PoolGinjector, CacheGinjector, IndexGinjector,
+        DictionaryGinjector, XMLSchemaGinjector, MonitoringGinjector, CacheGinjector, IndexGinjector,
         StatisticsGinjector, DashboardGinjector, VisGinjector, ScriptGinjector, VisualisationGinjector, ImportExportConfigGinjector {
     // Default implementation of standard resources
     EventBus getEventBus();

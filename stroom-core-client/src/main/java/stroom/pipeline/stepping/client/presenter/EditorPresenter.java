@@ -24,7 +24,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.app.client.event.DirtyKeyDownHander;
+import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
@@ -248,8 +248,8 @@ public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorVie
         return elementType;
     }
 
-    public void setPropertyValue(final PipelinePropertyValue propertyValue) {
-        this.propertyValue = propertyValue;
+    public void setEntityRef(final DocRef entityRef) {
+        this.entityRef = entityRef;
     }
 
     public void setPipelineStepAction(final PipelineStepAction pipelineStepAction) {

@@ -14,8 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.processor.client.presenter;
+package stroom.process.client.presenter;
 
+import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.cell.client.ImageResourceCell;
+import com.google.gwt.cell.client.NumberCell;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
@@ -38,8 +48,10 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.ResultList;
-import stroom.pipeline.processor.shared.FetchProcessorAction;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.process.shared.FetchProcessorAction;
+import stroom.process.shared.StreamProcessorFilterRow;
+import stroom.process.shared.StreamProcessorRow;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
@@ -57,17 +69,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
-import com.google.gwt.cell.client.FieldUpdater;
-import com.google.gwt.cell.client.ImageResourceCell;
-import com.google.gwt.cell.client.NumberCell;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
 
 public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<SharedObject>>
         implements Refreshable, HasRead<BaseEntity> {

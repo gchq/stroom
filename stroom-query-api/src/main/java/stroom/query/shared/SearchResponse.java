@@ -21,7 +21,11 @@ import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.ToStringBuilder;
 
-import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;

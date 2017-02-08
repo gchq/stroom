@@ -7,9 +7,14 @@ import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.JAXBException;
-
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -51,8 +56,7 @@ public class SerialisationTest {
     }
 
 
-
-    private static SearchRequest getSearchRequest(){
+    private static SearchRequest getSearchRequest() {
         DocRef docRef = new DocRef();
         docRef.setId(1l);
         docRef.setName("docRefName");
@@ -90,7 +94,7 @@ public class SerialisationTest {
         componentResultRequests.put("componentResult", new TableResultRequest());
 
 
-        SearchRequest searchRequest = new SearchRequest(search, componentResultRequests, "en-gb");
+        SearchRequest searchRequest = new SearchRequest(search, componentResultRequests);
 
         return searchRequest;
     }

@@ -16,6 +16,12 @@
 
 package stroom.query.shared;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+import java.io.Serializable;
 import java.util.Map;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -48,27 +54,21 @@ public class SearchRequest implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) return true;
-
         if (o == null || getClass() != o.getClass()) return false;
 
-        SearchRequest that = (SearchRequest) o;
+        final SearchRequest that = (SearchRequest) o;
 
-        return new EqualsBuilder()
-                .append(search, that.search)
-                .append(componentResultRequests, that.componentResultRequests)
-                .append(dateTimeLocale, that.dateTimeLocale)
-                .isEquals();
+        if (search != null ? !search.equals(that.search) : that.search != null) return false;
+        return componentResultRequests != null ? componentResultRequests.equals(that.componentResultRequests) : that.componentResultRequests == null;
     }
 
     @Override
     public int hashCode() {
-        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
-        hashCodeBuilder.append(search);
-        hashCodeBuilder.append(componentResultRequests);
-        hashCodeBuilder.append(dateTimeLocale);
-        return hashCodeBuilder.toHashCode();
+        int result = search != null ? search.hashCode() : 0;
+        result = 31 * result + (componentResultRequests != null ? componentResultRequests.hashCode() : 0);
+        return result;
     }
 
     @Override
@@ -76,7 +76,6 @@ public class SearchRequest implements Serializable {
         return "SearchRequest{" +
                 "search=" + search +
                 ", componentResultRequests=" + componentResultRequests +
-                ", dateTimeLocale='" + dateTimeLocale + '\'' +
                 '}';
     }
 }

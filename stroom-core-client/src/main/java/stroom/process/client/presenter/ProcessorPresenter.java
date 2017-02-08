@@ -14,27 +14,37 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.processor.client.presenter;
+package stroom.process.client.presenter;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.data.grid.client.DoubleClickEvent;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
-import stroom.entity.shared.*;
+import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.EntityIdSet;
+import stroom.entity.shared.EntityReferenceComparator;
+import stroom.entity.shared.EntityServiceDeleteAction;
+import stroom.entity.shared.EntityServiceLoadAction;
+import stroom.entity.shared.EntityServiceSaveAction;
+import stroom.entity.shared.Folder;
+import stroom.entity.shared.NamedEntity;
+import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.processor.shared.CreateProcessorAction;
-import stroom.pipeline.processor.shared.LoadEntityIdSetAction;
-import stroom.pipeline.processor.shared.SetId;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.process.shared.CreateProcessorAction;
+import stroom.process.shared.LoadEntityIdSetAction;
+import stroom.process.shared.SetId;
+import stroom.process.shared.StreamProcessorFilterRow;
+import stroom.process.shared.StreamProcessorRow;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.shared.Condition;
 import stroom.query.shared.ExpressionOperator;
@@ -493,7 +503,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
         } else {
             // Now create the processor filter using the find stream criteria.
-            dispatcher.execute(new CreateProcessorAction(DocRef.create(pipelineEntity), findStreamCriteria, false, 10),
+            dispatcher.execute(new CreateProcessorAction(DocRefUtil.create(pipelineEntity), findStreamCriteria, false, 10),
                     new AsyncCallbackAdaptor<StreamProcessorFilter>() {
                         @Override
                         public void onSuccess(final StreamProcessorFilter result) {
