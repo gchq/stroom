@@ -1386,7 +1386,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             appendStreamCriteria(criteria, sql);
 
             // Append order by criteria.
-            SQLUtil.appendOrderBy(sql, false, criteria, "S");
+//            SQLUtil.appendOrderBy(sql, false, criteria, "S");
             SQLUtil.applyRestrictionCriteria(criteria, sql);
 
         } else {
@@ -1429,7 +1429,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             appendStreamCriteria(criteria, sql);
 
             // Append order by criteria.
-            SQLUtil.appendOrderBy(sql, false, criteria, "S");
+//            SQLUtil.appendOrderBy(sql, false, criteria, "S");
             SQLUtil.applyRestrictionCriteria(criteria, sql);
 
             sql.append(")");

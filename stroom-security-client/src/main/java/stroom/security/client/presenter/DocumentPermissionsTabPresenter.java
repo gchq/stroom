@@ -17,9 +17,6 @@
 package stroom.security.client.presenter;
 
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
@@ -73,28 +70,18 @@ public class DocumentPermissionsTabPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(userListPresenter.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                enableButtons();
-                setCurrentUser(userListPresenter.getSelectedItem());
+        registerHandler(userListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            enableButtons();
+            setCurrentUser(userListPresenter.getSelectionModel().getSelected());
+        }));
+        registerHandler(addButton.addClickHandler(event -> {
+            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                add();
             }
         }));
-
-        registerHandler(addButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
-                    add();
-                }
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
-                    remove();
-                }
+        registerHandler(removeButton.addClickHandler(event -> {
+            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                remove();
             }
         }));
 
@@ -102,7 +89,7 @@ public class DocumentPermissionsTabPresenter
     }
 
     private void enableButtons() {
-        removeButton.setEnabled(userListPresenter.getSelectedItem() != null);
+        removeButton.setEnabled(userListPresenter.getSelectionModel().getSelected() != null);
     }
 
     protected void setCurrentUser(final UserRef user) {
@@ -130,11 +117,11 @@ public class DocumentPermissionsTabPresenter
             @Override
             public void onHide(boolean autoClose, boolean ok) {
                 if (ok) {
-                    final UserRef selected = selectUserPresenter.getSelectedItem();
+                    final UserRef selected = selectUserPresenter.getSelectionModel().getSelected();
                     if (selected != null) {
                         if (documentPermissions.getUserPermissions().get(selected) == null) {
                             documentPermissions.getUserPermissions().put(selected, new HashSet<String>());
-                            userListPresenter.setSelectedItem(selected, true);
+                            userListPresenter.getSelectionModel().setSelected(selected);
                             refreshUserList();
                         }
                     }
@@ -150,7 +137,7 @@ public class DocumentPermissionsTabPresenter
     }
 
     private void remove() {
-        final UserRef userRef = userListPresenter.getSelectedItem();
+        final UserRef userRef = userListPresenter.getSelectionModel().getSelected();
         if (userRef != null) {
             final Set<String> permissionsToRemove = documentPermissions.getUserPermissions().get(userRef);
             if (permissionsToRemove != null) {

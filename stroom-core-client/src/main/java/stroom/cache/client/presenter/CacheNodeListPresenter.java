@@ -208,7 +208,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
 
             if (dataProvider == null) {
                 dataProvider = new ActionDataProvider<CacheNodeRow>(dispatcher, action);
-                dataProvider.addDataDisplay(getView());
+                dataProvider.addDataDisplay(getView().getDataDisplay());
             }
 
             dataProvider.refresh();

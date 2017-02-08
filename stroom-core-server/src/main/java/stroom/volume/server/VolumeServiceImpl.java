@@ -402,8 +402,6 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     @Override
     public Volume save(final Volume entity) throws RuntimeException {
         if (!entity.isPersistent()) {
-            FileSystemUtil.mkdirs(null, new File(entity.getPath()));
-
             VolumeState volumeState = entity.getVolumeState();
             if (volumeState == null) {
                 volumeState = new VolumeState();
@@ -532,7 +530,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
 
     private void createIndexVolume(final Path path, final Node node) {
         final Volume vol = new Volume();
-        vol.setStreamStatus(VolumeUseStatus.CLOSED);
+        vol.setStreamStatus(VolumeUseStatus.INACTIVE);
         vol.setIndexStatus(VolumeUseStatus.ACTIVE);
         vol.setVolumeType(VolumeType.PRIVATE);
         createVolume(path, node, Optional.of(vol));
@@ -541,7 +539,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private void createStreamVolume(final Path path, final Node node) {
         final Volume vol = new Volume();
         vol.setStreamStatus(VolumeUseStatus.ACTIVE);
-        vol.setIndexStatus(VolumeUseStatus.CLOSED);
+        vol.setIndexStatus(VolumeUseStatus.INACTIVE);
         vol.setVolumeType(VolumeType.PUBLIC);
         createVolume(path, node, Optional.of(vol));
     }

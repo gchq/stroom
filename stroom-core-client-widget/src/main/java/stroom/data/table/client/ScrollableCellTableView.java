@@ -16,13 +16,7 @@
  *
  */
 
-package stroom.pipeline.stepping.client.presenter;
+package stroom.data.table.client;
 
-import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.structure.client.presenter.SimplePipelineTreeBuilder;
-
-public class SteppingPipelineTreeBuilder extends SimplePipelineTreeBuilder {
-    public SteppingPipelineTreeBuilder() {
-        super(PipelineElementType.VISABILITY_STEPPING);
-    }
+public interface ScrollableCellTableView<R> extends CellTableView<R> {
 }

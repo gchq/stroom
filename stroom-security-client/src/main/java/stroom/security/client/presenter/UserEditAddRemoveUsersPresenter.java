@@ -18,8 +18,6 @@ package stroom.security.client.presenter;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandlers;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
@@ -38,7 +36,7 @@ import stroom.widget.popup.client.presenter.PopupView;
 
 import javax.inject.Provider;
 
-public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter implements HasSelectionChangedHandlers, UserListUiHandlers {
+public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter implements UserListUiHandlers {
     private final ClientDispatchAsync dispatcher;
     private final Provider<AdvancedUserListPresenter> selectUserPresenterProvider;
     private final GlyphButtonView addButton;
@@ -84,7 +82,7 @@ public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter i
                     @Override
                     public void onHide(boolean autoClose, boolean ok) {
                         if (ok) {
-                            final UserRef selected = selectUserPresenter.getSelectedItem();
+                            final UserRef selected = selectUserPresenter.getSelectionModel().getSelected();
                             if (selected != null) {
                                 final ChangeUserAction changeUserAction = new ChangeUserAction();
                                 changeUserAction.setUserRef(relatedUser);
@@ -105,7 +103,7 @@ public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter i
         registerHandler(removeButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-                final UserRef selected = getSelectedItem();
+                final UserRef selected = getSelectionModel().getSelected();
                 if (selected != null) {
                     final ChangeUserAction changeUserAction = new ChangeUserAction();
                     changeUserAction.setUserRef(relatedUser);
@@ -119,16 +117,11 @@ public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter i
                 }
             }
         }));
-        registerHandler(addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(SelectionChangeEvent event) {
-                enableButtons();
-            }
-        }));
+        registerHandler(getSelectionModel().addSelectionHandler(event -> enableButtons()));
     }
 
     private void enableButtons() {
-        removeButton.setEnabled(getSelectedItem() != null);
+        removeButton.setEnabled(getSelectionModel().getSelected() != null);
     }
 
     public void setUser(final UserRef relateduser) {

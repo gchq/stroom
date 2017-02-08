@@ -16,7 +16,6 @@
 
 package stroom.cache.client.presenter;
 
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
@@ -52,12 +51,9 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
         super.onBind();
 
         registerHandler(
-                cacheListPresenter.getSelectionModel().addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-                    @Override
-                    public void onSelectionChange(final SelectionChangeEvent event) {
-                        final CacheRow row = cacheListPresenter.getSelectionModel().getSelectedObject();
-                        cacheNodeListPresenter.read(row);
-                    }
+                cacheListPresenter.getSelectionModel().addSelectionHandler(event -> {
+                    final CacheRow row = cacheListPresenter.getSelectionModel().getSelected();
+                    cacheNodeListPresenter.read(row);
                 }));
     }
 

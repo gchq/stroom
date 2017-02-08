@@ -16,9 +16,15 @@
 
 package stroom.entity.client.presenter;
 
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.data.grid.client.DoubleClickEvent;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceDeleteAction;
@@ -30,19 +36,9 @@ import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E extends NamedEntity> extends
-        MyPresenterWidget<ManageEntityPresenter.ManageEntityView>implements ManageEntityUiHandlers, HasHandlers {
+        MyPresenterWidget<ManageEntityPresenter.ManageEntityView> implements ManageEntityUiHandlers, HasHandlers {
     public static final String LIST = "LIST";
 
     protected final ManageEntityListPresenter<C, E> listPresenter;
@@ -58,9 +54,9 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
     protected C criteria;
 
     public ManageEntityPresenter(final EventBus eventBus, final ManageEntityView view,
-            final ManageEntityListPresenter<C, E> listPresenter, final Provider<?> editProvider,
-            final ManageNewEntityPresenter newPresenter,
-            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
+                                 final ManageEntityListPresenter<C, E> listPresenter, final Provider<?> editProvider,
+                                 final ManageNewEntityPresenter newPresenter,
+                                 final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
@@ -88,41 +84,25 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
 
     @Override
     protected void onBind() {
-        registerHandler(listPresenter.getView().addDoubleClickHandler(new DoubleClickEvent.Handler() {
-            @Override
-            public void onDoubleClick(final DoubleClickEvent event) {
+        registerHandler(listPresenter.getView().getSelectionModel().addSelectionHandler(event -> {
+            enableButtons();
+            if (event.getSelectionType().isDoubleSelect()) {
                 onOpen();
             }
         }));
-        registerHandler(listPresenter.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                enableButtons();
+        registerHandler(newButton.addClickHandler(event -> {
+            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                onNew();
             }
         }));
-
-        registerHandler(newButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
-                    onNew();
-                }
+        registerHandler(openButton.addClickHandler(event -> {
+            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                onOpen();
             }
         }));
-        registerHandler(openButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
-                    onOpen();
-                }
-            }
-        }));
-        registerHandler(deleteButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
-                    onDelete();
-                }
+        registerHandler(deleteButton.addClickHandler(event -> {
+            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                onDelete();
             }
         }));
 
@@ -175,7 +155,7 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
                                     @Override
                                     public void onSuccess(final E result) {
                                         listPresenter.refresh();
-                                        listPresenter.setSelectedItem(null, true);
+                                        listPresenter.getView().getSelectionModel().clear();
                                     }
                                 });
                             }

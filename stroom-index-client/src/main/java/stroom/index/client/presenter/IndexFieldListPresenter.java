@@ -21,7 +21,6 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -30,7 +29,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
-import stroom.data.grid.client.DoubleClickEvent;
 import stroom.data.grid.client.EndColumn;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
@@ -43,7 +41,6 @@ import stroom.query.shared.IndexFields;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,18 +54,14 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     private final GlyphButtonView removeButton;
     private final GlyphButtonView upButton;
     private final GlyphButtonView downButton;
-    private final MySingleSelectionModel<IndexField> selectionModel;
-    private IndexField selectedElement;
     private IndexFields indexFields;
 
     @SuppressWarnings("unchecked")
     @Inject
     public IndexFieldListPresenter(final EventBus eventBus,
                                    final IndexFieldEditPresenter indexFieldEditPresenter) {
-        super(eventBus, new DataGridViewImpl<IndexField>(true));
+        super(eventBus, new DataGridViewImpl<IndexField>(true, true));
         this.indexFieldEditPresenter = indexFieldEditPresenter;
-
-        selectionModel = (MySingleSelectionModel<IndexField>) getView().getSelectionModel();
 
         newButton = getView().addButton(GlyphIcons.NEW_ITEM);
         newButton.setTitle("New Field");
@@ -128,15 +121,9 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
                 }
             }
         }));
-        registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                enableButtons();
-            }
-        }));
-        registerHandler(getView().addDoubleClickHandler(new DoubleClickEvent.Handler() {
-            @Override
-            public void onDoubleClick(final DoubleClickEvent event) {
+        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
+            enableButtons();
+            if (event.getSelectionType().isDoubleSelect()) {
                 onEdit();
             }
         }));
@@ -145,7 +132,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     private void enableButtons() {
         if (indexFields != null && indexFields.getIndexFields() != null) {
             final List<IndexField> fieldList = indexFields.getIndexFields();
-            selectedElement = selectionModel.getSelectedObject();
+            final IndexField selectedElement = getView().getSelectionModel().getSelected();
             final boolean enabled = selectedElement != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);
@@ -274,7 +261,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void onEdit() {
-        final IndexField indexField = selectionModel.getSelectedObject();
+        final IndexField indexField = getView().getSelectionModel().getSelected();
         if (indexField != null) {
             final Set<String> otherNames = indexFields.getFieldNames();
             otherNames.remove(indexField.getFieldName());
@@ -303,14 +290,19 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void onRemove() {
-        final IndexField indexField = selectionModel.getSelectedObject();
-        if (indexField != null) {
-            ConfirmEvent.fire(this, "Are you sure you want to delete the selected field?", new ConfirmCallback() {
+        final List<IndexField> list = getView().getSelectionModel().getSelectedItems();
+        if (list != null && list.size() > 0) {
+            String message = "Are you sure you want to delete the selected field?";
+            if (list.size() > 1) {
+                message = "Are you sure you want to delete the selected fields?";
+            }
+
+            ConfirmEvent.fire(this, message, new ConfirmCallback() {
                 @Override
                 public void onResult(final boolean result) {
                     if (result) {
-                        indexFields.getIndexFields().remove(indexField);
-                        selectionModel.clear();
+                        indexFields.getIndexFields().removeAll(list);
+                        getView().getSelectionModel().clear();
                         refresh();
                         DirtyEvent.fire(IndexFieldListPresenter.this, true);
                     }
@@ -320,7 +312,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void moveSelectedFieldUp() {
-        final IndexField selected = selectionModel.getSelectedObject();
+        final IndexField selected = getView().getSelectionModel().getSelected();
         final List<IndexField> fieldList = indexFields.getIndexFields();
         if (selected != null) {
             final int index = fieldList.indexOf(selected);
@@ -336,7 +328,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void moveSelectedFieldDown() {
-        final IndexField selected = selectionModel.getSelectedObject();
+        final IndexField selected = getView().getSelectionModel().getSelected();
         final List<IndexField> fieldList = indexFields.getIndexFields();
         if (selected != null) {
             final int index = fieldList.indexOf(selected);

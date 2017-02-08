@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.process.client.presenter;
+package stroom.pipeline.processor.client.presenter;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -29,24 +29,12 @@ import stroom.data.grid.client.DoubleClickEvent;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.EntityReferenceComparator;
-import stroom.entity.shared.EntityServiceDeleteAction;
-import stroom.entity.shared.EntityServiceLoadAction;
-import stroom.entity.shared.EntityServiceSaveAction;
-import stroom.entity.shared.Folder;
-import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.Period;
+import stroom.entity.shared.*;
 import stroom.feed.shared.Feed;
+import stroom.pipeline.processor.shared.CreateProcessorAction;
+import stroom.pipeline.processor.shared.LoadEntityIdSetAction;
+import stroom.pipeline.processor.shared.SetId;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.process.shared.CreateProcessorAction;
-import stroom.process.shared.LoadEntityIdSetAction;
-import stroom.process.shared.SetId;
-import stroom.process.shared.StreamProcessorFilterRow;
-import stroom.process.shared.StreamProcessorRow;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.shared.Condition;
 import stroom.query.shared.ExpressionOperator;
@@ -71,7 +59,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.Collections;
 
@@ -183,16 +171,9 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     protected void onBind() {
         super.onBind();
 
-        registerHandler(processorListPresenter.getSelectionModel()
-                .addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-                    @Override
-                    public void onSelectionChange(final SelectionChangeEvent event) {
-                        updateData();
-                    }
-                }));
-        registerHandler(processorListPresenter.getView().addDoubleClickHandler(new DoubleClickEvent.Handler() {
-            @Override
-            public void onDoubleClick(final DoubleClickEvent event) {
+        registerHandler(processorListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            updateData();
+            if (event.getSelectionType().isDoubleSelect()) {
                 if (allowUpdate()) {
                     editProcessor();
                 }
@@ -201,7 +182,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     private void updateData() {
-        selectedProcessor = processorListPresenter.getSelectionModel().getSelectedObject();
+        selectedProcessor = processorListPresenter.getSelectionModel().getSelected();
 
         if (selectedProcessor == null) {
             enableButtons(false);
@@ -383,7 +364,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    public MySingleSelectionModel<SharedObject> getSelectionModel() {
+    public MultiSelectionModel<SharedObject> getSelectionModel() {
         return processorListPresenter.getSelectionModel();
     }
 
@@ -512,7 +493,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
         } else {
             // Now create the processor filter using the find stream criteria.
-            dispatcher.execute(new CreateProcessorAction(DocRefUtil.create(pipelineEntity), findStreamCriteria, false, 10),
+            dispatcher.execute(new CreateProcessorAction(DocRef.create(pipelineEntity), findStreamCriteria, false, 10),
                     new AsyncCallbackAdaptor<StreamProcessorFilter>() {
                         @Override
                         public void onSuccess(final StreamProcessorFilter result) {

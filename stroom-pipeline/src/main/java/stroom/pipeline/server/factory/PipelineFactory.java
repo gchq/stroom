@@ -1,17 +1,19 @@
 /*
- * Copyright 2016 Crown Copyright
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2017 Crown Copyright
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package stroom.pipeline.server.factory;
@@ -20,6 +22,7 @@ import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
 import stroom.pipeline.destination.DestinationProvider;
+import stroom.pipeline.server.SupportsCodeInjection;
 import stroom.pipeline.server.filter.SAXEventRecorder;
 import stroom.pipeline.server.filter.SAXRecordDetector;
 import stroom.pipeline.server.filter.SplitFilter;
@@ -268,12 +271,9 @@ public class PipelineFactory {
                                 if (request.getCode() != null && request.getCode().size() > 0) {
                                     final String code = request.getCode().get(id);
                                     if (code != null) {
-                                        if (elementInstance instanceof CombinedParser) {
-                                            final CombinedParser parser = (CombinedParser) elementInstance;
-                                            parser.setInjectedCode(code);
-                                        } else if (elementInstance instanceof XSLTFilter) {
-                                            final XSLTFilter xsltFilter = (XSLTFilter) elementInstance;
-                                            xsltFilter.setInjectedCode(code);
+                                        if (elementInstance instanceof SupportsCodeInjection) {
+                                            final SupportsCodeInjection supportsCodeInjection = (SupportsCodeInjection) elementInstance;
+                                            supportsCodeInjection.setInjectedCode(code);
                                         }
                                     }
                                 }

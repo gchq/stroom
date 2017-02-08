@@ -16,20 +16,6 @@
 
 package stroom.streamstore.client.presenter;
 
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.AlertCallback;
@@ -44,7 +30,6 @@ import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
 import stroom.entity.shared.Folder;
@@ -75,6 +60,20 @@ import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.Arrays;
 import java.util.List;
@@ -219,111 +218,90 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     protected void onBind() {
         super.onBind();
 
-        registerHandler(streamListPresenter.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                streamRelationListPresenter.setSelectedStream(streamListPresenter.getSelectedStream(), true,
-                        !StreamStatus.UNLOCKED.equals(getCriteria().obtainStatusSet().getSingleItem()));
-                showData();
-            }
+        registerHandler(streamListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            streamRelationListPresenter.setSelectedStream(streamListPresenter.getSelectedStream(), true,
+                    !StreamStatus.UNLOCKED.equals(getCriteria().obtainStatusSet().getSingleItem()));
+            showData();
         }));
-        registerHandler(streamListPresenter.addDataSelectionHandler(new DataSelectionHandler<EntityIdSet<Stream>>() {
-            @Override
-            public void onSelection(final DataSelectionEvent<EntityIdSet<Stream>> event) {
-                setStreamListSelectableEnabled(event.getSelectedItem(),
-                        findStreamAttributeMapCriteria.getFindStreamCriteria().obtainStatusSet().getSingleItem());
-            }
-        }));
-        registerHandler(streamRelationListPresenter.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                showData();
-            }
-        }));
+        registerHandler(streamListPresenter.addDataSelectionHandler(event -> setStreamListSelectableEnabled(event.getSelectedItem(),
+                findStreamAttributeMapCriteria.getFindStreamCriteria().obtainStatusSet().getSingleItem())));
+        registerHandler(streamRelationListPresenter.getSelectionModel().addSelectionHandler(event -> showData()));
         registerHandler(
-                streamRelationListPresenter.addDataSelectionHandler(new DataSelectionHandler<EntityIdSet<Stream>>() {
-                    @Override
-                    public void onSelection(final DataSelectionEvent<EntityIdSet<Stream>> event) {
-                        setStreamRelationListSelectableEnabled(event.getSelectedItem(), findStreamAttributeMapCriteria
-                                .getFindStreamCriteria().obtainStatusSet().getSingleItem());
-                    }
-                }));
+                streamRelationListPresenter.addDataSelectionHandler(event -> setStreamRelationListSelectableEnabled(event.getSelectedItem(), findStreamAttributeMapCriteria
+                        .getFindStreamCriteria().obtainStatusSet().getSingleItem())));
 
-        registerHandler(streamListFilter.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                final StreamFilterPresenter presenter = streamListFilterPresenter.get();
-                presenter.setCriteria(findStreamAttributeMapCriteria, folderVisible, feedVisible, pipelineVisible, true,
-                        true);
+        registerHandler(streamListFilter.addClickHandler(event -> {
+            final StreamFilterPresenter presenter = streamListFilterPresenter.get();
+            presenter.setCriteria(findStreamAttributeMapCriteria, folderVisible, feedVisible, pipelineVisible, true,
+                    true);
 
-                final PopupUiHandlers streamFilterPUH = new DefaultPopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            presenter.write();
+            final PopupUiHandlers streamFilterPUH = new DefaultPopupUiHandlers() {
+                @Override
+                public void onHideRequest(final boolean autoClose, final boolean ok) {
+                    if (ok) {
+                        presenter.write();
 
-                            if (!presenter.getCriteria().equals(findStreamAttributeMapCriteria)) {
-                                if (hasAdvancedCriteria(presenter.getCriteria())) {
-                                    ConfirmEvent.fire(StreamPresenter.this,
-                                            "You are setting advanced filters!  It is recommendend you constrain your filter (e.g. by 'Created') to avoid an expensive query.  "
-                                                    + "Are you sure you want to apply this advanced filter?",
-                                            new ConfirmCallback() {
-                                                @Override
-                                                public void onResult(final boolean confirm) {
-                                                    if (confirm) {
-                                                        applyCriteriaAndShow(presenter);
-                                                        HidePopupEvent.fire(StreamPresenter.this, presenter);
-                                                    } else {
-                                                        // Don't hide
-                                                    }
+                        if (!presenter.getCriteria().equals(findStreamAttributeMapCriteria)) {
+                            if (hasAdvancedCriteria(presenter.getCriteria())) {
+                                ConfirmEvent.fire(StreamPresenter.this,
+                                        "You are setting advanced filters!  It is recommendend you constrain your filter (e.g. by 'Created') to avoid an expensive query.  "
+                                                + "Are you sure you want to apply this advanced filter?",
+                                        new ConfirmCallback() {
+                                            @Override
+                                            public void onResult(final boolean confirm) {
+                                                if (confirm) {
+                                                    applyCriteriaAndShow(presenter);
+                                                    HidePopupEvent.fire(StreamPresenter.this, presenter);
+                                                } else {
+                                                    // Don't hide
                                                 }
+                                            }
 
-                                            });
-
-                                } else {
-                                    applyCriteriaAndShow(presenter);
-                                    HidePopupEvent.fire(StreamPresenter.this, presenter);
-                                }
+                                        });
 
                             } else {
-                                // Nothing changed!
+                                applyCriteriaAndShow(presenter);
                                 HidePopupEvent.fire(StreamPresenter.this, presenter);
                             }
 
                         } else {
+                            // Nothing changed!
                             HidePopupEvent.fire(StreamPresenter.this, presenter);
                         }
+
+                    } else {
+                        HidePopupEvent.fire(StreamPresenter.this, presenter);
+                    }
+                }
+
+                private void applyCriteriaAndShow(final StreamFilterPresenter presenter) {
+                    // Copy new filter settings back.
+                    findStreamAttributeMapCriteria.copyFrom(presenter.getCriteria());
+                    // Reset the page offset.
+                    findStreamAttributeMapCriteria.obtainPageRequest().setOffset(0L);
+
+                    // Init the buttons
+                    setStreamListSelectableEnabled(streamListPresenter.getSelectedEntityIdSet(),
+                            findStreamAttributeMapCriteria.getFindStreamCriteria().obtainStatusSet()
+                                    .getSingleItem());
+
+                    // Get a new list of streams.
+                    streamListPresenter.refresh();
+
+                    // If something is selected refresh the
+                    // relations
+                    if (streamListPresenter.getSelectedStream() != null) {
+                        streamRelationListPresenter.setSelectedStream(streamListPresenter.getSelectedStream(), true,
+                                !StreamStatus.UNLOCKED.equals(getCriteria().obtainStatusSet().getSingleItem()));
                     }
 
-                    private void applyCriteriaAndShow(final StreamFilterPresenter presenter) {
-                        // Copy new filter settings back.
-                        findStreamAttributeMapCriteria.copyFrom(presenter.getCriteria());
-                        // Reset the page offset.
-                        findStreamAttributeMapCriteria.obtainPageRequest().setOffset(0L);
+                    showData();
+                }
+            };
 
-                        // Init the buttons
-                        setStreamListSelectableEnabled(streamListPresenter.getSelectedEntityIdSet(),
-                                findStreamAttributeMapCriteria.getFindStreamCriteria().obtainStatusSet()
-                                        .getSingleItem());
-
-                        // Get a new list of streams.
-                        streamListPresenter.refresh();
-
-                        // If something is selected refresh the
-                        // relations
-                        if (streamListPresenter.getSelectedStream() != null) {
-                            streamRelationListPresenter.setSelectedStream(streamListPresenter.getSelectedStream(), true,
-                                    !StreamStatus.UNLOCKED.equals(getCriteria().obtainStatusSet().getSingleItem()));
-                        }
-
-                        showData();
-                    }
-                };
-
-                final PopupSize popupSize = new PopupSize(412, 600, 412, 600, true);
-                ShowPopupEvent.fire(StreamPresenter.this, presenter, PopupType.OK_CANCEL_DIALOG, popupSize,
-                        "Filter Streams", streamFilterPUH);
-            }
+            final PopupSize popupSize = new PopupSize(412, 600, 412, 600, true);
+            ShowPopupEvent.fire(StreamPresenter.this, presenter, PopupType.OK_CANCEL_DIALOG, popupSize,
+                    "Filter Streams", streamFilterPUH);
         }));
 
         // Some button's may not exist due to permissions
@@ -530,7 +508,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         if (streamListPresenter.getResultList() == null || streamListPresenter.getResultList().size() == 0) {
             return false;
         }
-        return !(selectedIdSet == null || selectedIdSet.isMatchNothing());
+        return selectedIdSet != null && (Boolean.TRUE.equals(selectedIdSet.getMatchAll()) || selectedIdSet.size() > 0);
     }
 
     public void setStreamListSelectableEnabled(final EntityIdSet<Stream> streamIdSet, final StreamStatus streamStatus) {
@@ -541,8 +519,9 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
         if (streamListDelete != null) {
             streamListDelete
-                    .setEnabled(someSelected && isSelectedAllOfStatus(getCriteria().obtainStatusSet().getSingleItem(),
-                            streamListPresenter, streamIdSet, StreamStatus.LOCKED, StreamStatus.UNLOCKED));
+                    .setEnabled(someSelected);
+            // && isSelectedAllOfStatus(getCriteria().obtainStatusSet().getSingleItem(),
+//                            streamListPresenter, streamIdSet, StreamStatus.LOCKED, StreamStatus.UNLOCKED));
         }
         if (streamListProcess != null) {
             streamListProcess.setEnabled(someSelected);
@@ -593,7 +572,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 //                    .getPipelineIdSet();
 //            if (entityIdSet != null) {
 //                if (entityIdSet.getSet().size() > 0) {
-//                    pipelineRef = DocRefUtil.create(entityIdSet.getSet().iterator().next());
+//                    pipelineRef = DocRef.create(entityIdSet.getSet().iterator().next());
 //                }
 //            }
 
@@ -723,11 +702,11 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             super(streamPresenter, streamListPresenter, useCriteria, dispatcher);
         }
 
-        protected String getDeleteText(final FindStreamCriteria criteria) {
+        protected String getDeleteText(final FindStreamCriteria criteria, final boolean pastTense) {
             if (StreamStatus.DELETED.equals(criteria.obtainStatusSet().getSingleItem())) {
-                return "Un-delete";
+                return "Restore" + (pastTense ? "d" : "");
             } else {
-                return "Delete";
+                return "Delete" + (pastTense ? "d" : "");
             }
         }
 
@@ -748,7 +727,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                 AlertEvent.fireError(this, "Unable to action command on mixed status", null);
             } else {
                 ConfirmEvent.fire(this,
-                        "Are you sure you want to " + getDeleteText(deleteCriteria) + " the selected items?",
+                        "Are you sure you want to " + getDeleteText(deleteCriteria, false).toLowerCase() + " the selected items?",
                         new ConfirmCallback() {
                             @Override
                             public void onResult(final boolean confirm) {
@@ -756,7 +735,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                                     if (!deleteCriteria.getStreamIdSet().isConstrained()) {
                                         ConfirmEvent.fireWarn(DeleteStreamClickHandler.this,
                                                 "You have selected all items.  Are you sure you want to "
-                                                        + getDeleteText(deleteCriteria) + " all the selected items?",
+                                                        + getDeleteText(deleteCriteria, false).toLowerCase() + " all the selected items?",
                                                 new ConfirmCallback() {
                                                     @Override
                                                     public void onResult(final boolean confirm) {
@@ -781,13 +760,11 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                     new AsyncCallbackAdaptor<SharedLong>() {
                         @Override
                         public void onSuccess(final SharedLong result) {
+                            getStreamListPresenter().getSelectedEntityIdSet().clear();
+                            getStreamListPresenter().getSelectedEntityIdSet().setMatchAll(false);
+
                             AlertEvent.fireInfo(DeleteStreamClickHandler.this,
-                                    getDeleteText(criteria) + " " + result + " records", new AlertCallback() {
-                                        @Override
-                                        public void onClose() {
-                                            refreshList();
-                                        }
-                                    });
+                                    getDeleteText(criteria, true) + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), () -> refreshList());
                         }
                     });
         }

@@ -19,10 +19,7 @@ package stroom.jobsystem.client.presenter;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -41,36 +38,32 @@ import stroom.entity.shared.EntityRow;
 import stroom.entity.shared.ResultList;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
-import stroom.streamstore.client.presenter.InterceptingSelectionChangeHandler;
 import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>>
-        implements SelectionChangeEvent.HasSelectionChangedHandlers {
+public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
     private EntityServiceFindActionDataProvider<FindJobCriteria, Job> dataProvider;
-    private final InterceptingSelectionChangeHandler interceptingSelectionChangeHandler = new InterceptingSelectionChangeHandler();
-    private final MySingleSelectionModel<Job> selectionModel = new MySingleSelectionModel<Job>() {
-        @Override
-        protected boolean isSelectable(final Job item) {
-            return item.isPersistent();
-        }
-    };
+//    private final InterceptingSelectionChangeHandler interceptingSelectionChangeHandler = new InterceptingSelectionChangeHandler();
+//    private final MySingleSelectionModel<Job> selectionModel = new MySingleSelectionModel<Job>() {
+//        @Override
+//        protected boolean isSelectable(final Job item) {
+//            return item.isPersistent();
+//        }
+//    };
 
     private final SaveQueue<Job> jobSaver;
 
     @Inject
     public JobListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                             final TooltipPresenter tooltipPresenter) {
-        super(eventBus, new DataGridViewImpl<Job>(false));
+        super(eventBus, new DataGridViewImpl<Job>(true));
 
         jobSaver = new SaveQueue<Job>(dispatcher);
-
-        getView().setSelectionModel(selectionModel);
 
         getView().addColumn(new InfoHelpLinkColumn<Job>() {
             @Override
@@ -159,19 +152,17 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>>
 
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(selectionModel.addSelectionChangeHandler(interceptingSelectionChangeHandler));
-    }
+//    @Override
+//    public HandlerRegistration addSelectionChangeHandler(final Handler handler) {
+//        return interceptingSelectionChangeHandler.addSelectionChangeHandler(handler);
+//    }
+//
+//
+//    public HandlerRegistration addSelectionHandler(DataGridSelectEvent.Handler handler) {
+//        return getView().addSelectionHandler(handler);
+//    }
 
-    public MySingleSelectionModel<Job> getSelectionModel() {
-        return selectionModel;
+    public MultiSelectionModel<Job> getSelectionModel() {
+        return getView().getSelectionModel();
     }
-
-    @Override
-    public HandlerRegistration addSelectionChangeHandler(final Handler handler) {
-        return interceptingSelectionChangeHandler.addSelectionChangeHandler(handler);
-    }
-
 }

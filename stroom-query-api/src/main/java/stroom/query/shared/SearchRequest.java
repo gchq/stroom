@@ -16,15 +16,10 @@
 
 package stroom.query.shared;
 
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
-
-import javax.xml.bind.annotation.*;
-import java.io.Serializable;
 import java.util.Map;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "searchRequest", propOrder = {"search", "componentResultRequests", "dateTimeLocale"})
+@XmlType(name = "searchRequest", propOrder = {"search", "componentResultRequests"})
 @XmlRootElement(name = "searchRequest")
 public class SearchRequest implements Serializable {
     private static final long serialVersionUID = -6668626615097471925L;
@@ -35,18 +30,13 @@ public class SearchRequest implements Serializable {
     @XmlElement
     private Map<String, ComponentResultRequest> componentResultRequests;
 
-    @XmlElement
-    private String dateTimeLocale;
-
     public SearchRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public SearchRequest(final Search search, final Map<String, ComponentResultRequest> componentResultRequests,
-            final String dateTimeLocale) {
+    public SearchRequest(final Search search, final Map<String, ComponentResultRequest> componentResultRequests) {
         this.search = search;
         this.componentResultRequests = componentResultRequests;
-        this.dateTimeLocale = dateTimeLocale;
     }
 
     public Search getSearch() {
@@ -55,10 +45,6 @@ public class SearchRequest implements Serializable {
 
     public Map<String, ComponentResultRequest> getComponentResultRequests() {
         return componentResultRequests;
-    }
-
-    public String getDateTimeLocale() {
-        return dateTimeLocale;
     }
 
     @Override

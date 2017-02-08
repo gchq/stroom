@@ -1,17 +1,19 @@
 /*
- * Copyright 2016 Crown Copyright
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2017 Crown Copyright
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package stroom.entity.client;
@@ -49,7 +51,6 @@ import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.client.presenter.MultiSelectionModel;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.EntityData;
@@ -76,6 +77,7 @@ import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.ImageIcon;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -160,7 +162,9 @@ public class EntityPluginEventManager extends Plugin {
         registerHandler(
                 getEventBus().addHandler(ExplorerTreeSelectEvent.getType(), event -> {
                     // Remember the selection model.
-                    selectionModel = event.getSelectionModel();
+                    if (event.getSelectionModel() != null) {
+                        selectionModel = event.getSelectionModel();
+                    }
 
                     if (!event.getSelectionType().isRightClick() && !event.getSelectionType().isMultiSelect()) {
                         final ExplorerData explorerData = event.getSelectionModel().getSelected();
@@ -233,8 +237,8 @@ public class EntityPluginEventManager extends Plugin {
 
         // 10. Handle entity delete events.
         registerHandler(getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
-            if (selectionModel != null && selectionModel.getSelectedItems().size() > 0) {
-                fetchPermissions(selectionModel.getSelectedItems(), new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
+            if (getSelectedItems().size() > 0) {
+                fetchPermissions(getSelectedItems(), new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
                     @Override
                     public void onSuccess(final SharedMap<ExplorerData, ExplorerPermissions> documentPermissionMap) {
                         documentTypeCache.fetch(new AsyncCallbackAdaptor<DocumentTypes>() {
@@ -262,8 +266,8 @@ public class EntityPluginEventManager extends Plugin {
         // Not handled as it is done directly.
 
         registerHandler(getEventBus().addHandler(ShowNewMenuEvent.getType(), event -> {
-            if (selectionModel != null && selectionModel.getSelectedItems().size() == 1) {
-                final ExplorerData primarySelection = selectionModel.getSelected();
+            if (getSelectedItems().size() == 1) {
+                final ExplorerData primarySelection = getPrimarySelection();
                 getNewMenuItems(primarySelection, new AsyncCallbackAdaptor<List<Item>>() {
                     @Override
                     public void onSuccess(final List<Item> children) {
@@ -277,32 +281,31 @@ public class EntityPluginEventManager extends Plugin {
             }
         }));
         registerHandler(getEventBus().addHandler(ShowExplorerMenuEvent.getType(), event -> {
-            if (selectionModel != null) {
-                final boolean singleSelection = selectionModel.getSelectedItems().size() == 1;
-                final ExplorerData primarySelection = selectionModel.getSelected();
+            final List<ExplorerData> selectedItems = getSelectedItems();
+            final boolean singleSelection = selectedItems.size() == 1;
+            final ExplorerData primarySelection = getPrimarySelection();
 
-                if (selectionModel.getSelectedItems().size() > 0) {
-                    fetchPermissions(selectionModel.getSelectedItems(), new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
-                        @Override
-                        public void onSuccess(final SharedMap<ExplorerData, ExplorerPermissions> documentPermissionMap) {
-                            documentTypeCache.fetch(new AsyncCallbackAdaptor<DocumentTypes>() {
-                                @Override
-                                public void onSuccess(final DocumentTypes documentTypes) {
-                                    final List<Item> menuItems = new ArrayList<>();
+            if (selectedItems.size() > 0) {
+                fetchPermissions(selectedItems, new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
+                    @Override
+                    public void onSuccess(final SharedMap<ExplorerData, ExplorerPermissions> documentPermissionMap) {
+                        documentTypeCache.fetch(new AsyncCallbackAdaptor<DocumentTypes>() {
+                            @Override
+                            public void onSuccess(final DocumentTypes documentTypes) {
+                                final List<Item> menuItems = new ArrayList<>();
 
-                                    // Only allow the new menu to appear if we have a single selection.
-                                    addNewMenuItem(menuItems, singleSelection, documentPermissionMap, primarySelection, documentTypes);
-                                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
+                                // Only allow the new menu to appear if we have a single selection.
+                                addNewMenuItem(menuItems, singleSelection, documentPermissionMap, primarySelection, documentTypes);
+                                addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
-                                    menuListPresenter.setData(menuItems);
-                                    final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                                    ShowPopupEvent.fire(EntityPluginEventManager.this, menuListPresenter, PopupType.POPUP,
-                                            popupPosition, null);
-                                }
-                            });
-                        }
-                    });
-                }
+                                menuListPresenter.setData(menuItems);
+                                final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
+                                ShowPopupEvent.fire(EntityPluginEventManager.this, menuListPresenter, PopupType.POPUP,
+                                        popupPosition, null);
+                            }
+                        });
+                    }
+                });
             }
         }));
     }
@@ -327,37 +330,34 @@ public class EntityPluginEventManager extends Plugin {
         event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU, new SimpleParentMenuItem(1, "Item", null) {
             @Override
             public void getChildren(final AsyncCallback<List<Item>> callback) {
-                if (selectionModel != null) {
-                    final boolean singleSelection = selectionModel.getSelectedItems().size() == 1;
-                    final ExplorerData primarySelection = selectionModel.getSelected();
+                final List<ExplorerData> selectedItems = getSelectedItems();
+                final boolean singleSelection = selectedItems.size() == 1;
+                final ExplorerData primarySelection = getPrimarySelection();
 
-                    if (selectionModel.getSelectedItems().size() > 0) {
-                        fetchPermissions(selectionModel.getSelectedItems(), new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
+                fetchPermissions(selectedItems, new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
+                    @Override
+                    public void onSuccess(final SharedMap<ExplorerData, ExplorerPermissions> documentPermissionMap) {
+                        documentTypeCache.fetch(new AsyncCallbackAdaptor<DocumentTypes>() {
                             @Override
-                            public void onSuccess(final SharedMap<ExplorerData, ExplorerPermissions> documentPermissionMap) {
-                                documentTypeCache.fetch(new AsyncCallbackAdaptor<DocumentTypes>() {
-                                    @Override
-                                    public void onSuccess(final DocumentTypes documentTypes) {
-                                        final List<Item> menuItems = new ArrayList<>();
+                            public void onSuccess(final DocumentTypes documentTypes) {
+                                final List<Item> menuItems = new ArrayList<>();
 
-                                        // Only allow the new menu to appear if we have a single selection.
-                                        addNewMenuItem(menuItems, singleSelection, documentPermissionMap, primarySelection, documentTypes);
-                                        menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
-                                        menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
-                                        menuItems.add(new Separator(5));
-                                        menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
-                                        menuItems.add(createSaveAsMenuItem(7, isEntityTabData(selectedTab)));
-                                        menuItems.add(createSaveAllMenuItem(8, isTabItemSelected(selectedTab)));
-                                        menuItems.add(new Separator(9));
-                                        addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
+                                // Only allow the new menu to appear if we have a single selection.
+                                addNewMenuItem(menuItems, singleSelection, documentPermissionMap, primarySelection, documentTypes);
+                                menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
+                                menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
+                                menuItems.add(new Separator(5));
+                                menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
+                                menuItems.add(createSaveAsMenuItem(7, isEntityTabData(selectedTab)));
+                                menuItems.add(createSaveAllMenuItem(8, isTabItemSelected(selectedTab)));
+                                menuItems.add(new Separator(9));
+                                addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
-                                        callback.onSuccess(menuItems);
-                                    }
-                                });
+                                callback.onSuccess(menuItems);
                             }
                         });
                     }
-                }
+                });
             }
         });
     }
@@ -445,7 +445,7 @@ public class EntityPluginEventManager extends Plugin {
 
         menuItems.add(createCopyMenuItem(readableItems, 3, allowRead));
         menuItems.add(createMoveMenuItem(updatableItems, 4, allowUpdate));
-        menuItems.add(createRenameMenuItem(updatableItems, 5, allowUpdate));
+        menuItems.add(createRenameMenuItem(updatableItems, 5, singleSelection && allowUpdate));
         menuItems.add(createDeleteMenuItem(deletableItems, 6, allowDelete));
 
         // Only allow users to change permissions if they have a single item selected.
@@ -607,5 +607,21 @@ public class EntityPluginEventManager extends Plugin {
         }
 
         return false;
+    }
+
+    private List<ExplorerData> getSelectedItems() {
+        if (selectionModel == null) {
+            return Collections.emptyList();
+        }
+
+        return selectionModel.getSelectedItems();
+    }
+
+    private ExplorerData getPrimarySelection() {
+        if (selectionModel == null) {
+            return null;
+        }
+
+        return selectionModel.getSelected();
     }
 }

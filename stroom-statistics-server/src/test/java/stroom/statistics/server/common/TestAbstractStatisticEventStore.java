@@ -417,7 +417,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final FindEventCriteria criteria = AbstractStatistics.buildCriteria(search, dataSource);
 
         Assert.assertNotNull(criteria);
-        Assert.assertEquals("[MyField=]", criteria.getFilterTermsTree().toString());
+        Assert.assertEquals("[]", criteria.getFilterTermsTree().toString());
     }
 
     @Test

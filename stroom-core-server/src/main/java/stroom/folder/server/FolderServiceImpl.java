@@ -28,6 +28,7 @@ import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderIdSet;
 import stroom.entity.shared.FolderService;
+import stroom.entity.shared.HasFolder;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.logging.StroomLogger;
@@ -109,7 +110,11 @@ public class FolderServiceImpl extends DocumentEntityServiceImpl<Folder, FindFol
                 final Collection<DocumentEntityService<?>> serviceList = genericEntityService.findAll();
                 for (final DocumentEntityService<?> service : serviceList) {
                     final BaseEntity e = service.getEntityClass().newInstance();
-                    permissionList.add(DocumentPermissionNames.getDocumentCreatePermission(e.getType()));
+
+                    // Exclude queries as they aren't really entities that live in folders.
+                    if (!"Query".equals(e.getType())) {
+                        permissionList.add(DocumentPermissionNames.getDocumentCreatePermission(e.getType()));
+                    }
                 }
             } catch (final IllegalAccessException | InstantiationException | RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);

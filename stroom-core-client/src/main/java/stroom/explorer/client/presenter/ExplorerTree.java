@@ -1,17 +1,19 @@
 /*
- * Copyright 2016 Crown Copyright
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2017 Crown Copyright
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package stroom.explorer.client.presenter;
@@ -26,13 +28,11 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.explorer.client.event.ExplorerTreeSelectEvent;
-import stroom.explorer.client.event.SelectionType;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerData;
@@ -40,6 +40,11 @@ import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.HasNodeState;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.DoubleSelectTest;
+import stroom.widget.util.client.MultiSelectEvent;
+import stroom.widget.util.client.MultiSelectEvent.Handler;
+import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SelectionType;
 
 import java.util.List;
 import java.util.Set;
@@ -64,15 +69,12 @@ public class ExplorerTree extends AbstractExporerTree {
         spinnerSmall.getElement().getStyle().setRight(5, Style.Unit.PX);
         spinnerSmall.getElement().getStyle().setTop(5, Style.Unit.PX);
 
-        selectionModel = new MultiSelectionModel<>();
-
         final ExplorerCell explorerCell = new ExplorerCell();
         expanderClassName = explorerCell.getExpanderClassName();
 
         final ExplorerTreeResources resources = GWT.create(ExplorerTreeResources.class);
         cellTable = new CellTable<>(Integer.MAX_VALUE, resources);
         cellTable.setWidth("100%");
-        cellTable.setKeyboardSelectionHandler(new MyKeyboardSelectionHandler(cellTable));
         cellTable.addColumn(new Column<ExplorerData, ExplorerData>(explorerCell) {
             @Override
             public ExplorerData getValue(ExplorerData object) {
@@ -81,9 +83,21 @@ public class ExplorerTree extends AbstractExporerTree {
         });
 
         cellTable.setLoadingIndicator(null);
-        cellTable.setSelectionModel(selectionModel);
 
-        cellTable.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.ENABLED);
+        final MultiSelectionModelImpl<ExplorerData> multiSelectionModel = new MultiSelectionModelImpl<ExplorerData>() {
+            @Override
+            public HandlerRegistration addSelectionHandler(final Handler handler) {
+                return addHandler(handler, MultiSelectEvent.getType());
+            }
+
+            @Override
+            protected void fireChange() {
+                MultiSelectEvent.fire(ExplorerTree.this, new SelectionType(false, false, allowMultiSelect, false, false));
+            }
+        };
+        cellTable.setSelectionModel(multiSelectionModel, new MySelectionEventManager(cellTable));
+        selectionModel = multiSelectionModel;
+        cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
 
         cellTable.getRowContainer().getStyle().setCursor(Style.Cursor.POINTER);
 
@@ -245,7 +259,7 @@ public class ExplorerTree extends AbstractExporerTree {
             selectionModel.setSelected(selection);
         }
 
-        ExplorerTreeSelectEvent.fire(ExplorerTree.this, selectionModel, selectionType);
+        MultiSelectEvent.fire(ExplorerTree.this, selectionType);
     }
 
     public ExplorerTreeModel getTreeModel() {
@@ -254,10 +268,6 @@ public class ExplorerTree extends AbstractExporerTree {
 
     public MultiSelectionModel<ExplorerData> getSelectionModel() {
         return selectionModel;
-    }
-
-    public HandlerRegistration addSelectionHandler(final ExplorerTreeSelectEvent.Handler handler) {
-        return addHandler(handler, ExplorerTreeSelectEvent.getType());
     }
 
     public HandlerRegistration addContextMenuHandler(final ShowExplorerMenuEvent.Handler handler) {
@@ -279,8 +289,8 @@ public class ExplorerTree extends AbstractExporerTree {
         ExplorerTreeStyle cellTableStyle();
     }
 
-    private class MyKeyboardSelectionHandler extends AbstractCellTable.CellTableKeyboardSelectionHandler<ExplorerData> {
-        MyKeyboardSelectionHandler(AbstractCellTable<ExplorerData> table) {
+    private class MySelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<ExplorerData> {
+        MySelectionEventManager(AbstractCellTable<ExplorerData> table) {
             super(table);
         }
 

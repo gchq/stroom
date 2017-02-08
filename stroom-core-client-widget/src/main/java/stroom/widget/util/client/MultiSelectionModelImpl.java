@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.presenter;
+package stroom.widget.util.client;
 
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.HasSelection;
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
+import stroom.widget.util.client.MultiSelectEvent.Handler;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -26,28 +28,33 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class MultiSelectionModel<T> extends AbstractSelectionModel<T> implements HasSelection<T> {
+public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<T> implements MultiSelectionModel<T>, HasSelection<T> {
     private final Deque<T> selectedItems = new ArrayDeque<>();
     private final Set<T> changes = new HashSet<>();
 
-    public MultiSelectionModel() {
+    public MultiSelectionModelImpl() {
         super(null);
     }
 
     /**
-     * Get the list of selected items.
-     *
-     * @return the list of selected items
+     * Get a list of all selected items.
      */
+    @Override
     public List<T> getSelectedItems() {
         return new ArrayList<>(selectedItems);
     }
 
+    /**
+     * Tests if the specified item is selected.
+     */
     @Override
     public boolean isSelected(final T item) {
         return selectedItems.contains(item);
     }
 
+    /**
+     * Sets the selected state of the specified item.
+     */
     @Override
     public void setSelected(final T item, final boolean selected) {
         if (item != null) {
@@ -59,19 +66,23 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> implements
             if (currentlySelected != selected) {
                 changes.add(item);
                 fireSelectionChangeEvent();
+                fireChange();
             }
         }
     }
 
+    /**
+     * Gets the most recently selected item or only selected item if an item is selected, null otherwise.
+     */
     @Override
-    public boolean hasSelectionChanged(final T item) {
-        return changes.remove(item);
-    }
-
     public T getSelected() {
         return selectedItems.peekFirst();
     }
 
+    /**
+     * Sets the specified item as the only selected item, i.e. clears the current selection and sets a single item selected.
+     */
+    @Override
     public void setSelected(final T item) {
         if (item == null) {
             clear();
@@ -91,15 +102,30 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> implements
                 selectedItems.add(item);
 
                 fireSelectionChangeEvent();
+                fireChange();
             }
         }
     }
 
+    /**
+     * Clears all selected items.
+     */
+    @Override
     public void clear() {
         if (selectedItems.size() > 0) {
             changes.addAll(selectedItems);
             selectedItems.clear();
             fireSelectionChangeEvent();
+            fireChange();
         }
+    }
+
+    protected void fireChange() {
+
+    }
+
+    @Override
+    public boolean hasSelectionChanged(final T item) {
+        return changes.remove(item);
     }
 }

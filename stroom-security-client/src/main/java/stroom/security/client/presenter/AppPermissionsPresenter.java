@@ -16,7 +16,6 @@
 
 package stroom.security.client.presenter;
 
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
@@ -44,8 +43,6 @@ public class AppPermissionsPresenter extends
         MyPresenterWidget<DataGridViewImpl<String>> {
     private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
-//    private final DataGridView<String> permissionTable;
-//    private final MySingleSelectionModel<String> selectedFeature = new MySingleSelectionModel<String>();
 
     private UserAppPermissions userAppPermissions;
 
@@ -59,18 +56,7 @@ public class AppPermissionsPresenter extends
         this.securityContext = securityContext;
 
         addColumns();
-//        permissionTable = getView();
     }
-
-//    @Override
-//    protected void onBind() {
-//        registerHandler(selectedFeature.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-//            @Override
-//            public void onSelectionChange(final SelectionChangeEvent event) {
-//                changeSelectedFeature();
-//            }
-//        }));
-//    }
 
     public void setUser(final UserRef userRef) {
         this.relatedUser = userRef;
@@ -95,54 +81,9 @@ public class AppPermissionsPresenter extends
         });
     }
 
-//    private DataGridViewImpl<String> createFeatureTable() {
-//        final DataGridViewImpl<String> featureTable = new DataGridViewImpl<String>(true, 1000);
-//        featureTable.setSelectionModel(selectedFeature);
-//
-//        // featureTable.addColumn(new InfoHelpLinkColumn<String>() {
-//        // @Override
-//        // public InfoCell.State getValue(final String feature) {
-//        // return InfoCell.State.HELP;
-//        // }
-//        //
-//        // @Override
-//        // protected String getHelpLink(final String feature) {
-//        // return GWT.getHostPageBaseURL() + "doc/user-guide/roles/roles.html"
-//        // + formatAnchor(feature);
-//        // }
-//        //
-//        // }, "<br/>", 20);
-//
-//        featureTable.addColumn(new Column<String, String>(new TextCell()) {
-//            @Override
-//            public String getValue(final String row) {
-//                return row;
-//            }
-//        }, "Feature", 150);
-//
-//        featureTable.addEndColumn(new EndColumn<String>());
-//
-//        return featureTable;
-//    }
-
     private void addColumns() {
         final boolean updateable = isCurrentUserUpdate();
         final TickBoxCell.Appearance appearance = updateable ? new TickBoxCell.DefaultAppearance() : new TickBoxCell.NoBorderAppearance();
-
-//        final DataGridViewImpl<String> permissionTable = new DataGridViewImpl<String>(false, 1000);
-
-//        permissionTable.addColumn(new InfoHelpLinkColumn<String>() {
-//            @Override
-//            public InfoCell.State getValue(final String row) {
-//                return InfoCell.State.HELP;
-//            }
-//
-//            @Override
-//            protected String getHelpLink(final String row) {
-//                return GWT.getHostPageBaseURL() + "doc/user-guide/roles/roles.html" + formatAnchor(row);
-//            }
-//
-//        }, "<br/>", 20);
 
         getView().addColumn(new Column<String, String>(new TextCell()) {
             @Override
@@ -165,41 +106,24 @@ public class AppPermissionsPresenter extends
             }
         };
         if (updateable) {
-            selectionColumn.setFieldUpdater(new FieldUpdater<String, TickBoxState>() {
-                @Override
-                public void update(final int index, final String permission, final TickBoxState value) {
-                    final ChangeUserAction changeUserAction = new ChangeUserAction();
-                    changeUserAction.setUserRef(relatedUser);
-                    if (value.toBoolean()) {
-                        changeUserAction.getChangedAppPermissions().add(permission);
-                    } else {
-                        changeUserAction.getChangedAppPermissions().remove(permission);
-                    }
-                    dispatcher.execute(changeUserAction, new AsyncCallbackAdaptor<VoidResult>() {
-                        @Override
-                        public void onSuccess(VoidResult result) {
-                            refresh();
-                        }
-                    });
+            selectionColumn.setFieldUpdater((index, permission, value) -> {
+                final ChangeUserAction changeUserAction = new ChangeUserAction();
+                changeUserAction.setUserRef(relatedUser);
+                if (value.toBoolean()) {
+                    changeUserAction.getChangedAppPermissions().add(permission);
+                } else {
+                    changeUserAction.getChangedAppPermissions().remove(permission);
                 }
+                dispatcher.execute(changeUserAction, new AsyncCallbackAdaptor<VoidResult>() {
+                    @Override
+                    public void onSuccess(VoidResult result) {
+                        refresh();
+                    }
+                });
             });
         }
         getView().addColumn(selectionColumn, "<br/>", 50);
     }
-
-//    private void changeSelectedFeature() {
-//        final String feature = selectedFeature.getSelectedObject();
-//        if (feature != null) {
-//            final List<String> permissions = new ArrayList<String>(
-//                    userAppPermissions.getAllPermissions().get(feature));
-//            Collections.sort(permissions);
-//            permissionTable.setRowData(0, permissions);
-//            permissionTable.setRowCount(permissions.size(), true);
-//        } else {
-//            permissionTable.setRowData(0, null);
-//            permissionTable.setRowCount(0, true);
-//        }
-//    }
 
     protected boolean isCurrentUserUpdate() {
         return securityContext.hasAppPermission(User.MANAGE_USERS_PERMISSION);

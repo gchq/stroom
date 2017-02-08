@@ -58,10 +58,9 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,16 +68,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class AbstractStreamListPresenter extends MyPresenterWidget<DataGridView<StreamAttributeMap>>implements
-        SelectionChangeEvent.HasSelectionChangedHandlers, HasDataSelectionHandlers<EntityIdSet<Stream>>, Refreshable {
+public abstract class AbstractStreamListPresenter extends MyPresenterWidget<DataGridView<StreamAttributeMap>>implements HasDataSelectionHandlers<EntityIdSet<Stream>>, Refreshable {
     private final TooltipPresenter tooltipPresenter;
     private final ClientSecurityContext securityContext;
 
-    private final MySingleSelectionModel<StreamAttributeMap> selectionModel = new MySingleSelectionModel<StreamAttributeMap>();
+//    private final MySingleSelectionModel<StreamAttributeMap> selectionModel = new MySingleSelectionModel<StreamAttributeMap>();
     // private final EntityIdSet<Stream> masterEntityIdSet = new
     // EntityIdSet<Stream>();
     private final EntityIdSet<Stream> entityIdSet = new EntityIdSet<Stream>();
-    private final InterceptingSelectionChangeHandler interceptingSelectionChangeHandler = new InterceptingSelectionChangeHandler();
+//    private final InterceptingSelectionChangeHandler interceptingSelectionChangeHandler = new InterceptingSelectionChangeHandler();
     private final ClientDispatchAsync dispatcher;
     protected EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamAttributeMap> dataProvider;
     private ResultList<StreamAttributeMap> resultList = null;
@@ -92,7 +90,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         this.securityContext = securityContext;
 
         entityIdSet.setMatchAll(false);
-        getView().setSelectionModel(selectionModel);
+//        getView().setSelectionModel(selectionModel);
 
         addColumns(allowSelectAll);
 
@@ -173,20 +171,21 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
         }
 
-        if (selectionModel.getSelectedObject() != null) {
-            if (!resultList.contains(selectionModel.getSelectedObject())) {
-                selectionModel.setSelected(selectionModel.getSelectedObject(), false);
+        StreamAttributeMap selected = getView().getSelectionModel().getSelected();
+        if (selected != null) {
+            if (!resultList.contains(selected)) {
+                getView().getSelectionModel().setSelected(selected, false);
             }
         }
 
         return data;
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(selectionModel.addSelectionChangeHandler(interceptingSelectionChangeHandler));
-    }
+//    @Override
+//    protected void onBind() {
+//        super.onBind();
+//        registerHandler(getView().addSelectionHandler().addSelectionChangeHandler(interceptingSelectionChangeHandler));
+//    }
 
     protected abstract void addColumns(boolean allowSelectAll);
 
@@ -447,8 +446,8 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         // }
     }
 
-    protected MySingleSelectionModel<StreamAttributeMap> getSelectionModel() {
-        return selectionModel;
+    protected MultiSelectionModel<StreamAttributeMap> getSelectionModel() {
+        return getView().getSelectionModel();
     }
 
     public EntityIdSet<Stream> getSelectedEntityIdSet() {
@@ -516,26 +515,18 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     }
 
     public StreamAttributeMap getSelectedStream() {
-        if (selectionModel.getSelectedObject() == null) {
-            return null;
-        }
-        return selectionModel.getSelectedObject();
+        return getView().getSelectionModel().getSelected();
     }
 
-    public void setSelectedStream(final StreamAttributeMap selectedStream, final boolean fireEvents,
-            final boolean showHiddenStream) {
-        setSelectedStreamInternal(selectedStream, fireEvents);
-    }
+//    public void setSelectedStream(final StreamAttributeMap selectedStream, final boolean fireEvents,
+//            final boolean showHiddenStream) {
+//        setSelectedStreamInternal(selectedStream, fireEvents);
+//    }
 
-    protected void setSelectedStreamInternal(final StreamAttributeMap selectedStream, final boolean fireEvents) {
-        interceptingSelectionChangeHandler.setIgnoreNextEvent(!fireEvents);
-        selectionModel.setSelected(selectedStream, true);
-    }
-
-    @Override
-    public HandlerRegistration addSelectionChangeHandler(final SelectionChangeEvent.Handler handler) {
-        return interceptingSelectionChangeHandler.addSelectionChangeHandler(handler);
-    }
+//    protected void setSelectedStreamInternal(final StreamAttributeMap selectedStream, final boolean fireEvents) {
+//        interceptingSelectionChangeHandler.setIgnoreNextEvent(!fireEvents);
+//        selectionModel.setSelected(selectedStream, true);
+//    }
 
     @Override
     public com.google.web.bindery.event.shared.HandlerRegistration addDataSelectionHandler(

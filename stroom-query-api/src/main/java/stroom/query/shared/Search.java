@@ -17,19 +17,13 @@
 package stroom.query.shared;
 
 import stroom.entity.shared.DocRef;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
+import stroom.util.shared.SharedObject;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "incremental"})
+@XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "dateTimeLocale", "incremental"})
 public class Search implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
@@ -46,6 +40,9 @@ public class Search implements Serializable {
     private Map<String, String> paramMap;
 
     @XmlElement
+    private String dateTimeLocale;
+
+    @XmlElement
     private boolean incremental;
 
     public Search() {
@@ -53,21 +50,22 @@ public class Search implements Serializable {
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression) {
-        this(dataSourceRef, expression, null, Collections.emptyMap(), true);
+        this(dataSourceRef, expression, null, Collections.emptyMap(), "UTC", true);
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
                   final Map<String, ComponentSettings> componentSettingsMap) {
-        this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), true);
+        this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), "UTC", true);
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
                   final Map<String, ComponentSettings> componentSettingsMap, final Map<String, String> paramMap,
-                  final boolean incremental) {
+                  final String dateTimeLocale, final boolean incremental) {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
         this.paramMap = paramMap;
+        this.dateTimeLocale = dateTimeLocale;
         this.incremental = incremental;
     }
 
@@ -85,6 +83,10 @@ public class Search implements Serializable {
 
     public Map<String, String> getParamMap() {
         return paramMap;
+    }
+
+    public String getDateTimeLocale() {
+        return dateTimeLocale;
     }
 
     public boolean isIncremental() {

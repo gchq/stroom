@@ -16,15 +16,6 @@
 
 package stroom.streamstore.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.table.client.CellTableView;
@@ -35,18 +26,27 @@ import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
 import stroom.entity.shared.Folder;
 import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
 import stroom.explorer.shared.ExplorerData;
-import stroom.process.shared.LoadEntityIdSetAction;
-import stroom.process.shared.SetId;
+import stroom.pipeline.processor.shared.LoadEntityIdSetAction;
+import stroom.pipeline.processor.shared.SetId;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedMap;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.CellTable.Resources;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.ArrayList;
@@ -55,7 +55,15 @@ import java.util.List;
 
 public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter.EntityIdSetView>
         implements EntityIdSetUiHandlers {
-    private final ExplorerDropDownTreePresenter treePresenter;
+    public interface EntityIdSetView extends View, HasUiHandlers<EntityIdSetUiHandlers> {
+        void setListView(View view);
+
+        void setAddEnabled(boolean enabled);
+
+        void setRemoveEnabled(boolean enabled);
+    }
+
+    private final EntityChooser treePresenter;
     private final EntityChoicePresenter choicePresenter;
     private final ClientDispatchAsync dispatcher;
     private final StreamTypeUiManager streamTypeUiManager;
@@ -64,9 +72,10 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
     private boolean groupedEntity;
     private List<DocRef> data;
     private boolean enabled = true;
+
     @Inject
     public EntityIdSetPresenter(final EventBus eventBus, final EntityIdSetView view,
-                                final ExplorerDropDownTreePresenter treePresenter, final EntityChoicePresenter choicePresenter,
+                                final EntityChooser treePresenter, final EntityChoicePresenter choicePresenter,
                                 final StreamTypeUiManager streamTypeUiManager, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.treePresenter = treePresenter;
@@ -82,7 +91,7 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
     private void createList(final boolean enabled) {
         if (enabled) {
             selectionModel = new MySingleSelectionModel<DocRef>();
-            list = new CellTableViewImpl<DocRef>(true, GWT.create(DefaultResources.class));
+            list = new CellTableViewImpl<DocRef>(true, (Resources) GWT.create(DefaultResources.class));
 
             registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
                 @Override
@@ -92,7 +101,7 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
             }));
         } else {
             selectionModel = null;
-            list = new CellTableViewImpl<DocRef>(false, GWT.create(DisabledResources.class));
+            list = new CellTableViewImpl<DocRef>(false, (Resources) GWT.create(DisabledResources.class));
         }
 
         // Text.

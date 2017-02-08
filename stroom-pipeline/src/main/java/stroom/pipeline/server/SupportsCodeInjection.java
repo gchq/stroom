@@ -16,13 +16,8 @@
  *
  */
 
-package stroom.pipeline.stepping.client.presenter;
+package stroom.pipeline.server;
 
-import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.structure.client.presenter.SimplePipelineTreeBuilder;
-
-public class SteppingPipelineTreeBuilder extends SimplePipelineTreeBuilder {
-    public SteppingPipelineTreeBuilder() {
-        super(PipelineElementType.VISABILITY_STEPPING);
-    }
+public interface SupportsCodeInjection {
+    void setInjectedCode(String injectedCode);
 }

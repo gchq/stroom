@@ -17,16 +17,12 @@
 package stroom.security.client.presenter;
 
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.data.grid.client.DoubleClickEvent;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.ManageNewEntityPresenter;
@@ -87,41 +83,25 @@ public class UsersAndGroupsTabPresenter extends
 
     @Override
     protected void onBind() {
-        registerHandler(listPresenter.getDataGridView().addDoubleClickHandler(new DoubleClickEvent.Handler() {
-            @Override
-            public void onDoubleClick(final DoubleClickEvent event) {
+        registerHandler(listPresenter.getDataGridView().getSelectionModel().addSelectionHandler(event -> {
+            enableButtons();
+            if (event.getSelectionType().isDoubleSelect()) {
                 onOpen();
             }
         }));
-        registerHandler(listPresenter.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                enableButtons();
+        registerHandler(newButton.addClickHandler(event -> {
+            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                onNew();
             }
         }));
-
-        registerHandler(newButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
-                    onNew();
-                }
+        registerHandler(openButton.addClickHandler(event -> {
+            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                onOpen();
             }
         }));
-        registerHandler(openButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
-                    onOpen();
-                }
-            }
-        }));
-        registerHandler(deleteButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
-                    onDelete();
-                }
+        registerHandler(deleteButton.addClickHandler(event -> {
+            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                onDelete();
             }
         }));
 
@@ -134,13 +114,13 @@ public class UsersAndGroupsTabPresenter extends
     }
 
     private void enableButtons() {
-        final boolean enabled = listPresenter.getSelectedItem() != null;
+        final boolean enabled = listPresenter.getSelectionModel().getSelected() != null;
         openButton.setEnabled(enabled);
         deleteButton.setEnabled(enabled);
     }
 
     private void onOpen() {
-        final DocRef e = listPresenter.getSelectedItem();
+        final DocRef e = listPresenter.getSelectionModel().getSelected();
         onEdit(e);
     }
 
@@ -157,7 +137,7 @@ public class UsersAndGroupsTabPresenter extends
     }
 
     private void onDelete() {
-        final DocRef userRef = listPresenter.getSelectedItem();
+        final DocRef userRef = listPresenter.getSelectionModel().getSelected();
         if (userRef != null) {
             dispatcher.execute(new EntityServiceLoadAction<User>(userRef, null), new AsyncCallbackAdaptor<User>() {
                 @Override
@@ -171,7 +151,7 @@ public class UsersAndGroupsTabPresenter extends
                                             @Override
                                             public void onSuccess(final User result) {
                                                 listPresenter.refresh();
-                                                listPresenter.setSelectedItem(null, true);
+                                                listPresenter.getSelectionModel().clear();
                                             }
                                         });
                                     }

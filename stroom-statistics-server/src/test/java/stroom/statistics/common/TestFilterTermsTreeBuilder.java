@@ -17,6 +17,7 @@
 package stroom.statistics.common;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
@@ -213,8 +214,7 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
 
         final TermNode term2Node = (TermNode) filterTermsTree.getRootNode();
 
-        assertEquals("term1field", term2Node.getTag());
-        assertEquals(null, term2Node.getValue());
+        assertNull(term2Node);
     }
 
     private static ExpressionTerm buildTerm(final String field, final String value, final Condition condition) {
