@@ -23,6 +23,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Arrays;
 
 @JsonPropertyOrder({"op", "children"})
 @XmlType(name = "ExpressionOperator", propOrder = {"op", "children"})
@@ -72,7 +73,7 @@ public class ExpressionOperator extends ExpressionItem {
         final ExpressionOperator that = (ExpressionOperator) o;
 
         if (op != that.op) return false;
-        return children != null ? children.equals(that.children) : that.children == null;
+        return children != null ? Arrays.deepEquals(children, that.children) : that.children == null;
     }
 
     @Override
