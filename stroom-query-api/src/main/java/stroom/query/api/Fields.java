@@ -19,41 +19,31 @@ package stroom.query.api;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 
-@JsonPropertyOrder({"values"})
-@XmlType(name = "Values", propOrder = {"values"})
-public class Values extends ArrayList<Object> implements Serializable {
+@JsonPropertyOrder({"fields"})
+@XmlType(name = "Fields", propOrder = {"fields"})
+public class Fields implements Serializable {
     private static final long serialVersionUID = 3826654996795750099L;
 
-    private Object[] values;
+    private Field[] fields;
 
-    public Values() {
+    public Fields() {
     }
 
-    public Values(final Object[] values) {
-        this.values = values;
+    public Fields(final Field[] fields) {
+        this.fields = fields;
     }
 
-    @XmlElements({
-            @XmlElement(name = "byte", type = Byte.class),
-            @XmlElement(name = "double", type = Double.class),
-            @XmlElement(name = "float", type = Float.class),
-            @XmlElement(name = "short", type = Short.class),
-            @XmlElement(name = "integer", type = Integer.class),
-            @XmlElement(name = "long", type = Long.class),
-            @XmlElement(name = "string", type = String.class)
-    })
-    public Object[] getValues() {
-        return values;
+    @XmlElement(name = "field")
+    public Field[] getFields() {
+        return fields;
     }
 
-    public void setValues(final Object[] values) {
-        this.values = values;
+    public void setFields(final Field[] fields) {
+        this.fields = fields;
     }
 
     @Override
@@ -61,14 +51,14 @@ public class Values extends ArrayList<Object> implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final Values values1 = (Values) o;
+        final Fields fields1 = (Fields) o;
 
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(values, values1.values);
+        return Arrays.equals(fields, fields1.fields);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(values);
+        return Arrays.hashCode(fields);
     }
 }

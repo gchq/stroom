@@ -16,6 +16,9 @@
 
 package stroom.benchmark.server;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.entity.cluster.ClearServiceClusterTask;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
@@ -53,17 +56,14 @@ import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AsyncTaskHelper;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadUtil;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -76,12 +76,16 @@ import java.util.concurrent.locks.ReentrantLock;
 @Component
 @Scope(StroomScope.TASK)
 public class BenchmarkClusterExecutor extends AbstractBenchmark {
+    // 20 min timeout
+    public static final int TIME_OUT = 1000 * 60 * 20;
     private static final StroomLogger LOGGER = StroomLogger.getLogger(BenchmarkClusterExecutor.class);
-
     private static final String ROOT_TEST_NAME = "Benchmark-Cluster Test";
     private static final String EPS = "EPS";
     private static final String ERROR = "Error";
-
+    private static final String BENCHMARK_REFERENCE = "BENCHMARK-REFERENCE";
+    private static final String BENCHMARK_EVENTS = "BENCHMARK-EVENTS";
+    private final Set<Node> nodeSet = new HashSet<>();
+    private final ReentrantLock rangeLock = new ReentrantLock();
     @Resource
     private FeedService feedService;
     @Resource
@@ -94,7 +98,6 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private ClusterDispatchAsyncHelper dispatchHelper;
     @Resource
     private StreamAttributeMapService streamAttributeMapService;
-
     @Resource
     private StreamStore streamStore;
     @Resource
@@ -105,23 +108,11 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private TaskMonitor taskMonitor;
     @Resource
     private TaskManager taskManager;
-
-    private final Set<Node> nodeSet = new HashSet<>();
-
     @Resource
     private Statistics statistics;
-
-    private static final String BENCHMARK_REFERENCE = "BENCHMARK-REFERENCE";
-    private static final String BENCHMARK_EVENTS = "BENCHMARK-EVENTS";
-
-    // 20 min timeout
-    public static final int TIME_OUT = 1000 * 60 * 20;
-
     private int streamCount = 1000;
     private int recordCount = 10000;
     private int concurrentWriters = 10;
-
-    private final ReentrantLock rangeLock = new ReentrantLock();
     private volatile Long minStreamId = null;
     private volatile Long maxStreamId = null;
 
@@ -657,7 +648,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // .entrySet()) {
     // final NodeIndexingResults nodeResults = entry.getValue();
     // final NodeIndexingStats stats = nodeResults.getStats();
-    // final String nodeName = "/" + entry.getKey().getName();
+    // final String nodeName = "/" + entry.getValues().getName();
     //
     // // Save results for each node.
     // benchmarkService.save(new Benchmark(node, now, epsTestName

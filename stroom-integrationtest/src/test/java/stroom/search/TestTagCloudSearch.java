@@ -28,8 +28,6 @@ import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionBuilder;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Field;
 import stroom.query.api.Format;
@@ -41,7 +39,6 @@ import stroom.query.api.Row;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
-import stroom.query.api.TableResultRequest;
 import stroom.query.api.TableSettings;
 import stroom.search.server.SearchResource;
 import stroom.util.logging.StroomLogger;
@@ -100,10 +97,7 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
         final ExpressionBuilder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
         final Query query = new Query(dataSourceRef, expression.build());
 
-        final TableResultRequest tableResultRequest = new TableResultRequest();
-        tableResultRequest.setComponentId(componentId);
-        tableResultRequest.setTableSettings(tableSettings);
-        tableResultRequest.setFetchData(true);
+        final ResultRequest tableResultRequest = new ResultRequest(componentId, tableSettings);
 
         final ResultRequest[] resultRequests = new ResultRequest[1];
         resultRequests[0] = tableResultRequest;

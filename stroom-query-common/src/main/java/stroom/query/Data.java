@@ -19,17 +19,17 @@ package stroom.query;
 import java.util.Map;
 
 public class Data {
-    private final Map<String, Items<Item>> childMap;
+    private final Map<Key, Items<Item>> childMap;
     private final long size;
     private final long totalSize;
 
-    public Data(final Map<String, Items<Item>> childMap, final long size, final long totalSize) {
+    public Data(final Map<Key, Items<Item>> childMap, final long size, final long totalSize) {
         this.childMap = childMap;
         this.size = size;
         this.totalSize = totalSize;
     }
 
-    public Map<String, Items<Item>> getChildMap() {
+    public Map<Key, Items<Item>> getChildMap() {
         return childMap;
     }
 

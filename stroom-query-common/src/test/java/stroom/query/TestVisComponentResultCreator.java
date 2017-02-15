@@ -21,101 +21,248 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.junit.Assert;
 import org.junit.Test;
-import stroom.query.CompiledStructure.FieldRef;
 import stroom.query.api.Field;
 import stroom.query.api.Format;
 import stroom.query.api.Format.Type;
-import stroom.query.api.Node;
+import stroom.query.api.Result;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.TableSettings;
+import stroom.query.api.VisField;
+import stroom.query.api.VisLimit;
+import stroom.query.api.VisNest;
+import stroom.query.api.VisStructure;
+import stroom.query.api.VisValues;
 import stroom.util.shared.ParamUtil;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TestVisComponentResultCreator {
-    final Path TEST_DIR = TestFileUtil.getTestResourcesDir().resolve("TestVisComponentResultCreator");
+//    final Path TEST_DIR = TestFileUtil.getTestResourcesDir().resolve("TestVisComponentResultCreator");
 
     @Test
     public void testValues() throws Exception {
-        final Items<Item> items = createData();
+        final TableSettings parentTableSettings = getParentTableSettings();
+        final Data parentData = createData();
 
-        final CompiledStructure.Field xField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 0), null);
-        final CompiledStructure.Field yField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 1), null);
+        final VisField fieldX = new VisField("x");
+        final VisField fieldY = new VisField("y");
+        final VisValues visValues = new VisValues();
+        visValues.setFields(new VisField[]{fieldX, fieldY});
+        visValues.setLimit(new VisLimit(100));
+        VisStructure visStructure = new VisStructure();
+        visStructure.setValues(visValues);
 
-        final CompiledStructure.Values values = new CompiledStructure.Values(
-                new CompiledStructure.Field[]{xField, yField}, null);
+        final TableSettings childTableSettings = visStructureToTableSettings(parentTableSettings, visStructure);
 
-        final VisResultCreator resultCreator = new VisResultCreator(null);
-        final Node store = resultCreator.create(items, values);
+        final ResultRequest tableResultRequest = new ResultRequest();
+        tableResultRequest.setTableSettings(new TableSettings[]{parentTableSettings, childTableSettings});
+
+        final VisResultCreator resultCreator = new VisResultCreator(tableResultRequest, Collections.emptyMap(), null);
+        final Result visResult = resultCreator.create(parentData, tableResultRequest);
 
         final ObjectMapper mapper = createMapper(true);
-        final String json = mapper.writeValueAsString(store);
+        final String json = mapper.writeValueAsString(visResult);
         System.out.println(json);
     }
 
     @Test
     public void testNest() throws Exception {
-        final Items<Item> items = createData();
+        final TableSettings parentTableSettings = getParentTableSettings();
+        final Data parentData = createData();
 
-        final CompiledStructure.Field xField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 0), null);
-        final CompiledStructure.Field yField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 1), null);
-        final CompiledStructure.Field seriesField = new CompiledStructure.Field(new FieldRef(Type.TEXT, 2), null);
+        final VisField fieldX = new VisField("x");
+        final VisField fieldY = new VisField("y");
+        final VisField fieldSeries = new VisField("series");
+        final VisValues visValues = new VisValues();
+        visValues.setFields(new VisField[]{fieldX, fieldY});
 
-        final CompiledStructure.Values values = new CompiledStructure.Values(
-                new CompiledStructure.Field[]{xField, yField}, null);
-        final CompiledStructure.Nest nest = new CompiledStructure.Nest(seriesField, null, null, values);
+        VisNest visNest = new VisNest(fieldSeries);
+        visNest.setValues(visValues);
 
-        final VisResultCreator resultCreator = new VisResultCreator(null);
-        final Node store = resultCreator.create(items, nest);
+        VisStructure visStructure = new VisStructure();
+        visStructure.setNest(visNest);
+
+        final TableSettings childTableSettings = visStructureToTableSettings(parentTableSettings, visStructure);
+
+        final ResultRequest tableResultRequest = new ResultRequest();
+        tableResultRequest.setTableSettings(new TableSettings[]{parentTableSettings, childTableSettings});
+
+        final VisResultCreator resultCreator = new VisResultCreator(tableResultRequest, Collections.emptyMap(), null);
+        final Result visResult = resultCreator.create(parentData, tableResultRequest);
 
         final ObjectMapper mapper = createMapper(true);
-        final String json = mapper.writeValueAsString(store);
+        final String json = mapper.writeValueAsString(visResult);
         System.out.println(json);
     }
 
-    @Test
-    public void testDeepNest() throws Exception {
-        final Items<Item> items = createData();
+//    @Test
+//    public void testDeepNest() throws Exception {
+//        final Items<Item> items = createData();
+//
+//        final CompiledStructure.Field xField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 0), null);
+//        final CompiledStructure.Field yField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 1), null);
+//        final CompiledStructure.Field seriesField = new CompiledStructure.Field(new FieldRef(Type.TEXT, 2), null);
+//
+//        final CompiledStructure.Values values = new CompiledStructure.Values(
+//                new CompiledStructure.Field[]{xField, yField}, null);
+//        final CompiledStructure.Nest nestLevel2 = new CompiledStructure.Nest(xField, null, null, values);
+//        final CompiledStructure.Nest nest = new CompiledStructure.Nest(seriesField, null, nestLevel2, null);
+//
+//        final VisResultCreator resultCreator = new VisResultCreator(null);
+//        final Node store = resultCreator.create(items, nest);
+//
+//        final ObjectMapper mapper = createMapper(true);
+//        final String json = mapper.writeValueAsString(store);
+//        System.out.println(json);
+//    }
 
-        final CompiledStructure.Field xField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 0), null);
-        final CompiledStructure.Field yField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 1), null);
-        final CompiledStructure.Field seriesField = new CompiledStructure.Field(new FieldRef(Type.TEXT, 2), null);
+    private TableSettings visStructureToTableSettings(final TableSettings parentTableSettings, final VisStructure visStructure) {
+        final Field[] parentFields = parentTableSettings.getFields();
+        final Map<String, Field> parentFieldMap = new HashMap<>();
+        for (final Field field : parentFields) {
+            parentFieldMap.put(field.getName(), field);
+        }
 
-        final CompiledStructure.Values values = new CompiledStructure.Values(
-                new CompiledStructure.Field[]{xField, yField}, null);
-        final CompiledStructure.Nest nestLevel2 = new CompiledStructure.Nest(xField, null, null, values);
-        final CompiledStructure.Nest nest = new CompiledStructure.Nest(seriesField, null, nestLevel2, null);
+        List<Field> fields = new ArrayList<>();
+        List<Integer> limits = new ArrayList<>();
 
-        final VisResultCreator resultCreator = new VisResultCreator(null);
-        final Node store = resultCreator.create(items, nest);
+        VisNest nest = visStructure.getNest();
+        VisValues values = visStructure.getValues();
 
-        final ObjectMapper mapper = createMapper(true);
-        final String json = mapper.writeValueAsString(store);
-        System.out.println(json);
-    }
+        int group = 0;
+        while (nest != null) {
+            Field field = convertField(visStructure.getNest().getKey(), parentFieldMap);
+            field.setGroup(group++);
 
-    @Test
-    public void testAll() throws IOException {
-        Files.list(TEST_DIR).forEach(f -> {
-            if (Files.isDirectory(f)) {
-                testDir(f);
+            fields.add(field);
+
+            // Get limit from nest.
+            Integer limit = null;
+            if (nest.getLimit() != null) {
+                limit = nest.getLimit().getSize();
             }
-        });
+            limits.add(limit);
+
+            values = nest.getValues();
+            nest = nest.getNest();
+        }
+
+        if (values != null) {
+            // Get limit from values.
+            Integer limit = null;
+            if (values.getLimit() != null) {
+                limit = values.getLimit().getSize();
+            }
+            limits.add(limit);
+
+            if (values.getFields() != null) {
+                for (final VisField visField : values.getFields()) {
+                    fields.add(convertField(visField, parentFieldMap));
+                }
+            }
+        }
+
+        final TableSettings tableSettings = new TableSettings();
+        tableSettings.setFields(fields.toArray(new Field[fields.size()]));
+        tableSettings.setMaxResults(limits.toArray(new Integer[limits.size()]));
+        tableSettings.setShowDetail(true);
+
+        return tableSettings;
     }
 
-    @Test
-    public void testGroupBySeries() {
-        testDir(TEST_DIR.resolve("testGroupBySeries"));
+    private Field convertField(final VisField visField, final Map<String, Field> parentFieldMap) {
+        final Field parentField = parentFieldMap.get(visField.getId());
+        Format format;
+        if (parentField != null && parentField.getFormat() != null) {
+            format = parentField.getFormat();
+        } else {
+            format = new Format();
+            format.setType(Type.GENERAL);
+        }
+
+        final Field field = new Field();
+        field.setExpression("${" + visField.getId() + "}");
+        field.setSort(visField.getSort());
+        field.setFormat(format);
+
+        return field;
     }
 
-    @Test
-    public void testGroupBySeriesAndX() {
-        testDir(TEST_DIR.resolve("testGroupBySeriesAndX"));
+    private TableSettings getParentTableSettings() {
+        final Field fieldX = new Field("x", "${x}", null, null, null, null);
+        final Field fieldY = new Field("y", "${y}", null, null, null, null);
+        final Field series = new Field("series", "${series}", null, null, null, null);
+        final TableSettings tableSettings = new TableSettings();
+        tableSettings.setFields(new Field[]{fieldX, fieldY, series});
+        return tableSettings;
     }
 
-    private void testDir(final Path dir) {
+//    @Test
+//    public void testNest() throws Exception {
+//        final Items<Item> items = createData();
+//
+//        final CompiledStructure.Field xField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 0), null);
+//        final CompiledStructure.Field yField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 1), null);
+//        final CompiledStructure.Field seriesField = new CompiledStructure.Field(new FieldRef(Type.TEXT, 2), null);
+//
+//        final CompiledStructure.Values values = new CompiledStructure.Values(
+//                new CompiledStructure.Field[]{xField, yField}, null);
+//        final CompiledStructure.Nest nest = new CompiledStructure.Nest(seriesField, null, null, values);
+//
+//        final VisResultCreator resultCreator = new VisResultCreator(null);
+//        final Node store = resultCreator.create(items, nest);
+//
+//        final ObjectMapper mapper = createMapper(true);
+//        final String json = mapper.writeValueAsString(store);
+//        System.out.println(json);
+//    }
+//
+//    @Test
+//    public void testDeepNest() throws Exception {
+//        final Items<Item> items = createData();
+//
+//        final CompiledStructure.Field xField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 0), null);
+//        final CompiledStructure.Field yField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 1), null);
+//        final CompiledStructure.Field seriesField = new CompiledStructure.Field(new FieldRef(Type.TEXT, 2), null);
+//
+//        final CompiledStructure.Values values = new CompiledStructure.Values(
+//                new CompiledStructure.Field[]{xField, yField}, null);
+//        final CompiledStructure.Nest nestLevel2 = new CompiledStructure.Nest(xField, null, null, values);
+//        final CompiledStructure.Nest nest = new CompiledStructure.Nest(seriesField, null, nestLevel2, null);
+//
+//        final VisResultCreator resultCreator = new VisResultCreator(null);
+//        final Node store = resultCreator.create(items, nest);
+//
+//        final ObjectMapper mapper = createMapper(true);
+//        final String json = mapper.writeValueAsString(store);
+//        System.out.println(json);
+//    }
+
+//    @Test
+//    public void testAll() throws IOException {
+//        Files.list(TEST_DIR).forEach(f -> {
+//            if (Files.isDirectory(f)) {
+//                testDir(f);
+//            }
+//        });
+//    }
+//
+//    @Test
+//    public void testGroupBySeries() {
+//        testDir(TEST_DIR.resolve("testGroupBySeries"));
+//    }
+//
+//    @Test
+//    public void testGroupBySeriesAndX() {
+//        testDir(TEST_DIR.resolve("testGroupBySeriesAndX"));
+//    }
+//
+//    private void testDir(final Path dir) {
 //        final File settings = new File(dir, "settings.json");
 //        final String settingsJSON = StreamUtil.fileToString(settings);
 //        final VisSettings visSettings = VisSettingsUtil.read(settingsJSON);
@@ -146,26 +293,26 @@ public class TestVisComponentResultCreator {
 //        mapper = createMapper(false);
 //        json = mapper.writeValueAsString(store);
 //        compareFiles(dir, json, "data.json", "data.json.tmp");
-    }
+//    }
+//
+//    private void compareFiles(final Path dir, final String data, final String expectedFileName,
+//                              final String actualFileName) throws IOException {
+//        final Path expectedFile = dir.resolve(expectedFileName);
+//        if (!Files.isRegularFile(expectedFile)) {
+//            StreamUtil.stringToFile(data, expectedFile);
+//        } else {
+//            final String expected = StreamUtil.fileToString(expectedFile);
+//            final Path actualFile = dir.resolve(actualFileName);
+//            if (!expected.equals(data)) {
+//                StreamUtil.stringToFile(data, actualFile);
+//                Assert.fail("Files are not the same");
+//            } else if (Files.isRegularFile(actualFile)) {
+//                Files.delete(actualFile);
+//            }
+//        }
+//    }
 
-    private void compareFiles(final Path dir, final String data, final String expectedFileName,
-                              final String actualFileName) throws IOException {
-        final Path expectedFile = dir.resolve(expectedFileName);
-        if (!Files.isRegularFile(expectedFile)) {
-            StreamUtil.stringToFile(data, expectedFile);
-        } else {
-            final String expected = StreamUtil.fileToString(expectedFile);
-            final Path actualFile = dir.resolve(actualFileName);
-            if (!expected.equals(data)) {
-                StreamUtil.stringToFile(data, actualFile);
-                Assert.fail("Files are not the same");
-            } else if (Files.isRegularFile(actualFile)) {
-                Files.delete(actualFile);
-            }
-        }
-    }
-
-    private Items<Item> createData() {
+    private Data createData() {
         final Items<Item> items = new ItemsArrayList<Item>();
         int seriesCount = 0;
         for (int i = 100; i < 120; i++) {
@@ -176,13 +323,17 @@ public class TestVisComponentResultCreator {
                     seriesCount = 0;
                 }
 
-                items.add(new Item(null, null, createValues(i + 10, j + 10, series), 0));
-                items.add(new Item(null, null, createValues(i - 5, j + 11, series), 0));
-                items.add(new Item(null, null, createValues(i + 3, j + 3, series), 0));
-                items.add(new Item(null, null, createValues(i - 2, j + 8, series), 0));
+                items.add(new Item(null, createValues(i + 10, j + 10, series), 0));
+                items.add(new Item(null, createValues(i - 5, j + 11, series), 0));
+                items.add(new Item(null, createValues(i + 3, j + 3, series), 0));
+                items.add(new Item(null, createValues(i - 2, j + 8, series), 0));
             }
         }
-        return items;
+
+        final Map<Key, Items<Item>> map = new HashMap<>();
+        map.put(null, items);
+
+        return new Data(map, items.size(), items.size());
     }
 
     private Object[] createValues(final int x, final int y, final String series) {

@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
@@ -68,10 +67,7 @@ public class SearchRequest implements Serializable {
     }
 
     @XmlElementWrapper(name = "resultRequests")
-    @XmlElements({
-            @XmlElement(name = "table", type = TableResultRequest.class),
-            @XmlElement(name = "vis", type = VisResultRequest.class)
-    })
+    @XmlElement(name = "resultRequest")
     public ResultRequest[] getResultRequests() {
         return resultRequests;
     }

@@ -18,6 +18,7 @@ package stroom.search.server;
 
 import stroom.dashboard.expression.FieldIndexMap;
 import stroom.index.shared.IndexConstants;
+import stroom.query.Coprocessor;
 import stroom.query.Payload;
 
 import java.util.concurrent.locks.ReentrantLock;

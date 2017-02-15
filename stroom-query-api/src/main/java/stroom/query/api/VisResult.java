@@ -16,27 +16,18 @@
 
 package stroom.query.api;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
 import java.util.Arrays;
 
-@JsonPropertyOrder({"componentId", "types", "nodes", "values", "min", "max", "sum", "size", "error"})
-@XmlType(name = "VisResult", propOrder = {"types", "nodes", "XMLValues", "min", "max", "sum", "size", "error"})
+@JsonPropertyOrder({"componentId", "structure", "values", "size", "error"})
 public class VisResult extends Result {
     private static final long serialVersionUID = 3826654996795750099L;
 
-    private String[] types;
-    private Node[] nodes;
+    private Field[] structure;
     private Object[][] values;
-    private Double[] min;
-    private Double[] max;
-    private Double[] sum;
     private Long size;
     private String error;
 
@@ -48,103 +39,30 @@ public class VisResult extends Result {
         this.error = error;
     }
 
-    public VisResult(final String componentId, final String[] types, final Node[] nodes, final Object[][] values, final Double[] min, final Double[] max, final Double[] sum, final Long size, final String error) {
+    public VisResult(final String componentId, final Field[] structure, final Object[][] values, final Long size, final String error) {
         super(componentId);
-        this.types = types;
-        this.nodes = nodes;
+        this.structure = structure;
         this.values = values;
-        this.min = min;
-        this.max = max;
-        this.sum = sum;
         this.size = size;
         this.error = error;
     }
 
-    @XmlElementWrapper(name = "types")
-    @XmlElement(name = "type")
-    public String[] getTypes() {
-        return types;
+    @JsonProperty
+    public Field[] getStructure() {
+        return structure;
     }
 
-    public void setTypes(final String[] types) {
-        this.types = types;
+    public void setStructure(final Field[] structure) {
+        this.structure = structure;
     }
 
-    @XmlElementWrapper(name = "nodes")
-    @XmlElement(name = "node")
-    public Node[] getNodes() {
-        return nodes;
-    }
-
-    public void setNodes(final Node[] nodes) {
-        this.nodes = nodes;
-    }
-
-    @XmlTransient
+    @JsonProperty
     public Object[][] getValues() {
         return values;
     }
 
     public void setValues(final Object[][] values) {
         this.values = values;
-    }
-
-    @JsonIgnore
-    @XmlElementWrapper(name = "values")
-    @XmlElement(name = "values")
-    public Values[] getXMLValues() {
-        if (this.values == null) {
-            return null;
-        }
-        final Values[] values = new Values[this.values.length];
-        for (int i = 0; i < this.values.length; i++) {
-            values[i] = new Values(this.values[i]);
-        }
-        return values;
-    }
-
-    public void setXMLValues(final Values[] values) {
-        if (values != null) {
-            this.values = new Object[values.length][];
-            for (int i = 0; i < values.length; i++) {
-                this.values[i] = values[i].getValues();
-            }
-        } else {
-            this.values = null;
-        }
-    }
-
-    @XmlElementWrapper(name = "min")
-    @XmlElement(name = "val")
-    @JsonProperty("min")
-    public Double[] getMin() {
-        return min;
-    }
-
-    public void setMin(final Double[] min) {
-        this.min = min;
-    }
-
-    @XmlElementWrapper(name = "max")
-    @XmlElement(name = "val")
-    @JsonProperty("max")
-    public Double[] getMax() {
-        return max;
-    }
-
-    public void setMax(final Double[] max) {
-        this.max = max;
-    }
-
-    @XmlElementWrapper(name = "sum")
-    @XmlElement(name = "val")
-    @JsonProperty("sum")
-    public Double[] getSum() {
-        return sum;
-    }
-
-    public void setSum(final Double[] sum) {
-        this.sum = sum;
     }
 
     @XmlElement
@@ -174,16 +92,8 @@ public class VisResult extends Result {
         final VisResult visResult = (VisResult) o;
 
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(types, visResult.types)) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(nodes, visResult.nodes)) return false;
+        if (!Arrays.equals(structure, visResult.structure)) return false;
         if (!Arrays.deepEquals(values, visResult.values)) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(min, visResult.min)) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(max, visResult.max)) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(sum, visResult.sum)) return false;
         if (size != null ? !size.equals(visResult.size) : visResult.size != null) return false;
         return error != null ? error.equals(visResult.error) : visResult.error == null;
     }
@@ -191,12 +101,8 @@ public class VisResult extends Result {
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + Arrays.hashCode(types);
-        result = 31 * result + Arrays.hashCode(nodes);
+        result = 31 * result + Arrays.hashCode(structure);
         result = 31 * result + Arrays.deepHashCode(values);
-        result = 31 * result + Arrays.hashCode(min);
-        result = 31 * result + Arrays.hashCode(max);
-        result = 31 * result + Arrays.hashCode(sum);
         result = 31 * result + (size != null ? size.hashCode() : 0);
         result = 31 * result + (error != null ? error.hashCode() : 0);
         return result;
@@ -204,6 +110,6 @@ public class VisResult extends Result {
 
     @Override
     public String toString() {
-        return "data points = " + size;
+        return size + " rows";
     }
 }

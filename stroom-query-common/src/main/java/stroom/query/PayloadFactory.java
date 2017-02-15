@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.search.server;
+package stroom.query;
 
-public interface Coprocessor extends PayloadFactory {
-    void receive(String[] values);
+public interface PayloadFactory {
+    Payload createPayload();
 }

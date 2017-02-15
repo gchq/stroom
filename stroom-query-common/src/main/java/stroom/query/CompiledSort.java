@@ -30,7 +30,9 @@ public class CompiledSort implements Serializable {
 
     public CompiledSort(final int fieldIndex, final Sort sort) {
         this.fieldIndex = fieldIndex;
-        this.order = sort.getOrder();
+        if (sort.getOrder() != null) {
+            this.order = sort.getOrder();
+        }
         this.direction = sort.getDirection();
     }
 

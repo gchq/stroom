@@ -18,6 +18,7 @@ package stroom.dashboard.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.dashboard.shared.QueryService;
 import stroom.dashboard.shared.Search;
@@ -25,12 +26,10 @@ import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.logging.SearchEventLog;
 import stroom.query.api.DocRef;
 import stroom.query.api.Param;
 import stroom.query.api.Query;
-import stroom.query.api.QueryKey;
 import stroom.security.SecurityContext;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -93,7 +92,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
 //            // Fix query keys so they have session and user info.
 //            for (final Entry<DashboardQueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
-//                final QueryKey queryKey = entry.getKey().getQueryKey();
+//                final QueryKey queryKey = entry.getValues().getQueryKey();
 //                queryKey.setSessionId(action.getSessionId());
 //                queryKey.setUserId(action.getUserId());
 //            }
@@ -179,7 +178,11 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             }
 
             result = new SearchResponse();
-            result.setErrors(e.getMessage());
+            if (e.getMessage() == null) {
+                result.setErrors(e.getClass().getName());
+            } else {
+                result.setErrors(e.getClass().getName() + ": " + e.getMessage());
+            }
             result.setComplete(true);
         }
 

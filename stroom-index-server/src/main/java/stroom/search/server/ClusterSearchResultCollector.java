@@ -17,10 +17,10 @@
 package stroom.search.server;
 
 import stroom.node.shared.Node;
-import stroom.query.CoprocessorMap.CoprocessorKey;
+import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.Data;
 import stroom.query.Payload;
 import stroom.query.ResultHandler;
-import stroom.query.Data;
 import stroom.query.Store;
 import stroom.task.cluster.ClusterResultCollector;
 import stroom.task.cluster.ClusterResultCollectorCache;

@@ -35,9 +35,9 @@
     } ]
   },
   "resultRequests" : [ {
-    "type" : "table",
     "componentId" : "componentX",
-    "tableSettings" : {
+    "tableSettings": [
+      {
       "queryId" : "someQueryId",
       "fields" : [ {
         "name" : "name1",
@@ -89,7 +89,8 @@
         "name" : "docRefName2"
       },
       "maxResults" : [ 1, 2 ]
-    },
+      }
+    ],
     "requestedRange" : {
       "offset" : 1,
       "length" : 100

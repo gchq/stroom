@@ -16,7 +16,6 @@
 
 package stroom.dashboard.server;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -24,12 +23,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.springframework.stereotype.Component;
+import stroom.dashboard.expression.TypeConverter;
 import stroom.dashboard.shared.ComponentResult;
+import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.SearchResponse;
 import stroom.dashboard.shared.TableResult;
 import stroom.dashboard.shared.VisResult;
-import stroom.query.api.Node;
+import stroom.query.api.Field;
 import stroom.query.api.Result;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedString;
@@ -40,6 +41,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 @Component
 public class SearchResponseMapper {
@@ -86,7 +88,9 @@ public class SearchResponseMapper {
             final TableResult copy = new TableResult();
 
             copy.setRows(mapRows(tableResult.getRows()));
-            copy.setResultRange(new OffsetRange<>(tableResult.getResultRange().getOffset().intValue(), tableResult.getResultRange().getLength().intValue()));
+            if (tableResult.getResultRange() != null) {
+                copy.setResultRange(new OffsetRange<>(tableResult.getResultRange().getOffset().intValue(), tableResult.getResultRange().getLength().intValue()));
+            }
             copy.setError(tableResult.getError());
             copy.setTotalResults(tableResult.getTotalResults());
 
@@ -127,24 +131,62 @@ public class SearchResponseMapper {
 
         if (error == null) {
             try {
-                final Store store = new Store(null, null, visResult.getTypes());
-                store.map = mapNodes(visResult.getNodes(), visResult.getTypes());
-                store.list = mapValues(visResult.getValues());
-                store.min = visResult.getMin();
-                store.max = visResult.getMax();
-                store.sum = visResult.getSum();
+                final Field[] fields = visResult.getStructure();
+                if (fields != null && visResult.getValues() != null) {
+                    int valueOffset = 3;
 
-                final SimpleModule module = new SimpleModule();
-                module.addSerializer(Double.class, new MyDoubleSerialiser());
+                    final Map<Integer, List<String>> typeMap = new HashMap<>();
+                    int maxDepth = 0;
+                    for (final Field field : fields) {
+                        String type = Type.GENERAL.name();
+                        if (field.getFormat() != null && field.getFormat().getType() != null) {
+                            type = field.getFormat().getType().name();
+                        }
+                        typeMap.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(type);
 
-                final ObjectMapper mapper = new ObjectMapper();
-                mapper.registerModule(module);
-                mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-                mapper.setSerializationInclusion(Include.NON_NULL);
+                        if (field.getGroup() != null) {
+                            maxDepth = Math.max(maxDepth, field.getGroup());
+                        } else {
+                            valueOffset++;
+                        }
+                    }
 
-                json = mapper.writeValueAsString(store);
+                    maxDepth++;
 
+                    // Create an array of types.
+                    String[][] types = new String[maxDepth + 1][];
+                    for (final Entry<Integer, List<String>> entry : typeMap.entrySet()) {
+                        int group = maxDepth;
+                        if (entry.getKey() != null) {
+                            group = entry.getKey();
+                        }
+
+                        String[] row = new String[entry.getValue().size()];
+                        row = entry.getValue().toArray(row);
+                        types[group] = row;
+                    }
+
+                    final int valueCount = 3 + fields.length - valueOffset;
+
+
+                    final Map<Object, List<Object[]>> map = new HashMap<>();
+                    for (final Object[] row : visResult.getValues()) {
+                        map.computeIfAbsent(row[0], k -> new ArrayList<>()).add(row);
+                    }
+
+                    final Store store = getStore(null, map, types, valueCount, maxDepth, 0);
+
+                    final SimpleModule module = new SimpleModule();
+                    module.addSerializer(Double.class, new MyDoubleSerialiser());
+
+                    final ObjectMapper mapper = new ObjectMapper();
+                    mapper.registerModule(module);
+                    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                    mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
+                    mapper.setSerializationInclusion(Include.NON_NULL);
+
+                    json = mapper.writeValueAsString(store);
+                }
             } catch (final Exception e) {
                 error = e.getMessage();
             }
@@ -153,66 +195,199 @@ public class SearchResponseMapper {
         return new VisResult(json, visResult.getSize(), error);
     }
 
-    private Map<Object, Store> mapNodes(Node[] nodes, String[] types) {
-        if (nodes == null) {
-            return null;
+    private Store getStore(final Object key, final Map<Object, List<Object[]>> map, final String[][] types, final int valueCount, final int maxDepth, final int depth) {
+        Store store = null;
+
+        final List<Object[]> rows = map.get(key);
+        if (rows != null) {
+            final List<Object> values = new ArrayList<>();
+            final Double[] min = new Double[valueCount];
+            final Double[] max = new Double[valueCount];
+            final Double[] sum = new Double[valueCount];
+
+            for (final Object[] row : rows) {
+                if (depth < maxDepth) {
+                    final Store childStore = getStore(row[1], map, types, valueCount, maxDepth, depth + 1);
+                    if (childStore != null) {
+                        values.add(childStore);
+
+                        for (int i = 0; i < valueCount; i++) {
+                            min[i] = min(min[i], childStore.min[i]);
+                            max[i] = max(max[i], childStore.max[i]);
+                            sum[i] = sum(sum[i], childStore.sum[i]);
+                        }
+                    }
+                } else {
+                    final Object[] vals = new Object[valueCount];
+                    System.arraycopy(row, row.length - valueCount, vals, 0, valueCount);
+                    values.add(vals);
+                    for (int i = 0; i < valueCount; i++) {
+                        final Double dbl = TypeConverter.getDouble(vals[i]);
+                        if (dbl != null) {
+                            min[i] = min(min[i], dbl);
+                            max[i] = max(max[i], dbl);
+                            sum[i] = sum(sum[i], dbl);
+                        }
+                    }
+                }
+            }
+
+            store = new Store();
+            if (key != null && key instanceof List) {
+                List list = (List) key;
+                store.key = list.get(list.size() - 1);
+            }
+            store.keyType = types[depth][0];
+            store.values = values.toArray(new Object[values.size()]);
+            store.types = types[types.length - 1];
+            store.min = min;
+            store.max = max;
+            store.sum = sum;
         }
 
-        final Map<Object, Store> map = new HashMap<>();
-        for (final Node node : nodes) {
-            final Store store = new Store(node.getKey().getValue(), node.getKey().getType(), types);
-            store.map = mapNodes(node.getNodes(), types);
-            store.list = mapValues(node.getValues());
-            store.min = node.getMin();
-            store.max = node.getMax();
-            store.sum = node.getSum();
-
-            map.put(node.getKey().getValue(), store);
-        }
-
-
-        return map;
+        return store;
     }
 
-    private List<Object> mapValues(Object[][] values) {
-        if (values == null) {
-            return null;
+    private Double min(final Double m1, final Double m2) {
+        if (m1 == null) {
+            return m2;
+        } else if (m2 == null) {
+            return m1;
         }
-
-        final List<Object> list = new ArrayList<>();
-        for (final Object[] vals : values) {
-            list.add(vals);
-        }
-
-        return list;
+        return Math.min(m1, m2);
     }
+
+    private Double max(final Double m1, final Double m2) {
+        if (m1 == null) {
+            return m2;
+        } else if (m2 == null) {
+            return m1;
+        }
+        return Math.max(m1, m2);
+    }
+
+    private Double sum(final Double m1, final Double m2) {
+        if (m1 == null) {
+            return m2;
+        } else if (m2 == null) {
+            return m1;
+        }
+        return m1 + m2;
+    }
+
+//    private Map<Object, Store> mapNodes(final Node[] nodes, final Field[][] structure, final int depth, final String[] types) {
+//        if (nodes == null) {
+//            return null;
+//        }
+//
+//        String keyType = Type.GENERAL.name();
+//        Field[] fields = structure[depth];
+//        if (fields.length == 1) {
+//            keyType = fields[0].getFormat().getType().name();
+//        }
+//
+//        final Map<Object, Store> map = new HashMap<>();
+//        for (final Node node : nodes) {
+//
+//            // Turn node key into basic single key value that visualisations expect.
+//            Object keyValue = null;
+//            if (node.getKey() != null) {
+//                final Object[] keyValues = node.getKey()[depth];
+//                if (keyValues != null && keyValues.length > 0) {
+//                    if (keyValues.length == 1) {
+//                        keyValue = keyValues[0];
+//                    } else {
+//                        final StringBuilder sb = new StringBuilder();
+//                        for (final Object v : keyValues) {
+//                            sb.append(v);
+//                            sb.append("|");
+//                        }
+//                        sb.setLength(sb.length() - 1);
+//                        keyValue = sb.toString();
+//                    }
+//                }
+//            }
+//
+//            final Store store = new Store(keyValue, keyType, types);
+//            store.map = mapNodes(node.getNodes(), structure, depth + 1, types);
+//            store.values = mapValues(node.getValues(), structure, de);
+//            store.min = node.getMin();
+//            store.max = node.getMax();
+//            store.sum = node.getSum();
+//
+//            map.put(keyValue, store);
+//        }
+//
+//        return map;
+//    }
+//
+//    private Object mapNode(final Map<String, Object> node, String keyType, final Field[] structure, final int depth, final String[] types) {
+//        Object key = node.get("key");
+//        Object values = node.get("values");
+//        Object min = node.get("min");
+//        Object max = node.get("max");
+//        Object sum = node.get("sum");
+//
+//        // Turn node key into basic single key value that visualisations expect.
+//        Object keyValue = null;
+//        if (key != null) {
+//            final Object[] keyValues = (Object[])((Object[]) key)[depth];
+//            if (keyValues != null && keyValues.length > 0) {
+//                if (keyValues.length == 1) {
+//                    keyValue = keyValues[0];
+//                } else {
+//                    final StringBuilder sb = new StringBuilder();
+//                    for (final Object v : keyValues) {
+//                        sb.append(v);
+//                        sb.append("|");
+//                    }
+//                    sb.setLength(sb.length() - 1);
+//                    keyValue = sb.toString();
+//                }
+//            }
+//        }
+//
+//        final Store store = new Store(keyValue, keyType, types);
+//        store.values = mapValues(node.getValues(), structure, depth + 1, types);
+//        store.min = node.getMin();
+//        store.max = node.getMax();
+//        store.sum = node.getSum();
+//
+//        return store;
+//    }
+//
+//    private Object[] mapValues(final Object[][] values, final Field[] structure, final int depth, final String[] types) {
+//        if (values == null) {
+//            return null;
+//        }
+//
+//        String keyType = Type.GENERAL.name();
+//        Field[] fields = structure[depth];
+//        if (fields.length == 1) {
+//            keyType = fields[0].getFormat().getType().name();
+//        }
+//
+//        final Object[] mapped = new Object[values.length];
+//        for (int i = 0; i < values.length; i++) {
+//            final Object value = values[i];
+//            if (value instanceof Node) {
+//                mapped[i] = mapNode((Node) value, keyType, structure, depth, types);
+//            } else {
+//                mapped[i] = value;
+//            }
+//        }
+//
+//        return mapped;
+//    }
 
     public static class Store {
-        private final Object key;
-
-        private Map<Object, Store> map;
-        private List<Object> list;
-
+        private Object key;
+        private Object[] values;
         private Double[] min;
         private Double[] max;
         private Double[] sum;
-        private final String[] types;
+        private String[] types;
         private String keyType;
-
-        public Store(final Object key, final String keyType, final String[] types) {
-            this.key = key;
-            this.keyType = keyType;
-            this.types = types;
-        }
-
-        public Store(final Object key, final List<Object> list, final String[] types, final int len) {
-            this.key = key;
-            this.list = list;
-            this.types = types;
-            this.min = new Double[len];
-            this.max = new Double[len];
-            this.sum = new Double[len];
-        }
 
         @JsonProperty("key")
         public Object getKey() {
@@ -225,14 +400,8 @@ public class SearchResponseMapper {
         }
 
         @JsonProperty("values")
-        public Object getValues() {
-            if (map != null) {
-                return map.values();
-            } else if (list != null) {
-                return list;
-            }
-
-            return null;
+        public Object[] getValues() {
+            return values;
         }
 
         @JsonProperty("types")
@@ -254,30 +423,5 @@ public class SearchResponseMapper {
         public Double[] getSum() {
             return sum;
         }
-
-        @JsonIgnore
-        public Map<Object, Store> getMap() {
-            return map;
-        }
-
-        public void setMap(final Map<Object, Store> map) {
-            this.map = map;
-        }
-
-        @JsonIgnore
-        public List<Object> getList() {
-            return list;
-        }
-
-        public void add(final Object[] vals) {
-            list.add(vals);
-        }
-
-        @Override
-        public String toString() {
-            return "Store [key=" + key + ", map=" + map + ", types=" + Arrays.toString(types) + ", keyType=" + keyType
-                    + "]";
-        }
-
     }
 }

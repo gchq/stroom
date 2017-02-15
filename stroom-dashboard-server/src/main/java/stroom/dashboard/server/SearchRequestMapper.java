@@ -49,6 +49,7 @@ import stroom.query.api.Param;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest;
+import stroom.query.api.ResultRequest.ResultStyle;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.TableSettings;
 import stroom.query.api.TimeZone.Use;
@@ -64,6 +65,7 @@ import stroom.visualisation.shared.VisualisationService;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -131,22 +133,49 @@ public class SearchRequestMapper {
             final ComponentResultRequest componentResultRequest = entry.getValue();
             if (componentResultRequest instanceof TableResultRequest) {
                 final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
-                final stroom.query.api.TableResultRequest copy = new stroom.query.api.TableResultRequest();
+                final stroom.query.api.ResultRequest copy = new stroom.query.api.ResultRequest();
                 copy.setComponentId(componentId);
                 copy.setFetchData(tableResultRequest.wantsData());
-                copy.setTableSettings(mapTableSettings(tableResultRequest.getTableSettings()));
+                final TableSettings tableSettings = mapTableSettings(tableResultRequest.getTableSettings());
+                copy.setTableSettings(new TableSettings[]{tableSettings});
                 copy.setRequestedRange(mapOffsetRange(tableResultRequest.getRequestedRange()));
                 copy.setOpenGroups(mapCollection(String.class, tableResultRequest.getOpenGroups()));
+                copy.setResultStyle(ResultStyle.FLAT);
                 resultRequests[i++] = copy;
 
             } else if (componentResultRequest instanceof VisResultRequest) {
                 final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
-                final stroom.query.api.VisResultRequest copy = new stroom.query.api.VisResultRequest();
+                final stroom.query.api.ResultRequest copy = new stroom.query.api.ResultRequest();
                 copy.setComponentId(componentId);
                 copy.setFetchData(visResultRequest.wantsData());
-                copy.setTableSettings(mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings()));
-                copy.setStructure(mapStructure(visResultRequest.getVisDashboardSettings()));
+
+                final VisStructure visStructure = mapStructure(visResultRequest.getVisDashboardSettings());
+
+                final TableSettings parentTableSettings = mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings());
+                final TableSettings childTableSettings = visStructureToTableSettings(visStructure, parentTableSettings);
+
+                copy.setTableSettings(new TableSettings[]{parentTableSettings, childTableSettings});
+                copy.setRequestedRange(null);
+                copy.setOpenGroups(null);
+                copy.setResultStyle(ResultStyle.TREE);
                 resultRequests[i++] = copy;
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//                final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
+//                final stroom.query.api.VisResultRequest copy = new stroom.query.api.VisResultRequest();
+//                copy.setComponentId(componentId);
+//                copy.setFetchData(visResultRequest.wantsData());
+//                copy.setTableSettings(mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings()));
+//                copy.setStructure(mapStructure(visResultRequest.getVisDashboardSettings()));
+//                resultRequests[i++] = copy;
             }
         }
 
@@ -308,6 +337,80 @@ public class SearchRequestMapper {
         return copy;
     }
 
+    private TableSettings visStructureToTableSettings(final VisStructure visStructure, final TableSettings parentTableSettings) {
+        final Map<String, stroom.query.api.Format> formatMap = new HashMap<>();
+        if (parentTableSettings.getFields() != null) {
+            for (final stroom.query.api.Field field : parentTableSettings.getFields()) {
+                if (field != null) {
+                    formatMap.put(field.getName(), field.getFormat());
+                }
+            }
+        }
+
+        List<stroom.query.api.Field> fields = new ArrayList<>();
+        List<Integer> limits = new ArrayList<>();
+
+        VisNest nest = visStructure.getNest();
+        VisValues values = visStructure.getValues();
+
+        int group = 0;
+        while (nest != null) {
+            stroom.query.api.Field field = convertField(visStructure.getNest().getKey(), formatMap);
+            field.setGroup(group++);
+
+            fields.add(field);
+
+            // Get limit from nest.
+            Integer limit = null;
+            if (nest.getLimit() != null) {
+                limit = nest.getLimit().getSize();
+            }
+            limits.add(limit);
+
+            values = nest.getValues();
+            nest = nest.getNest();
+        }
+
+        if (values != null) {
+            // Get limit from values.
+            Integer limit = null;
+            if (values.getLimit() != null) {
+                limit = values.getLimit().getSize();
+            }
+            limits.add(limit);
+
+            if (values.getFields() != null) {
+                for (final VisField visField : values.getFields()) {
+                    fields.add(convertField(visField, formatMap));
+                }
+            }
+        }
+
+        final TableSettings tableSettings = new TableSettings();
+        tableSettings.setFields(fields.toArray(new stroom.query.api.Field[fields.size()]));
+        tableSettings.setMaxResults(limits.toArray(new Integer[limits.size()]));
+        tableSettings.setShowDetail(true);
+
+        return tableSettings;
+    }
+
+    private stroom.query.api.Field convertField(final VisField visField, final Map<String, stroom.query.api.Format> formatMap) {
+        final stroom.query.api.Field field = new stroom.query.api.Field();
+        field.setFormat(new stroom.query.api.Format(Type.GENERAL));
+
+        if (visField.getId() != null) {
+            final stroom.query.api.Format format = formatMap.get(visField.getId());
+            if (format != null) {
+                field.setFormat(format);
+            }
+
+            field.setExpression("${" + visField.getId() + "}");
+        }
+        field.setSort(visField.getSort());
+
+        return field;
+    }
+
     private stroom.query.api.VisStructure mapStructure(final VisComponentSettings visComponentSettings) {
         DocRef docRef = visComponentSettings.getVisualisation();
         VisStructure copy = null;
@@ -366,7 +469,7 @@ public class SearchRequestMapper {
         }
 
         final VisField copy = new VisField();
-        copy.setId(field.getId());
+        copy.setId(settingResolver.resolveField(field.getId()));
         copy.setSort(mapVisSort(field.getSort(), settingResolver));
 
         return copy;
@@ -452,6 +555,14 @@ public class SearchRequestMapper {
             }
         }
 
+        public String resolveField(final String value) {
+            if (value == null) {
+                throw new RuntimeException("Structure element with missing field name");
+            }
+
+            return resolveString(value);
+        }
+
         public String resolveString(final String value) {
             String val = value;
             if (val != null) {
@@ -463,6 +574,8 @@ public class SearchRequestMapper {
                         final Control control = controls.get(controlId);
                         if (control != null) {
                             val = control.getDefaultValue();
+                        } else {
+//                            throw new RuntimeException("No control found with id = '" + controlId + "'");
                         }
                     }
                 }

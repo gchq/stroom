@@ -20,7 +20,7 @@ import stroom.dashboard.expression.Generator;
 import stroom.mapreduce.OutputCollector;
 import stroom.mapreduce.Reducer;
 
-public class ItemReducer implements Reducer<String, Item, String, Item> {
+public class ItemReducer implements Reducer<Key, Item, Key, Item> {
     private final int[] depths;
     private final int maxDepth;
 
@@ -30,7 +30,7 @@ public class ItemReducer implements Reducer<String, Item, String, Item> {
     }
 
     @Override
-    public void reduce(final String key, final Iterable<Item> values, final OutputCollector<String, Item> output) {
+    public void reduce(final Key key, final Iterable<Item> values, final OutputCollector<Key, Item> output) {
         Item dest = null;
         for (final Item item : values) {
             if (dest == null) {

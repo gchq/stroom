@@ -35,10 +35,9 @@
     } ]
   },
   "resultRequests" : [ {
-    "type" : "table",
     "componentId" : "componentSettingsMapKey",
-    "fetchData" : true,
-    "tableSettings" : {
+    "tableSettings": [
+      {
       "queryId" : "someQueryId",
       "fields" : [ {
         "name" : "name1",
@@ -90,11 +89,13 @@
         "name" : "docRefName2"
       },
       "maxResults" : [ 1, 2 ]
-    },
+      }
+    ],
     "requestedRange" : {
       "offset" : 0,
       "length" : 100
-    }
+    },
+    "fetchData": true
   } ],
   "dateTimeLocale" : "en-gb",
   "incremental" : true

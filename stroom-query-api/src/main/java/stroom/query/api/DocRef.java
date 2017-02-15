@@ -28,7 +28,7 @@ import java.io.Serializable;
 @JsonPropertyOrder({"type", "id", "uuid", "name"})
 @XmlType(name = "DocRef", propOrder = {"type", "id", "uuid", "name"})
 @XmlRootElement(name = "doc")
-public class DocRef implements HasDisplayValue, Serializable {
+public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable {
     private static final long serialVersionUID = -2121399789820829359L;
 
     protected String type;
@@ -98,6 +98,7 @@ public class DocRef implements HasDisplayValue, Serializable {
         return name;
     }
 
+    @Override
     public int compareTo(final DocRef o) {
         int diff = type.compareTo(o.type);
 

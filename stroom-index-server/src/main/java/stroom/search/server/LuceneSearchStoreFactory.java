@@ -24,14 +24,12 @@ import stroom.index.shared.IndexService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;
-import stroom.query.CoprocessorMap;
+import stroom.query.CoprocessorSettingsMap;
 import stroom.query.SearchResultHandler;
 import stroom.query.Store;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Query;
-import stroom.query.api.ResultRequest;
 import stroom.query.api.SearchRequest;
-import stroom.query.api.TableSettings;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.SecurityContext;
 import stroom.task.cluster.ClusterResultCollectorCache;
@@ -41,8 +39,6 @@ import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 @Component
@@ -88,21 +84,16 @@ public class LuceneSearchStoreFactory {
         // This is a new search so begin a new asynchronous search.
         final Node node = nodeCache.getDefaultNode();
 
-        // Create a coprocessor map.
-        final Map<String, TableSettings> settingsMap = new HashMap<>();
-        for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
-            settingsMap.put(resultRequest.getComponentId(), resultRequest.getTableSettings());
-        }
-
-        final CoprocessorMap coprocessorMap = new CoprocessorMap(settingsMap);
+        // Create a coprocessor settings map.
+        final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
         final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(null, securityContext.getUserId(), searchName, query, node,
-                SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorMap.getMap(), nowEpochMilli);
+                SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorSettingsMap.getMap(), nowEpochMilli);
 
         // Create a handler for search results.
-        final SearchResultHandler resultHandler = new SearchResultHandler(coprocessorMap, getDefaultTrimSizes());
+        final SearchResultHandler resultHandler = new SearchResultHandler(coprocessorSettingsMap, getDefaultTrimSizes());
 
         // Create the search result collector.
         final ClusterSearchResultCollector searchResultCollector = ClusterSearchResultCollector.create(taskManager,
