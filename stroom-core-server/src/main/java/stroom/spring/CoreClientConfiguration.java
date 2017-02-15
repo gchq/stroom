@@ -30,6 +30,7 @@ import stroom.dispatch.server.DispatchServiceImpl;
 import stroom.dispatch.shared.DispatchService;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.feed.server.RemoteFeedServiceRPC;
+import stroom.lifecycle.LifecycleServiceImpl;
 import stroom.servlet.DebugServlet;
 import stroom.servlet.DynamicCSSServlet;
 import stroom.servlet.EchoServlet;
@@ -51,7 +52,7 @@ import java.util.Properties;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@EnableWebMvc
+//@EnableWebMvc
 @ComponentScan(basePackages = {"stroom"}, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class CoreClientConfiguration {
@@ -59,6 +60,11 @@ public class CoreClientConfiguration {
 
     public CoreClientConfiguration() {
         LOGGER.info("CoreClientConfiguration loading...");
+    }
+
+    @Bean
+    public LifecycleServiceImpl lifecycleService() {
+        return new LifecycleServiceImpl();
     }
 
     @Bean

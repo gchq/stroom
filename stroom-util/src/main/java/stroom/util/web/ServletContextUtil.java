@@ -33,12 +33,17 @@ public class ServletContextUtil {
 
     public static final String getWARName(ServletContext servletContext) {
         final String fullPath = servletContext.getRealPath(".");
-        final String[] parts = fullPath.split("/");
+        if(fullPath != null) {
+            final String[] parts = fullPath.split("/");
 
-        if (WEBAPP.equals(parts[parts.length - 1])) {
-            return DEFAULT_NAME;
+            if (WEBAPP.equals(parts[parts.length - 1])) {
+                return DEFAULT_NAME;
+            }
+
+            return parts[parts.length - 2];
         }
-
-        return parts[parts.length - 2];
+        else {
+            return "n/a";
+        }
     }
 }

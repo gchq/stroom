@@ -1,0 +1,29 @@
+plugins {
+  id 'com.github.johnrengelman.shadow' version '1.2.4'
+}
+
+
+dependencies{
+//  compile 'com.hmsonline:dropwizard-spring:0.6.0'
+    compile project(':stroom-core-server')
+    compile project(':stroom-index-server')
+    compile project(':stroom-statistics-server')
+    compile project(':stroom-dashboard-server')
+    compile project(':stroom-security-server')
+    compile "io.dropwizard:dropwizard-core:1.0.6"
+
+    // TODO Added after adding shading
+    compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
+    compile group: 'org.glassfish.web', name: 'javax.el', version: '2.2.6'
+
+
+    compile 'org.springframework.security:spring-security-web:4.2.1.RELEASE'
+    compile "org.springframework.security:spring-security-web:4.2.1.RELEASE"
+    compile "org.springframework.security:spring-security-config:4.1.1.RELEASE"
+    compile "org.springframework.security:spring-security-aspects:4.2.1.RELEASE"
+    compile "org.springframework:spring-web:4.2.1.RELEASE"
+
+    compile "org.apache.geronimo.specs:geronimo-servlet_3.0_spec:1.0"
+
+
+}

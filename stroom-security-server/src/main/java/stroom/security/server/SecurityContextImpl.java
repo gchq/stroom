@@ -43,6 +43,7 @@ import stroom.security.shared.UserService;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
+import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;
@@ -51,7 +52,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Component
-@Profile(SecurityConfiguration.PROD_SECURITY)
+@Profile(StroomSpringProfiles.PROD)
 @Scope(value = StroomScope.PROTOTYPE, proxyMode = ScopedProxyMode.INTERFACES)
 class SecurityContextImpl implements SecurityContext {
     public static final String ISSUER = "stroom";

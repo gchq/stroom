@@ -42,6 +42,21 @@ public class TableSettings implements Serializable {
     public TableSettings() {
     }
 
+    public TableSettings(
+            String queryId,
+            List<Field> fields,
+            Boolean extractValues,
+            DocRef extractionPipeline,
+            Integer[] maxResults,
+            Boolean showDetail){
+        this.queryId = queryId;
+        this.fields = fields;
+        this.extractValues = extractValues;
+        this.extractionPipeline = extractionPipeline;
+        this.maxResults = maxResults;
+        this.showDetail = showDetail;
+    }
+
     @XmlElement
     public String getQueryId() {
         return queryId;

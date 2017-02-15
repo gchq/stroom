@@ -12,6 +12,7 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
+    apply plugin: 'idea'
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
@@ -76,6 +77,10 @@ task buildUI(type: GradleBuild) {
 
 task run(type: GradleBuild) {
     tasks = [':stroom-app:jettyStart']
+}
+
+task debug(type: GradleBuild) {
+    tasks = [':stroom-app:jettyStartDebug']
 }
 
 task setupSampleData(type: GradleBuild) {

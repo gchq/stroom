@@ -53,12 +53,21 @@ import java.util.Properties;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = {"stroom.security.server", "stroom.security.shared"}, excludeFilters = {
-        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
+@ComponentScan(
+        basePackages = {"stroom.security.server", "stroom.security.shared"},
+        excludeFilters = {
+            @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class)
+        }
+)
 public class SecurityConfiguration {
     public static final String PROD_SECURITY = "PROD_SECURITY";
     public static final String MOCK_SECURITY = "MOCK_SECURITY";
     private static final StroomLogger LOGGER = StroomLogger.getLogger(SecurityConfiguration.class);
+
+    public SecurityConfiguration(){
+        LOGGER.info("SecurityConfiguration loading...");
+    }
+
     @Resource
     private DBRealm dbRealm;
 

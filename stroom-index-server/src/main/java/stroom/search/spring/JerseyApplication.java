@@ -16,11 +16,9 @@
 
 package stroom.search.spring;
 
-
 import org.glassfish.jersey.server.ResourceConfig;
 import stroom.search.server.HelloResource;
 import stroom.search.server.SearchResource;
-
 
 public class JerseyApplication extends ResourceConfig {
     public JerseyApplication() {
