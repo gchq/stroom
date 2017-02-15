@@ -69,23 +69,35 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
 //        valueFields = fieldStructure[fieldStructure.length - 1];
     }
 
-    public static Object[] toNodeKey(Key key) {
+    private Object[] toNodeKey(final Field[] fields, final Key key) {
         if (key == null) {
             return null;
         }
 
-        final List<Object> list = new ArrayList<>();
-
+        final List<Object[]> list = new ArrayList<>();
         Key k = key;
+        int size = 0;
         while (k != null && k.getValues() != null) {
-            Object[] values = k.getValues();
-            for (int i = values.length - 1; i >= 0; i--) {
-                list.add(0, values[i]);
-            }
+            list.add(0, k.getValues());
+            size += k.getValues().length;
             k = k.getParent();
         }
 
-        return list.toArray(new Object[list.size()]);
+        final Object[] result = new Object[size];
+        int index = 0;
+        int i = 0;
+        for (final Object[] values : list) {
+            final Field field = fields[i++];
+            if (values.length == 1) {
+                result[index++] = convert(field, values[0]);
+            } else {
+                for (final Object obj : values) {
+                    result[index++] = obj;
+                }
+            }
+        }
+
+        return result;
     }
 
 //    private Field[][] createFieldStructure(final Field[] fields) {
@@ -177,8 +189,8 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
                 final Object[] values = new Object[fields.length + 3];
 
                 if (item.getKey() != null) {
-                    values[0] = toNodeKey(item.getKey().getParent());
-                    values[1] = toNodeKey(item.getKey());
+                    values[0] = toNodeKey(fields, item.getKey().getParent());
+                    values[1] = toNodeKey(fields, item.getKey());
                 }
                 values[2] = depth;
 
@@ -199,6 +211,9 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
                             if (fieldFormatter != null) {
                                 final Field field = fields[i];
                                 val = fieldFormatter.format(field, val);
+                            } else {
+                                final Field field = fields[i];
+                                val = convert(field, val);
                             }
                             values[i + 3] = val;
                         }
@@ -223,6 +238,18 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
         }
 
         return count;
+    }
+
+    // TODO : Replace this with conversion a the item level.
+    private Object convert(final Field field, final Object val) {
+        if (field != null && field.getFormat() != null && field.getFormat().getType() != null) {
+            final Type type = field.getFormat().getType();
+            if (Type.NUMBER.equals(type) || Type.DATE_TIME.equals(type)) {
+                return TypeConverter.getDouble(val);
+            }
+        }
+
+        return val;
     }
 
     private String[] getTypes(final Field[] fields) {
