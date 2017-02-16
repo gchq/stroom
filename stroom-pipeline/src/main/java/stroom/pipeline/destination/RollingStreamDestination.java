@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
@@ -27,7 +29,7 @@ import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.util.zip.HeaderMap;
 
 public class RollingStreamDestination extends RollingDestination {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(RollingStreamDestination.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RollingStreamDestination.class);
 
     private static final int ONE_MINUTE = 60000;
 

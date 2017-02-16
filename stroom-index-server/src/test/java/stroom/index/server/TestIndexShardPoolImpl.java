@@ -25,6 +25,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.cache.CacheManagerAutoCloseable;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
@@ -46,7 +48,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestIndexShardPoolImpl extends StroomUnitTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestIndexShardPoolImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestIndexShardPoolImpl.class);
+
     static AtomicLong indexShardId = new AtomicLong(0);
     AtomicInteger indexShardsCreated = new AtomicInteger(0);
     AtomicInteger failedThreads = new AtomicInteger(0);

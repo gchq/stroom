@@ -21,6 +21,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import stroom.jobsystem.server.JobTrackedSchedule;
@@ -32,7 +34,7 @@ import stroom.util.spring.StroomSimpleCronSchedule;
 
 @Component
 public class SQLStatisticCacheImpl implements SQLStatisticCache {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticCacheImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticCacheImpl.class);
 
     /**
      * By default we only want to hold a million values in memory before
@@ -133,7 +135,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
             }
 
         } catch (final InterruptedException e) {
-            LOGGER.fatal("doFlush() - No expecting InterruptedException", e);
+            LOGGER.error("doFlush() - No expecting InterruptedException", e);
         }
     }
 

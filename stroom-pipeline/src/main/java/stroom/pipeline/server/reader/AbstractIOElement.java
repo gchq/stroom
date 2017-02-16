@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.server.errorhandler.ProcessException;
@@ -206,7 +208,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
         }
     }
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractIOElement.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIOElement.class);
 
     private final List<Element> targetList = new ArrayList<>();
 

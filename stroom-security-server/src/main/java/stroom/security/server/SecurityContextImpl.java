@@ -23,6 +23,8 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.UnavailableSecurityManagerException;
 import org.apache.shiro.session.InvalidSessionException;
 import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
@@ -56,7 +58,7 @@ class SecurityContextImpl implements SecurityContext {
     public static final String ISSUER = "stroom";
     public static final String SECRET = "some-secret";
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SecurityContextImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
     private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", "INTERNAL_PROCESSING_USER", false);
     private final UserPermissionsCache userPermissionCache;
     private final UserService userService;

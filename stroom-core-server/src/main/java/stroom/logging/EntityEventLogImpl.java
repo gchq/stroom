@@ -109,7 +109,7 @@ public class EntityEventLogImpl implements EntityEventLog {
             objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to create event!", e);
         }
     }
 
@@ -128,7 +128,7 @@ public class EntityEventLogImpl implements EntityEventLog {
             objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to create event!", e);
         }
     }
 
@@ -160,7 +160,7 @@ public class EntityEventLogImpl implements EntityEventLog {
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to update event!", e);
         }
     }
 
@@ -197,7 +197,7 @@ public class EntityEventLogImpl implements EntityEventLog {
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to move event!", e);
         }
     }
 
@@ -216,7 +216,7 @@ public class EntityEventLogImpl implements EntityEventLog {
             objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to delete event!", e);
         }
     }
 
@@ -235,7 +235,7 @@ public class EntityEventLogImpl implements EntityEventLog {
             objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to view event!", e);
         }
     }
 
@@ -268,7 +268,7 @@ public class EntityEventLogImpl implements EntityEventLog {
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to doDelete!", e);
         }
     }
 
@@ -303,7 +303,7 @@ public class EntityEventLogImpl implements EntityEventLog {
             search.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to doSearch!", e);
         }
     }
 
@@ -338,7 +338,7 @@ public class EntityEventLogImpl implements EntityEventLog {
             search.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to doSearchSummary", e);
         }
     }
 

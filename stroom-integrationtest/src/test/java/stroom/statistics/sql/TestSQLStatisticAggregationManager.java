@@ -18,6 +18,8 @@ package stroom.statistics.sql;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.entity.server.util.ConnectionUtil;
@@ -45,7 +47,7 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestSQLStatisticAggregationManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticAggregationManager.class);
 
     @Resource
     private CommonTestControl commonTestControl;

@@ -21,6 +21,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.DatabaseTool;
 import stroom.util.logging.LogExecutionTime;
@@ -29,7 +31,7 @@ import stroom.util.logging.LogExecutionTime;
  * Utility that can be run as a main method to manually perform aggregation
  */
 public class SQLStatisticValueBatchSaveServiceTestDatabaseTool extends DatabaseTool {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticValueBatchSaveServiceTestDatabaseTool.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticValueBatchSaveServiceTestDatabaseTool.class);
 
     public static void main(final String[] args) throws Exception {
         new SQLStatisticValueBatchSaveServiceTestDatabaseTool().doMain(args);

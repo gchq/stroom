@@ -16,6 +16,8 @@
 
 package stroom.statistics.server.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.datasource.api.DataSourceField;
 import stroom.entity.shared.Period;
@@ -53,7 +55,7 @@ import java.util.Set;
 
 @Component
 public abstract class AbstractStatistics implements Statistics {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractStatistics.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractStatistics.class);
 
     private static final List<Condition> SUPPORTED_DATE_CONDITIONS = Arrays.asList(Condition.BETWEEN);
 

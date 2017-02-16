@@ -17,12 +17,14 @@
 package stroom.index.server;
 
 import org.apache.lucene.util.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 
 public final class LuceneVersionUtil {
     public static final Version CURRENT_LUCENE_VERSION = Version.LUCENE_5_5_3;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(LuceneVersionUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LuceneVersionUtil.class);
 
     private LuceneVersionUtil() {
         // Private constructor for utility class.

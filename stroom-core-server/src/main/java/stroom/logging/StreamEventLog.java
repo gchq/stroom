@@ -72,7 +72,7 @@ public class StreamEventLog {
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to import stream!", e);
         }
     }
 
@@ -87,7 +87,7 @@ public class StreamEventLog {
                 eventLoggingService.log(event);
             }
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to view stream!", e);
         }
     }
 
@@ -112,7 +112,7 @@ public class StreamEventLog {
                 eventLoggingService.log(event);
             }
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to export stream!", e);
         }
     }
 

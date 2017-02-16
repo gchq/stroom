@@ -131,7 +131,7 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
                     try {
                         inetAddress = InetAddress.getByName(ip);
                     } catch (final UnknownHostException e) {
-                        LOG.warn("Problem getting client InetAddress", e);
+                        LOGGER.warn("Problem getting client InetAddress", e);
                     }
 
                     Device client = null;
@@ -145,7 +145,7 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
                     return client;
                 }
             } catch (final Exception e) {
-                LOG.warn("Problem getting client IP address and host name", e);
+                LOGGER.warn("Problem getting client IP address and host name", e);
             }
         }
 
@@ -161,7 +161,7 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
                 return user;
             }
         } catch (final Exception e) {
-            LOG.warn("Problem getting current user", e);
+            LOGGER.warn("Problem getting current user", e);
         }
 
         return null;
@@ -174,7 +174,7 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
             try {
                 inetAddress = InetAddress.getLocalHost();
             } catch (final UnknownHostException e) {
-                LOG.warn("Problem getting device from InetAddress", e);
+                LOGGER.warn("Problem getting device from InetAddress", e);
             }
 
             if (inetAddress != null) {
@@ -188,7 +188,7 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
                         try {
                             inetAddress = InetAddress.getByName(ip);
                         } catch (final UnknownHostException e) {
-                            LOG.warn("Problem getting client InetAddress", e);
+                            LOGGER.warn("Problem getting client InetAddress", e);
                         }
 
                         if (inetAddress != null) {

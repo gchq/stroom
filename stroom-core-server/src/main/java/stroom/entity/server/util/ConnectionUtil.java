@@ -50,7 +50,7 @@ public class ConnectionUtil {
         final String driverPassword = StroomProperties.getProperty(JDBC_DRIVER_PASSWORD);
 
         if (driverClassname == null || driverUrl == null) {
-            LOGGER.fatal("Properties are not set for DB connection");
+            LOGGER.error("Properties are not set for DB connection");
             throw new RuntimeException("Properties are not set for DB connection");
         }
 
@@ -71,7 +71,7 @@ public class ConnectionUtil {
             try {
                 connection.close();
             } catch (final SQLException ex) {
-                LOGGER.error(ex, ex);
+                LOGGER.error("Unable to close connection!", ex);
             }
         }
     }

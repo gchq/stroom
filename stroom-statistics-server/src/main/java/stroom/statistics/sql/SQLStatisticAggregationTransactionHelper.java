@@ -16,6 +16,8 @@
 
 package stroom.statistics.sql;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.SQLUtil;
@@ -134,7 +136,7 @@ public class SQLStatisticAggregationTransactionHelper {
 
     }
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticAggregationTransactionHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticAggregationTransactionHelper.class);
 
     // /**
     // * The number of records to add to the aggregate from the aggregate source
@@ -462,7 +464,7 @@ public class SQLStatisticAggregationTransactionHelper {
     }
 
     protected void logDebug(final Object... args) {
-        LOGGER.debug(args);
+        Arrays.asList(args).forEach(arg -> LOGGER.debug(arg.toString()));
     }
 
     public long aggregateConfigStage1(final TaskMonitor taskMonitor, final String prefix, final long batchSize,

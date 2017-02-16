@@ -21,6 +21,8 @@ import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.node.server.StroomPropertyService;
@@ -57,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class SQLStatisticEventStore extends AbstractStatistics {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticEventStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticEventStore.class);
 
     static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.stats.sql.search.maxResults";
 

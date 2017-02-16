@@ -16,6 +16,8 @@
 
 package stroom.task.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.util.StringUtils;
 import stroom.node.server.StroomPropertyService;
@@ -32,7 +34,7 @@ import javax.inject.Inject;
 class RefreshHandler extends AbstractTaskHandler<RefreshAction, SharedString> {
     public static final String STROOM_MAINTENANCE_MESSAGE = "stroom.maintenanceMessage";
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(RefreshHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RefreshHandler.class);
 
     private final StroomPropertyService stroomPropertyService;
 

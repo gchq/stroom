@@ -110,7 +110,7 @@ public final class ImportFileServlet extends HttpServlet {
                 fields.put(item.getFieldName(), item);
             }
         } catch (final FileUploadException e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to get file items!", e);
         }
 
         return fields;

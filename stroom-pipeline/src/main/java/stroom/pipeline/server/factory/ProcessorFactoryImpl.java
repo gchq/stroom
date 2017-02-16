@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.factory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.errorhandler.*;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskCallback;
@@ -37,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 @Scope(StroomScope.TASK)
 class ProcessorFactoryImpl implements ProcessorFactory {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ProcessorFactoryImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFactoryImpl.class);
 
     static class MultiWayProcessor implements Processor {
         private final List<Processor> processors;
@@ -119,7 +121,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
                     ((ErrorStatistics) errorReceiver).checkRecord(-1);
                 }
             } else {
-                LOGGER.fatal(t, t);
+                LOGGER.error("Unable to output error!", t);
             }
         }
     }

@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.factory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskScopeContextHolder;
 import org.springframework.beans.BeansException;
@@ -30,7 +32,7 @@ import java.util.Map;
 
 @Component
 public class ElementRegistryFactoryImpl implements ElementRegistryFactory, ElementFactory, ApplicationContextAware {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ElementRegistryFactoryImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ElementRegistryFactoryImpl.class);
 
     @Resource
     private StroomBeanStore beanStore;

@@ -16,6 +16,8 @@
 
 package stroom.security.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.GenericEntityService;
@@ -42,7 +44,7 @@ import java.util.Set;
 @Transactional
 @Component
 public class DocumentPermissionServiceImpl implements DocumentPermissionService {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(DocumentPermissionServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DocumentPermissionServiceImpl.class);
 
     private static final String SQL_INSERT_USER_PERMISSIONS;
     private static final String SQL_DELETE_USER_PERMISSIONS;

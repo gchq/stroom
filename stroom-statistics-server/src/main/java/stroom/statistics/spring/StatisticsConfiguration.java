@@ -18,6 +18,8 @@ package stroom.statistics.spring;
 
 import java.util.Arrays;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -27,7 +29,7 @@ import stroom.statistics.server.common.MetaDataStatisticTemplate;
 
 @Configuration
 public class StatisticsConfiguration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StatisticsConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsConfiguration.class);
 
     public StatisticsConfiguration() {
         LOGGER.info("StatisticsConfiguration loading...");

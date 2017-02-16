@@ -16,6 +16,8 @@
 
 package stroom.statistics.server.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
@@ -38,7 +40,7 @@ import java.util.List;
 public class StatisticStoreEntityServiceImpl
         extends DocumentEntityServiceImpl<StatisticStoreEntity, FindStatisticsEntityCriteria>
         implements StatisticStoreEntityService {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StatisticStoreEntityServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticStoreEntityServiceImpl.class);
 
     @Inject
     StatisticStoreEntityServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext) {

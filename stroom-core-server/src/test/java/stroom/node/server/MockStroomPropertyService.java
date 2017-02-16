@@ -19,13 +19,16 @@ package stroom.node.server;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 
 import stroom.util.spring.PropertyProvider;
 
 public class MockStroomPropertyService extends PropertyPlaceholderConfigurer
         implements StroomPropertyService, PropertyProvider {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(MockStroomPropertyService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MockStroomPropertyService.class);
+
     private final Map<String, String> properties = new HashMap<>();
 
     public MockStroomPropertyService() {

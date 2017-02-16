@@ -25,6 +25,8 @@ import event.logging.Query;
 import event.logging.Query.Advanced;
 import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.server.DataSourceProviderRegistry;
 import stroom.dictionary.shared.DictionaryService;
@@ -38,7 +40,7 @@ import javax.annotation.Resource;
 @Component
 @Insecure
 public class SearchEventLogImpl implements SearchEventLog {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SearchEventLogImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SearchEventLogImpl.class);
 
     @Resource
     private StroomEventLoggingService eventLoggingService;
@@ -105,7 +107,7 @@ public class SearchEventLogImpl implements SearchEventLog {
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to download results!", e);
         }
     }
 
@@ -131,7 +133,7 @@ public class SearchEventLogImpl implements SearchEventLog {
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
         }
     }
 

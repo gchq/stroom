@@ -100,7 +100,7 @@ public class AuthenticationEventLog {
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to complete authenticationEvent!", e);
         }
     }
 }

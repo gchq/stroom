@@ -599,7 +599,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         try {
             target.close();
         } catch (final IOException e) {
-            LOGGER.error(e);
+            LOGGER.error("Unable to delete stream target!", e);
         }
 
         // Make sure the stream data is deleted.
@@ -614,7 +614,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             // Close the stream source.
             streamSource.close();
         } catch (final Exception e) {
-            LOGGER.error(e);
+            LOGGER.error("Unable to close stream source!", e);
         }
     }
 

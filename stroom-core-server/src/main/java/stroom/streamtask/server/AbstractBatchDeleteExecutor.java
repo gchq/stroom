@@ -27,6 +27,8 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.task.TaskMonitor;
 
+import java.util.Arrays;
+
 public abstract class AbstractBatchDeleteExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBatchDeleteExecutor.class);
 
@@ -171,7 +173,7 @@ public abstract class AbstractBatchDeleteExecutor {
 
     private void info(final Object... args) {
         taskMonitor.info(args);
-        LOGGER.debug(args);
+        Arrays.asList(args).forEach(arg -> LOGGER.debug(arg.toString()));
     }
 
     private Long getDeleteAge(final String property) {

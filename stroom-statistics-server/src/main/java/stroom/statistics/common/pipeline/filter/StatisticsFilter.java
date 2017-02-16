@@ -16,6 +16,8 @@
 
 package stroom.statistics.common.pipeline.filter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
@@ -71,7 +73,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
     private static final String COUNT = "count";
     private static final String VALUE = "value";
     private static final int EVENT_BUFFER_SIZE = 1000;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StatisticsFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsFilter.class);
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
     private final StatisticsFactory statisticEventStoreFactory;

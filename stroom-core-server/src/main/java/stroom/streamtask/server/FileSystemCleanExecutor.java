@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +104,7 @@ public class FileSystemCleanExecutor {
     }
 
     private void logInfo(final Object... args) {
-        LOGGER.info(args);
+        Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
         taskMonitor.info(args);
     }
 

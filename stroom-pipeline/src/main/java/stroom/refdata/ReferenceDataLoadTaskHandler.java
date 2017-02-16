@@ -16,6 +16,8 @@
 
 package stroom.refdata;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
@@ -59,7 +61,8 @@ import java.io.IOException;
 @TaskHandlerBean(task = ReferenceDataLoadTask.class)
 @Scope(value = StroomScope.TASK)
 public class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoadTask, MapStore> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ReferenceDataLoadTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataLoadTaskHandler.class);
+
     @Resource
     private StreamStore streamStore;
     @Resource

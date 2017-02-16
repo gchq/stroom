@@ -120,7 +120,7 @@ public class EntityEventBusImpl implements EntityEventBus {
                 try {
                     handler.onChange(event);
                 } catch (final Exception e) {
-                    LOGGER.error(e);
+                    LOGGER.error("Unable to handle onChange event!",e);
                 }
             }
         }
@@ -187,7 +187,7 @@ public class EntityEventBusImpl implements EntityEventBus {
                     }
                 }
             } catch (final Exception e) {
-                LOGGER.error(e);
+                LOGGER.error("Unable to initialise EntityEventBusImpl!", e);
             }
 
             initialised = true;

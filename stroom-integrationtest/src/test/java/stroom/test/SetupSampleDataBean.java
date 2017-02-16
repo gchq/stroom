@@ -16,6 +16,8 @@
 
 package stroom.test;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.CommonTestControl;
 import stroom.dashboard.shared.Dashboard;
 import stroom.entity.shared.BaseResultList;
@@ -70,7 +72,7 @@ import java.util.Set;
  * Script to create some base data for testing.
  */
 public final class SetupSampleDataBean {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SetupSampleDataBean.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SetupSampleDataBean.class);
 
     private static final String ROOT_DIR_NAME = "samples";
 

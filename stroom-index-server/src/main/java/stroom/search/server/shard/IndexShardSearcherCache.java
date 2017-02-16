@@ -25,6 +25,8 @@ import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.constructs.blocking.SelfPopulatingCache;
 import net.sf.ehcache.event.CacheEventListenerAdapter;
 import org.apache.lucene.index.IndexWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 import stroom.index.server.IndexShardWriter;
@@ -43,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 public class IndexShardSearcherCache implements InitializingBean {
     public static final int MAX_OPEN_SHARDS = 2;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexShardSearcherCache.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearcherCache.class);
     private final IndexShardWriterCache indexShardWriterPool;
     private final CacheManager cacheManager;
     private final Cache cache;
@@ -92,7 +94,7 @@ public class IndexShardSearcherCache implements InitializingBean {
 
             @Override
             public void notifyRemoveAll(final Ehcache cache) {
-                LOGGER.fatal("Unexpected call to remove all index shard searchers");
+                LOGGER.error("Unexpected call to remove all index shard searchers");
             }
         });
 

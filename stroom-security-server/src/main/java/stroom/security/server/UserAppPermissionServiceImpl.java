@@ -16,6 +16,8 @@
 
 package stroom.security.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -47,7 +49,7 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
     private static final String SQL_INSERT_USER_PERMISSIONS;
     private static final String SQL_DELETE_USER_PERMISSIONS;
     private static final String SQL_GET_PERMISSION_KEYSET_FOR_USER;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(UserAppPermissionServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserAppPermissionServiceImpl.class);
 
     static {
         SQL_INSERT_USER_PERMISSIONS = ""

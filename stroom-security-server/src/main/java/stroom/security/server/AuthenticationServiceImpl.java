@@ -23,6 +23,8 @@ import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
@@ -50,7 +52,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public static final String USER_ID_SESSION_KEY = AuthenticationServiceImpl.class.getName() + "_UID";
     private static final int DEFAULT_DAYS_TO_PASSWORD_EXPIRY = 90;
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AuthenticationServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
     private final StroomPropertyService stroomPropertyService;
     private final transient HttpServletRequestHolder httpServletRequestHolder;

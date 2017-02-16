@@ -16,6 +16,8 @@
 
 package stroom.refdata;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
 import stroom.pipeline.server.EncodingSelection;
@@ -44,7 +46,7 @@ import java.io.InputStream;
 @TaskHandlerBean(task = ContextDataLoadTask.class)
 @Scope(value = StroomScope.TASK)
 public class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask, MapStore> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ContextDataLoadTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ContextDataLoadTaskHandler.class);
 
     @Resource
     private PipelineFactory pipelineFactory;

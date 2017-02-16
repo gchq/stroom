@@ -20,6 +20,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.query.CoprocessorMap.CoprocessorKey;
 import stroom.query.Payload;
 import stroom.query.ResultHandler;
@@ -32,7 +34,7 @@ import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 
 public class StatisticsSearchStore implements Store {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StatisticsSearchStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsSearchStore.class);
 
     private final TaskManager taskManager;
     private final Task<VoidResult> task;

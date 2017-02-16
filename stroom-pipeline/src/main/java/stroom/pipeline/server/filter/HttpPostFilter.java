@@ -2,6 +2,8 @@ package stroom.pipeline.server.filter;
 
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
@@ -27,7 +29,7 @@ import javax.ws.rs.core.Response;
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS,
         PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.STREAM)
 public class HttpPostFilter extends AbstractSamplingFilter {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(HttpPostFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpPostFilter.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
 

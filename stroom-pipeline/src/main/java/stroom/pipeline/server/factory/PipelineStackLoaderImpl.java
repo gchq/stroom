@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.factory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.query.api.DocRef;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
@@ -27,7 +29,7 @@ import java.util.List;
 
 @Component
 public class PipelineStackLoaderImpl implements PipelineStackLoader {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(PipelineStackLoaderImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PipelineStackLoaderImpl.class);
 
     @Resource
     private PipelineEntityService pipelineEntityService;

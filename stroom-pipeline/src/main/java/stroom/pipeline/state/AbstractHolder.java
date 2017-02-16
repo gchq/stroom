@@ -16,11 +16,14 @@
 
 package stroom.pipeline.state;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractHolder<T extends Holder> implements HasChangeHandlers<T> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractHolder.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractHolder.class);
 
     private List<ChangeHandler<T>> handlers;
 
@@ -38,7 +41,7 @@ public abstract class AbstractHolder<T extends Holder> implements HasChangeHandl
                 try {
                     handler.onChange(event);
                 } catch (final Throwable e) {
-                    LOGGER.error(e, e);
+                    LOGGER.error("Unable to handle onChange!", e);
                 }
             }
         }

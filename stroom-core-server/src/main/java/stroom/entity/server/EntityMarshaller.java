@@ -37,7 +37,7 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
         try {
             jaxbContext = JAXBContext.newInstance(getObjectType());
         } catch (final JAXBException e) {
-            LOGGER.fatal(e, e);
+            LOGGER.error("Unable to create new JAXBContext for object type!", e);
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -77,7 +77,7 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
             final O object = XMLMarshallerUtil.unmarshal(jaxbContext, getObjectType(), data);
             setObject(entity, object);
         } catch (final Exception e) {
-            LOGGER.debug(e, e);
+            LOGGER.debug("Unable to unmarshal entity!", e);
             LOGGER.warn(e.getMessage());
         }
         return entity;

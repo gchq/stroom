@@ -16,6 +16,8 @@
 
 package stroom.search.server.taskqueue;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
 import stroom.util.shared.Task;
@@ -24,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TaskQueueExecutor {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TaskQueueExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskQueueExecutor.class);
 
     private static final int DEFAULT_CONCURRENCY = 5;
     private final TaskManager taskManager;

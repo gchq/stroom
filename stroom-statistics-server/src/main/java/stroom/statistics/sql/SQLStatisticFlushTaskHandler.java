@@ -23,6 +23,8 @@ import java.util.Map.Entry;
 
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.spring.StroomScope;
 import org.apache.commons.lang.mutable.MutableLong;
 import org.springframework.context.annotation.Scope;
@@ -38,7 +40,8 @@ import stroom.util.task.TaskMonitor;
 @TaskHandlerBean(task = SQLStatisticFlushTask.class)
 @Scope(value = StroomScope.TASK)
 public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlushTask, VoidResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticFlushTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticFlushTaskHandler.class);
+
     /**
      * The number of records to flush to the DB in one go.
      */

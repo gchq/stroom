@@ -20,6 +20,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.pipeline.server.errorhandler.ProcessException;
@@ -50,7 +52,8 @@ import java.util.function.Consumer;
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class HDFSFileAppender extends AbstractAppender {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(HDFSFileAppender.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HDFSFileAppender.class);
+
     private static final String LOCK_EXTENSION = ".lock";
 
     @Resource

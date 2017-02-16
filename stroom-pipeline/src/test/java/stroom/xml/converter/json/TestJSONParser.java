@@ -33,6 +33,8 @@ import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
@@ -67,7 +69,7 @@ import stroom.xmlschema.shared.XMLSchemaService;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestJSONParser extends StroomUnitTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestJSONParser.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestJSONParser.class);
 
     private final XMLSchemaService xmlSchemaService = new MockXMLSchemaService();
 

@@ -26,10 +26,12 @@ import java.nio.file.Path;
 
 import org.apache.commons.lang.StringUtils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.writer.PathCreator;
 
 public class RollingFileDestination extends RollingDestination {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(RollingFileDestination.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RollingFileDestination.class);
 
     private static final int MAX_FAILED_RENAME_ATTEMPTS = 100;
     private static final int ONE_MINUTE = 60000;

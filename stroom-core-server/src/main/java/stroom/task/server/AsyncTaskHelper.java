@@ -194,7 +194,7 @@ public class AsyncTaskHelper<R> {
                 Thread.sleep(waitMs);
             }
         } catch (final InterruptedException e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Thread interrupted!", e);
         }
     }
 

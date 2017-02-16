@@ -129,7 +129,7 @@ public class BaseEntityDeProxyProcessor {
                     }
                 }
             } catch (final ClassNotFoundException e) {
-                LOGGER.error(e, e);
+                LOGGER.error("Unable to get proxy!", e);
             }
 
             target = replacement;

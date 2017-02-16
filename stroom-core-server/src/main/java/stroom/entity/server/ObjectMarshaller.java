@@ -34,7 +34,7 @@ public class ObjectMarshaller<E> {
         try {
             jaxbContext = JAXBContext.newInstance(clazz);
         } catch (final JAXBException e) {
-            LOGGER.fatal(e, e);
+            LOGGER.error("Unable to create a new JAXBContext!", e);
             throw new RuntimeException(e.getMessage());
         }
     }

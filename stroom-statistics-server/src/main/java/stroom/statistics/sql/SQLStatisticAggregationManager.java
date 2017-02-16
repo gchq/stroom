@@ -21,6 +21,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
@@ -39,7 +41,7 @@ import stroom.util.task.TaskMonitor;
 @Component
 @Scope(value = StroomScope.TASK)
 public class SQLStatisticAggregationManager {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticAggregationManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticAggregationManager.class);
 
     /**
      * The cluster lock to acquire to prevent other nodes from concurrently

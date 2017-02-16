@@ -23,6 +23,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.node.server.StroomPropertyService;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +37,7 @@ import stroom.util.task.TaskMonitor;
 
 @Component
 public class RollingDestinations {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(RollingDestinations.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RollingDestinations.class);
 
     private static final int DEFAULT_MAX_ACTIVE_DESTINATIONS = 100;
     private static final int MAX_TRY_COUNT = 1000;

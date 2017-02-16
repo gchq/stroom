@@ -16,6 +16,8 @@
 
 package stroom.datafeed.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,7 +36,7 @@ import stroom.util.zip.HeaderMapFactory;
  */
 @Configuration
 public class TestDataFeedServiceImplConfiguration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestDataFeedServiceImplConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataFeedServiceImplConfiguration.class);
 
     public TestDataFeedServiceImplConfiguration() {
         LOGGER.info("TestDataFeedServiceImplConfiguration loading...");

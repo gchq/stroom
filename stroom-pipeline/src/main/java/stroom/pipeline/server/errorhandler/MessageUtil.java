@@ -16,13 +16,17 @@
 
 package stroom.pipeline.server.errorhandler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.regex.Pattern;
 
 public final class MessageUtil {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(MessageUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MessageUtil.class);
+
     private static final Pattern PATTERN = Pattern.compile("[\n\t]+");
     private static final String SPACE = " ";
     private static final String MORE = "...";
@@ -60,7 +64,7 @@ public final class MessageUtil {
                 outputStream.close();
                 trace = new String(outputStream.toByteArray());
             } catch (final IOException e) {
-                LOGGER.error(e, e);
+                LOGGER.error("Unable to flush and close output stream!", e);
             }
 
             trace = PATTERN.matcher(trace).replaceAll(SPACE);
@@ -75,7 +79,7 @@ public final class MessageUtil {
         try {
             throw new RuntimeException(UNKNOWN_ERROR);
         } catch (final RuntimeException e) {
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
         }
 
         return UNKNOWN_ERROR;

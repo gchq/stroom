@@ -30,6 +30,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Resource;
 
 import com.caucho.hessian.client.HessianRuntimeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -62,7 +64,7 @@ import stroom.util.thread.ThreadUtil;
  */
 @Component
 public class DistributedTaskFetcher implements BeanFactoryAware {
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(DistributedTaskFetcher.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFetcher.class);
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
@@ -229,7 +231,7 @@ public class DistributedTaskFetcher implements BeanFactoryAware {
                 }
             }
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to fetch task!", e);
         }
     }
 

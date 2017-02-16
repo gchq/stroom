@@ -18,12 +18,14 @@ package stroom.pipeline.server.task;
 
 import java.io.File;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.test.StroomProcessTestFileUtil;
 import org.joda.time.Period;
 import org.junit.Test;
 
 public class TestFullTranslationTaskAndStepping extends TranslationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestFullTranslationTaskAndStepping.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestFullTranslationTaskAndStepping.class);
 
     @Override
     protected boolean doSingleSetup() {

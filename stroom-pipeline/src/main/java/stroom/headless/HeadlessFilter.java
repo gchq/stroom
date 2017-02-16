@@ -22,6 +22,8 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
@@ -37,7 +39,7 @@ import stroom.xml.event.simple.StartElement;
 import stroom.xml.event.simple.StartPrefixMapping;
 
 public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(HeadlessFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HeadlessFilter.class);
 
     private static final String URI = "event-logging:3";
     private static final String BLANK = "";
@@ -241,7 +243,7 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
                     super.startElement(URI, ERROR, ERROR, atts);
                     super.endElement(URI, ERROR, ERROR);
                 } catch (final SAXException e) {
-                    LOGGER.error(e, e);
+                    LOGGER.error("Unable to write errors!", e);
                 }
             }
             errors.clear();

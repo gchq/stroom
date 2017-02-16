@@ -24,6 +24,8 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -39,7 +41,7 @@ import stroom.xmlschema.server.XMLSchemaCache;
 
 @Component
 public class SchemaLoaderImpl implements SchemaLoader {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SchemaLoaderImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SchemaLoaderImpl.class);
 
     private final XMLSchemaCache xmlSchemaCache;
 
@@ -75,13 +77,13 @@ public class SchemaLoaderImpl implements SchemaLoader {
             schema = schemaFactory.newSchema(new StreamSource(inputStream));
 
         } catch (final SAXException e) {
-            LOGGER.debug(e, e);
+            LOGGER.debug(e.getMessage(), e);
             errorReceiver.log(Severity.FATAL_ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
         } finally {
             try {
                 inputStream.close();
             } catch (final IOException e) {
-                LOGGER.debug(e, e);
+                LOGGER.debug(e.getMessage(), e);
                 errorReceiver.log(Severity.FATAL_ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
             }
         }

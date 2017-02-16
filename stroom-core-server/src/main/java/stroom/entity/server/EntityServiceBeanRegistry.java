@@ -238,7 +238,7 @@ public class EntityServiceBeanRegistry implements BeanPostProcessor {
                     final Entity entity = (Entity) entityType.newInstance();
                     entityServiceTypeMap.put(entity.getType(), beanName);
                 } catch (final Exception e) {
-                    LOGGER.error(e, e);
+                    LOGGER.error("Unable to create new entity!", e);
                 }
             }
 

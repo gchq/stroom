@@ -250,7 +250,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                 }
             }
         } catch (final Throwable e) {
-            LOGGER.fatal(e.getMessage(), e);
+            LOGGER.error(e.getMessage(), e);
 
         } finally {
             DebugTrace.debugTraceOut(task, RECEIVE_RESULT, success);

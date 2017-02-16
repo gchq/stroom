@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.task;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
@@ -75,7 +77,8 @@ import java.util.Set;
 @Scope(value = StroomScope.TASK)
 @Secured(PipelineEntity.STEPPING_PERMISSION)
 public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SteppingTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SteppingTaskHandler.class);
+
     private static final SAXParserFactory PARSER_FACTORY;
 
     static {
@@ -706,7 +709,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
     }
 
     private void error(final Exception e) {
-        LOGGER.debug(e, e);
+        LOGGER.debug(e.getMessage(), e);
 
         if (e.getMessage() == null || e.getMessage().trim().length() == 0) {
             generalErrors.add(e.toString());

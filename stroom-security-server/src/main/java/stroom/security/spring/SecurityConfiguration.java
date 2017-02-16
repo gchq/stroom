@@ -20,6 +20,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.AbstractShiroFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -61,7 +63,7 @@ import java.util.Properties;
 public class SecurityConfiguration {
     public static final String PROD_SECURITY = "PROD_SECURITY";
     public static final String MOCK_SECURITY = "MOCK_SECURITY";
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SecurityConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityConfiguration.class);
 
     public SecurityConfiguration(){
         LOGGER.info("SecurityConfiguration loading...");

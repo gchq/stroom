@@ -18,6 +18,8 @@ package stroom.index.server;
 
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
@@ -58,7 +60,8 @@ import java.util.concurrent.locks.Lock;
 @EntityEventHandler(type = Index.ENTITY_TYPE)
 public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, IndexShardWriter>
         implements IndexShardWriterCache, EntityEvent.Handler {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexShardWriterCacheImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardWriterCacheImpl.class);
+
     private static final int MAX_CACHE_ENTRIES = 1000000;
 
     private final IndexService indexService;
@@ -142,7 +145,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                         return writer;
                     }
                 } catch (final Exception e) {
-                    LOGGER.error(e, e);
+                    LOGGER.error(e.getMessage(), e);
                 }
             }
         }
@@ -167,7 +170,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
             try {
                 indexShardService.delete(indexShard);
             } catch (final Exception e) {
-                LOGGER.error(e, e);
+                LOGGER.error(e.getMessage(), e);
             }
             throw new IndexException("Unable to create new index shard for index " + key.getIndex().getName()
                     + " and partition " + key.getPartition());
@@ -261,7 +264,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                 writer.check();
 
             } catch (final Exception e) {
-                LOGGER.error(e, e);
+                LOGGER.error(e.getMessage(), e);
             }
         }
     }
@@ -286,7 +289,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                     }
                 }
             } catch (final Exception e) {
-                LOGGER.error(e, e);
+                LOGGER.error(e.getMessage(), e);
             }
         }
 
@@ -349,7 +352,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                 LOGGER.debug("flush() - Flushing index shard %s", writer.getIndexShard().getId());
                 writer.flush();
             } catch (final Exception e) {
-                LOGGER.error(e, e);
+                LOGGER.error(e.getMessage(), e);
             }
         }
         return null;
@@ -368,7 +371,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                 LOGGER.debug("close() - Closing IndexShard %s", writer.getIndexShard().getId());
                 writer.close();
             } catch (final Exception e) {
-                LOGGER.error(e, e);
+                LOGGER.error(e.getMessage(), e);
             }
         }
         return null;
@@ -387,7 +390,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                 LOGGER.debug("delete() - Deleting index shard %s", writer.getIndexShard().getId());
                 writer.delete();
             } catch (final Exception e) {
-                LOGGER.error(e, e);
+                LOGGER.error(e.getMessage(), e);
             }
         }
         return null;

@@ -16,6 +16,8 @@
 
 package stroom.statistics.server.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import stroom.statistics.common.StatisticStoreValidator;
@@ -24,7 +26,7 @@ import stroom.statistics.shared.StatisticType;
 
 @Component
 public class StatisticsDataSourceValidatorImpl implements StatisticStoreValidator {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StatisticsDataSourceValidatorImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsDataSourceValidatorImpl.class);
 
     @Override
     public boolean validateStatisticDataSource(final String statisticName, final String engineName,

@@ -28,6 +28,8 @@ import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomSpringJUnit4ClassRunner;
 import stroom.util.test.StroomTest;
@@ -44,7 +46,8 @@ import stroom.util.test.TestState.State;
 @RunWith(StroomSpringJUnit4ClassRunner.class)
 @Category(IntegrationTest.class)
 public abstract class StroomIntegrationTest implements StroomTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomIntegrationTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomIntegrationTest.class);
+
     private static final boolean TEAR_DOWN_DATABASE_BETWEEEN_TESTS = true;
 
     @Resource

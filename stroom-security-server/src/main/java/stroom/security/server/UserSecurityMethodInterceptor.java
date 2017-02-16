@@ -21,6 +21,8 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -38,7 +40,7 @@ import java.lang.reflect.Method;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Component
 public class UserSecurityMethodInterceptor {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(UserSecurityMethodInterceptor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserSecurityMethodInterceptor.class);
 
     private static final Class<?>[] SECURITY_ANNOTATIONS = new Class<?>[]{Secured.class,
             Insecure.class};

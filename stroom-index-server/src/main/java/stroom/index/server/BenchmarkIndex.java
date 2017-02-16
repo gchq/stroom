@@ -26,6 +26,8 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.TermQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexField;
@@ -50,7 +52,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class BenchmarkIndex extends AbstractCommandLineTool {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(BenchmarkIndex.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkIndex.class);
+
     private final List<String> docArgs = new ArrayList<>();
     private IndexShard[] indexShards;
     private IndexShardService indexShardService;

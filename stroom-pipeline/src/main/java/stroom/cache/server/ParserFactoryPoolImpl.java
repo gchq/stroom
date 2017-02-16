@@ -18,6 +18,8 @@ package stroom.cache.server;
 
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
 
@@ -42,7 +44,7 @@ import net.sf.ehcache.CacheManager;
 public class ParserFactoryPoolImpl
         extends AbstractPoolCacheBean<VersionedEntityDecorator<TextConverter>, StoredParserFactory>
         implements ParserFactoryPool {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ParserFactoryPool.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParserFactoryPoolImpl.class);
 
     private final DSChooser dsChooser;
 
@@ -92,7 +94,7 @@ public class ParserFactoryPoolImpl
             }
 
         } catch (final Throwable e) {
-            LOGGER.debug(e, e);
+            LOGGER.debug(e.getMessage(), e);
             errorReceiver.log(Severity.FATAL_ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
         }
 

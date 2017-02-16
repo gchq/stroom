@@ -16,6 +16,8 @@
 
 package stroom.spring;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -115,7 +117,7 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = XMLSchemaServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = XSLTServiceImpl.class) })
 public class ProcessTestServerComponentScanConfiguration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ProcessTestServerComponentScanConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessTestServerComponentScanConfiguration.class);
 
     public ProcessTestServerComponentScanConfiguration() {
         LOGGER.info("ProcessConfiguration loading...");

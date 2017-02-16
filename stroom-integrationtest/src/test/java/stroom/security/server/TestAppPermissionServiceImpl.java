@@ -16,6 +16,8 @@
 
 package stroom.security.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
@@ -33,7 +35,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestAppPermissionServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestAppPermissionServiceImpl.class);
 
     @Resource
     private UserService userService;

@@ -24,6 +24,8 @@ import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.realm.AuthenticatingRealm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -47,7 +49,7 @@ import java.util.regex.Pattern;
 
 @Component
 public class DBRealm extends AuthenticatingRealm {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(DBRealm.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DBRealm.class);
 
     public static final String ADMINISTRATORS = "Administrators";
 

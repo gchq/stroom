@@ -18,6 +18,8 @@ package stroom.security.server;
 
 import event.logging.BaseObject;
 import event.logging.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
@@ -30,7 +32,7 @@ import javax.annotation.Resource;
 
 @Component
 public class UserEventInfoProvider implements EventInfoProvider {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(UserEventInfoProvider.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserEventInfoProvider.class);
 
     @Resource(name = "cachedFolderService")
     private FolderService folderService;
@@ -58,7 +60,7 @@ public class UserEventInfoProvider implements EventInfoProvider {
                             break;
                     }
                 } catch (final RuntimeException ex) {
-                    LOGGER.error(ex, ex);
+                    LOGGER.error("Unable to set user state!", ex);
                 }
 
                 return usr;

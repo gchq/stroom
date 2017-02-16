@@ -103,7 +103,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
                 }
             });
         } catch (final Throwable e) {
-            LOGGER.fatal(e.getMessage(), e);
+            LOGGER.error(e.getMessage(), e);
 
         } finally {
             DebugTrace.debugTraceOut(task, EXEC_ASYNC, true);
@@ -156,7 +156,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
                 }
             }
         } catch (final Throwable e) {
-            LOGGER.fatal(e.getMessage(), e);
+            LOGGER.error(e.getMessage(), e);
 
         } finally {
             DebugTrace.debugTraceOut(task, SEND_RESULT, true);

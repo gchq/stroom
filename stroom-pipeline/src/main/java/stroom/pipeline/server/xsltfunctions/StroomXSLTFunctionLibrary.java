@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -28,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StroomXSLTFunctionLibrary {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomXSLTFunctionLibrary.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomXSLTFunctionLibrary.class);
 
     private final Configuration config;
     private final List<DelegateExtensionFunctionCall> callsInUse = new ArrayList<>();
@@ -78,7 +80,7 @@ public class StroomXSLTFunctionLibrary {
                     SequenceType.EMPTY_SEQUENCE);
 
         } catch (final XPathException e) {
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
         }
     }
 

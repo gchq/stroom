@@ -16,6 +16,8 @@
 
 package stroom.search.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.query.CoprocessorMap.CoprocessorKey;
 import stroom.query.Payload;
 import stroom.query.ResultHandler;
@@ -28,7 +30,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class EventSearchResultHandler implements ResultHandler {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(EventSearchResultHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchResultHandler.class);
 
     private final AtomicBoolean complete = new AtomicBoolean();
     private final LinkedBlockingQueue<EventRefs> pendingMerges = new LinkedBlockingQueue<>();

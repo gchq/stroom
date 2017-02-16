@@ -16,6 +16,8 @@
 
 package stroom.refdata;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.query.api.DocRef;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -41,7 +43,7 @@ import java.util.TreeSet;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 public class ReferenceData {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ReferenceData.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceData.class);
 
     // Maps can be nested during the look up process e.g. "MAP1/MAP2"
     private static final String NEST_SEPERATOR = "/";
@@ -162,7 +164,7 @@ public class ReferenceData {
                 events = mapStore.getEvents(mapName, keyName);
             }
         } catch (final IOException e) {
-            LOGGER.debug(e, e);
+            LOGGER.debug("Unable to get nested stream event list!", e);
             errorReceiver.log(Severity.ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
         }
 

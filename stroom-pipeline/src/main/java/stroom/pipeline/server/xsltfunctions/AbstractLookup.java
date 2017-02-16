@@ -20,6 +20,8 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
@@ -91,7 +93,7 @@ public abstract class AbstractLookup extends StroomExtensionFunctionCall {
         }
     }
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractLookup.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLookup.class);
 
     @Resource
     private ReferenceData referenceData;

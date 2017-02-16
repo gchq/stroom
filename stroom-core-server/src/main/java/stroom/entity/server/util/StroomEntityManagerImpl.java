@@ -17,6 +17,8 @@
 package stroom.entity.server.util;
 
 import org.hibernate.proxy.HibernateProxy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -55,7 +57,7 @@ import java.util.Set;
 @Component
 @Transactional
 public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactoryAware {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomEntityManagerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomEntityManagerImpl.class);
 
     private final Provider<EntityEventBus> eventBusProvider;
     private final Provider<StroomDatabaseInfo> stroomDatabaseInfoProvider;

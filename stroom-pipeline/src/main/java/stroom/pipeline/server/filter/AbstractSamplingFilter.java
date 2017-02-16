@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.filter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
@@ -40,7 +42,7 @@ import java.io.IOException;
  * XML pipeline. Many instances of this filter can be used.
  */
 public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(AbstractSamplingFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSamplingFilter.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
@@ -100,7 +102,7 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
             try {
                 errorListener.fatalError(new TransformerException(e.getMessage()));
             } catch (final TransformerException te) {
-                LOGGER.fatal(te, te);
+                LOGGER.error(te.getMessage(), te);
             }
         } finally {
             super.endProcessing();

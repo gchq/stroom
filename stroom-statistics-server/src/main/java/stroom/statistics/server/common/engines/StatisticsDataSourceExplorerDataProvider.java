@@ -16,6 +16,8 @@
 
 package stroom.statistics.server.common.engines;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.FolderService;
 import stroom.explorer.server.AbstractExplorerDataProvider;
@@ -40,7 +42,7 @@ import java.util.Set;
 @Component
 public class StatisticsDataSourceExplorerDataProvider
         extends AbstractExplorerDataProvider<StatisticStoreEntity, FindStatisticsEntityCriteria> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StatisticsDataSourceExplorerDataProvider.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsDataSourceExplorerDataProvider.class);
 
     private static final Set<String> tags = new HashSet<>();
 

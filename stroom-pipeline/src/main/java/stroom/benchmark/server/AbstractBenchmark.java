@@ -19,10 +19,13 @@ package stroom.benchmark.server;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.XMLUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
@@ -40,7 +43,7 @@ import stroom.util.task.TaskMonitor;
 public abstract class AbstractBenchmark {
     // FIXME : Do something with this....
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractBenchmark.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBenchmark.class);
 
     @Resource
     private StreamStore streamStore;
@@ -57,12 +60,13 @@ public abstract class AbstractBenchmark {
 
     protected void info(final Object... args) {
         taskMonitor.info(args);
-        LOGGER.info(args);
+        Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
     }
 
     protected void infoInterval(final Object... args) {
         taskMonitor.info(args);
-        LOGGER.infoInterval(args);
+        //TODO logger in an interval
+        Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
     }
 
     protected Stream writeData(final Feed feed, final StreamType streamType, final String data) {
@@ -84,7 +88,7 @@ public abstract class AbstractBenchmark {
             return dataTarget.getStream();
 
         } catch (final IOException e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to write data!", e);
         }
 
         return null;

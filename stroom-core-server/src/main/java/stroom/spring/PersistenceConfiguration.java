@@ -187,7 +187,7 @@ public class PersistenceConfiguration {
             flyway.migrate();
         } else {
             final String message = "The current Stroom version cannot be upgraded to v5+. You must be on v4.0.60 or later.";
-            LOGGER.fatal(message);
+            LOGGER.error(message);
             throw new RuntimeException(message);
         }
 

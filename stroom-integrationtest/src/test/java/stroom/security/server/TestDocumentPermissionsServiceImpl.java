@@ -18,6 +18,8 @@ package stroom.security.server;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseEntity;
@@ -38,7 +40,7 @@ import javax.persistence.PersistenceException;
 import java.util.Set;
 
 public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestDocumentPermissionsServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestDocumentPermissionsServiceImpl.class);
 
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;

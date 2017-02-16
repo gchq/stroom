@@ -127,7 +127,7 @@ public class EntityServiceExceptionUtil {
 
             // Log the exception otherwise we may never know what type of
             // exception this was.
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
         } else if (msg.startsWith("Incorrect key file for table")) {
             return "Unable to run query as data set too large";
         }

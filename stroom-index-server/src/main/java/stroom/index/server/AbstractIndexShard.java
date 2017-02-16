@@ -20,6 +20,8 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.store.NoLockFactory;
 import org.apache.lucene.store.SimpleFSLockFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardService;
@@ -33,7 +35,7 @@ import java.nio.file.Path;
  * the Pool returns these objects to writing threads.
  */
 public abstract class AbstractIndexShard {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractIndexShard.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIndexShard.class);
 
     /**
      * The Data Model Object that records our location.

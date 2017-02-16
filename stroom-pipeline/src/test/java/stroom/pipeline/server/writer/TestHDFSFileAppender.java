@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.writer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
 import org.apache.hadoop.conf.Configuration;
@@ -35,7 +37,7 @@ import java.io.OutputStream;
 import java.util.Optional;
 
 public class TestHDFSFileAppender extends StroomUnitTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestHDFSFileAppender.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestHDFSFileAppender.class);
 
     private Configuration conf;
     private UserGroupInformation userGroupInformation;

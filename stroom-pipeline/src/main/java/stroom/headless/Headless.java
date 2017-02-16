@@ -27,6 +27,8 @@ import java.io.OutputStreamWriter;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.zip.StroomZipFile;
 import stroom.util.zip.StroomZipFileType;
 import stroom.util.zip.StroomZipNameSet;
@@ -64,7 +66,7 @@ import stroom.util.zip.StroomZipRepository;
  * Command line tool to process some files from a proxy stroom.
  */
 public class Headless extends AbstractCommandLineTool {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(Headless.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Headless.class);
 
     private ApplicationContext appContext = null;
 
@@ -191,7 +193,7 @@ public class Headless extends AbstractCommandLineTool {
             headlessFilter.endOutput();
 
         } catch (final Throwable e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to process headless", e);
         } finally {
             try {
                 // Close the output stream writer.
@@ -200,7 +202,7 @@ public class Headless extends AbstractCommandLineTool {
                     outputStreamWriter.close();
                 }
             } catch (final IOException e) {
-                LOGGER.error(e, e);
+                LOGGER.error("Unable to flush and close outputStreamWriter", e);
             }
         }
 
@@ -237,7 +239,7 @@ public class Headless extends AbstractCommandLineTool {
             }
 
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to process repository!", e);
         }
     }
 

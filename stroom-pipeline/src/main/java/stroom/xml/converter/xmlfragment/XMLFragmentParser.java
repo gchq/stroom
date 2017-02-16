@@ -24,6 +24,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -36,7 +38,7 @@ import stroom.xml.converter.AbstractParser;
 import stroom.util.xml.SAXParserFactoryFactory;
 
 public class XMLFragmentParser extends AbstractParser {
-	private static final StroomLogger LOGGER = StroomLogger.getLogger(XMLFragmentParser.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(XMLFragmentParser.class);
 
 	private static final SAXParserFactory PARSER_FACTORY;
 

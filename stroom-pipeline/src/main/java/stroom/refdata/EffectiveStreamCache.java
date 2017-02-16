@@ -16,6 +16,8 @@
 
 package stroom.refdata;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.cache.AbstractCacheBean;
 import stroom.entity.shared.Period;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
@@ -31,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class EffectiveStreamCache extends AbstractCacheBean<EffectiveStreamKey, TreeSet<EffectiveStream>> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(EffectiveStreamCache.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EffectiveStreamCache.class);
 
     // = 86 400 000
     public static final long ONE_DAY = 1000 * 60 * 60 * 24;
@@ -113,7 +115,7 @@ public class EffectiveStreamCache extends AbstractCacheBean<EffectiveStreamKey, 
                 LOGGER.debug("Created effective stream set: " + key.toString());
             }
         } catch (final Throwable e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to create stream cache!", e);
         }
 
         // Make sure this pool always returns some kind of effective stream set

@@ -766,7 +766,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                             }
                         }
                     } catch (final Exception ex) {
-                        LOGGER.error(ex);
+                        LOGGER.error("Unable to add date!", ex);
                     }
                 }
             }

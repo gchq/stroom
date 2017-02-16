@@ -16,6 +16,8 @@
 
 package stroom.security.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.entity.shared.BaseResultList;
@@ -36,7 +38,7 @@ public class UserManagerImpl implements UserManager {
     public static final String DAYS_TO_UNUSED_ACCOUNT_EXPIRY = "stroom.daysToUnusedAccountExpiry";
     public static final String DAYS_TO_ACCOUNT_EXPIRY = "stroom.daysToAccountExpiry";
     public static final long MS_IN_DAY = 1000 * 60 * 60 * 24;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(UserManagerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserManagerImpl.class);
     private final UserService userService;
     private final StroomPropertyService stroomPropertyService;
 

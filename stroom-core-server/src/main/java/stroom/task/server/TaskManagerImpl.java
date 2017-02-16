@@ -332,7 +332,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
                 } catch (final Throwable t) {
                     try {
-                        LOGGER.fatal("exec() - Unexpected Exception", t);
+                        LOGGER.error("exec() - Unexpected Exception", t);
                         throw new RuntimeException(t.getMessage(), t);
 
                     } finally {

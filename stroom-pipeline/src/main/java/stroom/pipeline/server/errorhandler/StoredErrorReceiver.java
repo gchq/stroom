@@ -19,12 +19,14 @@ package stroom.pipeline.server.errorhandler;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 
 public class StoredErrorReceiver implements ErrorReceiver {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StoredErrorReceiver.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StoredErrorReceiver.class);
 
     private long totalErrors;
     private List<StoredError> list = new ArrayList<>();

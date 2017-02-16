@@ -16,6 +16,8 @@
 
 package stroom.security.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -49,7 +51,7 @@ import java.util.UUID;
 @Component("userService")
 public class UserServiceImpl implements UserService {
     public static final String NAME_PATTERN = "^[a-zA-Z0-9_]{3,}$";
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(UserServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
     private static final String SQL_ADD_USER_TO_GROUP;
     private static final String SQL_REMOVE_USER_FROM_GROUP;
     /**

@@ -16,6 +16,8 @@
 
 package stroom.statistics.sql;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.sql.SQLSafe;
@@ -38,7 +40,7 @@ import java.util.List;
 @Transactional
 @Component
 public class SQLStatisticValueBatchSaveService {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticValueBatchSaveService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticValueBatchSaveService.class);
 
     @Resource
     DataSource cachedSqlDataSource;

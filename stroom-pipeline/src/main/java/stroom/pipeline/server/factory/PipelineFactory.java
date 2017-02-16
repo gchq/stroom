@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.factory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.query.api.DocRef;
@@ -62,7 +64,7 @@ import java.util.Set;
 @Component
 @Scope(StroomScope.TASK)
 public class PipelineFactory {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(PipelineFactory.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PipelineFactory.class);
     private final ElementRegistryFactory pipelineElementRegistryFactory;
     private final ElementFactory elementFactory;
     private final ProcessorFactory processorFactory;

@@ -20,6 +20,8 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.jaxp.TemplatesImpl;
 import net.sf.saxon.jaxp.TransformerImpl;
 import net.sf.saxon.s9api.XsltExecutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
@@ -72,7 +74,8 @@ import java.util.List;
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.ROLE_HAS_CODE }, icon = ElementIcons.XSLT)
 public class XSLTFilter extends AbstractXMLFilter {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(XSLTFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(XSLTFilter.class);
+
     private static final int DEFAULT_MAX_ELEMENTS = 1000000;
 
     private final XSLTPool xsltPool;

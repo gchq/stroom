@@ -197,7 +197,7 @@ public class LifecycleServiceImpl implements ContextAwareService {
             try {
                 scheduledExecutorService.awaitTermination(1, TimeUnit.MINUTES);
             } catch (final InterruptedException e) {
-                LOGGER.error(e, e);
+                LOGGER.error("Waiting termination interrupted!", e);
             }
         }
 

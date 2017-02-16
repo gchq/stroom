@@ -76,7 +76,7 @@ public class AuthorisationEventLog {
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to create authorisation event!", e);
         }
     }
 }

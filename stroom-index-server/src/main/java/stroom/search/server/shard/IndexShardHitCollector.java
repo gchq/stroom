@@ -18,6 +18,8 @@ package stroom.search.server.shard;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.SimpleCollector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.errorhandler.TerminatedException;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Monitor;
@@ -27,7 +29,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class IndexShardHitCollector extends SimpleCollector {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexShardHitCollector.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardHitCollector.class);
+
     private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
 
     private final Monitor taskMonitor;

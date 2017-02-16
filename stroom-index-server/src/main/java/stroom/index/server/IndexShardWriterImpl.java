@@ -30,6 +30,8 @@ import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.store.SimpleFSLockFactory;
 import org.apache.lucene.util.Version;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.index.server.analyzer.AnalyzerFactory;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
@@ -58,7 +60,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class IndexShardWriterImpl implements IndexShardWriter {
     public static final int DEFAULT_RAM_BUFFER_MB_SIZE = 1024;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexShardWriterImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardWriterImpl.class);
+
     /**
      * When we are in debug mode we track some important info from the LUCENE
      * log so that we can report some debug info

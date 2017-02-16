@@ -18,12 +18,14 @@ package stroom.pipeline.server;
 
 import java.nio.charset.Charset;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
 
 public final class EncodingSelection {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(EncodingSelection.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EncodingSelection.class);
 
     private EncodingSelection() {
         // Utility class.
