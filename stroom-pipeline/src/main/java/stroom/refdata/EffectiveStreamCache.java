@@ -21,7 +21,6 @@ import stroom.entity.shared.Period;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
-import stroom.util.logging.StroomLogger;
 import net.sf.ehcache.CacheManager;
 import org.springframework.stereotype.Component;
 

@@ -16,11 +16,12 @@
 
 package stroom.entity.server.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.HasEntity;
 import stroom.entity.shared.HasPassword;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.SharedObject;
 import org.hibernate.Hibernate;
 import org.hibernate.proxy.AbstractLazyInitializer;
@@ -51,7 +52,7 @@ import java.util.Set;
  * just the id set (as these is a lazy loaded class)
  */
 public class BaseEntityDeProxyProcessor {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(BaseEntityDeProxyProcessor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BaseEntityDeProxyProcessor.class);
 
     private final HashMap<BaseEntity, BaseEntity> objectsDone = new HashMap<>();
 

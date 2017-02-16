@@ -16,11 +16,12 @@
 
 package stroom.util.date;
 
-import stroom.util.logging.StroomLogger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -34,7 +35,7 @@ public final class DateUtil {
         Locale.setDefault(Locale.ROOT);
     }
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(DateUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DateUtil.class);
     private static final String NULL = "NULL";
     private static final DateTimeFormatter FILE_TIME_STROOM_TIME_FORMATTER = DateTimeFormat
             .forPattern("yyyy-MM-dd'T'HH#mm#ss,SSS'Z'").withZone(DateTimeZone.UTC);
@@ -84,7 +85,7 @@ public final class DateUtil {
                 }
             }
         } catch (final IllegalArgumentException e) {
-            LOGGER.debug(e, e);
+            LOGGER.debug("Unable to parse time zone!", e);
         }
 
         DateTimeFormatter dateFormat = buildDateFormatter(pattern);
@@ -94,7 +95,7 @@ public final class DateUtil {
                 dateTime = dateFormat.parseDateTime(value);
 
             } catch (final IllegalArgumentException e) {
-                LOGGER.debug(e, e);
+                LOGGER.debug("Unable to parse date!", e);
 
                 // We failed to use the time zone so try UTC.
                 dateFormat = dateFormat.withZone(DateTimeZone.UTC);

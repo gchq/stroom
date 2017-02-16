@@ -27,7 +27,6 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.User.UserStatus;
 import stroom.security.shared.UserService;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;

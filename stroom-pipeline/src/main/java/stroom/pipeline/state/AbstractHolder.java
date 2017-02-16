@@ -19,8 +19,6 @@ package stroom.pipeline.state;
 import java.util.ArrayList;
 import java.util.List;
 
-import stroom.util.logging.StroomLogger;
-
 public abstract class AbstractHolder<T extends Holder> implements HasChangeHandlers<T> {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractHolder.class);
 

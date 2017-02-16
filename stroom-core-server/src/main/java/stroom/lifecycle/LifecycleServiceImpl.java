@@ -16,13 +16,14 @@
 
 package stroom.lifecycle;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.jobsystem.server.ScheduledTaskExecutor;
 import stroom.security.SecurityContext;
 import stroom.task.server.StroomThreadGroup;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanLifeCycle;
@@ -45,7 +46,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 public class LifecycleServiceImpl implements ContextAwareService {
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(LifecycleServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleServiceImpl.class);
     private static final String STROOM_LIFECYCLE_THREAD_POOL = "Stroom Lifecycle#";
 
     private static final int ONE_SECOND = 1000;

@@ -26,7 +26,6 @@ import org.springframework.stereotype.Component;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.server.task.Recorder;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 @Component

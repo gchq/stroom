@@ -16,8 +16,9 @@
 
 package stroom.test;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.StroomLogger;
 import org.junit.Assert;
 
 import java.io.BufferedReader;
@@ -36,7 +37,7 @@ import java.util.List;
  * Provides methods that are used by multiple tests.
  */
 public final class ComparisonHelper {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ComparisonHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ComparisonHelper.class);
 
     public static final String OUTPUT_EXTENSION = ".out";
 

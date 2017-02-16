@@ -20,7 +20,6 @@ import stroom.pipeline.server.errorhandler.*;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;

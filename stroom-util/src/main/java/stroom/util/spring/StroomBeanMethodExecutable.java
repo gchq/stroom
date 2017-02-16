@@ -18,11 +18,12 @@ package stroom.util.spring;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.shared.Task;
 
 public class StroomBeanMethodExecutable {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomBeanMethodExecutable.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomBeanMethodExecutable.class);
 
     private final StroomBeanMethod stroomBeanMethod;
     private final StroomBeanStore stroomBeanStore;

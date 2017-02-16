@@ -16,10 +16,11 @@
 
 package stroom.util.zip;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileSystemIterator;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.StroomLogger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,7 +48,7 @@ public class StroomZipRepository {
     public static final String BAD_EXTENSION = ".bad";
     // 1 hour
     public static final int DEFAULT_LOCK_AGE_MS = 1000 * 60 * 60;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomZipRepository.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipRepository.class);
     private static final Pattern ZIP_PATTERN = Pattern.compile(".*\\.zip");
     /**
      * Date the repository was created

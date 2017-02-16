@@ -48,7 +48,6 @@ import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.xml.converter.SchemaFilterFactory;
 
 public class DS3PerformanceTest {

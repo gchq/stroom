@@ -16,13 +16,14 @@
 
 package stroom.streamtask.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.Node;
-import stroom.query.api.DocRef;
 import stroom.query.api.Query;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
@@ -51,7 +52,6 @@ import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomFrequencySchedule;
@@ -91,7 +91,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     public static final int MAX_DELETE_STREAM_RANGE = 10000;
     public static final int MAX_DELETE_COUNT = 50;
 
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(StreamTaskCreator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskCreatorImpl.class);
 
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamTaskCreatorTransactionHelper streamTaskTransactionHelper;

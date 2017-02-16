@@ -19,7 +19,6 @@ package stroom.pipeline.server.xsltfunctions;
 import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.trans.XPathException;

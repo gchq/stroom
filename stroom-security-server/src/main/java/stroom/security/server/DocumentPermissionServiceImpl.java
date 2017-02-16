@@ -30,7 +30,6 @@ import stroom.security.shared.DocumentPermissionKeySet;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;

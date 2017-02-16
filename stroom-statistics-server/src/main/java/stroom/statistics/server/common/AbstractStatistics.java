@@ -42,7 +42,6 @@ import stroom.statistics.common.rollup.RollUpBitMask;
 import stroom.statistics.shared.CustomRollUpMask;
 import stroom.statistics.shared.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.util.logging.StroomLogger;
 
 import java.util.ArrayList;
 import java.util.Arrays;

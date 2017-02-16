@@ -26,6 +26,8 @@ import event.logging.Query;
 import event.logging.Query.Advanced;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.EntityActionConfirmation;
 import stroom.entity.shared.FindFolderCriteria;
@@ -34,7 +36,6 @@ import stroom.entity.shared.FolderService;
 import stroom.importexport.shared.ExportConfigAction;
 import stroom.importexport.shared.ImportConfigAction;
 import stroom.security.Insecure;
-import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -42,7 +43,7 @@ import java.util.List;
 @Component
 @Insecure
 public class ImportExportEventLog {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ImportExportEventLog.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportEventLog.class);
 
     @Resource
     private StroomEventLoggingService eventLoggingService;

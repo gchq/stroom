@@ -16,7 +16,6 @@
 
 package stroom.pipeline.server.errorhandler;
 
-import stroom.util.logging.StroomLogger;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;

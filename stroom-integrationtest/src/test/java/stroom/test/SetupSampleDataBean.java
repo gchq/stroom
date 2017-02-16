@@ -52,7 +52,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;

@@ -25,7 +25,6 @@ import stroom.refdata.MapStoreBuilder;
 import stroom.refdata.MapStoreBuilderImpl;
 import stroom.refdata.MapStoreCacheKey;
 import stroom.refdata.ReferenceDataLoader;
-import stroom.util.logging.StroomLogger;
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;

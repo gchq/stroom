@@ -24,7 +24,6 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.xml.event.EventList;
 import stroom.xml.event.np.EventListConsumer;
 import stroom.xml.event.np.NPEventList;

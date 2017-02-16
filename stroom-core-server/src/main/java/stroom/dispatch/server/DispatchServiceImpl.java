@@ -16,6 +16,8 @@
 
 package stroom.dispatch.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.dispatch.shared.DispatchService;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
@@ -26,7 +28,6 @@ import stroom.servlet.HttpServletRequestHolder;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskHandlerBeanRegistry;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
 import stroom.util.task.TaskIdFactory;
@@ -37,7 +38,7 @@ import javax.inject.Inject;
 public class DispatchServiceImpl implements DispatchService {
     public static final String BEAN_NAME = "dispatchService";
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(DispatchServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DispatchServiceImpl.class);
 
     private final TaskHandlerBeanRegistry taskHandlerBeanRegistry;
     private final TaskManager taskManager;

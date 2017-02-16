@@ -22,8 +22,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +41,7 @@ import stroom.util.spring.StroomFrequencySchedule;
 
 @Component
 public class ClusterLockServiceImpl implements ClusterLockService {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterLockServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceImpl.class);
 
     @Resource
     private StroomEntityManager entityManager;

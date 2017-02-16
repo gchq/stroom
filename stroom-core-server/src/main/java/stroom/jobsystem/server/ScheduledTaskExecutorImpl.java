@@ -23,7 +23,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import stroom.jobsystem.server.JobNodeTrackerCache.Trackers;
@@ -43,7 +44,7 @@ import stroom.util.spring.StroomSimpleCronSchedule;
 @Component
 public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
     private static class JobNodeTrackedExecutable extends StroomBeanMethodExecutable {
-        private static final StroomLogger LOGGER = StroomLogger.getLogger(JobNodeTrackedExecutable.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackedExecutable.class);
 
         private final JobNodeTracker jobNodeTracker;
 
@@ -78,7 +79,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         }
     }
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ScheduledTaskExecutorImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskExecutorImpl.class);
 
     @Resource
     private StroomBeanStore stroomBeanStore;
@@ -181,7 +182,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                     running.set(false);
                 }
             } catch (final Throwable t) {
-                LOGGER.fatal(t.getMessage());
+                LOGGER.error(t.getMessage());
             }
         } else {
             LOGGER.trace("Skipping as method still running: %s", stroomBeanMethod);

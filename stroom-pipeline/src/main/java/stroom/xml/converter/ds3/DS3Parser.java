@@ -28,7 +28,6 @@ import org.xml.sax.helpers.AttributesImpl;
 
 import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
 import stroom.util.CharBuffer;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 import stroom.xml.NamespaceConstants;

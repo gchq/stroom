@@ -40,8 +40,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
-import stroom.security.spring.SecurityConfiguration;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSpringProfiles;
 

@@ -36,7 +36,6 @@ import stroom.pool.AbstractPoolCacheBean;
 import stroom.pool.PoolItem;
 import stroom.security.Insecure;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomBeanStore;
 

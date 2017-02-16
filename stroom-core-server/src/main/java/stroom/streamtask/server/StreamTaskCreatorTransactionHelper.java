@@ -16,6 +16,8 @@
 
 package stroom.streamtask.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.SQLBuilder;
@@ -41,7 +43,6 @@ import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.StreamTaskService;
 import stroom.streamtask.shared.TaskStatus;
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -90,7 +91,7 @@ public class StreamTaskCreatorTransactionHelper {
         }
     }
 
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(StreamTaskCreator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskCreatorTransactionHelper.class);
 
     private static final String LOCK_NAME = "StreamTaskCreator";
     public static final int RECENT_STREAM_ID_LIMIT = 10000;

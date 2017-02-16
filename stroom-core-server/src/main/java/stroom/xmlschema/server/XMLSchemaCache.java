@@ -25,7 +25,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 
 import stroom.entity.server.event.EntityEvent;

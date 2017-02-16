@@ -18,8 +18,9 @@ package stroom.spring;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.node.server.StroomPropertyService;
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 
 import stroom.node.server.GlobalProperties;
@@ -34,7 +35,7 @@ import stroom.util.spring.PropertyProvider;
  */
 @Component("propertyConfigurer")
 public class PropertyConfigurer implements PropertyProvider {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(PropertyConfigurer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PropertyConfigurer.class);
 
     @Resource
     private StroomBeanStore beanStore;

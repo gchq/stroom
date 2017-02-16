@@ -30,7 +30,6 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.query.api.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import java.util.Arrays;

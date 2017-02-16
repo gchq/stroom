@@ -16,12 +16,13 @@
 
 package stroom.util.task;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.config.Scope;
 
 public class TaskScope implements Scope {
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(TaskScope.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskScope.class);
 
     @SuppressWarnings({ "rawtypes" })
     @Override

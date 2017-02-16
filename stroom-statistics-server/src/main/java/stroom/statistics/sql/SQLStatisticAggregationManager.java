@@ -22,7 +22,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Resource;
 
 import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.util.logging.StroomLogger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;

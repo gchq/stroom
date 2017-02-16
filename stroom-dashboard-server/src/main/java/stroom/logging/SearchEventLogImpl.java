@@ -27,13 +27,11 @@ import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.server.DataSourceProviderRegistry;
-import stroom.datasource.api.DataSource;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.server.QueryDataLogUtil;
 import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.security.Insecure;
-import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 

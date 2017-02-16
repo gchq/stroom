@@ -38,7 +38,6 @@ import stroom.node.shared.VolumeService;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;

@@ -22,7 +22,6 @@ import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.SharedBoolean;
 import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;

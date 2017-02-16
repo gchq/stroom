@@ -18,12 +18,13 @@ package stroom.jobsystem.server;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.jobsystem.shared.JobNode;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 
 public class JobNodeTracker {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(JobNodeTracker.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTracker.class);
 
     private JobNode jobNode;
     private final AtomicInteger currentTaskCount = new AtomicInteger();

@@ -34,7 +34,6 @@ import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.security.SecurityContext;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.EqualsUtil;
 
 import javax.inject.Inject;

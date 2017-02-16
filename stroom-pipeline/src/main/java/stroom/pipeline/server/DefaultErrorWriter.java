@@ -21,7 +21,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import stroom.util.logging.StroomLogger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 

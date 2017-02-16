@@ -22,7 +22,6 @@ import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
-import stroom.util.logging.StroomLogger;
 import stroom.util.test.FileSystemTestUtil;
 import org.junit.Assert;
 import org.junit.Test;

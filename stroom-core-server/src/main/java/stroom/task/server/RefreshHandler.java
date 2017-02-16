@@ -21,7 +21,6 @@ import org.springframework.util.StringUtils;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.Insecure;
 import stroom.task.shared.RefreshAction;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.SharedString;
 import stroom.util.spring.StroomScope;
 

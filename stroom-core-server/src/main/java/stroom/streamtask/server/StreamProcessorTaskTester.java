@@ -16,6 +16,8 @@
 
 package stroom.streamtask.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -24,12 +26,11 @@ import stroom.streamstore.server.StreamSource;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
-import stroom.util.logging.StroomLogger;
 
 @Scope(StroomScope.PROTOTYPE)
 @Component("streamProcessorTaskTester")
 public class StreamProcessorTaskTester implements StreamProcessorTaskExecutor {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StreamProcessorTaskTester.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamProcessorTaskTester.class);
 
     @Override
     public void exec(final StreamProcessor streamProcessor, final StreamProcessorFilter streamProcessorFilter,

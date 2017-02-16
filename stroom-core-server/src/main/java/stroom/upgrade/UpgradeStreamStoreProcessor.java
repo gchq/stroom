@@ -16,6 +16,8 @@
 
 package stroom.upgrade;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
@@ -28,7 +30,6 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomScope;
 import stroom.util.zip.HeaderMap;
@@ -47,7 +48,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Scope(StroomScope.PROTOTYPE)
 @Component("upgradeStreamStoreProcessor")
 public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(UpgradeStreamStoreProcessor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UpgradeStreamStoreProcessor.class);
 
     @Resource
     private StreamStore streamStore;

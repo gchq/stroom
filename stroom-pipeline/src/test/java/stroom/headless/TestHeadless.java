@@ -20,7 +20,6 @@ import stroom.test.StroomProcessTestFileUtil;
 import stroom.test.ComparisonHelper;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.zip.ZipUtil;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;

@@ -18,7 +18,6 @@ package stroom.search.server.taskqueue;
 
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Task;
 
 import java.util.concurrent.TimeUnit;

@@ -16,7 +16,8 @@
 
 package stroom.db.migration;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -25,7 +26,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class EntityReferenceReplacer {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(EntityReferenceReplacer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EntityReferenceReplacer.class);
 
     private static final String[] CONTAINERS = {"entity", "pipeline", "feed", "streamType", "dataSource", "extractionPipeline", "visualisation"};
 

@@ -19,7 +19,6 @@ package stroom.spring;
 import java.util.HashMap;
 import java.util.Map;
 
-import stroom.util.logging.StroomLogger;
 import org.springframework.beans.factory.config.CustomScopeConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

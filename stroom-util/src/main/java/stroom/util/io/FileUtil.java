@@ -16,8 +16,9 @@
 
 package stroom.util.io;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 import stroom.util.thread.ThreadUtil;
 
 import java.io.File;
@@ -27,7 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public final class FileUtil {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileUtil.class);
 
     public static final int MKDIR_RETRY_COUNT = 2;
     public static final int MKDIR_RETRY_SLEEP_MS = 100;
@@ -52,7 +53,7 @@ public final class FileUtil {
             try {
                 Files.createDirectory(path);
             } catch (IOException e) {
-                LOGGER.fatal("Unable to create temp directory.", e);
+                LOGGER.error("Unable to create temp directory.", e);
                 throw new RuntimeException("Unable to create temp directory", e);
             }
         }

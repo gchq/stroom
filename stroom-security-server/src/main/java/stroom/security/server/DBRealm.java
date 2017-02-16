@@ -40,7 +40,6 @@ import stroom.security.shared.User.UserStatus;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.util.cert.CertificateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.EqualsUtil;
 
 import javax.inject.Inject;

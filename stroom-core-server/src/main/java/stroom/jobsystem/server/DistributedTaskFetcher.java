@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
 import com.caucho.hessian.client.HessianRuntimeException;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;

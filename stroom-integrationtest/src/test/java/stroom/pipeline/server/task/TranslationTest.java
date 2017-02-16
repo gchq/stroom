@@ -56,7 +56,6 @@ import stroom.test.ComparisonHelper;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Indicators;
 import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;

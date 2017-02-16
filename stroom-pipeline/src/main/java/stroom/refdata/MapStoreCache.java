@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 
 import stroom.cache.AbstractCacheBean;

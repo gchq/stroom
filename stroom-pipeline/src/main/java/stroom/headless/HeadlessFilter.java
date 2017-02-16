@@ -29,7 +29,6 @@ import org.xml.sax.helpers.AttributesImpl;
 import stroom.pipeline.server.ErrorWriter;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;

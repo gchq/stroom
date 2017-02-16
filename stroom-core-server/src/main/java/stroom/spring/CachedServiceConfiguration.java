@@ -16,7 +16,8 @@
 
 package stroom.spring;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,7 +35,7 @@ import stroom.streamtask.shared.StreamProcessorService;
  */
 @Configuration
 public class CachedServiceConfiguration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(CachedServiceConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CachedServiceConfiguration.class);
 
     public CachedServiceConfiguration() {
         LOGGER.info("CachedServiceConfiguration loading...");

@@ -18,6 +18,8 @@ package stroom.task.cluster;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 
@@ -27,13 +29,12 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TaskProgress;
-import stroom.util.logging.StroomLogger;
 
 @TaskHandlerBean(task = TerminateTaskClusterTask.class)
 @Scope(value = StroomScope.TASK)
 public class TerminateTaskClusterHandler
         extends AbstractTaskHandler<TerminateTaskClusterTask, BaseResultList<TaskProgress>> {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(TerminateTaskClusterHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TerminateTaskClusterHandler.class);
 
     @Resource
     private TaskManager taskManager;

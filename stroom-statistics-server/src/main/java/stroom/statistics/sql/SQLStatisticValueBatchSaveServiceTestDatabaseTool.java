@@ -23,7 +23,6 @@ import java.util.List;
 
 import stroom.statistics.shared.StatisticType;
 import stroom.util.DatabaseTool;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 
 /**

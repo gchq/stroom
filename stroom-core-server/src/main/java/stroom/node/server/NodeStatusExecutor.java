@@ -18,19 +18,20 @@ package stroom.node.server;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.statistics.common.StatisticsFactory;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 
 @Component
 @Scope(value = StroomScope.TASK)
 public class NodeStatusExecutor {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(NodeStatusExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NodeStatusExecutor.class);
 
     @Resource
     private NodeStatusServiceUtil nodeStatusServiceUtil;

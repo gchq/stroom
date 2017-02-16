@@ -53,7 +53,6 @@ import stroom.task.server.TaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskTerminatedException;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Location;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;

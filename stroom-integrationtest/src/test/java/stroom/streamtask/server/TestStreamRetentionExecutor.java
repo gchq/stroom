@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
 import org.junit.Assert;
 import org.junit.Test;
 

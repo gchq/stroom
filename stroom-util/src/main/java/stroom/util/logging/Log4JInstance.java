@@ -16,9 +16,8 @@
 
 package stroom.util.logging;
 
-import org.apache.log4j.Appender;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -47,7 +46,7 @@ public class Log4JInstance {
     private static Log4JInstance instance;
     private final AtomicInteger initCount = new AtomicInteger();
     private transient volatile ServletContext servletContext;
-    private transient volatile StroomLogger logger;
+    private transient volatile Logger logger;
     private transient volatile ResourceLoader resourceLoader;
 
     public synchronized static Log4JInstance getInstance() {
@@ -115,32 +114,33 @@ public class Log4JInstance {
         } catch (final Exception ex) {
             logError("tryConfig() - " + ex.getMessage());
         }
-        if (existingFile) {
-            BasicConfigurator.resetConfiguration();
-            Log4jWebConfigurer.initLogging(servletContext, resource);
-            logInfo("tryConfig() - Started log4j using: " + path + " (" + resource.getFilename() + ")");
-
-            logger = StroomLogger.getLogger(Log4JInstance.class);
-            logger.info("tryConfig() - Started log4j using: " + path + " (" + resource.getFilename() + ")");
-
-            boolean redirectSystemOut = true;
-            final Enumeration<?> allApenders = Logger.getRootLogger().getAllAppenders();
-            while (allApenders.hasMoreElements()) {
-                final Appender appender = (Appender) allApenders.nextElement();
-                if (appender.getClass().getName().contains("Console")) {
-                    redirectSystemOut = false;
-                }
-            }
-
-            if (redirectSystemOut) {
-                System.setErr(LoggerPrintStream.create(logger, true));
-                System.setOut(LoggerPrintStream.create(logger, true));
-            }
-
-            return true;
-        } else {
-            logInfo("tryConfig() - Not found: " + path);
-        }
+        //TODO Replace this with whatever the SLF4J equivalent is.
+//        if (existingFile) {
+//            BasicConfigurator.resetConfiguration();
+//            Log4jWebConfigurer.initLogging(servletContext, resource);
+//            logInfo("tryConfig() - Started log4j using: " + path + " (" + resource.getFilename() + ")");
+//
+//            logger = LoggerFactory.getLogger(Log4JInstance.class);
+//            logger.info("tryConfig() - Started log4j using: " + path + " (" + resource.getFilename() + ")");
+//
+//            boolean redirectSystemOut = true;
+//            final Enumeration<?> allApenders = Logger.getRootLogger().getAllAppenders();
+//            while (allApenders.hasMoreElements()) {
+//                final Appender appender = (Appender) allApenders.nextElement();
+//                if (appender.getClass().getName().contains("Console")) {
+//                    redirectSystemOut = false;
+//                }
+//            }
+//
+//            if (redirectSystemOut) {
+//                System.setErr(LoggerPrintStream.create(logger, true));
+//                System.setOut(LoggerPrintStream.create(logger, true));
+//            }
+//
+//            return true;
+//        } else {
+//            logInfo("tryConfig() - Not found: " + path);
+//        }
 
         return false;
     }

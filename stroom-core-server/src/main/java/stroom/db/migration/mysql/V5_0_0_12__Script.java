@@ -16,10 +16,11 @@
 
 package stroom.db.migration.mysql;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefs;
-import stroom.util.logging.StroomLogger;
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
 
 import java.sql.Connection;
@@ -30,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class V5_0_0_12__Script implements JdbcMigration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(V5_0_0_12__Script.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_12__Script.class);
 
     @Override
     public void migrate(Connection connection) throws Exception {

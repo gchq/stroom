@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.regex.Pattern;
 
-import stroom.util.logging.StroomLogger;
-
 public final class MessageUtil {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(MessageUtil.class);
     private static final Pattern PATTERN = Pattern.compile("[\n\t]+");

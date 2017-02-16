@@ -21,7 +21,6 @@ import java.io.IOException;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;

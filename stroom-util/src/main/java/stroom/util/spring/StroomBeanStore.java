@@ -28,7 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
@@ -41,7 +42,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class StroomBeanStore implements InitializingBean, BeanFactoryAware, ApplicationContextAware {
-    private final StroomLogger LOGGER = StroomLogger.getLogger(StroomBeanStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomBeanStore.class);
 
     private static final String STROOM_CLASSES = "stroom.";
 
@@ -97,7 +98,7 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
         try {
             o = beanFactory.getBean(name);
         } catch (final Throwable t) {
-            LOGGER.error(t, t);
+            LOGGER.error("Unable to get bean!", t);
         }
 
         if (o == null) {
@@ -164,7 +165,7 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
         try {
             bean = beanFactory.getBean(stroomBeanClass);
         } catch (final Throwable t) {
-            LOGGER.error(t, t);
+            LOGGER.error("Unable to get bean!", t);
         }
 
         if (bean == null) {

@@ -16,7 +16,6 @@
 
 package stroom.statistics.server.common;
 
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 
 import stroom.statistics.common.StatisticStoreValidator;

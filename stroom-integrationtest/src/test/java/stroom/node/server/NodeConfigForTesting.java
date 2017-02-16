@@ -37,7 +37,6 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
 import stroom.node.shared.VolumeState;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 
 @Component
 @Profile(StroomSpringProfiles.IT)

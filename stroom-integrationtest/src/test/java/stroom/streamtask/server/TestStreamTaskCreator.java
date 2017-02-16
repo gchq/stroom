@@ -29,7 +29,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskMonitorImpl;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 import java.util.List;

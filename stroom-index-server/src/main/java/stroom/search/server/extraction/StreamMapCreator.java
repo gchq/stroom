@@ -24,7 +24,6 @@ import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamPermissionException;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 
 import java.util.ArrayList;

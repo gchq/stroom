@@ -17,7 +17,6 @@
 package stroom.pipeline.server.writer;
 
 import stroom.util.io.FileUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.test.StroomUnitTest;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;

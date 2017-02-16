@@ -16,10 +16,11 @@
 
 package stroom.entity.cluster;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Clearable;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
 
@@ -27,7 +28,7 @@ import javax.inject.Inject;
 
 @TaskHandlerBean(task = ClearServiceClusterTask.class)
 class ClearServiceClusterHandler extends AbstractTaskHandler<ClearServiceClusterTask, VoidResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClearServiceClusterHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClearServiceClusterHandler.class);
 
     private final StroomBeanStore stroomBeanStore;
 

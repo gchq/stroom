@@ -17,7 +17,6 @@
 package stroom.index.server;
 
 import org.apache.lucene.util.Version;
-import stroom.util.logging.StroomLogger;
 
 import java.text.ParseException;
 

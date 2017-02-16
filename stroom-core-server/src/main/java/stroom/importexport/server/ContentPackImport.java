@@ -16,11 +16,12 @@
 
 package stroom.importexport.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.GlobalPropertyService;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 public class ContentPackImport {
 
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(ContentPackImport.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackImport.class);
 
     static final String AUTO_IMPORT_ENABLED_PROP_KEY = "stroom.contentPackImportEnabled";
     static final String CONTENT_PACK_IMPORT_DIR = "contentPackImport";

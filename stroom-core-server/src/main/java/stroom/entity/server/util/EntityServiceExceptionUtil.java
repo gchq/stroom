@@ -16,9 +16,10 @@
 
 package stroom.entity.server.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.EntityServiceException;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import com.caucho.hessian.HessianException;
 import org.hibernate.PropertyValueException;
 
@@ -33,7 +34,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 
 public class EntityServiceExceptionUtil {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(EntityServiceExceptionUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EntityServiceExceptionUtil.class);
 
     /**
      * Handle an exception and throw a nice EntityServiceException

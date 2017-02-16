@@ -26,7 +26,8 @@ import java.util.zip.GZIPOutputStream;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -49,7 +50,7 @@ import stroom.util.zip.HeaderMap;
  * </p>
  */
 public final class SendStreamDataClient {
-    static final StroomLogger LOGGER = StroomLogger.getLogger(SendStreamDataClient.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SendStreamDataClient.class);
 
     private static final String GZIP = "GZIP";
     private static final String COMPRESSION = "Compression";

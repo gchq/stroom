@@ -18,7 +18,6 @@ package stroom.cache.server;
 
 import javax.inject.Inject;
 
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
 

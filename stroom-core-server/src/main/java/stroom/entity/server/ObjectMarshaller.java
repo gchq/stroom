@@ -16,14 +16,15 @@
 
 package stroom.entity.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.XMLMarshallerUtil;
-import stroom.util.logging.StroomLogger;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
 public class ObjectMarshaller<E> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ObjectMarshaller.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ObjectMarshaller.class);
 
     private final Class<E> clazz;
     private final JAXBContext jaxbContext;

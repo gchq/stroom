@@ -25,7 +25,6 @@ import stroom.pipeline.server.errorhandler.ErrorStatistics;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.task.server.TaskCallback;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 

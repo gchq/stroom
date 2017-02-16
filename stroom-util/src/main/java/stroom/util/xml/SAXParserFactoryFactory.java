@@ -16,9 +16,10 @@
 
 package stroom.util.xml;
 
-import javax.xml.parsers.SAXParserFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import stroom.util.logging.StroomLogger;
+import javax.xml.parsers.SAXParserFactory;
 
 /**
  * Our own factory class to return the desired SAXParserFactory implementation. This is due to the many xerces
@@ -28,7 +29,7 @@ import stroom.util.logging.StroomLogger;
  *
  */
 public final class SAXParserFactoryFactory {
-	private static final StroomLogger LOGGER = StroomLogger.getLogger(SAXParserFactoryFactory.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(SAXParserFactoryFactory.class);
 
 	private static final String DEFAULT_SAX_PARSER_FACTORY = "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl";
 	private static final String IMP_USED = "The SAX Parser factory implementation being used is: ";
@@ -58,7 +59,7 @@ public final class SAXParserFactoryFactory {
 			sb.append(factory.getClass().getName());
 			LOGGER.info(sb.toString());
 		} catch (final Exception ex) {
-			LOGGER.error(ex);
+			LOGGER.error("Unable to configure SAXParserFactory!", ex);
 		}
 	}
 

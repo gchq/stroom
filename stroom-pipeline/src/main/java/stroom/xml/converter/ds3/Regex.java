@@ -19,7 +19,6 @@ package stroom.xml.converter.ds3;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import stroom.util.logging.StroomLogger;
 import stroom.xml.converter.ds3.NodeFactory.NodeType;
 import stroom.xml.converter.ds3.ref.VarMap;
 

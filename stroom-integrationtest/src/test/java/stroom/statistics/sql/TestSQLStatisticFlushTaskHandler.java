@@ -24,9 +24,7 @@ import java.sql.SQLException;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 
-import stroom.util.logging.StroomLogger;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import stroom.AbstractCoreIntegrationTest;

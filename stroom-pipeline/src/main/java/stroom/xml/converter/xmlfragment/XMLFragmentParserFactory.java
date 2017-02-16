@@ -25,7 +25,6 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.LocatorImpl;
 
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.xml.converter.ParserFactory;
 
 public class XMLFragmentParserFactory implements ParserFactory {

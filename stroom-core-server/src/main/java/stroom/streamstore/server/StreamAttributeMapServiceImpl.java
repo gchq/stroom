@@ -16,23 +16,13 @@
 
 package stroom.streamstore.server;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.util.logging.StroomLogger;
+import event.logging.BaseAdvancedQueryItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
 import stroom.entity.server.SupportsCriteriaLogging;
 import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.PermissionException;
@@ -42,26 +32,21 @@ import stroom.node.shared.Volume;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.streamstore.server.fs.FileSystemStreamTypeUtil;
-import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamAttributeKey;
-import stroom.streamstore.shared.StreamAttributeKeyService;
-import stroom.streamstore.shared.StreamAttributeMap;
-import stroom.streamstore.shared.StreamAttributeMapService;
-import stroom.streamstore.shared.StreamAttributeValue;
-import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamTypeService;
-import stroom.streamstore.shared.StreamVolume;
+import stroom.streamstore.shared.*;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.zip.HeaderMap;
-import event.logging.BaseAdvancedQueryItem;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.*;
 
 @Component
 public class StreamAttributeMapServiceImpl
         implements StreamAttributeMapService, SupportsCriteriaLogging<FindStreamAttributeMapCriteria> {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StreamAttributeMapServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapServiceImpl.class);
 
     @Resource(name = "cachedFeedService")
     private FeedService feedService;

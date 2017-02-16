@@ -16,7 +16,6 @@
 
 package stroom.pipeline.server.factory;
 
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskScopeContextHolder;
 import org.springframework.beans.BeansException;

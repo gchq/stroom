@@ -19,7 +19,8 @@ package stroom.streamtask.server;
 import javax.annotation.Resource;
 import javax.persistence.EntityNotFoundException;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +33,7 @@ import stroom.streamtask.shared.TaskStatus;
 @Component
 @Transactional(propagation = Propagation.NEVER)
 public class StreamTaskHelper {
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(StreamTaskHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskHelper.class);
 
     @Resource
     private StreamTaskService streamTaskService;

@@ -18,10 +18,11 @@ package stroom.util.config;
 
 import com.google.common.base.CaseFormat;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import stroom.util.io.CloseableUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomResourceLoaderUtil;
 import stroom.util.upgrade.UpgradeDispatcherSingleton;
 import stroom.util.web.ServletContextUtil;
@@ -38,7 +39,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class StroomProperties {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(StroomProperties.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomProperties.class);
 
     public static final String STROOM_TEMP = "stroom.temp";
 

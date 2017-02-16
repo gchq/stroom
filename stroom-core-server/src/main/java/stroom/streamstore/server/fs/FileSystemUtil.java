@@ -17,10 +17,11 @@
 package stroom.streamstore.server.fs;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.StroomLogger;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,7 +72,8 @@ public final class FileSystemUtil {
      * The store root.
      */
     public static final String STORE_NAME = "store";
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileSystemUtil.class);
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemUtil.class);
 
     private FileSystemUtil() {
         // NA

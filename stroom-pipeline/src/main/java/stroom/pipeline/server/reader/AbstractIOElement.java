@@ -45,7 +45,6 @@ import stroom.pipeline.server.factory.TakesInput;
 import stroom.pipeline.server.factory.TakesReader;
 import stroom.pipeline.server.factory.Target;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 
 public class AbstractIOElement extends AbstractElement implements HasTargets {
     private static abstract class DestinationProcessor implements Processor {

@@ -16,7 +16,8 @@
 
 package stroom.task.server;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.Task;
 import stroom.util.spring.StroomBeanStore;
@@ -34,7 +35,7 @@ import java.util.Map;
 
 @Component
 public class TaskHandlerBeanRegistry implements ApplicationContextAware, InitializingBean {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TaskHandlerBeanRegistry.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerBeanRegistry.class);
 
     @Resource
     private StroomBeanStore beanStore;

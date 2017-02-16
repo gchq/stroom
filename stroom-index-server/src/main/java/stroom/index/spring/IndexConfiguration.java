@@ -19,7 +19,6 @@ package stroom.index.spring;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-import stroom.util.logging.StroomLogger;
 
 @Configuration
 @ComponentScan(basePackages = { "stroom.index.server", "stroom.index.shared" }, excludeFilters = {

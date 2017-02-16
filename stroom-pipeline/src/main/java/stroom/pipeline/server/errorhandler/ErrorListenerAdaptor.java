@@ -23,7 +23,6 @@ import javax.xml.transform.TransformerException;
 import org.xml.sax.SAXParseException;
 
 import stroom.pipeline.server.LocationFactory;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 

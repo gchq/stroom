@@ -16,13 +16,14 @@
 
 package stroom.entity.server.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 
 import java.sql.Connection;
@@ -40,7 +41,7 @@ public class ConnectionUtil {
     public static final String JDBC_DRIVER_URL = "stroom.jdbcDriverUrl";
     public static final String JDBC_DRIVER_USERNAME = "stroom.jdbcDriverUsername";
     public static final String JDBC_DRIVER_PASSWORD = "stroom.jdbcDriverPassword";
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ConnectionUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionUtil.class);
 
     public static final Connection getConnection() throws SQLException {
         final String driverClassname = StroomProperties.getProperty(JDBC_DRIVER_CLASS_NAME);

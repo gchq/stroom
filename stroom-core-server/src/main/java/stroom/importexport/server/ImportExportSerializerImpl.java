@@ -16,6 +16,8 @@
 
 package stroom.importexport.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.xml.sax.InputSource;
@@ -50,7 +52,6 @@ import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.ModelStringUtil;
 
@@ -88,7 +89,8 @@ import java.util.Set;
 
 @Component
 public class ImportExportSerializerImpl implements ImportExportSerializer {
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(ImportExportSerializerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportSerializerImpl.class);
+
     private static final Attributes2Impl BLANK_ATTRIBUTES = new Attributes2Impl();
     private static final Set<String> RESOURCE_FETCH_SET = Collections.singleton("all");
     private static final String YES = "yes";

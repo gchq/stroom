@@ -25,7 +25,6 @@ import stroom.entity.shared.Entity;
 import stroom.entity.shared.FolderService;
 import stroom.logging.EventInfoProvider;
 import stroom.security.shared.FindUserCriteria;
-import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 

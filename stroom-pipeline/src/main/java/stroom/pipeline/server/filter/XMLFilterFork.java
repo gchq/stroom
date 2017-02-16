@@ -19,7 +19,6 @@ package stroom.pipeline.server.filter;
 import java.util.ArrayList;
 import java.util.List;
 
-import stroom.util.logging.StroomLogger;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;

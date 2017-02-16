@@ -26,9 +26,10 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,7 +47,7 @@ import stroom.node.shared.SystemTableStatus;
 @Transactional
 @Component
 public class NodeServiceTransactionHelper {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(NodeServiceTransactionHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NodeServiceTransactionHelper.class);
 
     private final StroomEntityManager entityManager;
     private final StroomDatabaseInfo stroomDatabaseInfo;

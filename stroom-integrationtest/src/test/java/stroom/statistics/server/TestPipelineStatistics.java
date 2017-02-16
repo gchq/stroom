@@ -21,7 +21,6 @@ import stroom.CommonTranslationTest;
 import stroom.streamstore.server.tools.StoreCreationTool;
 import stroom.streamtask.server.StreamTaskCreator;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import org.junit.Ignore;
 import org.junit.Test;
 

@@ -24,11 +24,12 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.io.SeekableInputStream;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 
 /**
  * This is an implementation of <code>SegmentInputStream</code> that uses random
@@ -65,7 +66,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
         }
     }
 
-    private static StroomLogger LOGGER = StroomLogger.getLogger(RASegmentInputStream.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RASegmentInputStream.class);
 
     private static final int INT8 = 8;
 

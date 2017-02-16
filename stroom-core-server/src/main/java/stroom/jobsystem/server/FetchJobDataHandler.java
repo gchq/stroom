@@ -16,6 +16,8 @@
 
 package stroom.jobsystem.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
@@ -34,7 +36,6 @@ import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.SharedMap;
 import stroom.util.spring.StroomScope;
 
@@ -48,7 +49,7 @@ import java.util.Map;
 @TaskHandlerBean(task = FetchJobDataAction.class)
 @Scope(StroomScope.TASK)
 class FetchJobDataHandler extends AbstractTaskHandler<FetchJobDataAction, ResultList<JobNodeRow>> {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StroomLogger.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FetchJobDataHandler.class);
 
     private final JobService jobService;
     private final JobNodeService jobNodeService;

@@ -21,6 +21,8 @@ import event.logging.Group;
 import event.logging.Groups;
 import event.logging.Object;
 import event.logging.util.EventLoggingUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
@@ -34,14 +36,13 @@ import stroom.feed.shared.FeedService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamTypeService;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 @Component
 public class BasicEventInfoProvider implements EventInfoProvider {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(BasicEventInfoProvider.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BasicEventInfoProvider.class);
 
     private final StreamTypeService streamTypeService;
     private final FeedService feedService;

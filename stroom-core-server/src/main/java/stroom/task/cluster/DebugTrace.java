@@ -18,11 +18,12 @@ package stroom.task.cluster;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.concurrent.SimpleConcurrentMap;
-import stroom.util.logging.StroomLogger;
 
 public class DebugTrace {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(DebugTrace.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DebugTrace.class);
 
     private static final SimpleConcurrentMap<String, AtomicInteger> debugMap = new SimpleConcurrentMap<String, AtomicInteger>() {
         @Override

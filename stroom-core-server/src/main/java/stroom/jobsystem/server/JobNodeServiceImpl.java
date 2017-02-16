@@ -16,6 +16,8 @@
 
 package stroom.jobsystem.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
@@ -34,7 +36,6 @@ import stroom.jobsystem.shared.JobService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.security.Secured;
-import stroom.util.logging.StroomLogger;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomBeanMethod;
@@ -63,7 +64,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     public static final String DELETE_ORPHAN_JOBS_HSQLDB = "DELETE FROM " + Job.TABLE_NAME + " WHERE " + Job.ID
             + " IN (" + "SELECT " + Job.ID + " FROM " + Job.TABLE_NAME + " JB LEFT OUTER JOIN " + JobNode.TABLE_NAME
             + " JB_ND ON (JB." + Job.ID + " = JB_ND." + Job.FOREIGN_KEY + ") WHERE JB_ND." + JobNode.ID + " IS NULL);";
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(JobNodeServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeServiceImpl.class);
     private static final String LOCK_NAME = "JobNodeService";
 
     private final StroomEntityManager entityManager;

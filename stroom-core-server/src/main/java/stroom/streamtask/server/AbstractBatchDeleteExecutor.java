@@ -16,8 +16,9 @@
 
 package stroom.streamtask.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.node.server.StroomPropertyService;
-import stroom.util.logging.StroomLogger;
 import org.springframework.util.StringUtils;
 
 import stroom.jobsystem.server.ClusterLockService;
@@ -27,7 +28,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.task.TaskMonitor;
 
 public abstract class AbstractBatchDeleteExecutor {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractBatchDeleteExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBatchDeleteExecutor.class);
 
     private final BatchIdTransactionHelper batchIdTransactionHelper;
     private final ClusterLockService clusterLockService;

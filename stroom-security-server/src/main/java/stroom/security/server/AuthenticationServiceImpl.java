@@ -37,7 +37,6 @@ import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.cert.CertificateUtil;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

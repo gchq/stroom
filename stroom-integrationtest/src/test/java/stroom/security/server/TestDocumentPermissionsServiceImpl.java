@@ -30,7 +30,6 @@ import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
-import stroom.util.logging.StroomLogger;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;

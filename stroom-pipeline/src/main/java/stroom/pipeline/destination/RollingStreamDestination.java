@@ -24,7 +24,6 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.util.logging.StroomLogger;
 import stroom.util.zip.HeaderMap;
 
 public class RollingStreamDestination extends RollingDestination {

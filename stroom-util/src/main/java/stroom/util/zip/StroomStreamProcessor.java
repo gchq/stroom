@@ -19,6 +19,8 @@ package stroom.util.zip;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import stroom.util.cert.CertificateUtil;
 import stroom.util.date.DateUtil;
@@ -28,7 +30,6 @@ import stroom.util.io.InitialByteArrayOutputStream;
 import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.Closeable;
@@ -44,7 +45,7 @@ import java.util.UUID;
 
 public class StroomStreamProcessor {
     private static final String ZERO_CONTENT = "0";
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StroomStreamProcessor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomStreamProcessor.class);
     private static String hostName;
     private final HeaderMap globalHeaderMap;
     private final List<? extends StroomStreamHandler> stroomStreamHandlerList;

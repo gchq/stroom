@@ -16,13 +16,14 @@
 
 package stroom.entity.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.EntityService;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindService;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
@@ -44,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class EntityServiceBeanRegistry implements BeanPostProcessor {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(EntityServiceBeanRegistry.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EntityServiceBeanRegistry.class);
     private final Map<Class<?>, String> entityServiceClassMap = new HashMap<>();
     private final Map<String, String> entityServiceTypeMap = new HashMap<>();
     private final Map<List<Object>, Method> entityServiceMethodMap = new ConcurrentHashMap<>();

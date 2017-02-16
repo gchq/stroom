@@ -29,7 +29,6 @@ import stroom.entity.shared.PermissionException;
 import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;

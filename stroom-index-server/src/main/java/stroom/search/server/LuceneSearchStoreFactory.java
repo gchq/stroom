@@ -36,7 +36,6 @@ import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import java.util.Collections;

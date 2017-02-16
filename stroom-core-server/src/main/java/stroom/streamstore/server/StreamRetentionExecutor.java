@@ -20,7 +20,8 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -45,7 +46,7 @@ import stroom.util.task.TaskMonitor;
 @Component
 @Scope(value = StroomScope.TASK)
 public class StreamRetentionExecutor {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StreamRetentionExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamRetentionExecutor.class);
 
     private static final String LOCK_NAME = "StreamRetentionExecutor";
     private static final int DELETE_STREAM_BATCH_SIZE = 10000;

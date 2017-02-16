@@ -23,18 +23,19 @@ import java.util.Map.Entry;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.jobsystem.shared.JobNode;
 import stroom.node.shared.Node;
 import stroom.streamtask.server.TaskStatusTraceLog;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.logging.StroomLogger;
 
 @TaskHandlerBean(task = DistributedTaskRequestClusterTask.class)
 public class DistributedTaskRequestClusterHandler
         implements TaskHandler<DistributedTaskRequestClusterTask, DistributedTaskRequestResult> {
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(DistributedTaskRequestClusterHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskRequestClusterHandler.class);
 
     @Resource
     private DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;

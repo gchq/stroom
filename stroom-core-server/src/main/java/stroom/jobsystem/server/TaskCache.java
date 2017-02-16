@@ -25,7 +25,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import stroom.cache.AbstractCacheBean;
@@ -35,7 +36,7 @@ import net.sf.ehcache.CacheManager;
 
 @Component
 public class TaskCache extends AbstractCacheBean<String, Queue<Task<?>>> {
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(TaskCache.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskCache.class);
 
     private static final int MAX_CACHE_ENTRIES = 1000000;
 

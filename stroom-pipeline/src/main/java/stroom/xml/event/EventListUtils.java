@@ -36,7 +36,6 @@ import org.xml.sax.helpers.DefaultHandler;
 import stroom.entity.server.util.XMLUtil;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.util.CharBuffer;
-import stroom.util.logging.StroomLogger;
 import stroom.xml.event.simple.StartElement;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.query.QueryResult;

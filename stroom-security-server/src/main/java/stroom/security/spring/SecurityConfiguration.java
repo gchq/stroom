@@ -31,7 +31,6 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import stroom.security.server.DBRealm;
 import stroom.security.server.JWTAuthenticationFilter;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;

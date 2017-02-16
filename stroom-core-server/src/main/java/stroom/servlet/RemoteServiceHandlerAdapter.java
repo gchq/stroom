@@ -21,12 +21,13 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.context.ServletContextAware;
 import org.springframework.web.servlet.HandlerAdapter;
 import org.springframework.web.servlet.ModelAndView;
-import stroom.util.logging.StroomLogger;
 import stroom.util.thread.ThreadScopeContextHolder;
 
 import javax.annotation.Resource;
@@ -40,7 +41,7 @@ import java.util.Enumeration;
 
 @Component
 public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements HandlerAdapter, ServletContextAware {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(RemoteServiceHandlerAdapter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RemoteServiceHandlerAdapter.class);
     private static final long serialVersionUID = -7421136737990135393L;
     private static ThreadLocal<Object> handlerHolder = new ThreadLocal<Object>();
     private transient ServletContext servletContext;

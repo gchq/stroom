@@ -16,6 +16,8 @@
 
 package stroom.jobsystem.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.NamedEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.StroomEntityManager;
@@ -23,7 +25,6 @@ import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobService;
 import stroom.security.Secured;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanMethod;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
@@ -44,7 +45,7 @@ import java.util.Set;
 @Secured(Job.MANAGE_JOBS_PERMISSION)
 @Component
 public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements JobService {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(JobServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JobServiceImpl.class);
 
     private final StroomBeanStore stroomBeanStore;
 

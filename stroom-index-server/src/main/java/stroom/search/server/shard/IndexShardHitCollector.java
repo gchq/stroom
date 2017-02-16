@@ -19,7 +19,6 @@ package stroom.search.server.shard;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.SimpleCollector;
 import stroom.pipeline.server.errorhandler.TerminatedException;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Monitor;
 

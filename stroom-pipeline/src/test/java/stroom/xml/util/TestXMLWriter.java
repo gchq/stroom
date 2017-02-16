@@ -30,7 +30,6 @@ import java.io.FileWriter;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import stroom.util.logging.StroomLogger;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.xml.SAXParserFactoryFactory;
 import org.apache.commons.io.output.ByteArrayOutputStream;

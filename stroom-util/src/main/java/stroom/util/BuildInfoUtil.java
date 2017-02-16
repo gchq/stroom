@@ -16,13 +16,14 @@
 
 package stroom.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 
 import java.util.Properties;
 
 public class BuildInfoUtil {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(BuildInfoUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BuildInfoUtil.class);
 
     public static final String upDate = DateUtil.createNormalDateTimeString();
     private static final String buildVersion;
@@ -34,7 +35,7 @@ public class BuildInfoUtil {
             properties.load(
                     BuildInfoUtil.class.getClassLoader().getResourceAsStream("META-INF/stroom-util-build.properties"));
         } catch (Exception e) {
-            LOGGER.error(e);
+            LOGGER.error("Unable to load strom-util-build.properties!", e);
         }
         buildVersion = properties.getProperty("buildVersion");
         buildDate = properties.getProperty("buildDate");

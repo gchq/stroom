@@ -17,7 +17,6 @@
 package stroom.statistics.sql;
 
 import stroom.entity.server.util.ConnectionUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.sql.SQLSafe;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;

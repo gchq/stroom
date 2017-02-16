@@ -16,8 +16,9 @@
 
 package stroom.util.test;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.task.ExternalShutdownController;
 import stroom.util.thread.ThreadScopeContextHolder;
@@ -31,7 +32,7 @@ import org.junit.runners.model.InitializationError;
 import java.io.File;
 
 public class StroomJUnit4ClassRunner extends BlockJUnit4ClassRunner {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomJUnit4ClassRunner.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomJUnit4ClassRunner.class);
 
     public StroomJUnit4ClassRunner(final Class<?> clazz) throws InitializationError {
         super(clazz);

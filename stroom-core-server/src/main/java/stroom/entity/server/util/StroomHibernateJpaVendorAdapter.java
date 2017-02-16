@@ -16,7 +16,8 @@
 
 package stroom.entity.server.util;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.ConnectionHandle;
 import org.springframework.orm.jpa.vendor.HibernateJpaDialect;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
@@ -32,7 +33,7 @@ import java.util.ArrayDeque;
  * TODO: Not sure we need this anymore
  */
 public class StroomHibernateJpaVendorAdapter extends HibernateJpaVendorAdapter {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomHibernateJpaVendorAdapter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomHibernateJpaVendorAdapter.class);
 
     static ThreadLocal<ArrayDeque<StackTraceElement[]>> threadTransactionStack = new ThreadLocal<ArrayDeque<StackTraceElement[]>>();
 

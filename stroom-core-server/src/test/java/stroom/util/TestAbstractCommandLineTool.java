@@ -16,7 +16,6 @@
 
 package stroom.util;
 
-import stroom.util.logging.StroomLogger;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import org.junit.Test;

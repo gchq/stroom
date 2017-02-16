@@ -16,7 +16,6 @@
 
 package stroom.pipeline.server.errorhandler;
 
-import stroom.util.logging.StroomLogger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 

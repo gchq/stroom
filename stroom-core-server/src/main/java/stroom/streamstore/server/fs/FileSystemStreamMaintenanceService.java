@@ -16,6 +16,8 @@
 
 package stroom.streamstore.server.fs;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.SupportsCriteriaLogging;
 import stroom.entity.server.util.StroomEntityManager;
@@ -33,7 +35,6 @@ import stroom.streamstore.server.StreamRange;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamTypeService;
 import stroom.streamstore.shared.StreamVolume;
-import stroom.util.logging.StroomLogger;
 import event.logging.BaseAdvancedQueryItem;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -69,7 +70,8 @@ public class FileSystemStreamMaintenanceService
     public static final String PREFIX_NODE = "Node - ";
     public static final String PREFIX_VOLUME = "Volume - ";
     public static final String PREFIX_FEED = "Feed - ";
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileSystemStreamMaintenanceService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamMaintenanceService.class);
+
     @Resource
     private StroomEntityManager entityManager;
     @Resource

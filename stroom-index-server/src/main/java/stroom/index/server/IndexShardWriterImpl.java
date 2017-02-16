@@ -40,7 +40,6 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardService;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.logging.LoggerPrintStream;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.persistence.EntityNotFoundException;

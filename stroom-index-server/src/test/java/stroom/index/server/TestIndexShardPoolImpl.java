@@ -37,7 +37,6 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.concurrent.SimpleExecutor;
-import stroom.util.logging.StroomLogger;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.thread.ThreadUtil;
 

@@ -18,7 +18,6 @@ package stroom.statistics.spring;
 
 import java.util.Arrays;
 
-import stroom.util.logging.StroomLogger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

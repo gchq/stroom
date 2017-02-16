@@ -21,12 +21,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.io.SeekableOutputStream;
 import stroom.io.StreamCloser;
-import stroom.util.logging.StroomLogger;
 
 public class BlockGZipOutputStream extends OutputStream implements SeekableOutputStream {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(BlockGZIPOutputFile.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BlockGZipOutputStream.class);
 
     // The main buffer used (typically holds 2 longs and the the GZIP output).
     // We use 'big' buffer (that holds the whole block) as we go back and write

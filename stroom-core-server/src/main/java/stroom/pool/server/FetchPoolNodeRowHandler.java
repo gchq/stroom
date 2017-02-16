@@ -16,6 +16,8 @@
 
 package stroom.pool.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
@@ -24,7 +26,6 @@ import stroom.pool.shared.PoolNodeRow;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
@@ -34,7 +35,7 @@ import java.util.List;
 @TaskHandlerBean(task = FetchPoolNodeRowAction.class)
 @Scope(StroomScope.TASK)
 public class FetchPoolNodeRowHandler extends AbstractTaskHandler<FetchPoolNodeRowAction, ResultList<PoolNodeRow>> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FetchPoolNodeRowHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FetchPoolNodeRowHandler.class);
 
     @Resource
     private ClusterDispatchAsyncHelper dispatchHelper;

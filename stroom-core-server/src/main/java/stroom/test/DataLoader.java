@@ -22,6 +22,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
@@ -33,14 +35,13 @@ import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
-import stroom.util.logging.StroomLogger;
 import stroom.util.zip.StroomZipEntry;
 import stroom.util.zip.StroomZipFile;
 import stroom.util.zip.StroomZipFileType;
 import stroom.util.zip.HeaderMap;
 
 public class DataLoader {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(DataLoader.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataLoader.class);
 
     private static final String INPUT_EXTENSION = ".in";
     private static final String ZIP_EXTENSION = ".zip";

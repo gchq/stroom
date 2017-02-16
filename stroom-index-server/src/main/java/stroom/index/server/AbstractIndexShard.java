@@ -23,7 +23,6 @@ import org.apache.lucene.store.SimpleFSLockFactory;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardService;
-import stroom.util.logging.StroomLogger;
 
 import java.io.IOException;
 import java.nio.file.Files;

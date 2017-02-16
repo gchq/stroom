@@ -21,7 +21,6 @@ import java.nio.charset.Charset;
 import stroom.feed.shared.Feed;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 
 public final class EncodingSelection {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(EncodingSelection.class);

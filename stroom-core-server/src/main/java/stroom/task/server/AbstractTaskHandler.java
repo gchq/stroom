@@ -16,13 +16,14 @@
 
 package stroom.task.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.security.Secured;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Task;
 
 @Secured
 public abstract class AbstractTaskHandler<T extends Task<R>, R> implements TaskHandler<T, R> {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(AbstractTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTaskHandler.class);
 
     @Override
     public void exec(final T task, final TaskCallback<R> callback) {

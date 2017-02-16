@@ -16,12 +16,13 @@
 
 package stroom.task.cluster;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.cluster.server.ClusterCallService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.TaskId;
 import stroom.util.thread.ThreadUtil;
@@ -34,7 +35,7 @@ import javax.inject.Named;
 @Component(value = ClusterWorkerImpl.BEAN_NAME)
 @Lazy
 public class ClusterWorkerImpl implements ClusterWorker {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterWorkerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterWorkerImpl.class);
 
     private static final Long DEBUG_RESPONSE_DELAY = null;
 

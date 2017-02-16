@@ -55,7 +55,6 @@ import stroom.streamstore.shared.StreamTypeService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Highlight;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;

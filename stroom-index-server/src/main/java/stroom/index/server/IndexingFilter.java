@@ -42,7 +42,6 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.search.server.IndexFieldsMap;
 import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 

@@ -16,13 +16,14 @@
 
 package stroom.spring;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Scope;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import stroom.cluster.server.ClusterCallServiceRPC;
 import stroom.datafeed.server.DataFeedServiceImpl;
@@ -40,7 +41,6 @@ import stroom.servlet.SessionListServlet;
 import stroom.servlet.SessionResourceStoreImpl;
 import stroom.servlet.StatusServlet;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 import stroom.util.thread.ThreadLocalBuffer;
 import stroom.util.zip.HeaderMap;
 import stroom.util.zip.HeaderMapFactory;
@@ -56,7 +56,7 @@ import java.util.Properties;
 @ComponentScan(basePackages = {"stroom"}, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class CoreClientConfiguration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(CoreClientConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CoreClientConfiguration.class);
 
     public CoreClientConfiguration() {
         LOGGER.info("CoreClientConfiguration loading...");

@@ -16,11 +16,12 @@
 
 package stroom.task.cluster;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.cluster.server.ClusterCallService;
 import stroom.node.shared.Node;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.*;
 import stroom.util.task.TaskScopeContextHolder;
@@ -38,7 +39,7 @@ import java.util.Set;
 @Component(ClusterDispatchAsyncImpl.BEAN_NAME)
 @Lazy
 public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterDispatchAsyncImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDispatchAsyncImpl.class);
 
     public static final String BEAN_NAME = "clusterDispatchAsync";
     public static final String RECEIVE_RESULT_METHOD = "receiveResult";

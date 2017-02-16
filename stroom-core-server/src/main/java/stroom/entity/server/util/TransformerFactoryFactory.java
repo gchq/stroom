@@ -18,8 +18,6 @@ package stroom.entity.server.util;
 
 import javax.xml.transform.TransformerFactory;
 
-import stroom.util.logging.StroomLogger;
-
 public final class TransformerFactoryFactory {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(TransformerFactoryFactory.class);
 

@@ -21,7 +21,6 @@ import java.util.Map;
 
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.PropertyProvider;
 
 public class MockStroomPropertyService extends PropertyPlaceholderConfigurer

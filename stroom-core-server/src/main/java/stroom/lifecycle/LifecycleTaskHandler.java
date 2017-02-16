@@ -16,15 +16,16 @@
 
 package stroom.lifecycle;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.VoidResult;
 
 @TaskHandlerBean(task = LifecycleTask.class)
 public class LifecycleTaskHandler extends AbstractTaskHandler<LifecycleTask, VoidResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(LifecycleTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleTaskHandler.class);
 
     @Override
     public VoidResult exec(final LifecycleTask task) {

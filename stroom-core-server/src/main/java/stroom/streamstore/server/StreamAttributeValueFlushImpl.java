@@ -16,6 +16,8 @@
 
 package stroom.streamstore.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.node.server.StroomPropertyService;
 import stroom.streamstore.shared.Stream;
@@ -23,7 +25,6 @@ import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeKeyService;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
@@ -44,7 +45,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Component
 public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StreamAttributeValueFlushImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueFlushImpl.class);
 
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;

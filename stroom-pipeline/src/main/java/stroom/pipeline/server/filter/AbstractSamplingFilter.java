@@ -16,9 +16,6 @@
 
 package stroom.pipeline.server.filter;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
@@ -28,15 +25,8 @@ import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.shared.ElementIcons;
-import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
-import stroom.util.spring.StroomSpringProfiles;
 
-import javax.annotation.Resource;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;

@@ -16,9 +16,10 @@
 
 package stroom.entity.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.entity.shared.BaseEntity;
-import stroom.util.logging.StroomLogger;
 import javassist.Modifier;
 
 import javax.xml.bind.JAXBContext;
@@ -28,7 +29,7 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 
 public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marshaller<E, O> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(EntityMarshaller.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EntityMarshaller.class);
 
     private final JAXBContext jaxbContext;
 

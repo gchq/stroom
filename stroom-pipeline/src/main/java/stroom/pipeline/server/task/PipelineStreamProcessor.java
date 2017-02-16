@@ -26,7 +26,6 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 

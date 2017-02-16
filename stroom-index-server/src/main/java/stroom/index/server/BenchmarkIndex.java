@@ -38,7 +38,6 @@ import stroom.search.server.IndexShardSearcherImpl;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.logging.LoggerPrintStream;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.ThreadUtil;
 

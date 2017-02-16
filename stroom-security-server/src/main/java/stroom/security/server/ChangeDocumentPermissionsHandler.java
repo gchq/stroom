@@ -35,7 +35,6 @@ import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;

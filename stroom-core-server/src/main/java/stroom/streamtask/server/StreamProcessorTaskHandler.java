@@ -16,6 +16,8 @@
 
 package stroom.streamtask.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.server.StreamSource;
@@ -30,7 +32,6 @@ import stroom.streamtask.shared.TaskStatus;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
@@ -48,7 +49,7 @@ public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProces
     @Resource
     private StroomBeanStore beanStore;
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StreamProcessorTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamProcessorTaskHandler.class);
 
     @Resource(name = "cachedStreamProcessorService")
     private StreamProcessorService streamProcessorService;

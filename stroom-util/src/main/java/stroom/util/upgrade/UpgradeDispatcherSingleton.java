@@ -16,7 +16,8 @@
 
 package stroom.util.upgrade;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.spring.ContextAwareService;
 import stroom.util.thread.ThreadScopeContextHolder;
 import stroom.util.thread.ThreadUtil;
@@ -35,7 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * requests.
  */
 public class UpgradeDispatcherSingleton {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(UpgradeDispatcherSingleton.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UpgradeDispatcherSingleton.class);
 
     private Thread upgradeThread;
     private UpgradeDispatcherServlet servlet;

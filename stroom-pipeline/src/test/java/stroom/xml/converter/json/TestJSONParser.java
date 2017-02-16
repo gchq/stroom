@@ -34,7 +34,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import stroom.test.StroomProcessTestFileUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;

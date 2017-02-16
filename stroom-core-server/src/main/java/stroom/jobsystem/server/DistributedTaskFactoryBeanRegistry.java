@@ -16,7 +16,8 @@
 
 package stroom.jobsystem.server;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 import org.springframework.stereotype.Component;
@@ -32,7 +33,7 @@ public class DistributedTaskFactoryBeanRegistry {
     @Resource
     private StroomBeanStore stroomBeanStore;
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(DistributedTaskFactoryBeanRegistry.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFactoryBeanRegistry.class);
 
     @SuppressWarnings("unchecked")
     public DistributedTaskFactory<DistributedTask<?>, ?> findFactory(final String jobName) {

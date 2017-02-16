@@ -22,6 +22,8 @@ import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.joda.time.DateTimeZone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
@@ -72,7 +74,6 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.StroomLogger;
 import stroom.util.zip.HeaderMap;
 
 import javax.inject.Inject;
@@ -106,7 +107,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     public static final String MYSQL_INDEX_STRM_EFFECT_MS_IDX = "STRM_EFFECT_MS_IDX";
     public static final String MYSQL_INDEX_STRM_PARNT_STRM_ID_IDX = "STRM_PARNT_STRM_ID_IDX";
     public static final String MYSQL_INDEX_STRM_FK_STRM_PROC_ID_CRT_MS_IDX = "STRM_FK_STRM_PROC_ID_CRT_MS_IDX";
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileSystemStreamStoreImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamStoreImpl.class);
     private static final Set<String> SOURCE_FETCH_SET;
 
     static {

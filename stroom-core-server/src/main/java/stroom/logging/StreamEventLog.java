@@ -26,6 +26,8 @@ import event.logging.ObjectOutcome;
 import event.logging.Query;
 import event.logging.Query.Advanced;
 import event.logging.util.EventLoggingUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.FolderService;
 import stroom.feed.shared.Feed;
@@ -34,7 +36,6 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -42,7 +43,7 @@ import java.util.Date;
 @Component
 @Insecure
 public class StreamEventLog {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StreamEventLog.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamEventLog.class);
 
     @Resource
     private StroomEventLoggingService eventLoggingService;

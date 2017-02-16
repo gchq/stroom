@@ -33,7 +33,6 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
 import stroom.search.server.IndexShardSearcher;
 import stroom.search.server.IndexShardSearcherImpl;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import java.util.Collection;

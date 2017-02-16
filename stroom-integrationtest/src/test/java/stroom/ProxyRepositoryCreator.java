@@ -32,7 +32,6 @@ import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.zip.StroomZipEntry;
 
 public class ProxyRepositoryCreator {

@@ -19,7 +19,6 @@ package stroom.pipeline.server.task;
 import java.io.File;
 
 import stroom.test.StroomProcessTestFileUtil;
-import stroom.util.logging.StroomLogger;
 import org.joda.time.Period;
 import org.junit.Test;
 

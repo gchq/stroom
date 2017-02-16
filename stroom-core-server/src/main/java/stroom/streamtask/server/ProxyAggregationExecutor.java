@@ -16,6 +16,8 @@
 
 package stroom.streamtask.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.jobsystem.server.JobTrackedSchedule;
@@ -26,7 +28,6 @@ import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamProgressMonitor;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
@@ -60,7 +61,7 @@ import java.util.List;
 @Component
 @Scope(value = StroomScope.TASK)
 public class ProxyAggregationExecutor {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ProxyAggregationExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyAggregationExecutor.class);
 
     private final StreamStore streamStore;
     private final FeedService feedService;

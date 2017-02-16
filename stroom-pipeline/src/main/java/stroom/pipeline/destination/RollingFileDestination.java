@@ -24,7 +24,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import stroom.util.logging.StroomLogger;
 import org.apache.commons.lang.StringUtils;
 
 import stroom.pipeline.server.writer.PathCreator;

@@ -16,35 +16,26 @@
 
 package stroom.node.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.node.shared.GlobalProperty;
 import stroom.util.config.StroomProperties;
-import stroom.util.io.CloseableUtil;
-import stroom.util.logging.StroomLogger;
-import stroom.util.spring.StroomResourceLoaderUtil;
-import stroom.util.upgrade.UpgradeDispatcherSingleton;
-import stroom.util.web.ServletContextUtil;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 
 @Component
 public class GlobalProperties {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(GlobalProperties.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalProperties.class);
     private static GlobalProperties instance;
     private final Map<String, GlobalProperty> globalProperties = new HashMap<>();
 

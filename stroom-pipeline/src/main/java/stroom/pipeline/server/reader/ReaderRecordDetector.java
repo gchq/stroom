@@ -20,7 +20,6 @@ import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
 
-import stroom.util.logging.StroomLogger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 

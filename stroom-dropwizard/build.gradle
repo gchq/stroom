@@ -2,8 +2,23 @@ plugins {
   id 'com.github.johnrengelman.shadow' version '1.2.4'
 }
 
+configurations {
+    all {
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            if (details.requested.name == 'log4j') {
+                details.useTarget "org.slf4j:log4j-over-slf4j:1.7.5"
+            }
+        }
+        exclude group: "org.slf4j", module: "slf4j-log4j12"
+        exclude group: "log4j", module: "log4j"
+    }
+}
+dependencies {
 
-dependencies{
+    compile "ch.qos.logback:logback-classic:1.2.1"
+    compile "org.slf4j:log4j-over-slf4j:1.7.22"
+
+
 //  compile 'com.hmsonline:dropwizard-spring:0.6.0'
     compile project(':stroom-core-server')
     compile project(':stroom-index-server')
@@ -27,3 +42,5 @@ dependencies{
 
 
 }
+
+

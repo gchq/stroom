@@ -16,6 +16,8 @@
 
 package stroom.benchmark.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.cluster.ClearServiceClusterTask;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
@@ -53,7 +55,6 @@ import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AsyncTaskHelper;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
@@ -76,7 +77,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Component
 @Scope(StroomScope.TASK)
 public class BenchmarkClusterExecutor extends AbstractBenchmark {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(BenchmarkClusterExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkClusterExecutor.class);
 
     private static final String ROOT_TEST_NAME = "Benchmark-Cluster Test";
     private static final String EPS = "EPS";
@@ -244,7 +245,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 LOGGER.info("Cluster benchmark complete");
             }
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to create benchmark!", e);
         }
     }
 
