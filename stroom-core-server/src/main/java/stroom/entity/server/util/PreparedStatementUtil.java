@@ -63,7 +63,7 @@ public class PreparedStatementUtil {
         try {
             return connection.prepareStatement(sql);
         } catch (final SQLException sqlEx) {
-            LOGGER.error("prepareStatement() - %s %s", sql, sqlEx.getMessage());
+            LOGGER.error("prepareStatement() - {} {}", sql, sqlEx.getMessage());
             throw sqlEx;
         }
     }

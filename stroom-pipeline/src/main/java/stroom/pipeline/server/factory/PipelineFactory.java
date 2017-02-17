@@ -103,7 +103,7 @@ public class PipelineFactory {
         linkSets.put(null, rootLinkSet);
 
         for (final PipelineElement element : pipelineData.getElements().getAdd()) {
-            LOGGER.debug("create() - loading element %s", element);
+            LOGGER.debug("create() - loading element {}", element);
 
             final Class<Element> elementClass = pipelineElementRegistry.getElementClass(element.getType());
 

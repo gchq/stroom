@@ -176,7 +176,7 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
 
             final Permission existingPermission = existingPermissionMap.remove(requiredPermission);
             if (existingPermission == null) {
-                LOGGER.info("createAll() - Persisting %s", requiredPermission);
+                LOGGER.info("createAll() - Persisting {}", requiredPermission);
                 Permission newPermission = Permission.create(
                         requiredPermission);
                 newPermission = entityManager.saveEntity(newPermission);
@@ -188,7 +188,7 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
 
         // Delete the remaining existing ones that are no longer needed.
         for (final Permission existingPermission : existingPermissionMap.values()) {
-            LOGGER.info("createAll() - Removing %s", existingPermission);
+            LOGGER.info("createAll() - Removing {}", existingPermission);
 
             // Delete old application permissions.
             sql = new SQLBuilder(false);

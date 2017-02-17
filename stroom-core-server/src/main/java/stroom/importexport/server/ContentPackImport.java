@@ -65,7 +65,7 @@ public class ContentPackImport {
         if (isEnabled) {
             doImport();
         } else {
-            LOGGER.info("Content pack import currently disabled via property: %s", AUTO_IMPORT_ENABLED_PROP_KEY);
+            LOGGER.info("Content pack import currently disabled via property: {}", AUTO_IMPORT_ENABLED_PROP_KEY);
         }
     }
 
@@ -78,7 +78,7 @@ public class ContentPackImport {
             final Path contentPacksDir = optContentPacksDir.get();
             try {
                 if (!Files.isDirectory(contentPacksDir)) {
-                    LOGGER.error("Content packs directory %s doesn't exist", contentPacksDir.toAbsolutePath());
+                    LOGGER.error("Content packs directory {} doesn't exist", contentPacksDir.toAbsolutePath());
                     return;
                 }
 
@@ -109,12 +109,12 @@ public class ContentPackImport {
                             }
                         });
 
-                LOGGER.info("Content pack import counts - success: %s, failed: %s",
+                LOGGER.info("Content pack import counts - success: {}, failed: {}",
                         successCounter.get(),
                         failedCounter.get());
 
             } catch (IOException e) {
-                LOGGER.error("Unable to read content pack files from %s", contentPacksDir.toAbsolutePath(), e);
+                LOGGER.error("Unable to read content pack files from {}", contentPacksDir.toAbsolutePath(), e);
             }
 
             LOGGER.info("ContentPackImport finished");
@@ -124,7 +124,7 @@ public class ContentPackImport {
     }
 
     private boolean importContentPack(Path parentPath, Path contentPack) {
-        LOGGER.info("Starting import of content pack %s", contentPack.toAbsolutePath());
+        LOGGER.info("Starting import of content pack {}", contentPack.toAbsolutePath());
 
         try {
             //It is possible to import a content pack (or packs) with missing dependencies
@@ -132,10 +132,10 @@ public class ContentPackImport {
             //ensure the packs they import are complete
             importExportService.performImportWithoutConfirmation(contentPack.toFile());
 
-            LOGGER.info("Completed import of content pack %s", contentPack.toAbsolutePath());
+            LOGGER.info("Completed import of content pack {}", contentPack.toAbsolutePath());
 
         } catch (Exception e) {
-            LOGGER.error("Error importing content pack %s", contentPack.toAbsolutePath(), e);
+            LOGGER.error("Error importing content pack {}", contentPack.toAbsolutePath(), e);
             return false;
         }
         return true;

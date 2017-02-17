@@ -73,7 +73,7 @@ public abstract class AbstractStatistics implements Statistics {
     }
 
     protected static FindEventCriteria buildCriteria(final Query query, final StatisticStoreEntity dataSource) {
-        LOGGER.trace(String.format("buildCriteria called for statistic %s", dataSource.getName()));
+        LOGGER.trace("buildCriteria called for statistic {}", dataSource.getName());
 
         // Get the current time in millis since epoch.
         final long nowEpochMilli = System.currentTimeMillis();
@@ -190,7 +190,7 @@ public abstract class AbstractStatistics implements Statistics {
                 dataSource.getName(), filterTermsTree, rolledUpFieldNames);
 
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(String.format("Searching statistics store with criteria: %s", criteria.toString()));
+            LOGGER.info("Searching statistics store with criteria: {}", criteria.toString());
         }
 
         return criteria;
@@ -348,7 +348,7 @@ public abstract class AbstractStatistics implements Statistics {
                 .getProperty(CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME);
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("%s property value: %s", CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME,
+            LOGGER.debug("{} property value: {}", CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME,
                     enabledEngines);
         }
 

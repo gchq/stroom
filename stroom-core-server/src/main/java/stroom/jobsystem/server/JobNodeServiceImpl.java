@@ -157,7 +157,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
             validJobNames.add(jobScheduleDescriptor.jobName());
 
             if (stroomFrequencySchedule == null && stroomSimpleCronSchedule == null) {
-                LOGGER.error("Invalid annotations on %s", stroomBeanMethod);
+                LOGGER.error("Invalid annotations on {}", stroomBeanMethod);
                 continue;
             }
             // Add the job node to the DB if it isn't there already.
@@ -181,7 +181,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                     newJobNode.setSchedule(stroomFrequencySchedule.value());
                 }
 
-                LOGGER.info("Adding JobNode '%s' for node '%s'", newJobNode.getJob().getName(),
+                LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
                         newJobNode.getNode().getName());
                 save(newJobNode);
                 existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
@@ -210,7 +210,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                 newJobNode.setEnabled(false);
                 newJobNode.setJobType(JobType.DISTRIBUTED);
 
-                LOGGER.info("Adding JobNode '%s' for node '%s'", newJobNode.getJob().getName(),
+                LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
                         newJobNode.getNode().getName());
                 save(newJobNode);
                 existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
@@ -219,7 +219,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
         existingJobList.stream().filter(jobNode -> !validJobNames.contains(jobNode.getJob().getName()))
                 .forEach(jobNode -> {
-                    LOGGER.info("Removing old job node %s ", jobNode.getJob().getName());
+                    LOGGER.info("Removing old job node {} ", jobNode.getJob().getName());
                     delete(jobNode);
                 });
 
@@ -235,7 +235,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
         final Long deleteCount = entityManager.executeNativeUpdate(sql);
         if (deleteCount != null && deleteCount > 0) {
-            LOGGER.info("Removed %s orhan jobs", deleteCount);
+            LOGGER.info("Removed {} orhan jobs", deleteCount);
         }
 
     }
@@ -258,7 +258,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         if (existingJob != null && existingJob.size() > 0) {
             result = existingJob.getFirst();
         } else {
-            LOGGER.info("Adding Job     '%s'", job.getName());
+            LOGGER.info("Adding Job     '{}'", job.getName());
             result = jobService.save(job);
         }
 

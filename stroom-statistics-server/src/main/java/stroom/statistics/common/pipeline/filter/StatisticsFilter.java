@@ -150,7 +150,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
             if (statisticEventStore == null) {
                 statisticEventStore = getStatisticEventStore();
             }
-            LOGGER.debug("Flushing %s stats from the statisticfilter", statisticEventList.size());
+            LOGGER.debug("Flushing {} stats from the statisticfilter", statisticEventList.size());
             statisticEventStore.putEvents(statisticEventList, statisticsDataSource);
             statisticEventList.clear();
         }

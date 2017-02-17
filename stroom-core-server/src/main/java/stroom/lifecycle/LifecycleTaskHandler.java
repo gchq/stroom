@@ -31,9 +31,9 @@ public class LifecycleTaskHandler extends AbstractTaskHandler<LifecycleTask, Voi
     public VoidResult exec(final LifecycleTask task) {
         try {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
-            LOGGER.debug("exec() - >>> %s", task.getTaskName());
+            LOGGER.debug("exec() - >>> {}", task.getTaskName());
             task.getExecutable().exec(task);
-            LOGGER.debug("exec() - <<< %s took %s", task.getTaskName(), logExecutionTime);
+            LOGGER.debug("exec() - <<< {} took {}", task.getTaskName(), logExecutionTime);
         } catch (final Throwable t) {
             LOGGER.error(t.getMessage(), t);
         }

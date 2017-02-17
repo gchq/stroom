@@ -94,7 +94,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
             final String fileBasePath = data.getAbsolutePath().substring(0, data.getAbsolutePath().lastIndexOf(".zip"));
 
             final LogItemProgress logItemProgress = new LogItemProgress(0, list.size());
-            streamProgressMonitor.info("Stream %s", logItemProgress);
+            streamProgressMonitor.info("Stream {}", logItemProgress);
 
             for (final Stream stream : list) {
                 result.incrementRecordsWritten();
@@ -188,7 +188,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
                 while (dataInputStream.getNextEntry()) {
                     entryProgress++;
 
-                    streamProgressMonitor.info("Stream Input %s/%s", entryProgress, entryTotal);
+                    streamProgressMonitor.info("Stream Input {}/{}", entryProgress, entryTotal);
 
                     String basePartName = StroomFileNameUtil.getFilePathForId(id);
 

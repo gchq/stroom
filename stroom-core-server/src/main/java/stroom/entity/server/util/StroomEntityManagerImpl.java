@@ -155,7 +155,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
             rtn = Long.valueOf(query.executeUpdate());
             EntityServiceLogUtil.logUpdate(LOGGER, "executeNativeUpdate", logExecutionTime, rtn, sql);
         } catch (final RuntimeException e) {
-            LOGGER.debug("executeNativeUpdate - %s \"%s\"", sql, sql.toTraceString(), e);
+            LOGGER.debug("executeNativeUpdate - {} \"{}\"", new Object[]{ sql, sql.toTraceString()}, e);
             throw e;
         }
         return rtn;
@@ -197,7 +197,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
             }
             EntityServiceLogUtil.logUpdate(LOGGER, "executeQueryLongResult", logExecutionTime, rtn, sql);
         } catch (final RuntimeException e) {
-            LOGGER.debug("executeQueryLongResult - %s", sql, e);
+            LOGGER.debug("executeQueryLongResult - {}", sql, e);
             throw e;
         }
         return rtn;
@@ -319,7 +319,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
             EntityServiceLogUtil.logQuery(LOGGER, "executeQueryResultList", logExecutionTime, rtn, sql);
 
         } catch (final RuntimeException e) {
-            LOGGER.debug("executeQueryResultList() - %s", sql, e);
+            LOGGER.debug("executeQueryResultList() - {}", sql, e);
             throw e;
         }
         return rtn;
@@ -337,7 +337,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
             EntityServiceLogUtil.logQuery(LOGGER, "executeQueryResultList", logExecutionTime, rtn, sql);
 
         } catch (final RuntimeException e) {
-            LOGGER.debug("executeQueryResultList() - %s", sql, e);
+            LOGGER.debug("executeQueryResultList() - {}", sql, e);
             throw e;
         }
         return rtn;
@@ -355,7 +355,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
             EntityServiceLogUtil.logQuery(LOGGER, "executeNativeQueryResultList", logExecutionTime, rtn, sql);
 
         } catch (final RuntimeException e) {
-            LOGGER.debug("executeNativeQueryResultList() - %s", sql, e);
+            LOGGER.debug("executeNativeQueryResultList() - {}", sql, e);
             throw e;
         }
         return rtn;

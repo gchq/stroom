@@ -93,14 +93,14 @@ class FetchJobDataHandler extends AbstractTaskHandler<FetchJobDataAction, Result
             final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNode());
 
             if (response == null) {
-                LOGGER.debug("No response for: %s", jobNode);
+                LOGGER.debug("No response for: {}", jobNode);
             } else if (response.getError() != null) {
-                LOGGER.debug("Error response for: %s - %s", jobNode, response.getError().getMessage());
+                LOGGER.debug("Error response for: {} - {}", jobNode, response.getError().getMessage());
                 LOGGER.debug(response.getError().getMessage(), response.getError());
             } else {
                 final Map<JobNode, JobNodeInfo> map = response.getResult();
                 if (map == null) {
-                    LOGGER.warn("No data for: %s", jobNode);
+                    LOGGER.warn("No data for: {}", jobNode);
                 } else {
                     jobNodeInfo = map.get(jobNode);
                 }

@@ -81,7 +81,7 @@ public class TaskHandlerBeanRegistry implements ApplicationContextAware, Initial
                         + taskClass + "\"");
             }
 
-            LOGGER.debug("postProcessAfterInitialization() - registering %s for action %s", handlerName,
+            LOGGER.debug("postProcessAfterInitialization() - registering {} for action {}", handlerName,
                     taskClass.getSimpleName());
         }
     }

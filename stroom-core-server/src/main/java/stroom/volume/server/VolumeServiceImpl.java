@@ -551,9 +551,9 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         String pathStr = path.toAbsolutePath().toString();
         try {
             Files.createDirectories(path);
-            LOGGER.info(String.format("Creating volume in %s on node %s",
+            LOGGER.info("Creating volume in {} on node {}",
                     pathStr,
-                    node.getName()));
+                    node.getName());
             final Volume vol = optVolume.orElseGet(Volume::new);
             vol.setPath(pathStr);
             vol.setNode(node);
@@ -562,7 +562,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             getDefaultVolumeLimit(path).ifPresent(vol::setBytesLimit);
             save(vol);
         } catch (IOException e) {
-            LOGGER.error("Unable to create volume due to an error creating directory %s", pathStr, e);
+            LOGGER.error("Unable to create volume due to an error creating directory {}", pathStr, e);
         }
     }
 

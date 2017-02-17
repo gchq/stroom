@@ -144,7 +144,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
                     .getBaseNameGroupedList(AGGREGATION_DELIMITER);
 
             for (int i = 0; i < groupedFileLists.size(); i++) {
-                progressMonitor.info("Zip %s/%s", i, groupedFileLists.size());
+                progressMonitor.info("Zip {}/{}", i, groupedFileLists.size());
 
                 uploadData(stroomZipFile, streamUploadTask, headerMap, groupedFileLists.get(i));
 
@@ -198,7 +198,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
             final int maxCount = fileList.size();
             for (final String inputBase : fileList) {
                 count++;
-                zipPartTaskMonitor.info("%s/%s", count, maxCount);
+                zipPartTaskMonitor.info("{}/{}", count, maxCount);
                 streamContents(stroomZipFile, metaMap, rawNestedStreamTarget, inputBase, StroomZipFileType.Data,
                         streamProgressMonitor);
                 streamContents(stroomZipFile, metaMap, rawNestedStreamTarget, inputBase, StroomZipFileType.Meta,

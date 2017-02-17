@@ -63,7 +63,7 @@ public class StroomBeanMethodExecutable {
                 stroomBeanStore.invoke(stroomBeanMethod);
             }
         } catch (final Throwable t) {
-            LOGGER.error("Error calling %s", stroomBeanMethod, t);
+            LOGGER.error("Error calling {}", stroomBeanMethod, t);
         } finally {
             running.set(false);
         }

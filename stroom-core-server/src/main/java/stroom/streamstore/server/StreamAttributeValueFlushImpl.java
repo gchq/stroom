@@ -142,7 +142,7 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
             if (batchInsert.size() > 0) {
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-                LOGGER.debug("flush() - Processing batch of %s, queue size is %s", batchInsert.size(), queue.size());
+                LOGGER.debug("flush() - Processing batch of {}, queue size is {}", batchInsert.size(), queue.size());
 
                 int skipCount = 0;
 
@@ -206,7 +206,7 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
                             }
                         } else {
                             skipCount++;
-                            LOGGER.debug("flush() - Skipping flush of old stream attributes %s %s",
+                            LOGGER.debug("flush() - Skipping flush of old stream attributes {} {}",
                                     asyncFlush.getStream(), DateUtil.createNormalDateTimeString(applicableStreamAgeMs));
                         }
                     }
@@ -219,11 +219,11 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
                 }
 
                 if (logExecutionTime.getDuration() > 1000) {
-                    LOGGER.warn("flush() - Saved %s updates, skipped %s, queue size is %s, completed in %s",
-                            batchUpdate.size(), skipCount, queue.size(), logExecutionTime);
+                    LOGGER.warn("flush() - Saved {} updates, skipped {}, queue size is {}, completed in {}",
+                            new Object[] {batchUpdate.size(), skipCount, queue.size(), logExecutionTime});
                 } else {
-                    LOGGER.debug("flush() - Saved %s updates, skipped %s, queue size is %s, completed in %s",
-                            batchUpdate.size(), skipCount, queue.size(), logExecutionTime);
+                    LOGGER.debug("flush() - Saved {} updates, skipped {}, queue size is {}, completed in {}",
+                            new Object[] {batchUpdate.size(), skipCount, queue.size(), logExecutionTime});
                 }
             }
         }

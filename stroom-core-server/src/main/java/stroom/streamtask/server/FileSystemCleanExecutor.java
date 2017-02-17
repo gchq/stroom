@@ -129,7 +129,7 @@ public class FileSystemCleanExecutor {
         // Load the node.
         asyncTaskHelper = new AsyncTaskHelper<>(null, taskMonitor, taskManager, batchSize);
 
-        logInfo("Starting file system clean task. oldAge = %s", ModelStringUtil.formatDurationString(oldAge));
+        logInfo("Starting file system clean task. oldAge = {}", ModelStringUtil.formatDurationString(oldAge));
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -218,6 +218,6 @@ public class FileSystemCleanExecutor {
             printWriterMap.values().forEach(CloseableUtil::closeLogAndIngoreException);
         }
 
-        logInfo("start() - Completed file system clean task in %s", logExecutionTime);
+        logInfo("start() - Completed file system clean task in {}", logExecutionTime);
     }
 }

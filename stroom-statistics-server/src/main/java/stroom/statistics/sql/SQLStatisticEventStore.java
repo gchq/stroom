@@ -252,14 +252,14 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     }
 
     public void destroyAggregateMap(final SQLStatisticAggregateMap map) {
-        LOGGER.debug("destroyAggregateMap - Flushing map size=%s", map.size());
+        LOGGER.debug("destroyAggregateMap - Flushing map size={}", map.size());
         statisticCache.add(map);
     }
 
     @Override
     public boolean putEvents(final List<StatisticEvent> statisticEvents, final StatisticStore statisticStore) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("putEvents - count=%s", statisticEvents.size());
+            LOGGER.debug("putEvents - count={}", statisticEvents.size());
         }
 
         final Long optionalEventProcessingThresholdMs = getEventProcessingThresholdMs();
@@ -477,7 +477,7 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         final int maxResults = propertyService.getIntProperty(PROP_KEY_SQL_SEARCH_MAX_RESULTS, 100000);
         sqlQuery += " LIMIT " + maxResults;
 
-        LOGGER.debug("Search query: %s", sqlQuery);
+        LOGGER.debug("Search query: {}", sqlQuery);
 
         final PreparedStatement ps = connection.prepareStatement(sqlQuery);
         int position = 1;

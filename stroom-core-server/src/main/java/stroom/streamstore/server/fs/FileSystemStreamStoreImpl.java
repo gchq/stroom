@@ -360,7 +360,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
         final Stream stream = loadStreamById(streamId, SOURCE_FETCH_SET, anyStatus);
         if (stream != null) {
-            LOGGER.debug("openStreamSource() %s", stream.getId());
+            LOGGER.debug("openStreamSource() {}", stream.getId());
 
             final Set<StreamVolume> volumeSet = findStreamVolume(stream.getId());
             if (volumeSet.isEmpty()) {
@@ -627,7 +627,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             // Close the stream target.
             streamTarget.close();
         } catch (final Exception e) {
-            LOGGER.error("closeStreamTarget() - Error on closing stream %s", streamTarget, e);
+            LOGGER.error("closeStreamTarget() - Error on closing stream {}", streamTarget, e);
             streamCloseException = e;
         }
 
@@ -664,7 +664,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
             }
         } catch (final Exception e) {
-            LOGGER.error("closeStreamTarget() - Error on writing Manifest %s", streamTarget, e);
+            LOGGER.error("closeStreamTarget() - Error on writing Manifest {}", streamTarget, e);
         }
 
         if (streamCloseException == null) {

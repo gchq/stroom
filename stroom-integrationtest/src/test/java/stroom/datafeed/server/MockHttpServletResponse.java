@@ -37,33 +37,8 @@ public class MockHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
-    public int getStatus() {
-        return 0;
-    }
-
-    @Override
     public void setStatus(final int arg0) {
         resposeCode = arg0;
-    }
-
-    @Override
-    public String getHeader(final String s) {
-        return null;
-    }
-
-    @Override
-    public Collection<String> getHeaders(final String s) {
-        return null;
-    }
-
-    @Override
-    public Collection<String> getHeaderNames() {
-        return null;
-    }
-
-    @Override
-    public void setContentLengthLong(final long l) {
-
     }
 
     @Override

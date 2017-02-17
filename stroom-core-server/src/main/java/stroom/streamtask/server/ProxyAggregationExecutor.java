@@ -140,7 +140,7 @@ public class ProxyAggregationExecutor {
 
         boolean complete = false;
         while (!complete && !taskMonitor.isTerminated()) {
-            taskMonitor.info("Aggregate started %s, maxAggregation %s, maxAggregationScan %s, maxStreamSize %s",
+            taskMonitor.info("Aggregate started {}, maxAggregation {}, maxAggregationScan {}, maxStreamSize {}",
                     DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
                     ModelStringUtil.formatCsv(stroomZipRepositoryProcessor.getMaxAggregation()),
                     ModelStringUtil.formatCsv(stroomZipRepositoryProcessor.getMaxFileScan()),
@@ -150,7 +150,7 @@ public class ProxyAggregationExecutor {
             complete = stroomZipRepositoryProcessor.process(stroomZipRepository);
         }
 
-        LOGGER.info("exec() - completed in %s", logExecutionTime);
+        LOGGER.info("exec() - completed in {}", logExecutionTime);
     }
 
     private List<StreamTargetStroomStreamHandler> openStreamHandlers(final Feed feed) {
@@ -201,7 +201,7 @@ public class ProxyAggregationExecutor {
                 final Feed feed = feedService.loadByName(feedName);
 
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                LOGGER.info("processFeedFiles() - Started %s (%s Files)", feedName, fileList.size());
+                LOGGER.info("processFeedFiles() - Started {} ({} Files)", feedName, fileList.size());
 
                 if (feed == null) {
                     LOGGER.error("processFeedFiles() - " + feedName + " Failed to find feed");
@@ -235,9 +235,14 @@ public class ProxyAggregationExecutor {
                     try {
                         if (sequence > maxAggregation
                                 || (nextBatchBreak != null && streamProgressMonitor.getTotalBytes() > nextBatchBreak)) {
-                            LOGGER.info("processFeedFiles() - Breaking Batch %s as limit is (%s > %s) or (%s > %s)",
-                                    feedName, sequence, maxAggregation, streamProgressMonitor.getTotalBytes(),
-                                    nextBatchBreak);
+                            LOGGER.info("processFeedFiles() - Breaking Batch {} as limit is ({} > {}) or ({} > {})",
+                                    new Object[]{
+                                            feedName,
+                                            sequence,
+                                            maxAggregation,
+                                            streamProgressMonitor.getTotalBytes(),
+                                            nextBatchBreak
+                            });
 
                             // Recalculate the next batch break
                             if (nextBatchBreak != null) {
@@ -263,7 +268,7 @@ public class ProxyAggregationExecutor {
                 }
                 closeStreamHandlers(handlers);
                 deleteFiles(stroomZipRepository, deleteFileList);
-                LOGGER.info("processFeedFiles() - Completed %s in %s", feedName, logExecutionTime);
+                LOGGER.info("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime);
             }
 
             @Override

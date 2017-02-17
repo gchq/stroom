@@ -85,14 +85,14 @@ class FetchCacheNodeRowHandler extends AbstractTaskHandler<FetchCacheNodeRowActi
             final ClusterCallEntry<ResultList<CacheInfo>> response = collector.getResponse(node);
 
             if (response == null) {
-                LOGGER.debug("No response from node: %s", node);
+                LOGGER.debug("No response from node: {}", node);
             } else if (response.getError() != null) {
-                LOGGER.debug("Error from node: %s - %s", node, response.getError().getMessage());
+                LOGGER.debug("Error from node: {} - {}", node, response.getError().getMessage());
                 LOGGER.debug(response.getError().getMessage(), response.getError());
             } else {
                 final ResultList<CacheInfo> result = response.getResult();
                 if (result == null) {
-                    LOGGER.debug("No response object received from node: %s", node);
+                    LOGGER.debug("No response object received from node: {}", node);
                 } else {
                     for (final CacheInfo value : result) {
                         values.add(new CacheNodeRow(node, value));

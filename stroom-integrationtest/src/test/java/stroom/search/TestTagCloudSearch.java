@@ -19,6 +19,8 @@ package stroom.search;
 import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonIndexingTest;
 import stroom.entity.shared.DocRefUtil;
@@ -51,7 +53,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestTagCloudSearch.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestTagCloudSearch.class);
     private static boolean doneSetup;
     @Resource
     private CommonIndexingTest commonIndexingTest;

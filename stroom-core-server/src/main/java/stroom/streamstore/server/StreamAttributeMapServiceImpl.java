@@ -245,7 +245,7 @@ public class StreamAttributeMapServiceImpl
                 try {
                     headerMap.read(new FileInputStream(manifest), true);
                 } catch (final IOException ioException) {
-                    LOGGER.error("loadAttributeMapFromFileSystem() %s", manifest, ioException);
+                    LOGGER.error("loadAttributeMapFromFileSystem() {}", manifest, ioException);
                 }
 
                 for (final String name : headerMap.keySet()) {

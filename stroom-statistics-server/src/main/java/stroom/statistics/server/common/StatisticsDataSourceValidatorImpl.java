@@ -33,17 +33,17 @@ public class StatisticsDataSourceValidatorImpl implements StatisticStoreValidato
             final StatisticType statisticType, final StatisticStoreEntity statisticsDataSource) {
         if (statisticsDataSource == null) {
             LOGGER.warn(
-                    "No StatisticDataSource could be found with name %s and engine %s, so no statistics will be recorded for it.",
+                    "No StatisticDataSource could be found with name {} and engine {}, so no statistics will be recorded for it.",
                     statisticName, engineName);
             return false;
         } else if (!statisticsDataSource.getStatisticType().equals(statisticType)) {
             LOGGER.error(
-                    "The type of the event [%s] is not valid for the StatisticDataSource with name %s, engine %s and type %s.",
+                    "The type of the event [{}] is not valid for the StatisticDataSource with name {}, engine {} and type {}.",
                     statisticType, statisticName, engineName, statisticsDataSource.getStatisticType().toString());
             return false;
         } else if (!statisticsDataSource.isEnabled()) {
             LOGGER.warn(
-                    "The StatisticDataSource with name %s, engine %s and type %s is not enabled, so no statistics will be recorded for it.",
+                    "The StatisticDataSource with name {}, engine {} and type {} is not enabled, so no statistics will be recorded for it.",
                     statisticName, engineName, statisticsDataSource.getStatisticType().toString());
             return false;
         }

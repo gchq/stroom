@@ -66,7 +66,7 @@ public class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSyste
 
     @Override
     public VoidResult exec(final FileSystemCleanSubTask task) {
-        taskMonitor.info("Cleaning: %s - %s", task.getVolume().getPath(), task.getPath());
+        taskMonitor.info("Cleaning: {} - {}", task.getVolume().getPath(), task.getPath());
 
         if (taskMonitor.isTerminated() || task.getParentTask().isTerminated()) {
             LOGGER.info("exec() - Been asked to Quit");

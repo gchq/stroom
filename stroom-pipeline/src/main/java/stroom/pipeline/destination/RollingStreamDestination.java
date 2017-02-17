@@ -202,14 +202,14 @@ public class RollingStreamDestination extends RollingDestination {
 
     private void flush() throws IOException {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Flushing: %s", key);
+            LOGGER.debug("Flushing: {}", key);
         }
         outputStream.flush();
     }
 
     private void close() throws IOException {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Closing: %s", key);
+            LOGGER.debug("Closing: {}", key);
         }
         outputStream.close();
     }

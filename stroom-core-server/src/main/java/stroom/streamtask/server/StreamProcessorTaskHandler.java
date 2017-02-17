@@ -72,7 +72,7 @@ public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProces
         boolean complete = false;
         final long startTime = System.currentTimeMillis();
         StreamTask streamTask = task.getStreamTask();
-        LOGGER.trace("Executing stream task: %s", streamTask.getId());
+        LOGGER.trace("Executing stream task: {}", streamTask.getId());
 
         StreamSource streamSource = null;
         try {
@@ -100,11 +100,11 @@ public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProces
                 }
 
                 if (destStreamProcessor.getPipeline() != null) {
-                    taskMonitor.info("Stream %s %s %s %s", stream.getId(),
+                    taskMonitor.info("Stream {} {} {} {}", stream.getId(),
                             DateUtil.createNormalDateTimeString(stream.getCreateMs()),
                             destStreamProcessor.getTaskType(), destStreamProcessor.getPipeline().getName());
                 } else {
-                    taskMonitor.info("Stream %s %s %s", stream.getId(),
+                    taskMonitor.info("Stream {} {} {}", stream.getId(),
                             DateUtil.createNormalDateTimeString(stream.getCreateMs()),
                             destStreamProcessor.getTaskType());
                 }
@@ -112,7 +112,7 @@ public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProces
                 // Don't process any streams that we have already created
                 if (sourceStreamProcessor != null && sourceStreamProcessor.equals(destStreamProcessor)) {
                     complete = true;
-                    LOGGER.warn("Skipping stream that we seem to have created (avoid processing forever) %s %s", stream,
+                    LOGGER.warn("Skipping stream that we seem to have created (avoid processing forever) {} {}", stream,
                             sourceStreamProcessor);
 
                 } else {
@@ -139,7 +139,7 @@ public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProces
                             complete = true;
                         }
                     } catch (final Exception ex) {
-                        LOGGER.error("Task failed %s %s", destStreamProcessor, stream, ex);
+                        LOGGER.error("Task failed {} {}", new Object[] {destStreamProcessor, stream}, ex);
                     }
                 }
             }

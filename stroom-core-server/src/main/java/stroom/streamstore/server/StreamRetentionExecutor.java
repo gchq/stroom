@@ -79,33 +79,37 @@ public class StreamRetentionExecutor {
                         processFeed(feed);
                     }
                 }
-                LOGGER.info("Stream Retention Executor - finished in %s", logExecutionTime);
+                LOGGER.info("Stream Retention Executor - finished in {}", logExecutionTime);
             } catch (final Throwable t) {
                 LOGGER.error(t.getMessage(), t);
             } finally {
                 clusterLockService.releaseLock(LOCK_NAME);
             }
         } else {
-            LOGGER.info("Stream Retention Executor - Skipped as did not get lock in %s", logExecutionTime);
+            LOGGER.info("Stream Retention Executor - Skipped as did not get lock in {}", logExecutionTime);
         }
     }
 
     private void processFeed(final Feed feed) {
         if (feed.getRetentionDayAge() == null) {
-            LOGGER.info("processFeed() - %s Skipping as no retention set", feed.getName());
+            LOGGER.info("processFeed() - {} Skipping as no retention set", feed.getName());
             return;
         }
         try {
             final Period createPeriod = PeriodUtil.createToDateWithOffset(System.currentTimeMillis(),
                     -1 * feed.getRetentionDayAge());
 
-            LOGGER.info("processFeed() - %s deleting range %s .. %s", feed.getName(),
+            LOGGER.info("processFeed() - {} deleting range {} .. {}", new Object[]{
+                    feed.getName(),
                     DateUtil.createNormalDateTimeString(createPeriod.getFrom()),
-                    DateUtil.createNormalDateTimeString(createPeriod.getTo()));
+                    DateUtil.createNormalDateTimeString(createPeriod.getTo())
+            });
 
-            taskMonitor.info("%s deleting range %s .. %s", feed.getName(),
+            taskMonitor.info("{} deleting range {} .. {}", new Object[]{
+                    feed.getName(),
                     DateUtil.createNormalDateTimeString(createPeriod.getFrom()),
-                    DateUtil.createNormalDateTimeString(createPeriod.getTo()));
+                    DateUtil.createNormalDateTimeString(createPeriod.getTo())
+            });
 
             // Delete anything received older than -1 * retention age
             final FindStreamCriteria criteria = new FindStreamCriteria();
@@ -129,9 +133,9 @@ public class StreamRetentionExecutor {
                 }
             } while (deleted >= DELETE_STREAM_BATCH_SIZE);
 
-            LOGGER.info("processFeed() - %s Deleted %s", feed.getName(), total);
+            LOGGER.info("processFeed() - {} Deleted {}", feed.getName(), total);
         } catch (final Exception ex) {
-            LOGGER.error("processFeed() - %s Error", feed.getName(), ex);
+            LOGGER.error("processFeed() - {} Error", feed.getName(), ex);
         }
     }
 }

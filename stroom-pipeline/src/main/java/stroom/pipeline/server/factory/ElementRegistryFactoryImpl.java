@@ -92,7 +92,7 @@ public class ElementRegistryFactoryImpl implements ElementRegistryFactory, Eleme
         try {
             return beanStore.getBean(elementClass);
         } catch (final RuntimeException rex) {
-            LOGGER.error("Failed to load %s", elementClass, rex);
+            LOGGER.error("Failed to load {}", elementClass, rex);
             throw rex;
         }
     }

@@ -41,7 +41,7 @@ public class EntityServiceExceptionUtil {
      */
     public static EntityServiceException create(final Throwable ex) throws EntityServiceException {
         if (ex instanceof EntityServiceException) {
-            LOGGER.trace("create() - %s", ex.getMessage());
+            LOGGER.trace("create() - {}", ex.getMessage());
 
             return (EntityServiceException) ex;
         } else {
@@ -176,7 +176,7 @@ public class EntityServiceExceptionUtil {
             }
         }
 
-        LOGGER.warn("unwrap() - wrapping exception %s %s (increase log level to debug to see stack trace)",
+        LOGGER.warn("unwrap() - wrapping exception {} {} (increase log level to debug to see stack trace)",
                 rootEx.getMessage(), thEx.getMessage());
         LOGGER.debug("unwrap() - wrapping exception ", rootEx);
 

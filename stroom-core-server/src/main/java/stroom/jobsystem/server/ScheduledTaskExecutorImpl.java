@@ -170,7 +170,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                 }
 
                 if (enabled && scheduler != null && scheduler.execute()) {
-                    LOGGER.trace("Returning runnable for method: %s - %s - %s", stroomBeanMethod, enabled, scheduler);
+                    LOGGER.trace("Returning runnable for method: {} - {} - {}", new Object[] {stroomBeanMethod, enabled, scheduler});
                     if (jobNodeTracker != null) {
                         executable = new JobNodeTrackedExecutable(stroomBeanMethod, stroomBeanStore, "Executing", running,
                                 jobNodeTracker);
@@ -178,14 +178,14 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                         executable = new StroomBeanMethodExecutable(stroomBeanMethod, stroomBeanStore, "Executing", running);
                     }
                 } else {
-                    LOGGER.trace("Not returning runnable for method: %s - %s - %s", stroomBeanMethod, enabled, scheduler);
+                    LOGGER.trace("Not returning runnable for method: {} - {} - {}", new Object[]{stroomBeanMethod, enabled, scheduler});
                     running.set(false);
                 }
             } catch (final Throwable t) {
                 LOGGER.error(t.getMessage());
             }
         } else {
-            LOGGER.trace("Skipping as method still running: %s", stroomBeanMethod);
+            LOGGER.trace("Skipping as method still running: {}", stroomBeanMethod);
         }
 
         return executable;

@@ -19,7 +19,6 @@ package stroom.entity.server.util;
 import org.slf4j.Logger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import org.apache.log4j.Level;
 
 import java.util.Collection;
 

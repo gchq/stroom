@@ -26,6 +26,8 @@ import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.feed.shared.Feed;
@@ -48,7 +50,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     private static final int NEG_SIXTY = -60;
     private static final int NEG_FOUR = -4;
 
-    private static StroomLogger LOGGER = StroomLogger.getLogger(TestFileSystemCleanTask.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(TestFileSystemCleanTask.class);
 
     @Resource
     private StreamStore streamStore;

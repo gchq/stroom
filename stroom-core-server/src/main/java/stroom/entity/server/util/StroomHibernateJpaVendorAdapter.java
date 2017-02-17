@@ -70,7 +70,7 @@ public class StroomHibernateJpaVendorAdapter extends HibernateJpaVendorAdapter {
                     }
                 }
 
-                LOGGER.warn("beginTransaction() - \n%s", trace);
+                LOGGER.warn("beginTransaction() - \n{}", trace);
 
             }
 

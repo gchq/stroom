@@ -130,7 +130,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     user.setTotalLoginFailures(user.getTotalLoginFailures() + 1);
 
                     if (user.getCurrentLoginFailures() > 3) {
-                        LOGGER.error("login() - Locking account %s", user.getName());
+                        LOGGER.error("login() - Locking account {}", user.getName());
                         user.updateStatus(UserStatus.LOCKED);
                     }
 
@@ -139,7 +139,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             }
         }
 
-        LOGGER.warn("login() - Bad Credentials %s", userName);
+        LOGGER.warn("login() - Bad Credentials {}", userName);
 
         try {
             throw e;

@@ -82,7 +82,7 @@ public class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
             if (nextDeleteMs.get() == 0) {
                 LOGGER.debug("deleteSchedule() - no schedule set .... maybe we aren't in charge of creating tasks");
             } else {
-                LOGGER.debug("deleteSchedule() - nextDeleteMs=%s",
+                LOGGER.debug("deleteSchedule() - nextDeleteMs={}",
                         DateUtil.createNormalDateTimeString(nextDeleteMs.get()));
                 // Have we gone past our next delete schedule?
                 if (nextDeleteMs.get() < System.currentTimeMillis()) {
@@ -150,7 +150,7 @@ public class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
                     // The database constraint will not allow filters to be
                     // deleted that still have associated tasks.
                     try {
-                        LOGGER.debug("deleteCompleteOrFailedTasks() - Removing old complete filter %s", filter);
+                        LOGGER.debug("deleteCompleteOrFailedTasks() - Removing old complete filter {}", filter);
                         streamProcessorFilterService.delete(filter);
 
                     } catch (final Throwable t) {

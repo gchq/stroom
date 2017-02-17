@@ -372,7 +372,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
         try {
             if (!IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
-                LOGGER.warn("deleteFromDisk() - Can only be called on delete records %s", indexShard);
+                LOGGER.warn("deleteFromDisk() - Can only be called on delete records {}", indexShard);
             } else {
                 // Make sure the shard is closed before it is deleted. If it
                 // isn't then delete will fail as there
@@ -503,7 +503,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     indexShard.setStatus(IndexShardStatus.DELETED);
                 }
             } catch (final EntityNotFoundException e) {
-                LOGGER.debug("Index shard has been deleted %s", indexShard);
+                LOGGER.debug("Index shard has been deleted {}", indexShard);
                 indexShard.setStatus(IndexShardStatus.DELETED);
             } catch (final Throwable t) {
                 LOGGER.error(t.getMessage(), t);
@@ -694,7 +694,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 indexShard = is;
             }
         } catch (final EntityNotFoundException e) {
-            LOGGER.debug("Index shard has been deleted %s", indexShard);
+            LOGGER.debug("Index shard has been deleted {}", indexShard);
             indexShard.setStatus(IndexShardStatus.DELETED);
         } catch (final Throwable t) {
             LOGGER.error(t.getMessage(), t);
@@ -708,12 +708,12 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             indexShard = service.save(indexShard);
             success = true;
         } catch (final EntityNotFoundException e) {
-            LOGGER.debug("Index shard has been deleted %s", indexShard);
+            LOGGER.debug("Index shard has been deleted {}", indexShard);
             indexShard.setStatus(IndexShardStatus.DELETED);
             success = true;
         } catch (final Throwable t) {
             LOGGER.debug(t.getMessage(), t);
-            LOGGER.debug("Reloading index shard due to save error %s", indexShard);
+            LOGGER.debug("Reloading index shard due to save error {}", indexShard);
             reload();
         }
 
@@ -841,7 +841,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             try {
                 close();
             } catch (final Exception ex) {
-                LOGGER.error("destroy() - Error closing writer %s", this);
+                LOGGER.error("destroy() - Error closing writer {}", this);
             }
         }
     }

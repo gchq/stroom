@@ -106,13 +106,13 @@ public class UpgradeDispatcherSingleton {
             public void run() {
                 try {
 //                    if (upgradeHandler != null) {
-//                        LOGGER.info("init() - Running upgrade %s", upgradeHandler.getClass());
+//                        LOGGER.info("init() - Running upgrade {}", upgradeHandler.getClass());
 //                        if (!upgradeHandler.doUpgrade()) {
-//                            LOGGER.warn("init() - Upgrade failed %s", upgradeHandler.getClass());
+//                            LOGGER.warn("init() - Upgrade failed {}", upgradeHandler.getClass());
 //                            // Don't start the context
 //                            return;
 //                        } else {
-//                            LOGGER.info("init() - Upgrade passed %s", upgradeHandler.getClass());
+//                            LOGGER.info("init() - Upgrade passed {}", upgradeHandler.getClass());
 //                        }
 //                    }
                     // Don't start the context if we have been asked to shut
@@ -135,7 +135,7 @@ public class UpgradeDispatcherSingleton {
 
                     // Then kick off the life cycle
                     for (final String beanName : context.getBeanNamesForType(ContextAwareService.class)) {
-                        LOGGER.info("init() - Starting ContextAwareService %s", beanName);
+                        LOGGER.info("init() - Starting ContextAwareService {}", beanName);
                         ((ContextAwareService) context.getBean(beanName)).init();
                     }
 
@@ -171,7 +171,7 @@ public class UpgradeDispatcherSingleton {
             final WebApplicationContext context = getServlet().getWebApplicationContext();
 
             for (final String beanName : context.getBeanNamesForType(ContextAwareService.class)) {
-                LOGGER.info("destroy() - Stopping ContextAwareService %s", beanName);
+                LOGGER.info("destroy() - Stopping ContextAwareService {}", beanName);
                 ((ContextAwareService) context.getBean(beanName)).destroy();
             }
 

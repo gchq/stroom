@@ -102,7 +102,7 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
         }
 
         if (o == null) {
-            LOGGER.error("getBean() - %s returned null !!", name);
+            LOGGER.error("getBean() - {} returned null !!", name);
         }
 
         return o;
@@ -169,7 +169,7 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
         }
 
         if (bean == null) {
-            LOGGER.error("getBean() - %s returned null !!", stroomBeanClass);
+            LOGGER.error("getBean() - {} returned null !!", stroomBeanClass);
         }
 
         return bean;
@@ -201,7 +201,7 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
                 }
 
                 if (beanClass.getName().contains("$")) {
-                    LOGGER.error("init() - UNABLE TO RESOVE BEAN CLASS ?? MAYBE SPRING IS NOLONGER USING CGLIB .... %s",
+                    LOGGER.error("init() - UNABLE TO RESOVE BEAN CLASS ?? MAYBE SPRING IS NOLONGER USING CGLIB .... {}",
                             beanClass.getName());
                 }
 
@@ -218,7 +218,7 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
             }
             Collections.sort(beanMethodList);
             for (final String string : beanMethodList) {
-                LOGGER.debug("init() - %s", string);
+                LOGGER.debug("init() - {}", string);
             }
         }
         initialised = true;

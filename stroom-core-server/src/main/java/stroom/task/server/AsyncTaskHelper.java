@@ -37,8 +37,8 @@ public class AsyncTaskHelper<R> {
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncTaskHelper.class);
-    private static final String STATUS = "Executing task %s\n%s";
-    private static final String FINISHED = "Finished task %s\n%s";
+    private static final String STATUS = "Executing task {}\n{}";
+    private static final String FINISHED = "Finished task {}\n{}";
 
     private final TaskMonitor taskMonitor;
     private final TaskManager taskManager;

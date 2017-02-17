@@ -326,7 +326,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
             Assert.assertEquals(expectedCountTotalByPrecision * 13,
                     getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION));
 
-            LOGGER.info("Test ran in %s", time);
+            LOGGER.info("Test ran in {}", time);
         }
     }
 
@@ -489,7 +489,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
             Assert.assertEquals(expectedCountTotalByPrecision * 7,
                     getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION));
 
-            LOGGER.info("Test ran in %s", time);
+            LOGGER.info("Test ran in {}", time);
         }
     }
 

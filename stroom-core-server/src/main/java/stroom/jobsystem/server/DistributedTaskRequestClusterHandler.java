@@ -76,7 +76,7 @@ public class DistributedTaskRequestClusterHandler
                     // Try and get the next task for this job.
                     if (requiredTaskCount > 0) {
                         final String jobName = jobNode.getJob().getName();
-                        LOGGER.trace("Getting tasks for %s", jobName);
+                        LOGGER.trace("Getting tasks for {}", jobName);
                         final DistributedTaskFactory<DistributedTask<?>, ?> factory = getDistributedTaskFactory(
                                 jobName);
                         final List<DistributedTask<?>> fetched = factory.fetch(node, requiredTaskCount);

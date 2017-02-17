@@ -82,7 +82,7 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
             }
 
         } catch (final Exception ex) {
-            LOGGER.error("handle() - %s", request.getRequestURI(), ex);
+            LOGGER.error("handle() - {}", request.getRequestURI(), ex);
             throw ex;
         } finally {
             // Make sure this thread no longer references this request as it

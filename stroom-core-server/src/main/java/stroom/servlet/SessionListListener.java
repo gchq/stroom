@@ -83,7 +83,7 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
     public void sessionCreated(final HttpSessionEvent event) {
         final HttpSession httpSession = event.getSession();
         synchronized (httpSession) {
-            getLogger().info("sessionCreated() - %s", httpSession.getId());
+            getLogger().info("sessionCreated() - {}", httpSession.getId());
             sessionMap.put(httpSession.getId(), httpSession);
         }
     }
@@ -92,7 +92,7 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
     public void sessionDestroyed(final HttpSessionEvent event) {
         final HttpSession httpSession = event.getSession();
         synchronized (httpSession) {
-            getLogger().info("sessionDestroyed() - %s", httpSession.getId());
+            getLogger().info("sessionDestroyed() - {}", httpSession.getId());
             sessionMap.remove(httpSession.getId());
             lastRequestUserAgent.remove(httpSession.getId());
         }

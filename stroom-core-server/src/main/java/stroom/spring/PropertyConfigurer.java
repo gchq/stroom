@@ -41,7 +41,7 @@ public class PropertyConfigurer implements PropertyProvider {
     private StroomBeanStore beanStore;
 
     public PropertyConfigurer() {
-        LOGGER.debug("Initialising: %s", this.getClass().getCanonicalName());
+        LOGGER.debug("Initialising: {}", this.getClass().getCanonicalName());
         GlobalProperties.getInstance();
     }
 

@@ -156,7 +156,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
                 // Output some debug to list the tasks that are executing
                 // and queued.
-                LOGGER.info("shutdown() - Waiting for %s tasks to complete. %s", currentCount, builder);
+                LOGGER.info("shutdown() - Waiting for {} tasks to complete. {}", currentCount, builder);
 
                 // Wait 1 second.
                 ThreadUtil.sleep(1000);
@@ -280,7 +280,11 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                 @Override
                 protected void exec() {
                     try {
-                        LOGGER.debug("execAsync()->exec() - %s %s took %s", task.getClass().getSimpleName(), task.getTaskName(), logExecutionTime);
+                        LOGGER.debug("execAsync()->exec() - {} {} took {}", new Object[]{
+                                task.getClass().getSimpleName(),
+                                task.getTaskName(),
+                                logExecutionTime.toString()
+                        });
 
                         taskThread.setThread(Thread.currentThread());
 
@@ -381,9 +385,9 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                 // Get the task handler that will deal with this task.
                 final TaskHandler<Task<R>, R> taskHandler = taskHandlerBeanRegistry.findHandler(task);
 
-                LOGGER.debug("doExec() - exec >> '%s' %s", task.getClass().getName(), task);
+                LOGGER.debug("doExec() - exec >> '{}' {}", task.getClass().getName(), task);
                 taskHandler.exec(task, callback);
-                LOGGER.debug("doExec() - exec << '%s' %s", task.getClass().getName(), task);
+                LOGGER.debug("doExec() - exec << '{}' {}", task.getClass().getName(), task);
 
             } finally {
                 securityContext.popUser();
@@ -431,7 +435,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                               final List<TaskThread<?>> itemsToKill) {
         for (final TaskThread<?> taskThread : itemsToKill) {
             final Task<?> task = taskThread.getTask();
-            LOGGER.info("doTerminated() 1 - %s", taskThread.getTask());
+            LOGGER.info("doTerminated() 1 - {}", taskThread.getTask());
             // First try and terminate the task.
             if (!task.isTerminated()) {
                 taskThread.terminate();

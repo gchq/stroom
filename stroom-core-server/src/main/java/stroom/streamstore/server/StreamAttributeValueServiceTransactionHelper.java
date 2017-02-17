@@ -87,6 +87,6 @@ public class StreamAttributeValueServiceTransactionHelper {
                 ConnectionUtil.close(connection);
             }
         }
-        LOGGER.debug("saveBatch() - inserted %s records in %s", list.size(), logExecutionTime);
+        LOGGER.debug("saveBatch() - inserted {} records in {}", list.size(), logExecutionTime);
     }
 }

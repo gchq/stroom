@@ -61,7 +61,7 @@ public class ClusterLockServiceTransactionHelper {
                 try {
                     save(clusterLock);
                 } catch (final Exception e) {
-                    LOGGER.warn("checkLockCreated() - %s %s", name, e.getMessage());
+                    LOGGER.warn("checkLockCreated() - {} {}", name, e.getMessage());
                 }
             }
             registeredLockSet.add(name);

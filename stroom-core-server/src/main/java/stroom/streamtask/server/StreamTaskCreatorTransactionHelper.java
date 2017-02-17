@@ -137,7 +137,7 @@ public class StreamTaskCreatorTransactionHelper {
         final long results = stroomEntityManager.executeNativeUpdate(sql);
 
         LOGGER.info(
-                "doStartup() - Set %s Tasks back to UNPROCESSED (Reprocess), NULL that were UNPROCESSED, ASSIGNED, PROCESSING for node %s",
+                "doStartup() - Set {} Tasks back to UNPROCESSED (Reprocess), NULL that were UNPROCESSED, ASSIGNED, PROCESSING for node {}",
                 results, nodeCache.getDefaultNode().getName());
     }
 
@@ -314,8 +314,8 @@ public class StreamTaskCreatorTransactionHelper {
 
             // Anything created?
             if (totalTasksCreated > 0) {
-                LOGGER.debug("processStreamProcessorFilter() - Created %s tasks (%s avaliable) in the range %s",
-                        totalTasksCreated, availableTasksCreated, streamIdRange);
+                LOGGER.debug("processStreamProcessorFilter() - Created {} tasks ({} avaliable) in the range {}",
+                        new Object[] {totalTasksCreated, availableTasksCreated, streamIdRange});
 
                 // If we have never created tasks before or the last poll gave
                 // us no tasks then start to report a new creation range.
@@ -375,7 +375,7 @@ public class StreamTaskCreatorTransactionHelper {
             // any possibility of getting more tasks in future?
             if (tracker.getMaxStreamCreateMs() != null && tracker.getStreamCreateMs() != null
                     && tracker.getStreamCreateMs().longValue() > tracker.getMaxStreamCreateMs()) {
-                LOGGER.info("processStreamProcessorFilter() - Finished task creation for bounded filter %s", filter);
+                LOGGER.info("processStreamProcessorFilter() - Finished task creation for bounded filter {}", filter);
                 tracker.setStatus(StreamProcessorFilterTracker.COMPLETE);
             }
 

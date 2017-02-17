@@ -90,7 +90,7 @@ public class LifecycleServiceImpl implements ContextAwareService {
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
                 LOGGER.info("init() - Starting up in background");
                 startup();
-                LOGGER.info("init() - Started in %s", logExecutionTime);
+                LOGGER.info("init() - Started in {}", logExecutionTime);
             }).start();
         }
     }

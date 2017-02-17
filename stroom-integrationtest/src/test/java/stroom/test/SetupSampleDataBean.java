@@ -159,7 +159,7 @@ public final class SetupSampleDataBean {
                 .find(FindStatisticsEntityCriteria.instance());
 
         for (final StatisticStoreEntity statisticsDataSource : statisticsDataSources) {
-            LOGGER.info(String.format("Retreiving statisticsDataSource with name: %s, engine: %s and type: %s",
+            LOGGER.info(String.format("Retreiving statisticsDataSource with name: {}, engine: {} and type: {}",
                     statisticsDataSource.getName(), statisticsDataSource.getEngineName(),
                     statisticsDataSource.getStatisticType()));
         }
@@ -275,7 +275,7 @@ public final class SetupSampleDataBean {
             LOGGER.info("StatisticDataSource count = " + commonTestControl.countEntity(StatisticStore.class));
 
         } else {
-            LOGGER.info(String.format("Directory %s doesn't exist so skipping", configDir));
+            LOGGER.info(String.format("Directory {} doesn't exist so skipping", configDir));
         }
 
         if (dataDir.exists()) {
@@ -307,7 +307,7 @@ public final class SetupSampleDataBean {
                 startTime += tenMinMs;
             }
         } else {
-            LOGGER.info(String.format("Directory %s doesn't exist so skipping", dataDir));
+            LOGGER.info(String.format("Directory {} doesn't exist so skipping", dataDir));
         }
 
         // streamTaskCreator.doCreateTasks();
@@ -334,7 +334,7 @@ public final class SetupSampleDataBean {
             dataLoader.loadInputStream(countFeed, "Auto generated statistics count data",
                     StreamUtil.stringToStream(GenerateSampleStatisticsData.generateCountData()), false, startTime);
         } catch (final RuntimeException e1) {
-            LOGGER.warn(String.format("Feed %s does not exist so cannot load the sample count statistics data.",
+            LOGGER.warn(String.format("Feed {} does not exist so cannot load the sample count statistics data.",
                     STATS_COUNT_FEED_NAME));
         }
 
@@ -345,7 +345,7 @@ public final class SetupSampleDataBean {
             dataLoader.loadInputStream(valueFeed, "Auto generated statistics value data",
                     StreamUtil.stringToStream(GenerateSampleStatisticsData.generateValueData()), false, startTime);
         } catch (final RuntimeException e) {
-            LOGGER.warn(String.format("Feed %s does not exist so cannot load the sample value statistics data.",
+            LOGGER.warn(String.format("Feed {} does not exist so cannot load the sample value statistics data.",
                     STATS_VALUE_FEED_NAME));
         }
 
@@ -360,7 +360,7 @@ public final class SetupSampleDataBean {
                     false,
                     startTime);
         } catch (final RuntimeException | IOException e) {
-            LOGGER.warn(String.format("Feed %s does not exist so cannot load the sample count for export to API statistics data.",
+            LOGGER.warn(String.format("Feed {} does not exist so cannot load the sample count for export to API statistics data.",
                     STATS_COUNT_API_FEED_NAME));
         }
 

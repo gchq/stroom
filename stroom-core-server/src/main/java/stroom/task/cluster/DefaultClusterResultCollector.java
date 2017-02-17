@@ -174,7 +174,7 @@ public class DefaultClusterResultCollector<R extends SharedObject> implements Cl
             lock.unlock();
         }
 
-        LOGGER.debug("waitToComplete() - Finished complete is %s", isComplete());
+        LOGGER.debug("waitToComplete() - Finished complete is {}", isComplete());
     }
 
     public Set<Node> getTargetNodes() {

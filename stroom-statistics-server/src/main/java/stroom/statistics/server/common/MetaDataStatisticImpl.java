@@ -111,10 +111,10 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
                     if (statisticEvent != null) {
                         statisticEventStore.putEvent(statisticEvent);
                     } else {
-                        LOGGER.trace("recordStatistics() - abort %s", metaData);
+                        LOGGER.trace("recordStatistics() - abort {}", metaData);
                     }
                 } catch (final Exception ex) {
-                    LOGGER.trace("recordStatistics() - abort %s", metaData, ex);
+                    LOGGER.trace("recordStatistics() - abort {}", metaData, ex);
                 }
             }
         }

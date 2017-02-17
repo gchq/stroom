@@ -46,8 +46,8 @@ public class ObjectMarshaller<E> {
             try {
                 xml = XMLMarshallerUtil.marshal(jaxbContext, object);
             } catch( final Exception e){
-                LOGGER.debug("Problem marshalling %s", object, e);
-                LOGGER.warn("Problem marshalling %s - %s (enable debug for full trace)", object, String.valueOf(e));
+                LOGGER.debug("Problem marshalling {}", object, e);
+                LOGGER.warn("Problem marshalling {} - {} (enable debug for full trace)", object, String.valueOf(e));
             }
         }
 
@@ -60,8 +60,8 @@ public class ObjectMarshaller<E> {
             try {
                 object = XMLMarshallerUtil.unmarshal(jaxbContext, clazz, xml);
             } catch (final Exception e) {
-                LOGGER.debug("Problem unmarshalling\n%s", xml, e);
-                LOGGER.warn("Problem unmarshalling - %s(enable debug for full trace)", String.valueOf(e));
+                LOGGER.debug("Problem unmarshalling\n{}", xml, e);
+                LOGGER.warn("Problem unmarshalling - {}(enable debug for full trace)", String.valueOf(e));
             }
         }
         return object;

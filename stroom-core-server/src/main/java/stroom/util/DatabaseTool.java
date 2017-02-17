@@ -59,7 +59,7 @@ public class DatabaseTool extends AbstractCommandLineTool {
                 throw new RuntimeException(ex);
             }
             connection = DriverManager.getConnection(jdbcDriverUrl, jdbcDriverUsername, jdbcDriverPassword);
-            LOGGER.info("getConnection() - Connected !! (%s,%s)", jdbcDriverClassName, jdbcDriverUrl);
+            LOGGER.info("getConnection() - Connected !! ({},{})", jdbcDriverClassName, jdbcDriverUrl);
         }
         return connection;
     }

@@ -77,7 +77,7 @@ public class UserManagerImpl implements UserManager {
                 value = Integer.parseInt(str);
             }
         } catch (final RuntimeException ex) {
-            LOGGER.error("getProperty(%s)", name, ex);
+            LOGGER.error("getProperty({})", name, ex);
         }
         return value;
     }
@@ -89,11 +89,11 @@ public class UserManagerImpl implements UserManager {
             // Only do this if the account is supposed to never expire
             if (user.isLoginExpiry()) {
                 user.updateStatus(UserStatus.DISABLED);
-                LOGGER.info("disableUnusedAccounts() - Disabling %s", user.getName());
+                LOGGER.info("disableUnusedAccounts() - Disabling {}", user.getName());
                 try {
                     userService.save(user);
                 } catch (final RuntimeException ex) {
-                    LOGGER.error("disableUnusedAccounts() - Error Disabling %s", user.getName(), ex);
+                    LOGGER.error("disableUnusedAccounts() - Error Disabling {}", user.getName(), ex);
                 }
             }
         });

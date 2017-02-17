@@ -109,7 +109,7 @@ public class StroomProperties {
                     // Ignore.
                 }
 
-                LOGGER.info("Using properties '%s' from '%s'", resourceName, path);
+                LOGGER.info("Using properties '{}' from '{}'", resourceName, path);
 
                 // Is this this web app property file?
                 if (Source.WAR.equals(source)) {
@@ -121,7 +121,7 @@ public class StroomProperties {
                     }
                 }
             } else {
-                LOGGER.info("Properties not found at '%s'", resourceName);
+                LOGGER.info("Properties not found at '{}'", resourceName);
             }
         } catch (final Exception e) {
             e.printStackTrace();
@@ -244,7 +244,7 @@ public class StroomProperties {
         value = replaceProperties(propertyName, value, cyclicCheckSet);
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("getProperty( %s ) returns '%s'", name, makeSafe(name, value));
+            LOGGER.debug("getProperty( {} ) returns '{}'", name, makeSafe(name, value));
         }
 
         // If magic NULL then we will set null as the property rather than blank
@@ -253,7 +253,7 @@ public class StroomProperties {
             value = MAGIC_NULL;
         }
         if (trace) {
-            LOGGER.info("getProperty( %s ) returns '%s'", name, makeSafe(name, value));
+            LOGGER.info("getProperty( {} ) returns '{}'", name, makeSafe(name, value));
         }
 
         return value;

@@ -96,7 +96,7 @@ public final class ZipUtil {
 
     private static void putEntry(final ZipOutputStream zipOutputStream, final File file, final String name)
             throws IOException {
-        LOGGER.debug("zip() - Putting entry %s", name);
+        LOGGER.debug("zip() - Putting entry {}", name);
         final ZipEntry zipEntry = new ZipEntry(name);
         zipOutputStream.putNextEntry(zipEntry);
         InputStream is = null;

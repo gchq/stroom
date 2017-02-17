@@ -19,6 +19,8 @@ package stroom.spring;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.CustomScopeConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,7 +29,7 @@ import stroom.util.spring.StroomScope;
 
 @Configuration
 public class ScopeTestConfiguration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ScopeTestConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScopeTestConfiguration.class);
 
     public ScopeTestConfiguration() {
         LOGGER.info("ScopeConfiguration loading...");

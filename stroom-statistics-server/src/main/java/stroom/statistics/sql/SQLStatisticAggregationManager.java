@@ -75,14 +75,14 @@ public class SQLStatisticAggregationManager {
         if (clusterLockService.tryLock(LOCK_NAME)) {
             try {
                 aggregate(System.currentTimeMillis());
-                LOGGER.info("SQL Statistic Aggregation - finished in %s", logExecutionTime);
+                LOGGER.info("SQL Statistic Aggregation - finished in {}", logExecutionTime);
             } catch (final Throwable t) {
                 LOGGER.error(t.getMessage(), t);
             } finally {
                 clusterLockService.releaseLock(LOCK_NAME);
             }
         } else {
-            LOGGER.info("SQL Statistic Aggregation - Skipped as did not get lock in %s", logExecutionTime);
+            LOGGER.info("SQL Statistic Aggregation - Skipped as did not get lock in {}", logExecutionTime);
         }
     }
 
@@ -96,7 +96,7 @@ public class SQLStatisticAggregationManager {
         if (stroomDatabaseInfo.isMysql()) {
             guard.lock();
             try {
-                LOGGER.debug("aggregate() Called for SQL stats - Start timeNow = %s",
+                LOGGER.debug("aggregate() Called for SQL stats - Start timeNow = {}",
                         DateUtil.createNormalDateTimeString(timeNow));
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -127,7 +127,7 @@ public class SQLStatisticAggregationManager {
                 } catch (final SQLException ex) {
                     throw EntityServiceExceptionUtil.create(ex);
                 } finally {
-                    LOGGER.debug("aggregate() - Finished for SQL stats in %s timeNowOverride = %s", logExecutionTime,
+                    LOGGER.debug("aggregate() - Finished for SQL stats in {} timeNowOverride = {}", logExecutionTime,
                             DateUtil.createNormalDateTimeString(timeNow));
                 }
             } catch (final Throwable t) {

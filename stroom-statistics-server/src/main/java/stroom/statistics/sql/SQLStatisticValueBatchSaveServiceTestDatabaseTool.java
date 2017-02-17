@@ -67,7 +67,7 @@ public class SQLStatisticValueBatchSaveServiceTestDatabaseTool extends DatabaseT
                 statisticValueBatchSaveService.saveBatchStatisticValueSource_PreparedStatement(batch);
                 statisticValueBatchSaveService.saveBatchStatisticValueSource_String(batch);
             }
-            LOGGER.info("run() - took %s", logExecutionTime);
+            LOGGER.info("run() - took {}", logExecutionTime);
 
         } catch (final Exception ex) {
             ex.printStackTrace();

@@ -58,7 +58,7 @@ public class DispatchServiceImpl implements DispatchService {
     public <R extends SharedObject> R exec(final Action<R> action) throws RuntimeException {
         final long startTime = System.currentTimeMillis();
 
-        LOGGER.debug("exec() - >> %s %s", action.getClass().getName(), httpServletRequestHolder);
+        LOGGER.debug("exec() - >> {} {}", action.getClass().getName(), httpServletRequestHolder);
 
         final TaskHandlerBean taskHandlerBean = taskHandlerBeanRegistry.getTaskHandlerBean(action);
 
@@ -74,14 +74,14 @@ public class DispatchServiceImpl implements DispatchService {
         try {
             final R r = taskManager.exec(action);
 
-            LOGGER.debug("exec() - >> %s returns %s", action.getClass().getName(), r);
+            LOGGER.debug("exec() - >> {} returns {}", action.getClass().getName(), r);
             return r;
 
         } catch (final Throwable t) {
             LOGGER.debug(t.getMessage(), t);
             throw EntityServiceExceptionUtil.create(t);
         } finally {
-            LOGGER.debug("exec() - << %s took %s", action.getClass().getName(),
+            LOGGER.debug("exec() - << {} took {}", action.getClass().getName(),
                     ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
         }
     }

@@ -32,7 +32,7 @@ public class MockStroomPropertyService extends PropertyPlaceholderConfigurer
     private final Map<String, String> properties = new HashMap<>();
 
     public MockStroomPropertyService() {
-        LOGGER.debug("Initialising: %s", this.getClass().getCanonicalName());
+        LOGGER.debug("Initialising: {}", this.getClass().getCanonicalName());
     }
 
     @Override

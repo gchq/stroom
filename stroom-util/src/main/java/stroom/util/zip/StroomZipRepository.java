@@ -97,7 +97,7 @@ public class StroomZipRepository {
             fileCount.set(lastId);
         }
 
-        LOGGER.debug("() - Opened REPO %s lastId = %s", baseLockDir, lastId);
+        LOGGER.debug("() - Opened REPO {} lastId = {}", baseLockDir, lastId);
     }
 
     /**
@@ -459,7 +459,7 @@ public class StroomZipRepository {
         if (rootDir != null && rootDir.isDirectory()) {
             return () -> new FileSystemIterator(rootDir, ZIP_PATTERN);
         } else {
-            LOGGER.error("getZipFiles() - root dir %s is not a directory !", rootDir);
+            LOGGER.error("getZipFiles() - root dir {} is not a directory !", rootDir);
             return new ArrayList<>();
         }
 

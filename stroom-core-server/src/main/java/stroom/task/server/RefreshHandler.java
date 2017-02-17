@@ -45,7 +45,7 @@ class RefreshHandler extends AbstractTaskHandler<RefreshAction, SharedString> {
 
     @Override
     public SharedString exec(final RefreshAction action) {
-        LOGGER.debug("exec() - %s %s", action.getUserId(), action.getSessionId());
+        LOGGER.debug("exec() - {} {}", action.getUserId(), action.getSessionId());
 
         final String msg = getMaintenanceMessage();
         if (StringUtils.hasText(msg)) {

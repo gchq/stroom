@@ -185,7 +185,7 @@ public abstract class StroomZipRepositoryProcessor {
             if (!monitor.isTerminated()) {
                 fileScan(stroomZipRepository, file);
             } else {
-                LOGGER.info("run() - Quit File Scan %s", file);
+                LOGGER.info("run() - Quit File Scan {}", file);
             }
         };
     }
@@ -196,7 +196,7 @@ public abstract class StroomZipRepositoryProcessor {
             if (!monitor.isTerminated()) {
                 processFeedFiles(stroomZipRepository, feed, fileList);
             } else {
-                LOGGER.info("run() - Quit Feed Aggregation %s", feed);
+                LOGGER.info("run() - Quit Feed Aggregation {}", feed);
             }
         };
     }
@@ -345,7 +345,7 @@ public abstract class StroomZipRepositoryProcessor {
             if (totalRead == 0) {
                 LOGGER.warn("sendEntry() - " + targetEntry + " IS BLANK");
             }
-            LOGGER.debug("sendEntry() - %s size is %s", targetEntry, totalRead);
+            LOGGER.debug("sendEntry() - {} size is {}", targetEntry, totalRead);
 
         }
     }

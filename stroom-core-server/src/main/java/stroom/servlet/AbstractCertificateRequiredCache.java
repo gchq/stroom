@@ -18,7 +18,8 @@ package stroom.servlet;
 
 import com.googlecode.ehcache.annotations.Cacheable;
 import com.googlecode.ehcache.annotations.KeyGenerator;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import stroom.node.server.StroomPropertyService;
 import stroom.util.cert.CertificateUtil;
@@ -35,7 +36,7 @@ import java.util.regex.Pattern;
 public abstract class AbstractCertificateRequiredCache {
     public static final String CERTIFICATE_CN = "certificateCn";
     public static final int NEXT_MS_INCREMENT_CHECK = 1000 * 60;
-    private static Logger LOGGER = Logger.getLogger(AbstractCertificateRequiredCache.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(AbstractCertificateRequiredCache.class);
     private long certificateCnMatchRefershMs = 0;
     private String certificateCnMatchRegEx;
     private Pattern certificateCnMatch;

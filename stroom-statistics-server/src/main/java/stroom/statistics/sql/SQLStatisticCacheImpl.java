@@ -68,7 +68,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
             if (this.map.size() > maxSize) {
                 final SQLStatisticAggregateMap flushMap = this.map;
                 // Switch out the current map under lock.
-                LOGGER.debug("add() - Switch out the current map under lock. %s", flushMap);
+                LOGGER.debug("add() - Switch out the current map under lock. {}", flushMap);
 
                 this.map = aggregateMap;
 
@@ -107,7 +107,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
 
     private void doFlush(final boolean block, final SQLStatisticAggregateMap flushMap) {
         try {
-            LOGGER.debug("doFlush() - Locking %s", flushMap);
+            LOGGER.debug("doFlush() - Locking {}", flushMap);
 
             flushQueue.putLast(flushMap);
             if (block) {

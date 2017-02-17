@@ -309,7 +309,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                             importMode);
                     paths.remove(i);
                 } catch (final EntityDependencyServiceException e) {
-                    LOGGER.warn("performImport() - %s", e.getMessage());
+                    LOGGER.warn("performImport() - {}", e.getMessage());
                     exceptions.put(path, e);
 
                     // If it was a dependency not of the same type then this
@@ -443,7 +443,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
 
         init();
 
-        LOGGER.info("performExport() - %s %s", entityType, entity);
+        LOGGER.info("performExport() - {} {}", entityType, entity);
         try {
             final String name = entity.getName();
             final FileOutputStream fileOutputStream = new FileOutputStream(getXMLFile(dir, entityType, name));
@@ -594,7 +594,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                                                           final Map<String, EntityActionConfirmation> confirmMap, final ImportMode importMode) {
         init();
 
-        LOGGER.info("performImport() - %s %s", entityType, file);
+        LOGGER.info("performImport() - {} {}", entityType, file);
 
         try {
             final String entityActionPath = toPath(folder, name);

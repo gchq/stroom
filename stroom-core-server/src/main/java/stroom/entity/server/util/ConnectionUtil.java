@@ -60,8 +60,8 @@ public class ConnectionUtil {
             throw new RuntimeException(ex);
         }
 
-        LOGGER.info("Connecting to database using classname: %s, url: %s, username: %s", driverClassname, driverUrl,
-                driverUsername);
+        LOGGER.info("Connecting to database using classname: {}, url: {}, username: {}", new Object[] {driverClassname, driverUrl,
+                driverUsername});
 
         return DriverManager.getConnection(driverUrl, driverUsername, driverPassword);
     }
@@ -87,7 +87,7 @@ public class ConnectionUtil {
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static int executeUpdate(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
-        LOGGER.debug(">>> %s", sql);
+        LOGGER.debug(">>> {}", sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
             final PreparedStatement preparedStatement = connection.prepareStatement(sql);
@@ -100,7 +100,7 @@ public class ConnectionUtil {
 
             return result;
         } catch (final SQLException sqlException) {
-            LOGGER.error("executeUpdate() - %s %s", sql, args, sqlException);
+            LOGGER.error("executeUpdate() - {} {}", new Object[]{sql, args}, sqlException);
             throw sqlException;
         }
     }
@@ -108,7 +108,7 @@ public class ConnectionUtil {
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static List<Long> executeInsert(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
-        LOGGER.debug(">>> %s", sql);
+        LOGGER.debug(">>> {}", sql);
         final List<Long> keyList = new ArrayList<Long>();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -133,7 +133,7 @@ public class ConnectionUtil {
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static Long executeQueryLongResult(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
-        LOGGER.debug(">>> %s", sql);
+        LOGGER.debug(">>> {}", sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         Long result = null;
 
@@ -159,7 +159,7 @@ public class ConnectionUtil {
             final String sql, final int numberKeys, final List<Object> args,
             final List<? extends HasPrimitiveValue> stats,
             final PrimitiveValueConverter<? extends HasPrimitiveValue> converter) throws SQLException {
-        LOGGER.debug(">>> %s", sql);
+        LOGGER.debug(">>> {}", sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final ArrayList<SummaryDataRow> summaryData = new ArrayList<>();
         try {
@@ -192,7 +192,7 @@ public class ConnectionUtil {
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static ResultSet executeQueryResultSet(final Connection connection, final String sql,
             final List<Object> args) throws SQLException {
-        LOGGER.debug(">>> %s", sql);
+        LOGGER.debug(">>> {}", sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
             final PreparedStatement preparedStatement = connection.prepareStatement(sql);

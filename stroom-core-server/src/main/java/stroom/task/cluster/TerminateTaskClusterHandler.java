@@ -45,7 +45,7 @@ public class TerminateTaskClusterHandler
 
         final FindTaskCriteria criteria = task.getCriteria();
         if (criteria != null) {
-            LOGGER.debug("exec() - %s", criteria.toString());
+            LOGGER.debug("exec() - {}", criteria.toString());
 
             // Terminate tasks on this node
             taskedKilled = taskManager.terminate(criteria, task.isKill());

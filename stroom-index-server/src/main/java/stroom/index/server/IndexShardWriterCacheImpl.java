@@ -139,7 +139,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                     // Open the writer.
                     final boolean success = writer.open(false);
                     if (success) {
-                        LOGGER.debug("getOrCreateIndexShard() - Opened index shard %s for index %s and partition %s",
+                        LOGGER.debug("getOrCreateIndexShard() - Opened index shard {} for index {} and partition {}",
                                 indexShard.getId(), key.getIndex().getName(), key.getPartition());
 
                         return writer;
@@ -176,7 +176,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                     + " and partition " + key.getPartition());
         }
 
-        LOGGER.debug("getOrCreateIndexShard() - Created new index shard %s for index %s and partition %s",
+        LOGGER.debug("getOrCreateIndexShard() - Created new index shard {} for index {} and partition {}",
                 indexShard.getId(), key.getIndex().getName(), key.getPartition());
 
         // Remember this writer for future use.
@@ -260,7 +260,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                 ownedWriters.put(indexShard, writer);
 
                 // Check that the writer is ok.
-                LOGGER.debug("loadAllAtStartup() - Checking index shard %s", indexShard.getId());
+                LOGGER.debug("loadAllAtStartup() - Checking index shard {}", indexShard.getId());
                 writer.check();
 
             } catch (final Exception e) {
@@ -282,7 +282,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
             final IndexShardWriter writer = entry.getValue();
             try {
                 if (writer != null && writer.isDeleted()) {
-                    LOGGER.debug("deleteLogicallyDeleted() - Deleting index shard %s", writer.getIndexShard().getId());
+                    LOGGER.debug("deleteLogicallyDeleted() - Deleting index shard {}", writer.getIndexShard().getId());
 
                     if (writer.deleteFromDisk()) {
                         iter.remove();
@@ -293,7 +293,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
             }
         }
 
-        LOGGER.debug("deleteLogicallyDeleted() - Completed in %s",
+        LOGGER.debug("deleteLogicallyDeleted() - Completed in {}",
                 ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
     }
 
@@ -321,7 +321,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
         } catch (final Throwable t) {
             LOGGER.error(t.getMessage(), t);
         }
-        LOGGER.debug("flushAll() - Completed in %s",
+        LOGGER.debug("flushAll() - Completed in {}",
                 ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
     }
 
@@ -333,7 +333,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                 try {
                     indexShardWriter.flush();
                 } catch (final Exception ex) {
-                    LOGGER.error("flush() - Error flushing writer %s", indexShardWriter);
+                    LOGGER.error("flush() - Error flushing writer {}", indexShardWriter);
                 }
             }
         }
@@ -349,7 +349,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
         final List<IndexShardWriter> writers = getFilteredWriters(criteria);
         for (final IndexShardWriter writer : writers) {
             try {
-                LOGGER.debug("flush() - Flushing index shard %s", writer.getIndexShard().getId());
+                LOGGER.debug("flush() - Flushing index shard {}", writer.getIndexShard().getId());
                 writer.flush();
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);
@@ -368,7 +368,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
         final List<IndexShardWriter> writers = getFilteredWriters(criteria);
         for (final IndexShardWriter writer : writers) {
             try {
-                LOGGER.debug("close() - Closing IndexShard %s", writer.getIndexShard().getId());
+                LOGGER.debug("close() - Closing IndexShard {}", writer.getIndexShard().getId());
                 writer.close();
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);
@@ -387,7 +387,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
         final List<IndexShardWriter> writers = getFilteredWriters(criteria);
         for (final IndexShardWriter writer : writers) {
             try {
-                LOGGER.debug("delete() - Deleting index shard %s", writer.getIndexShard().getId());
+                LOGGER.debug("delete() - Deleting index shard {}", writer.getIndexShard().getId());
                 writer.delete();
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);

@@ -41,7 +41,7 @@ public class TestAbstractCommandLineTool extends StroomUnitTest {
 
         @Override
         public void run() {
-            LOGGER.info("run() - %s %s", prop1, prop2);
+            LOGGER.info("run() - {} {}", prop1, prop2);
         }
     }
 

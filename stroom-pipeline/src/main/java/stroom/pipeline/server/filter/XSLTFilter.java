@@ -156,7 +156,7 @@ public class XSLTFilter extends AbstractXMLFilter {
                     throw new ProcessException(sb.toString());
                 }
 
-                LOGGER.debug("Finding XSLT with resolved name '%s' from pattern '%s'", resolvedName, xsltNamePattern);
+                LOGGER.debug("Finding XSLT with resolved name '{}' from pattern '{}'", resolvedName, xsltNamePattern);
                 final FindXSLTCriteria criteria = new FindXSLTCriteria();
                 criteria.setName(new StringCriteria(resolvedName));
                 criteria.setOrderBy(FindXSLTCriteria.ORDER_BY_ID);
