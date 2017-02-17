@@ -45,7 +45,7 @@ import java.util.Map.Entry;
 @TaskHandlerBean(task = SearchBusPollAction.class)
 @Scope(value = StroomScope.TASK)
 class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction, SearchBusPollResult> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SearchBusPollActionHandler.class);
+    private transient static final Logger LOGGER = LoggerFactory.getLogger(SearchBusPollActionHandler.class);
 
     private final QueryService queryService;
     private final SearchEventLog searchEventLog;

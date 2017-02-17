@@ -33,12 +33,6 @@ public class QueryKey implements Serializable {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public QueryKey(String uuid, String sessionId, String userId){
-        this.uuid = uuid;
-        this.sessionId = sessionId;
-        this.userId = userId;
-    }
-
     public QueryKey(final String uuid) {
         this.uuid = uuid;
     }

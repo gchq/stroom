@@ -8,8 +8,6 @@ allprojects {
 
     group = 'stroom'
     version = '6.0-beta.1-SNAPSHOT'
-
-
 }
 
 subprojects {
@@ -65,7 +63,6 @@ subprojects {
     }
 
     dependencies {
-
         testCompile 'junit:junit:4.12'
         testCompile 'org.mockito:mockito-all:1.10.19'
     }
