@@ -93,22 +93,16 @@ public class StroomJUnit4ClassRunner extends BlockJUnit4ClassRunner {
             final RunNotifier notifier) {
         final StroomExpectedException stroomExpectedException = method.getAnnotation(StroomExpectedException.class);
         if (stroomExpectedException != null) {
-            StroomJunitConsoleAppender.setExpectedException(stroomExpectedException.exception());
-            LOGGER.info(">>> %s.  Expecting Exceptions %s", method.getMethod(), stroomExpectedException.exception());
+//            StroomJunitConsoleAppender.setExpectedException(stroomExpectedException.exception());
+            LOGGER.info(">>> {}.  Expecting Exceptions {}", method.getMethod(), stroomExpectedException.exception());
         } else {
-            LOGGER.info(">>> %s", method.getMethod());
+            LOGGER.info(">>> {}", method.getMethod());
         }
 
     }
 
     static void runChildAfter(final BlockJUnit4ClassRunner runner, final FrameworkMethod method,
             final RunNotifier notifier, final LogExecutionTime logExecutionTime) {
-        LOGGER.info("<<< %s took %s", method.getMethod(), logExecutionTime);
-        if (StroomJunitConsoleAppender.getUnexpectedExceptions().size() > 0) {
-            notifier.fireTestFailure(new Failure(
-                    Description.createTestDescription(runner.getTestClass().getJavaClass(), method.getName()),
-                    StroomJunitConsoleAppender.getUnexpectedExceptions().get(0)));
-        }
-        StroomJunitConsoleAppender.setExpectedException(null);
+        LOGGER.info("<<< {} took {}", method.getMethod(), logExecutionTime);
     }
 }
