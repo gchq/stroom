@@ -29,13 +29,7 @@ public abstract class SimplePartitioner<K2, V2, K3, V3> implements Partitioner<K
     public SimplePartitioner() {
         store = new LinkedHashMap<>(10, 0.75F);
         storeCollector = (key, value) -> {
-            Collection<V2> collection = store.get(key);
-            if (collection == null) {
-                collection = new ArrayList<V2>();
-                store.put(key, collection);
-            }
-
-            collection.add(value);
+            store.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
         };
     }
 

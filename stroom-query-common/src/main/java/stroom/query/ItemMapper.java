@@ -21,12 +21,15 @@ import stroom.dashboard.expression.Generator;
 import stroom.mapreduce.MapperBase;
 import stroom.mapreduce.OutputCollector;
 
-public class ItemMapper extends MapperBase<Object, String[], String, Item> {
+import java.util.ArrayList;
+import java.util.List;
+
+public class ItemMapper extends MapperBase<Object, String[], Key, Item> {
     private final CompiledFields fields;
     private final int maxDepth;
     private final int maxGroupDepth;
 
-    public ItemMapper(final OutputCollector<String, Item> outputCollector, final CompiledFields fields,
+    public ItemMapper(final OutputCollector<Key, Item> outputCollector, final CompiledFields fields,
                       final int maxDepth, final int maxGroupDepth) {
         super(outputCollector);
         this.fields = fields;
@@ -35,20 +38,20 @@ public class ItemMapper extends MapperBase<Object, String[], String, Item> {
     }
 
     @Override
-    public void map(final Object key, final String[] values, final OutputCollector<String, Item> output) {
+    public void map(final Object key, final String[] values, final OutputCollector<Key, Item> output) {
         // Add the item to the output recursively up to the max depth.
         addItem(values, null, null, 0, maxDepth, maxGroupDepth, output);
     }
 
-    private void addItem(final String[] values, final String parentKey, final Generator[] parentGenerators,
-                         final int depth, final int maxDepth, final int maxGroupDepth, final OutputCollector<String, Item> output) {
+    private void addItem(final String[] values, final Key parentKey, final Generator[] parentGenerators,
+                         final int depth, final int maxDepth, final int maxGroupDepth, final OutputCollector<Key, Item> output) {
         // Process list into fields.
         final Generator[] generators = new Generator[fields.size()];
 
-        StringBuilder sb = null;
+        List<Object> groupValues = null;
         int pos = 0;
         for (final CompiledField compiledField : fields) {
-            String stringValue = null;
+            Object value = null;
 
             final Expression expression = compiledField.getExpression();
             if (expression != null) {
@@ -75,15 +78,9 @@ public class ItemMapper extends MapperBase<Object, String[], String, Item> {
                 if (compiledField.getCompiledFilter() != null || compiledField.getGroupDepth() == depth) {
                     // If we are filtering then we need to evaluate this field
                     // now so that we can filter the resultant value.
-                    final Object o = generator.eval();
-                    if (o != null) {
-                        stringValue = o.toString();
-                    } else {
-                        stringValue = null;
-                    }
+                    value = generator.eval();
 
-                    if (compiledField.getCompiledFilter() != null
-                            && !compiledField.getCompiledFilter().match(stringValue)) {
+                    if (compiledField.getCompiledFilter() != null && value != null && !compiledField.getCompiledFilter().match(value.toString())) {
                         // We want to exclude this item.
                         return;
                     }
@@ -93,29 +90,22 @@ public class ItemMapper extends MapperBase<Object, String[], String, Item> {
             // If this field is being grouped at this depth then add the value
             // to the group key for this depth.
             if (compiledField.getGroupDepth() == depth) {
-                if (sb == null) {
-                    sb = new StringBuilder();
+                if (groupValues == null) {
+                    groupValues = new ArrayList<>();
                 }
-                if (stringValue != null) {
-                    sb.append(stringValue);
-                }
-                sb.append("|");
+                groupValues.add(value);
             }
 
             pos++;
         }
 
         // Are we grouping this item?
-        String groupKey = null;
-        if (sb != null) {
-            // take off last pipe.
-            sb.setLength(sb.length() - 1);
-            if (parentKey != null) {
-                sb.insert(0, ":");
-                sb.insert(0, parentKey);
-            }
-
-            groupKey = sb.toString();
+        Key key = null;
+        if (groupValues != null) {
+            final Object[] groupKey = groupValues.toArray(new Object[groupValues.size()]);
+            key = new Key(parentKey, groupKey);
+        } else if (parentKey != null) {
+            key = new Key(parentKey, null);
         }
 
         // If the parent row has child group key sets then add this child group
@@ -123,17 +113,17 @@ public class ItemMapper extends MapperBase<Object, String[], String, Item> {
         if (parentGenerators != null) {
             for (final Generator parent : parentGenerators) {
                 if (parent != null && parent instanceof Generator) {
-                    parent.addChildKey(groupKey);
+                    parent.addChildKey(key);
                 }
             }
         }
 
         // Add the new item.
-        output.collect(groupKey, new Item(parentKey, groupKey, generators, depth));
+        output.collect(key, new Item(key, generators, depth));
 
         // If we haven't reached the max depth then recurse.
         if (depth < maxDepth) {
-            addItem(values, groupKey, generators, depth + 1, maxDepth, maxGroupDepth, output);
+            addItem(values, key, generators, depth + 1, maxDepth, maxGroupDepth, output);
         }
     }
 }

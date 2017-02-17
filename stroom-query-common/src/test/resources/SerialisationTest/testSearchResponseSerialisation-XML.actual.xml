@@ -29,253 +29,144 @@
         </table>
         <vis>
             <componentId>vis-1234</componentId>
-            <types>
-                <type>string</type>
-                <type>double</type>
-                <type>integer</type>
-                <type>string</type>
-            </types>
+            <error>visResultError</error>
+            <size>200</size>
+            <structure>
+                <name>val1</name>
+                <format>
+                    <type>GENERAL</type>
+                </format>
+            </structure>
+            <structure>
+                <name>val2</name>
+                <format>
+                    <type>NUMBER</type>
+                </format>
+            </structure>
+            <structure>
+                <name>val3</name>
+                <format>
+                    <type>NUMBER</type>
+                </format>
+            </structure>
+            <structure>
+                <name>val4</name>
+                <format>
+                    <type>GENERAL</type>
+                </format>
+            </structure>
             <values>
-                <values>
-                    <string>test0</string>
-                    <double>0.4</double>
-                    <integer>234</integer>
-                    <string>this0</string>
-                </values>
-                <values>
-                    <string>test1</string>
-                    <double>0.5</double>
-                    <integer>25634</integer>
-                    <string>this1</string>
-                </values>
-                <values>
-                    <string>test2</string>
-                    <double>0.6</double>
-                    <integer>27</integer>
-                    <string>this2</string>
-                </values>
-                <values>
-                    <string>test3</string>
-                    <double>0.7</double>
-                    <integer>344</integer>
-                    <string>this3</string>
-                </values>
-                <values>
-                    <string>test4</string>
-                    <double>0.2</double>
-                    <integer>8984</integer>
-                    <string>this4</string>
-                </values>
-                <values>
-                    <string>test5</string>
-                    <double>0.33</double>
-                    <integer>3244</integer>
-                    <string>this5</string>
-                </values>
-                <values>
-                    <string>test6</string>
-                    <double>34.66</double>
-                    <integer>44</integer>
-                    <string>this6</string>
-                </values>
-                <values>
-                    <string>test7</string>
-                    <double>2.33</double>
-                    <integer>74</integer>
-                    <string>this7</string>
-                </values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test0
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">0.4
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">234
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this0
+                </item>
             </values>
-            <size>200</size>
-            <error>visResultError</error>
-        </vis>
-        <vis>
-            <componentId>vis-5555</componentId>
-            <types>
-                <type>string</type>
-                <type>double</type>
-                <type>integer</type>
-                <type>string</type>
-            </types>
-            <nodes>
-                <node>
-                    <key>
-                        <type>string</type>
-                        <string>key1</string>
-                    </key>
-                    <nodes>
-                        <node>
-                            <key>
-                                <type>string</type>
-                                <string>innerKey1</string>
-                            </key>
-                            <values>
-                                <values>
-                                    <string>test0</string>
-                                    <double>0.4</double>
-                                    <integer>234</integer>
-                                    <string>this0</string>
-                                </values>
-                                <values>
-                                    <string>test1</string>
-                                    <double>0.5</double>
-                                    <integer>25634</integer>
-                                    <string>this1</string>
-                                </values>
-                                <values>
-                                    <string>test2</string>
-                                    <double>0.6</double>
-                                    <integer>27</integer>
-                                    <string>this2</string>
-                                </values>
-                                <values>
-                                    <string>test3</string>
-                                    <double>0.7</double>
-                                    <integer>344</integer>
-                                    <string>this3</string>
-                                </values>
-                                <values>
-                                    <string>test4</string>
-                                    <double>0.2</double>
-                                    <integer>8984</integer>
-                                    <string>this4</string>
-                                </values>
-                                <values>
-                                    <string>test5</string>
-                                    <double>0.33</double>
-                                    <integer>3244</integer>
-                                    <string>this5</string>
-                                </values>
-                                <values>
-                                    <string>test6</string>
-                                    <double>34.66</double>
-                                    <integer>44</integer>
-                                    <string>this6</string>
-                                </values>
-                                <values>
-                                    <string>test7</string>
-                                    <double>2.33</double>
-                                    <integer>74</integer>
-                                    <string>this7</string>
-                                </values>
-                            </values>
-                        </node>
-                        <node>
-                            <key>
-                                <type>string</type>
-                                <string>innerKey2</string>
-                            </key>
-                            <values>
-                                <values>
-                                    <string>test0</string>
-                                    <double>0.4</double>
-                                    <integer>234</integer>
-                                    <string>this0</string>
-                                </values>
-                                <values>
-                                    <string>test1</string>
-                                    <double>0.5</double>
-                                    <integer>25634</integer>
-                                    <string>this1</string>
-                                </values>
-                                <values>
-                                    <string>test2</string>
-                                    <double>0.6</double>
-                                    <integer>27</integer>
-                                    <string>this2</string>
-                                </values>
-                                <values>
-                                    <string>test3</string>
-                                    <double>0.7</double>
-                                    <integer>344</integer>
-                                    <string>this3</string>
-                                </values>
-                                <values>
-                                    <string>test4</string>
-                                    <double>0.2</double>
-                                    <integer>8984</integer>
-                                    <string>this4</string>
-                                </values>
-                                <values>
-                                    <string>test5</string>
-                                    <double>0.33</double>
-                                    <integer>3244</integer>
-                                    <string>this5</string>
-                                </values>
-                                <values>
-                                    <string>test6</string>
-                                    <double>34.66</double>
-                                    <integer>44</integer>
-                                    <string>this6</string>
-                                </values>
-                                <values>
-                                    <string>test7</string>
-                                    <double>2.33</double>
-                                    <integer>74</integer>
-                                    <string>this7</string>
-                                </values>
-                            </values>
-                        </node>
-                    </nodes>
-                </node>
-                <node>
-                    <key>
-                        <type>string</type>
-                        <string>key2</string>
-                    </key>
-                    <values>
-                        <values>
-                            <string>test0</string>
-                            <double>0.4</double>
-                            <integer>234</integer>
-                            <string>this0</string>
-                        </values>
-                        <values>
-                            <string>test1</string>
-                            <double>0.5</double>
-                            <integer>25634</integer>
-                            <string>this1</string>
-                        </values>
-                        <values>
-                            <string>test2</string>
-                            <double>0.6</double>
-                            <integer>27</integer>
-                            <string>this2</string>
-                        </values>
-                        <values>
-                            <string>test3</string>
-                            <double>0.7</double>
-                            <integer>344</integer>
-                            <string>this3</string>
-                        </values>
-                        <values>
-                            <string>test4</string>
-                            <double>0.2</double>
-                            <integer>8984</integer>
-                            <string>this4</string>
-                        </values>
-                        <values>
-                            <string>test5</string>
-                            <double>0.33</double>
-                            <integer>3244</integer>
-                            <string>this5</string>
-                        </values>
-                        <values>
-                            <string>test6</string>
-                            <double>34.66</double>
-                            <integer>44</integer>
-                            <string>this6</string>
-                        </values>
-                        <values>
-                            <string>test7</string>
-                            <double>2.33</double>
-                            <integer>74</integer>
-                            <string>this7</string>
-                        </values>
-                    </values>
-                </node>
-            </nodes>
-            <size>200</size>
-            <error>visResultError</error>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test1
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">0.5
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">25634
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this1
+                </item>
+            </values>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test2
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">0.6
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">27
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this2
+                </item>
+            </values>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test3
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">0.7
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">344
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this3
+                </item>
+            </values>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test4
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">0.2
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">8984
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this4
+                </item>
+            </values>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test5
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">0.33
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">3244
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this5
+                </item>
+            </values>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test6
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">34.66
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">44
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this6
+                </item>
+            </values>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test7
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">2.33
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">74
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this7
+                </item>
+            </values>
         </vis>
     </results>
 </searchResponse>

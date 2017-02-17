@@ -16,7 +16,7 @@
 
 package stroom.query;
 
-import stroom.query.CoprocessorMap.CoprocessorKey;
+import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.util.shared.HasTerminate;
 
 import java.util.Map;

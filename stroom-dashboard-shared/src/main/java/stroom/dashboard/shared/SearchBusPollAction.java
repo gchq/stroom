@@ -17,24 +17,23 @@
 package stroom.dashboard.shared;
 
 import stroom.entity.shared.Action;
-import stroom.query.api.QueryKey;
 
 import java.util.Map;
 
 public class SearchBusPollAction extends Action<SearchBusPollResult> {
     private static final long serialVersionUID = -6668626615097471925L;
 
-    private Map<QueryKey, SearchRequest> searchActionMap;
+    private Map<DashboardQueryKey, SearchRequest> searchActionMap;
 
     public SearchBusPollAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public SearchBusPollAction(final Map<QueryKey, SearchRequest> searchActionMap) {
+    public SearchBusPollAction(final Map<DashboardQueryKey, SearchRequest> searchActionMap) {
         this.searchActionMap = searchActionMap;
     }
 
-    public Map<QueryKey, SearchRequest> getSearchActionMap() {
+    public Map<DashboardQueryKey, SearchRequest> getSearchActionMap() {
         return searchActionMap;
     }
 

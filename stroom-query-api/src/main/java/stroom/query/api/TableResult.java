@@ -80,7 +80,8 @@ public class TableResult extends Result {
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof TableResult)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
 
         final TableResult that = (TableResult) o;
 
@@ -93,7 +94,8 @@ public class TableResult extends Result {
 
     @Override
     public int hashCode() {
-        int result = Arrays.hashCode(rows);
+        int result = super.hashCode();
+        result = 31 * result + Arrays.hashCode(rows);
         result = 31 * result + (resultRange != null ? resultRange.hashCode() : 0);
         result = 31 * result + (totalResults != null ? totalResults.hashCode() : 0);
         result = 31 * result + (error != null ? error.hashCode() : 0);
@@ -103,7 +105,7 @@ public class TableResult extends Result {
     @Override
     public String toString() {
         if (rows == null) {
-            return "";
+            return "0 rows";
         }
 
         return rows.length + " rows";

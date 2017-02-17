@@ -16,13 +16,19 @@
 
 package stroom.dashboard.server;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.server.vis.VisSettings;
+import stroom.dashboard.server.vis.VisSettings.Control;
 import stroom.dashboard.server.vis.VisSettings.Nest;
 import stroom.dashboard.server.vis.VisSettings.Structure;
+import stroom.dashboard.server.vis.VisSettings.Tab;
 import stroom.dashboard.shared.ComponentResultRequest;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DateTimeFormatSettings;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Filter;
@@ -33,6 +39,7 @@ import stroom.dashboard.shared.Sort;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.TimeZone;
+import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.query.api.DateTimeFormat;
 import stroom.query.api.DocRef;
@@ -42,13 +49,13 @@ import stroom.query.api.Param;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest;
+import stroom.query.api.ResultRequest.ResultStyle;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.TableSettings;
 import stroom.query.api.TimeZone.Use;
 import stroom.query.api.VisField;
 import stroom.query.api.VisLimit;
 import stroom.query.api.VisNest;
-import stroom.query.api.VisSort;
 import stroom.query.api.VisStructure;
 import stroom.query.api.VisValues;
 import stroom.util.shared.OffsetRange;
@@ -60,75 +67,14 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 @Component
 public class SearchRequestMapper {
-//    private static Param[] convert(final Map<String, String> paramMap) {
-//        if (paramMap == null || paramMap.size() == 0) {
-//            return null;
-//        }
-//
-//        final Param[] arr = new Param[paramMap.size()];
-//        int i = 0;
-//        for (final Entry<String, String> entry : paramMap.entrySet()) {
-//            arr[i++] = new Param(entry.getKey(), entry.getValue());
-//        }
-//
-//        return arr;
-//    }
-//
-//    public SearchRequest mapRequest(final stroom.dashboard.shared.SearchRequest in) {
-////        Converter<Map<String, String>, Collection<Param>> mapCollectionConverter = new Converter<Map<String, String>, Collection<Param>>() {
-////            @Override
-////            public Collection<Param> convert(final MappingContext<Map<String, String>, Collection<Param>> context) {
-////                return null;
-////            }
-////        };
-//
-//        PropertyMap<stroom.dashboard.shared.Search, Query> searchMapping = new PropertyMap<stroom.dashboard.shared.Search, Query>() {
-//            @Override
-//            protected void configure() {
-//                map(source.getDataSourceRef(), destination.getDataSource());
-//                map(source.getExpression(), destination.getExpression());
-//                skip(source.getComponentSettingsMap());
-////                map().setParams(convert(source.getParamMap()));
-//
-//                skip(source.getParamMap());
-//                skip().setParams(null);
-//
-//                skip(source.getIncremental());
-//            }
-//        };
-//
-//        PropertyMap<stroom.dashboard.shared.SearchRequest, SearchRequest> searchRequestMapping = new PropertyMap<stroom.dashboard.shared.SearchRequest, SearchRequest>() {
-//            @Override
-//            protected void configure() {
-//                skip().setKey(null);
-//                map(source.getSearch(), destination.getQuery());
-////                map(source.getComponentResultRequests(), destination.getResultRequests());
-//
-//                skip(source.getComponentResultRequests());
-//                skip().setResultRequests(null);
-//
-//                map().setDateTimeLocale(source.getDateTimeLocale());
-//                map().setIncremental(source.getSearch().getIncremental());
-//            }
-//        };
-//
-//        final ModelMapper modelMapper = new ModelMapper();
-////        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
-//        modelMapper.addMappings(searchRequestMapping);
-//        modelMapper.addMappings(searchMapping);
-//        modelMapper.validate();
-//
-//        SearchRequest out = modelMapper.map(in, SearchRequest.class);
-//        return out;
-//    }
-
-
     private final VisualisationService visualisationService;
 
     @Inject
@@ -136,13 +82,13 @@ public class SearchRequestMapper {
         this.visualisationService = visualisationService;
     }
 
-    public stroom.query.api.SearchRequest mapRequest(final QueryKey queryKey, final stroom.dashboard.shared.SearchRequest searchRequest) {
+    public stroom.query.api.SearchRequest mapRequest(final DashboardQueryKey queryKey, final stroom.dashboard.shared.SearchRequest searchRequest) {
         if (searchRequest == null) {
             return null;
         }
 
         final stroom.query.api.SearchRequest copy = new stroom.query.api.SearchRequest();
-        copy.setKey(queryKey);
+        copy.setKey(new QueryKey(queryKey.getUuid()));
         copy.setQuery(mapQuery(searchRequest));
         copy.setResultRequests(mapResultRequests(searchRequest));
         copy.setDateTimeLocale(searchRequest.getDateTimeLocale());
@@ -187,23 +133,49 @@ public class SearchRequestMapper {
             final ComponentResultRequest componentResultRequest = entry.getValue();
             if (componentResultRequest instanceof TableResultRequest) {
                 final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
-                final stroom.query.api.TableResultRequest copy = new stroom.query.api.TableResultRequest();
+                final stroom.query.api.ResultRequest copy = new stroom.query.api.ResultRequest();
                 copy.setComponentId(componentId);
                 copy.setFetchData(tableResultRequest.wantsData());
-                copy.setTableSettings(mapTableSettings(tableResultRequest.getTableSettings()));
+                final TableSettings tableSettings = mapTableSettings(tableResultRequest.getTableSettings());
+                copy.setTableSettings(new TableSettings[]{tableSettings});
                 copy.setRequestedRange(mapOffsetRange(tableResultRequest.getRequestedRange()));
                 copy.setOpenGroups(mapCollection(String.class, tableResultRequest.getOpenGroups()));
+                copy.setResultStyle(ResultStyle.FLAT);
                 resultRequests[i++] = copy;
 
             } else if (componentResultRequest instanceof VisResultRequest) {
                 final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
-                final stroom.query.api.VisResultRequest copy = new stroom.query.api.VisResultRequest();
+                final stroom.query.api.ResultRequest copy = new stroom.query.api.ResultRequest();
                 copy.setComponentId(componentId);
                 copy.setFetchData(visResultRequest.wantsData());
-                copy.setTableSettings(mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings()));
-                copy.setStructure(mapStructure(visResultRequest.getVisDashboardSettings().getVisualisation()));
-                copy.setParams(mapVisParams(visResultRequest.getVisDashboardSettings().getJSON()));
+
+                final VisStructure visStructure = mapStructure(visResultRequest.getVisDashboardSettings());
+
+                final TableSettings parentTableSettings = mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings());
+                final TableSettings childTableSettings = visStructureToTableSettings(visStructure, parentTableSettings);
+
+                copy.setTableSettings(new TableSettings[]{parentTableSettings, childTableSettings});
+                copy.setRequestedRange(null);
+                copy.setOpenGroups(null);
+                copy.setResultStyle(ResultStyle.TREE);
                 resultRequests[i++] = copy;
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//                final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
+//                final stroom.query.api.VisResultRequest copy = new stroom.query.api.VisResultRequest();
+//                copy.setComponentId(componentId);
+//                copy.setFetchData(visResultRequest.wantsData());
+//                copy.setTableSettings(mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings()));
+//                copy.setStructure(mapStructure(visResultRequest.getVisDashboardSettings()));
+//                resultRequests[i++] = copy;
             }
         }
 
@@ -218,7 +190,7 @@ public class SearchRequestMapper {
         final TableSettings tableSettings = new TableSettings();
         tableSettings.setQueryId(tableComponentSettings.getQueryId());
         tableSettings.setFields(mapFields(tableComponentSettings.getFields()));
-        tableSettings.setExtractValues(tableComponentSettings.getExtractValues());
+        tableSettings.setExtractValues(tableComponentSettings.extractValues());
         tableSettings.setExtractionPipeline(tableComponentSettings.getExtractionPipeline());
         tableSettings.setMaxResults(mapIntArray(tableComponentSettings.getMaxResults()));
         tableSettings.setShowDetail(tableComponentSettings.getShowDetail());
@@ -365,7 +337,82 @@ public class SearchRequestMapper {
         return copy;
     }
 
-    private stroom.query.api.VisStructure mapStructure(final DocRef docRef) {
+    private TableSettings visStructureToTableSettings(final VisStructure visStructure, final TableSettings parentTableSettings) {
+        final Map<String, stroom.query.api.Format> formatMap = new HashMap<>();
+        if (parentTableSettings.getFields() != null) {
+            for (final stroom.query.api.Field field : parentTableSettings.getFields()) {
+                if (field != null) {
+                    formatMap.put(field.getName(), field.getFormat());
+                }
+            }
+        }
+
+        List<stroom.query.api.Field> fields = new ArrayList<>();
+        List<Integer> limits = new ArrayList<>();
+
+        VisNest nest = visStructure.getNest();
+        VisValues values = visStructure.getValues();
+
+        int group = 0;
+        while (nest != null) {
+            stroom.query.api.Field field = convertField(visStructure.getNest().getKey(), formatMap);
+            field.setGroup(group++);
+
+            fields.add(field);
+
+            // Get limit from nest.
+            Integer limit = null;
+            if (nest.getLimit() != null) {
+                limit = nest.getLimit().getSize();
+            }
+            limits.add(limit);
+
+            values = nest.getValues();
+            nest = nest.getNest();
+        }
+
+        if (values != null) {
+            // Get limit from values.
+            Integer limit = null;
+            if (values.getLimit() != null) {
+                limit = values.getLimit().getSize();
+            }
+            limits.add(limit);
+
+            if (values.getFields() != null) {
+                for (final VisField visField : values.getFields()) {
+                    fields.add(convertField(visField, formatMap));
+                }
+            }
+        }
+
+        final TableSettings tableSettings = new TableSettings();
+        tableSettings.setFields(fields.toArray(new stroom.query.api.Field[fields.size()]));
+        tableSettings.setMaxResults(limits.toArray(new Integer[limits.size()]));
+        tableSettings.setShowDetail(true);
+
+        return tableSettings;
+    }
+
+    private stroom.query.api.Field convertField(final VisField visField, final Map<String, stroom.query.api.Format> formatMap) {
+        final stroom.query.api.Field field = new stroom.query.api.Field();
+        field.setFormat(new stroom.query.api.Format(Type.GENERAL));
+
+        if (visField.getId() != null) {
+            final stroom.query.api.Format format = formatMap.get(visField.getId());
+            if (format != null) {
+                field.setFormat(format);
+            }
+
+            field.setExpression("${" + visField.getId() + "}");
+        }
+        field.setSort(visField.getSort());
+
+        return field;
+    }
+
+    private stroom.query.api.VisStructure mapStructure(final VisComponentSettings visComponentSettings) {
+        DocRef docRef = visComponentSettings.getVisualisation();
         VisStructure copy = null;
 
         try {
@@ -379,16 +426,19 @@ public class SearchRequestMapper {
                 return null;
             }
 
-            ObjectMapper objectMapper = new ObjectMapper();
-            final VisSettings visSettings = objectMapper.readValue(visualisation.getSettings(), VisSettings.class);
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
+            mapper.setSerializationInclusion(Include.NON_NULL);
+
+            final VisSettings visSettings = mapper.readValue(visualisation.getSettings(), VisSettings.class);
             if (visSettings != null && visSettings.getData() != null) {
-
-
+                final SettingResolver settingResolver = new SettingResolver(visSettings, visComponentSettings.getJSON());
                 final Structure structure = visSettings.getData().getStructure();
                 if (structure != null) {
                     copy = new VisStructure();
-                    copy.setNest(mapNest(structure.getNest()));
-                    copy.setValues(mapVisValues(structure.getValues()));
+                    copy.setNest(mapNest(structure.getNest(), settingResolver));
+                    copy.setValues(mapVisValues(structure.getValues(), settingResolver));
                 }
             }
 
@@ -399,46 +449,59 @@ public class SearchRequestMapper {
         return copy;
     }
 
-    private stroom.query.api.VisNest mapNest(final Nest nest) {
+    private stroom.query.api.VisNest mapNest(final Nest nest, final SettingResolver settingResolver) {
         if (nest == null) {
             return null;
         }
 
         final VisNest copy = new VisNest();
-        copy.setKey(mapVisField(nest.getKey()));
-        copy.setNest(mapNest(nest.getNest()));
-        copy.setValues(mapVisValues(nest.getValues()));
-        copy.setLimit(mapVisLimit(nest.getLimit()));
+        copy.setKey(mapVisField(nest.getKey(), settingResolver));
+        copy.setNest(mapNest(nest.getNest(), settingResolver));
+        copy.setValues(mapVisValues(nest.getValues(), settingResolver));
+        copy.setLimit(mapVisLimit(nest.getLimit(), settingResolver));
 
         return copy;
     }
 
-    private stroom.query.api.VisField mapVisField(final VisSettings.Field field) {
+    private stroom.query.api.VisField mapVisField(final VisSettings.Field field, final SettingResolver settingResolver) {
         if (field == null) {
             return null;
         }
 
         final VisField copy = new VisField();
-        copy.setId(field.getId());
-        copy.setSort(mapVisSort(field.getSort()));
+        copy.setId(settingResolver.resolveField(field.getId()));
+        copy.setSort(mapVisSort(field.getSort(), settingResolver));
 
         return copy;
     }
 
-    private stroom.query.api.VisSort mapVisSort(final VisSettings.Sort sort) {
+    private stroom.query.api.Sort mapVisSort(final VisSettings.Sort sort, final SettingResolver settingResolver) {
         if (sort == null) {
             return null;
         }
 
-        final VisSort copy = new VisSort();
-        copy.setEnabled(sort.getEnabled());
-        copy.setDirection(sort.getDirection());
-        copy.setPriority(sort.getPriority());
+        Boolean enabled = settingResolver.resolveBoolean(sort.getEnabled());
+        if (enabled != null && enabled) {
+            final stroom.query.api.Sort copy = new stroom.query.api.Sort();
+            SortDirection direction = SortDirection.ASCENDING;
 
-        return copy;
+            String dir = settingResolver.resolveString(sort.getDirection());
+            if (dir != null) {
+                if (dir.equalsIgnoreCase(SortDirection.DESCENDING.getDisplayValue())) {
+                    direction = SortDirection.DESCENDING;
+                }
+            }
+
+            copy.setDirection(direction);
+            copy.setOrder(settingResolver.resolveInteger(sort.getPriority()));
+
+            return copy;
+        }
+
+        return null;
     }
 
-    private stroom.query.api.VisValues mapVisValues(final VisSettings.Values values) {
+    private stroom.query.api.VisValues mapVisValues(final VisSettings.Values values, final SettingResolver settingResolver) {
         if (values == null) {
             return null;
         }
@@ -447,60 +510,144 @@ public class SearchRequestMapper {
         if (values.getFields() != null) {
             fields = new VisField[values.getFields().length];
             for (int i = 0; i < values.getFields().length; i++) {
-                fields[i] = mapVisField(values.getFields()[i]);
+                fields[i] = mapVisField(values.getFields()[i], settingResolver);
             }
         }
 
         final VisValues copy = new VisValues();
         copy.setFields(fields);
-        copy.setLimit(mapVisLimit(values.getLimit()));
+        copy.setLimit(mapVisLimit(values.getLimit(), settingResolver));
 
         return copy;
     }
 
-    private stroom.query.api.VisLimit mapVisLimit(final VisSettings.Limit limit) {
-        if (limit == null) {
-            return null;
+    private stroom.query.api.VisLimit mapVisLimit(final VisSettings.Limit limit, final SettingResolver settingResolver) {
+        if (limit != null) {
+            Boolean enabled = settingResolver.resolveBoolean(limit.getEnabled());
+            if (enabled == null || enabled) {
+                final VisLimit copy = new VisLimit();
+                copy.setSize(settingResolver.resolveInteger(limit.getSize()));
+                return copy;
+            }
         }
 
-        final VisLimit copy = new VisLimit();
-        copy.setEnabled(limit.getEnabled());
-        copy.setSize(limit.getSize());
-
-        return copy;
+        return null;
     }
 
-    private stroom.query.api.Param[] mapVisParams(final String json) {
-        List<Param> params = new ArrayList<>();
+    private static class SettingResolver {
+        private final Map<String, Control> controls = new HashMap<>();
+        private final Map<String, String> dashboardSettings;
 
-        try {
-            if (json == null || json.length() == 0) {
-                return null;
+        public SettingResolver(final VisSettings visSettings, final String json) {
+            dashboardSettings = getDashboardSettingsMap(json);
+
+            // Create a map of controls.
+            if (visSettings.getTabs() != null) {
+                for (final Tab tab : visSettings.getTabs()) {
+                    if (tab.getControls() != null) {
+                        for (final Control control : tab.getControls()) {
+                            if (control.getId() != null && control != null) {
+                                controls.put(control.getId(), control);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public String resolveField(final String value) {
+            if (value == null) {
+                throw new RuntimeException("Structure element with missing field name");
             }
 
-            ObjectMapper objectMapper = new ObjectMapper();
-            final JsonNode node = objectMapper.readTree(json);
+            return resolveString(value);
+        }
 
-            Iterator<Entry<String, JsonNode>> iterator = node.fields();
-            while (iterator.hasNext()) {
-                Entry<String, JsonNode> entry = iterator.next();
-                JsonNode val = entry.getValue();
-                if (val != null) {
-                    final String str = val.textValue();
-                    if (str != null) {
-                        params.add(new Param(entry.getKey(), str));
+        public String resolveString(final String value) {
+            String val = value;
+            if (val != null) {
+                if (isReference(val)) {
+                    final String controlId = getReference(val);
+                    val = dashboardSettings.get(controlId);
+
+                    if (val == null) {
+                        final Control control = controls.get(controlId);
+                        if (control != null) {
+                            val = control.getDefaultValue();
+                        } else {
+//                            throw new RuntimeException("No control found with id = '" + controlId + "'");
+                        }
                     }
                 }
             }
 
-        } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            return val;
         }
 
-        if (params.size() == 0) {
-            return null;
+        public Boolean resolveBoolean(final String value) {
+            String str = resolveString(value);
+            if (str == null) {
+                return null;
+            }
+            return Boolean.valueOf(str);
         }
 
-        return params.toArray(new Param[params.size()]);
+        public Integer resolveInteger(final String value) {
+            String str = resolveString(value);
+            if (str == null) {
+                return null;
+            }
+            return Integer.valueOf(str);
+        }
+
+        public Long resolveLong(final String value) {
+            String str = resolveString(value);
+            if (str == null) {
+                return null;
+            }
+            return Long.valueOf(str);
+        }
+
+        private boolean isReference(final String value) {
+            if (value != null) {
+                return value.startsWith("${") && value.endsWith("}");
+            }
+
+            return false;
+        }
+
+        private String getReference(final String value) {
+            String ref = value;
+            ref = ref.substring(2);
+            ref = ref.substring(0, ref.length() - 1);
+            return ref;
+        }
+
+        private Map<String, String> getDashboardSettingsMap(final String json) {
+            Map<String, String> map = new HashMap<>();
+
+            try {
+                if (json != null && json.length() > 0) {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    final JsonNode node = objectMapper.readTree(json);
+
+                    Iterator<Entry<String, JsonNode>> iterator = node.fields();
+                    while (iterator.hasNext()) {
+                        Entry<String, JsonNode> entry = iterator.next();
+                        JsonNode val = entry.getValue();
+                        if (val != null) {
+                            final String str = val.textValue();
+                            if (str != null) {
+                                map.put(entry.getKey(), str);
+                            }
+                        }
+                    }
+                }
+            } catch (final IOException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+
+            return map;
+        }
     }
 }

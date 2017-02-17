@@ -14,36 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.search.server;
+package stroom.query;
 
 import stroom.dashboard.expression.FieldIndexMap;
 import stroom.mapreduce.BlockingPairQueue;
 import stroom.mapreduce.PairQueue;
 import stroom.mapreduce.UnsafePairQueue;
-import stroom.query.CompiledDepths;
-import stroom.query.CompiledFields;
-import stroom.query.Item;
-import stroom.query.ItemMapper;
-import stroom.query.ItemPartitioner;
-import stroom.query.Payload;
-import stroom.query.TableCoprocessorSettings;
-import stroom.query.TablePayload;
 import stroom.query.api.Field;
 import stroom.query.api.TableSettings;
-import stroom.util.task.TaskMonitor;
+import stroom.util.shared.HasTerminate;
 
-import java.util.List;
 import java.util.Map;
 
 public class TableCoprocessor implements Coprocessor {
-    private final PairQueue<String, Item> queue;
+    private final PairQueue<Key, Item> queue;
     private final ItemMapper mapper;
 
     private final CompiledFields compiledFields;
     private final CompiledDepths compiledDepths;
 
     public TableCoprocessor(final TableCoprocessorSettings settings,
-                            final FieldIndexMap fieldIndexMap, final TaskMonitor taskMonitor, final Map<String, String> paramMap) {
+                            final FieldIndexMap fieldIndexMap, final HasTerminate taskMonitor, final Map<String, String> paramMap) {
         final TableSettings tableSettings = settings.getTableSettings();
 
         final Field[] fields = tableSettings.getFields();
@@ -61,7 +52,7 @@ public class TableCoprocessor implements Coprocessor {
 
     @Override
     public Payload createPayload() {
-        final UnsafePairQueue<String, Item> outputQueue = new UnsafePairQueue<>();
+        final UnsafePairQueue<Key, Item> outputQueue = new UnsafePairQueue<>();
 
         // Create a partitioner to perform result reduction if needed.
         final ItemPartitioner partitioner = new ItemPartitioner(compiledDepths.getDepths(),

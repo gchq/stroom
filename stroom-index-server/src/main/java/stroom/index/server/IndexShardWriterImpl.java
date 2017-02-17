@@ -321,8 +321,10 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     // is unlocked.
                     try {
                         final Path lockFile = dir.resolve(IndexWriter.WRITE_LOCK_NAME);
-                        Files.delete(lockFile);
-                    } catch (final InvalidPathException e) {
+                        if (Files.isRegularFile(lockFile)) {
+                            Files.delete(lockFile);
+                        }
+                    } catch (final IOException e) {
                         // There is no lock file so ignore.
                     }
 

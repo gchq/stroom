@@ -26,10 +26,10 @@ public abstract class AbstractManyChildGenerator extends AbstractGenerator {
     }
 
     @Override
-    public void addChildKey(final String group) {
+    public void addChildKey(final Object key) {
         if (childGenerators != null) {
             for (final Generator gen : childGenerators) {
-                gen.addChildKey(group);
+                gen.addChildKey(key);
             }
         }
     }

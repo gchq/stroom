@@ -22,14 +22,12 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
-@JsonPropertyOrder({"uuid", "sessionId", "userId"})
-@XmlType(name = "QueryKey", propOrder = {"uuid", "sessionId", "userId"})
+@JsonPropertyOrder({"uuid"})
+@XmlType(name = "QueryKey", propOrder = {"uuid"})
 public class QueryKey implements Serializable {
     private static final long serialVersionUID = -3222989872764402068L;
 
     private String uuid;
-    private String sessionId;
-    private String userId;
 
     public QueryKey() {
         // Default constructor necessary for GWT serialisation.
@@ -52,24 +50,6 @@ public class QueryKey implements Serializable {
 
     public void setUuid(final String uuid) {
         this.uuid = uuid;
-    }
-
-    @XmlElement
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public void setSessionId(final String sessionId) {
-        this.sessionId = sessionId;
-    }
-
-    @XmlElement
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(final String userId) {
-        this.userId = userId;
     }
 
     @Override

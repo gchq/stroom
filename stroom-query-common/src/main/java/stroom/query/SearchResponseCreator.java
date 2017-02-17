@@ -20,11 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
+import stroom.query.api.ResultRequest.ResultStyle;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
-import stroom.query.api.TableResultRequest;
-import stroom.query.api.VisResultRequest;
 import stroom.query.format.FieldFormatter;
 import stroom.query.format.FormatterFactory;
 
@@ -131,7 +130,7 @@ public class SearchResponseCreator {
     }
 
     private ResultCreator getResultCreator(final String componentId,
-                                           final ResultRequest componentResultRequest,
+                                           final ResultRequest resultRequest,
                                            final String dateTimeLocale) {
         if (cachedResultCreators.containsKey(componentId)) {
             return cachedResultCreators.get(componentId);
@@ -139,11 +138,11 @@ public class SearchResponseCreator {
 
         ResultCreator resultCreator = null;
         try {
-            if (componentResultRequest instanceof TableResultRequest) {
+            if (ResultStyle.TREE.equals(resultRequest.getResultStyle())) {
+                resultCreator = new VisResultCreator(resultRequest, null, null);
+            } else {
                 final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeLocale));
                 resultCreator = new TableResultCreator(fieldFormatter);
-            } else if (componentResultRequest instanceof VisResultRequest) {
-                resultCreator = VisResultCreator.create(componentResultRequest);
             }
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage());

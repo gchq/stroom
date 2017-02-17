@@ -21,41 +21,42 @@ import java.io.Serializable;
 public class Item implements Serializable {
     private static final long serialVersionUID = 4371018450667741005L;
 
-    String parentKey;
-    String groupKey;
+    Key key;
     Object[] values;
     int depth;
 
-    public Item(final String parentKey, final String groupKey, final Object[] values, final int depth) {
-        this.parentKey = parentKey;
-        this.groupKey = groupKey;
+    public Item(final Key key, final Object[] values, final int depth) {
+        this.key = key;
         this.values = values;
         this.depth = depth;
+    }
+
+    public Key getKey() {
+        return key;
     }
 
     public Object[] getValues() {
         return values;
     }
 
+
+    public int getDepth() {
+        return depth;
+    }
+
     @Override
     public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof Item)) {
-            return false;
-        }
+        if (this == o) return true;
+        if (!(o instanceof Item)) return false;
 
         final Item item = (Item) o;
-        return groupKey != null && item.groupKey != null && groupKey.equals(item.groupKey);
 
+        return key != null ? key.equals(item.key) : item.key == null;
     }
 
     @Override
     public int hashCode() {
-        if (groupKey != null) {
-            return groupKey.hashCode();
-        }
-        return super.hashCode();
+        return key != null ? key.hashCode() : 0;
     }
 
     @Override
@@ -69,13 +70,5 @@ public class Item implements Serializable {
             sb.setLength(sb.length() - 1);
         }
         return sb.toString();
-    }
-
-    public int getDepth() {
-        return depth;
-    }
-
-    public String getGroupKey() {
-        return groupKey;
     }
 }

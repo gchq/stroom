@@ -25,17 +25,17 @@ import java.util.Map;
 public class SearchBusPollResult implements SharedObject {
     private static final long serialVersionUID = -2964122512841756795L;
 
-    private Map<QueryKey, SearchResponse> searchResultMap = new HashMap<QueryKey, SearchResponse>();
+    private Map<DashboardQueryKey, SearchResponse> searchResultMap = new HashMap<>();
 
     public SearchBusPollResult() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public SearchBusPollResult(final Map<QueryKey, SearchResponse> searchResultMap) {
+    public SearchBusPollResult(final Map<DashboardQueryKey, SearchResponse> searchResultMap) {
         this.searchResultMap = searchResultMap;
     }
 
-    public Map<QueryKey, SearchResponse> getSearchResultMap() {
+    public Map<DashboardQueryKey, SearchResponse> getSearchResultMap() {
         return searchResultMap;
     }
 }
