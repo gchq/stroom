@@ -23,7 +23,6 @@ import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.Row;
 import stroom.query.api.TableResult;
-import stroom.query.api.TableResultRequest;
 import stroom.query.format.FieldFormatter;
 
 import java.util.ArrayList;
@@ -42,8 +41,7 @@ public class TableResultCreator implements ResultCreator {
     }
 
     @Override
-    public Result create(final Data data, final ResultRequest componentResultRequest) {
-        final TableResultRequest resultRequest = (TableResultRequest) componentResultRequest;
+    public Result create(final Data data, final ResultRequest resultRequest) {
         final List<Row> resultList = new ArrayList<>();
         int offset = 0;
         int length = Integer.MAX_VALUE;
@@ -62,14 +60,14 @@ public class TableResultCreator implements ResultCreator {
                 openGroups = Arrays.stream(resultRequest.getOpenGroups()).collect(Collectors.toSet());
             }
 
-            latestFields = resultRequest.getTableSettings().getFields();
+            latestFields = resultRequest.getTableSettings()[0].getFields();
             totalResults = addTableResults(data, latestFields, offset, length, openGroups, resultList, null, 0,
                     0);
         } catch (final Exception e) {
             error = e.getMessage();
         }
 
-        final TableResult tableResult = new TableResult(componentResultRequest.getComponentId());
+        final TableResult tableResult = new TableResult(resultRequest.getComponentId());
         tableResult.setRows(resultList.toArray(new Row[resultList.size()]));
         tableResult.setResultRange(new OffsetRange(offset, resultList.size()));
         tableResult.setTotalResults(totalResults);
@@ -79,7 +77,7 @@ public class TableResultCreator implements ResultCreator {
     }
 
     private int addTableResults(final Data data, final Field[] fields, final int offset,
-                                final int length, final Set<String> openGroups, final List<Row> resultList, final String parentKey,
+                                final int length, final Set<String> openGroups, final List<Row> resultList, final Key parentKey,
                                 final int depth, final int position) {
         int pos = position;
         // Get top level items.
@@ -112,16 +110,20 @@ public class TableResultCreator implements ResultCreator {
                         }
                     }
 
-                    resultList.add(new Row(item.getGroupKey(), values, item.getDepth()));
+                    if (item.getKey() != null) {
+                        resultList.add(new Row(item.getKey().toString(), values, item.getDepth()));
+                    } else {
+                        resultList.add(new Row(null, values, item.getDepth()));
+                    }
                 }
 
                 // Increment the position.
                 pos++;
 
                 // Add child results if a node is open.
-                if (item.getGroupKey() != null && openGroups != null && openGroups.contains(item.getGroupKey())) {
+                if (item.getKey() != null && openGroups != null && openGroups.contains(item.getKey().toString())) {
                     pos = addTableResults(data, fields, offset, length, openGroups, resultList,
-                            item.getGroupKey(), depth + 1, pos);
+                            item.getKey(), depth + 1, pos);
                 }
             }
         }

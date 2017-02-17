@@ -30,6 +30,9 @@ public class DateTimeFormat implements Serializable {
     private String pattern;
     private TimeZone timeZone;
 
+    public DateTimeFormat() {
+    }
+
     @XmlElement
     public String getPattern() {
         return pattern;

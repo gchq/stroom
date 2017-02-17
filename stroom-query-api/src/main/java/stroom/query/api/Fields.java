@@ -21,35 +21,29 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
+import java.util.Arrays;
 
-@JsonPropertyOrder({"uuid"})
-@XmlType(name = "QueryKey", propOrder = {"uuid"})
-public class QueryKey implements Serializable {
-    private static final long serialVersionUID = -3222989872764402068L;
+@JsonPropertyOrder({"fields"})
+@XmlType(name = "Fields", propOrder = {"fields"})
+public class Fields implements Serializable {
+    private static final long serialVersionUID = 3826654996795750099L;
 
-    private String uuid;
+    private Field[] fields;
 
-    public QueryKey() {
-        // Default constructor necessary for GWT serialisation.
+    public Fields() {
     }
 
-    public QueryKey(String uuid, String sessionId, String userId){
-        this.uuid = uuid;
-        this.sessionId = sessionId;
-        this.userId = userId;
+    public Fields(final Field[] fields) {
+        this.fields = fields;
     }
 
-    public QueryKey(final String uuid) {
-        this.uuid = uuid;
+    @XmlElement(name = "field")
+    public Field[] getFields() {
+        return fields;
     }
 
-    @XmlElement
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(final String uuid) {
-        this.uuid = uuid;
+    public void setFields(final Field[] fields) {
+        this.fields = fields;
     }
 
     @Override
@@ -57,18 +51,14 @@ public class QueryKey implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final QueryKey queryKey = (QueryKey) o;
+        final Fields fields1 = (Fields) o;
 
-        return uuid.equals(queryKey.uuid);
+        // Probably incorrect - comparing Object[] arrays with Arrays.equals
+        return Arrays.equals(fields, fields1.fields);
     }
 
     @Override
     public int hashCode() {
-        return uuid.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return uuid;
+        return Arrays.hashCode(fields);
     }
 }

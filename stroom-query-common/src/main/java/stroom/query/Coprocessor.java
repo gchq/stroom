@@ -16,7 +16,6 @@
 
 package stroom.query;
 
-import java.io.Serializable;
-
-public interface QueryKey extends Serializable {
+public interface Coprocessor extends PayloadFactory {
+    void receive(String[] values);
 }

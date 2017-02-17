@@ -24,7 +24,7 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.dashboard.shared.SharedQueryKey;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionItem;
@@ -47,7 +47,7 @@ public class SearchModel {
     private ExpressionOperator currentExpression;
     private SearchResponse currentResult;
     private DashboardUUID dashboardUUID;
-    private SharedQueryKey currentQueryKey;
+    private DashboardQueryKey currentQueryKey;
     private Search currentSearch;
     private Search activeSearch;
     private Mode mode = Mode.INACTIVE;
@@ -132,7 +132,7 @@ public class SearchModel {
                 replaceExpressionParameters(builder, expression, currentParameterMap);
                 currentExpression = builder.build();
 
-                currentQueryKey = new SharedQueryKey(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
+                currentQueryKey = new DashboardQueryKey(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
                 currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, incremental);
                 activeSearch = currentSearch;
 
@@ -299,7 +299,7 @@ public class SearchModel {
         return currentSearch != null;
     }
 
-    public QueryKey getCurrentQueryKey() {
+    public DashboardQueryKey getCurrentQueryKey() {
         return currentQueryKey;
     }
 
@@ -314,7 +314,7 @@ public class SearchModel {
     public void setDashboardUUID(final DashboardUUID dashboardUUID) {
         this.dashboardUUID = dashboardUUID;
         destroy();
-        currentQueryKey = new SharedQueryKey(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
+        currentQueryKey = new DashboardQueryKey(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
     }
 
     public SearchResponse getCurrentResult() {

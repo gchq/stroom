@@ -28,7 +28,7 @@ public class VisField implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;
 
     private String id;
-    private VisSort sort;
+    private Sort sort;
 
     public VisField() {
     }
@@ -37,7 +37,7 @@ public class VisField implements Serializable {
         this(id, null);
     }
 
-    public VisField(final String id, final VisSort sort) {
+    public VisField(final String id, final Sort sort) {
         this.id = id;
         this.sort = sort;
     }
@@ -52,11 +52,11 @@ public class VisField implements Serializable {
     }
 
     @XmlElement
-    public VisSort getSort() {
+    public Sort getSort() {
         return sort;
     }
 
-    public void setSort(final VisSort sort) {
+    public void setSort(final Sort sort) {
         this.sort = sort;
     }
 

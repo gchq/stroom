@@ -14,42 +14,31 @@
  * limitations under the License.
  */
 
-package stroom.query.api;
+package stroom.dashboard.shared;
 
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.util.shared.SharedObject;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-
-@JsonPropertyOrder({"uuid"})
-@XmlType(name = "QueryKey", propOrder = {"uuid"})
-public class QueryKey implements Serializable {
+public class DashboardQueryKey implements SharedObject {
     private static final long serialVersionUID = -3222989872764402068L;
 
     private String uuid;
+    private long dashboardId;
 
-    public QueryKey() {
+    public DashboardQueryKey() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public QueryKey(String uuid, String sessionId, String userId){
+    public DashboardQueryKey(final String uuid, final long dashboardId) {
         this.uuid = uuid;
-        this.sessionId = sessionId;
-        this.userId = userId;
+        this.dashboardId = dashboardId;
     }
 
-    public QueryKey(final String uuid) {
-        this.uuid = uuid;
-    }
-
-    @XmlElement
     public String getUuid() {
         return uuid;
     }
 
-    public void setUuid(final String uuid) {
-        this.uuid = uuid;
+    public long getDashboardId() {
+        return dashboardId;
     }
 
     @Override
@@ -57,18 +46,24 @@ public class QueryKey implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final QueryKey queryKey = (QueryKey) o;
+        final DashboardQueryKey that = (DashboardQueryKey) o;
 
-        return uuid.equals(queryKey.uuid);
+        if (dashboardId != that.dashboardId) return false;
+        return uuid != null ? uuid.equals(that.uuid) : that.uuid == null;
     }
 
     @Override
     public int hashCode() {
-        return uuid.hashCode();
+        int result = uuid != null ? uuid.hashCode() : 0;
+        result = 31 * result + (int) (dashboardId ^ (dashboardId >>> 32));
+        return result;
     }
 
     @Override
     public String toString() {
-        return uuid;
+        return "DashboardQueryKey{" +
+                "uuid='" + uuid + '\'' +
+                ", dashboardId=" + dashboardId +
+                '}';
     }
 }

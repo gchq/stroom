@@ -16,6 +16,8 @@
 
 package stroom.query;
 
+import stroom.query.api.ResultRequest;
+import stroom.query.api.SearchRequest;
 import stroom.query.api.TableSettings;
 
 import java.io.Serializable;
@@ -26,11 +28,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class CoprocessorMap {
+public class CoprocessorSettingsMap {
     private final Map<String, CoprocessorKey> componentIdToCoprocessorKeyMap = new HashMap<>();
     private final Map<CoprocessorKey, CoprocessorSettings> map = new HashMap<>();
 
-    public CoprocessorMap(final Map<String, TableSettings> settingsMap) {
+    private CoprocessorSettingsMap(final Map<String, TableSettings> settingsMap) {
         // Group common settings.
         final Map<TableSettings, Set<String>> groupMap = new HashMap<>();
         for (final Entry<String, TableSettings> entry : settingsMap.entrySet()) {
@@ -52,6 +54,14 @@ public class CoprocessorMap {
                 componentIdToCoprocessorKeyMap.put(componentId, key);
             }
         }
+    }
+
+    public static CoprocessorSettingsMap create(final SearchRequest searchRequest) {
+        final Map<String, TableSettings> settingsMap = new HashMap<>();
+        for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
+            settingsMap.put(resultRequest.getComponentId(), resultRequest.getTableSettings()[0]);
+        }
+        return new CoprocessorSettingsMap(settingsMap);
     }
 
     public CoprocessorKey getCoprocessorKey(final String componentId) {

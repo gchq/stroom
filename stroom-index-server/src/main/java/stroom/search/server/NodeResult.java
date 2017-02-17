@@ -16,7 +16,7 @@
 
 package stroom.search.server;
 
-import stroom.query.CoprocessorMap.CoprocessorKey;
+import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.Payload;
 import stroom.util.shared.SharedObject;
 

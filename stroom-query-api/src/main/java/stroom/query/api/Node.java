@@ -16,122 +16,144 @@
 
 package stroom.query.api;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 import java.util.Arrays;
 
-@JsonPropertyOrder({"key", "nodes", "values", "min", "max", "sum"})
-@XmlType(name = "Node", propOrder = {"key", "nodes", "XMLValues", "min", "max", "sum"})
+@JsonPropertyOrder({"key", "values", "nodes", "min", "max", "sum"})
 public class Node implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;
 
-    private Key key;
-    private Node[] nodes;
-    private Object[][] values;
-    private Double[] min;
-    private Double[] max;
-    private Double[] sum;
+    private Object[] key;
+    private Object[] values;
 
     public Node() {
     }
 
-    public Node(final Key key, final Node[] nodes, final Object[][] values, final Double[] min, final Double[] max, final Double[] sum) {
+    public Node(final Object[] key, final Object[] values, final Double[] min, final Double[] max, final Double[] sum) {
         this.key = key;
-        this.nodes = nodes;
         this.values = values;
-        this.min = min;
-        this.max = max;
-        this.sum = sum;
+//        this.nodes = nodes;
+//        this.min = min;
+//        this.max = max;
+//        this.sum = sum;
     }
 
-    @XmlElement
-    public Key getKey() {
+    //    @XmlTransient
+    @JsonProperty
+    public Object[] getKey() {
         return key;
     }
 
-    public void setKey(final Key key) {
+    public void setKey(final Object[] key) {
         this.key = key;
     }
+//
+//    @JsonIgnore
+//    @XmlElementWrapper(name = "key")
+//    @XmlElement(name = "values")
+//    public Values[] getXMLKey() {
+//        if (this.key == null) {
+//            return null;
+//        }
+//        final Values[] key = new Values[this.key.length];
+//        for (int i = 0; i < this.key.length; i++) {
+//            key[i] = new Values(this.key[i]);
+//        }
+//        return key;
+//    }
+//
+//    public void setXMLKey(final Values[] key) {
+//        if (key != null) {
+//            this.key = new Object[key.length][];
+//            for (int i = 0; i < key.length; i++) {
+//                this.key[i] = key[i].getValues();
+//            }
+//        } else {
+//            this.key = null;
+//        }
+//    }
 
-    @XmlElementWrapper(name = "nodes")
-    @XmlElement(name = "node")
-    public Node[] getNodes() {
-        return nodes;
-    }
-
-    public void setNodes(final Node[] nodes) {
-        this.nodes = nodes;
-    }
-
-    @XmlTransient
-    public Object[][] getValues() {
+    //    @XmlTransient
+    @JsonProperty
+    public Object[] getValues() {
         return values;
     }
 
-    public void setValues(final Object[][] values) {
+    public void setValues(final Object[] values) {
         this.values = values;
     }
 
-    @JsonIgnore
-    @XmlElementWrapper(name = "values")
-    @XmlElement(name = "values")
-    public Values[] getXMLValues() {
-        if (this.values == null) {
-            return null;
-        }
-        final Values[] values = new Values[this.values.length];
-        for (int i = 0; i < this.values.length; i++) {
-            values[i] = new Values(this.values[i]);
-        }
-        return values;
-    }
+//    @JsonIgnore
+//    @XmlElementWrapper(name = "values")
+//    @XmlElement(name = "values")
+//    public Values[] getXMLValues() {
+//        if (this.values == null) {
+//            return null;
+//        }
+//        final Values[] values = new Values[this.values.length];
+//        for (int i = 0; i < this.values.length; i++) {
+//            values[i] = new Values(this.values[i]);
+//        }
+//        return values;
+//    }
+//
+//    public void setXMLValues(final Values[] values) {
+//        if (values != null) {
+//            this.values = new Object[values.length][];
+//            for (int i = 0; i < values.length; i++) {
+//                this.values[i] = values[i].getValues();
+//            }
+//        } else {
+//            this.values = null;
+//        }
+//    }
+//
+//    @XmlElementWrapper(name = "nodes")
+//    @XmlElement(name = "node")
+//    public Node[] getNodes() {
+//        return nodes;
+//    }
+//
+//    public void setNodes(final Node[] nodes) {
+//        this.nodes = nodes;
+//    }
+//
+//    @XmlElementWrapper(name = "min")
+//    @XmlElement(name = "double", nillable = true)
+//    @JsonProperty("min")
+//    public Double[] getMin() {
+//        return min;
+//    }
+//
+//    public void setMin(final Double[] min) {
+//        this.min = min;
+//    }
+//
+//    @XmlElementWrapper(name = "max")
+//    @XmlElement(name = "double", nillable = true)
+//    @JsonProperty("max")
+//    public Double[] getMax() {
+//        return max;
+//    }
+//
+//    public void setMax(final Double[] max) {
+//        this.max = max;
+//    }
+//
+//    @XmlElementWrapper(name = "sum")
+//    @XmlElement(name = "double", nillable = true)
+//    @JsonProperty("sum")
+//    public Double[] getSum() {
+//        return sum;
+//    }
+//
+//    public void setSum(final Double[] sum) {
+//        this.sum = sum;
+//    }
 
-    public void setXMLValues(final Values[] values) {
-        if (values != null) {
-            this.values = new Object[values.length][];
-            for (int i = 0; i < values.length; i++) {
-                this.values[i] = values[i].getValues();
-            }
-        } else {
-            this.values = null;
-        }
-    }
-
-    @XmlElementWrapper(name = "min")
-    @XmlElement(name = "val")
-    public Double[] getMin() {
-        return min;
-    }
-
-    public void setMin(final Double[] min) {
-        this.min = min;
-    }
-
-    @XmlElementWrapper(name = "max")
-    @XmlElement(name = "val")
-    public Double[] getMax() {
-        return max;
-    }
-
-    public void setMax(final Double[] max) {
-        this.max = max;
-    }
-
-    @XmlElementWrapper(name = "sum")
-    @XmlElement(name = "val")
-    public Double[] getSum() {
-        return sum;
-    }
-
-    public void setSum(final Double[] sum) {
-        this.sum = sum;
-    }
 
     @Override
     public boolean equals(final Object o) {
@@ -140,38 +162,39 @@ public class Node implements Serializable {
 
         final Node node = (Node) o;
 
-        if (key != null ? !key.equals(node.key) : node.key != null) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(nodes, node.nodes)) return false;
-        if (!Arrays.deepEquals(values, node.values)) return false;
+        if (!Arrays.equals(key, node.key)) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(min, node.min)) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(max, node.max)) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(sum, node.sum);
+        return Arrays.equals(values, node.values);
     }
 
     @Override
     public int hashCode() {
-        int result = key != null ? key.hashCode() : 0;
-        result = 31 * result + Arrays.hashCode(nodes);
-        result = 31 * result + Arrays.deepHashCode(values);
-        result = 31 * result + Arrays.hashCode(min);
-        result = 31 * result + Arrays.hashCode(max);
-        result = 31 * result + Arrays.hashCode(sum);
+        int result = Arrays.hashCode(key);
+        result = 31 * result + Arrays.hashCode(values);
         return result;
     }
 
     @Override
     public String toString() {
-        return "Node{" +
-                "key=" + key +
-                ", nodes=" + Arrays.toString(nodes) +
-                ", values=" + Arrays.toString(values) +
-                ", min=" + Arrays.toString(min) +
-                ", max=" + Arrays.toString(max) +
-                ", sum=" + Arrays.toString(sum) +
-                '}';
+        if (key == null || key.length == 0) {
+            return "";
+        }
+
+        final Object[] group = (Object[]) key[key.length - 1];
+        if (group.length == 0) {
+            return "";
+        }
+
+        if (group.length == 1) {
+            return String.valueOf(group[0]);
+        }
+        final StringBuilder sb = new StringBuilder();
+        for (final Object obj : group) {
+            sb.append(String.valueOf(obj));
+            sb.append("|");
+        }
+        sb.setLength(sb.length() - 1);
+        return sb.toString();
     }
 }

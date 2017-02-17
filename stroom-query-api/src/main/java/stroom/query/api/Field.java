@@ -17,6 +17,7 @@
 package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.query.api.Format.Type;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
@@ -39,6 +40,11 @@ public class Field implements Serializable {
 
     public Field(final String name) {
         this.name = name;
+    }
+
+    public Field(final String name, final Type type) {
+        this.name = name;
+        this.format = new Format(type);
     }
 
     public Field(String name, String expression, Sort sort, Filter filter, Format format, Integer group) {

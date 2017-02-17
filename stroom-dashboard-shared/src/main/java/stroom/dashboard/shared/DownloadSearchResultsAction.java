@@ -17,13 +17,12 @@
 package stroom.dashboard.shared;
 
 import stroom.entity.shared.Action;
-import stroom.query.api.QueryKey;
 import stroom.util.shared.ResourceGeneration;
 
 public class DownloadSearchResultsAction extends Action<ResourceGeneration> {
     private static final long serialVersionUID = -6668626615097471925L;
 
-    private QueryKey queryKey;
+    private DashboardQueryKey queryKey;
     private Search search;
     private String componentId;
     private DownloadSearchResultFileType fileType;
@@ -35,7 +34,7 @@ public class DownloadSearchResultsAction extends Action<ResourceGeneration> {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public DownloadSearchResultsAction(final QueryKey queryKey, final Search search, final String componentId,
+    public DownloadSearchResultsAction(final DashboardQueryKey queryKey, final Search search, final String componentId,
                                        final DownloadSearchResultFileType fileType, final boolean sample, final int percent,
                                        final String dateTimeLocale) {
         this.queryKey = queryKey;
@@ -47,7 +46,7 @@ public class DownloadSearchResultsAction extends Action<ResourceGeneration> {
         this.dateTimeLocale = dateTimeLocale;
     }
 
-    public QueryKey getQueryKey() {
+    public DashboardQueryKey getQueryKey() {
         return queryKey;
     }
 

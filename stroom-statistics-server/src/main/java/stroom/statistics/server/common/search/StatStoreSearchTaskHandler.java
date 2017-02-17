@@ -88,7 +88,7 @@ public class StatStoreSearchTaskHandler {//extends AbstractTaskHandler<StatStore
 //                if (payloadMap == null) {
 //                    payloadMap = new HashMap<>();
 //                }
-//                payloadMap.put(entry.getKey(), payload);
+//                payloadMap.put(entry.getValues(), payload);
 //            }
 //
 //            resultCollector.handle(payloadMap);

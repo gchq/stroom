@@ -21,11 +21,12 @@ import org.junit.Test;
 import stroom.mapreduce.UnsafePairQueue;
 import stroom.query.api.Field;
 import stroom.query.api.Format;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.ResultRequest;
 import stroom.query.api.Row;
 import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.TableResult;
-import stroom.query.api.TableResultRequest;
 import stroom.query.api.TableSettings;
 import stroom.query.format.FieldFormatter;
 import stroom.query.format.FormatterFactory;
@@ -35,6 +36,8 @@ import stroom.util.shared.ParamUtil;
 import java.util.Collections;
 
 public class TestTablePayloadHandler {
+    private final TrimSettings trimSettings = new TrimSettings(new Integer[]{50}, new Integer[]{50});
+
     @Test
     public void basicTest() {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
@@ -55,7 +58,7 @@ public class TestTablePayloadHandler {
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
 
-        final UnsafePairQueue<String, Item> queue = new UnsafePairQueue<>();
+        final UnsafePairQueue<Key, Item> queue = new UnsafePairQueue<>();
         final ItemMapper itemMapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),
                 compiledDepths.getMaxGroupDepth());
 
@@ -68,13 +71,12 @@ public class TestTablePayloadHandler {
         }
 
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
-                tableSettings.showDetail(), new Integer[]{50}, new Integer[]{50});
+                tableSettings.showDetail(), trimSettings);
         payloadHandler.addQueue(queue, new Terminatable());
         final Data data = payloadHandler.getData();
 
         // Make sure we only get 50 results.
-        final TableResultRequest tableResultRequest = new TableResultRequest("componentX", tableSettings, 0, 3000);
-        tableResultRequest.setTableSettings(tableSettings);
+        final ResultRequest tableResultRequest = new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(data,
                 tableResultRequest);
@@ -102,7 +104,7 @@ public class TestTablePayloadHandler {
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
 
-        final UnsafePairQueue<String, Item> queue = new UnsafePairQueue<>();
+        final UnsafePairQueue<Key, Item> queue = new UnsafePairQueue<>();
         final ItemMapper itemMapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),
                 compiledDepths.getMaxGroupDepth());
 
@@ -115,12 +117,11 @@ public class TestTablePayloadHandler {
         }
 
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
-                tableSettings.showDetail(), new Integer[]{50}, new Integer[]{50});
+                tableSettings.showDetail(), trimSettings);
         payloadHandler.addQueue(queue, new Terminatable());
         final Data data = payloadHandler.getData();
 
-        final TableResultRequest tableResultRequest = new TableResultRequest("componentX", tableSettings, 0, 3000);
-        tableResultRequest.setTableSettings(tableSettings);
+        final ResultRequest tableResultRequest = new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
         checkResults(data, tableResultRequest, 0);
     }
 
@@ -145,7 +146,7 @@ public class TestTablePayloadHandler {
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
 
-        final UnsafePairQueue<String, Item> queue = new UnsafePairQueue<>();
+        final UnsafePairQueue<Key, Item> queue = new UnsafePairQueue<>();
         final ItemMapper itemMapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),
                 compiledDepths.getMaxGroupDepth());
 
@@ -158,12 +159,11 @@ public class TestTablePayloadHandler {
         }
 
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
-                tableSettings.showDetail(), new Integer[]{50}, new Integer[]{50});
+                tableSettings.showDetail(), trimSettings);
         payloadHandler.addQueue(queue, new Terminatable());
         final Data data = payloadHandler.getData();
 
-        final TableResultRequest tableResultRequest = new TableResultRequest("componentX", tableSettings, 0, 3000);
-        tableResultRequest.setTableSettings(tableSettings);
+        final ResultRequest tableResultRequest = new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
         checkResults(data, tableResultRequest, 0);
     }
 
@@ -192,7 +192,7 @@ public class TestTablePayloadHandler {
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
 
-        final UnsafePairQueue<String, Item> queue = new UnsafePairQueue<>();
+        final UnsafePairQueue<Key, Item> queue = new UnsafePairQueue<>();
         final ItemMapper itemMapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),
                 compiledDepths.getMaxGroupDepth());
 
@@ -205,12 +205,11 @@ public class TestTablePayloadHandler {
         }
 
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
-                tableSettings.showDetail(), new Integer[]{50}, new Integer[]{50});
+                tableSettings.showDetail(), trimSettings);
         payloadHandler.addQueue(queue, new Terminatable());
         final Data data = payloadHandler.getData();
 
-        final TableResultRequest tableResultRequest = new TableResultRequest("componentX", tableSettings, 0, 3000);
-        tableResultRequest.setTableSettings(tableSettings);
+        final ResultRequest tableResultRequest = new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
         checkResults(data, tableResultRequest, 0);
     }
 
@@ -239,7 +238,7 @@ public class TestTablePayloadHandler {
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
 
-        final UnsafePairQueue<String, Item> queue = new UnsafePairQueue<>();
+        final UnsafePairQueue<Key, Item> queue = new UnsafePairQueue<>();
         final ItemMapper itemMapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),
                 compiledDepths.getMaxGroupDepth());
 
@@ -252,12 +251,11 @@ public class TestTablePayloadHandler {
         }
 
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
-                tableSettings.showDetail(), new Integer[]{50}, new Integer[]{50});
+                tableSettings.showDetail(), trimSettings);
         payloadHandler.addQueue(queue, new Terminatable());
         final Data data = payloadHandler.getData();
 
-        final TableResultRequest tableResultRequest = new TableResultRequest("componentX", tableSettings, 0, 3000);
-        tableResultRequest.setTableSettings(tableSettings);
+        final ResultRequest tableResultRequest = new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
         checkResults(data, tableResultRequest, 1);
     }
 
@@ -286,7 +284,7 @@ public class TestTablePayloadHandler {
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
 
-        final UnsafePairQueue<String, Item> queue = new UnsafePairQueue<>();
+        final UnsafePairQueue<Key, Item> queue = new UnsafePairQueue<>();
         final ItemMapper itemMapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),
                 compiledDepths.getMaxGroupDepth());
 
@@ -299,17 +297,16 @@ public class TestTablePayloadHandler {
         }
 
         final TablePayloadHandler payloadHandler = new TablePayloadHandler(tableSettings.getFields(),
-                tableSettings.showDetail(), new Integer[]{50}, new Integer[]{50});
+                tableSettings.showDetail(), trimSettings);
         payloadHandler.addQueue(queue, new Terminatable());
         final Data data = payloadHandler.getData();
 
-        final TableResultRequest tableResultRequest = new TableResultRequest("componentX", tableSettings, 0, 3000);
-        tableResultRequest.setTableSettings(tableSettings);
+        final ResultRequest tableResultRequest = new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
         checkResults(data, tableResultRequest, 1);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private void checkResults(final Data data, final TableResultRequest tableResultRequest,
+    private void checkResults(final Data data, final ResultRequest tableResultRequest,
                               final int sortCol) {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);

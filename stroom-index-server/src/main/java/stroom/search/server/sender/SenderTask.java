@@ -16,9 +16,9 @@
 
 package stroom.search.server.sender;
 
-import stroom.query.CoprocessorMap.CoprocessorKey;
+import stroom.query.Coprocessor;
+import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.search.server.ClusterSearchTask;
-import stroom.search.server.Coprocessor;
 import stroom.search.server.NodeResult;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.ThreadPoolImpl;

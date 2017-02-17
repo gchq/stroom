@@ -22,9 +22,9 @@ public interface Generator extends Serializable, Comparable<Object> {
     /**
      * For countGroups() we need to know what child keys are used.
      *
-     * @param group The key of a chld group.
+     * @param key The key of a child group.
      */
-    void addChildKey(String group);
+    void addChildKey(Object key);
 
     /**
      * Set values that can be used to source whatever data is required by value

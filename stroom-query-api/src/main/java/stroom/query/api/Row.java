@@ -31,12 +31,12 @@ public class Row implements Serializable {
 
     private String groupKey;
     private String[] values;
-    private int depth;
+    private Integer depth;
 
     public Row() {
     }
 
-    public Row(final String groupKey, final String[] values, final int depth) {
+    public Row(final String groupKey, final String[] values, final Integer depth) {
         this.groupKey = groupKey;
         this.values = values;
         this.depth = depth;
@@ -62,32 +62,32 @@ public class Row implements Serializable {
     }
 
     @XmlElement
-    public int getDepth() {
+    public Integer getDepth() {
         return depth;
     }
 
-    public void setDepth(final int depth) {
+    public void setDepth(final Integer depth) {
         this.depth = depth;
     }
 
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof Row)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
 
         final Row row = (Row) o;
 
-        if (depth != row.depth) return false;
         if (groupKey != null ? !groupKey.equals(row.groupKey) : row.groupKey != null) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(values, row.values);
+        if (!Arrays.equals(values, row.values)) return false;
+        return depth != null ? depth.equals(row.depth) : row.depth == null;
     }
 
     @Override
     public int hashCode() {
         int result = groupKey != null ? groupKey.hashCode() : 0;
         result = 31 * result + Arrays.hashCode(values);
-        result = 31 * result + depth;
+        result = 31 * result + (depth != null ? depth.hashCode() : 0);
         return result;
     }
 

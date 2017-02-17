@@ -16,10 +16,10 @@
 
 package stroom.search.server;
 
-import stroom.query.CoprocessorMap.CoprocessorKey;
+import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.Data;
 import stroom.query.Payload;
 import stroom.query.ResultHandler;
-import stroom.query.Data;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.HasTerminate;
 

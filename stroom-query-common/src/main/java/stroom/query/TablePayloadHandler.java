@@ -37,42 +37,29 @@ public class TablePayloadHandler implements PayloadHandler {
 
     private final CompiledSorter compiledSorter;
     private final CompiledDepths compiledDepths;
-    private final Integer[] storeTrimSizes;
+    private final TrimSettings trimSettings;
     private final AtomicLong totalResults = new AtomicLong();
-    private final LinkedBlockingQueue<UnsafePairQueue<String, Item>> pendingMerges = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<UnsafePairQueue<Key, Item>> pendingMerges = new LinkedBlockingQueue<>();
     private final AtomicBoolean merging = new AtomicBoolean();
 
-    private volatile PairQueue<String, Item> currentQueue;
+    private volatile PairQueue<Key, Item> currentQueue;
     private volatile Data data;
 
-    public TablePayloadHandler(final Field[] fields, final boolean showDetails, final Integer[] storeTrimSizes, final Integer[] defaultStoreTrimSizes) {
+    public TablePayloadHandler(final Field[] fields, final boolean showDetails, final TrimSettings trimSettings) {
         this.compiledSorter = new CompiledSorter(fields);
         this.compiledDepths = new CompiledDepths(fields, showDetails);
-        this.storeTrimSizes = getStoreTrimSizes(storeTrimSizes, defaultStoreTrimSizes);
+        this.trimSettings = trimSettings;
     }
 
-    private Integer[] getStoreTrimSizes(final Integer[] storeTrimSizes, final Integer[] defaultStoreTrimSizes) {
-        Integer[] array;
-
-        if (storeTrimSizes != null && storeTrimSizes.length > 0) {
-            if (defaultStoreTrimSizes != null && defaultStoreTrimSizes.length > storeTrimSizes.length) {
-                // There are more entries in the global settings so keep
-                // them and copy over user settings that exist.
-                array = defaultStoreTrimSizes;
-                System.arraycopy(storeTrimSizes, 0, array, 0, storeTrimSizes.length);
-            } else {
-                // User settings have more entries than global settings so
-                // keep the user settings.
-                array = storeTrimSizes;
-            }
-        } else {
-            array = defaultStoreTrimSizes;
-        }
-
-        return array;
+    void clear() {
+        totalResults.set(0);
+        pendingMerges.clear();
+        merging.set(false);
+        currentQueue = null;
+        data = null;
     }
 
-    void addQueue(final UnsafePairQueue<String, Item> newQueue, final HasTerminate hasTerminate) {
+    void addQueue(final UnsafePairQueue<Key, Item> newQueue, final HasTerminate hasTerminate) {
         if (newQueue != null) {
             if (hasTerminate.isTerminated()) {
                 // Clear the queue if we should terminate.
@@ -104,7 +91,7 @@ public class TablePayloadHandler implements PayloadHandler {
                     pendingMerges.clear();
 
                 } else {
-                    UnsafePairQueue<String, Item> queue = pendingMerges.poll();
+                    UnsafePairQueue<Key, Item> queue = pendingMerges.poll();
                     while (queue != null) {
                         try {
                             mergeQueue(queue);
@@ -139,7 +126,7 @@ public class TablePayloadHandler implements PayloadHandler {
         }
     }
 
-    private void mergeQueue(final UnsafePairQueue<String, Item> newQueue) {
+    private void mergeQueue(final UnsafePairQueue<Key, Item> newQueue) {
         /*
          * Update the total number of results that we have received.
          */
@@ -149,7 +136,7 @@ public class TablePayloadHandler implements PayloadHandler {
             currentQueue = updateResultStore(newQueue);
 
         } else {
-            final PairQueue<String, Item> outputQueue = new UnsafePairQueue<>();
+            final PairQueue<Key, Item> outputQueue = new UnsafePairQueue<>();
 
             /*
              * Create a partitioner to perform result reduction if needed.
@@ -171,21 +158,21 @@ public class TablePayloadHandler implements PayloadHandler {
         }
     }
 
-    private PairQueue<String, Item> updateResultStore(final PairQueue<String, Item> queue) {
+    private PairQueue<Key, Item> updateResultStore(final PairQueue<Key, Item> queue) {
         // Stick the new reduced results into a new result store.
         final ResultStoreCreator resultStoreCreator = new ResultStoreCreator(compiledSorter);
         resultStoreCreator.read(queue);
 
         // Trim the number of results in the store.
-        resultStoreCreator.trim(storeTrimSizes);
+        resultStoreCreator.trim(trimSettings);
 
         // Put the remaining items into the current queue ready for the next
         // result.
-        final PairQueue<String, Item> remaining = new UnsafePairQueue<>();
+        final PairQueue<Key, Item> remaining = new UnsafePairQueue<>();
         long size = 0;
         for (final Items<Item> items : resultStoreCreator.childMap.values()) {
             for (final Item item : items) {
-                remaining.collect(item.groupKey, item);
+                remaining.collect(item.key, item);
                 size++;
             }
         }
@@ -200,7 +187,7 @@ public class TablePayloadHandler implements PayloadHandler {
     @Override
     public boolean shouldTerminateSearch() {
         if (!compiledSorter.hasSort() && !compiledDepths.hasGroupBy()) {
-            if (data != null && data.getTotalSize() >= storeTrimSizes[0]) {
+            if (data != null && trimSettings != null && data.getTotalSize() >= trimSettings.size(0)) {
                 return true;
             }
         }
@@ -211,9 +198,9 @@ public class TablePayloadHandler implements PayloadHandler {
         return data;
     }
 
-    private static class ResultStoreCreator implements Reader<String, Item> {
+    private static class ResultStoreCreator implements Reader<Key, Item> {
         private final CompiledSorter sorter;
-        private final Map<String, Items<Item>> childMap;
+        private final Map<Key, Items<Item>> childMap;
 
         ResultStoreCreator(final CompiledSorter sorter) {
             this.sorter = sorter;
@@ -225,35 +212,30 @@ public class TablePayloadHandler implements PayloadHandler {
         }
 
         @Override
-        public void read(final Source<String, Item> source) {
+        public void read(final Source<Key, Item> source) {
             // We should now have a reduction in the reducedQueue.
-            for (final Pair<String, Item> pair : source) {
+            for (final Pair<Key, Item> pair : source) {
                 final Item item = pair.getValue();
-                final Items<Item> items = getItems(childMap, item.parentKey);
-                items.add(item);
+
+                if (item.key != null) {
+                    childMap.computeIfAbsent(item.key.getParent(), k -> new ItemsArrayList<>()).add(item);
+                } else {
+                    childMap.computeIfAbsent(null, k -> new ItemsArrayList<>()).add(item);
+                }
             }
         }
 
-        private Items<Item> getItems(final Map<String, Items<Item>> childMap, final String parentKey) {
-            return childMap.computeIfAbsent(parentKey, k -> new ItemsArrayList<>());
+        public void trim(final TrimSettings trimSettings) {
+            trim(trimSettings, null, 0);
         }
 
-        public void trim(final Integer[] sizes) {
-            trim(sizes, null, 0);
-        }
-
-        private void trim(final Integer[] sizes, final String parentKey, final int depth) {
-            Integer size = sizes[sizes.length - 1];
-            if (depth < sizes.length) {
-                size = sizes[depth];
-            }
-
+        private void trim(final TrimSettings trimSettings, final Key parentKey, final int depth) {
             final Items<Item> parentItems = childMap.get(parentKey);
-            if (parentItems != null && size != null) {
-                parentItems.trim(size, sorter, item -> {
+            if (parentItems != null && trimSettings != null) {
+                parentItems.trim(trimSettings.size(depth), sorter, item -> {
                     // If there is a group key then cascade removal.
-                    if (item.groupKey != null) {
-                        remove(item.groupKey);
+                    if (item.key != null) {
+                        remove(item.key);
                     }
                 });
 
@@ -268,22 +250,22 @@ public class TablePayloadHandler implements PayloadHandler {
                 // sz = 1;
                 // }
                 for (final Item item : parentItems) {
-                    if (item.groupKey != null) {
-                        trim(sizes, item.groupKey, depth + 1);
+                    if (item.key != null) {
+                        trim(trimSettings, item.key, depth + 1);
                     }
                 }
             }
         }
 
-        private void remove(final String parentKey) {
+        private void remove(final Key parentKey) {
             final Items<Item> items = childMap.get(parentKey);
             if (items != null) {
                 childMap.remove(parentKey);
 
                 // Cascade delete.
                 for (final Item item : items) {
-                    if (item.groupKey != null) {
-                        remove(item.groupKey);
+                    if (item.key != null) {
+                        remove(item.key);
                     }
                 }
             }

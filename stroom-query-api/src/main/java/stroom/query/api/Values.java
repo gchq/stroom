@@ -22,11 +22,12 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 @JsonPropertyOrder({"values"})
 @XmlType(name = "Values", propOrder = {"values"})
-public class Values implements Serializable {
+public class Values extends ArrayList<Object> implements Serializable {
     private static final long serialVersionUID = 3826654996795750099L;
 
     private Object[] values;

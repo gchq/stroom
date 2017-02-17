@@ -16,77 +16,159 @@
 
 package stroom.query;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import stroom.dashboard.expression.FieldIndexMap;
 import stroom.dashboard.expression.Generator;
-import stroom.dashboard.expression.ObjectCompareUtil;
 import stroom.dashboard.expression.TypeConverter;
+import stroom.query.api.Field;
 import stroom.query.api.Format.Type;
-import stroom.query.api.Key;
-import stroom.query.api.Node;
+import stroom.query.api.OffsetRange;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
+import stroom.query.api.TableSettings;
 import stroom.query.api.VisResult;
-import stroom.query.api.VisResultRequest;
+import stroom.query.format.FieldFormatter;
+import stroom.util.shared.HasTerminate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-public class VisResultCreator implements ResultCreator {
-    private final CompiledStructure.Structure structure;
+public class VisResultCreator implements ResultCreator, HasTerminate {
+    private final FieldFormatter fieldFormatter;
+    private final Mapper[] mappers;
+    private final Field[] fields;
+//    private final Field[] valueFields;
+
     private String error;
 
-    public VisResultCreator(final CompiledStructure.Structure structure) {
-        this.structure = structure;
-    }
+    public VisResultCreator(final ResultRequest resultRequest, final Map<String, String> paramMap, final FieldFormatter fieldFormatter) {
+        this.fieldFormatter = fieldFormatter;
 
-    public static VisResultCreator create(final ResultRequest resultRequest) {
-        CompiledStructure.Structure structure;
-        try {
-            final VisResultRequest visResultRequest = (VisResultRequest) resultRequest;
-            final StructureBuilder structureBuilder = new StructureBuilder(visResultRequest.getStructure(),
-                    visResultRequest.getParams(), visResultRequest.getTableSettings().getFields());
-            structure = structureBuilder.create();
-        } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage());
+        final TableSettings[] tableSettings = resultRequest.getTableSettings();
+
+        if (tableSettings.length > 1) {
+            mappers = new Mapper[tableSettings.length - 1];
+            for (int i = 0; i < tableSettings.length - 1; i++) {
+                final TableSettings parent = tableSettings[i];
+                final TableSettings child = tableSettings[i + 1];
+                mappers[i] = new Mapper(parent, child, paramMap);
+            }
+        } else {
+            mappers = new Mapper[0];
         }
 
-        return new VisResultCreator(structure);
+        final TableSettings child = tableSettings[tableSettings.length - 1];
+        fields = child.getFields();
+
+//        tfields = Structure = createFieldStructure(fields);
+//
+//        // Get detail/value fields.
+//        valueFields = fieldStructure[fieldStructure.length - 1];
     }
+
+    private Object[] toNodeKey(final Field[] fields, final Key key) {
+        if (key == null) {
+            return null;
+        }
+
+        final List<Object[]> list = new ArrayList<>();
+        Key k = key;
+        int size = 0;
+        while (k != null && k.getValues() != null) {
+            list.add(0, k.getValues());
+            size += k.getValues().length;
+            k = k.getParent();
+        }
+
+        final Object[] result = new Object[size];
+        int index = 0;
+        int i = 0;
+        for (final Object[] values : list) {
+            final Field field = fields[i++];
+            if (values.length == 1) {
+                result[index++] = convert(field, values[0]);
+            } else {
+                for (final Object obj : values) {
+                    result[index++] = obj;
+                }
+            }
+        }
+
+        return result;
+    }
+
+//    private Field[][] createFieldStructure(final Field[] fields) {
+//        int maxGroup = -1;
+//        for (final Field field : fields) {
+//            Integer group = field.getGroup();
+//            if (group != null) {
+//                maxGroup = Math.max(maxGroup, group);
+//            }
+//        }
+//        maxGroup++;
+//
+//        final Map<Integer, List<Field>> map = new HashMap<>();
+//        for (final Field field : fields) {
+//            Integer group = field.getGroup();
+//            if (group == null || group < 0) {
+//                group = maxGroup;
+//            }
+//            final List<Field> fieldList = map.computeIfAbsent(group, k -> new ArrayList<>());
+//            fieldList.add(field);
+//        }
+//
+//        final Field[][] fieldStructure = new Field[map.size()][];
+//        for (final Entry<Integer, List<Field>> entry : map.entrySet()) {
+//            final Integer depth = entry.getKey();
+//            final List<Field> fieldList = entry.getValue();
+//            fieldList.sort((f1, f2) -> {
+//                if (f1.getGroup() == f2.getGroup()) {
+//                    return 0;
+//                }
+//                if (f1.getGroup() == null) {
+//                    return -1;
+//                } else if (f2.getGroup() == null) {
+//                    return 1;
+//                }
+//                return f1.getGroup().compareTo(f2.getGroup());
+//            });
+//            fieldStructure[depth] = fieldList.toArray(new Field[fieldList.size()]);
+//        }
+//
+//        return fieldStructure;
+//    }
 
     @Override
     public Result create(final Data data, final ResultRequest resultRequest) {
         if (error == null) {
             try {
-                // Get top level items.
-                final Items<Item> items = data.getChildMap().get(null);
-                final Node node = create(items);
-
-                int dataPoints = 0;
-                if (items != null && items.size() > 0) {
-                    dataPoints = items.size();
+                // Map data.
+                Data mappedData = data;
+                for (final Mapper mapper : mappers) {
+                    mappedData = mapper.map(mappedData);
                 }
 
-                final CompiledStructure.Field[] fields = getFields(structure);
-                final String[] types = getTypes(fields);
+//                final NodeBuilder nodeBuilder = new NodeBuilder(valueFields.length);
+                long totalResults = 0;
 
-//                final SimpleModule module = new SimpleModule();
-//                module.addSerializer(Double.class, new MyDoubleSerialiser());
-//
-//                final ObjectMapper mapper = new ObjectMapper();
-//                mapper.registerModule(module);
-//                mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-//                mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-//                mapper.setSerializationInclusion(Include.NON_NULL);
-//
-//                String json = null;
-//                if (store != null) {
-//                    json = mapper.writeValueAsString(store);
-//                }
-                return new VisResult(resultRequest.getComponentId(), types, node.getNodes(), node.getValues(), node.getMin(), node.getMax(), node.getSum(), dataPoints, error);
+                // Get top level items.
+                final Items<Item> items = mappedData.getChildMap().get(null);
+
+                final List<Object[]> results = new ArrayList<>();
+
+                if (items != null) {
+                    final RangeChecker rangeChecker = RangeCheckerFactory.create(resultRequest.getRequestedRange());
+                    final OpenGroups openGroups = OpenGroupsFactory.create(resultRequest.getOpenGroups());
+                    totalResults = addResults(mappedData, rangeChecker, openGroups, items, results, 0,
+                            0);
+                }
+
+                final Object[][] values = results.toArray(new Object[results.size()][]);
+
+                return new VisResult(resultRequest.getComponentId(), fields, values, totalResults, error);
 
             } catch (final Exception e) {
                 error = e.getMessage();
@@ -96,460 +178,208 @@ public class VisResultCreator implements ResultCreator {
         return new VisResult(error);
     }
 
-    /**
-     * Public method for testing purposes.
-     */
-    public Node create(final Items<Item> items) throws JsonProcessingException {
-        return create(items, structure);
-    }
+    private int addResults(final Data data, final RangeChecker rangeChecker,
+                           final OpenGroups openGroups, final Items<Item> items, final List<Object[]> results,
+                           final int depth, final int parentCount) {
+        int count = parentCount;
 
-    /**
-     * Public method for testing purposes.
-     */
-    public Node create(final Items<Item> items, final CompiledStructure.Structure structure) {
-        if (structure.getNest() != null) {
-            return create(items, structure.getNest());
-        } else if (structure.getValues() != null) {
-            return create(items, structure.getValues());
-        }
-        return null;
-    }
+        for (final Item item : items) {
+            if (rangeChecker.check(count)) {
+                // TODO : Add hidden fields for parent key, key and depth.
+                final Object[] values = new Object[fields.length + 3];
 
-    /**
-     * Public method for testing purposes.
-     */
-    public Node create(final Items<Item> items, final CompiledStructure.Nest structure) {
-        if (items != null && items.size() > 0) {
-            final Store store = new Store();
+                if (item.getKey() != null) {
+                    values[0] = toNodeKey(fields, item.getKey().getParent());
+                    values[1] = toNodeKey(fields, item.getKey());
+                }
+                values[2] = depth;
 
-            // Iterate over the items.
-            for (final Item item : items) {
-                addNest(structure, store, item);
+                // Convert all list into fully resolved objects evaluating
+                // functions where necessary.
+                for (int i = 0; i < fields.length; i++) {
+                    final Object o = item.getValues()[i];
+                    if (o != null) {
+                        // Convert all list into fully resolved
+                        // objects evaluating functions where necessary.
+                        Object val = o;
+                        if (o instanceof Generator) {
+                            final Generator generator = (Generator) o;
+                            val = generator.eval();
+                        }
+
+                        if (val != null) {
+                            if (fieldFormatter != null) {
+                                final Field field = fields[i];
+                                val = fieldFormatter.format(field, val);
+                            } else {
+                                final Field field = fields[i];
+                                val = convert(field, val);
+                            }
+                            values[i + 3] = val;
+                        }
+                    }
+                }
+
+                // Add the values.
+                results.add(values);
+
+                // Add child results if a node is open.
+                if (openGroups.isOpen(item.getKey())) {
+                    final Items<Item> childItems = data.getChildMap().get(item.getKey());
+                    if (childItems != null) {
+                        count = addResults(data, rangeChecker, openGroups,
+                                childItems, results, depth + 1, count);
+                    }
+                }
             }
 
-            // Apply sorting and trimming if required.
-            return sort(null, store, structure);
+            // Increment the position.
+            count++;
         }
 
-        return null;
+        return count;
     }
 
-    /**
-     * Public method for testing purposes.
-     */
-    public Node create(final Items<Item> items, final CompiledStructure.Values structure) {
-        if (items != null && items.size() > 0) {
-//            final CompiledStructure.Field[] fields = structure.getFields();
-//            final String[] types = getTypes(fields);
-//
-//            final int len = fields.length;
-            final Store store = new Store();
-
-            // Iterate over the items.
-            for (final Item item : items) {
-                addValues(structure, store, item);
+    // TODO : Replace this with conversion a the item level.
+    private Object convert(final Field field, final Object val) {
+        if (field != null && field.getFormat() != null && field.getFormat().getType() != null) {
+            final Type type = field.getFormat().getType();
+            if (Type.NUMBER.equals(type) || Type.DATE_TIME.equals(type)) {
+                return TypeConverter.getDouble(val);
             }
-
-            // Apply sorting and trimming if required.
-            Object[][] values = sort(store, structure);
-
-            return new Node(null, null, values, store.min, store.max, store.sum);
         }
 
-        return null;
+        return val;
     }
 
-    private CompiledStructure.Field[] getFields(final CompiledStructure.Nest structure) {
-        if (structure.getNest() != null) {
-            return getFields(structure.getNest());
-        }
-        if (structure.getValues() != null) {
-            return structure.getValues().getFields();
-        }
-        return null;
-    }
-
-    private CompiledStructure.Field[] getFields(final CompiledStructure.Structure structure) {
-        if (structure.getNest() != null) {
-            return getFields(structure.getNest());
-        }
-        if (structure.getValues() != null) {
-            return structure.getValues().getFields();
-        }
-        return null;
-    }
-
-    private String[] getTypes(final CompiledStructure.Field[] fields) {
+    private String[] getTypes(final Field[] fields) {
         String[] types = null;
         if (fields != null) {
             types = new String[fields.length];
             for (int i = 0; i < types.length; i++) {
-                final CompiledStructure.Field field = fields[i];
-                if (field != null && field.getId() != null && field.getId().getType() != null) {
-                    types[i] = field.getId().getType().name();
-                }
+                final Field field = fields[i];
+                final Type type = getType(field);
+                types[i] = type.name();
             }
         }
         return types;
     }
 
-    private String getKeyType(final CompiledStructure.Nest structure) {
-        String keyType = null;
-        if (structure != null && structure.getKey() != null && structure.getKey().getId() != null
-                && structure.getKey().getId().getType() != null) {
-            keyType = structure.getKey().getId().getType().name();
+    private Type getType(final Field field) {
+        Type type = Type.GENERAL;
+        if (field != null && field.getFormat() != null && field.getFormat().getType() != null) {
+            type = field.getFormat().getType();
         }
-        return keyType;
+
+        return type;
     }
 
-    private Node sort(final Key key, final Store store, final CompiledStructure.Nest nest) {
-        Node[] nodes = null;
-        Object[][] values = null;
-
-        // Sort children first.
-        if (nest.getNest() != null) {
-            if (store.map != null) {
-                nodes = new Node[store.map.size()];
-                int i = 0;
-                for (final Map.Entry<Key, Store> entry : store.map.entrySet()) {
-                    nodes[i++] = sort(entry.getKey(), entry.getValue(), nest.getNest());
-                }
-            }
-
-            // Now sort this store.
-            if (nodes != null) {
-                if (nest.getKey() != null && nest.getKey().getSort() != null) {
-                    // Sort.
-                    Arrays.sort(nodes, new NodeComparator(nest.getKey().getSort().getDirection()));
-                }
-
-                // Trim if necessary.
-                if (nest.getLimit() != null) {
-                    if (nodes.length > nest.getLimit().getSize()) {
-                        nodes = Arrays.copyOf(nodes, nest.getLimit().getSize());
-                    }
-                }
-            }
-
-
-//            else if (store.list != null) {
-//                for (final Object subStore : store.list) {
-//                    sort((VisData) subStore, nest.getNest());
-//                }
-//            }
-        } else if (nest.getValues() != null) {
-            if (store.map != null) {
-                values = new Object[store.map.size()][];
-                int i = 0;
-                for (final Store subStore : store.map.values()) {
-                    values[i++] = sort(subStore, nest.getValues());
-                }
-            }
-//            else
-//            if (store.list != null) {
-//                for (final Object subStore : store.list) {
-//                    sort((VisData) subStore, nest.getValues());
-//                }
-//            }
-        }
-
-
-        // Calculate min, max and sum list for all sub stores.
-        Double[] min = null;
-        Double[] max = null;
-        Double[] sum = null;
-
-
-        if (store.map != null && store.map.size() > 0) {
-
-            for (final Store subStore : store.map.values()) {
-                if (min == null) {
-                    min = new Double[subStore.min.length];
-                }
-                for (int i = 0; i < subStore.min.length; i++) {
-                    min[i] = min(min[i], subStore.min[i]);
-                }
-
-                if (max == null) {
-                    max = new Double[subStore.max.length];
-                }
-                for (int i = 0; i < subStore.max.length; i++) {
-                    max[i] = max(max[i], subStore.max[i]);
-                }
-
-                if (sum == null) {
-                    sum = new Double[subStore.sum.length];
-                }
-                for (int i = 0; i < subStore.sum.length; i++) {
-                    sum[i] = sum(sum[i], subStore.sum[i]);
-                }
-            }
-            store.min = min;
-            store.max = max;
-            store.sum = sum;
-        }
-
-        return new Node(key, nodes, values, min, max, sum);
+    @Override
+    public void terminate() {
     }
 
-    private Object[][] sort(final Store store, final CompiledStructure.Values values) {
-        Object[][] arr = new Object[store.list.size()][];
-        arr = store.list.toArray(arr);
-
-        if (values.getFields() != null && values.getFields().length > 0 && arr.length > 0) {
-            final List<CompiledStructure.Sort> sorts = new ArrayList<>();
-
-            // Create a list of sort options.
-            for (final CompiledStructure.Field field : values.getFields()) {
-                if (field.getSort() != null) {
-                    sorts.add(field.getSort());
-                }
-            }
-
-            if (sorts.size() > 0) {
-                // Sort the sort options by sort priority.
-                sorts.sort(Comparator.comparingInt(CompiledStructure.Sort::getPriority));
-
-                Arrays.sort(arr, new ValuesComparator(sorts));
-            }
-        }
-
-        // Trim if necessary.
-        if (values.getLimit() != null) {
-            if (arr.length > values.getLimit().getSize()) {
-                arr = Arrays.copyOf(arr, values.getLimit().getSize());
-            }
-        }
-
-        return arr;
+    @Override
+    public boolean isTerminated() {
+        return false;
     }
 
-    private void trimList(final List<Object[]> list, final CompiledStructure.Limit limit) {
-        if (list != null && limit != null) {
-            final int l = limit.getSize();
-            while (list.size() > l) {
-                list.remove(list.size() - 1);
+    @FunctionalInterface
+    private interface RangeChecker {
+        boolean check(long count);
+    }
+
+    @FunctionalInterface
+    private interface OpenGroups {
+        boolean isOpen(Key group);
+    }
+
+    private static class Mapper implements HasTerminate {
+        private final String[] parentFields;
+        private final FieldIndexMap fieldIndexMap;
+        private final TableCoprocessor tableCoprocessor;
+        private final TablePayloadHandler tablePayloadHandler;
+
+        public Mapper(final TableSettings parent, final TableSettings child, final Map<String, String> paramMap) {
+            parentFields = new String[parent.getFields().length];
+            int i = 0;
+            for (final Field field : parent.getFields()) {
+                parentFields[i++] = field.getName();
             }
-        }
-    }
 
-    private void addNest(final CompiledStructure.Nest structure, final Store parent, final Item item) {
-        Key key = null;
-        if (structure.getKey() != null && structure.getKey().getId() != null) {
-            final String keyType = getKeyType(structure);
-            final Object keyValue = getValue(item, structure.getKey().getId().getIndex(), structure.getKey().getId().getType());
-            key = new Key(keyType, keyValue);
-        }
+            fieldIndexMap = new FieldIndexMap(true);
 
-        if (parent.map == null) {
-            parent.map = new HashMap<>();
+            final TableCoprocessorSettings tableCoprocessorSettings = new TableCoprocessorSettings(child);
+            tableCoprocessor = new TableCoprocessor(tableCoprocessorSettings, fieldIndexMap, this, paramMap);
+
+            final TrimSettings trimSettings = new TrimSettings(child.getMaxResults(), new Integer[]{Integer.MAX_VALUE});
+            tablePayloadHandler = new TablePayloadHandler(child.getFields(), true, trimSettings);
         }
 
-        final Store child = parent.map.computeIfAbsent(key, k -> new Store());
-//        if (store == null) {
-//            if (structure.getNest() != null) {
-//                store = new VisData();
-//                parent.map.put(key, store);
-//            } else if (structure.getValues() != null) {
-//                store = new VisData();
-//                parent.map.put(key, store);
-//            }
-//        }
-//
-//        if (store != null) {
-        if (structure.getNest() != null) {
-            final CompiledStructure.Nest subStructure = structure.getNest();
-            addNest(subStructure, child, item);
-        } else if (structure.getValues() != null) {
-            final CompiledStructure.Values subStructure = structure.getValues();
-            addValues(subStructure, child, item);
-        }
-//        }
-    }
+        public Data map(final Data data) {
+            // Get top level items.
 
-    private void addValues(final CompiledStructure.Values structure, final Store store, final Item item) {
-        final Object[] objects = new Object[structure.getFields().length];
-        for (int i = 0; i < structure.getFields().length; i++) {
-            final CompiledStructure.Field field = structure.getFields()[i];
-            if (field != null && field.getId() != null) {
-                addValue(item, field.getId().getIndex(), field.getId().getType(), store.min, store.max, store.sum,
-                        objects, i);
-            }
-        }
+            // TODO : Add an option to get detail level items rather than root level items.
+            final Items<Item> items = data.getChildMap().get(null);
 
-        if (store.list == null) {
-            store.list = new ArrayList<>();
-        }
-        store.list.add(objects);
-    }
-
-    private Object getValue(final Item item, final int index, final Type type) {
-        if (index >= 0 && item.getValues().length > index) {
-            final Object o = item.getValues()[index];
-            if (o != null) {
-                // Convert all list into fully resolved objects evaluating
-                // functions where necessary.
-                Object val = o;
-                if (o instanceof Generator) {
-                    final Generator generator = (Generator) o;
-                    val = generator.eval();
-                }
-
-                if (val != null) {
-                    if (Type.NUMBER.equals(type) || Type.DATE_TIME.equals(type)) {
-                        return TypeConverter.getDouble(val);
-                    } else {
-                        return val.toString();
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private void addValue(final Item item, final int index, final Type type, final Double[] min, final Double[] max,
-                          final Double[] sum, final Object[] arr, final int i) {
-        if (index >= 0 && item.getValues().length > index) {
-            final Object o = item.getValues()[index];
-            if (o != null) {
-                // Convert all list into fully resolved objects evaluating
-                // functions where necessary.
-                Object val = o;
-                if (o instanceof Generator) {
-                    final Generator generator = (Generator) o;
-                    val = generator.eval();
-                }
-
-                if (val != null) {
-                    if (Type.NUMBER.equals(type) || Type.DATE_TIME.equals(type)) {
-                        final Double v = TypeConverter.getDouble(val);
-
-                        if (v != null) {
-                            min[i] = min(min[i], v);
-                            max[i] = max(max[i], v);
-                            sum[i] = sum(sum[i], v);
-                            arr[i] = v;
+            for (final Item item : items) {
+                final Object[] values = item.getValues();
+                final String[] strings = new String[fieldIndexMap.size()];
+                for (int i = 0; i < values.length; i++) {
+                    final Object value = values[i];
+                    if (value != null) {
+                        final int index = fieldIndexMap.get(parentFields[i]);
+                        if (index >= 0) {
+                            if (value instanceof Generator) {
+                                final Generator generator = (Generator) value;
+                                strings[index] = TypeConverter.getString(generator.eval());
+                            } else {
+                                strings[index] = TypeConverter.getString(value);
+                            }
                         }
-                    } else {
-                        arr[i] = val.toString();
                     }
                 }
+
+                // TODO : Receive Object[] for lazy + nested evaluation.
+                tableCoprocessor.receive(strings);
             }
-        }
-    }
 
-    private Double min(final Double m1, final Double m2) {
-        if (m1 == null) {
-            return m2;
-        } else if (m2 == null) {
-            return m1;
-        }
-        return Math.min(m1, m2);
-    }
+            final TablePayload payload = (TablePayload) tableCoprocessor.createPayload();
 
-    private Double max(final Double m1, final Double m2) {
-        if (m1 == null) {
-            return m2;
-        } else if (m2 == null) {
-            return m1;
-        }
-        return Math.max(m1, m2);
-    }
-
-    private Double sum(final Double m1, final Double m2) {
-        if (m1 == null) {
-            return m2;
-        } else if (m2 == null) {
-            return m1;
-        }
-        return m1 + m2;
-    }
-
-    private static class ObjectComparator implements Comparator<Object> {
-        @Override
-        public int compare(final Object o1, final Object o2) {
-            return ObjectCompareUtil.compare(o1, o2);
-        }
-    }
-
-//    private static class KeyComparator implements Comparator<Key> {
-//        private final CompiledStructure.Direction direction;
-//
-//        KeyComparator(final CompiledStructure.Direction direction) {
-//            this.direction = direction;
-//        }
-//
-//        @Override
-//        public int compare(final Key o1, final Key o2) {
-//            if (CompiledStructure.Direction.ASCENDING.equals(direction)) {
-//                return ObjectCompareUtil.compare(o1.getValue(), o2.getValue());
-//            } else {
-//                return ObjectCompareUtil.compare(o2.getValue(), o1.getValue());
-//            }
-//        }
-//    }
-
-    private static class NodeComparator implements Comparator<Node> {
-        private final CompiledStructure.Direction direction;
-
-        NodeComparator(final CompiledStructure.Direction direction) {
-            this.direction = direction;
+            tablePayloadHandler.clear();
+            tablePayloadHandler.addQueue(payload.getQueue(), this);
+            return tablePayloadHandler.getData();
         }
 
         @Override
-        public int compare(final Node o1, final Node o2) {
-            if (CompiledStructure.Direction.ASCENDING.equals(direction)) {
-                return ObjectCompareUtil.compare(o1.getKey().getValue(), o2.getKey().getValue());
-            } else {
-                return ObjectCompareUtil.compare(o2.getKey().getValue(), o1.getKey().getValue());
-            }
-        }
-    }
-
-    private static class Store {
-        Map<Key, Store> map;
-        List<Object[]> list;
-        Double[] min;
-        Double[] max;
-        Double[] sum;
-    }
-
-    private static class ValuesComparator extends ObjectComparator {
-        private final List<CompiledStructure.Sort> sorts;
-
-        ValuesComparator(final List<CompiledStructure.Sort> sorts) {
-            this.sorts = sorts;
+        public void terminate() {
         }
 
         @Override
-        public int compare(final Object o1, final Object o2) {
-            for (final CompiledStructure.Sort sort : sorts) {
-                final int index = sort.getIndex();
-                final Object v1 = getValue(o1, index);
-                final Object v2 = getValue(o2, index);
-
-                int result;
-                if (CompiledStructure.Direction.ASCENDING.equals(sort.getDirection())) {
-                    result = super.compare(v1, v2);
-                } else {
-                    result = super.compare(v2, v1);
-                }
-
-                if (result != 0) {
-                    return result;
-                }
-            }
-
-            return 0;
+        public boolean isTerminated() {
+            return false;
         }
+    }
 
-        private Object getValue(final Object o, final int index) {
-            final Object[] arr = (Object[]) o;
-            if (arr.length > index) {
-                return arr[index];
+    private static class RangeCheckerFactory {
+        public static RangeChecker create(final OffsetRange range) {
+            if (range == null) {
+                return count -> true;
             }
-            return null;
+
+            final long start = range.getOffset();
+            final long end = range.getOffset() + range.getLength();
+            return count -> count >= start && count < end;
+        }
+    }
+
+    private static class OpenGroupsFactory {
+        public static OpenGroups create(final String[] openGroups) {
+            if (openGroups == null || openGroups.length == 0) {
+                return group -> true;
+            }
+
+            final Set<String> set = new HashSet<>(Arrays.asList(openGroups));
+            return key -> key != null && set.contains(key.toString());
         }
     }
 }

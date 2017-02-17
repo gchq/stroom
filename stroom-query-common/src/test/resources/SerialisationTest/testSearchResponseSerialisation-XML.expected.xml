@@ -29,12 +29,34 @@
         </table>
         <vis>
             <componentId>vis-1234</componentId>
-            <types>
-                <type>string</type>
-                <type>double</type>
-                <type>integer</type>
-                <type>string</type>
-            </types>
+            <structure>
+                <fields>
+                    <field>
+                        <name>val1</name>
+                        <format>
+                            <type>GENERAL</type>
+                        </format>
+                    </field>
+                    <field>
+                        <name>val2</name>
+                        <format>
+                            <type>NUMBER</type>
+                        </format>
+                    </field>
+                    <field>
+                        <name>val3</name>
+                        <format>
+                            <type>NUMBER</type>
+                        </format>
+                    </field>
+                    <field>
+                        <name>val4</name>
+                        <format>
+                            <type>GENERAL</type>
+                        </format>
+                    </field>
+                </fields>
+            </structure>
             <values>
                 <values>
                     <string>test0</string>
@@ -90,23 +112,66 @@
         </vis>
         <vis>
             <componentId>vis-5555</componentId>
-            <types>
-                <type>string</type>
-                <type>double</type>
-                <type>integer</type>
-                <type>string</type>
-            </types>
+            <structure>
+                <fields>
+                    <field>
+                        <name>key1</name>
+                        <format>
+                            <type>GENERAL</type>
+                        </format>
+                    </field>
+                </fields>
+                <fields>
+                    <field>
+                        <name>key2</name>
+                        <format>
+                            <type>GENERAL</type>
+                        </format>
+                    </field>
+                </fields>
+                <fields>
+                    <field>
+                        <name>val1</name>
+                        <format>
+                            <type>GENERAL</type>
+                        </format>
+                    </field>
+                    <field>
+                        <name>val2</name>
+                        <format>
+                            <type>NUMBER</type>
+                        </format>
+                    </field>
+                    <field>
+                        <name>val3</name>
+                        <format>
+                            <type>NUMBER</type>
+                        </format>
+                    </field>
+                    <field>
+                        <name>val4</name>
+                        <format>
+                            <type>GENERAL</type>
+                        </format>
+                    </field>
+                </fields>
+            </structure>
             <nodes>
                 <node>
                     <key>
-                        <type>string</type>
-                        <string>key1</string>
+                        <values>
+                            <string>key1</string>
+                        </values>
                     </key>
                     <nodes>
                         <node>
                             <key>
-                                <type>string</type>
-                                <string>innerKey1</string>
+                                <values>
+                                    <string>key1</string>
+                                </values>
+                                <values>
+                                    <string>innerKey1</string>
+                                </values>
                             </key>
                             <values>
                                 <values>
@@ -158,11 +223,33 @@
                                     <string>this7</string>
                                 </values>
                             </values>
+                            <min>
+                                <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                                <double>0.2</double>
+                                <double>27.0</double>
+                                <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                            </min>
+                            <max>
+                                <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                                <double>34.66</double>
+                                <double>25634.0</double>
+                                <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                            </max>
+                            <sum>
+                                <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                                <double>39.72</double>
+                                <double>38585.0</double>
+                                <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                            </sum>
                         </node>
                         <node>
                             <key>
-                                <type>string</type>
-                                <string>innerKey2</string>
+                                <values>
+                                    <string>key1</string>
+                                </values>
+                                <values>
+                                    <string>innerKey2</string>
+                                </values>
                             </key>
                             <values>
                                 <values>
@@ -214,13 +301,50 @@
                                     <string>this7</string>
                                 </values>
                             </values>
+                            <min>
+                                <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                                <double>0.2</double>
+                                <double>27.0</double>
+                                <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                            </min>
+                            <max>
+                                <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                                <double>34.66</double>
+                                <double>25634.0</double>
+                                <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                            </max>
+                            <sum>
+                                <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                                <double>39.72</double>
+                                <double>38585.0</double>
+                                <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                            </sum>
                         </node>
                     </nodes>
+                    <min>
+                        <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <double>0.2</double>
+                        <double>27.0</double>
+                        <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </min>
+                    <max>
+                        <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <double>34.66</double>
+                        <double>25634.0</double>
+                        <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </max>
+                    <sum>
+                        <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <double>79.44</double>
+                        <double>77170.0</double>
+                        <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </sum>
                 </node>
                 <node>
                     <key>
-                        <type>string</type>
-                        <string>key2</string>
+                        <values>
+                            <string>key2</string>
+                        </values>
                     </key>
                     <values>
                         <values>
@@ -272,6 +396,24 @@
                             <string>this7</string>
                         </values>
                     </values>
+                    <min>
+                        <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <double>0.2</double>
+                        <double>27.0</double>
+                        <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </min>
+                    <max>
+                        <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <double>34.66</double>
+                        <double>25634.0</double>
+                        <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </max>
+                    <sum>
+                        <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                        <double>39.72</double>
+                        <double>38585.0</double>
+                        <double xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+                    </sum>
                 </node>
             </nodes>
             <size>200</size>

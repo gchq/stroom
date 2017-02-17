@@ -27,6 +27,7 @@ import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchResponse;
 import stroom.security.SecurityContext;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -50,15 +51,6 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
     @Override
     public DataSource getDataSource(final DocRef docRef) {
         return post(docRef, "dataSource", DataSource.class);
-
-//        Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
-//        WebTarget webTarget = client.target(url).path("dataSource");
-//
-//        Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-//        Response response = invocationBuilder.post(Entity.entity(docRef, MediaType.APPLICATION_JSON));
-//
-//        System.out.println(response.getStatus());
-//        System.out.println(response.readEntity(DataSource.class));
     }
 
     @Override
@@ -79,12 +71,11 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
         invocationBuilder.header(HttpHeaders.AUTHORIZATION, securityContext.getToken());
         Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
 
-        System.out.println(response.getStatus());
+        if (HttpServletResponse.SC_OK == response.getStatus()) {
+            return response.readEntity(responseClass);
+        }
 
-        final T res = response.readEntity(responseClass);
-        System.out.println(res);
-
-        return res;
+        throw new RuntimeException("Error " + response.getStatus() + ": " + response.getStatusInfo().getReasonPhrase());
     }
 
     @Override

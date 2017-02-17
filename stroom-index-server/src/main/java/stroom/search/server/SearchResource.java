@@ -33,8 +33,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @Path("/index")
@@ -62,7 +60,7 @@ public class SearchResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/search")
     public SearchResponse search(final SearchRequest request) {
-//        final SearchResponseCreator searchResponseCreator = searchResultCreatorCache.computeIfAbsent(request.getKey(), k -> new SearchResponseCreator(luceneSearchStoreFactory.create(request)));
+//        final SearchResponseCreator searchResponseCreator = searchResultCreatorCache.computeIfAbsent(request.getValues(), k -> new SearchResponseCreator(luceneSearchStoreFactory.create(request)));
 
         final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.get(new Key(request));
         return searchResponseCreator.create(request);
@@ -72,7 +70,8 @@ public class SearchResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/destroy")
-    public void destroy(final QueryKey queryKey) {
+    public Boolean destroy(final QueryKey queryKey) {
         searchResultCreatorManager.remove(new Key(queryKey));
+        return Boolean.TRUE;
     }
 }
