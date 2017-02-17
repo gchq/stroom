@@ -18,6 +18,7 @@ package stroom.entity.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import stroom.entity.server.util.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
@@ -34,7 +35,7 @@ public class ObjectMarshaller<E> {
         try {
             jaxbContext = JAXBContext.newInstance(clazz);
         } catch (final JAXBException e) {
-            LOGGER.error("Unable to create a new JAXBContext!", e);
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to create a new JAXBContext!", e);
             throw new RuntimeException(e.getMessage());
         }
     }

@@ -18,6 +18,7 @@ package stroom.task.cluster;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import stroom.cluster.server.ClusterCallService;
 import stroom.node.shared.Node;
 import stroom.task.server.GenericServerTask;
@@ -261,7 +262,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                 }
             }
         } catch (final Throwable e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
 
         } finally {
             DebugTrace.debugTraceOut(task, RECEIVE_RESULT, success);

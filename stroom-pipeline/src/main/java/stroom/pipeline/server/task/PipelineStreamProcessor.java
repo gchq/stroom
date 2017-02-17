@@ -28,6 +28,7 @@ import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -608,7 +609,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 LOGGER.trace("Error while processing stream task: id = " + streamSource.getStream().getId(), ex);
             }
         } else {
-            LOGGER.error(ex.getMessage(), ex);
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), ex.getMessage(), ex);
         }
     }
 

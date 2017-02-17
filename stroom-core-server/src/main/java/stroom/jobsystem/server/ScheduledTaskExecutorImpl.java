@@ -25,6 +25,7 @@ import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.springframework.stereotype.Component;
 
 import stroom.jobsystem.server.JobNodeTrackerCache.Trackers;
@@ -182,7 +183,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                     running.set(false);
                 }
             } catch (final Throwable t) {
-                LOGGER.error(t.getMessage());
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), t.getMessage());
             }
         } else {
             LOGGER.trace("Skipping as method still running: {}", stroomBeanMethod);

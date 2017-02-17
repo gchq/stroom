@@ -19,6 +19,7 @@ package stroom.task.server;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.SupportsCriteriaLogging;
@@ -336,7 +337,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
                 } catch (final Throwable t) {
                     try {
-                        LOGGER.error("exec() - Unexpected Exception", t);
+                        LOGGER.error(MarkerFactory.getMarker("FATAL"), "exec() - Unexpected Exception", t);
                         throw new RuntimeException(t.getMessage(), t);
 
                     } finally {

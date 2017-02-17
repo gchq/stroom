@@ -27,6 +27,7 @@ import net.sf.ehcache.event.CacheEventListenerAdapter;
 import org.apache.lucene.index.IndexWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 import stroom.index.server.IndexShardWriter;
@@ -94,7 +95,7 @@ public class IndexShardSearcherCache implements InitializingBean {
 
             @Override
             public void notifyRemoveAll(final Ehcache cache) {
-                LOGGER.error("Unexpected call to remove all index shard searchers");
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unexpected call to remove all index shard searchers");
             }
         });
 

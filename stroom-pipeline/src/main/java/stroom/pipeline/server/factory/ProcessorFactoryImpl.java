@@ -18,6 +18,7 @@ package stroom.pipeline.server.factory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import stroom.pipeline.server.errorhandler.*;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskCallback;
@@ -121,7 +122,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
                     ((ErrorStatistics) errorReceiver).checkRecord(-1);
                 }
             } else {
-                LOGGER.error("Unable to output error!", t);
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to output error!", t);
             }
         }
     }

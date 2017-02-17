@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -96,13 +97,13 @@ public class DefaultErrorWriter implements ErrorWriter {
                                 outputStream.write(sb.toString().getBytes());
                             }
                         } catch (final IOException e) {
-                            LOGGER.error("Unable to write to error stream", e);
+                            LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to write to error stream", e);
                         }
 
                         destinationProvider.returnDestination(destination);
                     }
                 } catch (final IOException e) {
-                    LOGGER.error("Unable to write to error stream", e);
+                    LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to write to error stream", e);
                 }
             }
         }

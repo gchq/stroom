@@ -18,6 +18,7 @@ package stroom.pipeline.server.filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
@@ -102,7 +103,7 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
             try {
                 errorListener.fatalError(new TransformerException(e.getMessage()));
             } catch (final TransformerException te) {
-                LOGGER.error(te.getMessage(), te);
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), te.getMessage(), te);
             }
         } finally {
             super.endProcessing();

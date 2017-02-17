@@ -23,6 +23,7 @@ import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.springframework.stereotype.Component;
 
 import stroom.jobsystem.server.JobTrackedSchedule;
@@ -135,7 +136,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
             }
 
         } catch (final InterruptedException e) {
-            LOGGER.error("doFlush() - No expecting InterruptedException", e);
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), "doFlush() - No expecting InterruptedException", e);
         }
     }
 

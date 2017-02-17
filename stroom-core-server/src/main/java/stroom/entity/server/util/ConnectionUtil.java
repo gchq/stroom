@@ -18,6 +18,7 @@ package stroom.entity.server.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
@@ -50,7 +51,7 @@ public class ConnectionUtil {
         final String driverPassword = StroomProperties.getProperty(JDBC_DRIVER_PASSWORD);
 
         if (driverClassname == null || driverUrl == null) {
-            LOGGER.error("Properties are not set for DB connection");
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), "Properties are not set for DB connection");
             throw new RuntimeException("Properties are not set for DB connection");
         }
 

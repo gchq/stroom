@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.ErrorStatistics;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
@@ -114,7 +115,7 @@ public class SimpleProcessorFactory implements ProcessorFactory {
                     ((ErrorStatistics) errorReceiver).checkRecord(-1);
                 }
             } else {
-                LOGGER.error(t.getMessage(), t);
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), t.getMessage(), t);
             }
         }
     }

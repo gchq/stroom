@@ -18,6 +18,7 @@ package stroom.spring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import stroom.node.server.GlobalProperties;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Version;
@@ -187,7 +188,7 @@ public class PersistenceConfiguration {
             flyway.migrate();
         } else {
             final String message = "The current Stroom version cannot be upgraded to v5+. You must be on v4.0.60 or later.";
-            LOGGER.error(message);
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
             throw new RuntimeException(message);
         }
 

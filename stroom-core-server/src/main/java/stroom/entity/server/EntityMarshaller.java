@@ -18,6 +18,7 @@ package stroom.entity.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.entity.shared.BaseEntity;
 import javassist.Modifier;
@@ -37,7 +38,7 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
         try {
             jaxbContext = JAXBContext.newInstance(getObjectType());
         } catch (final JAXBException e) {
-            LOGGER.error("Unable to create new JAXBContext for object type!", e);
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to create new JAXBContext for object type!", e);
             throw new RuntimeException(e.getMessage());
         }
     }

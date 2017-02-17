@@ -18,6 +18,7 @@ package stroom.util.io;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import stroom.util.config.StroomProperties;
 import stroom.util.thread.ThreadUtil;
 
@@ -53,7 +54,7 @@ public final class FileUtil {
             try {
                 Files.createDirectory(path);
             } catch (IOException e) {
-                LOGGER.error("Unable to create temp directory.", e);
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to create temp directory.", e);
                 throw new RuntimeException("Unable to create temp directory", e);
             }
         }
