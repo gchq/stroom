@@ -42,6 +42,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
+import stroom.security.spring.SecurityConfiguration;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSpringProfiles;
 
@@ -52,7 +53,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Component
-@Profile(StroomSpringProfiles.PROD)
+@Profile(SecurityConfiguration.PROD_SECURITY)
 @Scope(value = StroomScope.PROTOTYPE, proxyMode = ScopedProxyMode.INTERFACES)
 class SecurityContextImpl implements SecurityContext {
     public static final String ISSUER = "stroom";

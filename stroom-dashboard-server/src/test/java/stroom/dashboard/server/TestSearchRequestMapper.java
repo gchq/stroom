@@ -16,199 +16,72 @@
 
 package stroom.dashboard.server;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import stroom.dashboard.shared.ComponentResultRequest;
-import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
-import stroom.dashboard.shared.DateTimeFormatSettings;
-import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.Filter;
-import stroom.dashboard.shared.Format;
-import stroom.dashboard.shared.Format.Type;
-import stroom.dashboard.shared.NumberFormatSettings;
 import stroom.dashboard.shared.Search;
-import stroom.dashboard.shared.SearchRequest;
-import stroom.dashboard.shared.Sort;
-import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
-import stroom.dashboard.shared.TimeZone;
-import stroom.entity.shared.SharedDocRef;
-import stroom.query.api.DocRef;
-import stroom.query.api.ExpressionBuilder;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionOperator.Op;
-import stroom.query.api.ExpressionTerm.Condition;
-import stroom.query.api.QueryKey;
+import stroom.query.api.Query;
+import stroom.query.api.ResultRequest;
+import stroom.visualisation.shared.VisualisationService;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+@RunWith(MockitoJUnitRunner.class)
 public class TestSearchRequestMapper {
+
+    @Mock
+    private VisualisationService visualisationService;
+
+    @InjectMocks
+    private SearchRequestMapper searchRequestMapper;
+
     @Test
-    public void testRequest() throws Exception {
-        final SearchRequestMapper mapper = new SearchRequestMapper(new MockVisualisationService());
-        final stroom.query.api.SearchRequest result = mapper.mapRequest(new DashboardQueryKey("test", 1), getSearchRequest());
+    public void testSearchRequestMapper() {
+        // Given
+        stroom.dashboard.shared.SearchRequest dashboardSearchRequest = SearchRequestTestData.dashboardSearchRequest();
 
-        test(result, stroom.query.api.SearchRequest.class, "testRequest");
+        // When
+        stroom.query.api.SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(new DashboardQueryKey("test", 1), dashboardSearchRequest);
+
+        // Then
+        verify_Search_to_Query_mapping(
+                dashboardSearchRequest.getSearch(),
+                mappedApiSearchRequest.getQuery());
+        verify_componentResultRequest_to_ResultRequest_mappings(
+                dashboardSearchRequest.getComponentResultRequests(),
+                mappedApiSearchRequest.getResultRequests());
+        //TODO many more properties to check
     }
 
-    private static SearchRequest getSearchRequest() {
-        DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
-
-        ExpressionBuilder expressionOperator = new ExpressionBuilder(Op.AND);
-        expressionOperator.addTerm("field1", Condition.EQUALS, "value1");
-        expressionOperator.addOperator(Op.AND);
-        expressionOperator.addTerm("field2", Condition.BETWEEN, "value2");
-
-        TableComponentSettings tableSettings = new TableComponentSettings();
-        tableSettings.setQueryId("someQueryId");
-        tableSettings.addField(new Field("name1", "expression1",
-                new Sort(1, Sort.SortDirection.ASCENDING),
-                new Filter("include1", "exclude1"),
-                new Format(Type.NUMBER, new NumberFormatSettings(1, false)), 1, 200, true));
-        tableSettings.addField(new Field("name2", "expression2",
-                new Sort(2, Sort.SortDirection.DESCENDING),
-                new Filter("include2", "exclude2"),
-                new Format(Type.DATE_TIME, createDateTimeFormat()), 2, 200, true));
-        tableSettings.setExtractValues(false);
-        tableSettings.setExtractionPipeline(new SharedDocRef("docRefType2", "docRefUuid2", "docRefName2"));
-        tableSettings.setMaxResults(new int[]{1, 2});
-        tableSettings.setShowDetail(false);
-
-        Map<String, ComponentSettings> componentSettingsMap = new HashMap<>();
-        componentSettingsMap.put("componentSettingsMapKey", tableSettings);
-
-        Map<String, String> paramMap = new HashMap<>();
-        paramMap.put("param1", "val1");
-        paramMap.put("param2", "val2");
-
-        final Search search = new Search(docRef, expressionOperator.build(), componentSettingsMap, paramMap, true);
-
-        final Map<String, ComponentResultRequest> componentResultRequestMap = new HashMap<>();
-        for (final Entry<String, ComponentSettings> entry : componentSettingsMap.entrySet()) {
-            TableResultRequest tableResultRequest = new TableResultRequest();
-            tableResultRequest.setTableSettings((TableComponentSettings) entry.getValue());
-            tableResultRequest.setWantsData(true);
-            componentResultRequestMap.put(entry.getKey(), tableResultRequest);
-        }
-
-        SearchRequest searchRequest = new SearchRequest(search, componentResultRequestMap, "en-gb");
-
-        return searchRequest;
+    private static void verify_Search_to_Query_mapping(Search search, Query query){
+        assertThat(search.getDataSourceRef(), equalTo(query.getDataSource()));
+        assertThat(search.getExpression(), equalTo(query.getExpression()));
+        assertThat(search.getParamMap().size(), equalTo(query.getParams().length));
+        assertThat(search.getParamMap().get("param1"), equalTo(query.getParams()[0].getValue())); // 'param1' is the key from SearchRequestTestData.dashboardSearchRequest()
     }
 
-    private static DateTimeFormatSettings createDateTimeFormat() {
-        final TimeZone timeZone = TimeZone.fromOffset(2, 30);
+    private static void verify_componentResultRequest_to_ResultRequest_mappings(
+            Map<String, ComponentResultRequest> componentResultRequestMap,
+            ResultRequest[] resultRequests){
 
-        final DateTimeFormatSettings dateTimeFormat = new DateTimeFormatSettings();
-        dateTimeFormat.setPattern("yyyy-MM-dd'T'HH:mm:ss");
-        dateTimeFormat.setTimeZone(timeZone);
+        assertThat(componentResultRequestMap.size(), equalTo(resultRequests.length));
+        assertThat("componentSettingsMapKey", equalTo(resultRequests[0].getComponentId()));
+        assertThat(componentResultRequestMap.get("componentSettingsMapKey").wantsData(), equalTo(resultRequests[0].getFetchData()));
 
-        return dateTimeFormat;
+        TableResultRequest tableResultRequest = ((TableResultRequest)componentResultRequestMap.get("componentSettingsMapKey"));
+        ResultRequest resultRequest = resultRequests[0];
+        assertThat(tableResultRequest.getRequestedRange().getOffset().toString(), equalTo(resultRequest.getRequestedRange().getOffset().toString()));
+        assertThat(tableResultRequest.getRequestedRange().getLength().toString(), equalTo(resultRequest.getRequestedRange().getLength().toString()));
+        assertThat(tableResultRequest.getOpenGroups(), equalTo(resultRequest.getOpenGroups())); // No test data for this at the moment
+        //TODO many more properties to check
     }
 
-    private <T> void test(final T objIn, final Class<T> type, final String testName) throws IOException, JAXBException {
-        testJSON(objIn, type, testName);
-        testXML(objIn, type, testName);
-    }
-
-    private <T> void testJSON(final T objIn, final Class<T> type, final String testName) throws IOException, JAXBException {
-        ObjectMapper mapper = createMapper(true);
-
-        final Path dir = TestFileUtil.getTestResourcesDir().resolve("TestSearchRequestMapper");
-        Path expectedFile = dir.resolve(testName + "-JSON.expected.json");
-        Path actualFile = dir.resolve(testName + "-JSON.actual.json");
-
-        String serialisedIn = mapper.writeValueAsString(objIn);
-        System.out.println(serialisedIn);
-
-        if (!Files.isRegularFile(expectedFile)) {
-            StreamUtil.stringToFile(serialisedIn, expectedFile);
-        }
-        StreamUtil.stringToFile(serialisedIn, actualFile);
-
-        final String expected = StreamUtil.fileToString(expectedFile);
-        Assert.assertEquals(expected, serialisedIn);
-
-        T objOut = mapper.readValue(serialisedIn, type);
-        String serialisedOut = mapper.writeValueAsString(objOut);
-        System.out.println(serialisedOut);
-
-        Assert.assertEquals(serialisedIn, serialisedOut);
-        Assert.assertEquals(objIn, objOut);
-    }
-
-    private <T> void testXML(final T objIn, final Class<T> type, final String testName) throws IOException, JAXBException {
-        final JAXBContext context = JAXBContext.newInstance(type);
-
-        final Path dir = TestFileUtil.getTestResourcesDir().resolve("TestSearchRequestMapper");
-        Path expectedFile = dir.resolve(testName + "-XML.expected.xml");
-        Path actualFile = dir.resolve(testName + "-XML.actual.xml");
-
-        final StringWriter stringWriterIn = new StringWriter();
-        getMarshaller(context).marshal(objIn, stringWriterIn);
-
-        String serialisedIn = stringWriterIn.toString();
-        System.out.println(serialisedIn);
-
-        if (!Files.isRegularFile(expectedFile)) {
-            StreamUtil.stringToFile(serialisedIn, expectedFile);
-        }
-        StreamUtil.stringToFile(serialisedIn, actualFile);
-
-        final String expected = StreamUtil.fileToString(expectedFile);
-        Assert.assertEquals(expected, serialisedIn);
-
-        Object objOut = context.createUnmarshaller().unmarshal(new StringReader(serialisedIn));
-
-        final StringWriter stringWriterOut = new StringWriter();
-        getMarshaller(context).marshal(objOut, stringWriterOut);
-
-        String serialisedOut = stringWriterOut.toString();
-        System.out.println(serialisedOut);
-
-        Assert.assertEquals(serialisedIn, serialisedOut);
-        Assert.assertEquals(objIn, objOut);
-    }
-
-    private Marshaller getMarshaller(final JAXBContext context) {
-        try {
-            Marshaller marshaller = context.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            return marshaller;
-        } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    private ObjectMapper createMapper(final boolean indent) {
-//        final SimpleModule module = new SimpleModule();
-//        module.addSerializer(Double.class, new MyDoubleSerialiser());
-
-        final ObjectMapper mapper = new ObjectMapper();
-//        mapper.registerModule(module);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
-        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract classes
-//        mapper.enableDefaultTyping();
-
-        return mapper;
-    }
 }
