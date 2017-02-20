@@ -61,7 +61,9 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
         }
 
         final TableSettings child = tableSettings[tableSettings.length - 1];
+
         fields = child.getFields();
+
 
 //        tfields = Structure = createFieldStructure(fields);
 //
@@ -168,6 +170,18 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
 
                 final Object[][] values = results.toArray(new Object[results.size()][]);
 
+                Field parentKey = new Field(":ParentKey");
+                Field key = new Field(":Key");
+                Field depth = new Field(":Depth");
+
+                final Field[] fields = new Field[this.fields.length + 3];
+                fields[0] = parentKey;
+                fields[1] = key;
+                fields[2] = depth;
+                for (int i = 0; i < this.fields.length; i++) {
+                    fields[i + 3] = this.fields[i];
+                }
+
                 return new VisResult(resultRequest.getComponentId(), fields, values, totalResults, error);
 
             } catch (final Exception e) {
@@ -185,7 +199,6 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
 
         for (final Item item : items) {
             if (rangeChecker.check(count)) {
-                // TODO : Add hidden fields for parent key, key and depth.
                 final Object[] values = new Object[fields.length + 3];
 
                 if (item.getKey() != null) {

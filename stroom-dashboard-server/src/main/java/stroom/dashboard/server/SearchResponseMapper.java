@@ -133,21 +133,26 @@ public class SearchResponseMapper {
             try {
                 final Field[] fields = visResult.getStructure();
                 if (fields != null && visResult.getValues() != null) {
-                    int valueOffset = 3;
+                    int valueOffset = 0;
 
                     final Map<Integer, List<String>> typeMap = new HashMap<>();
                     int maxDepth = 0;
                     for (final Field field : fields) {
-                        String type = Type.GENERAL.name();
-                        if (field.getFormat() != null && field.getFormat().getType() != null) {
-                            type = field.getFormat().getType().name();
-                        }
-                        typeMap.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(type);
-
-                        if (field.getGroup() != null) {
-                            maxDepth = Math.max(maxDepth, field.getGroup());
-                        } else {
+                        // Ignore key and depth fields.
+                        if (field.getName() != null && field.getName().startsWith(":")) {
                             valueOffset++;
+
+                        } else {
+                            String type = Type.GENERAL.name();
+                            if (field.getFormat() != null && field.getFormat().getType() != null) {
+                                type = field.getFormat().getType().name();
+                            }
+                            typeMap.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(type);
+
+                            if (field.getGroup() != null) {
+                                maxDepth = Math.max(maxDepth, field.getGroup());
+                                valueOffset++;
+                            }
                         }
                     }
 
@@ -166,8 +171,7 @@ public class SearchResponseMapper {
                         types[group] = row;
                     }
 
-                    final int valueCount = 3 + fields.length - valueOffset;
-
+                    final int valueCount = fields.length - valueOffset;
 
                     final Map<Object, List<Object[]>> map = new HashMap<>();
                     for (final Object[] row : visResult.getValues()) {

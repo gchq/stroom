@@ -355,7 +355,7 @@ public class SearchRequestMapper {
 
         int group = 0;
         while (nest != null) {
-            stroom.query.api.Field field = convertField(visStructure.getNest().getKey(), formatMap);
+            stroom.query.api.Field field = convertField(nest.getKey(), formatMap);
             field.setGroup(group++);
 
             fields.add(field);
