@@ -27,6 +27,7 @@ import stroom.query.api.Format;
 import stroom.query.api.TableSettings;
 import stroom.util.shared.ParamUtil;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -188,7 +189,7 @@ public class TestVisComponentResultCreator {
         final Field fieldY = new Field("y", "${y}", null, null, null, null);
         final Field series = new Field("series", "${series}", null, null, null, null);
         final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(new Field[]{fieldX, fieldY, series});
+        tableSettings.setFields(Arrays.asList(fieldX, fieldY, series));
         return tableSettings;
     }
 

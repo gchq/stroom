@@ -48,6 +48,8 @@ import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,11 +83,11 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
     }
 
     private void test(final ExpressionBuilder expressionIn, final int expectResultCount) {
-        final String[] compoentIds = new String[]{"table-1"};
-        test(expressionIn, expectResultCount, compoentIds, true);
+        final List<String> componentIds = Collections.singletonList("table-1");
+        test(expressionIn, expectResultCount, componentIds, true);
     }
 
-    private void test(final ExpressionBuilder expressionIn, final int expectResultCount, final String[] componentIds,
+    private void test(final ExpressionBuilder expressionIn, final int expectResultCount, final List<String> componentIds,
                       final boolean extractValues) {
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
         StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
@@ -95,16 +97,14 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         Assert.assertNotNull("Index is null", index);
         final DocRef dataSourceRef = DocRefUtil.create(index);
 
-        final ResultRequest[] resultRequests = new ResultRequest[componentIds.length];
+        final List<ResultRequest> resultRequests = new ArrayList<>(componentIds.size());
 
-        for (int i = 0; i < componentIds.length; i++) {
-            final String componentId = componentIds[i];
-
+        for (final String componentId : componentIds) {
             final TableSettings tableSettings = createTableSettings(index);
             tableSettings.setExtractValues(extractValues);
 
             final ResultRequest tableResultRequest = new ResultRequest(componentId, tableSettings);
-            resultRequests[i] = tableResultRequest;
+            resultRequests.add(tableResultRequest);
         }
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
@@ -140,7 +140,7 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
                             values = new ArrayList<>();
                             rows.put(componentId, values);
                         }
-                        values.add(tableResult.getRows()[(int) i]);
+                        values.add(tableResult.getRows().get((int) i));
                     }
                 }
             }
@@ -155,7 +155,7 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         if (expectResultCount == 0) {
             Assert.assertEquals(0, rows.size());
         } else {
-            Assert.assertEquals(componentIds.length, rows.size());
+            Assert.assertEquals(componentIds.size(), rows.size());
         }
 
         for (final List<Row> values : rows.values()) {
@@ -171,12 +171,12 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
                 Assert.assertNotNull("No results found", firstResult);
 
                 if (extractValues) {
-                    final String time = firstResult.getValues()[1];
+                    final String time = firstResult.getValues().get(1);
                     Assert.assertNotNull("Incorrect heading", time);
                     Assert.assertEquals("Incorrect number of hits found", expectResultCount, values.size());
                     boolean found = false;
                     for (final Row hit : values) {
-                        final String str = hit.getValues()[1];
+                        final String str = hit.getValues().get(1);
                         if ("2007-03-18T14:34:41.000Z".equals(str)) {
                             found = true;
                         }
@@ -188,16 +188,15 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
     }
 
     private TableSettings createTableSettings(final Index index) {
-        final TableSettings tableSettings = new TableSettings();
-
         final Field idField = new Field("Id");
         idField.setExpression(ParamUtil.makeParam("StreamId"));
-        tableSettings.addField(idField);
 
         final Field timeField = new Field("Event Time");
         timeField.setExpression(ParamUtil.makeParam("EventTime"));
         timeField.setFormat(new Format(Format.Type.DATE_TIME));
-        tableSettings.addField(timeField);
+
+        final TableSettings tableSettings = new TableSettings();
+        tableSettings.setFields(Arrays.asList(idField, timeField));
 
         final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultPipeline();
         tableSettings.setExtractionPipeline(DocRefUtil.create(resultPipeline));

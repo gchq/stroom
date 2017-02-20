@@ -26,7 +26,7 @@ import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.List;
 
 @JsonPropertyOrder({"highlights", "errors", "complete", "results"})
 @XmlRootElement(name = "searchResponse")
@@ -41,14 +41,14 @@ public class SearchResponse implements Serializable {
      */
     @XmlElementWrapper(name = "highlights")
     @XmlElement(name = "highlight")
-    private String[] highlights;
+    private List<String> highlights;
 
     /**
      * Any errors that have been generated during searching.
      */
     @XmlElementWrapper(name = "errors")
     @XmlElement(name = "error")
-    private String[] errors;
+    private List<String> errors;
 
     /**
      * Complete means that all index shards have been searched across the
@@ -62,24 +62,24 @@ public class SearchResponse implements Serializable {
             @XmlElement(name = "table", type = TableResult.class),
             @XmlElement(name = "vis", type = FlatResult.class)
     })
-    private Result[] results;
+    private List<Result> results;
 
     public SearchResponse() {
     }
 
-    public String[] getHighlights() {
+    public List<String> getHighlights() {
         return highlights;
     }
 
-    public void setHighlights(final String[] highlights) {
+    public void setHighlights(final List<String> highlights) {
         this.highlights = highlights;
     }
 
-    public String[] getErrors() {
+    public List<String> getErrors() {
         return errors;
     }
 
-    public void setErrors(final String[] errors) {
+    public void setErrors(final List<String> errors) {
         this.errors = errors;
     }
 
@@ -95,11 +95,11 @@ public class SearchResponse implements Serializable {
         return complete != null && complete;
     }
 
-    public Result[] getResults() {
+    public List<Result> getResults() {
         return results;
     }
 
-    public void setResults(final Result[] results) {
+    public void setResults(final List<Result> results) {
         this.results = results;
     }
 
@@ -110,31 +110,28 @@ public class SearchResponse implements Serializable {
 
         final SearchResponse that = (SearchResponse) o;
 
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(highlights, that.highlights)) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(errors, that.errors)) return false;
+        if (highlights != null ? !highlights.equals(that.highlights) : that.highlights != null) return false;
+        if (errors != null ? !errors.equals(that.errors) : that.errors != null) return false;
         if (complete != null ? !complete.equals(that.complete) : that.complete != null) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(results, that.results);
+        return results != null ? results.equals(that.results) : that.results == null;
     }
 
     @Override
     public int hashCode() {
-        int result = Arrays.hashCode(highlights);
-        result = 31 * result + Arrays.hashCode(errors);
+        int result = highlights != null ? highlights.hashCode() : 0;
+        result = 31 * result + (errors != null ? errors.hashCode() : 0);
         result = 31 * result + (complete != null ? complete.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(results);
+        result = 31 * result + (results != null ? results.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
         return "SearchResponse{" +
-                "highlights=" + Arrays.toString(highlights) +
-                ", errors=" + Arrays.toString(errors) +
+                "highlights=" + highlights +
+                ", errors=" + errors +
                 ", complete=" + complete +
-                ", results=" + Arrays.toString(results) +
+                ", results=" + results +
                 '}';
     }
 }

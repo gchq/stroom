@@ -22,30 +22,31 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 @JsonPropertyOrder({"parent", "values"})
 @XmlType(name = "Key", propOrder = {"parent", "values"})
 public class Key {
     private final int depth;
     private final Key parent;
-    private final Object[] values;
+    private final List<Object> values;
 
     public Key(final Object value) {
-        this(new Object[]{value});
+        this(Collections.singletonList(value));
     }
 
-    public Key(final Object[] values) {
+    public Key(final List<Object> values) {
         this.depth = 0;
         this.parent = null;
         this.values = values;
     }
 
     public Key(final Key parent, final Object value) {
-        this(parent, new Object[]{value});
+        this(parent, Collections.singletonList(value));
     }
 
-    public Key(final Key parent, final Object[] values) {
+    public Key(final Key parent, final List<Object> values) {
         if (parent != null) {
             this.depth = parent.depth + 1;
         } else {
@@ -74,7 +75,7 @@ public class Key {
             @XmlElement(name = "long", type = Long.class),
             @XmlElement(name = "string", type = String.class)
     })
-    public Object[] getValues() {
+    public List<Object> getValues() {
         return values;
     }
 
@@ -87,15 +88,14 @@ public class Key {
 
         if (depth != key.depth) return false;
         if (parent != null ? !parent.equals(key.parent) : key.parent != null) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(values, key.values);
+        return values != null ? values.equals(key.values) : key.values == null;
     }
 
     @Override
     public int hashCode() {
         int result = depth;
         result = 31 * result + (parent != null ? parent.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(values);
+        result = 31 * result + (values != null ? values.hashCode() : 0);
         return result;
     }
 
@@ -105,7 +105,7 @@ public class Key {
             sb.append("/");
         }
 
-        if (values != null && values.length > 0) {
+        if (values != null && values.size() > 0) {
             for (final Object o : values) {
                 if (o != null) {
                     sb.append(o.toString());

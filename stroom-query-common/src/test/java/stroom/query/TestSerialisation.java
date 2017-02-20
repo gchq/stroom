@@ -42,7 +42,6 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.Param;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
-import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.Row;
 import stroom.query.api.SearchRequest;
@@ -67,6 +66,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class TestSerialisation {
@@ -90,37 +90,38 @@ public class TestSerialisation {
     }
 
     private static SearchRequest getSearchRequest() {
-        DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
+        final DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
 
-        ExpressionBuilder expressionBuilder = new ExpressionBuilder();
+        final ExpressionBuilder expressionBuilder = new ExpressionBuilder();
         expressionBuilder.addTerm("field1", Condition.EQUALS, "value1");
         expressionBuilder.addOperator(Op.AND);
         expressionBuilder.addTerm("field2", Condition.BETWEEN, "value2");
 
-        TableSettings tableSettings = new TableSettings();
+        final List<Field> fields = new ArrayList<>();
+        fields.add(new Field("name1", "expression1",
+                new Sort(1, Sort.SortDirection.ASCENDING),
+                new Filter("include1", "exclude1"),
+                new Format(new NumberFormat(1, false)), 1));
+        fields.add(new Field("name2", "expression2",
+                new Sort(2, Sort.SortDirection.DESCENDING),
+                new Filter("include2", "exclude2"),
+                new Format(createDateTimeFormat()), 2));
+
+        final TableSettings tableSettings = new TableSettings();
         tableSettings.setQueryId("someQueryId");
-        tableSettings.setFields(new Field[]{
-                new Field("name1", "expression1",
-                        new Sort(1, Sort.SortDirection.ASCENDING),
-                        new Filter("include1", "exclude1"),
-                        new Format(new NumberFormat(1, false)), 1),
-                new Field("name2", "expression2",
-                        new Sort(2, Sort.SortDirection.DESCENDING),
-                        new Filter("include2", "exclude2"),
-                        new Format(createDateTimeFormat()), 2)
-        });
+        tableSettings.setFields(fields);
         tableSettings.setExtractValues(false);
         tableSettings.setExtractionPipeline(new DocRef("docRefType2", "docRefUuid2", "docRefName2"));
-        tableSettings.setMaxResults(new Integer[]{1, 2});
+        tableSettings.setMaxResults(Arrays.asList(1, 2));
         tableSettings.setShowDetail(false);
 
 //        Map<String, TableSettings> componentSettingsMap = new HashMap<>();
 //        componentSettingsMap.put("componentSettingsMapKey", tableSettings);
 
-        final Param[] params = new Param[]{new Param("param1", "val1"), new Param("param2", "val2")};
+        final List<Param> params = Arrays.asList(new Param("param1", "val1"), new Param("param2", "val2"));
         final Query query = new Query(docRef, expressionBuilder.build(), params);
 
-        final ResultRequest[] resultRequests = new ResultRequest[]{new ResultRequest("componentX", tableSettings, new OffsetRange(1, 100))};
+        final List<ResultRequest> resultRequests = Collections.singletonList(new ResultRequest("componentX", tableSettings, new OffsetRange(1, 100)));
 
         SearchRequest searchRequest = new SearchRequest(new QueryKey("1234"), query, resultRequests, "en-gb");
 
@@ -197,14 +198,24 @@ public class TestSerialisation {
         StreamUtil.stringToFile(serialisedIn, actualFile);
 
         final String expected = StreamUtil.fileToString(expectedFile);
-        Assert.assertEquals(expected, serialisedIn);
+        assertEqualsIgnoreWhitespace(expected, serialisedIn);
 
         T objOut = mapper.readValue(serialisedIn, type);
         String serialisedOut = mapper.writeValueAsString(objOut);
         System.out.println(serialisedOut);
 
-        Assert.assertEquals(serialisedIn, serialisedOut);
+        assertEqualsIgnoreWhitespace(serialisedIn, serialisedOut);
         Assert.assertEquals(objIn, objOut);
+    }
+
+    private void assertEqualsIgnoreWhitespace(final String expected, final String actual) {
+        final String str1 = removeWhitespace(expected);
+        final String str2 = removeWhitespace(actual);
+        Assert.assertEquals(str1, str2);
+    }
+
+    private String removeWhitespace(final String in) {
+        return in.replaceAll("\\s", "");
     }
 
 //    private <T> void testXML(final T objIn, final Class<T> type, final String testName) throws IOException, JAXBException {
@@ -251,35 +262,32 @@ public class TestSerialisation {
     }
 
     private SearchResponse getSearchResponse() {
-        SearchResponse searchResponse = new SearchResponse();
-        searchResponse.setHighlights(new String[]{"highlight1", "highlight2"});
-        searchResponse.setErrors(new String[]{"some error"});
+        final SearchResponse searchResponse = new SearchResponse();
+        searchResponse.setHighlights(Arrays.asList("highlight1", "highlight2"));
+        searchResponse.setErrors(Arrays.asList("some error"));
         searchResponse.setComplete(false);
 
-        TableResult tableResult = new TableResult("table-1234");
+        final List<String> values = Arrays.asList("test");
+        final List<Row> rows = Collections.singletonList(new Row("groupKey", values, 5));
+
+        final TableResult tableResult = new TableResult("table-1234");
         tableResult.setError("tableResultError");
         tableResult.setTotalResults(1);
         tableResult.setResultRange(new OffsetRange(1, 2));
-        List<Row> rows = new ArrayList<>();
-        String[] values = new String[1];
-        values[0] = "test";
-        rows.add(new Row("groupKey", values, 5));
-        Row[] arr = new Row[rows.size()];
-        arr = rows.toArray(arr);
-        tableResult.setRows(arr);
-        searchResponse.setResults(new Result[]{tableResult, getVisResult1()});
+        tableResult.setRows(rows);
+        searchResponse.setResults(Arrays.asList(tableResult, getVisResult1()));
 
         return searchResponse;
     }
 
     private FlatResult getVisResult1() {
-        List<Field> structure = new ArrayList<>();
+        final List<Field> structure = new ArrayList<>();
         structure.add(new Field("val1", Type.GENERAL));
         structure.add(new Field("val2", Type.NUMBER));
         structure.add(new Field("val3", Type.NUMBER));
         structure.add(new Field("val4", Type.GENERAL));
 
-        List<List<Object>> data = new ArrayList<>();
+        final List<List<Object>> data = new ArrayList<>();
         data.add(Arrays.asList("test0", 0.4, 234, "this0"));
         data.add(Arrays.asList("test1", 0.5, 25634, "this1"));
         data.add(Arrays.asList("test2", 0.6, 27, "this2"));
@@ -288,9 +296,8 @@ public class TestSerialisation {
         data.add(Arrays.asList("test5", 0.33, 3244, "this5"));
         data.add(Arrays.asList("test6", 34.66, 44, "this6"));
         data.add(Arrays.asList("test7", 2.33, 74, "this7"));
-        FlatResult visResult = new FlatResult("vis-1234", structure, data, 200L, "visResultError");
 
-        return visResult;
+        return new FlatResult("vis-1234", structure, data, 200L, "visResultError");
     }
 
 //    private VisResult getVisResult2() {

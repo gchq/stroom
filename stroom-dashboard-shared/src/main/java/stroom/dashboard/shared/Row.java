@@ -16,11 +16,9 @@
 
 package stroom.dashboard.shared;
 
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.SharedObject;
 
-import java.util.Arrays;
+import java.util.List;
 
 /**
  * Class that represents a hit in the index
@@ -29,14 +27,14 @@ public class Row implements SharedObject {
     private static final long serialVersionUID = 4379892306375080112L;
 
     private String groupKey;
-    private SharedObject[] values;
+    private List<String> values;
     private int depth;
 
     public Row() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public Row(final String groupKey, final SharedObject[] values, final int depth) {
+    public Row(final String groupKey, final List<String> values, final int depth) {
         this.groupKey = groupKey;
         this.values = values;
         this.depth = depth;
@@ -46,7 +44,7 @@ public class Row implements SharedObject {
         return groupKey;
     }
 
-    public SharedObject[] getValues() {
+    public List<String> getValues() {
         return values;
     }
 
@@ -56,27 +54,22 @@ public class Row implements SharedObject {
 
     @Override
     public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof Row)) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-        final Row result = (Row) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(groupKey, result.groupKey);
-        builder.appendSuper(Arrays.equals(values, result.values));
-        builder.append(depth, result.depth);
-        return builder.isEquals();
+        final Row row = (Row) o;
+
+        if (depth != row.depth) return false;
+        if (groupKey != null ? !groupKey.equals(row.groupKey) : row.groupKey != null) return false;
+        return values != null ? values.equals(row.values) : row.values == null;
     }
 
     @Override
     public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(groupKey);
-        builder.append(Arrays.hashCode(values));
-        builder.append(depth);
-        return builder.toHashCode();
+        int result = groupKey != null ? groupKey.hashCode() : 0;
+        result = 31 * result + (values != null ? values.hashCode() : 0);
+        result = 31 * result + depth;
+        return result;
     }
 
     @Override

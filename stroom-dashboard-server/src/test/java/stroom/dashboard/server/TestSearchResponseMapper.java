@@ -21,13 +21,13 @@ import stroom.query.api.Field;
 import stroom.query.api.FlatResult;
 import stroom.query.api.Format.Type;
 import stroom.query.api.OffsetRange;
-import stroom.query.api.Result;
 import stroom.query.api.Row;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class TestSearchResponseMapper {
@@ -39,23 +39,19 @@ public class TestSearchResponseMapper {
     }
 
     private SearchResponse getSearchResponse() {
-        SearchResponse searchResponse = new SearchResponse();
-        searchResponse.setHighlights(new String[]{"highlight1", "highlight2"});
-        searchResponse.setErrors(new String[]{"some error"});
+        final SearchResponse searchResponse = new SearchResponse();
+        searchResponse.setHighlights(Arrays.asList("highlight1", "highlight2"));
+        searchResponse.setErrors(Arrays.asList("some error"));
         searchResponse.setComplete(false);
 
-        TableResult tableResult = new TableResult("table-1234");
+        final List<Row> rows = Collections.singletonList(new Row("groupKey", Arrays.asList("test"), 5));
+
+        final TableResult tableResult = new TableResult("table-1234");
         tableResult.setError("tableResultError");
         tableResult.setTotalResults(1);
         tableResult.setResultRange(new OffsetRange(1, 2));
-        List<Row> rows = new ArrayList<>();
-        String[] values = new String[1];
-        values[0] = "test";
-        rows.add(new Row("groupKey", values, 5));
-        Row[] arr = new Row[rows.size()];
-        arr = rows.toArray(arr);
-        tableResult.setRows(arr);
-        searchResponse.setResults(new Result[]{tableResult, getVisResult1()});
+        tableResult.setRows(rows);
+        searchResponse.setResults(Arrays.asList(tableResult, getVisResult1()));
 
         return searchResponse;
     }

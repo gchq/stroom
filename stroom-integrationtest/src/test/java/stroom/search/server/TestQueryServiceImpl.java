@@ -37,7 +37,6 @@ import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
-import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Query;
 import stroom.security.shared.User;
@@ -119,7 +118,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         final ExpressionOperator root = query.getQuery().getExpression();
 
-        Assert.assertEquals(1, root.getChildren().length);
+        Assert.assertEquals(1, root.getChildren().size());
 
         final StringBuilder sb = new StringBuilder();
         sb.append("<expression>\n");
@@ -150,7 +149,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         Assert.assertEquals("Test query", query.getName());
         Assert.assertNotNull(query.getData());
         final ExpressionOperator root = query.getQuery().getExpression();
-        Assert.assertEquals(1, root.getChildren().length);
+        Assert.assertEquals(1, root.getChildren().size());
     }
 
     @Test
@@ -161,7 +160,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         Assert.assertEquals("Test query", query.getName());
         Assert.assertNotNull(query.getData());
         final ExpressionOperator root = query.getQuery().getExpression();
-        Assert.assertEquals(1, root.getChildren().length);
+        Assert.assertEquals(1, root.getChildren().size());
     }
 
     @Test

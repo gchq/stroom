@@ -59,9 +59,10 @@ import stroom.visualisation.shared.VisualisationService;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -103,11 +104,10 @@ public class SearchRequestMapper {
         query.setExpression(searchRequest.getSearch().getExpression());
 
         if (searchRequest.getSearch().getParamMap() != null && searchRequest.getSearch().getParamMap().size() > 0) {
-            Param[] params = new Param[searchRequest.getSearch().getParamMap().size()];
-            int i = 0;
+            final List<Param> params = new ArrayList<>(searchRequest.getSearch().getParamMap().size());
             for (final Entry<String, String> entry : searchRequest.getSearch().getParamMap().entrySet()) {
                 final Param param = new Param(entry.getKey(), entry.getValue());
-                params[i++] = param;
+                params.add(param);
             }
 
             query.setParams(params);
@@ -116,13 +116,12 @@ public class SearchRequestMapper {
         return query;
     }
 
-    private ResultRequest[] mapResultRequests(final stroom.dashboard.shared.SearchRequest searchRequest) {
+    private List<ResultRequest> mapResultRequests(final stroom.dashboard.shared.SearchRequest searchRequest) {
         if (searchRequest.getComponentResultRequests() == null || searchRequest.getComponentResultRequests().size() == 0) {
             return null;
         }
 
-        final ResultRequest[] resultRequests = new ResultRequest[searchRequest.getComponentResultRequests().size()];
-        int i = 0;
+        final List<ResultRequest> resultRequests = new ArrayList<>(searchRequest.getComponentResultRequests().size());
         for (final Entry<String, ComponentResultRequest> entry : searchRequest.getComponentResultRequests().entrySet()) {
             final String componentId = entry.getKey();
             final ComponentResultRequest componentResultRequest = entry.getValue();
@@ -132,11 +131,11 @@ public class SearchRequestMapper {
                 copy.setComponentId(componentId);
                 copy.setFetchData(tableResultRequest.wantsData());
                 final TableSettings tableSettings = mapTableSettings(tableResultRequest.getTableSettings());
-                copy.setTableSettings(new TableSettings[]{tableSettings});
+                copy.setTableSettings(Collections.singletonList(tableSettings));
                 copy.setRequestedRange(mapOffsetRange(tableResultRequest.getRequestedRange()));
                 copy.setOpenGroups(mapCollection(String.class, tableResultRequest.getOpenGroups()));
                 copy.setResultStyle(ResultStyle.TABLE);
-                resultRequests[i++] = copy;
+                resultRequests.add(copy);
 
             } else if (componentResultRequest instanceof VisResultRequest) {
                 final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
@@ -149,11 +148,11 @@ public class SearchRequestMapper {
                 final TableSettings parentTableSettings = mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings());
                 final TableSettings childTableSettings = mapVisSettingsToTableSettings(visResultRequest.getVisDashboardSettings(), parentTableSettings);
 
-                copy.setTableSettings(new TableSettings[]{parentTableSettings, childTableSettings});
+                copy.setTableSettings(Arrays.asList(parentTableSettings, childTableSettings));
                 copy.setRequestedRange(null);
                 copy.setOpenGroups(null);
                 copy.setResultStyle(ResultStyle.FLAT);
-                resultRequests[i++] = copy;
+                resultRequests.add(copy);
 
 //
 //
@@ -193,13 +192,12 @@ public class SearchRequestMapper {
         return tableSettings;
     }
 
-    private stroom.query.api.Field[] mapFields(final List<Field> fields) {
+    private List<stroom.query.api.Field> mapFields(final List<Field> fields) {
         if (fields == null || fields.size() == 0) {
             return null;
         }
 
-        stroom.query.api.Field[] arr = new stroom.query.api.Field[fields.size()];
-        int i = 0;
+        final List<stroom.query.api.Field> list = new ArrayList<>(fields.size());
         for (final Field field : fields) {
             stroom.query.api.Field fld = new stroom.query.api.Field();
             fld.setName(field.getName());
@@ -208,35 +206,35 @@ public class SearchRequestMapper {
             fld.setFilter(mapFilter(field.getFilter()));
             fld.setFormat(mapFormat(field.getFormat()));
             fld.setGroup(field.getGroup());
-            arr[i++] = fld;
+            list.add(fld);
         }
 
-        return arr;
+        return list;
     }
 
-    private Integer[] mapIntArray(final int[] arr) {
+    private List<Integer> mapIntArray(final int[] arr) {
         if (arr == null || arr.length == 0) {
             return null;
         }
 
-        final Integer[] copy = new Integer[arr.length];
+        final List<Integer> copy = new ArrayList<>(arr.length);
         for (int i = 0; i < arr.length; i++) {
-            copy[i] = arr[i];
+            copy.add(arr[i]);
         }
 
         return copy;
     }
 
-    private <T> T[] mapCollection(final Class<T> clazz, final Collection<T> collection) {
+    private <T> List<T> mapCollection(final Class<T> clazz, final Collection<T> collection) {
         if (collection == null || collection.size() == 0) {
             return null;
         }
 
         @SuppressWarnings("unchecked")
-        T[] copy = (T[]) Array.newInstance(clazz, collection.size());
+        List<T> copy = new ArrayList<>(collection.size());
         int i = 0;
         for (final T t : collection) {
-            copy[i++] = t;
+            copy.add(t);
         }
 
         return copy;
@@ -482,8 +480,8 @@ public class SearchRequestMapper {
                     }
 
                     tableSettings = new TableSettings();
-                    tableSettings.setFields(fields.toArray(new stroom.query.api.Field[fields.size()]));
-                    tableSettings.setMaxResults(limits.toArray(new Integer[limits.size()]));
+                    tableSettings.setFields(fields);
+                    tableSettings.setMaxResults(limits);
                     tableSettings.setShowDetail(true);
                 }
             }

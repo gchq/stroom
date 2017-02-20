@@ -59,7 +59,7 @@ public class CoprocessorSettingsMap {
     public static CoprocessorSettingsMap create(final SearchRequest searchRequest) {
         final Map<String, TableSettings> settingsMap = new HashMap<>();
         for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
-            settingsMap.put(resultRequest.getComponentId(), resultRequest.getTableSettings()[0]);
+            settingsMap.put(resultRequest.getComponentId(), resultRequest.getTableSettings().get(0));
         }
         return new CoprocessorSettingsMap(settingsMap);
     }

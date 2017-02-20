@@ -34,10 +34,8 @@ import stroom.query.api.Field;
 import stroom.query.api.FlatResult;
 import stroom.query.api.Result;
 import stroom.util.shared.OffsetRange;
-import stroom.util.shared.SharedString;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,8 +58,7 @@ public class SearchResponseMapper {
         }
 
         if (searchResponse.getHighlights() != null) {
-            List<String> list = Arrays.asList(searchResponse.getHighlights());
-            copy.setHighlights(new HashSet<>(list));
+            copy.setHighlights(new HashSet<>(searchResponse.getHighlights()));
         }
 
         if (searchResponse.getErrors() != null) {
@@ -106,20 +103,11 @@ public class SearchResponseMapper {
         return null;
     }
 
-    private List<Row> mapRows(final stroom.query.api.Row[] rows) {
+    private List<Row> mapRows(final List<stroom.query.api.Row> rows) {
         final List<Row> copy = new ArrayList<>();
         if (rows != null) {
             for (final stroom.query.api.Row row : rows) {
-                SharedString[] values = null;
-
-                if (row.getValues() != null) {
-                    values = new SharedString[row.getValues().length];
-                    for (int i = 0; i < values.length; i++) {
-                        values[i] = SharedString.wrap(row.getValues()[i]);
-                    }
-                }
-
-                final Row item = new Row(row.getGroupKey(), values, row.getDepth());
+                final Row item = new Row(row.getGroupKey(), row.getValues(), row.getDepth());
                 copy.add(item);
             }
         }

@@ -19,7 +19,6 @@ package stroom.dashboard.client.table;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -56,7 +55,6 @@ import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Format;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.IndexConstants;
-import stroom.query.api.QueryKey;
 import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
@@ -78,7 +76,6 @@ import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.util.shared.Expander;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.ParamUtil;
-import stroom.util.shared.SharedObject;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -430,12 +427,10 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                     return null;
                 }
 
-                final SharedObject[] values = row.getValues();
+                final List<String> values = row.getValues();
                 if (values != null) {
-                    final SharedObject res = values[pos];
-                    if (res != null) {
-                        final String value = res.toString();
-
+                    final String value = values.get(pos);
+                    if (value != null) {
                         if (field.getGroup() != null && field.getGroup() >= row.getDepth()) {
                             final SafeHtmlBuilder sb = new SafeHtmlBuilder();
                             sb.appendHtmlConstant("<b>");
@@ -457,17 +452,11 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                 }
 
                 return super.getCellStyleNames(context, object);
-
             }
         };
 
         final FieldHeader fieldHeader = new FieldHeader(fieldsManager, field);
-        fieldHeader.setUpdater(new ValueUpdater<Field>() {
-            @Override
-            public void update(final Field value) {
-                getView().redrawHeaders();
-            }
-        });
+        fieldHeader.setUpdater(value -> getView().redrawHeaders());
 
         getView().addResizableColumn(column, fieldHeader, field.getWidth());
         existingColumns.add(column);
@@ -477,12 +466,12 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
         selectedStreamId = null;
         selectedEventId = null;
         if (result != null && streamIdIndex >= 0 && eventIdIndex >= 0) {
-            final SharedObject[] values = result.getValues();
-            if (values.length > streamIdIndex && values[streamIdIndex] != null) {
-                selectedStreamId = values[streamIdIndex].toString();
+            final List<String> values = result.getValues();
+            if (values.size() > streamIdIndex && values.get(streamIdIndex) != null) {
+                selectedStreamId = values.get(streamIdIndex).toString();
             }
-            if (values.length > eventIdIndex && values[eventIdIndex] != null) {
-                selectedEventId = values[eventIdIndex].toString();
+            if (values.size() > eventIdIndex && values.get(eventIdIndex) != null) {
+                selectedEventId = values.get(eventIdIndex).toString();
             }
         }
 

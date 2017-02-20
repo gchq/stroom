@@ -24,8 +24,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @JsonPropertyOrder({"queryId", "fields", "extractValues", "extractionPipeline", "maxResults",
@@ -46,7 +44,7 @@ public class TableSettings implements Serializable {
     private DocRef extractionPipeline;
     @XmlElementWrapper(name = "maxResults")
     @XmlElement(name = "val")
-    private Integer[] maxResults;
+    private List<Integer> maxResults;
     @XmlElement
     private Boolean showDetail;
 
@@ -61,27 +59,12 @@ public class TableSettings implements Serializable {
         this.queryId = queryId;
     }
 
-
-    public Field[] getFields() {
-        if (fields == null || fields.size() == 0) {
-            return null;
-        }
-        return fields.toArray(new Field[fields.size()]);
+    public List<Field> getFields() {
+        return fields;
     }
 
-    public void setFields(final Field[] fields) {
-        if (fields != null && fields.length > 0) {
-            this.fields = new ArrayList<>(Arrays.asList(fields));
-        } else {
-            this.fields = null;
-        }
-    }
-
-    public void addField(final Field field) {
-        if (fields == null) {
-            fields = new ArrayList<>();
-        }
-        fields.add(field);
+    public void setFields(final List<Field> fields) {
+        this.fields = fields;
     }
 
     public Boolean getExtractValues() {
@@ -107,11 +90,11 @@ public class TableSettings implements Serializable {
         this.extractionPipeline = extractionPipeline;
     }
 
-    public Integer[] getMaxResults() {
+    public List<Integer> getMaxResults() {
         return maxResults;
     }
 
-    public void setMaxResults(final Integer[] maxResults) {
+    public void setMaxResults(final List<Integer> maxResults) {
         this.maxResults = maxResults;
     }
 
@@ -147,8 +130,7 @@ public class TableSettings implements Serializable {
             return false;
         if (extractionPipeline != null ? !extractionPipeline.equals(that.extractionPipeline) : that.extractionPipeline != null)
             return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(maxResults, that.maxResults)) return false;
+        if (maxResults != null ? !maxResults.equals(that.maxResults) : that.maxResults != null) return false;
         return showDetail != null ? showDetail.equals(that.showDetail) : that.showDetail == null;
     }
 
@@ -158,7 +140,7 @@ public class TableSettings implements Serializable {
         result = 31 * result + (fields != null ? fields.hashCode() : 0);
         result = 31 * result + (extractValues != null ? extractValues.hashCode() : 0);
         result = 31 * result + (extractionPipeline != null ? extractionPipeline.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(maxResults);
+        result = 31 * result + (maxResults != null ? maxResults.hashCode() : 0);
         result = 31 * result + (showDetail != null ? showDetail.hashCode() : 0);
         return result;
     }
@@ -170,7 +152,7 @@ public class TableSettings implements Serializable {
                 ", fields=" + fields +
                 ", extractValues=" + extractValues +
                 ", extractionPipeline=" + extractionPipeline +
-                ", maxResults=" + Arrays.toString(maxResults) +
+                ", maxResults=" + maxResults +
                 ", showDetail=" + showDetail +
                 '}';
     }

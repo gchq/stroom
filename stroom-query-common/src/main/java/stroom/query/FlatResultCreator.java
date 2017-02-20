@@ -30,7 +30,7 @@ import stroom.query.format.FieldFormatter;
 import stroom.util.shared.HasTerminate;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,65 +38,58 @@ import java.util.Set;
 
 public class FlatResultCreator implements ResultCreator, HasTerminate {
     private final FieldFormatter fieldFormatter;
-    private final Mapper[] mappers;
-    private final Field[] fields;
-//    private final Field[] valueFields;
+    private final List<Mapper> mappers;
+    private final List<Field> fields;
 
     private String error;
 
     public FlatResultCreator(final ResultRequest resultRequest, final Map<String, String> paramMap, final FieldFormatter fieldFormatter) {
         this.fieldFormatter = fieldFormatter;
 
-        final TableSettings[] tableSettings = resultRequest.getTableSettings();
+        final List<TableSettings> tableSettings = resultRequest.getTableSettings();
 
-        if (tableSettings.length > 1) {
-            mappers = new Mapper[tableSettings.length - 1];
-            for (int i = 0; i < tableSettings.length - 1; i++) {
-                final TableSettings parent = tableSettings[i];
-                final TableSettings child = tableSettings[i + 1];
-                mappers[i] = new Mapper(parent, child, paramMap);
+        if (tableSettings.size() > 1) {
+            mappers = new ArrayList<>(tableSettings.size() - 1);
+            for (int i = 0; i < tableSettings.size() - 1; i++) {
+                final TableSettings parent = tableSettings.get(i);
+                final TableSettings child = tableSettings.get(i + 1);
+                mappers.add(new Mapper(parent, child, paramMap));
             }
         } else {
-            mappers = new Mapper[0];
+            mappers = Collections.emptyList();
         }
 
-        final TableSettings child = tableSettings[tableSettings.length - 1];
+        final TableSettings child = tableSettings.get(tableSettings.size() - 1);
 
         fields = child.getFields();
-
-
-//        tfields = Structure = createFieldStructure(fields);
-//
-//        // Get detail/value fields.
-//        valueFields = fieldStructure[fieldStructure.length - 1];
     }
 
-    private Object[] toNodeKey(final Field[] fields, final Key key) {
+    private List<Object> toNodeKey(final List<Field> fields, final Key key) {
         if (key == null) {
             return null;
         }
 
-        final List<Object[]> list = new ArrayList<>();
+        final List<List<Object>> list = new ArrayList<>();
         Key k = key;
         int size = 0;
         while (k != null && k.getValues() != null) {
             list.add(0, k.getValues());
-            size += k.getValues().length;
+            size += k.getValues().size();
             k = k.getParent();
         }
 
-        final Object[] result = new Object[size];
-        int index = 0;
+        final List<Object> result = new ArrayList<>(size);
         int i = 0;
-        for (final Object[] values : list) {
-            final Field field = fields[i++];
-            if (values.length == 1) {
-                result[index++] = convert(field, values[0]);
+        for (final List<Object> values : list) {
+            if (values.size() == 1) {
+                final Field field = fields.get(i);
+                result.add(convert(field, values.get(0)));
             } else {
                 for (final Object obj : values) {
-                    result[index++] = obj;
+                    result.add(obj);
                 }
             }
+            i++;
         }
 
         return result;
@@ -174,7 +167,7 @@ public class FlatResultCreator implements ResultCreator, HasTerminate {
                 Field key = new Field(":Key");
                 Field depth = new Field(":Depth");
 
-                final List<Field> fields = new ArrayList<>(this.fields.length + 3);
+                final List<Field> fields = new ArrayList<>(this.fields.size() + 3);
                 fields.add(parentKey);
                 fields.add(key);
                 fields.add(depth);
@@ -199,7 +192,7 @@ public class FlatResultCreator implements ResultCreator, HasTerminate {
 
         for (final Item item : items) {
             if (rangeChecker.check(count)) {
-                final List<Object> values = new ArrayList<>(fields.length + 3);
+                final List<Object> values = new ArrayList<>(fields.size() + 3);
 
                 if (item.getKey() != null) {
                     values.add(toNodeKey(fields, item.getKey().getParent()));
@@ -212,7 +205,8 @@ public class FlatResultCreator implements ResultCreator, HasTerminate {
 
                 // Convert all list into fully resolved objects evaluating
                 // functions where necessary.
-                for (int i = 0; i < fields.length; i++) {
+                int i = 0;
+                for (final Field field : fields) {
                     final Object o = item.getValues()[i];
                     Object val = o;
                     if (o != null) {
@@ -225,16 +219,15 @@ public class FlatResultCreator implements ResultCreator, HasTerminate {
 
                         if (val != null) {
                             if (fieldFormatter != null) {
-                                final Field field = fields[i];
                                 val = fieldFormatter.format(field, val);
                             } else {
-                                final Field field = fields[i];
                                 val = convert(field, val);
                             }
                         }
                     }
 
                     values.add(val);
+                    i++;
                 }
 
                 // Add the values.
@@ -257,7 +250,7 @@ public class FlatResultCreator implements ResultCreator, HasTerminate {
         return count;
     }
 
-    // TODO : Replace this with conversion a the item level.
+    // TODO : Replace this with conversion at the item level.
     private Object convert(final Field field, final Object val) {
         if (field != null && field.getFormat() != null && field.getFormat().getType() != null) {
             final Type type = field.getFormat().getType();
@@ -317,7 +310,7 @@ public class FlatResultCreator implements ResultCreator, HasTerminate {
         private final TablePayloadHandler tablePayloadHandler;
 
         public Mapper(final TableSettings parent, final TableSettings child, final Map<String, String> paramMap) {
-            parentFields = new String[parent.getFields().length];
+            parentFields = new String[parent.getFields().size()];
             int i = 0;
             for (final Field field : parent.getFields()) {
                 parentFields[i++] = field.getName();
@@ -328,7 +321,7 @@ public class FlatResultCreator implements ResultCreator, HasTerminate {
             final TableCoprocessorSettings tableCoprocessorSettings = new TableCoprocessorSettings(child);
             tableCoprocessor = new TableCoprocessor(tableCoprocessorSettings, fieldIndexMap, this, paramMap);
 
-            final TrimSettings trimSettings = new TrimSettings(child.getMaxResults(), new Integer[]{Integer.MAX_VALUE});
+            final TrimSettings trimSettings = new TrimSettings(child.getMaxResults(), Collections.singletonList(Integer.MAX_VALUE));
             tablePayloadHandler = new TablePayloadHandler(child.getFields(), true, trimSettings);
         }
 
@@ -390,12 +383,12 @@ public class FlatResultCreator implements ResultCreator, HasTerminate {
     }
 
     private static class OpenGroupsFactory {
-        public static OpenGroups create(final String[] openGroups) {
-            if (openGroups == null || openGroups.length == 0) {
+        public static OpenGroups create(final List<String> openGroups) {
+            if (openGroups == null || openGroups.size() == 0) {
                 return group -> true;
             }
 
-            final Set<String> set = new HashSet<>(Arrays.asList(openGroups));
+            final Set<String> set = new HashSet<>(openGroups);
             return key -> key != null && set.contains(key.toString());
         }
     }

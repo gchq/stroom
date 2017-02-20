@@ -28,7 +28,9 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -96,16 +98,16 @@ public class StatisticsSearchStore implements Store {
         errors.add(error);
     }
 
-    public synchronized String[] getErrors() {
+    public synchronized List<String> getErrors() {
         if (errors == null || errors.size() == 0) {
             return null;
         }
 
-        return errors.toArray(new String[errors.size()]);
+        return new ArrayList<>(errors);
     }
 
     @Override
-    public String[] getHighlights() {
+    public List<String> getHighlights() {
         return null;
     }
 

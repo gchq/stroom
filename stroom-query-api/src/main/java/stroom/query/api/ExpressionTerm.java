@@ -23,6 +23,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Arrays;
+import java.util.List;
 
 @JsonPropertyOrder({"field", "condition", "value", "dictionary"})
 @XmlType(name = "ExpressionTerm", propOrder = {"field", "condition", "value", "dictionary"})
@@ -138,8 +140,8 @@ public class ExpressionTerm extends ExpressionItem {
         CONTAINS("contains"), EQUALS("="), GREATER_THAN(">"), GREATER_THAN_OR_EQUAL_TO(">="), LESS_THAN(
                 "<"), LESS_THAN_OR_EQUAL_TO("<="), BETWEEN("between"), IN("in"), IN_DICTIONARY("in dictionary");
 
-        public static final Condition[] SIMPLE_CONDITIONS = {EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL_TO, LESS_THAN,
-                LESS_THAN_OR_EQUAL_TO, BETWEEN};
+        public static final List<Condition> SIMPLE_CONDITIONS = Arrays.asList(EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL_TO, LESS_THAN,
+                LESS_THAN_OR_EQUAL_TO, BETWEEN);
         public static final String IN_CONDITION_DELIMITER = ",";
         private final String displayValue;
 

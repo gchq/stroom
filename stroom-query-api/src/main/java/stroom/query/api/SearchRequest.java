@@ -25,7 +25,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.List;
 
 @JsonPropertyOrder({"key", "query", "resultRequests", "dateTimeLocale", "incremental"})
 @XmlRootElement(name = "searchRequest")
@@ -40,7 +40,7 @@ public class SearchRequest implements Serializable {
     private Query query;
     @XmlElementWrapper(name = "resultRequests")
     @XmlElement(name = "resultRequest")
-    private ResultRequest[] resultRequests;
+    private List<ResultRequest> resultRequests;
     @XmlElement
     private String dateTimeLocale;
     @XmlElement
@@ -49,7 +49,7 @@ public class SearchRequest implements Serializable {
     public SearchRequest() {
     }
 
-    public SearchRequest(final QueryKey key, final Query query, final ResultRequest[] resultRequests,
+    public SearchRequest(final QueryKey key, final Query query, final List<ResultRequest> resultRequests,
                          final String dateTimeLocale) {
         this.key = key;
         this.query = query;
@@ -73,11 +73,11 @@ public class SearchRequest implements Serializable {
         this.query = query;
     }
 
-    public ResultRequest[] getResultRequests() {
+    public List<ResultRequest> getResultRequests() {
         return resultRequests;
     }
 
-    public void setResultRequests(final ResultRequest[] resultRequests) {
+    public void setResultRequests(final List<ResultRequest> resultRequests) {
         this.resultRequests = resultRequests;
     }
 
@@ -110,8 +110,8 @@ public class SearchRequest implements Serializable {
 
         if (key != null ? !key.equals(that.key) : that.key != null) return false;
         if (query != null ? !query.equals(that.query) : that.query != null) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(resultRequests, that.resultRequests)) return false;
+        if (resultRequests != null ? !resultRequests.equals(that.resultRequests) : that.resultRequests != null)
+            return false;
         if (dateTimeLocale != null ? !dateTimeLocale.equals(that.dateTimeLocale) : that.dateTimeLocale != null)
             return false;
         return incremental != null ? incremental.equals(that.incremental) : that.incremental == null;
@@ -121,7 +121,7 @@ public class SearchRequest implements Serializable {
     public int hashCode() {
         int result = key != null ? key.hashCode() : 0;
         result = 31 * result + (query != null ? query.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(resultRequests);
+        result = 31 * result + (resultRequests != null ? resultRequests.hashCode() : 0);
         result = 31 * result + (dateTimeLocale != null ? dateTimeLocale.hashCode() : 0);
         result = 31 * result + (incremental != null ? incremental.hashCode() : 0);
         return result;
@@ -132,7 +132,7 @@ public class SearchRequest implements Serializable {
         return "SearchRequest{" +
                 "key=" + key +
                 ", query=" + query +
-                ", resultRequests=" + Arrays.toString(resultRequests) +
+                ", resultRequests=" + resultRequests +
                 ", dateTimeLocale='" + dateTimeLocale + '\'' +
                 ", incremental=" + incremental +
                 '}';
