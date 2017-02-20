@@ -18,16 +18,21 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"key", "value"})
 @XmlType(name = "Param", propOrder = {"key", "value"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Param implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
+    @XmlElement
     private String key;
+    @XmlElement
     private String value;
 
     public Param() {
@@ -38,7 +43,6 @@ public class Param implements Serializable {
         this.value = value;
     }
 
-    @XmlElement
     public String getKey() {
         return key;
     }
@@ -47,7 +51,6 @@ public class Param implements Serializable {
         this.key = key;
     }
 
-    @XmlElement
     public String getValue() {
         return value;
     }

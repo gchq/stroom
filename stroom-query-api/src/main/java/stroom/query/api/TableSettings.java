@@ -18,6 +18,8 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
@@ -29,20 +31,28 @@ import java.util.List;
 @JsonPropertyOrder({"queryId", "fields", "extractValues", "extractionPipeline", "maxResults",
         "showDetail"})
 @XmlType(name = "TableSettings", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class TableSettings implements Serializable {
     private static final long serialVersionUID = -2530827581046882396L;
 
+    @XmlElement
     private String queryId;
+    @XmlElementWrapper(name = "fields")
+    @XmlElement(name = "field")
     private List<Field> fields;
+    @XmlElement
     private Boolean extractValues;
+    @XmlElement
     private DocRef extractionPipeline;
+    @XmlElementWrapper(name = "maxResults")
+    @XmlElement(name = "val")
     private Integer[] maxResults;
+    @XmlElement
     private Boolean showDetail;
 
     public TableSettings() {
     }
 
-    @XmlElement
     public String getQueryId() {
         return queryId;
     }
@@ -51,8 +61,7 @@ public class TableSettings implements Serializable {
         this.queryId = queryId;
     }
 
-    @XmlElementWrapper(name = "fields")
-    @XmlElement(name = "field")
+
     public Field[] getFields() {
         if (fields == null || fields.size() == 0) {
             return null;
@@ -75,23 +84,6 @@ public class TableSettings implements Serializable {
         fields.add(field);
     }
 
-    public void addField(final int index, final Field field) {
-        if (fields == null) {
-            fields = new ArrayList<>();
-        }
-        fields.add(index, field);
-    }
-
-    public void removeField(final Field field) {
-        if (fields != null) {
-            fields.remove(field);
-            if (fields.size() == 0) {
-                fields = null;
-            }
-        }
-    }
-
-    @XmlElement
     public Boolean getExtractValues() {
         return extractValues;
     }
@@ -107,7 +99,6 @@ public class TableSettings implements Serializable {
         return extractValues;
     }
 
-    @XmlElement
     public DocRef getExtractionPipeline() {
         return extractionPipeline;
     }
@@ -116,8 +107,6 @@ public class TableSettings implements Serializable {
         this.extractionPipeline = extractionPipeline;
     }
 
-    @XmlElementWrapper(name = "maxResults")
-    @XmlElement(name = "val")
     public Integer[] getMaxResults() {
         return maxResults;
     }
@@ -126,7 +115,6 @@ public class TableSettings implements Serializable {
         this.maxResults = maxResults;
     }
 
-    @XmlElement
     public Boolean getShowDetail() {
         return showDetail;
     }

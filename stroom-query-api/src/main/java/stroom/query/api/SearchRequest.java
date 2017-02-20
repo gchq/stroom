@@ -18,6 +18,8 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -28,13 +30,20 @@ import java.util.Arrays;
 @JsonPropertyOrder({"key", "query", "resultRequests", "dateTimeLocale", "incremental"})
 @XmlRootElement(name = "searchRequest")
 @XmlType(name = "SearchRequest", propOrder = {"key", "query", "resultRequests", "dateTimeLocale", "incremental"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class SearchRequest implements Serializable {
     private static final long serialVersionUID = -6668626615097471925L;
 
+    @XmlElement
     private QueryKey key;
+    @XmlElement
     private Query query;
+    @XmlElementWrapper(name = "resultRequests")
+    @XmlElement(name = "resultRequest")
     private ResultRequest[] resultRequests;
+    @XmlElement
     private String dateTimeLocale;
+    @XmlElement
     private Boolean incremental;
 
     public SearchRequest() {
@@ -48,7 +57,6 @@ public class SearchRequest implements Serializable {
         this.dateTimeLocale = dateTimeLocale;
     }
 
-    @XmlElement
     public QueryKey getKey() {
         return key;
     }
@@ -57,7 +65,6 @@ public class SearchRequest implements Serializable {
         this.key = key;
     }
 
-    @XmlElement
     public Query getQuery() {
         return query;
     }
@@ -66,8 +73,6 @@ public class SearchRequest implements Serializable {
         this.query = query;
     }
 
-    @XmlElementWrapper(name = "resultRequests")
-    @XmlElement(name = "resultRequest")
     public ResultRequest[] getResultRequests() {
         return resultRequests;
     }
@@ -76,7 +81,6 @@ public class SearchRequest implements Serializable {
         this.resultRequests = resultRequests;
     }
 
-    @XmlElement
     public String getDateTimeLocale() {
         return dateTimeLocale;
     }
@@ -85,7 +89,6 @@ public class SearchRequest implements Serializable {
         this.dateTimeLocale = dateTimeLocale;
     }
 
-    @XmlElement
     public Boolean getIncremental() {
         return incremental;
     }

@@ -18,6 +18,8 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
@@ -29,6 +31,7 @@ import java.util.Arrays;
 @JsonPropertyOrder({"highlights", "errors", "complete", "results"})
 @XmlRootElement(name = "searchResponse")
 @XmlType(name = "SearchResponse", propOrder = {"highlights", "errors", "complete", "results"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class SearchResponse implements Serializable {
     private static final long serialVersionUID = -2964122512841756795L;
 
@@ -36,26 +39,34 @@ public class SearchResponse implements Serializable {
      * A set of strings to highlight in the UI that should correlate with the
      * search query.
      */
+    @XmlElementWrapper(name = "highlights")
+    @XmlElement(name = "highlight")
     private String[] highlights;
 
     /**
      * Any errors that have been generated during searching.
      */
+    @XmlElementWrapper(name = "errors")
+    @XmlElement(name = "error")
     private String[] errors;
 
     /**
      * Complete means that all index shards have been searched across the
      * cluster and there are no more results to come.
      **/
+    @XmlElement
     private Boolean complete;
 
+    @XmlElementWrapper(name = "results")
+    @XmlElements({
+            @XmlElement(name = "table", type = TableResult.class),
+            @XmlElement(name = "vis", type = FlatResult.class)
+    })
     private Result[] results;
 
     public SearchResponse() {
     }
 
-    @XmlElementWrapper(name = "highlights")
-    @XmlElement(name = "highlight")
     public String[] getHighlights() {
         return highlights;
     }
@@ -64,8 +75,6 @@ public class SearchResponse implements Serializable {
         this.highlights = highlights;
     }
 
-    @XmlElementWrapper(name = "errors")
-    @XmlElement(name = "error")
     public String[] getErrors() {
         return errors;
     }
@@ -74,7 +83,6 @@ public class SearchResponse implements Serializable {
         this.errors = errors;
     }
 
-    @XmlElement
     public Boolean getComplete() {
         return complete;
     }
@@ -87,11 +95,6 @@ public class SearchResponse implements Serializable {
         return complete != null && complete;
     }
 
-    @XmlElementWrapper(name = "results")
-    @XmlElements({
-            @XmlElement(name = "table", type = TableResult.class),
-            @XmlElement(name = "vis", type = FlatResult.class)
-    })
     public Result[] getResults() {
         return results;
     }
@@ -99,14 +102,6 @@ public class SearchResponse implements Serializable {
     public void setResults(final Result[] results) {
         this.results = results;
     }
-
-//    public void addResult(final ComponentResult result) {
-//        if (results == null) {
-//            results = new ArrayList<>();
-//        }
-//        results.add(result);
-//    }
-
 
     @Override
     public boolean equals(final Object o) {

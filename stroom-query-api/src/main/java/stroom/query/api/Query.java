@@ -18,6 +18,8 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -28,11 +30,16 @@ import java.util.Arrays;
 @JsonPropertyOrder({"dataSource", "expression", "params"})
 @XmlType(name = "Query", propOrder = {"dataSource", "expression", "params"})
 @XmlRootElement(name = "query")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Query implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
+    @XmlElement
     private DocRef dataSource;
+    @XmlElement
     private ExpressionOperator expression;
+    @XmlElementWrapper(name = "params")
+    @XmlElement(name = "param")
     private Param[] params;
 
     public Query() {
@@ -48,7 +55,6 @@ public class Query implements Serializable {
         this.params = params;
     }
 
-    @XmlElement
     public DocRef getDataSource() {
         return dataSource;
     }
@@ -57,7 +63,6 @@ public class Query implements Serializable {
         this.dataSource = dataSource;
     }
 
-    @XmlElement
     public ExpressionOperator getExpression() {
         return expression;
     }
@@ -66,8 +71,6 @@ public class Query implements Serializable {
         this.expression = expression;
     }
 
-    @XmlElementWrapper(name = "params")
-    @XmlElement(name = "param")
     public Param[] getParams() {
         return params;
     }

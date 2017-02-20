@@ -18,6 +18,8 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
@@ -26,11 +28,16 @@ import java.util.Arrays;
 
 @JsonPropertyOrder({"groupKey", "values", "depth"})
 @XmlType(name = "Row", propOrder = {"groupKey", "values", "depth"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Row implements Serializable {
     private static final long serialVersionUID = 4379892306375080112L;
 
+    @XmlElement
     private String groupKey;
+    @XmlElementWrapper(name = "values")
+    @XmlElement(name = "value")
     private String[] values;
+    @XmlElement
     private Integer depth;
 
     public Row() {
@@ -42,7 +49,7 @@ public class Row implements Serializable {
         this.depth = depth;
     }
 
-    @XmlElement
+
     public String getGroupKey() {
         return groupKey;
     }
@@ -51,8 +58,6 @@ public class Row implements Serializable {
         this.groupKey = groupKey;
     }
 
-    @XmlElementWrapper(name = "values")
-    @XmlElement(name = "value")
     public String[] getValues() {
         return values;
     }
@@ -61,7 +66,6 @@ public class Row implements Serializable {
         this.values = values;
     }
 
-    @XmlElement
     public Integer getDepth() {
         return depth;
     }

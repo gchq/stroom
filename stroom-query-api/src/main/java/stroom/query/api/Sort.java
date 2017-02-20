@@ -19,16 +19,21 @@ package stroom.query.api;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.HasDisplayValue;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"order", "direction"})
 @XmlType(name = "Sort", propOrder = {"order", "direction"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Sort implements Serializable {
     private static final long serialVersionUID = 4530846367973824427L;
 
+    @XmlElement
     private Integer order;
+    @XmlElement
     private SortDirection direction;
 
     public Sort() {
@@ -39,7 +44,6 @@ public class Sort implements Serializable {
         this.direction = direction;
     }
 
-    @XmlElement
     public Integer getOrder() {
         return order;
     }
@@ -48,7 +52,6 @@ public class Sort implements Serializable {
         this.order = order;
     }
 
-    @XmlElement
     public SortDirection getDirection() {
         return direction;
     }

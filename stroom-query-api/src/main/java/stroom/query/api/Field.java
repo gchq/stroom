@@ -19,20 +19,29 @@ package stroom.query.api;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.query.api.Format.Type;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"name", "expression", "sort", "filter", "format", "group"})
 @XmlType(name = "Field", propOrder = {"name", "expression", "sort", "filter", "format", "group"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Field implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 
+    @XmlElement
     private String name;
+    @XmlElement
     private String expression;
+    @XmlElement
     private Sort sort;
+    @XmlElement
     private Filter filter;
+    @XmlElement
     private Format format;
+    @XmlElement
     private Integer group;
 
     public Field() {
@@ -56,7 +65,6 @@ public class Field implements Serializable {
         this.group = group;
     }
 
-    @XmlElement
     public String getName() {
         return name;
     }
@@ -65,7 +73,6 @@ public class Field implements Serializable {
         this.name = name;
     }
 
-    @XmlElement
     public String getExpression() {
         return expression;
     }
@@ -74,7 +81,6 @@ public class Field implements Serializable {
         this.expression = expression;
     }
 
-    @XmlElement
     public Sort getSort() {
         return sort;
     }
@@ -83,7 +89,6 @@ public class Field implements Serializable {
         this.sort = sort;
     }
 
-    @XmlElement
     public Filter getFilter() {
         return filter;
     }
@@ -92,7 +97,6 @@ public class Field implements Serializable {
         this.filter = filter;
     }
 
-    @XmlElement
     public Format getFormat() {
         return format;
     }
@@ -101,7 +105,6 @@ public class Field implements Serializable {
         this.format = format;
     }
 
-    @XmlElement
     public Integer getGroup() {
         return group;
     }

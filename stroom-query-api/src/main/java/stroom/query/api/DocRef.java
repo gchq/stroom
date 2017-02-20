@@ -20,6 +20,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.HasDisplayValue;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
@@ -28,14 +31,19 @@ import java.io.Serializable;
 @JsonPropertyOrder({"type", "id", "uuid", "name"})
 @XmlType(name = "DocRef", propOrder = {"type", "id", "uuid", "name"})
 @XmlRootElement(name = "doc")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable {
     private static final long serialVersionUID = -2121399789820829359L;
 
+    @XmlElement
     protected String type;
+    @XmlElement
     protected String uuid;
+    @XmlElement
     protected String name;
 
     @Deprecated
+    @XmlElement
     protected Long id;
 
     public DocRef() {

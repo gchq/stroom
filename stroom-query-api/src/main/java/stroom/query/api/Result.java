@@ -19,6 +19,8 @@ package stroom.query.api;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
@@ -35,9 +37,11 @@ import java.io.Serializable;
 })
 @XmlType(name = "Result", propOrder = "componentId")
 @XmlSeeAlso({TableResult.class, FlatResult.class})
+@XmlAccessorType(XmlAccessType.FIELD)
 public abstract class Result implements Serializable {
     private static final long serialVersionUID = -7455554742243923562L;
 
+    @XmlElement
     private String componentId;
 
     public Result() {
@@ -47,7 +51,6 @@ public abstract class Result implements Serializable {
         this.componentId = componentId;
     }
 
-    @XmlElement
     public String getComponentId() {
         return componentId;
     }

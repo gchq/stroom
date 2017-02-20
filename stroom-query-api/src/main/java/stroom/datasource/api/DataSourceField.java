@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.shared.HasDisplayValue;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlTransient;
@@ -14,11 +16,15 @@ import java.util.Arrays;
 
 @JsonPropertyOrder({"type", "name", "queryable", "conditions"})
 @XmlType(name = "DataSourceField", propOrder = {"type", "name", "queryable", "conditions"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class DataSourceField implements Serializable, HasDisplayValue {
     private static final long serialVersionUID = 1272545271946712570L;
 
+    @XmlElement
     private DataSourceFieldType type;
+    @XmlElement
     private String name;
+    @XmlElement
     private Boolean queryable;
 
     /**
@@ -26,6 +32,8 @@ public class DataSourceField implements Serializable, HasDisplayValue {
      * can be null in which case a default set will be returned. Not persisted
      * in the XML
      */
+    @XmlElementWrapper(name = "conditions")
+    @XmlElement(name = "condition")
     private Condition[] conditions;
 
     public DataSourceField() {
@@ -43,7 +51,7 @@ public class DataSourceField implements Serializable, HasDisplayValue {
         this.conditions = conditions;
     }
 
-    @XmlElement
+
     public DataSourceFieldType getType() {
         return type;
     }
@@ -52,7 +60,6 @@ public class DataSourceField implements Serializable, HasDisplayValue {
         this.type = type;
     }
 
-    @XmlElement
     public String getName() {
         return name;
     }
@@ -61,8 +68,6 @@ public class DataSourceField implements Serializable, HasDisplayValue {
         this.name = name;
     }
 
-    @XmlElementWrapper(name = "conditions")
-    @XmlElement(name = "condition")
     public Condition[] getConditions() {
         return conditions;
     }
@@ -71,7 +76,6 @@ public class DataSourceField implements Serializable, HasDisplayValue {
         this.conditions = conditions;
     }
 
-    @XmlElement
     public Boolean getQueryable() {
         return queryable;
     }

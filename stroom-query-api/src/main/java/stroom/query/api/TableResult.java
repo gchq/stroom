@@ -18,6 +18,8 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
@@ -25,12 +27,18 @@ import java.util.Arrays;
 
 @JsonPropertyOrder({"componentId", "rows", "resultRange", "totalResults", "error"})
 @XmlType(name = "TableResult", propOrder = {"rows", "resultRange", "totalResults", "error"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class TableResult extends Result {
     private static final long serialVersionUID = -2964122512841756795L;
 
+    @XmlElementWrapper(name = "rows")
+    @XmlElement(name = "row")
     private Row[] rows;
+    @XmlElement
     private OffsetRange resultRange;
+    @XmlElement
     private Integer totalResults;
+    @XmlElement
     private String error;
 
     public TableResult() {
@@ -40,8 +48,6 @@ public class TableResult extends Result {
         super(componentId);
     }
 
-    @XmlElementWrapper(name = "rows")
-    @XmlElement(name = "row")
     public Row[] getRows() {
         return rows;
     }
@@ -50,7 +56,6 @@ public class TableResult extends Result {
         this.rows = rows;
     }
 
-    @XmlElement
     public OffsetRange getResultRange() {
         return resultRange;
     }
@@ -59,7 +64,6 @@ public class TableResult extends Result {
         this.resultRange = resultRange;
     }
 
-    @XmlElement
     public Integer getTotalResults() {
         return totalResults;
     }
@@ -68,7 +72,6 @@ public class TableResult extends Result {
         this.totalResults = totalResults;
     }
 
-    @XmlElement
     public String getError() {
         return error;
     }

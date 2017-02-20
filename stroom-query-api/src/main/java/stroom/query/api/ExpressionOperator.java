@@ -19,6 +19,8 @@ package stroom.query.api;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.HasDisplayValue;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
@@ -27,10 +29,17 @@ import java.util.Arrays;
 
 @JsonPropertyOrder({"op", "children"})
 @XmlType(name = "ExpressionOperator", propOrder = {"op", "children"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class ExpressionOperator extends ExpressionItem {
     private static final long serialVersionUID = 6602004424564268512L;
 
+    @XmlElement(name = "op")
     private Op op = Op.AND;
+    @XmlElementWrapper(name = "children")
+    @XmlElements({
+            @XmlElement(name = "operator", type = ExpressionOperator.class),
+            @XmlElement(name = "term", type = ExpressionTerm.class)
+    })
     private ExpressionItem[] children;
 
     public ExpressionOperator() {
@@ -42,7 +51,6 @@ public class ExpressionOperator extends ExpressionItem {
         this.children = children;
     }
 
-    @XmlElement(name = "op")
     public Op getOp() {
         return op;
     }
@@ -51,11 +59,6 @@ public class ExpressionOperator extends ExpressionItem {
         this.op = op;
     }
 
-    @XmlElementWrapper(name = "children")
-    @XmlElements({
-            @XmlElement(name = "operator", type = ExpressionOperator.class),
-            @XmlElement(name = "term", type = ExpressionTerm.class)
-    })
     public ExpressionItem[] getChildren() {
         return children;
     }

@@ -16,19 +16,25 @@
 
 package stroom.query.api;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import java.util.Arrays;
 
 @JsonPropertyOrder({"componentId", "structure", "values", "size", "error"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class FlatResult extends Result {
     private static final long serialVersionUID = 3826654996795750099L;
 
+    @XmlElement
     private Field[] structure;
+    @XmlElement
     private Object[][] values;
+    @XmlElement
     private Long size;
+    @XmlElement
     private String error;
 
     public FlatResult() {
@@ -47,7 +53,6 @@ public class FlatResult extends Result {
         this.error = error;
     }
 
-    @JsonProperty
     public Field[] getStructure() {
         return structure;
     }
@@ -56,7 +61,6 @@ public class FlatResult extends Result {
         this.structure = structure;
     }
 
-    @JsonProperty
     public Object[][] getValues() {
         return values;
     }
@@ -65,7 +69,6 @@ public class FlatResult extends Result {
         this.values = values;
     }
 
-    @XmlElement
     public Long getSize() {
         return size;
     }
@@ -74,7 +77,6 @@ public class FlatResult extends Result {
         this.size = size;
     }
 
-    @XmlElement
     public String getError() {
         return error;
     }

@@ -16,6 +16,8 @@
 
 package stroom.query.api;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
@@ -23,14 +25,23 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 @XmlType(name = "ResultRequest", propOrder = {"componentId", "tableSettings", "requestedRange", "openGroups", "resultStyle", "fetchData"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class ResultRequest implements Serializable {
     private static final long serialVersionUID = -7455554742243923562L;
 
+    @XmlElement
     private String componentId;
+    @XmlElementWrapper(name = "mappings")
+    @XmlElement(name = "tableSettings")
     private TableSettings[] tableSettings;
+    @XmlElement
     private OffsetRange requestedRange;
+    @XmlElementWrapper(name = "openGroups")
+    @XmlElement(name = "key")
     private String[] openGroups;
+    @XmlElement
     private ResultStyle resultStyle;
+    @XmlElement
     private Boolean fetchData;
 
     public ResultRequest() {
@@ -54,7 +65,6 @@ public class ResultRequest implements Serializable {
         this.requestedRange = requestedRange;
     }
 
-    @XmlElement
     public String getComponentId() {
         return componentId;
     }
@@ -63,8 +73,6 @@ public class ResultRequest implements Serializable {
         this.componentId = componentId;
     }
 
-    @XmlElementWrapper(name = "mappings")
-    @XmlElement(name = "tableSettings")
     public TableSettings[] getTableSettings() {
         return tableSettings;
     }
@@ -73,7 +81,6 @@ public class ResultRequest implements Serializable {
         this.tableSettings = tableSettings;
     }
 
-    @XmlElement
     public OffsetRange getRequestedRange() {
         return requestedRange;
     }
@@ -86,8 +93,6 @@ public class ResultRequest implements Serializable {
         requestedRange = new OffsetRange(offset, length);
     }
 
-    @XmlElementWrapper(name = "openGroups")
-    @XmlElement(name = "key")
     public String[] getOpenGroups() {
         return openGroups;
     }
@@ -96,7 +101,6 @@ public class ResultRequest implements Serializable {
         this.openGroups = openGroups;
     }
 
-    @XmlElement
     public ResultStyle getResultStyle() {
         return resultStyle;
     }
@@ -105,7 +109,6 @@ public class ResultRequest implements Serializable {
         this.resultStyle = resultStyle;
     }
 
-    @XmlElement
     public Boolean getFetchData() {
         return fetchData;
     }

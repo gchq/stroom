@@ -18,16 +18,21 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"decimalPlaces", "useSeparator"})
 @XmlType(name = "NumberFormat", propOrder = {"decimalPlaces", "useSeparator"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class NumberFormat implements Serializable {
     private static final long serialVersionUID = 9145624653060319801L;
 
+    @XmlElement
     private Integer decimalPlaces;
+    @XmlElement
     private Boolean useSeparator;
 
     public NumberFormat() {
@@ -38,7 +43,6 @@ public class NumberFormat implements Serializable {
         this.useSeparator = useSeparator;
     }
 
-    @XmlElement
     public Integer getDecimalPlaces() {
         return decimalPlaces;
     }
@@ -47,7 +51,6 @@ public class NumberFormat implements Serializable {
         this.decimalPlaces = decimalPlaces;
     }
 
-    @XmlElement
     public Boolean getUseSeparator() {
         return useSeparator;
     }

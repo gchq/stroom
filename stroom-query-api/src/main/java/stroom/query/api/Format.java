@@ -19,17 +19,23 @@ package stroom.query.api;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.HasDisplayValue;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"type", "numberFormat", "dateTimeFormat"})
 @XmlType(name = "Format", propOrder = {"type", "numberFormat", "dateTimeFormat"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Format implements Serializable {
     private static final long serialVersionUID = -5380825645719299089L;
 
+    @XmlElement
     private Type type;
+    @XmlElement
     private NumberFormat numberFormat;
+    @XmlElement
     private DateTimeFormat dateTimeFormat;
 
     public Format() {
@@ -49,7 +55,6 @@ public class Format implements Serializable {
         this.dateTimeFormat = dateTimeFormat;
     }
 
-    @XmlElement
     public Type getType() {
         return type;
     }
@@ -58,7 +63,6 @@ public class Format implements Serializable {
         this.type = type;
     }
 
-    @XmlElement
     public NumberFormat getNumberFormat() {
         return numberFormat;
     }
@@ -67,7 +71,6 @@ public class Format implements Serializable {
         this.numberFormat = numberFormat;
     }
 
-    @XmlElement
     public DateTimeFormat getDateTimeFormat() {
         return dateTimeFormat;
     }

@@ -18,22 +18,26 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"pattern", "timeZone"})
 @XmlType(name = "DateTimeFormat", propOrder = {"pattern", "timeZone"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class DateTimeFormat implements Serializable {
     private static final long serialVersionUID = 9145624653060319801L;
 
+    @XmlElement
     private String pattern;
+    @XmlElement
     private TimeZone timeZone;
 
     public DateTimeFormat() {
     }
 
-    @XmlElement
     public String getPattern() {
         return pattern;
     }
@@ -42,7 +46,6 @@ public class DateTimeFormat implements Serializable {
         this.pattern = pattern;
     }
 
-    @XmlElement
     public TimeZone getTimeZone() {
         return timeZone;
     }
