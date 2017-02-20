@@ -66,6 +66,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class TestSerialisation {
@@ -73,16 +74,16 @@ public class TestSerialisation {
         final DataSourceField field1 = new DataSourceField();
         field1.setType(DataSourceFieldType.FIELD);
         field1.setName("field1");
-        field1.setConditions(new Condition[]{Condition.EQUALS, Condition.CONTAINS});
+        field1.setConditions(Arrays.asList(Condition.EQUALS, Condition.CONTAINS));
         field1.setQueryable(true);
 
         final DataSourceField field2 = new DataSourceField();
         field2.setType(DataSourceFieldType.NUMERIC_FIELD);
         field2.setName("field2");
-        field2.setConditions(new Condition[]{Condition.EQUALS});
+        field2.setConditions(Arrays.asList(Condition.EQUALS));
         field2.setQueryable(true);
 
-        final DataSourceField[] fields = new DataSourceField[]{field1, field2};
+        final List<DataSourceField> fields = Arrays.asList(field1, field2);
         final DataSource dataSource = new DataSource(fields);
 
         return dataSource;
@@ -272,17 +273,21 @@ public class TestSerialisation {
     }
 
     private FlatResult getVisResult1() {
-        Field[] structure = new Field[]{new Field("val1", Type.GENERAL), new Field("val2", Type.NUMBER), new Field("val3", Type.NUMBER), new Field("val4", Type.GENERAL)};
+        List<Field> structure = new ArrayList<>();
+        structure.add(new Field("val1", Type.GENERAL));
+        structure.add(new Field("val2", Type.NUMBER));
+        structure.add(new Field("val3", Type.NUMBER));
+        structure.add(new Field("val4", Type.GENERAL));
 
-        Object[][] data = new Object[8][];
-        data[0] = new Object[]{"test0", 0.4, 234, "this0"};
-        data[1] = new Object[]{"test1", 0.5, 25634, "this1"};
-        data[2] = new Object[]{"test2", 0.6, 27, "this2"};
-        data[3] = new Object[]{"test3", 0.7, 344, "this3"};
-        data[4] = new Object[]{"test4", 0.2, 8984, "this4"};
-        data[5] = new Object[]{"test5", 0.33, 3244, "this5"};
-        data[6] = new Object[]{"test6", 34.66, 44, "this6"};
-        data[7] = new Object[]{"test7", 2.33, 74, "this7"};
+        List<List<Object>> data = new ArrayList<>();
+        data.add(Arrays.asList("test0", 0.4, 234, "this0"));
+        data.add(Arrays.asList("test1", 0.5, 25634, "this1"));
+        data.add(Arrays.asList("test2", 0.6, 27, "this2"));
+        data.add(Arrays.asList("test3", 0.7, 344, "this3"));
+        data.add(Arrays.asList("test4", 0.2, 8984, "this4"));
+        data.add(Arrays.asList("test5", 0.33, 3244, "this5"));
+        data.add(Arrays.asList("test6", 34.66, 44, "this6"));
+        data.add(Arrays.asList("test7", 2.33, 74, "this7"));
         FlatResult visResult = new FlatResult("vis-1234", structure, data, 200L, "visResultError");
 
         return visResult;

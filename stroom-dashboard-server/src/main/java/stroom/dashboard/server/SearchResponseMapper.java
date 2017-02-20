@@ -132,7 +132,7 @@ public class SearchResponseMapper {
 
         if (error == null) {
             try {
-                final Field[] fields = visResult.getStructure();
+                final List<Field> fields = visResult.getStructure();
                 if (fields != null && visResult.getValues() != null) {
                     int valueOffset = 0;
 
@@ -172,11 +172,11 @@ public class SearchResponseMapper {
                         types[group] = row;
                     }
 
-                    final int valueCount = fields.length - valueOffset;
+                    final int valueCount = fields.size() - valueOffset;
 
-                    final Map<Object, List<Object[]>> map = new HashMap<>();
-                    for (final Object[] row : visResult.getValues()) {
-                        map.computeIfAbsent(row[0], k -> new ArrayList<>()).add(row);
+                    final Map<Object, List<List<Object>>> map = new HashMap<>();
+                    for (final List<Object> row : visResult.getValues()) {
+                        map.computeIfAbsent(row.get(0), k -> new ArrayList<>()).add(row);
                     }
 
                     final Store store = getStore(null, map, types, valueCount, maxDepth, 0);
@@ -200,19 +200,19 @@ public class SearchResponseMapper {
         return new VisResult(json, visResult.getSize(), error);
     }
 
-    private Store getStore(final Object key, final Map<Object, List<Object[]>> map, final String[][] types, final int valueCount, final int maxDepth, final int depth) {
+    private Store getStore(final Object key, final Map<Object, List<List<Object>>> map, final String[][] types, final int valueCount, final int maxDepth, final int depth) {
         Store store = null;
 
-        final List<Object[]> rows = map.get(key);
+        final List<List<Object>> rows = map.get(key);
         if (rows != null) {
             final List<Object> values = new ArrayList<>();
             final Double[] min = new Double[valueCount];
             final Double[] max = new Double[valueCount];
             final Double[] sum = new Double[valueCount];
 
-            for (final Object[] row : rows) {
+            for (final List<Object> row : rows) {
                 if (depth < maxDepth) {
-                    final Store childStore = getStore(row[1], map, types, valueCount, maxDepth, depth + 1);
+                    final Store childStore = getStore(row.get(1), map, types, valueCount, maxDepth, depth + 1);
                     if (childStore != null) {
                         values.add(childStore);
 
@@ -223,11 +223,10 @@ public class SearchResponseMapper {
                         }
                     }
                 } else {
-                    final Object[] vals = new Object[valueCount];
-                    System.arraycopy(row, row.length - valueCount, vals, 0, valueCount);
+                    final List<Object> vals = row.subList(row.size() - valueCount, row.size());
                     values.add(vals);
                     for (int i = 0; i < valueCount; i++) {
-                        final Double dbl = TypeConverter.getDouble(vals[i]);
+                        final Double dbl = TypeConverter.getDouble(vals.get(i));
                         if (dbl != null) {
                             min[i] = min(min[i], dbl);
                             max[i] = max(max[i], dbl);

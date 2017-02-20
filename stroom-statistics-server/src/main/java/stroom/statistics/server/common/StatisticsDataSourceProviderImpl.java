@@ -52,7 +52,7 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
             return null;
         }
 
-        final DataSourceField[] fields = buildFields(entity);
+        final List<DataSourceField> fields = buildFields(entity);
 
         return new DataSource(fields);
     }
@@ -68,17 +68,17 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
      * This builds the standard set of fields for a statistics store, which can
      * be filtered by the relevant statistics store instance
      */
-    private DataSourceField[] buildFields(final StatisticStoreEntity entity) {
+    private List<DataSourceField> buildFields(final StatisticStoreEntity entity) {
         List<DataSourceField> fields = new ArrayList<>();
 
         // TODO currently only BETWEEN is supported, but need to add support for
         // more conditions like >, >=, <, <=, =
         addField(StatisticStoreEntity.FIELD_NAME_DATE_TIME, DataSourceFieldType.DATE_FIELD, true,
-                new Condition[] {ExpressionTerm.Condition.BETWEEN}, fields);
+                Arrays.asList(ExpressionTerm.Condition.BETWEEN), fields);
 
         // one field per tag
         if (entity.getStatisticDataSourceDataObject() != null) {
-            final Condition[] supportedConditions =  new Condition[] {Condition.EQUALS, Condition.IN};
+            final List<Condition> supportedConditions = Arrays.asList(Condition.EQUALS, Condition.IN);
 
             for (final StatisticField statisticField : entity.getStatisticFields()) {
                 // TODO currently only EQUALS is supported, but need to add
@@ -107,7 +107,7 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
             }
         }
 
-        return fields.toArray(new DataSourceField[fields.size()]);
+        return fields;
     }
 
     /**
@@ -115,7 +115,7 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
      * can be made
      */
     private void addField(final String name, final DataSourceFieldType type, final boolean isQueryable,
-                          final Condition[] supportedConditions, final List<DataSourceField> fields) {
+                          final List<Condition> supportedConditions, final List<DataSourceField> fields) {
         final DataSourceField field = new DataSourceField(type, name, isQueryable, supportedConditions);
         fields.add(field);
     }

@@ -25,7 +25,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.List;
 
 @JsonPropertyOrder({"fields"})
 @XmlType(name = "DataSource", propOrder = "fields")
@@ -36,20 +36,20 @@ public class DataSource implements Serializable {
 
     @XmlElementWrapper(name = "fields")
     @XmlElement(name = "field")
-    private DataSourceField[] fields;
+    private List<DataSourceField> fields;
 
     public DataSource() {
     }
 
-    public DataSource(final DataSourceField[] fields) {
+    public DataSource(final List<DataSourceField> fields) {
         this.fields = fields;
     }
 
-    public DataSourceField[] getFields() {
+    public List<DataSourceField> getFields() {
         return fields;
     }
 
-    public void setFields(final DataSourceField[] fields) {
+    public void setFields(final List<DataSourceField> fields) {
         this.fields = fields;
     }
 
@@ -60,19 +60,18 @@ public class DataSource implements Serializable {
 
         final DataSource that = (DataSource) o;
 
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(fields, that.fields);
+        return fields != null ? fields.equals(that.fields) : that.fields == null;
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(fields);
+        return fields != null ? fields.hashCode() : 0;
     }
 
     @Override
     public String toString() {
         return "DataSource{" +
-                "fields=" + Arrays.toString(fields) +
+                "fields=" + fields +
                 '}';
     }
 }

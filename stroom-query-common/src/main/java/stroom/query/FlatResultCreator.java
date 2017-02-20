@@ -159,7 +159,7 @@ public class FlatResultCreator implements ResultCreator, HasTerminate {
                 // Get top level items.
                 final Items<Item> items = mappedData.getChildMap().get(null);
 
-                final List<Object[]> results = new ArrayList<>();
+                final List<List<Object>> results = new ArrayList<>();
 
                 if (items != null) {
                     final RangeChecker rangeChecker = RangeCheckerFactory.create(resultRequest.getRequestedRange());
@@ -168,18 +168,18 @@ public class FlatResultCreator implements ResultCreator, HasTerminate {
                             0);
                 }
 
-                final Object[][] values = results.toArray(new Object[results.size()][]);
+                final List<List<Object>> values = results;
 
                 Field parentKey = new Field(":ParentKey");
                 Field key = new Field(":Key");
                 Field depth = new Field(":Depth");
 
-                final Field[] fields = new Field[this.fields.length + 3];
-                fields[0] = parentKey;
-                fields[1] = key;
-                fields[2] = depth;
-                for (int i = 0; i < this.fields.length; i++) {
-                    fields[i + 3] = this.fields[i];
+                final List<Field> fields = new ArrayList<>(this.fields.length + 3);
+                fields.add(parentKey);
+                fields.add(key);
+                fields.add(depth);
+                for (final Field field : this.fields) {
+                    fields.add(field);
                 }
 
                 return new FlatResult(resultRequest.getComponentId(), fields, values, totalResults, error);
@@ -193,28 +193,31 @@ public class FlatResultCreator implements ResultCreator, HasTerminate {
     }
 
     private int addResults(final Data data, final RangeChecker rangeChecker,
-                           final OpenGroups openGroups, final Items<Item> items, final List<Object[]> results,
+                           final OpenGroups openGroups, final Items<Item> items, final List<List<Object>> results,
                            final int depth, final int parentCount) {
         int count = parentCount;
 
         for (final Item item : items) {
             if (rangeChecker.check(count)) {
-                final Object[] values = new Object[fields.length + 3];
+                final List<Object> values = new ArrayList<>(fields.length + 3);
 
                 if (item.getKey() != null) {
-                    values[0] = toNodeKey(fields, item.getKey().getParent());
-                    values[1] = toNodeKey(fields, item.getKey());
+                    values.add(toNodeKey(fields, item.getKey().getParent()));
+                    values.add(toNodeKey(fields, item.getKey()));
+                } else {
+                    values.add(null);
+                    values.add(null);
                 }
-                values[2] = depth;
+                values.add(depth);
 
                 // Convert all list into fully resolved objects evaluating
                 // functions where necessary.
                 for (int i = 0; i < fields.length; i++) {
                     final Object o = item.getValues()[i];
+                    Object val = o;
                     if (o != null) {
                         // Convert all list into fully resolved
                         // objects evaluating functions where necessary.
-                        Object val = o;
                         if (o instanceof Generator) {
                             final Generator generator = (Generator) o;
                             val = generator.eval();
@@ -228,9 +231,10 @@ public class FlatResultCreator implements ResultCreator, HasTerminate {
                                 final Field field = fields[i];
                                 val = convert(field, val);
                             }
-                            values[i + 3] = val;
                         }
                     }
+
+                    values.add(val);
                 }
 
                 // Add the values.

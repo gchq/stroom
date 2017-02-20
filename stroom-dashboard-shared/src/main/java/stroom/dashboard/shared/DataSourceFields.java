@@ -19,17 +19,19 @@ package stroom.dashboard.shared;
 import stroom.datasource.api.DataSourceField;
 import stroom.util.shared.SharedObject;
 
+import java.util.List;
+
 public class DataSourceFields implements SharedObject {
-    private DataSourceField[] fields;
+    private List<DataSourceField> fields;
 
     public DataSourceFields() {
     }
 
-    public DataSourceFields(final DataSourceField[] fields) {
+    public DataSourceFields(final List<DataSourceField> fields) {
         this.fields = fields;
     }
 
-    public DataSourceField[] getFields() {
+    public List<DataSourceField> getFields() {
         return fields;
     }
 }

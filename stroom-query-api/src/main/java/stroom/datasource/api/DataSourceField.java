@@ -12,7 +12,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.List;
 
 @JsonPropertyOrder({"type", "name", "queryable", "conditions"})
 @XmlType(name = "DataSourceField", propOrder = {"type", "name", "queryable", "conditions"})
@@ -34,7 +34,7 @@ public class DataSourceField implements Serializable, HasDisplayValue {
      */
     @XmlElementWrapper(name = "conditions")
     @XmlElement(name = "condition")
-    private Condition[] conditions;
+    private List<Condition> conditions;
 
     public DataSourceField() {
     }
@@ -44,7 +44,7 @@ public class DataSourceField implements Serializable, HasDisplayValue {
         this.name = name;
     }
 
-    public DataSourceField(final DataSourceFieldType type, final String name, final Boolean queryable, final Condition[] conditions) {
+    public DataSourceField(final DataSourceFieldType type, final String name, final Boolean queryable, final List<Condition> conditions) {
         this.type = type;
         this.name = name;
         this.queryable = queryable;
@@ -68,11 +68,11 @@ public class DataSourceField implements Serializable, HasDisplayValue {
         this.name = name;
     }
 
-    public Condition[] getConditions() {
+    public List<Condition> getConditions() {
         return conditions;
     }
 
-    public void setConditions(final Condition[] conditions) {
+    public void setConditions(final List<Condition> conditions) {
         this.conditions = conditions;
     }
 
@@ -105,8 +105,7 @@ public class DataSourceField implements Serializable, HasDisplayValue {
         if (type != that.type) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (queryable != null ? !queryable.equals(that.queryable) : that.queryable != null) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(conditions, that.conditions);
+        return conditions != null ? conditions.equals(that.conditions) : that.conditions == null;
     }
 
     @Override
@@ -114,7 +113,7 @@ public class DataSourceField implements Serializable, HasDisplayValue {
         int result = type != null ? type.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (queryable != null ? queryable.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(conditions);
+        result = 31 * result + (conditions != null ? conditions.hashCode() : 0);
         return result;
     }
 
@@ -124,7 +123,7 @@ public class DataSourceField implements Serializable, HasDisplayValue {
                 "type=" + type +
                 ", name='" + name + '\'' +
                 ", queryable=" + queryable +
-                ", conditions=" + Arrays.toString(conditions) +
+                ", conditions=" + conditions +
                 '}';
     }
 
