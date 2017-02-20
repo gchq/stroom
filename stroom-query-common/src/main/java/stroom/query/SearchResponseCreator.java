@@ -138,11 +138,11 @@ public class SearchResponseCreator {
 
         ResultCreator resultCreator = null;
         try {
-            if (ResultStyle.TREE.equals(resultRequest.getResultStyle())) {
-                resultCreator = new VisResultCreator(resultRequest, null, null);
-            } else {
+            if (ResultStyle.TABLE.equals(resultRequest.getResultStyle())) {
                 final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeLocale));
                 resultCreator = new TableResultCreator(fieldFormatter);
+            } else {
+                resultCreator = new FlatResultCreator(resultRequest, null, null);
             }
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage());

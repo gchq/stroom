@@ -31,6 +31,7 @@ import stroom.dashboard.shared.SearchResponse;
 import stroom.dashboard.shared.TableResult;
 import stroom.dashboard.shared.VisResult;
 import stroom.query.api.Field;
+import stroom.query.api.FlatResult;
 import stroom.query.api.Result;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedString;
@@ -95,8 +96,8 @@ public class SearchResponseMapper {
             copy.setTotalResults(tableResult.getTotalResults());
 
             return copy;
-        } else if (result instanceof stroom.query.api.VisResult) {
-            final stroom.query.api.VisResult visResult = (stroom.query.api.VisResult) result;
+        } else if (result instanceof FlatResult) {
+            final FlatResult visResult = (FlatResult) result;
             final VisResult copy = mapVisResult(visResult);
 
             return copy;
@@ -125,7 +126,7 @@ public class SearchResponseMapper {
         return copy;
     }
 
-    private VisResult mapVisResult(final stroom.query.api.VisResult visResult) {
+    private VisResult mapVisResult(final FlatResult visResult) {
         String json = null;
         String error = visResult.getError();
 

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.query.api;
+package stroom.dashboard.server;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.query.api.Sort;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;

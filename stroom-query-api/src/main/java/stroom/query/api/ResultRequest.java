@@ -160,6 +160,6 @@ public class ResultRequest implements Serializable {
     }
 
     public enum ResultStyle {
-        FLAT, TREE
+        FLAT, TABLE
     }
 }

@@ -18,13 +18,13 @@ package stroom.dashboard.server;
 
 import org.junit.Test;
 import stroom.query.api.Field;
+import stroom.query.api.FlatResult;
 import stroom.query.api.Format.Type;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Result;
 import stroom.query.api.Row;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
-import stroom.query.api.VisResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +59,7 @@ public class TestSearchResponseMapper {
         return searchResponse;
     }
 
-    private VisResult getVisResult1() {
+    private FlatResult getVisResult1() {
         Field[] structure = new Field[]{new Field("val1", Type.GENERAL), new Field("val2", Type.NUMBER), new Field("val3", Type.NUMBER), new Field("val4", Type.GENERAL)};
 
         Object[][] data = new Object[8][];
@@ -71,7 +71,7 @@ public class TestSearchResponseMapper {
         data[5] = new Object[]{"test5", 0.33, 3244, "this5"};
         data[6] = new Object[]{"test6", 34.66, 44, "this6"};
         data[7] = new Object[]{"test7", 2.33, 74, "this7"};
-        VisResult visResult = new VisResult("vis-1234", structure, data, 200L, "visResultError");
+        FlatResult visResult = new FlatResult("vis-1234", structure, data, 200L, "visResultError");
 
         return visResult;
     }

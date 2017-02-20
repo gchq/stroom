@@ -34,6 +34,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Field;
 import stroom.query.api.Filter;
+import stroom.query.api.FlatResult;
 import stroom.query.api.Format;
 import stroom.query.api.Format.Type;
 import stroom.query.api.NumberFormat;
@@ -50,7 +51,6 @@ import stroom.query.api.Sort;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
 import stroom.query.api.TimeZone;
-import stroom.query.api.VisResult;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -271,7 +271,7 @@ public class TestSerialisation {
         return searchResponse;
     }
 
-    private VisResult getVisResult1() {
+    private FlatResult getVisResult1() {
         Field[] structure = new Field[]{new Field("val1", Type.GENERAL), new Field("val2", Type.NUMBER), new Field("val3", Type.NUMBER), new Field("val4", Type.GENERAL)};
 
         Object[][] data = new Object[8][];
@@ -283,7 +283,7 @@ public class TestSerialisation {
         data[5] = new Object[]{"test5", 0.33, 3244, "this5"};
         data[6] = new Object[]{"test6", 34.66, 44, "this6"};
         data[7] = new Object[]{"test7", 2.33, 74, "this7"};
-        VisResult visResult = new VisResult("vis-1234", structure, data, 200L, "visResultError");
+        FlatResult visResult = new FlatResult("vis-1234", structure, data, 200L, "visResultError");
 
         return visResult;
     }

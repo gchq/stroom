@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlElement;
 import java.util.Arrays;
 
 @JsonPropertyOrder({"componentId", "structure", "values", "size", "error"})
-public class VisResult extends Result {
+public class FlatResult extends Result {
     private static final long serialVersionUID = 3826654996795750099L;
 
     private Field[] structure;
@@ -31,15 +31,15 @@ public class VisResult extends Result {
     private Long size;
     private String error;
 
-    public VisResult() {
+    public FlatResult() {
     }
 
-    public VisResult(final String error) {
+    public FlatResult(final String error) {
         this.size = 0L;
         this.error = error;
     }
 
-    public VisResult(final String componentId, final Field[] structure, final Object[][] values, final Long size, final String error) {
+    public FlatResult(final String componentId, final Field[] structure, final Object[][] values, final Long size, final String error) {
         super(componentId);
         this.structure = structure;
         this.values = values;
@@ -89,7 +89,7 @@ public class VisResult extends Result {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
 
-        final VisResult visResult = (VisResult) o;
+        final FlatResult visResult = (FlatResult) o;
 
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(structure, visResult.structure)) return false;

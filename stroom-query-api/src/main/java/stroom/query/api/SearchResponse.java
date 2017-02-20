@@ -90,7 +90,7 @@ public class SearchResponse implements Serializable {
     @XmlElementWrapper(name = "results")
     @XmlElements({
             @XmlElement(name = "table", type = TableResult.class),
-            @XmlElement(name = "vis", type = VisResult.class)
+            @XmlElement(name = "vis", type = FlatResult.class)
     })
     public Result[] getResults() {
         return results;

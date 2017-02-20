@@ -31,10 +31,10 @@ import java.io.Serializable;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = TableResult.class, name = "table"),
-        @JsonSubTypes.Type(value = VisResult.class, name = "vis")
+        @JsonSubTypes.Type(value = FlatResult.class, name = "vis")
 })
 @XmlType(name = "Result", propOrder = "componentId")
-@XmlSeeAlso({TableResult.class, VisResult.class})
+@XmlSeeAlso({TableResult.class, FlatResult.class})
 public abstract class Result implements Serializable {
     private static final long serialVersionUID = -7455554742243923562L;
 

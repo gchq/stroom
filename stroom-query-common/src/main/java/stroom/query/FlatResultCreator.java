@@ -20,12 +20,12 @@ import stroom.dashboard.expression.FieldIndexMap;
 import stroom.dashboard.expression.Generator;
 import stroom.dashboard.expression.TypeConverter;
 import stroom.query.api.Field;
+import stroom.query.api.FlatResult;
 import stroom.query.api.Format.Type;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.TableSettings;
-import stroom.query.api.VisResult;
 import stroom.query.format.FieldFormatter;
 import stroom.util.shared.HasTerminate;
 
@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class VisResultCreator implements ResultCreator, HasTerminate {
+public class FlatResultCreator implements ResultCreator, HasTerminate {
     private final FieldFormatter fieldFormatter;
     private final Mapper[] mappers;
     private final Field[] fields;
@@ -44,7 +44,7 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
 
     private String error;
 
-    public VisResultCreator(final ResultRequest resultRequest, final Map<String, String> paramMap, final FieldFormatter fieldFormatter) {
+    public FlatResultCreator(final ResultRequest resultRequest, final Map<String, String> paramMap, final FieldFormatter fieldFormatter) {
         this.fieldFormatter = fieldFormatter;
 
         final TableSettings[] tableSettings = resultRequest.getTableSettings();
@@ -182,14 +182,14 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
                     fields[i + 3] = this.fields[i];
                 }
 
-                return new VisResult(resultRequest.getComponentId(), fields, values, totalResults, error);
+                return new FlatResult(resultRequest.getComponentId(), fields, values, totalResults, error);
 
             } catch (final Exception e) {
                 error = e.getMessage();
             }
         }
 
-        return new VisResult(error);
+        return new FlatResult(error);
     }
 
     private int addResults(final Data data, final RangeChecker rangeChecker,
