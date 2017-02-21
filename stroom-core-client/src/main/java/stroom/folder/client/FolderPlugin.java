@@ -27,9 +27,12 @@ import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.entity.shared.Folder;
+import stroom.streamstore.shared.Stream;
+import stroom.streamtask.shared.StreamProcessor;
 
 public class FolderPlugin extends EntityPlugin<Folder> {
     private final Provider<FolderPresenter> editorProvider;
+    private final ClientSecurityContext securityContext;
 
     @Inject
     public FolderPlugin(final EventBus eventBus, final Provider<FolderPresenter> editorProvider,
@@ -37,6 +40,7 @@ public class FolderPlugin extends EntityPlugin<Folder> {
             final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
         super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -46,7 +50,11 @@ public class FolderPlugin extends EntityPlugin<Folder> {
 
     @Override
     protected EntityEditPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+        if (securityContext.hasAppPermission(Stream.VIEW_DATA_PERMISSION) || securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
+            return editorProvider.get();
+        }
+
+        return null;
     }
 
     @Override

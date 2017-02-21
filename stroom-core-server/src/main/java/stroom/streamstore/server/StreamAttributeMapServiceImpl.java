@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.print.DocFlavor.STRING;
 
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.util.logging.StroomLogger;
@@ -123,6 +124,34 @@ public class StreamAttributeMapServiceImpl
             final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList) {
         final Map<Long, StreamAttributeMap> streamMap = new HashMap<>();
 
+        // Get a list of valid stream ids.
+        final StringBuilder streamIds = new StringBuilder();
+        for (final Stream stream : streamList) {
+            try {
+                // Resolve Relations
+                resolveRelations(criteria, stream);
+
+                final StreamAttributeMap streamAttributeMap = new StreamAttributeMap(stream);
+                streamMDList.add(streamAttributeMap);
+                streamMap.put(stream.getId(), streamAttributeMap);
+
+                streamIds.append(stream.getId());
+                streamIds.append(",");
+
+            } catch (final PermissionException e) {
+                // The current user might not have permission to see this
+                // stream.
+                LOGGER.debug(e.getMessage());
+            }
+        }
+        if (streamIds.length() > 0) {
+            streamIds.setLength(streamIds.length() - 1);
+        }
+
+        if (streamMap.size() == 0) {
+            return;
+        }
+
         final List<StreamAttributeKey> allKeys = streamAttributeKeyService.findAll();
         final Map<Long, StreamAttributeKey> keyMap = new HashMap<>();
         for (final StreamAttributeKey key : allKeys) {
@@ -143,25 +172,7 @@ public class StreamAttributeMapServiceImpl
         sql.append(" WHERE ");
         sql.append(StreamAttributeValue.STREAM_ID);
         sql.append(" in (");
-        for (final Stream stream : streamList) {
-            try {
-                // Resolve Relations
-                resolveRelations(criteria, stream);
-
-                final StreamAttributeMap streamAttributeMap = new StreamAttributeMap(stream);
-                streamMDList.add(streamAttributeMap);
-                streamMap.put(stream.getId(), streamAttributeMap);
-
-                sql.append(stream.getId());
-                sql.append(",");
-
-            } catch (final PermissionException e) {
-                // The current user might not have permission to see this
-                // stream.
-                LOGGER.debug(e.getMessage());
-            }
-        }
-        sql.setLength(sql.length() - 1);
+        sql.append(streamIds.toString());
         sql.append(")");
 
         // Status is a mandatory search

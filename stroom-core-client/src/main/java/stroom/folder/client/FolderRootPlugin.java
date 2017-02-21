@@ -29,6 +29,9 @@ import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerData;
+import stroom.security.client.ClientSecurityContext;
+import stroom.streamstore.shared.Stream;
+import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.client.ImageUtil;
 import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
@@ -38,15 +41,18 @@ import stroom.widget.util.client.SelectionType;
 public class FolderRootPlugin extends Plugin implements TabData {
     private final ContentManager contentManager;
     private final Provider<FolderRootPresenter> editorProvider;
+    private final ClientSecurityContext securityContext;
+
     private FolderRootPresenter presenter;
 
     @Inject
     public FolderRootPlugin(final EventBus eventBus, final ExplorerTreePresenter explorerTreePresenter,
-                            final Provider<FolderRootPresenter> editorProvider, final ClientDispatchAsync dispatcher,
+                            final Provider<FolderRootPresenter> editorProvider, final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
                             final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
         super(eventBus);
         this.contentManager = contentManager;
         this.editorProvider = editorProvider;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -64,7 +70,7 @@ public class FolderRootPlugin extends Plugin implements TabData {
                                 // If the presenter is null then we haven't got
                                 // this tab open.
                                 // Create a new presenter.
-                                presenter = editorProvider.get();
+                                presenter = createEditor();
                             }
 
                             if (presenter != null) {
@@ -84,6 +90,14 @@ public class FolderRootPlugin extends Plugin implements TabData {
                         }
                     }
                 }));
+    }
+
+    private FolderRootPresenter createEditor() {
+        if (securityContext.hasAppPermission(Stream.VIEW_DATA_PERMISSION) || securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
+            return editorProvider.get();
+        }
+
+        return null;
     }
 
     @Override
