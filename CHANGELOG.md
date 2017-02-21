@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#128** : Improved error handling during login.
 
+* Issue **#130** : Users with no permissions are no longer able to open folders including the root System folder to attempt data browsing.
+
 ## [v5.0-beta.10] - 2017-02-07
 
 * Issue **#109** : Added packetSize="65536" property to AJP connector in server.xml template.
