@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#132** : The explorer tree is now cleared on login so that users with different permissions do not see the previous users items.
 
+* Issue **#128** : Improved error handling during login.
+
 ## [v5.0-beta.10] - 2017-02-07
 
 * Issue **#109** : Added packetSize="65536" property to AJP connector in server.xml template.
