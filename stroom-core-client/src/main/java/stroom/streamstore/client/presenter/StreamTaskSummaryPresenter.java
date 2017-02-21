@@ -54,7 +54,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
     @Inject
     public StreamTaskSummaryPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                       final TooltipPresenter tooltipPresenter) {
-        super(eventBus, new DataGridViewImpl<SummaryDataRow>(false));
+        super(eventBus, new DataGridViewImpl<SummaryDataRow>(true, false));
 
         // Info column.
         final InfoColumn<SummaryDataRow> infoColumn = new InfoColumn<SummaryDataRow>() {
