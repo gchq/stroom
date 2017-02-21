@@ -194,6 +194,10 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
 //        reset(null, 1);
 //    }
 
+    public void clear() {
+        exporerTree.setData(new ArrayList<>());
+    }
+
     public void reset() {
         clearOpenItems();
         minDepth = 1;

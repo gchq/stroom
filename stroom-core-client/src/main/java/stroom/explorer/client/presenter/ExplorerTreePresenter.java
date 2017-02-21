@@ -139,6 +139,7 @@ public class ExplorerTreePresenter
             }
         });
 
+        explorerTree.getTreeModel().clear();
         explorerTree.getTreeModel().reset();
         explorerTree.getTreeModel().setRequiredPermissions(DocumentPermissionNames.READ);
         explorerTree.getTreeModel().setIncludedTypeSet(null);
