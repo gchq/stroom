@@ -53,7 +53,7 @@ class SecurityContextImpl implements SecurityContext {
     private final GenericEntityService genericEntityService;
 
 
-    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", "INTERNAL_PROCESSING_USER", false);
+    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", "INTERNAL_PROCESSING_USER", false, true);
 
     @Inject
     SecurityContextImpl(final UserPermissionsCache userPermissionCache, final UserService userService, final DocumentPermissionService documentPermissionService, final GenericEntityService genericEntityService) {

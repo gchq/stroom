@@ -51,7 +51,6 @@ public class FindUserCriteria extends FindDocumentEntityCriteria {
      */
     private Boolean group;
 
-
     private UserRef relatedUser;
 
     public FindUserCriteria() {

@@ -23,10 +23,12 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityService;
+import stroom.entity.shared.SQLNameConstants;
 import stroom.security.shared.DocumentPermissionKey;
 import stroom.security.shared.DocumentPermissionKeySet;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
+import stroom.security.shared.User.UserStatus;
 import stroom.security.shared.UserRef;
 import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
@@ -97,6 +99,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         sql.append(User.NAME);
         sql.append(", user.");
         sql.append(User.GROUP);
+        sql.append(", user.");
+        sql.append(SQLNameConstants.STATUS);
         sql.append(", doc.");
         sql.append(DocumentPermission.PERMISSION);
 
@@ -187,16 +191,12 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 final String uuid = (String) arr[0];
                 final String name = (String) arr[1];
                 final boolean group = (Boolean) arr[2];
-                final String permission = (String) arr[3];
+                final byte status = (Byte) arr[3];
+                final String permission = (String) arr[4];
 
-                final UserRef userRef = new UserRef(User.ENTITY_TYPE, uuid, name, group);
+                final UserRef userRef = new UserRef(User.ENTITY_TYPE, uuid, name, group, UserStatus.ENABLED.getPrimitiveValue() == status);
 
-                Set<String> permissions = userPermissions.get(userRef);
-                if (permissions == null) {
-                    permissions = new HashSet<>();
-                    userPermissions.put(userRef, permissions);
-                }
-                permissions.add(permission);
+                userPermissions.computeIfAbsent(userRef, k -> new HashSet<>()).add(permission);
             });
 
         } catch (final RuntimeException e) {
