@@ -95,6 +95,7 @@
       "offset" : 0,
       "length" : 100
     },
+    "resultStyle": "TABLE",
     "fetchData": true
   } ],
   "dateTimeLocale" : "en-gb",

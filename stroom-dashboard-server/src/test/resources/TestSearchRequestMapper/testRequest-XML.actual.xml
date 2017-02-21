@@ -106,6 +106,7 @@
                 <offset>0</offset>
                 <length>100</length>
             </requestedRange>
+            <resultStyle>TABLE</resultStyle>
             <fetchData>true</fetchData>
         </resultRequest>
     </resultRequests>
