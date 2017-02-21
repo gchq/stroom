@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#121** : Fixed cache clearing.
 
+* Issue **#122** : Improved the look of the cache screen.
+
 ## [v5.0-beta.10] - 2017-02-07
 
 * Issue **#109** : Added packetSize="65536" property to AJP connector in server.xml template.
