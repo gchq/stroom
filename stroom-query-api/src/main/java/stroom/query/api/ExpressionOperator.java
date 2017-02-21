@@ -30,7 +30,7 @@ import java.util.List;
 @JsonPropertyOrder({"op", "children"})
 @XmlType(name = "ExpressionOperator", propOrder = {"op", "children"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ExpressionOperator extends ExpressionItem {
+public final class ExpressionOperator extends ExpressionItem {
     private static final long serialVersionUID = 6602004424564268512L;
 
     @XmlElement(name = "op")

@@ -31,7 +31,7 @@ import java.util.List;
 @XmlType(name = "Query", propOrder = {"dataSource", "expression", "params"})
 @XmlRootElement(name = "query")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Query implements Serializable {
+public final class Query implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
     @XmlElement

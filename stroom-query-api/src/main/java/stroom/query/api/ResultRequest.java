@@ -25,23 +25,23 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-@XmlType(name = "ResultRequest", propOrder = {"componentId", "tableSettings", "requestedRange", "openGroups", "resultStyle", "fetchData"})
+@XmlType(name = "ResultRequest", propOrder = {"componentId", "mappings", "requestedRange", "openGroups", "resultStyle", "fetchData"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ResultRequest implements Serializable {
+public final class ResultRequest implements Serializable {
     private static final long serialVersionUID = -7455554742243923562L;
 
     @XmlElement
     private String componentId;
     @XmlElementWrapper(name = "mappings")
-    @XmlElement(name = "tableSettings")
-    private List<TableSettings> tableSettings;
+    @XmlElement(name = "mappings")
+    private List<TableSettings> mappings;
     @XmlElement
     private OffsetRange requestedRange;
     @XmlElementWrapper(name = "openGroups")
     @XmlElement(name = "key")
     private List<String> openGroups;
     @XmlElement
-    private ResultStyle resultStyle;
+    private ResultStyle resultStyle = ResultStyle.TABLE;
     @XmlElement
     private Boolean fetchData;
 
@@ -52,17 +52,17 @@ public class ResultRequest implements Serializable {
         this.componentId = componentId;
     }
 
-    public ResultRequest(final String componentId, final TableSettings tableSettings) {
-        this(componentId, Collections.singletonList(tableSettings), null);
+    public ResultRequest(final String componentId, final TableSettings mappings) {
+        this(componentId, Collections.singletonList(mappings), null);
     }
 
-    public ResultRequest(final String componentId, final TableSettings tableSettings, final OffsetRange requestedRange) {
-        this(componentId, Collections.singletonList(tableSettings), requestedRange);
+    public ResultRequest(final String componentId, final TableSettings mappings, final OffsetRange requestedRange) {
+        this(componentId, Collections.singletonList(mappings), requestedRange);
     }
 
-    public ResultRequest(final String componentId, final List<TableSettings> tableSettings, final OffsetRange requestedRange) {
+    public ResultRequest(final String componentId, final List<TableSettings> mappings, final OffsetRange requestedRange) {
         this.componentId = componentId;
-        this.tableSettings = tableSettings;
+        this.mappings = mappings;
         this.requestedRange = requestedRange;
     }
 
@@ -74,12 +74,12 @@ public class ResultRequest implements Serializable {
         this.componentId = componentId;
     }
 
-    public List<TableSettings> getTableSettings() {
-        return tableSettings;
+    public List<TableSettings> getMappings() {
+        return mappings;
     }
 
-    public void setTableSettings(final List<TableSettings> tableSettings) {
-        this.tableSettings = tableSettings;
+    public void setMappings(final List<TableSettings> mappings) {
+        this.mappings = mappings;
     }
 
     public OffsetRange getRequestedRange() {
@@ -130,7 +130,7 @@ public class ResultRequest implements Serializable {
         final ResultRequest that = (ResultRequest) o;
 
         if (componentId != null ? !componentId.equals(that.componentId) : that.componentId != null) return false;
-        if (tableSettings != null ? !tableSettings.equals(that.tableSettings) : that.tableSettings != null)
+        if (mappings != null ? !mappings.equals(that.mappings) : that.mappings != null)
             return false;
         if (requestedRange != null ? !requestedRange.equals(that.requestedRange) : that.requestedRange != null)
             return false;
@@ -142,7 +142,7 @@ public class ResultRequest implements Serializable {
     @Override
     public int hashCode() {
         int result = componentId != null ? componentId.hashCode() : 0;
-        result = 31 * result + (tableSettings != null ? tableSettings.hashCode() : 0);
+        result = 31 * result + (mappings != null ? mappings.hashCode() : 0);
         result = 31 * result + (requestedRange != null ? requestedRange.hashCode() : 0);
         result = 31 * result + (openGroups != null ? openGroups.hashCode() : 0);
         result = 31 * result + (resultStyle != null ? resultStyle.hashCode() : 0);
@@ -154,7 +154,7 @@ public class ResultRequest implements Serializable {
     public String toString() {
         return "ResultRequest{" +
                 "componentId='" + componentId + '\'' +
-                ", tableSettings=" + tableSettings +
+                ", mappings=" + mappings +
                 ", requestedRange=" + requestedRange +
                 ", openGroups=" + openGroups +
                 ", resultStyle=" + resultStyle +

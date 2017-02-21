@@ -36,15 +36,15 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable
     private static final long serialVersionUID = -2121399789820829359L;
 
     @XmlElement
-    protected String type;
+    private String type;
     @XmlElement
-    protected String uuid;
+    private String uuid;
     @XmlElement
-    protected String name;
+    private String name;
 
     @Deprecated
     @XmlElement
-    protected Long id;
+    private Long id;
 
     public DocRef() {
     }
@@ -64,24 +64,12 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable
         return type;
     }
 
-    public void setType(final String value) {
-        this.type = value;
-    }
-
     public String getUuid() {
         return uuid;
     }
 
-    public void setUuid(final String uuid) {
-        this.uuid = uuid;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(final String name) {
-        this.name = name;
     }
 
     @Deprecated

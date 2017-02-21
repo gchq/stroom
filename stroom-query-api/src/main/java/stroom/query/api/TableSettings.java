@@ -30,7 +30,7 @@ import java.util.List;
         "showDetail"})
 @XmlType(name = "TableSettings", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class TableSettings implements Serializable {
+public final class TableSettings implements Serializable {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement

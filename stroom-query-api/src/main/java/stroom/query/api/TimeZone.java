@@ -28,7 +28,7 @@ import java.io.Serializable;
 @JsonPropertyOrder({"use", "id", "offsetHours", "offsetMinutes"})
 @XmlType(name = "TimeZone", propOrder = {"use", "id", "offsetHours", "offsetMinutes"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class TimeZone implements Serializable {
+public final class TimeZone implements Serializable {
     private static final long serialVersionUID = 1200175661441813029L;
 
     @XmlElement
@@ -40,7 +40,7 @@ public class TimeZone implements Serializable {
     @XmlElement
     private Integer offsetMinutes;
 
-    public TimeZone() {
+    private TimeZone() {
     }
 
     public TimeZone(final Use use, final String id, final Integer offsetHours, final Integer offsetMinutes) {
@@ -81,32 +81,16 @@ public class TimeZone implements Serializable {
         return use;
     }
 
-    public void setUse(final Use use) {
-        this.use = use;
-    }
-
     public String getId() {
         return id;
-    }
-
-    public void setId(final String id) {
-        this.id = id;
     }
 
     public Integer getOffsetHours() {
         return offsetHours;
     }
 
-    public void setOffsetHours(final Integer offsetHours) {
-        this.offsetHours = offsetHours;
-    }
-
     public Integer getOffsetMinutes() {
         return offsetMinutes;
-    }
-
-    public void setOffsetMinutes(final Integer offsetMinutes) {
-        this.offsetMinutes = offsetMinutes;
     }
 
     @Override

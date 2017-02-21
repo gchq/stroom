@@ -31,7 +31,7 @@ import java.util.List;
 @XmlRootElement(name = "searchRequest")
 @XmlType(name = "SearchRequest", propOrder = {"key", "query", "resultRequests", "dateTimeLocale", "incremental"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class SearchRequest implements Serializable {
+public final class SearchRequest implements Serializable {
     private static final long serialVersionUID = -6668626615097471925L;
 
     @XmlElement

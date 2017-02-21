@@ -28,7 +28,7 @@ import java.io.Serializable;
 @JsonPropertyOrder({"name", "expression", "sort", "filter", "format", "group"})
 @XmlType(name = "Field", propOrder = {"name", "expression", "sort", "filter", "format", "group"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Field implements Serializable {
+public final class Field implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 
     @XmlElement

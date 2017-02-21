@@ -51,7 +51,7 @@ public class TestVisComponentResultCreator {
 //        final TableSettings childTableSettings = visStructureToTableSettings(parentTableSettings, visStructure);
 //
 //        final ResultRequest tableResultRequest = new ResultRequest();
-//        tableResultRequest.setTableSettings(new TableSettings[]{parentTableSettings, childTableSettings});
+//        tableResultRequest.setMappings(new TableSettings[]{parentTableSettings, childTableSettings});
 //
 //        final VisResultCreator resultCreator = new VisResultCreator(tableResultRequest, Collections.emptyMap(), null);
 //        final Result visResult = resultCreator.create(parentData, tableResultRequest);
@@ -81,7 +81,7 @@ public class TestVisComponentResultCreator {
 //        final TableSettings childTableSettings = visStructureToTableSettings(parentTableSettings, visStructure);
 //
 //        final ResultRequest tableResultRequest = new ResultRequest();
-//        tableResultRequest.setTableSettings(new TableSettings[]{parentTableSettings, childTableSettings});
+//        tableResultRequest.setMappings(new TableSettings[]{parentTableSettings, childTableSettings});
 //
 //        final VisResultCreator resultCreator = new VisResultCreator(tableResultRequest, Collections.emptyMap(), null);
 //        final Result visResult = resultCreator.create(parentData, tableResultRequest);

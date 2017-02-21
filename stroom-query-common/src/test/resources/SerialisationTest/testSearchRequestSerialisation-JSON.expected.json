@@ -36,7 +36,7 @@
   },
   "resultRequests" : [ {
     "componentId" : "componentX",
-    "tableSettings": [
+    "mappings": [
       {
       "queryId" : "someQueryId",
       "fields" : [ {
@@ -94,7 +94,8 @@
     "requestedRange" : {
       "offset" : 1,
       "length" : 100
-    }
+    },
+    "resultStyle": "TABLE"
   } ],
   "dateTimeLocale" : "en-gb"
 }

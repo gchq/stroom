@@ -71,17 +71,8 @@ import java.util.List;
 
 public class TestSerialisation {
     private static DataSource getDataSource() {
-        final DataSourceField field1 = new DataSourceField();
-        field1.setType(DataSourceFieldType.FIELD);
-        field1.setName("field1");
-        field1.setConditions(Arrays.asList(Condition.EQUALS, Condition.CONTAINS));
-        field1.setQueryable(true);
-
-        final DataSourceField field2 = new DataSourceField();
-        field2.setType(DataSourceFieldType.NUMERIC_FIELD);
-        field2.setName("field2");
-        field2.setConditions(Arrays.asList(Condition.EQUALS));
-        field2.setQueryable(true);
+        final DataSourceField field1 = new DataSourceField(DataSourceFieldType.FIELD, "field1", true, Arrays.asList(Condition.EQUALS, Condition.CONTAINS));
+        final DataSourceField field2 = new DataSourceField(DataSourceFieldType.NUMERIC_FIELD, "field2", true, Arrays.asList(Condition.EQUALS));
 
         final List<DataSourceField> fields = Arrays.asList(field1, field2);
         final DataSource dataSource = new DataSource(fields);
@@ -131,9 +122,7 @@ public class TestSerialisation {
     private static DateTimeFormat createDateTimeFormat() {
         final TimeZone timeZone = TimeZone.fromOffset(2, 30);
 
-        final DateTimeFormat dateTimeFormat = new DateTimeFormat();
-        dateTimeFormat.setPattern("yyyy-MM-dd'T'HH:mm:ss");
-        dateTimeFormat.setTimeZone(timeZone);
+        final DateTimeFormat dateTimeFormat = new DateTimeFormat("yyyy-MM-dd'T'HH:mm:ss", timeZone);
 
         return dateTimeFormat;
     }

@@ -32,7 +32,7 @@ import java.util.List;
 @XmlRootElement(name = "searchResponse")
 @XmlType(name = "SearchResponse", propOrder = {"highlights", "errors", "complete", "results"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class SearchResponse implements Serializable {
+public final class SearchResponse implements Serializable {
     private static final long serialVersionUID = -2964122512841756795L;
 
     /**

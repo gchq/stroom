@@ -27,7 +27,7 @@ import java.io.Serializable;
 @JsonPropertyOrder({"includes", "excludes"})
 @XmlType(name = "Filter", propOrder = {"includes", "excludes"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Filter implements Serializable {
+public final class Filter implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 
     @XmlElement

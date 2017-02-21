@@ -94,6 +94,7 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
 
         final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultTextPipeline();
         tableSettings.setExtractionPipeline(DocRefUtil.create(resultPipeline));
+        tableSettings.setExtractValues(true);
 
         final ExpressionBuilder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
         final Query query = new Query(dataSourceRef, expression.build());

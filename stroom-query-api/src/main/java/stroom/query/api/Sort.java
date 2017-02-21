@@ -28,7 +28,7 @@ import java.io.Serializable;
 @JsonPropertyOrder({"order", "direction"})
 @XmlType(name = "Sort", propOrder = {"order", "direction"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Sort implements Serializable {
+public final class Sort implements Serializable {
     private static final long serialVersionUID = 4530846367973824427L;
 
     @XmlElement

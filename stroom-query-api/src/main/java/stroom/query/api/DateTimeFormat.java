@@ -27,7 +27,7 @@ import java.io.Serializable;
 @JsonPropertyOrder({"pattern", "timeZone"})
 @XmlType(name = "DateTimeFormat", propOrder = {"pattern", "timeZone"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class DateTimeFormat implements Serializable {
+public final class DateTimeFormat implements Serializable {
     private static final long serialVersionUID = 9145624653060319801L;
 
     @XmlElement
@@ -35,23 +35,20 @@ public class DateTimeFormat implements Serializable {
     @XmlElement
     private TimeZone timeZone;
 
-    public DateTimeFormat() {
+    private DateTimeFormat() {
+    }
+
+    public DateTimeFormat(final String pattern, final TimeZone timeZone) {
+        this.pattern = pattern;
+        this.timeZone = timeZone;
     }
 
     public String getPattern() {
         return pattern;
     }
 
-    public void setPattern(final String pattern) {
-        this.pattern = pattern;
-    }
-
     public TimeZone getTimeZone() {
         return timeZone;
-    }
-
-    public void setTimeZone(final TimeZone timeZone) {
-        this.timeZone = timeZone;
     }
 
     @Override

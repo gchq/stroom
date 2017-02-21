@@ -42,7 +42,7 @@
         <resultRequest>
             <componentId>componentSettingsMapKey</componentId>
             <mappings>
-                <tableSettings>
+                <mappings>
                     <queryId>someQueryId</queryId>
                     <fields>
                         <field>
@@ -100,7 +100,7 @@
                         <val>1</val>
                         <val>2</val>
                     </maxResults>
-                </tableSettings>
+                </mappings>
             </mappings>
             <requestedRange>
                 <offset>0</offset>

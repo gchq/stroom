@@ -131,7 +131,7 @@ public class SearchRequestMapper {
                 copy.setComponentId(componentId);
                 copy.setFetchData(tableResultRequest.wantsData());
                 final TableSettings tableSettings = mapTableSettings(tableResultRequest.getTableSettings());
-                copy.setTableSettings(Collections.singletonList(tableSettings));
+                copy.setMappings(Collections.singletonList(tableSettings));
                 copy.setRequestedRange(mapOffsetRange(tableResultRequest.getRequestedRange()));
                 copy.setOpenGroups(mapCollection(String.class, tableResultRequest.getOpenGroups()));
                 copy.setResultStyle(ResultStyle.TABLE);
@@ -148,7 +148,7 @@ public class SearchRequestMapper {
                 final TableSettings parentTableSettings = mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings());
                 final TableSettings childTableSettings = mapVisSettingsToTableSettings(visResultRequest.getVisDashboardSettings(), parentTableSettings);
 
-                copy.setTableSettings(Arrays.asList(parentTableSettings, childTableSettings));
+                copy.setMappings(Arrays.asList(parentTableSettings, childTableSettings));
                 copy.setRequestedRange(null);
                 copy.setOpenGroups(null);
                 copy.setResultStyle(ResultStyle.FLAT);
@@ -167,7 +167,7 @@ public class SearchRequestMapper {
 //                final stroom.query.api.VisResultRequest copy = new stroom.query.api.VisResultRequest();
 //                copy.setComponentId(componentId);
 //                copy.setFetchData(visResultRequest.wantsData());
-//                copy.setTableSettings(mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings()));
+//                copy.setMappings(mapTableSettings(visResultRequest.getVisDashboardSettings().getMappings()));
 //                copy.setStructure(mapStructure(visResultRequest.getVisDashboardSettings()));
 //                resultRequests[i++] = copy;
             }
@@ -310,9 +310,7 @@ public class SearchRequestMapper {
 
         final DateTimeFormatSettings dateTimeFormatSettings = (DateTimeFormatSettings) formatSettings;
 
-        final DateTimeFormat copy = new DateTimeFormat();
-        copy.setPattern(dateTimeFormatSettings.getPattern());
-        copy.setTimeZone(mapTimeZone(dateTimeFormatSettings.getTimeZone()));
+        final DateTimeFormat copy = new DateTimeFormat(dateTimeFormatSettings.getPattern(), mapTimeZone(dateTimeFormatSettings.getTimeZone()));
         return copy;
     }
 
@@ -321,11 +319,7 @@ public class SearchRequestMapper {
             return null;
         }
 
-        final stroom.query.api.TimeZone copy = new stroom.query.api.TimeZone();
-        copy.setUse(Use.valueOf(timeZone.getUse().name()));
-        copy.setId(timeZone.getId());
-        copy.setOffsetHours(timeZone.getOffsetHours());
-        copy.setOffsetMinutes(timeZone.getOffsetMinutes());
+        final stroom.query.api.TimeZone copy = new stroom.query.api.TimeZone(Use.valueOf(timeZone.getUse().name()), timeZone.getId(), timeZone.getOffsetHours(), timeZone.getOffsetMinutes());
 
         return copy;
     }

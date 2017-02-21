@@ -46,7 +46,7 @@ public class FlatResultCreator implements ResultCreator, HasTerminate {
     public FlatResultCreator(final ResultRequest resultRequest, final Map<String, String> paramMap, final FieldFormatter fieldFormatter) {
         this.fieldFormatter = fieldFormatter;
 
-        final List<TableSettings> tableSettings = resultRequest.getTableSettings();
+        final List<TableSettings> tableSettings = resultRequest.getMappings();
 
         if (tableSettings.size() > 1) {
             mappers = new ArrayList<>(tableSettings.size() - 1);
@@ -234,7 +234,7 @@ public class FlatResultCreator implements ResultCreator, HasTerminate {
                 results.add(values);
 
                 // Add child results if a node is open.
-                if (openGroups.isOpen(item.getKey())) {
+                if (item.getKey() != null && openGroups.isOpen(item.getKey())) {
                     final Items<Item> childItems = data.getChildMap().get(item.getKey());
                     if (childItems != null) {
                         count = addResults(data, rangeChecker, openGroups,

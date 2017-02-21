@@ -25,7 +25,7 @@ import java.util.List;
 
 @JsonPropertyOrder({"componentId", "structure", "values", "size", "error"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class FlatResult extends Result {
+public final class FlatResult extends Result {
     private static final long serialVersionUID = 3826654996795750099L;
 
     @XmlElement

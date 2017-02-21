@@ -29,7 +29,7 @@ import java.util.List;
 @JsonPropertyOrder({"groupKey", "values", "depth"})
 @XmlType(name = "Row", propOrder = {"groupKey", "values", "depth"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Row implements Serializable {
+public final class Row implements Serializable {
     private static final long serialVersionUID = 4379892306375080112L;
 
     @XmlElement

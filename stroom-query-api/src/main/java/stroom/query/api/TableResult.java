@@ -28,7 +28,7 @@ import java.util.List;
 @JsonPropertyOrder({"componentId", "rows", "resultRange", "totalResults", "error"})
 @XmlType(name = "TableResult", propOrder = {"rows", "resultRange", "totalResults", "error"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class TableResult extends Result {
+public final class TableResult extends Result {
     private static final long serialVersionUID = -2964122512841756795L;
 
     @XmlElementWrapper(name = "rows")

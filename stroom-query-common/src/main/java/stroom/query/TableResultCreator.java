@@ -59,7 +59,7 @@ public class TableResultCreator implements ResultCreator {
                 openGroups = new HashSet<>(resultRequest.getOpenGroups());
             }
 
-            latestFields = resultRequest.getTableSettings().get(0).getFields();
+            latestFields = resultRequest.getMappings().get(0).getFields();
             totalResults = addTableResults(data, latestFields, offset, length, openGroups, resultList, null, 0,
                     0);
         } catch (final Exception e) {

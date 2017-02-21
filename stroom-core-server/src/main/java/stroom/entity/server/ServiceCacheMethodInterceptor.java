@@ -112,13 +112,12 @@ public class ServiceCacheMethodInterceptor implements MethodInterceptor, Initial
 
         if (method.getParameterTypes().length >= 1) {
             if (long.class.isAssignableFrom(method.getParameterTypes()[0])) {
-                docRef = new DocRef();
-                docRef.setType(type);
-                docRef.setId((Long) invocation.getArguments()[0]);
+                final long id = (Long) invocation.getArguments()[0];
+                docRef = new DocRef(type, String.valueOf(id));
+                docRef.setId(id);
             } else if (String.class.isAssignableFrom(method.getParameterTypes()[0])) {
-                docRef = new DocRef();
-                docRef.setType(type);
-                docRef.setUuid((String) invocation.getArguments()[0]);
+                final String uuid = (String) invocation.getArguments()[0];
+                docRef = new DocRef(type, uuid);
             } else if (Entity.class.isAssignableFrom(method.getParameterTypes()[0])) {
                 final Entity entity = (Entity) invocation.getArguments()[0];
                 // If no entity has been supplied to load then return null.

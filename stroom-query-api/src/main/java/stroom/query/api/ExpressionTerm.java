@@ -29,7 +29,7 @@ import java.util.List;
 @JsonPropertyOrder({"field", "condition", "value", "dictionary"})
 @XmlType(name = "ExpressionTerm", propOrder = {"field", "condition", "value", "dictionary"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ExpressionTerm extends ExpressionItem {
+public final class ExpressionTerm extends ExpressionItem {
     private static final long serialVersionUID = 9035311895540457146L;
 
     @XmlElement

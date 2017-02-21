@@ -28,7 +28,7 @@ import java.io.Serializable;
 @JsonPropertyOrder({"type", "numberFormat", "dateTimeFormat"})
 @XmlType(name = "Format", propOrder = {"type", "numberFormat", "dateTimeFormat"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Format implements Serializable {
+public final class Format implements Serializable {
     private static final long serialVersionUID = -5380825645719299089L;
 
     @XmlElement

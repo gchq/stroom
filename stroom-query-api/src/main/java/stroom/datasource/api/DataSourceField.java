@@ -17,7 +17,7 @@ import java.util.List;
 @JsonPropertyOrder({"type", "name", "queryable", "conditions"})
 @XmlType(name = "DataSourceField", propOrder = {"type", "name", "queryable", "conditions"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class DataSourceField implements Serializable, HasDisplayValue {
+public final class DataSourceField implements Serializable, HasDisplayValue {
     private static final long serialVersionUID = 1272545271946712570L;
 
     @XmlElement
@@ -36,12 +36,7 @@ public class DataSourceField implements Serializable, HasDisplayValue {
     @XmlElement(name = "condition")
     private List<Condition> conditions;
 
-    public DataSourceField() {
-    }
-
-    public DataSourceField(final DataSourceFieldType type, final String name) {
-        this.type = type;
-        this.name = name;
+    private DataSourceField() {
     }
 
     public DataSourceField(final DataSourceFieldType type, final String name, final Boolean queryable, final List<Condition> conditions) {
@@ -51,41 +46,24 @@ public class DataSourceField implements Serializable, HasDisplayValue {
         this.conditions = conditions;
     }
 
-
     public DataSourceFieldType getType() {
         return type;
-    }
-
-    public void setType(final DataSourceFieldType type) {
-        this.type = type;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(final String name) {
-        this.name = name;
-    }
-
-    public List<Condition> getConditions() {
-        return conditions;
-    }
-
-    public void setConditions(final List<Condition> conditions) {
-        this.conditions = conditions;
-    }
-
     public Boolean getQueryable() {
         return queryable;
     }
 
-    public void setQueryable(final Boolean queryable) {
-        this.queryable = queryable;
-    }
-
     public boolean queryable() {
         return queryable != null && queryable;
+    }
+
+    public List<Condition> getConditions() {
+        return conditions;
     }
 
     @JsonIgnore

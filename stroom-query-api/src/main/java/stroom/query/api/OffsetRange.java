@@ -27,7 +27,7 @@ import java.io.Serializable;
 @JsonPropertyOrder({"offset", "length"})
 @XmlType(name = "OffsetRange", propOrder = {"offset", "length"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class OffsetRange implements Serializable {
+public final class OffsetRange implements Serializable {
     private static final long serialVersionUID = 5045453517852867315L;
 
     @XmlElement

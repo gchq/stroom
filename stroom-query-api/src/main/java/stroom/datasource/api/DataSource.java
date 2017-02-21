@@ -31,14 +31,14 @@ import java.util.List;
 @XmlType(name = "DataSource", propOrder = "fields")
 @XmlRootElement(name = "dataSource")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class DataSource implements Serializable {
+public final class DataSource implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;
 
     @XmlElementWrapper(name = "fields")
     @XmlElement(name = "field")
     private List<DataSourceField> fields;
 
-    public DataSource() {
+    private DataSource() {
     }
 
     public DataSource(final List<DataSourceField> fields) {
@@ -47,10 +47,6 @@ public class DataSource implements Serializable {
 
     public List<DataSourceField> getFields() {
         return fields;
-    }
-
-    public void setFields(final List<DataSourceField> fields) {
-        this.fields = fields;
     }
 
     @Override
