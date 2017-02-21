@@ -16,6 +16,7 @@
 
 package stroom.entity.server;
 
+import net.sf.ehcache.Ehcache;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.Entity;
@@ -51,11 +52,11 @@ public class ServiceCacheMethodInterceptor implements MethodInterceptor, Initial
     ServiceCacheMethodInterceptorTransactionHelper serviceCacheMethodInterceptorTransactionHelper;
     @Resource
     private CacheManager cacheManager;
-    private Cache cache;
+    private Ehcache cache;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        cache = cacheManager.getCache("serviceCache");
+        cache = cacheManager.getEhcache("serviceCache");
     }
 
     @Override

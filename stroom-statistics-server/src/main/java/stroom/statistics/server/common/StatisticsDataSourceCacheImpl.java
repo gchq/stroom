@@ -42,8 +42,8 @@ public class StatisticsDataSourceCacheImpl implements StatisticStoreCache, Entit
     private final StatisticStoreEntityService statisticsDataSourceService;
     private final CacheManager cacheManager;
 
-    private volatile Cache cacheByRef;
-    private volatile Cache cacheByNameEngine;
+    private volatile Ehcache cacheByRef;
+    private volatile Ehcache cacheByNameEngine;
 
     @Inject
     public StatisticsDataSourceCacheImpl(final StatisticStoreEntityService statisticsDataSourceService,
@@ -52,22 +52,22 @@ public class StatisticsDataSourceCacheImpl implements StatisticStoreCache, Entit
         this.cacheManager = cacheManager;
     }
 
-    private Cache getCacheByEngineName() {
+    private Ehcache getCacheByEngineName() {
         if (cacheByNameEngine == null) {
             synchronized (this) {
                 if (cacheByNameEngine == null) {
-                    cacheByNameEngine = cacheManager.getCache(STATISTICS_DATA_SOURCE_CACHE_NAME_BY_NAME_ENGINE);
+                    cacheByNameEngine = cacheManager.getEhcache(STATISTICS_DATA_SOURCE_CACHE_NAME_BY_NAME_ENGINE);
                 }
             }
         }
         return cacheByNameEngine;
     }
 
-    private Cache getCacheByRef() {
+    private Ehcache getCacheByRef() {
         if (cacheByRef == null) {
             synchronized (this) {
                 if (cacheByRef == null) {
-                    cacheByRef = cacheManager.getCache(STATISTICS_DATA_SOURCE_CACHE_NAME_BY_ID);
+                    cacheByRef = cacheManager.getEhcache(STATISTICS_DATA_SOURCE_CACHE_NAME_BY_ID);
                 }
             }
         }
@@ -76,7 +76,7 @@ public class StatisticsDataSourceCacheImpl implements StatisticStoreCache, Entit
 
     @Override
     public StatisticStoreEntity getStatisticsDataSource(final DocRef docRef) {
-        final Cache cacheByRef = getCacheByRef();
+        final Ehcache cacheByRef = getCacheByRef();
 
         final Element cacheResult = cacheByRef.get(docRef);
 
@@ -107,7 +107,7 @@ public class StatisticsDataSourceCacheImpl implements StatisticStoreCache, Entit
 
     @Override
     public StatisticStoreEntity getStatisticsDataSource(final String statisticName, final String engineName) {
-        final Cache cacheByEngineName = getCacheByEngineName();
+        final Ehcache cacheByEngineName = getCacheByEngineName();
 
         final NameEngineCacheKey key = new NameEngineCacheKey(statisticName, engineName);
 
@@ -159,8 +159,8 @@ public class StatisticsDataSourceCacheImpl implements StatisticStoreCache, Entit
 
     @Override
     public void onChange(final EntityEvent event) {
-        final Cache cacheByEngineName = getCacheByEngineName();
-        final Cache cacheByRef = getCacheByRef();
+        final Ehcache cacheByEngineName = getCacheByEngineName();
+        final Ehcache cacheByRef = getCacheByRef();
 
 //        final long entityId = event.getDocRef().getId();
 
