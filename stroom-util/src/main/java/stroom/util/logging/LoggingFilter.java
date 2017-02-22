@@ -25,7 +25,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import java.io.IOException;
 
-public class Log4JFilter implements Filter {
+public class LoggingFilter implements Filter {
     private volatile ServletContext servletContext;
 
     @Override

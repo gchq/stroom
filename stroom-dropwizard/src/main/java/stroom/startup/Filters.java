@@ -15,7 +15,7 @@ public class Filters {
      */
     @SuppressWarnings("unchecked")
     static void loadInto(Environment environment) throws ClassNotFoundException {
-        addFilter(environment, "log4jFilter", "stroom.util.logging.Log4JFilter", null, "/*");
+        addFilter(environment, "loggingFilter", "stroom.util.logging.LoggingFilter", null, "/*");
         addFilter(environment, "upgradeFilter", "stroom.util.upgrade.UpgradeDispatcherFilter", null, "/*");
         addFilter(environment, "threadScopeContextFilter", "stroom.util.thread.ThreadScopeContextFilter", null, "/*");
         addFilter(environment, "rejectPostFilter", "stroom.servlet.RejectPostFilter",
