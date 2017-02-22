@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#119** : User permissions dialog now clears permissions when a user or group is deleted.
 
+* Issue **#115** : User permissions on documents can now be inherited from parent folders on create, copy and move.
+
 ## [v5.0-beta.10] - 2017-02-07
 
 * Issue **#109** : Added packetSize="65536" property to AJP connector in server.xml template.
