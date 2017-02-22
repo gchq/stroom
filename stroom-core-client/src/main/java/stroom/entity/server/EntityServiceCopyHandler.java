@@ -59,7 +59,7 @@ class EntityServiceCopyHandler
             // Validate the entity name.
             NameValidationUtil.validate(entityService, entity);
 
-            result = entityService.copy(entity, action.getFolder(), action.getName());
+            result = entityService.copy(entity, action.getFolder(), action.getName(), action.getPermissionInheritance());
             entityEventLog.create(result);
         } catch (final RuntimeException e) {
             entityEventLog.create(entity, e);

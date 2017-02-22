@@ -25,19 +25,28 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 import stroom.entity.client.presenter.MoveEntityPresenter.MoveEntityView;
+import stroom.entity.shared.PermissionInheritance;
+import stroom.item.client.ItemListBox;
 
 public class MoveEntityViewImpl extends ViewImpl implements MoveEntityView {
     public interface Binder extends UiBinder<Widget, MoveEntityViewImpl> {
     }
 
     @UiField
-    SimplePanel folders;
+    SimplePanel foldersInner;
+    @UiField
+    ItemListBox<PermissionInheritance> permissionInheritance;
 
     private final Widget widget;
 
     @Inject
     public MoveEntityViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+
+        permissionInheritance.addItem(PermissionInheritance.NONE);
+        permissionInheritance.addItem(PermissionInheritance.INHERIT);
+        permissionInheritance.addItem(PermissionInheritance.COMBINED);
+        permissionInheritance.setSelectedItem(PermissionInheritance.INHERIT);
     }
 
     @Override
@@ -49,6 +58,16 @@ public class MoveEntityViewImpl extends ViewImpl implements MoveEntityView {
     public void setFolderView(final View view) {
         view.asWidget().setWidth("100%");
         view.asWidget().setHeight("100%");
-        folders.setWidget(view.asWidget());
+        foldersInner.setWidget(view.asWidget());
+    }
+
+    @Override
+    public PermissionInheritance getPermissionInheritance() {
+        return permissionInheritance.getSelectedItem();
+    }
+
+    @Override
+    public void setPermissionInheritance(final PermissionInheritance permissionInheritance) {
+        this.permissionInheritance.setSelectedItem(permissionInheritance);
     }
 }

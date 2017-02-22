@@ -24,15 +24,17 @@ public class EntityServiceCreateAction extends Action<DocRef> {
     private String type;
     private String name;
     private DocRef folder;
+    private PermissionInheritance permissionInheritance;
 
     public EntityServiceCreateAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public EntityServiceCreateAction(final String type, final String name, final DocRef folder) {
+    public EntityServiceCreateAction(final String type, final String name, final DocRef folder, final PermissionInheritance permissionInheritance) {
         this.type = type;
         this.name = name;
         this.folder = folder;
+        this.permissionInheritance = permissionInheritance;
     }
 
     public String getType() {
@@ -45,6 +47,10 @@ public class EntityServiceCreateAction extends Action<DocRef> {
 
     public DocRef getFolder() {
         return folder;
+    }
+
+    public PermissionInheritance getPermissionInheritance() {
+        return permissionInheritance;
     }
 
     @Override

@@ -85,5 +85,7 @@ public interface SecurityContext {
      */
     boolean hasDocumentPermission(String documentType, String documentUuid, String permission);
 
-    void createInitialDocumentPermissions(String documentType, String documentUuid, String folderUuid);
+    void clearDocumentPermissions(String documentType, String documentUuid);
+
+    void addDocumentPermissions(String sourceType, String sourceUuid, String documentType, String documentUuid, boolean owner);
 }

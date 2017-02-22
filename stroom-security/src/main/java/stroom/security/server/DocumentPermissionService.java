@@ -29,4 +29,8 @@ public interface DocumentPermissionService {
     void addPermission(UserRef userRef, DocRef document, String permission);
 
     void removePermission(UserRef userRef, DocRef document, String permission);
+
+    void clearDocumentPermissions(DocRef document);
+
+    void clearUserPermissions(UserRef userRef);
 }

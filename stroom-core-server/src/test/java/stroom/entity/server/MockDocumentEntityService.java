@@ -25,6 +25,7 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
+import stroom.entity.shared.PermissionInheritance;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,6 +45,11 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 
     @Override
     public E create(final DocRef folder, final String name) throws RuntimeException {
+        return create(folder, name, PermissionInheritance.NONE);
+    }
+
+    @Override
+    public E create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
         // Create a new entity instance.
         E entity;
         try {
@@ -157,7 +163,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     }
 
     @Override
-    public E copy(final E entity, final DocRef folder, final String name) {
+    public E copy(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
         // This is going to be a copy so clear the persistence so save will create a new DB entry.
         entity.clearPersistence();
 
@@ -169,7 +175,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     }
 
     @Override
-    public E move(final E entity, final DocRef folder) {
+    public E move(final E entity, final DocRef folder, final PermissionInheritance permissionInheritance) {
         setFolder(entity, folder);
         return save(entity);
     }

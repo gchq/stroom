@@ -81,7 +81,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
         entity = super.create(entity);
 
         // Create the initial user permissions for this new document.
-        securityContext.createInitialDocumentPermissions(entity.getType(), entity.getUuid(), null);
+        securityContext.addDocumentPermissions(null, null, entity.getType(), entity.getUuid(), true);
 
         return entity;
     }

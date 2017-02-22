@@ -16,10 +16,10 @@
 
 package stroom.security.server;
 
-import stroom.security.SecurityContext;
-import stroom.security.spring.SecurityConfiguration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import stroom.security.SecurityContext;
+import stroom.security.spring.SecurityConfiguration;
 
 @Component
 @Profile(SecurityConfiguration.MOCK_SECURITY)
@@ -68,6 +68,10 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
-    public void createInitialDocumentPermissions(final String documentType, final String documentUuid, final String folderUuid) {
+    public void clearDocumentPermissions(final String documentType, final String documentUuid) {
+    }
+
+    @Override
+    public void addDocumentPermissions(final String sourceType, final String sourceUuid, final String documentType, final String documentUuid, final boolean owner) {
     }
 }

@@ -124,7 +124,7 @@ public class EntityPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(CreateEntityEvent.getType(), event -> {
             final EntityPlugin<?> plugin = pluginMap.get(event.getEntityType());
             if (plugin != null) {
-                plugin.createEntity(event.getPresenter(), event.getFolder(), event.getEntityName());
+                plugin.createEntity(event.getPresenter(), event.getFolder(), event.getEntityName(), event.getPermissionInheritance());
             }
         }));
 
@@ -192,7 +192,7 @@ public class EntityPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(SaveAsEntityEvent.getType(), event -> {
             final EntityPlugin<?> plugin = pluginMap.get(event.getTabData().getType());
             if (plugin != null) {
-                plugin.copy(event.getDialog(), event.getTabData(), event.getEntityName());
+                plugin.copy(event.getDialog(), event.getTabData(), event.getEntityName(), event.getPermissionInheritance());
             }
         }));
 
@@ -203,7 +203,7 @@ public class EntityPluginEventManager extends Plugin {
             final EntityPlugin<?> plugin = pluginMap.get(event.getDocument().getType());
             if (plugin != null) {
                 plugin.copyEntity(event.getPresenter(), event.getDocument(), event.getFolder(),
-                        event.getName());
+                        event.getName(), event.getPermissionInheritance());
             }
         }));
 
@@ -220,7 +220,7 @@ public class EntityPluginEventManager extends Plugin {
                     final EntityData entityData = (EntityData) child;
                     final EntityPlugin<?> plugin = pluginMap.get(entityData.getType());
                     if (plugin != null) {
-                        plugin.moveEntity(event.getPresenter(), entityData.getDocRef(), folder);
+                        plugin.moveEntity(event.getPresenter(), entityData.getDocRef(), folder, event.getPermissionInheritance());
                     }
                 }
             }

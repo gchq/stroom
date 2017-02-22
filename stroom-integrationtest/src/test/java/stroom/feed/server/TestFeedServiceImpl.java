@@ -23,6 +23,7 @@ import stroom.entity.shared.DocRef;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.OrderBy;
+import stroom.entity.shared.PermissionInheritance;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
@@ -89,7 +90,7 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         Feed fd = feedService.create(commonTestScenarioCreator.getTestFolder(), feedName);
 
-        fd = feedService.copy(fd, DocRef.create(fd.getFolder()), fd.getName() + "COPY");
+        fd = feedService.copy(fd, DocRef.create(fd.getFolder()), fd.getName() + "COPY", PermissionInheritance.INHERIT);
 
         feedService.save(fd);
     }

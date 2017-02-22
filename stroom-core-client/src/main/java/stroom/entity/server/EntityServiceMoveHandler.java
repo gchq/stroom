@@ -59,7 +59,7 @@ class EntityServiceMoveHandler
             // Validate the entity name.
             NameValidationUtil.validate(entityService, entity);
 
-            result = entityService.move(entity, action.getFolder());
+            result = entityService.move(entity, action.getFolder(), action.getPermissionInheritance());
             entityEventLog.move(null, result);
         } catch (final RuntimeException e) {
             entityEventLog.move(null, entity, e);

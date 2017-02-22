@@ -182,19 +182,19 @@ public class GenericEntityServiceImpl implements GenericEntityService {
         return (E) getEntityService(entity.getType()).save(entity);
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public <E extends DocumentEntity> E saveAs(final E entity, final DocRef folder, final String name) {
-        if (entity == null) {
-            return null;
-        }
-        final EntityService<E> entityService = getEntityService(entity.getType());
-        if (entityService instanceof DocumentEntityService) {
-            return ((DocumentEntityService<E>) entityService).copy(entity, folder, name);
-        }
-
-        return entity;
-    }
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public <E extends DocumentEntity> E saveAs(final E entity, final DocRef folder, final String name) {
+//        if (entity == null) {
+//            return null;
+//        }
+//        final EntityService<E> entityService = getEntityService(entity.getType());
+//        if (entityService instanceof DocumentEntityService) {
+//            return ((DocumentEntityService<E>) entityService).copy(entity, folder, name);
+//        }
+//
+//        return entity;
+//    }
 
     @Override
     public <E extends Entity> Boolean delete(final E entity) {
