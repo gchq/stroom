@@ -133,7 +133,7 @@ public class FilterTermsTreeBuilder {
         // the case just return null and handle for
         // the null in the calling method
 
-        if (oldNode.getChildren() == null || oldNode.getChildren().length == 0) {
+        if (oldNode.getChildren() == null || oldNode.getChildren().size() == 0) {
             return null;
         } else {
             final FilterOperationMode operationMode = FilterOperationMode.valueOf(oldNode.getOp().toString());

@@ -18,15 +18,19 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"uuid"})
 @XmlType(name = "QueryKey", propOrder = {"uuid"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class QueryKey implements Serializable {
     private static final long serialVersionUID = -3222989872764402068L;
 
+    @XmlElement
     private String uuid;
 
     public QueryKey() {
@@ -43,7 +47,6 @@ public class QueryKey implements Serializable {
         this.uuid = uuid;
     }
 
-    @XmlElement
     public String getUuid() {
         return uuid;
     }

@@ -27,7 +27,7 @@ public class DataSourceFieldsMap extends HashMap<String, DataSourceField> {
     public DataSourceFieldsMap() {
     }
 
-    public DataSourceFieldsMap(final DataSourceField[] fields) {
+    public DataSourceFieldsMap(final List<DataSourceField> fields) {
         for (final DataSourceField indexField : fields) {
             put(indexField);
         }

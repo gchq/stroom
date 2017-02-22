@@ -16,21 +16,33 @@
 
 package stroom.query.api;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-@XmlType(name = "ResultRequest", propOrder = {"componentId", "tableSettings", "requestedRange", "openGroups", "resultStyle", "fetchData"})
-public class ResultRequest implements Serializable {
+@XmlType(name = "ResultRequest", propOrder = {"componentId", "mappings", "requestedRange", "openGroups", "resultStyle", "fetchData"})
+@XmlAccessorType(XmlAccessType.FIELD)
+public final class ResultRequest implements Serializable {
     private static final long serialVersionUID = -7455554742243923562L;
 
+    @XmlElement
     private String componentId;
-    private TableSettings[] tableSettings;
+    @XmlElementWrapper(name = "mappings")
+    @XmlElement(name = "mappings")
+    private List<TableSettings> mappings;
+    @XmlElement
     private OffsetRange requestedRange;
-    private String[] openGroups;
-    private ResultStyle resultStyle;
+    @XmlElementWrapper(name = "openGroups")
+    @XmlElement(name = "key")
+    private List<String> openGroups;
+    @XmlElement
+    private ResultStyle resultStyle = ResultStyle.TABLE;
+    @XmlElement
     private Boolean fetchData;
 
     public ResultRequest() {
@@ -40,21 +52,20 @@ public class ResultRequest implements Serializable {
         this.componentId = componentId;
     }
 
-    public ResultRequest(final String componentId, final TableSettings tableSettings) {
-        this(componentId, new TableSettings[]{tableSettings}, null);
+    public ResultRequest(final String componentId, final TableSettings mappings) {
+        this(componentId, Collections.singletonList(mappings), null);
     }
 
-    public ResultRequest(final String componentId, final TableSettings tableSettings, final OffsetRange requestedRange) {
-        this(componentId, new TableSettings[]{tableSettings}, requestedRange);
+    public ResultRequest(final String componentId, final TableSettings mappings, final OffsetRange requestedRange) {
+        this(componentId, Collections.singletonList(mappings), requestedRange);
     }
 
-    public ResultRequest(final String componentId, final TableSettings[] tableSettings, final OffsetRange requestedRange) {
+    public ResultRequest(final String componentId, final List<TableSettings> mappings, final OffsetRange requestedRange) {
         this.componentId = componentId;
-        this.tableSettings = tableSettings;
+        this.mappings = mappings;
         this.requestedRange = requestedRange;
     }
 
-    @XmlElement
     public String getComponentId() {
         return componentId;
     }
@@ -63,17 +74,14 @@ public class ResultRequest implements Serializable {
         this.componentId = componentId;
     }
 
-    @XmlElementWrapper(name = "mappings")
-    @XmlElement(name = "tableSettings")
-    public TableSettings[] getTableSettings() {
-        return tableSettings;
+    public List<TableSettings> getMappings() {
+        return mappings;
     }
 
-    public void setTableSettings(final TableSettings[] tableSettings) {
-        this.tableSettings = tableSettings;
+    public void setMappings(final List<TableSettings> mappings) {
+        this.mappings = mappings;
     }
 
-    @XmlElement
     public OffsetRange getRequestedRange() {
         return requestedRange;
     }
@@ -86,17 +94,14 @@ public class ResultRequest implements Serializable {
         requestedRange = new OffsetRange(offset, length);
     }
 
-    @XmlElementWrapper(name = "openGroups")
-    @XmlElement(name = "key")
-    public String[] getOpenGroups() {
+    public List<String> getOpenGroups() {
         return openGroups;
     }
 
-    public void setOpenGroups(final String[] openGroups) {
+    public void setOpenGroups(final List<String> openGroups) {
         this.openGroups = openGroups;
     }
 
-    @XmlElement
     public ResultStyle getResultStyle() {
         return resultStyle;
     }
@@ -105,7 +110,6 @@ public class ResultRequest implements Serializable {
         this.resultStyle = resultStyle;
     }
 
-    @XmlElement
     public Boolean getFetchData() {
         return fetchData;
     }
@@ -126,12 +130,11 @@ public class ResultRequest implements Serializable {
         final ResultRequest that = (ResultRequest) o;
 
         if (componentId != null ? !componentId.equals(that.componentId) : that.componentId != null) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(tableSettings, that.tableSettings)) return false;
+        if (mappings != null ? !mappings.equals(that.mappings) : that.mappings != null)
+            return false;
         if (requestedRange != null ? !requestedRange.equals(that.requestedRange) : that.requestedRange != null)
             return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(openGroups, that.openGroups)) return false;
+        if (openGroups != null ? !openGroups.equals(that.openGroups) : that.openGroups != null) return false;
         if (resultStyle != that.resultStyle) return false;
         return fetchData != null ? fetchData.equals(that.fetchData) : that.fetchData == null;
     }
@@ -139,9 +142,9 @@ public class ResultRequest implements Serializable {
     @Override
     public int hashCode() {
         int result = componentId != null ? componentId.hashCode() : 0;
-        result = 31 * result + Arrays.hashCode(tableSettings);
+        result = 31 * result + (mappings != null ? mappings.hashCode() : 0);
         result = 31 * result + (requestedRange != null ? requestedRange.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(openGroups);
+        result = 31 * result + (openGroups != null ? openGroups.hashCode() : 0);
         result = 31 * result + (resultStyle != null ? resultStyle.hashCode() : 0);
         result = 31 * result + (fetchData != null ? fetchData.hashCode() : 0);
         return result;
@@ -151,15 +154,15 @@ public class ResultRequest implements Serializable {
     public String toString() {
         return "ResultRequest{" +
                 "componentId='" + componentId + '\'' +
-                ", tableSettings=" + Arrays.toString(tableSettings) +
+                ", mappings=" + mappings +
                 ", requestedRange=" + requestedRange +
-                ", openGroups=" + Arrays.toString(openGroups) +
+                ", openGroups=" + openGroups +
                 ", resultStyle=" + resultStyle +
                 ", fetchData=" + fetchData +
                 '}';
     }
 
     public enum ResultStyle {
-        FLAT, TREE
+        FLAT, TABLE
     }
 }

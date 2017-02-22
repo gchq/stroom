@@ -38,7 +38,9 @@ import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -108,16 +110,16 @@ public class LuceneSearchStoreFactory {
         return searchResultCollector;
     }
 
-    private Integer[] getDefaultTrimSizes() {
+    private List<Integer> getDefaultTrimSizes() {
         try {
             final String value = StroomProperties.getProperty(ClientProperties.MAX_RESULTS);
             if (value != null) {
                 final String[] parts = value.split(",");
-                final Integer[] arr = new Integer[parts.length];
-                for (int i = 0; i < arr.length; i++) {
-                    arr[i] = Integer.valueOf(parts[i].trim());
+                final List<Integer> list = new ArrayList<>(parts.length);
+                for (int i = 0; i < parts.length; i++) {
+                    list.add(Integer.valueOf(parts[i].trim()));
                 }
-                return arr;
+                return list;
             }
         } catch (final Exception e) {
             LOGGER.warn(e.getMessage());

@@ -16,30 +16,36 @@
 
 package stroom.query.api;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import java.util.Arrays;
+import java.util.List;
 
 @JsonPropertyOrder({"componentId", "structure", "values", "size", "error"})
-public class VisResult extends Result {
+@XmlAccessorType(XmlAccessType.FIELD)
+public final class FlatResult extends Result {
     private static final long serialVersionUID = 3826654996795750099L;
 
-    private Field[] structure;
-    private Object[][] values;
+    @XmlElement
+    private List<Field> structure;
+    @XmlElement
+    private List<List<Object>> values;
+    @XmlElement
     private Long size;
+    @XmlElement
     private String error;
 
-    public VisResult() {
+    public FlatResult() {
     }
 
-    public VisResult(final String error) {
+    public FlatResult(final String error) {
         this.size = 0L;
         this.error = error;
     }
 
-    public VisResult(final String componentId, final Field[] structure, final Object[][] values, final Long size, final String error) {
+    public FlatResult(final String componentId, final List<Field> structure, final List<List<Object>> values, final Long size, final String error) {
         super(componentId);
         this.structure = structure;
         this.values = values;
@@ -47,25 +53,22 @@ public class VisResult extends Result {
         this.error = error;
     }
 
-    @JsonProperty
-    public Field[] getStructure() {
+    public List<Field> getStructure() {
         return structure;
     }
 
-    public void setStructure(final Field[] structure) {
+    public void setStructure(final List<Field> structure) {
         this.structure = structure;
     }
 
-    @JsonProperty
-    public Object[][] getValues() {
+    public List<List<Object>> getValues() {
         return values;
     }
 
-    public void setValues(final Object[][] values) {
+    public void setValues(final List<List<Object>> values) {
         this.values = values;
     }
 
-    @XmlElement
     public Long getSize() {
         return size;
     }
@@ -74,7 +77,6 @@ public class VisResult extends Result {
         this.size = size;
     }
 
-    @XmlElement
     public String getError() {
         return error;
     }
@@ -89,20 +91,19 @@ public class VisResult extends Result {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
 
-        final VisResult visResult = (VisResult) o;
+        final FlatResult that = (FlatResult) o;
 
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(structure, visResult.structure)) return false;
-        if (!Arrays.deepEquals(values, visResult.values)) return false;
-        if (size != null ? !size.equals(visResult.size) : visResult.size != null) return false;
-        return error != null ? error.equals(visResult.error) : visResult.error == null;
+        if (structure != null ? !structure.equals(that.structure) : that.structure != null) return false;
+        if (values != null ? !values.equals(that.values) : that.values != null) return false;
+        if (size != null ? !size.equals(that.size) : that.size != null) return false;
+        return error != null ? error.equals(that.error) : that.error == null;
     }
 
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + Arrays.hashCode(structure);
-        result = 31 * result + Arrays.deepHashCode(values);
+        result = 31 * result + (structure != null ? structure.hashCode() : 0);
+        result = 31 * result + (values != null ? values.hashCode() : 0);
         result = 31 * result + (size != null ? size.hashCode() : 0);
         result = 31 * result + (error != null ? error.hashCode() : 0);
         return result;

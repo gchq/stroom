@@ -19,17 +19,26 @@ package stroom.query.api;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.HasDisplayValue;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Arrays;
+import java.util.List;
 
 @JsonPropertyOrder({"field", "condition", "value", "dictionary"})
 @XmlType(name = "ExpressionTerm", propOrder = {"field", "condition", "value", "dictionary"})
-public class ExpressionTerm extends ExpressionItem {
+@XmlAccessorType(XmlAccessType.FIELD)
+public final class ExpressionTerm extends ExpressionItem {
     private static final long serialVersionUID = 9035311895540457146L;
 
+    @XmlElement
     private String field;
+    @XmlElement
     private Condition condition;
+    @XmlElement
     private String value;
+    @XmlElement
     private DocRef dictionary;
 
     public ExpressionTerm() {
@@ -51,7 +60,7 @@ public class ExpressionTerm extends ExpressionItem {
         this.dictionary = dictionary;
     }
 
-    @XmlElement
+
     public String getField() {
         return field;
     }
@@ -60,7 +69,6 @@ public class ExpressionTerm extends ExpressionItem {
         this.field = field;
     }
 
-    @XmlElement
     public Condition getCondition() {
         return condition;
     }
@@ -69,7 +77,6 @@ public class ExpressionTerm extends ExpressionItem {
         this.condition = condition;
     }
 
-    @XmlElement
     public String getValue() {
         return value;
     }
@@ -78,7 +85,6 @@ public class ExpressionTerm extends ExpressionItem {
         this.value = value;
     }
 
-    @XmlElement
     public DocRef getDictionary() {
         return dictionary;
     }
@@ -86,20 +92,6 @@ public class ExpressionTerm extends ExpressionItem {
     public void setDictionary(final DocRef dictionary) {
         this.dictionary = dictionary;
     }
-
-//    private <T extends ExpressionTerm> T copyTo(T dest) {
-//        dest = super.copyTo(dest);
-//        ((ExpressionTerm) dest).condition = condition;
-//        ((ExpressionTerm) dest).field = field;
-//        ((ExpressionTerm) dest).value = value;
-//        ((ExpressionTerm) dest).dictionary = dictionary;
-//        return dest;
-//    }
-//
-//    @Override
-//    public ExpressionTerm copy() {
-//        return copyTo(new ExpressionTerm());
-//    }
 
     @Override
     public boolean equals(final Object o) {
@@ -148,8 +140,8 @@ public class ExpressionTerm extends ExpressionItem {
         CONTAINS("contains"), EQUALS("="), GREATER_THAN(">"), GREATER_THAN_OR_EQUAL_TO(">="), LESS_THAN(
                 "<"), LESS_THAN_OR_EQUAL_TO("<="), BETWEEN("between"), IN("in"), IN_DICTIONARY("in dictionary");
 
-        public static final Condition[] SIMPLE_CONDITIONS = {EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL_TO, LESS_THAN,
-                LESS_THAN_OR_EQUAL_TO, BETWEEN};
+        public static final List<Condition> SIMPLE_CONDITIONS = Arrays.asList(EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL_TO, LESS_THAN,
+                LESS_THAN_OR_EQUAL_TO, BETWEEN);
         public static final String IN_CONDITION_DELIMITER = ",";
         private final String displayValue;
 

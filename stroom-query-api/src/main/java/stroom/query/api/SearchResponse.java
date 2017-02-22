@@ -18,63 +18,71 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.List;
 
 @JsonPropertyOrder({"highlights", "errors", "complete", "results"})
 @XmlRootElement(name = "searchResponse")
 @XmlType(name = "SearchResponse", propOrder = {"highlights", "errors", "complete", "results"})
-public class SearchResponse implements Serializable {
+@XmlAccessorType(XmlAccessType.FIELD)
+public final class SearchResponse implements Serializable {
     private static final long serialVersionUID = -2964122512841756795L;
 
     /**
      * A set of strings to highlight in the UI that should correlate with the
      * search query.
      */
-    private String[] highlights;
+    @XmlElementWrapper(name = "highlights")
+    @XmlElement(name = "highlight")
+    private List<String> highlights;
 
     /**
      * Any errors that have been generated during searching.
      */
-    private String[] errors;
+    @XmlElementWrapper(name = "errors")
+    @XmlElement(name = "error")
+    private List<String> errors;
 
     /**
      * Complete means that all index shards have been searched across the
      * cluster and there are no more results to come.
      **/
+    @XmlElement
     private Boolean complete;
 
-    private Result[] results;
+    @XmlElementWrapper(name = "results")
+    @XmlElements({
+            @XmlElement(name = "table", type = TableResult.class),
+            @XmlElement(name = "vis", type = FlatResult.class)
+    })
+    private List<Result> results;
 
     public SearchResponse() {
     }
 
-    @XmlElementWrapper(name = "highlights")
-    @XmlElement(name = "highlight")
-    public String[] getHighlights() {
+    public List<String> getHighlights() {
         return highlights;
     }
 
-    public void setHighlights(final String[] highlights) {
+    public void setHighlights(final List<String> highlights) {
         this.highlights = highlights;
     }
 
-    @XmlElementWrapper(name = "errors")
-    @XmlElement(name = "error")
-    public String[] getErrors() {
+    public List<String> getErrors() {
         return errors;
     }
 
-    public void setErrors(final String[] errors) {
+    public void setErrors(final List<String> errors) {
         this.errors = errors;
     }
 
-    @XmlElement
     public Boolean getComplete() {
         return complete;
     }
@@ -87,26 +95,13 @@ public class SearchResponse implements Serializable {
         return complete != null && complete;
     }
 
-    @XmlElementWrapper(name = "results")
-    @XmlElements({
-            @XmlElement(name = "table", type = TableResult.class),
-            @XmlElement(name = "vis", type = VisResult.class)
-    })
-    public Result[] getResults() {
+    public List<Result> getResults() {
         return results;
     }
 
-    public void setResults(final Result[] results) {
+    public void setResults(final List<Result> results) {
         this.results = results;
     }
-
-//    public void addResult(final ComponentResult result) {
-//        if (results == null) {
-//            results = new ArrayList<>();
-//        }
-//        results.add(result);
-//    }
-
 
     @Override
     public boolean equals(final Object o) {
@@ -115,31 +110,28 @@ public class SearchResponse implements Serializable {
 
         final SearchResponse that = (SearchResponse) o;
 
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(highlights, that.highlights)) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(errors, that.errors)) return false;
+        if (highlights != null ? !highlights.equals(that.highlights) : that.highlights != null) return false;
+        if (errors != null ? !errors.equals(that.errors) : that.errors != null) return false;
         if (complete != null ? !complete.equals(that.complete) : that.complete != null) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(results, that.results);
+        return results != null ? results.equals(that.results) : that.results == null;
     }
 
     @Override
     public int hashCode() {
-        int result = Arrays.hashCode(highlights);
-        result = 31 * result + Arrays.hashCode(errors);
+        int result = highlights != null ? highlights.hashCode() : 0;
+        result = 31 * result + (errors != null ? errors.hashCode() : 0);
         result = 31 * result + (complete != null ? complete.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(results);
+        result = 31 * result + (results != null ? results.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
         return "SearchResponse{" +
-                "highlights=" + Arrays.toString(highlights) +
-                ", errors=" + Arrays.toString(errors) +
+                "highlights=" + highlights +
+                ", errors=" + errors +
                 ", complete=" + complete +
-                ", results=" + Arrays.toString(results) +
+                ", results=" + results +
                 '}';
     }
 }

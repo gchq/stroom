@@ -164,7 +164,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     @Override
-    public String[] getErrors() {
+    public List<String> getErrors() {
         if (errors == null || errors.size() == 0) {
             return null;
         }
@@ -183,15 +183,15 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
             }
         }
 
-        return err.toArray(new String[err.size()]);
+        return err;
     }
 
     @Override
-    public String[] getHighlights() {
+    public List<String> getHighlights() {
         if (highlights == null || highlights.size() == 0) {
             return null;
         }
-        return highlights.toArray(new String[highlights.size()]);
+        return new ArrayList<>(highlights);
     }
 
     @Override

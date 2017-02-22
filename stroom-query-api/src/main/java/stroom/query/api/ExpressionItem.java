@@ -19,6 +19,8 @@ package stroom.query.api;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
@@ -35,9 +37,11 @@ import java.io.Serializable;
 })
 @XmlType(name = "ExpressionItem", propOrder = {"enabled"})
 @XmlSeeAlso({ExpressionOperator.class, ExpressionTerm.class})
+@XmlAccessorType(XmlAccessType.FIELD)
 public abstract class ExpressionItem implements Serializable {
     private static final long serialVersionUID = -8483817637655853635L;
 
+    @XmlElement
     private Boolean enabled;
 
     public ExpressionItem() {
@@ -47,7 +51,6 @@ public abstract class ExpressionItem implements Serializable {
         this.enabled = enabled;
     }
 
-    @XmlElement
     public Boolean getEnabled() {
         return enabled;
     }
@@ -59,13 +62,6 @@ public abstract class ExpressionItem implements Serializable {
     public boolean enabled() {
         return enabled == null || enabled;
     }
-
-//    public abstract ExpressionItem copy();
-//
-//    <T extends ExpressionItem> T copyTo(T dest) {
-//        ((ExpressionItem) dest).enabled = enabled;
-//        return dest;
-//    }
 
     @Override
     public boolean equals(final Object o) {

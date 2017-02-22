@@ -33,10 +33,11 @@ import stroom.query.format.FormatterFactory;
 import stroom.util.shared.HasTerminate;
 import stroom.util.shared.ParamUtil;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 public class TestTablePayloadHandler {
-    private final TrimSettings trimSettings = new TrimSettings(new Integer[]{50}, new Integer[]{50});
+    private final TrimSettings trimSettings = new TrimSettings(Collections.singletonList(50), Collections.singletonList(50));
 
     @Test
     public void basicTest() {
@@ -53,7 +54,7 @@ public class TestTablePayloadHandler {
         field.setFormat(new Format(Format.Type.TEXT));
 
         final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(new Field[]{field});
+        tableSettings.setFields(Collections.singletonList(field));
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
@@ -99,7 +100,7 @@ public class TestTablePayloadHandler {
         field.setSort(sort);
 
         final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(new Field[]{field});
+        tableSettings.setFields(Collections.singletonList(field));
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
@@ -141,7 +142,7 @@ public class TestTablePayloadHandler {
         field.setSort(sort);
 
         final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(new Field[]{field});
+        tableSettings.setFields(Collections.singletonList(field));
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
@@ -187,7 +188,7 @@ public class TestTablePayloadHandler {
         field.setGroup(0);
 
         final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(new Field[]{field});
+        tableSettings.setFields(Collections.singletonList(field));
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
@@ -233,7 +234,7 @@ public class TestTablePayloadHandler {
         field.setSort(sort);
 
         final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(new Field[]{field, count});
+        tableSettings.setFields(Arrays.asList(field, count));
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
@@ -279,7 +280,7 @@ public class TestTablePayloadHandler {
         field.setGroup(1);
 
         final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(new Field[]{field, count});
+        tableSettings.setFields(Arrays.asList(field, count));
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
@@ -320,7 +321,7 @@ public class TestTablePayloadHandler {
 
         Object lastValue = null;
         for (final Row result : searchResult.getRows()) {
-            final String value = result.getValues()[sortCol];
+            final String value = result.getValues().get(sortCol);
 
             if (lastValue != null) {
                 if (lastValue instanceof Comparable) {

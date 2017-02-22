@@ -93,16 +93,15 @@ public final class ExpressionBuilder {
             return new ExpressionOperator(enabled, op, null);
         }
 
-        int i = 0;
-        final ExpressionItem[] arr = new ExpressionItem[children.size()];
+        final List<ExpressionItem> list = new ArrayList<>(children.size());
         for (final Object object : children) {
             if (object instanceof ExpressionBuilder) {
-                arr[i++] = ((ExpressionBuilder) object).build();
+                list.add(((ExpressionBuilder) object).build());
             } else if (object instanceof ExpressionTerm) {
-                arr[i++] = (ExpressionTerm) object;
+                list.add((ExpressionTerm) object);
             }
         }
 
-        return new ExpressionOperator(enabled, op, arr);
+        return new ExpressionOperator(enabled, op, list);
     }
 }

@@ -45,7 +45,6 @@ import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.query.api.ExpressionBuilder;
-import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
@@ -258,7 +257,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         // Verify all entity references have been restored.
         Assert.assertEquals(DocRefUtil.create(loadedIndex), loadedQueryData.getDataSource());
         Assert.assertEquals(DocRefUtil.create(loadedDictionary),
-                ((ExpressionTerm) loadedQueryData.getExpression().getChildren()[1]).getDictionary());
+                ((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDictionary());
         Assert.assertEquals(DocRefUtil.create(loadedPipeline), loadedTableSettings.getExtractionPipeline());
 
         if (!skipVisExport || skipVisCreation) {

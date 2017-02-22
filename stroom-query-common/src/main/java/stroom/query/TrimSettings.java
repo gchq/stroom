@@ -16,11 +16,13 @@
 
 package stroom.query;
 
+import java.util.List;
+
 public class TrimSettings {
     private final Integer[] trimSizes;
     private final int defaultSize;
 
-    public TrimSettings(final Integer[] storeTrimSizes, final Integer[] defaultStoreTrimSizes) {
+    public TrimSettings(final List<Integer> storeTrimSizes, final List<Integer> defaultStoreTrimSizes) {
         trimSizes = getStoreTrimSizes(storeTrimSizes, defaultStoreTrimSizes);
 
         if (trimSizes.length > 0) {
@@ -30,24 +32,24 @@ public class TrimSettings {
         }
     }
 
-    private Integer[] getStoreTrimSizes(final Integer[] storeTrimSizes, final Integer[] defaultStoreTrimSizes) {
+    private Integer[] getStoreTrimSizes(final List<Integer> storeTrimSizes, final List<Integer> defaultStoreTrimSizes) {
         int size = 0;
         if (storeTrimSizes != null) {
-            size = storeTrimSizes.length;
+            size = storeTrimSizes.size();
         }
-        if (defaultStoreTrimSizes != null && defaultStoreTrimSizes.length > size) {
-            size = defaultStoreTrimSizes.length;
+        if (defaultStoreTrimSizes != null && defaultStoreTrimSizes.size() > size) {
+            size = defaultStoreTrimSizes.size();
         }
 
         final Integer[] array = new Integer[size];
         for (int i = 0; i < size; i++) {
-            if (defaultStoreTrimSizes != null && i < defaultStoreTrimSizes.length) {
-                array[i] = defaultStoreTrimSizes[i];
+            if (defaultStoreTrimSizes != null && i < defaultStoreTrimSizes.size()) {
+                array[i] = defaultStoreTrimSizes.get(i);
             }
 
-            if (storeTrimSizes != null && i < storeTrimSizes.length) {
-                if (array[i] == null || (storeTrimSizes[i] != null && array[i] < storeTrimSizes[i])) {
-                    array[i] = storeTrimSizes[i];
+            if (storeTrimSizes != null && i < storeTrimSizes.size()) {
+                if (array[i] == null || (storeTrimSizes.get(i) != null && array[i] < storeTrimSizes.get(i))) {
+                    array[i] = storeTrimSizes.get(i);
                 }
             }
 

@@ -18,31 +18,38 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.List;
 
 @JsonPropertyOrder({"groupKey", "values", "depth"})
 @XmlType(name = "Row", propOrder = {"groupKey", "values", "depth"})
-public class Row implements Serializable {
+@XmlAccessorType(XmlAccessType.FIELD)
+public final class Row implements Serializable {
     private static final long serialVersionUID = 4379892306375080112L;
 
+    @XmlElement
     private String groupKey;
-    private String[] values;
+    @XmlElementWrapper(name = "values")
+    @XmlElement(name = "value")
+    private List<String> values;
+    @XmlElement
     private Integer depth;
 
     public Row() {
     }
 
-    public Row(final String groupKey, final String[] values, final Integer depth) {
+    public Row(final String groupKey, final List<String> values, final Integer depth) {
         this.groupKey = groupKey;
         this.values = values;
         this.depth = depth;
     }
 
-    @XmlElement
+
     public String getGroupKey() {
         return groupKey;
     }
@@ -51,17 +58,14 @@ public class Row implements Serializable {
         this.groupKey = groupKey;
     }
 
-    @XmlElementWrapper(name = "values")
-    @XmlElement(name = "value")
-    public String[] getValues() {
+    public List<String> getValues() {
         return values;
     }
 
-    public void setValues(final String[] values) {
+    public void setValues(final List<String> values) {
         this.values = values;
     }
 
-    @XmlElement
     public Integer getDepth() {
         return depth;
     }
@@ -78,15 +82,14 @@ public class Row implements Serializable {
         final Row row = (Row) o;
 
         if (groupKey != null ? !groupKey.equals(row.groupKey) : row.groupKey != null) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(values, row.values)) return false;
+        if (values != null ? !values.equals(row.values) : row.values != null) return false;
         return depth != null ? depth.equals(row.depth) : row.depth == null;
     }
 
     @Override
     public int hashCode() {
         int result = groupKey != null ? groupKey.hashCode() : 0;
-        result = 31 * result + Arrays.hashCode(values);
+        result = 31 * result + (values != null ? values.hashCode() : 0);
         result = 31 * result + (depth != null ? depth.hashCode() : 0);
         return result;
     }
@@ -95,7 +98,7 @@ public class Row implements Serializable {
     public String toString() {
         return "Row{" +
                 "groupKey='" + groupKey + '\'' +
-                ", values=" + Arrays.toString(values) +
+                ", values=" + values +
                 ", depth=" + depth +
                 '}';
     }

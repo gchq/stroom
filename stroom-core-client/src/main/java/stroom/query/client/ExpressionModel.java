@@ -45,7 +45,7 @@ public class ExpressionModel {
     private void addChildrenToTree(final DefaultTreeForTreeLayout<ExpressionItem> tree,
                                    final ExpressionOperator parent) {
         if (parent != null) {
-            final ExpressionItem[] children = parent.getChildren();
+            final List<ExpressionItem> children = parent.getChildren();
             if (children != null) {
                 for (final ExpressionItem child : children) {
                     tree.addChild(parent, child);

@@ -37,7 +37,9 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -193,12 +195,11 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
         try {
             // Add this search to the history so the user can get back to
             // this search again.
-            Param[] params;
+            List<Param> params;
             if (search.getParamMap() != null && search.getParamMap().size() > 0) {
-                params = new Param[search.getParamMap().size()];
-                int i = 0;
+                params = new ArrayList<>(search.getParamMap().size());
                 for (final Entry<String, String> entry : search.getParamMap().entrySet()) {
-                    params[i++] = new Param(entry.getKey(), entry.getValue());
+                    params.add(new Param(entry.getKey(), entry.getValue()));
                 }
             } else {
                 params = null;

@@ -20,81 +20,76 @@ import stroom.dashboard.expression.FieldIndexMap;
 import stroom.dashboard.expression.Generator;
 import stroom.dashboard.expression.TypeConverter;
 import stroom.query.api.Field;
+import stroom.query.api.FlatResult;
 import stroom.query.api.Format.Type;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.TableSettings;
-import stroom.query.api.VisResult;
 import stroom.query.format.FieldFormatter;
 import stroom.util.shared.HasTerminate;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class VisResultCreator implements ResultCreator, HasTerminate {
+public class FlatResultCreator implements ResultCreator, HasTerminate {
     private final FieldFormatter fieldFormatter;
-    private final Mapper[] mappers;
-    private final Field[] fields;
-//    private final Field[] valueFields;
+    private final List<Mapper> mappers;
+    private final List<Field> fields;
 
     private String error;
 
-    public VisResultCreator(final ResultRequest resultRequest, final Map<String, String> paramMap, final FieldFormatter fieldFormatter) {
+    public FlatResultCreator(final ResultRequest resultRequest, final Map<String, String> paramMap, final FieldFormatter fieldFormatter) {
         this.fieldFormatter = fieldFormatter;
 
-        final TableSettings[] tableSettings = resultRequest.getTableSettings();
+        final List<TableSettings> tableSettings = resultRequest.getMappings();
 
-        if (tableSettings.length > 1) {
-            mappers = new Mapper[tableSettings.length - 1];
-            for (int i = 0; i < tableSettings.length - 1; i++) {
-                final TableSettings parent = tableSettings[i];
-                final TableSettings child = tableSettings[i + 1];
-                mappers[i] = new Mapper(parent, child, paramMap);
+        if (tableSettings.size() > 1) {
+            mappers = new ArrayList<>(tableSettings.size() - 1);
+            for (int i = 0; i < tableSettings.size() - 1; i++) {
+                final TableSettings parent = tableSettings.get(i);
+                final TableSettings child = tableSettings.get(i + 1);
+                mappers.add(new Mapper(parent, child, paramMap));
             }
         } else {
-            mappers = new Mapper[0];
+            mappers = Collections.emptyList();
         }
 
-        final TableSettings child = tableSettings[tableSettings.length - 1];
-        fields = child.getFields();
+        final TableSettings child = tableSettings.get(tableSettings.size() - 1);
 
-//        tfields = Structure = createFieldStructure(fields);
-//
-//        // Get detail/value fields.
-//        valueFields = fieldStructure[fieldStructure.length - 1];
+        fields = child.getFields();
     }
 
-    private Object[] toNodeKey(final Field[] fields, final Key key) {
+    private List<Object> toNodeKey(final List<Field> fields, final Key key) {
         if (key == null) {
             return null;
         }
 
-        final List<Object[]> list = new ArrayList<>();
+        final List<List<Object>> list = new ArrayList<>();
         Key k = key;
         int size = 0;
         while (k != null && k.getValues() != null) {
             list.add(0, k.getValues());
-            size += k.getValues().length;
+            size += k.getValues().size();
             k = k.getParent();
         }
 
-        final Object[] result = new Object[size];
-        int index = 0;
+        final List<Object> result = new ArrayList<>(size);
         int i = 0;
-        for (final Object[] values : list) {
-            final Field field = fields[i++];
-            if (values.length == 1) {
-                result[index++] = convert(field, values[0]);
+        for (final List<Object> values : list) {
+            if (values.size() == 1) {
+                final Field field = fields.get(i);
+                result.add(convert(field, values.get(0)));
             } else {
                 for (final Object obj : values) {
-                    result[index++] = obj;
+                    result.add(obj);
                 }
             }
+            i++;
         }
 
         return result;
@@ -157,7 +152,7 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
                 // Get top level items.
                 final Items<Item> items = mappedData.getChildMap().get(null);
 
-                final List<Object[]> results = new ArrayList<>();
+                final List<List<Object>> results = new ArrayList<>();
 
                 if (items != null) {
                     final RangeChecker rangeChecker = RangeCheckerFactory.create(resultRequest.getRequestedRange());
@@ -166,42 +161,57 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
                             0);
                 }
 
-                final Object[][] values = results.toArray(new Object[results.size()][]);
+                final List<List<Object>> values = results;
 
-                return new VisResult(resultRequest.getComponentId(), fields, values, totalResults, error);
+                Field parentKey = new Field(":ParentKey");
+                Field key = new Field(":Key");
+                Field depth = new Field(":Depth");
+
+                final List<Field> fields = new ArrayList<>(this.fields.size() + 3);
+                fields.add(parentKey);
+                fields.add(key);
+                fields.add(depth);
+                for (final Field field : this.fields) {
+                    fields.add(field);
+                }
+
+                return new FlatResult(resultRequest.getComponentId(), fields, values, totalResults, error);
 
             } catch (final Exception e) {
                 error = e.getMessage();
             }
         }
 
-        return new VisResult(error);
+        return new FlatResult(error);
     }
 
     private int addResults(final Data data, final RangeChecker rangeChecker,
-                           final OpenGroups openGroups, final Items<Item> items, final List<Object[]> results,
+                           final OpenGroups openGroups, final Items<Item> items, final List<List<Object>> results,
                            final int depth, final int parentCount) {
         int count = parentCount;
 
         for (final Item item : items) {
             if (rangeChecker.check(count)) {
-                // TODO : Add hidden fields for parent key, key and depth.
-                final Object[] values = new Object[fields.length + 3];
+                final List<Object> values = new ArrayList<>(fields.size() + 3);
 
                 if (item.getKey() != null) {
-                    values[0] = toNodeKey(fields, item.getKey().getParent());
-                    values[1] = toNodeKey(fields, item.getKey());
+                    values.add(toNodeKey(fields, item.getKey().getParent()));
+                    values.add(toNodeKey(fields, item.getKey()));
+                } else {
+                    values.add(null);
+                    values.add(null);
                 }
-                values[2] = depth;
+                values.add(depth);
 
                 // Convert all list into fully resolved objects evaluating
                 // functions where necessary.
-                for (int i = 0; i < fields.length; i++) {
+                int i = 0;
+                for (final Field field : fields) {
                     final Object o = item.getValues()[i];
+                    Object val = o;
                     if (o != null) {
                         // Convert all list into fully resolved
                         // objects evaluating functions where necessary.
-                        Object val = o;
                         if (o instanceof Generator) {
                             final Generator generator = (Generator) o;
                             val = generator.eval();
@@ -209,22 +219,22 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
 
                         if (val != null) {
                             if (fieldFormatter != null) {
-                                final Field field = fields[i];
                                 val = fieldFormatter.format(field, val);
                             } else {
-                                final Field field = fields[i];
                                 val = convert(field, val);
                             }
-                            values[i + 3] = val;
                         }
                     }
+
+                    values.add(val);
+                    i++;
                 }
 
                 // Add the values.
                 results.add(values);
 
                 // Add child results if a node is open.
-                if (openGroups.isOpen(item.getKey())) {
+                if (item.getKey() != null && openGroups.isOpen(item.getKey())) {
                     final Items<Item> childItems = data.getChildMap().get(item.getKey());
                     if (childItems != null) {
                         count = addResults(data, rangeChecker, openGroups,
@@ -240,7 +250,7 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
         return count;
     }
 
-    // TODO : Replace this with conversion a the item level.
+    // TODO : Replace this with conversion at the item level.
     private Object convert(final Field field, final Object val) {
         if (field != null && field.getFormat() != null && field.getFormat().getType() != null) {
             final Type type = field.getFormat().getType();
@@ -300,7 +310,7 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
         private final TablePayloadHandler tablePayloadHandler;
 
         public Mapper(final TableSettings parent, final TableSettings child, final Map<String, String> paramMap) {
-            parentFields = new String[parent.getFields().length];
+            parentFields = new String[parent.getFields().size()];
             int i = 0;
             for (final Field field : parent.getFields()) {
                 parentFields[i++] = field.getName();
@@ -311,7 +321,7 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
             final TableCoprocessorSettings tableCoprocessorSettings = new TableCoprocessorSettings(child);
             tableCoprocessor = new TableCoprocessor(tableCoprocessorSettings, fieldIndexMap, this, paramMap);
 
-            final TrimSettings trimSettings = new TrimSettings(child.getMaxResults(), new Integer[]{Integer.MAX_VALUE});
+            final TrimSettings trimSettings = new TrimSettings(child.getMaxResults(), Collections.singletonList(Integer.MAX_VALUE));
             tablePayloadHandler = new TablePayloadHandler(child.getFields(), true, trimSettings);
         }
 
@@ -373,12 +383,12 @@ public class VisResultCreator implements ResultCreator, HasTerminate {
     }
 
     private static class OpenGroupsFactory {
-        public static OpenGroups create(final String[] openGroups) {
-            if (openGroups == null || openGroups.length == 0) {
+        public static OpenGroups create(final List<String> openGroups) {
+            if (openGroups == null || openGroups.size() == 0) {
                 return group -> true;
             }
 
-            final Set<String> set = new HashSet<>(Arrays.asList(openGroups));
+            final Set<String> set = new HashSet<>(openGroups);
             return key -> key != null && set.contains(key.toString());
         }
     }

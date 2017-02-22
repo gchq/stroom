@@ -22,6 +22,7 @@ import stroom.query.api.TableSettings;
 import stroom.util.shared.HasTerminate;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -31,7 +32,7 @@ public class SearchResultHandler implements ResultHandler {
     private final Map<CoprocessorKey, TablePayloadHandler> handlerMap = new HashMap<>();
     private final AtomicBoolean complete = new AtomicBoolean();
 
-    public SearchResultHandler(final CoprocessorSettingsMap coprocessorSettingsMap, final Integer[] defaultStoreTrimSizes) {
+    public SearchResultHandler(final CoprocessorSettingsMap coprocessorSettingsMap, final List<Integer> defaultStoreTrimSizes) {
         this.coprocessorSettingsMap = coprocessorSettingsMap;
 
         for (final Entry<CoprocessorKey, CoprocessorSettings> entry : coprocessorSettingsMap.getMap().entrySet()) {

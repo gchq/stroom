@@ -18,16 +18,21 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"offset", "length"})
 @XmlType(name = "OffsetRange", propOrder = {"offset", "length"})
-public class OffsetRange implements Serializable {
+@XmlAccessorType(XmlAccessType.FIELD)
+public final class OffsetRange implements Serializable {
     private static final long serialVersionUID = 5045453517852867315L;
 
+    @XmlElement
     private Long offset;
+    @XmlElement
     private Long length;
 
     public OffsetRange() {
@@ -43,7 +48,6 @@ public class OffsetRange implements Serializable {
         this.length = length;
     }
 
-    @XmlElement
     public Long getOffset() {
         return offset;
     }
@@ -52,7 +56,6 @@ public class OffsetRange implements Serializable {
         this.offset = offset;
     }
 
-    @XmlElement
     public Long getLength() {
         return length;
     }

@@ -14,36 +14,35 @@
  * limitations under the License.
  */
 
-package stroom.query.api;
+package stroom.dashboard.server;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.Arrays;
 
-@JsonPropertyOrder({"fields"})
-@XmlType(name = "Fields", propOrder = {"fields"})
-public class Fields implements Serializable {
-    private static final long serialVersionUID = 3826654996795750099L;
+@JsonPropertyOrder({"size"})
+@XmlType(name = "VisLimit", propOrder = {"size"})
+public class VisLimit implements Serializable {
+    private static final long serialVersionUID = 1272545271946712570L;
 
-    private Field[] fields;
+    private Integer size;
 
-    public Fields() {
+    public VisLimit() {
     }
 
-    public Fields(final Field[] fields) {
-        this.fields = fields;
+    public VisLimit(final Integer size) {
+        this.size = size;
     }
 
-    @XmlElement(name = "field")
-    public Field[] getFields() {
-        return fields;
+    @XmlElement
+    public Integer getSize() {
+        return size;
     }
 
-    public void setFields(final Field[] fields) {
-        this.fields = fields;
+    public void setSize(final Integer size) {
+        this.size = size;
     }
 
     @Override
@@ -51,14 +50,20 @@ public class Fields implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final Fields fields1 = (Fields) o;
+        final VisLimit visLimit = (VisLimit) o;
 
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(fields, fields1.fields);
+        return size != null ? size.equals(visLimit.size) : visLimit.size == null;
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(fields);
+        return size != null ? size.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return "VisLimit{" +
+                "size=" + size +
+                '}';
     }
 }

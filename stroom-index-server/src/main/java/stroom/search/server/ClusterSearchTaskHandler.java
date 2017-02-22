@@ -222,12 +222,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                                     filterStreams = true;
                                 }
 
-                                Set<Coprocessor> extractionCoprocessors = extractionCoprocessorsMap.get(pipelineRef);
-                                if (extractionCoprocessors == null) {
-                                    extractionCoprocessors = new HashSet<>();
-                                    extractionCoprocessorsMap.put(pipelineRef, extractionCoprocessors);
-                                }
-                                extractionCoprocessors.add(coprocessor);
+                                extractionCoprocessorsMap.computeIfAbsent(pipelineRef, k -> new HashSet<>()).add(coprocessor);
                             }
                         }
                     }

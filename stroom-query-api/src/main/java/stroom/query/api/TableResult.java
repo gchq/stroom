@@ -18,19 +18,27 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Arrays;
+import java.util.List;
 
 @JsonPropertyOrder({"componentId", "rows", "resultRange", "totalResults", "error"})
 @XmlType(name = "TableResult", propOrder = {"rows", "resultRange", "totalResults", "error"})
-public class TableResult extends Result {
+@XmlAccessorType(XmlAccessType.FIELD)
+public final class TableResult extends Result {
     private static final long serialVersionUID = -2964122512841756795L;
 
-    private Row[] rows;
+    @XmlElementWrapper(name = "rows")
+    @XmlElement(name = "row")
+    private List<Row> rows;
+    @XmlElement
     private OffsetRange resultRange;
+    @XmlElement
     private Integer totalResults;
+    @XmlElement
     private String error;
 
     public TableResult() {
@@ -40,17 +48,14 @@ public class TableResult extends Result {
         super(componentId);
     }
 
-    @XmlElementWrapper(name = "rows")
-    @XmlElement(name = "row")
-    public Row[] getRows() {
+    public List<Row> getRows() {
         return rows;
     }
 
-    public void setRows(final Row[] rows) {
+    public void setRows(final List<Row> rows) {
         this.rows = rows;
     }
 
-    @XmlElement
     public OffsetRange getResultRange() {
         return resultRange;
     }
@@ -59,7 +64,6 @@ public class TableResult extends Result {
         this.resultRange = resultRange;
     }
 
-    @XmlElement
     public Integer getTotalResults() {
         return totalResults;
     }
@@ -68,7 +72,6 @@ public class TableResult extends Result {
         this.totalResults = totalResults;
     }
 
-    @XmlElement
     public String getError() {
         return error;
     }
@@ -85,8 +88,7 @@ public class TableResult extends Result {
 
         final TableResult that = (TableResult) o;
 
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(rows, that.rows)) return false;
+        if (rows != null ? !rows.equals(that.rows) : that.rows != null) return false;
         if (resultRange != null ? !resultRange.equals(that.resultRange) : that.resultRange != null) return false;
         if (totalResults != null ? !totalResults.equals(that.totalResults) : that.totalResults != null) return false;
         return error != null ? error.equals(that.error) : that.error == null;
@@ -95,7 +97,7 @@ public class TableResult extends Result {
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + Arrays.hashCode(rows);
+        result = 31 * result + (rows != null ? rows.hashCode() : 0);
         result = 31 * result + (resultRange != null ? resultRange.hashCode() : 0);
         result = 31 * result + (totalResults != null ? totalResults.hashCode() : 0);
         result = 31 * result + (error != null ? error.hashCode() : 0);
@@ -108,6 +110,6 @@ public class TableResult extends Result {
             return "0 rows";
         }
 
-        return rows.length + " rows";
+        return rows.size() + " rows";
     }
 }

@@ -18,10 +18,7 @@ package stroom.statistics.common;
 
 import org.junit.Test;
 import stroom.query.api.ExpressionBuilder;
-import stroom.query.api.ExpressionItem;
-import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
-import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.statistics.common.FilterTermsTree.OperatorNode;
 import stroom.statistics.common.FilterTermsTree.TermNode;
@@ -69,19 +66,21 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
         final String term1value2 = "term1value2";
         final String term1value3 = "term1value3";
 
-        final ExpressionBuilder and = new ExpressionBuilder(Op.AND);
-        and.addTerm("term1field", Condition.IN, term1value1 + "," + term1value2 + "," + term1value3);
-        and.addTerm("term2field", Condition.EQUALS, "term2value");
-        final ExpressionBuilder or = and.addOperator(Op.OR);
-        or.addTerm("term3field", Condition.EQUALS, "term3value");
-        final ExpressionBuilder not = or.addOperator(Op.NOT);
-        not.addTerm("term4field", Condition.EQUALS, "term4value");
+        final ExpressionBuilder op1 = new ExpressionBuilder(Op.AND);
+        op1.addTerm("term1field", Condition.IN, term1value1 + "," + term1value2 + "," + term1value3);
 
-        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build());
+        final ExpressionBuilder op2 = op1.addOperator(Op.OR);
+        op2.addTerm("term2field", Condition.EQUALS, "term2value");
+        op2.addTerm("term3field", Condition.EQUALS, "term3value");
+
+        final ExpressionBuilder op3 = op2.addOperator(Op.NOT);
+        op3.addTerm("term4field", Condition.EQUALS, "term4value");
+
+        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(op1.build());
 
         final OperatorNode newOp1 = (OperatorNode) filterTermsTree.getRootNode();
 
-        assertEquals(and.build().getOp().toString(), newOp1.getFilterOperationMode().toString());
+        assertEquals(op1.build().getOp().toString(), newOp1.getFilterOperationMode().toString());
 
         final OperatorNode newTerm1OpNode = (OperatorNode) newOp1.getChildren().get(0);
         assertEquals(Op.OR.toString(), newTerm1OpNode.getFilterOperationMode().toString());
@@ -100,21 +99,21 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
 
         final OperatorNode newOp2 = (OperatorNode) newOp1.getChildren().get(1);
 
-        assertEquals(or.build().getOp().toString(), newOp2.getFilterOperationMode().toString());
+        assertEquals(op2.build().getOp().toString(), newOp2.getFilterOperationMode().toString());
 
         final TermNode newTerm2 = (TermNode) newOp2.getChildren().get(0);
         final TermNode newTerm3 = (TermNode) newOp2.getChildren().get(1);
         final OperatorNode newOp3 = (OperatorNode) newOp2.getChildren().get(2);
 
         assertEquals("term2field", newTerm2.getTag());
-        assertEquals("term2field", newTerm2.getValue());
+        assertEquals("term2value", newTerm2.getValue());
         assertEquals("term3field", newTerm3.getTag());
-        assertEquals("term3field", newTerm3.getValue());
-        assertEquals(or.build().getOp().toString(), newOp3.getFilterOperationMode().toString());
+        assertEquals("term3value", newTerm3.getValue());
+        assertEquals(op3.build().getOp().toString(), newOp3.getFilterOperationMode().toString());
 
         final TermNode newTerm4 = (TermNode) newOp3.getChildren().get(0);
         assertEquals("term4field", newTerm4.getTag());
-        assertEquals("term4field", newTerm4.getValue());
+        assertEquals("term4value", newTerm4.getValue());
     }
 
     @Test
@@ -186,6 +185,6 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
         final TermNode term2Node = (TermNode) filterTermsTree.getRootNode();
 
         assertEquals("term1field", term2Node.getTag());
-        assertEquals(null, term2Node.getValue());
+        assertEquals("", term2Node.getValue());
     }
 }

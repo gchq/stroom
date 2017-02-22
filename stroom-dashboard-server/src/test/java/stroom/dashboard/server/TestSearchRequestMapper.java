@@ -40,10 +40,8 @@ import stroom.dashboard.shared.TimeZone;
 import stroom.entity.shared.SharedDocRef;
 import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionBuilder;
-import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.query.api.QueryKey;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -58,14 +56,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class TestSearchRequestMapper {
-    @Test
-    public void testRequest() throws Exception {
-        final SearchRequestMapper mapper = new SearchRequestMapper(new MockVisualisationService());
-        final stroom.query.api.SearchRequest result = mapper.mapRequest(new DashboardQueryKey("test", 1), getSearchRequest());
-
-        test(result, stroom.query.api.SearchRequest.class, "testRequest");
-    }
-
     private static SearchRequest getSearchRequest() {
         DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
 
@@ -121,6 +111,14 @@ public class TestSearchRequestMapper {
         return dateTimeFormat;
     }
 
+    @Test
+    public void testRequest() throws Exception {
+        final SearchRequestMapper mapper = new SearchRequestMapper(new MockVisualisationService());
+        final stroom.query.api.SearchRequest result = mapper.mapRequest(new DashboardQueryKey("test", 1), getSearchRequest());
+
+        test(result, stroom.query.api.SearchRequest.class, "testRequest");
+    }
+
     private <T> void test(final T objIn, final Class<T> type, final String testName) throws IOException, JAXBException {
         testJSON(objIn, type, testName);
         testXML(objIn, type, testName);
@@ -142,13 +140,13 @@ public class TestSearchRequestMapper {
         StreamUtil.stringToFile(serialisedIn, actualFile);
 
         final String expected = StreamUtil.fileToString(expectedFile);
-        Assert.assertEquals(expected, serialisedIn);
+        assertEqualsIgnoreWhitespace(expected, serialisedIn);
 
         T objOut = mapper.readValue(serialisedIn, type);
         String serialisedOut = mapper.writeValueAsString(objOut);
         System.out.println(serialisedOut);
 
-        Assert.assertEquals(serialisedIn, serialisedOut);
+        assertEqualsIgnoreWhitespace(serialisedIn, serialisedOut);
         Assert.assertEquals(objIn, objOut);
     }
 
@@ -210,5 +208,15 @@ public class TestSearchRequestMapper {
 //        mapper.enableDefaultTyping();
 
         return mapper;
+    }
+
+    private void assertEqualsIgnoreWhitespace(final String expected, final String actual) {
+        final String str1 = removeWhitespace(expected);
+        final String str2 = removeWhitespace(actual);
+        Assert.assertEquals(str1, str2);
+    }
+
+    private String removeWhitespace(final String in) {
+        return in.replaceAll("\\s", "");
     }
 }

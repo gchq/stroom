@@ -26,15 +26,14 @@ import stroom.query.api.TableResult;
 import stroom.query.format.FieldFormatter;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class TableResultCreator implements ResultCreator {
     private final FieldFormatter fieldFormatter;
-    private volatile Field[] latestFields;
+    private volatile List<Field> latestFields;
 
     public TableResultCreator(final FieldFormatter fieldFormatter) {
         this.fieldFormatter = fieldFormatter;
@@ -57,10 +56,10 @@ public class TableResultCreator implements ResultCreator {
 
             Set<String> openGroups = Collections.emptySet();
             if (resultRequest.getOpenGroups() != null) {
-                openGroups = Arrays.stream(resultRequest.getOpenGroups()).collect(Collectors.toSet());
+                openGroups = new HashSet<>(resultRequest.getOpenGroups());
             }
 
-            latestFields = resultRequest.getTableSettings()[0].getFields();
+            latestFields = resultRequest.getMappings().get(0).getFields();
             totalResults = addTableResults(data, latestFields, offset, length, openGroups, resultList, null, 0,
                     0);
         } catch (final Exception e) {
@@ -68,7 +67,7 @@ public class TableResultCreator implements ResultCreator {
         }
 
         final TableResult tableResult = new TableResult(resultRequest.getComponentId());
-        tableResult.setRows(resultList.toArray(new Row[resultList.size()]));
+        tableResult.setRows(resultList);
         tableResult.setResultRange(new OffsetRange(offset, resultList.size()));
         tableResult.setTotalResults(totalResults);
         tableResult.setError(error);
@@ -76,7 +75,7 @@ public class TableResultCreator implements ResultCreator {
         return tableResult;
     }
 
-    private int addTableResults(final Data data, final Field[] fields, final int offset,
+    private int addTableResults(final Data data, final List<Field> fields, final int offset,
                                 final int length, final Set<String> openGroups, final List<Row> resultList, final Key parentKey,
                                 final int depth, final int position) {
         int pos = position;
@@ -87,9 +86,11 @@ public class TableResultCreator implements ResultCreator {
                 if (pos >= offset && resultList.size() < length) {
                     // Convert all list into fully resolved objects evaluating
                     // functions where necessary.
-                    final String[] values = new String[item.getValues().length];
-                    for (int i = 0; i < fields.length; i++) {
-                        final Field field = fields[i];
+                    final List<String> values = new ArrayList<>(item.getValues().length);
+                    int i = 0;
+
+                    for (final Field field : fields) {
+                        String string = null;
 
                         if (item.getValues().length > i) {
                             final Object o = item.getValues()[i];
@@ -103,11 +104,14 @@ public class TableResultCreator implements ResultCreator {
                                 }
 
                                 if (val != null) {
-                                    final String formatted = fieldFormatter.format(field, val);
-                                    values[i] = formatted;
+                                    string = fieldFormatter.format(field, val);
                                 }
                             }
                         }
+
+                        values.add(string);
+
+                        i++;
                     }
 
                     if (item.getKey() != null) {
@@ -130,7 +134,7 @@ public class TableResultCreator implements ResultCreator {
         return pos;
     }
 
-    public Field[] getFields() {
+    public List<Field> getFields() {
         return latestFields;
     }
 }

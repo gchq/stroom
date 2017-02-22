@@ -32,9 +32,9 @@ import java.util.Map;
 public class CompiledFields implements Iterable<CompiledField> {
     private final List<CompiledField> compiledFields;
 
-    public CompiledFields(final Field[] fields,
+    public CompiledFields(final List<Field> fields,
                           final FieldIndexMap fieldIndexMap, final Map<String, String> paramMap) {
-        compiledFields = new ArrayList<>(fields.length);
+        compiledFields = new ArrayList<>(fields.size());
 
         final ExpressionParser expressionParser = new ExpressionParser(new FunctionFactory(), new ParamFactory());
         for (final Field field : fields) {

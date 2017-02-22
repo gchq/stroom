@@ -16,18 +16,16 @@
 
 package stroom.index.shared;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.util.shared.HasDisplayValue;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
-
-import stroom.query.api.ExpressionTerm.Condition;
-import stroom.util.shared.HasDisplayValue;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>
@@ -39,30 +37,12 @@ import stroom.util.shared.HasDisplayValue;
         "stored", "termPositions" })
 public class IndexField implements HasDisplayValue, Comparable<IndexField>, Serializable {
     private static final long serialVersionUID = 3100770758821157580L;
-
-    public enum AnalyzerType implements HasDisplayValue {
-        KEYWORD("Keyword"), ALPHA("Alpha"), NUMERIC("Numeric"), ALPHA_NUMERIC("Alpha numeric"), WHITESPACE(
-                "Whitespace"), STOP("Stop words"), STANDARD("Standard");
-
-        private final String displayValue;
-
-        AnalyzerType(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-    }
-
     @XmlElement(name = "fieldType")
     private IndexFieldType fieldType;
     @XmlElement(name = "fieldName")
     private String fieldName;
     @XmlElement(name = "stored")
     private boolean stored = false;
-
     /**
      * Determines whether the field can be queried or not
      */
@@ -74,9 +54,19 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     private AnalyzerType analyzerType;
     @XmlElement(name = "caseSensitive")
     private boolean caseSensitive = false;
-
     public IndexField() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    private IndexField(final IndexFieldType fieldType, final String fieldName, final AnalyzerType analyzerType,
+                       final boolean caseSensitive, final boolean stored, final boolean indexed, final boolean termPositions) {
+        setFieldType(fieldType);
+        setFieldName(fieldName);
+        setAnalyzerType(analyzerType);
+        setCaseSensitive(caseSensitive);
+        setStored(stored);
+        setIndexed(indexed);
+        setTermPositions(termPositions);
     }
 
     public static IndexField createField(final String fieldName) {
@@ -114,17 +104,6 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
             final AnalyzerType analyzerType, final boolean caseSensitive, final boolean stored, final boolean indexed,
             final boolean termPositions) {
         return new IndexField(fieldType, fieldName, analyzerType, caseSensitive, stored, indexed, termPositions);
-    }
-
-    private IndexField(final IndexFieldType fieldType, final String fieldName, final AnalyzerType analyzerType,
-            final boolean caseSensitive, final boolean stored, final boolean indexed, final boolean termPositions) {
-        setFieldType(fieldType);
-        setFieldName(fieldName);
-        setAnalyzerType(analyzerType);
-        setCaseSensitive(caseSensitive);
-        setStored(stored);
-        setIndexed(indexed);
-        setTermPositions(termPositions);
     }
 
     public IndexFieldType getFieldType() {
@@ -190,7 +169,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         this.termPositions = termPositions;
     }
 
-    public Condition[] getSupportedConditions() {
+    public List<Condition> getSupportedConditions() {
         return getDefaultConditions();
     }
 
@@ -222,7 +201,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         return fieldName.compareToIgnoreCase(o.fieldName);
     }
 
-    private Condition[] getDefaultConditions() {
+    private List<Condition> getDefaultConditions() {
         final List<Condition> conditions = new ArrayList<>();
 
         if (fieldType != null) {
@@ -267,6 +246,22 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
             }
         }
 
-        return conditions.toArray(new Condition[conditions.size()]);
+        return conditions;
+    }
+
+    public enum AnalyzerType implements HasDisplayValue {
+        KEYWORD("Keyword"), ALPHA("Alpha"), NUMERIC("Numeric"), ALPHA_NUMERIC("Alpha numeric"), WHITESPACE(
+                "Whitespace"), STOP("Stop words"), STANDARD("Standard");
+
+        private final String displayValue;
+
+        AnalyzerType(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
     }
 }
