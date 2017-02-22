@@ -16,6 +16,7 @@
 
 package stroom.security.server;
 
+import org.springframework.transaction.TransactionException;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseEntity;
@@ -98,7 +99,7 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
         for (final String permission : permissions) {
             try {
                 documentPermissionService.addPermission(user, docRef, permission);
-            } catch (final PersistenceException e) {
+            } catch (final PersistenceException | TransactionException e) {
                 LOGGER.info(e.getMessage());
             }
         }
