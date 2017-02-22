@@ -41,12 +41,16 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     ExplorerDropDownTreePresenter(final EventBus eventBus, final DropDownTreeView view,
                                   final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
-        setUnselectedText("None");
 
         explorerTree = new ExtendedExplorerTree(this, dispatcher);
+        setIncludeNullSelection(true);
 
         // Add views.
         view.setCellTree(explorerTree);
+    }
+
+    protected void setIncludeNullSelection(final boolean includeNullSelection) {
+        explorerTree.getTreeModel().setIncludeNullSelection(includeNullSelection);
     }
 
     protected void setSelectedTreeItem(final ExplorerData selectedItem,
@@ -84,11 +88,6 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         explorerTree.changeNameFilter(text);
     }
 
-    @Override
-    public void unselect() {
-        explorerTree.setSelectedItem(null);
-    }
-
     public void reset() {
         explorerTree.getTreeModel().reset();
     }
@@ -124,12 +123,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     }
 
     public void setSelectedEntityReference(final DocRef docRef) {
-        if (docRef != null) {
-            final EntityData entityData = EntityData.create(docRef);
-            setSelectedEntityData(entityData);
-        } else {
-            setSelectedEntityData(null);
-        }
+        setSelectedEntityData(EntityData.create(docRef));
     }
 
     private EntityData getSelectedEntityData() {
@@ -141,16 +135,10 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     }
 
     private void setSelectedEntityData(final EntityData entityData) {
-        if (entityData != null) {
-            explorerTree.setSelectedItem(entityData);
-            explorerTree.getTreeModel().reset();
-            explorerTree.getTreeModel().setEnsureVisible(entityData);
-            explorerTree.getTreeModel().refresh();
-        } else {
-            explorerTree.getTreeModel().reset();
-            explorerTree.setSelectedItem(null);
-            explorerTree.getTreeModel().refresh();
-        }
+        explorerTree.setSelectedItem(entityData);
+        explorerTree.getTreeModel().reset();
+        explorerTree.getTreeModel().setEnsureVisible(entityData);
+        explorerTree.getTreeModel().refresh();
     }
 
     public void setAllowFolderSelection(final boolean allowFolderSelection) {
@@ -189,13 +177,21 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         @Override
         protected void setInitialSelectedItem(final ExplorerData selection) {
             super.setInitialSelectedItem(selection);
-            explorerDropDownTreePresenter.setSelectedTreeItem(selection, new SelectionType(false, false), true);
+            explorerDropDownTreePresenter.setSelectedTreeItem(resolve(selection), new SelectionType(false, false), true);
         }
 
         @Override
         protected void doSelect(final ExplorerData selection, final SelectionType selectionType) {
             super.doSelect(selection, selectionType);
-            explorerDropDownTreePresenter.setSelectedTreeItem(selection, selectionType, false);
+            explorerDropDownTreePresenter.setSelectedTreeItem(resolve(selection), selectionType, false);
+        }
+
+        private static ExplorerData resolve(final ExplorerData selection) {
+            if (selection == ExplorerTreeModel.NULL_SELECTION) {
+                return null;
+            }
+
+            return selection;
         }
     }
 }

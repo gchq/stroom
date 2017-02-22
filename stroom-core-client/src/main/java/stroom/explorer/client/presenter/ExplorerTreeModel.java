@@ -27,10 +27,13 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.shared.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
+    public static final ExplorerData NULL_SELECTION = new SimpleExplorerItem(null, null, "None", null);
+
     private final NameFilterTimer timer = new NameFilterTimer();
     private final ExplorerTreeFilterBuilder explorerTreeFilterBuilder = new ExplorerTreeFilterBuilder();
     private final AbstractExporerTree exporerTree;
@@ -43,6 +46,8 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
     private FindExplorerDataCriteria currentCriteria;
     private FetchExplorerDataResult currentResult;
     private boolean fetching;
+
+    private boolean includeNullSelection;
 
     ExplorerTreeModel(final AbstractExporerTree exporerTree, final Widget loading, final ClientDispatchAsync dispatcher) {
         this.exporerTree = exporerTree;
@@ -112,6 +117,14 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
                                         addToRows(result.getTreeStructure().getRoot(), result.getTreeStructure(), rows);
                                     }
 
+                                    // If we are allowing null selection then insert a node at the root to make it
+                                    // possible.
+                                    if (includeNullSelection) {
+                                        if (rows.size() == 0 || rows.get(0) != NULL_SELECTION) {
+                                            rows.add(0, NULL_SELECTION);
+                                        }
+                                    }
+
                                     exporerTree.setData(rows);
                                     loading.setVisible(false);
 
@@ -122,6 +135,13 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
                                     // make the requested item visible.
                                     if (criteria.getEnsureVisible() != null && criteria.getEnsureVisible().size() > 0) {
                                         ExplorerData nextSelection = criteria.getEnsureVisible().iterator().next();
+
+                                        // If we are allowing null selection then select the NULL node if we have been
+                                        // asked to ensure NULL is selected after refresh.
+                                        if (nextSelection == null && includeNullSelection) {
+                                            nextSelection = NULL_SELECTION;
+                                        }
+
                                         int index = rows.indexOf(nextSelection);
                                         if (index == -1) {
                                             nextSelection = null;
@@ -181,19 +201,6 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
         }
     }
 
-//    public void refresh(final Set<ExplorerData> openItems, final Integer depth) {
-//        Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-//            @Override
-//            public void execute() {
-//                fetchData();
-//            }
-//        });
-//    }
-//
-//    public void reset() {
-//        reset(null, 1);
-//    }
-
     public void clear() {
         exporerTree.setData(new ArrayList<>());
     }
@@ -202,19 +209,15 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
         clearOpenItems();
         minDepth = 1;
         ensureVisible = null;
-//        explorerTreeFilterBuilder = new ExplorerTreeFilterBuilder();
     }
 
-//    public void reset() {
-//        clearOpenItems();
-//        minDepth = 1;
-//        refresh();
-//    }
-//
-//
-//    public FetchExplorerDataResult getCurrentResult() {
-//        return currentResult;
-//    }
+    public void setIncludeNullSelection(final boolean includeNullSelection) {
+        this.includeNullSelection = includeNullSelection;
+    }
+
+    public boolean isIncludeNullSelection() {
+        return includeNullSelection;
+    }
 
     private class NameFilterTimer extends Timer {
         private String name;

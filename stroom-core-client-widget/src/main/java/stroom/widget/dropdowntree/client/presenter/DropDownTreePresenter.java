@@ -33,8 +33,6 @@ public abstract class DropDownTreePresenter extends MyPresenterWidget<DropDownTr
     public interface DropDownTreeView extends View, HasUiHandlers<DropDownTreeUiHandlers> {
         void setCellTree(Widget widget);
 
-        void setUnselectedText(String unselectedText);
-
         void setSize(int width, int height);
     }
 
@@ -55,10 +53,6 @@ public abstract class DropDownTreePresenter extends MyPresenterWidget<DropDownTr
     protected abstract void refresh();
 
     protected abstract void focus();
-
-    public void setUnselectedText(final String unselectedText) {
-        getView().setUnselectedText(unselectedText);
-    }
 
     public void setCellTree(final Widget widget) {
         getView().setCellTree(widget);

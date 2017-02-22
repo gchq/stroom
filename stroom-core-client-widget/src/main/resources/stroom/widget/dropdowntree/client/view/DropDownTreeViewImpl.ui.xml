@@ -2,22 +2,10 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
 	<ui:style>
-		.container {
-			width: 100%;
-			padding: 0px;
-		}
-		
 		.nameFilter {
 			width: 100%;
 			border: none !important;
 			border-bottom: 1px solid #C5CDE2 !important;
-		}
-		
-		.label {
-			width: 100%;
-			padding-left: 5px;
-			padding-top: 2px;
-			cursor: pointer;
 		}
 	</ui:style>
 
@@ -27,10 +15,7 @@
 		</g:north>
 		<g:center>
 			<g:ScrollPanel styleName="dataTree">
-				<g:FlowPanel styleName="{style.container}">
-					<g:Label ui:field="label" styleName="gwt-Label {style.label}" />
-					<g:SimplePanel ui:field="treeContainer" />
-				</g:FlowPanel>
+				<g:SimplePanel ui:field="treeContainer" />
 			</g:ScrollPanel>
 		</g:center>
 	</g:DockLayoutPanel>

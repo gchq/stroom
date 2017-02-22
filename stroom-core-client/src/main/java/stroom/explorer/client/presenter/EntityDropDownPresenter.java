@@ -20,6 +20,7 @@ import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.entity.shared.DocRef;
+import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
 import com.google.inject.Inject;
@@ -29,27 +30,18 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 public class EntityDropDownPresenter extends DropDownPresenter implements HasDataSelectionHandlers<ExplorerData> {
     private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
 
-    private String unselectedText;
-
     @Inject
     public EntityDropDownPresenter(final EventBus eventBus, final DropDrownView view,
                                    final ExplorerDropDownTreePresenter explorerDropDownTreePresenter) {
         super(eventBus, view);
         this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
-        setUnselectedText("None");
+        changeSelection(null);
     }
 
     @Override
     protected void onBind() {
         super.onBind();
-
         registerHandler(explorerDropDownTreePresenter.addDataSelectionHandler(event -> changeSelection(event.getSelectedItem())));
-    }
-
-    public void setUnselectedText(final String unselectedText) {
-        this.unselectedText = unselectedText;
-        explorerDropDownTreePresenter.setUnselectedText(unselectedText);
-        changeSelection(null);
     }
 
     public void setIncludedTypes(final String... includedTypes) {
@@ -88,11 +80,7 @@ public class EntityDropDownPresenter extends DropDownPresenter implements HasDat
 
     private void changeSelection(final ExplorerData selection) {
         if (selection == null) {
-            if (unselectedText == null) {
-                getView().setText("");
-            } else {
-                getView().setText(unselectedText);
-            }
+            getView().setText("None");
         } else {
             getView().setText(selection.getDisplayValue());
         }

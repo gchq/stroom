@@ -39,8 +39,6 @@ public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandl
     private final Widget widget;
 
     @UiField
-    Label label;
-    @UiField
     QuickFilter nameFilter;
     @UiField
     SimplePanel treeContainer;
@@ -64,18 +62,6 @@ public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandl
     @Override
     public void setCellTree(final Widget widget) {
         treeContainer.setWidget(widget);
-    }
-
-    @Override
-    public void setUnselectedText(final String unselectedText) {
-        label.setText(unselectedText);
-    }
-
-    @UiHandler("label")
-    public void onLabelClick(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().unselect();
-        }
     }
 
     @UiHandler("nameFilter")
