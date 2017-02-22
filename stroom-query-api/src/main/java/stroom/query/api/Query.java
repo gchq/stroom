@@ -18,22 +18,29 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.List;
 
 @JsonPropertyOrder({"dataSource", "expression", "params"})
 @XmlType(name = "Query", propOrder = {"dataSource", "expression", "params"})
 @XmlRootElement(name = "query")
-public class Query implements Serializable {
+@XmlAccessorType(XmlAccessType.FIELD)
+public final class Query implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
+    @XmlElement
     private DocRef dataSource;
+    @XmlElement
     private ExpressionOperator expression;
-    private Param[] params;
+    @XmlElementWrapper(name = "params")
+    @XmlElement(name = "param")
+    private List<Param> params;
 
     public Query() {
     }
@@ -42,13 +49,12 @@ public class Query implements Serializable {
         this(dataSource, expression, null);
     }
 
-    public Query(final DocRef dataSource, final ExpressionOperator expression, Param[] params) {
+    public Query(final DocRef dataSource, final ExpressionOperator expression, final List<Param> params) {
         this.dataSource = dataSource;
         this.expression = expression;
         this.params = params;
     }
 
-    @XmlElement
     public DocRef getDataSource() {
         return dataSource;
     }
@@ -57,7 +63,6 @@ public class Query implements Serializable {
         this.dataSource = dataSource;
     }
 
-    @XmlElement
     public ExpressionOperator getExpression() {
         return expression;
     }
@@ -66,13 +71,11 @@ public class Query implements Serializable {
         this.expression = expression;
     }
 
-    @XmlElementWrapper(name = "params")
-    @XmlElement(name = "param")
-    public Param[] getParams() {
+    public List<Param> getParams() {
         return params;
     }
 
-    public void setParams(final Param[] params) {
+    public void setParams(final List<Param> params) {
         this.params = params;
     }
 
@@ -85,15 +88,14 @@ public class Query implements Serializable {
 
         if (dataSource != null ? !dataSource.equals(query.dataSource) : query.dataSource != null) return false;
         if (expression != null ? !expression.equals(query.expression) : query.expression != null) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(params, query.params);
+        return params != null ? params.equals(query.params) : query.params == null;
     }
 
     @Override
     public int hashCode() {
         int result = dataSource != null ? dataSource.hashCode() : 0;
         result = 31 * result + (expression != null ? expression.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(params);
+        result = 31 * result + (params != null ? params.hashCode() : 0);
         return result;
     }
 
@@ -102,7 +104,7 @@ public class Query implements Serializable {
         return "Query{" +
                 "dataSource=" + dataSource +
                 ", expression=" + expression +
-                ", params=" + Arrays.toString(params) +
+                ", params=" + params +
                 '}';
     }
 }

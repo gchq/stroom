@@ -18,46 +18,39 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @JsonPropertyOrder({"queryId", "fields", "extractValues", "extractionPipeline", "maxResults",
         "showDetail"})
 @XmlType(name = "TableSettings", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
-public class TableSettings implements Serializable {
+@XmlAccessorType(XmlAccessType.FIELD)
+public final class TableSettings implements Serializable {
     private static final long serialVersionUID = -2530827581046882396L;
 
+    @XmlElement
     private String queryId;
+    @XmlElementWrapper(name = "fields")
+    @XmlElement(name = "field")
     private List<Field> fields;
+    @XmlElement
     private Boolean extractValues;
+    @XmlElement
     private DocRef extractionPipeline;
-    private Integer[] maxResults;
+    @XmlElementWrapper(name = "maxResults")
+    @XmlElement(name = "val")
+    private List<Integer> maxResults;
+    @XmlElement
     private Boolean showDetail;
 
     public TableSettings() {
     }
 
-    public TableSettings(
-            String queryId,
-            List<Field> fields,
-            Boolean extractValues,
-            DocRef extractionPipeline,
-            Integer[] maxResults,
-            Boolean showDetail){
-        this.queryId = queryId;
-        this.fields = fields;
-        this.extractValues = extractValues;
-        this.extractionPipeline = extractionPipeline;
-        this.maxResults = maxResults;
-        this.showDetail = showDetail;
-    }
-
-    @XmlElement
     public String getQueryId() {
         return queryId;
     }
@@ -66,47 +59,14 @@ public class TableSettings implements Serializable {
         this.queryId = queryId;
     }
 
-    @XmlElementWrapper(name = "fields")
-    @XmlElement(name = "field")
-    public Field[] getFields() {
-        if (fields == null || fields.size() == 0) {
-            return null;
-        }
-        return fields.toArray(new Field[fields.size()]);
+    public List<Field> getFields() {
+        return fields;
     }
 
-    public void setFields(final Field[] fields) {
-        if (fields != null && fields.length > 0) {
-            this.fields = new ArrayList<>(Arrays.asList(fields));
-        } else {
-            this.fields = null;
-        }
+    public void setFields(final List<Field> fields) {
+        this.fields = fields;
     }
 
-    public void addField(final Field field) {
-        if (fields == null) {
-            fields = new ArrayList<>();
-        }
-        fields.add(field);
-    }
-
-    public void addField(final int index, final Field field) {
-        if (fields == null) {
-            fields = new ArrayList<>();
-        }
-        fields.add(index, field);
-    }
-
-    public void removeField(final Field field) {
-        if (fields != null) {
-            fields.remove(field);
-            if (fields.size() == 0) {
-                fields = null;
-            }
-        }
-    }
-
-    @XmlElement
     public Boolean getExtractValues() {
         return extractValues;
     }
@@ -122,7 +82,6 @@ public class TableSettings implements Serializable {
         return extractValues;
     }
 
-    @XmlElement
     public DocRef getExtractionPipeline() {
         return extractionPipeline;
     }
@@ -131,17 +90,14 @@ public class TableSettings implements Serializable {
         this.extractionPipeline = extractionPipeline;
     }
 
-    @XmlElementWrapper(name = "maxResults")
-    @XmlElement(name = "val")
-    public Integer[] getMaxResults() {
+    public List<Integer> getMaxResults() {
         return maxResults;
     }
 
-    public void setMaxResults(final Integer[] maxResults) {
+    public void setMaxResults(final List<Integer> maxResults) {
         this.maxResults = maxResults;
     }
 
-    @XmlElement
     public Boolean getShowDetail() {
         return showDetail;
     }
@@ -174,8 +130,7 @@ public class TableSettings implements Serializable {
             return false;
         if (extractionPipeline != null ? !extractionPipeline.equals(that.extractionPipeline) : that.extractionPipeline != null)
             return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(maxResults, that.maxResults)) return false;
+        if (maxResults != null ? !maxResults.equals(that.maxResults) : that.maxResults != null) return false;
         return showDetail != null ? showDetail.equals(that.showDetail) : that.showDetail == null;
     }
 
@@ -185,7 +140,7 @@ public class TableSettings implements Serializable {
         result = 31 * result + (fields != null ? fields.hashCode() : 0);
         result = 31 * result + (extractValues != null ? extractValues.hashCode() : 0);
         result = 31 * result + (extractionPipeline != null ? extractionPipeline.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(maxResults);
+        result = 31 * result + (maxResults != null ? maxResults.hashCode() : 0);
         result = 31 * result + (showDetail != null ? showDetail.hashCode() : 0);
         return result;
     }
@@ -197,7 +152,7 @@ public class TableSettings implements Serializable {
                 ", fields=" + fields +
                 ", extractValues=" + extractValues +
                 ", extractionPipeline=" + extractionPipeline +
-                ", maxResults=" + Arrays.toString(maxResults) +
+                ", maxResults=" + maxResults +
                 ", showDetail=" + showDetail +
                 '}';
     }

@@ -1,6 +1,6 @@
 {
   "key" : {
-    "uuid" : "1234"
+    "uuid" : "test"
   },
   "query" : {
     "dataSource" : {
@@ -35,9 +35,8 @@
     } ]
   },
   "resultRequests" : [ {
-    "componentId" : "componentX",
-    "mappings": [
-      {
+    "componentId" : "componentSettingsMapKey",
+    "mappings" : [ {
       "queryId" : "someQueryId",
       "fields" : [ {
         "name" : "name1",
@@ -89,13 +88,14 @@
         "name" : "docRefName2"
       },
       "maxResults" : [ 1, 2 ]
-      }
-    ],
+    } ],
     "requestedRange" : {
-      "offset" : 1,
+      "offset" : 0,
       "length" : 100
     },
-    "resultStyle": "TABLE"
+    "resultStyle" : "TABLE",
+    "fetchData" : true
   } ],
-  "dateTimeLocale" : "en-gb"
+  "dateTimeLocale" : "en-gb",
+  "incremental" : true
 }

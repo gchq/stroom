@@ -53,20 +53,16 @@ import stroom.query.api.ResultRequest.ResultStyle;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.TableSettings;
 import stroom.query.api.TimeZone.Use;
-import stroom.query.api.VisField;
-import stroom.query.api.VisLimit;
-import stroom.query.api.VisNest;
-import stroom.query.api.VisStructure;
-import stroom.query.api.VisValues;
 import stroom.util.shared.OffsetRange;
 import stroom.visualisation.shared.Visualisation;
 import stroom.visualisation.shared.VisualisationService;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -108,11 +104,10 @@ public class SearchRequestMapper {
         query.setExpression(searchRequest.getSearch().getExpression());
 
         if (searchRequest.getSearch().getParamMap() != null && searchRequest.getSearch().getParamMap().size() > 0) {
-            Param[] params = new Param[searchRequest.getSearch().getParamMap().size()];
-            int i = 0;
+            final List<Param> params = new ArrayList<>(searchRequest.getSearch().getParamMap().size());
             for (final Entry<String, String> entry : searchRequest.getSearch().getParamMap().entrySet()) {
                 final Param param = new Param(entry.getKey(), entry.getValue());
-                params[i++] = param;
+                params.add(param);
             }
 
             query.setParams(params);
@@ -121,13 +116,12 @@ public class SearchRequestMapper {
         return query;
     }
 
-    private ResultRequest[] mapResultRequests(final stroom.dashboard.shared.SearchRequest searchRequest) {
+    private List<ResultRequest> mapResultRequests(final stroom.dashboard.shared.SearchRequest searchRequest) {
         if (searchRequest.getComponentResultRequests() == null || searchRequest.getComponentResultRequests().size() == 0) {
             return null;
         }
 
-        final ResultRequest[] resultRequests = new ResultRequest[searchRequest.getComponentResultRequests().size()];
-        int i = 0;
+        final List<ResultRequest> resultRequests = new ArrayList<>(searchRequest.getComponentResultRequests().size());
         for (final Entry<String, ComponentResultRequest> entry : searchRequest.getComponentResultRequests().entrySet()) {
             final String componentId = entry.getKey();
             final ComponentResultRequest componentResultRequest = entry.getValue();
@@ -137,11 +131,11 @@ public class SearchRequestMapper {
                 copy.setComponentId(componentId);
                 copy.setFetchData(tableResultRequest.wantsData());
                 final TableSettings tableSettings = mapTableSettings(tableResultRequest.getTableSettings());
-                copy.setTableSettings(new TableSettings[]{tableSettings});
+                copy.setMappings(Collections.singletonList(tableSettings));
                 copy.setRequestedRange(mapOffsetRange(tableResultRequest.getRequestedRange()));
                 copy.setOpenGroups(mapCollection(String.class, tableResultRequest.getOpenGroups()));
-                copy.setResultStyle(ResultStyle.FLAT);
-                resultRequests[i++] = copy;
+                copy.setResultStyle(ResultStyle.TABLE);
+                resultRequests.add(copy);
 
             } else if (componentResultRequest instanceof VisResultRequest) {
                 final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
@@ -149,16 +143,16 @@ public class SearchRequestMapper {
                 copy.setComponentId(componentId);
                 copy.setFetchData(visResultRequest.wantsData());
 
-                final VisStructure visStructure = mapStructure(visResultRequest.getVisDashboardSettings());
+//                final VisStructure visStructure = mapStructure(visResultRequest.getVisDashboardSettings());
 
                 final TableSettings parentTableSettings = mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings());
-                final TableSettings childTableSettings = visStructureToTableSettings(visStructure, parentTableSettings);
+                final TableSettings childTableSettings = mapVisSettingsToTableSettings(visResultRequest.getVisDashboardSettings(), parentTableSettings);
 
-                copy.setTableSettings(new TableSettings[]{parentTableSettings, childTableSettings});
+                copy.setMappings(Arrays.asList(parentTableSettings, childTableSettings));
                 copy.setRequestedRange(null);
                 copy.setOpenGroups(null);
-                copy.setResultStyle(ResultStyle.TREE);
-                resultRequests[i++] = copy;
+                copy.setResultStyle(ResultStyle.FLAT);
+                resultRequests.add(copy);
 
 //
 //
@@ -173,7 +167,7 @@ public class SearchRequestMapper {
 //                final stroom.query.api.VisResultRequest copy = new stroom.query.api.VisResultRequest();
 //                copy.setComponentId(componentId);
 //                copy.setFetchData(visResultRequest.wantsData());
-//                copy.setTableSettings(mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings()));
+//                copy.setMappings(mapTableSettings(visResultRequest.getVisDashboardSettings().getMappings()));
 //                copy.setStructure(mapStructure(visResultRequest.getVisDashboardSettings()));
 //                resultRequests[i++] = copy;
             }
@@ -198,13 +192,12 @@ public class SearchRequestMapper {
         return tableSettings;
     }
 
-    private stroom.query.api.Field[] mapFields(final List<Field> fields) {
+    private List<stroom.query.api.Field> mapFields(final List<Field> fields) {
         if (fields == null || fields.size() == 0) {
             return null;
         }
 
-        stroom.query.api.Field[] arr = new stroom.query.api.Field[fields.size()];
-        int i = 0;
+        final List<stroom.query.api.Field> list = new ArrayList<>(fields.size());
         for (final Field field : fields) {
             stroom.query.api.Field fld = new stroom.query.api.Field();
             fld.setName(field.getName());
@@ -213,35 +206,35 @@ public class SearchRequestMapper {
             fld.setFilter(mapFilter(field.getFilter()));
             fld.setFormat(mapFormat(field.getFormat()));
             fld.setGroup(field.getGroup());
-            arr[i++] = fld;
+            list.add(fld);
         }
 
-        return arr;
+        return list;
     }
 
-    private Integer[] mapIntArray(final int[] arr) {
+    private List<Integer> mapIntArray(final int[] arr) {
         if (arr == null || arr.length == 0) {
             return null;
         }
 
-        final Integer[] copy = new Integer[arr.length];
+        final List<Integer> copy = new ArrayList<>(arr.length);
         for (int i = 0; i < arr.length; i++) {
-            copy[i] = arr[i];
+            copy.add(arr[i]);
         }
 
         return copy;
     }
 
-    private <T> T[] mapCollection(final Class<T> clazz, final Collection<T> collection) {
+    private <T> List<T> mapCollection(final Class<T> clazz, final Collection<T> collection) {
         if (collection == null || collection.size() == 0) {
             return null;
         }
 
         @SuppressWarnings("unchecked")
-        T[] copy = (T[]) Array.newInstance(clazz, collection.size());
+        List<T> copy = new ArrayList<>(collection.size());
         int i = 0;
         for (final T t : collection) {
-            copy[i++] = t;
+            copy.add(t);
         }
 
         return copy;
@@ -317,9 +310,7 @@ public class SearchRequestMapper {
 
         final DateTimeFormatSettings dateTimeFormatSettings = (DateTimeFormatSettings) formatSettings;
 
-        final DateTimeFormat copy = new DateTimeFormat();
-        copy.setPattern(dateTimeFormatSettings.getPattern());
-        copy.setTimeZone(mapTimeZone(dateTimeFormatSettings.getTimeZone()));
+        final DateTimeFormat copy = new DateTimeFormat(dateTimeFormatSettings.getPattern(), mapTimeZone(dateTimeFormatSettings.getTimeZone()));
         return copy;
     }
 
@@ -328,71 +319,67 @@ public class SearchRequestMapper {
             return null;
         }
 
-        final stroom.query.api.TimeZone copy = new stroom.query.api.TimeZone();
-        copy.setUse(Use.valueOf(timeZone.getUse().name()));
-        copy.setId(timeZone.getId());
-        copy.setOffsetHours(timeZone.getOffsetHours());
-        copy.setOffsetMinutes(timeZone.getOffsetMinutes());
+        final stroom.query.api.TimeZone copy = new stroom.query.api.TimeZone(Use.valueOf(timeZone.getUse().name()), timeZone.getId(), timeZone.getOffsetHours(), timeZone.getOffsetMinutes());
 
         return copy;
     }
 
-    private TableSettings visStructureToTableSettings(final VisStructure visStructure, final TableSettings parentTableSettings) {
-        final Map<String, stroom.query.api.Format> formatMap = new HashMap<>();
-        if (parentTableSettings.getFields() != null) {
-            for (final stroom.query.api.Field field : parentTableSettings.getFields()) {
-                if (field != null) {
-                    formatMap.put(field.getName(), field.getFormat());
-                }
-            }
-        }
-
-        List<stroom.query.api.Field> fields = new ArrayList<>();
-        List<Integer> limits = new ArrayList<>();
-
-        VisNest nest = visStructure.getNest();
-        VisValues values = visStructure.getValues();
-
-        int group = 0;
-        while (nest != null) {
-            stroom.query.api.Field field = convertField(visStructure.getNest().getKey(), formatMap);
-            field.setGroup(group++);
-
-            fields.add(field);
-
-            // Get limit from nest.
-            Integer limit = null;
-            if (nest.getLimit() != null) {
-                limit = nest.getLimit().getSize();
-            }
-            limits.add(limit);
-
-            values = nest.getValues();
-            nest = nest.getNest();
-        }
-
-        if (values != null) {
-            // Get limit from values.
-            Integer limit = null;
-            if (values.getLimit() != null) {
-                limit = values.getLimit().getSize();
-            }
-            limits.add(limit);
-
-            if (values.getFields() != null) {
-                for (final VisField visField : values.getFields()) {
-                    fields.add(convertField(visField, formatMap));
-                }
-            }
-        }
-
-        final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(fields.toArray(new stroom.query.api.Field[fields.size()]));
-        tableSettings.setMaxResults(limits.toArray(new Integer[limits.size()]));
-        tableSettings.setShowDetail(true);
-
-        return tableSettings;
-    }
+//    private TableSettings visStructureToTableSettings(final VisStructure visStructure, final TableSettings parentTableSettings) {
+//        final Map<String, stroom.query.api.Format> formatMap = new HashMap<>();
+//        if (parentTableSettings.getFields() != null) {
+//            for (final stroom.query.api.Field field : parentTableSettings.getFields()) {
+//                if (field != null) {
+//                    formatMap.put(field.getName(), field.getFormat());
+//                }
+//            }
+//        }
+//
+//        List<stroom.query.api.Field> fields = new ArrayList<>();
+//        List<Integer> limits = new ArrayList<>();
+//
+//        VisNest nest = visStructure.getNest();
+//        VisValues values = visStructure.getValues();
+//
+//        int group = 0;
+//        while (nest != null) {
+//            stroom.query.api.Field field = convertField(nest.getKey(), formatMap);
+//            field.setGroup(group++);
+//
+//            fields.add(field);
+//
+//            // Get limit from nest.
+//            Integer limit = null;
+//            if (nest.getLimit() != null) {
+//                limit = nest.getLimit().getSize();
+//            }
+//            limits.add(limit);
+//
+//            values = nest.getValues();
+//            nest = nest.getNest();
+//        }
+//
+//        if (values != null) {
+//            // Get limit from values.
+//            Integer limit = null;
+//            if (values.getLimit() != null) {
+//                limit = values.getLimit().getSize();
+//            }
+//            limits.add(limit);
+//
+//            if (values.getFields() != null) {
+//                for (final VisField visField : values.getFields()) {
+//                    fields.add(convertField(visField, formatMap));
+//                }
+//            }
+//        }
+//
+//        final TableSettings tableSettings = new TableSettings();
+//        tableSettings.setFields(fields.toArray(new stroom.query.api.Field[fields.size()]));
+//        tableSettings.setMaxResults(limits.toArray(new Integer[limits.size()]));
+//        tableSettings.setShowDetail(true);
+//
+//        return tableSettings;
+//    }
 
     private stroom.query.api.Field convertField(final VisField visField, final Map<String, stroom.query.api.Format> formatMap) {
         final stroom.query.api.Field field = new stroom.query.api.Field();
@@ -411,9 +398,10 @@ public class SearchRequestMapper {
         return field;
     }
 
-    private stroom.query.api.VisStructure mapStructure(final VisComponentSettings visComponentSettings) {
+
+    private stroom.query.api.TableSettings mapVisSettingsToTableSettings(final VisComponentSettings visComponentSettings, final TableSettings parentTableSettings) {
         DocRef docRef = visComponentSettings.getVisualisation();
-        VisStructure copy = null;
+        TableSettings tableSettings = null;
 
         try {
             if (docRef == null) {
@@ -436,9 +424,59 @@ public class SearchRequestMapper {
                 final SettingResolver settingResolver = new SettingResolver(visSettings, visComponentSettings.getJSON());
                 final Structure structure = visSettings.getData().getStructure();
                 if (structure != null) {
-                    copy = new VisStructure();
-                    copy.setNest(mapNest(structure.getNest(), settingResolver));
-                    copy.setValues(mapVisValues(structure.getValues(), settingResolver));
+
+                    final Map<String, stroom.query.api.Format> formatMap = new HashMap<>();
+                    if (parentTableSettings.getFields() != null) {
+                        for (final stroom.query.api.Field field : parentTableSettings.getFields()) {
+                            if (field != null) {
+                                formatMap.put(field.getName(), field.getFormat());
+                            }
+                        }
+                    }
+
+                    List<stroom.query.api.Field> fields = new ArrayList<>();
+                    List<Integer> limits = new ArrayList<>();
+
+                    VisNest nest = mapNest(structure.getNest(), settingResolver);
+                    VisValues values = mapVisValues(structure.getValues(), settingResolver);
+
+                    int group = 0;
+                    while (nest != null) {
+                        stroom.query.api.Field field = convertField(nest.getKey(), formatMap);
+                        field.setGroup(group++);
+
+                        fields.add(field);
+
+                        // Get limit from nest.
+                        Integer limit = null;
+                        if (nest.getLimit() != null) {
+                            limit = nest.getLimit().getSize();
+                        }
+                        limits.add(limit);
+
+                        values = nest.getValues();
+                        nest = nest.getNest();
+                    }
+
+                    if (values != null) {
+                        // Get limit from values.
+                        Integer limit = null;
+                        if (values.getLimit() != null) {
+                            limit = values.getLimit().getSize();
+                        }
+                        limits.add(limit);
+
+                        if (values.getFields() != null) {
+                            for (final VisField visField : values.getFields()) {
+                                fields.add(convertField(visField, formatMap));
+                            }
+                        }
+                    }
+
+                    tableSettings = new TableSettings();
+                    tableSettings.setFields(fields);
+                    tableSettings.setMaxResults(limits);
+                    tableSettings.setShowDetail(true);
                 }
             }
 
@@ -446,10 +484,49 @@ public class SearchRequestMapper {
             throw new RuntimeException(e.getMessage(), e);
         }
 
-        return copy;
+        return tableSettings;
     }
 
-    private stroom.query.api.VisNest mapNest(final Nest nest, final SettingResolver settingResolver) {
+
+//    private VisStructure mapStructure(final VisComponentSettings visComponentSettings) {
+//        DocRef docRef = visComponentSettings.getVisualisation();
+//        VisStructure copy = null;
+//
+//        try {
+//            if (docRef == null) {
+//                return null;
+//            }
+//
+//            final Visualisation visualisation = visualisationService.loadByUuid(docRef.getUuid());
+//
+//            if (visualisation == null || visualisation.getSettings() == null || visualisation.getSettings().length() == 0) {
+//                return null;
+//            }
+//
+//            ObjectMapper mapper = new ObjectMapper();
+//            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+//            mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
+//            mapper.setSerializationInclusion(Include.NON_NULL);
+//
+//            final VisSettings visSettings = mapper.readValue(visualisation.getSettings(), VisSettings.class);
+//            if (visSettings != null && visSettings.getData() != null) {
+//                final SettingResolver settingResolver = new SettingResolver(visSettings, visComponentSettings.getJSON());
+//                final Structure structure = visSettings.getData().getStructure();
+//                if (structure != null) {
+//                    copy = new VisStructure();
+//                    copy.setNest(mapNest(structure.getNest(), settingResolver));
+//                    copy.setValues(mapVisValues(structure.getValues(), settingResolver));
+//                }
+//            }
+//
+//        } catch (final IOException e) {
+//            throw new RuntimeException(e.getMessage(), e);
+//        }
+//
+//        return copy;
+//    }
+
+    private VisNest mapNest(final Nest nest, final SettingResolver settingResolver) {
         if (nest == null) {
             return null;
         }
@@ -463,7 +540,7 @@ public class SearchRequestMapper {
         return copy;
     }
 
-    private stroom.query.api.VisField mapVisField(final VisSettings.Field field, final SettingResolver settingResolver) {
+    private VisField mapVisField(final VisSettings.Field field, final SettingResolver settingResolver) {
         if (field == null) {
             return null;
         }
@@ -501,7 +578,7 @@ public class SearchRequestMapper {
         return null;
     }
 
-    private stroom.query.api.VisValues mapVisValues(final VisSettings.Values values, final SettingResolver settingResolver) {
+    private VisValues mapVisValues(final VisSettings.Values values, final SettingResolver settingResolver) {
         if (values == null) {
             return null;
         }
@@ -521,7 +598,7 @@ public class SearchRequestMapper {
         return copy;
     }
 
-    private stroom.query.api.VisLimit mapVisLimit(final VisSettings.Limit limit, final SettingResolver settingResolver) {
+    private VisLimit mapVisLimit(final VisSettings.Limit limit, final SettingResolver settingResolver) {
         if (limit != null) {
             Boolean enabled = settingResolver.resolveBoolean(limit.getEnabled());
             if (enabled == null || enabled) {

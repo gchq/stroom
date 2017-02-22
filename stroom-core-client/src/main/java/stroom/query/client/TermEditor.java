@@ -44,7 +44,6 @@ import stroom.util.shared.EqualsUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class TermEditor extends Composite {
@@ -249,7 +248,7 @@ public class TermEditor extends Composite {
             conditions.add(Condition.IN_DICTIONARY);
 
         } else {
-            conditions.addAll(Arrays.asList(field.getConditions()));
+            conditions.addAll(field.getConditions());
         }
 
         return conditions;

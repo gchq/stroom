@@ -24,6 +24,7 @@ import stroom.query.api.Field;
 import stroom.query.api.TableSettings;
 import stroom.util.shared.HasTerminate;
 
+import java.util.List;
 import java.util.Map;
 
 public class TableCoprocessor implements Coprocessor {
@@ -37,7 +38,7 @@ public class TableCoprocessor implements Coprocessor {
                             final FieldIndexMap fieldIndexMap, final HasTerminate taskMonitor, final Map<String, String> paramMap) {
         final TableSettings tableSettings = settings.getTableSettings();
 
-        final Field[] fields = tableSettings.getFields();
+        final List<Field> fields = tableSettings.getFields();
         compiledDepths = new CompiledDepths(fields, tableSettings.showDetail());
         compiledFields = new CompiledFields(fields, fieldIndexMap, paramMap);
 

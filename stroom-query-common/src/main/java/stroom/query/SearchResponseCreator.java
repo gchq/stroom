@@ -48,7 +48,7 @@ public class SearchResponseCreator {
 
     public SearchResponse create(final SearchRequest searchRequest) {
         final SearchResponse searchResponse = new SearchResponse();
-        final List<Result> results = new ArrayList<>(searchRequest.getResultRequests().length);
+        final List<Result> results = new ArrayList<>(searchRequest.getResultRequests().size());
 
         // The result handler could possibly have not been set yet if the
         // AsyncSearchTask has not started execution.
@@ -120,7 +120,7 @@ public class SearchResponseCreator {
         }
 
         if (results.size() > 0) {
-            searchResponse.setResults(results.toArray(new Result[results.size()]));
+            searchResponse.setResults(results);
         }
 
         // Deliver the latest results from the store.
@@ -138,11 +138,11 @@ public class SearchResponseCreator {
 
         ResultCreator resultCreator = null;
         try {
-            if (ResultStyle.TREE.equals(resultRequest.getResultStyle())) {
-                resultCreator = new VisResultCreator(resultRequest, null, null);
-            } else {
+            if (ResultStyle.TABLE.equals(resultRequest.getResultStyle())) {
                 final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeLocale));
                 resultCreator = new TableResultCreator(fieldFormatter);
+            } else {
+                resultCreator = new FlatResultCreator(resultRequest, null, null);
             }
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage());

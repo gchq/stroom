@@ -509,8 +509,7 @@ public class SearchExpressionQueryBuilder {
     }
 
     private boolean hasChildren(final ExpressionOperator operator) {
-        if (operator != null && operator.enabled() && operator.getChildren() != null
-                && operator.getChildren().length > 0) {
+        if (operator != null && operator.enabled() && operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
                 if (child.enabled()) {
                     if (child instanceof ExpressionOperator) {

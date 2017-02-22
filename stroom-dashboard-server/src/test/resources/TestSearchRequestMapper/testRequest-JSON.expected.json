@@ -1,6 +1,6 @@
 {
   "key" : {
-    "uuid" : "1234"
+    "uuid" : "test"
   },
   "query" : {
     "dataSource" : {
@@ -35,7 +35,7 @@
     } ]
   },
   "resultRequests" : [ {
-    "componentId" : "componentX",
+    "componentId" : "componentSettingsMapKey",
     "mappings": [
       {
       "queryId" : "someQueryId",
@@ -92,10 +92,12 @@
       }
     ],
     "requestedRange" : {
-      "offset" : 1,
+      "offset" : 0,
       "length" : 100
     },
-    "resultStyle": "TABLE"
+    "resultStyle": "TABLE",
+    "fetchData": true
   } ],
-  "dateTimeLocale" : "en-gb"
+  "dateTimeLocale" : "en-gb",
+  "incremental" : true
 }

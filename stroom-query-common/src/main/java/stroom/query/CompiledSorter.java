@@ -31,7 +31,7 @@ public class CompiledSorter implements Serializable, Comparator<Item> {
     private final List<CompiledSort> compiledSorts = new ArrayList<>();
     private final boolean hasSort;
 
-    public CompiledSorter(final Field[] fields) {
+    public CompiledSorter(final List<Field> fields) {
         int pos = 0;
 
         if (fields != null) {

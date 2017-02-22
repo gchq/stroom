@@ -57,7 +57,7 @@ public class StatStoreSearchTaskHandler {//extends AbstractTaskHandler<StatStore
 //
 //            final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
 //            for (final Entry<Integer, CoprocessorSettings> entry : task.getCoprocessorMap().entrySet()) {
-//                final TableSettings tableSettings = ((TableCoprocessorSettings) entry.getValue()).getTableSettings();
+//                final TableSettings tableSettings = ((TableCoprocessorSettings) entry.getValue()).getMappings();
 //                final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(),
 //                        tableSettings.showDetail());
 //                final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(),

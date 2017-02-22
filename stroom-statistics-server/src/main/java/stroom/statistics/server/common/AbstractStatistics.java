@@ -89,7 +89,7 @@ public abstract class AbstractStatistics implements Statistics {
                     "The top level operator for the query must be one of [" + ExpressionOperator.Op.values() + "]");
         }
 
-        final ExpressionItem[] childExpressions = topLevelExpressionOperator.getChildren();
+        final List<ExpressionItem> childExpressions = topLevelExpressionOperator.getChildren();
         int validDateTermsFound = 0;
         int dateTermsFound = 0;
 

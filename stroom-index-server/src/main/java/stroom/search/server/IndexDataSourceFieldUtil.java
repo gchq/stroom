@@ -23,17 +23,20 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFields;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class IndexDataSourceFieldUtil {
-    public static DataSourceField[] getDataSourceFields(final Index index) {
+    public static List<DataSourceField> getDataSourceFields(final Index index) {
         if (index == null || index.getIndexFieldsObject() == null || index.getIndexFieldsObject().getIndexFields() == null) {
             return null;
         }
 
         final IndexFields indexFields = index.getIndexFieldsObject();
-        DataSourceField[] dataSourceFields = new DataSourceField[indexFields.getIndexFields().size()];
+        final List<DataSourceField> dataSourceFields = new ArrayList<>(indexFields.getIndexFields().size());
         for (int i = 0; i < indexFields.getIndexFields().size(); i++) {
             final IndexField indexField = indexFields.getIndexFields().get(i);
-            dataSourceFields[i] = new DataSourceField(getDataSourceFieldType(indexField.getFieldType()), indexField.getFieldName(), indexField.isIndexed(), indexField.getSupportedConditions());
+            dataSourceFields.add(new DataSourceField(getDataSourceFieldType(indexField.getFieldType()), indexField.getFieldName(), indexField.isIndexed(), indexField.getSupportedConditions()));
         }
 
         return dataSourceFields;

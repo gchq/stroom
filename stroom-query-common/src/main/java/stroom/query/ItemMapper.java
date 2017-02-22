@@ -101,11 +101,8 @@ public class ItemMapper extends MapperBase<Object, String[], Key, Item> {
 
         // Are we grouping this item?
         Key key = null;
-        if (groupValues != null) {
-            final Object[] groupKey = groupValues.toArray(new Object[groupValues.size()]);
-            key = new Key(parentKey, groupKey);
-        } else if (parentKey != null) {
-            key = new Key(parentKey, null);
+        if (parentKey != null || groupValues != null) {
+            key = new Key(parentKey, groupValues);
         }
 
         // If the parent row has child group key sets then add this child group

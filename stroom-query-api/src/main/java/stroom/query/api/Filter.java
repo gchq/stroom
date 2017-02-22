@@ -18,16 +18,21 @@ package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"includes", "excludes"})
 @XmlType(name = "Filter", propOrder = {"includes", "excludes"})
-public class Filter implements Serializable {
+@XmlAccessorType(XmlAccessType.FIELD)
+public final class Filter implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 
+    @XmlElement
     private String includes;
+    @XmlElement
     private String excludes;
 
     public Filter() {
@@ -38,7 +43,6 @@ public class Filter implements Serializable {
         this.excludes = excludes;
     }
 
-    @XmlElement
     public String getIncludes() {
         return includes;
     }
@@ -47,7 +51,6 @@ public class Filter implements Serializable {
         this.includes = includes;
     }
 
-    @XmlElement
     public String getExcludes() {
         return excludes;
     }

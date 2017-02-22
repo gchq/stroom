@@ -19,30 +19,38 @@ package stroom.query.api;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.HasDisplayValue;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Arrays;
+import java.util.List;
 
 @JsonPropertyOrder({"op", "children"})
 @XmlType(name = "ExpressionOperator", propOrder = {"op", "children"})
-public class ExpressionOperator extends ExpressionItem {
+@XmlAccessorType(XmlAccessType.FIELD)
+public final class ExpressionOperator extends ExpressionItem {
     private static final long serialVersionUID = 6602004424564268512L;
 
+    @XmlElement(name = "op")
     private Op op = Op.AND;
-    private ExpressionItem[] children;
+    @XmlElementWrapper(name = "children")
+    @XmlElements({
+            @XmlElement(name = "operator", type = ExpressionOperator.class),
+            @XmlElement(name = "term", type = ExpressionTerm.class)
+    })
+    private List<ExpressionItem> children;
 
     public ExpressionOperator() {
     }
 
-    public ExpressionOperator(final Boolean enabled, final Op op, final ExpressionItem[] children) {
+    public ExpressionOperator(final Boolean enabled, final Op op, final List<ExpressionItem> children) {
         super(enabled);
         this.op = op;
         this.children = children;
     }
 
-    @XmlElement(name = "op")
     public Op getOp() {
         return op;
     }
@@ -51,16 +59,11 @@ public class ExpressionOperator extends ExpressionItem {
         this.op = op;
     }
 
-    @XmlElementWrapper(name = "children")
-    @XmlElements({
-            @XmlElement(name = "operator", type = ExpressionOperator.class),
-            @XmlElement(name = "term", type = ExpressionTerm.class)
-    })
-    public ExpressionItem[] getChildren() {
+    public List<ExpressionItem> getChildren() {
         return children;
     }
 
-    public void setChildren(final ExpressionItem[] children) {
+    public void setChildren(final List<ExpressionItem> children) {
         this.children = children;
     }
 
@@ -73,15 +76,14 @@ public class ExpressionOperator extends ExpressionItem {
         final ExpressionOperator that = (ExpressionOperator) o;
 
         if (op != that.op) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(children, that.children);
+        return children != null ? children.equals(that.children) : that.children == null;
     }
 
     @Override
     public int hashCode() {
         int result = super.hashCode();
         result = 31 * result + (op != null ? op.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(children);
+        result = 31 * result + (children != null ? children.hashCode() : 0);
         return result;
     }
 

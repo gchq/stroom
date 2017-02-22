@@ -27,6 +27,7 @@ import stroom.query.api.Field;
 import stroom.util.shared.HasTerminate;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,7 +46,7 @@ public class TablePayloadHandler implements PayloadHandler {
     private volatile PairQueue<Key, Item> currentQueue;
     private volatile Data data;
 
-    public TablePayloadHandler(final Field[] fields, final boolean showDetails, final TrimSettings trimSettings) {
+    public TablePayloadHandler(final List<Field> fields, final boolean showDetails, final TrimSettings trimSettings) {
         this.compiledSorter = new CompiledSorter(fields);
         this.compiledDepths = new CompiledDepths(fields, showDetails);
         this.trimSettings = trimSettings;

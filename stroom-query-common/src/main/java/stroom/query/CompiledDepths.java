@@ -18,29 +18,31 @@ package stroom.query;
 
 import stroom.query.api.Field;
 
+import java.util.List;
+
 public class CompiledDepths {
     private final int maxGroupDepth;
     private final int maxDepth;
     private final int[] depths;
     private final boolean hasGroupBy;
 
-    public CompiledDepths(final Field[] fields, boolean showDetail) {
+    public CompiledDepths(final List<Field> fields, boolean showDetail) {
         int maxGroupDepth = -1;
 
         if (fields == null) {
             depths = new int[0];
         } else {
-            depths = new int[fields.length];
+            depths = new int[fields.size()];
 
-            for (int i = 0; i < fields.length; i++) {
-                final Field field = fields[i];
+            int i = 0;
+            for (final Field field : fields) {
                 // Create compiled field.
                 int groupDepth = -1;
                 if (field.getGroup() != null) {
                     groupDepth = field.getGroup();
                 }
                 maxGroupDepth = Math.max(maxGroupDepth, groupDepth);
-                depths[i] = groupDepth;
+                depths[i++] = groupDepth;
             }
         }
 

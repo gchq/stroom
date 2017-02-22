@@ -16,6 +16,8 @@
 
 package stroom.query;
 
+import java.util.List;
+
 public interface Store {
     /**
      * Stop searching and destroy any stored data.
@@ -45,7 +47,7 @@ public interface Store {
      * @return A string containing all errors that have occurred so far during
      * the current search.
      */
-    String[] getErrors();
+    List<String> getErrors();
 
     /**
      * Get any search query highlights that can be extracted from the query.
@@ -53,5 +55,5 @@ public interface Store {
      * @return A set of strings found in the query that could be highlighted in
      * the UI to show where the query terms have been found.
      */
-    String[] getHighlights();
+    List<String> getHighlights();
 }

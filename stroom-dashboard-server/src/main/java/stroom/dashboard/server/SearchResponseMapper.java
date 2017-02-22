@@ -31,12 +31,11 @@ import stroom.dashboard.shared.SearchResponse;
 import stroom.dashboard.shared.TableResult;
 import stroom.dashboard.shared.VisResult;
 import stroom.query.api.Field;
+import stroom.query.api.FlatResult;
 import stroom.query.api.Result;
 import stroom.util.shared.OffsetRange;
-import stroom.util.shared.SharedString;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -59,8 +58,7 @@ public class SearchResponseMapper {
         }
 
         if (searchResponse.getHighlights() != null) {
-            List<String> list = Arrays.asList(searchResponse.getHighlights());
-            copy.setHighlights(new HashSet<>(list));
+            copy.setHighlights(new HashSet<>(searchResponse.getHighlights()));
         }
 
         if (searchResponse.getErrors() != null) {
@@ -95,8 +93,8 @@ public class SearchResponseMapper {
             copy.setTotalResults(tableResult.getTotalResults());
 
             return copy;
-        } else if (result instanceof stroom.query.api.VisResult) {
-            final stroom.query.api.VisResult visResult = (stroom.query.api.VisResult) result;
+        } else if (result instanceof FlatResult) {
+            final FlatResult visResult = (FlatResult) result;
             final VisResult copy = mapVisResult(visResult);
 
             return copy;
@@ -105,49 +103,45 @@ public class SearchResponseMapper {
         return null;
     }
 
-    private List<Row> mapRows(final stroom.query.api.Row[] rows) {
+    private List<Row> mapRows(final List<stroom.query.api.Row> rows) {
         final List<Row> copy = new ArrayList<>();
         if (rows != null) {
             for (final stroom.query.api.Row row : rows) {
-                SharedString[] values = null;
-
-                if (row.getValues() != null) {
-                    values = new SharedString[row.getValues().length];
-                    for (int i = 0; i < values.length; i++) {
-                        values[i] = SharedString.wrap(row.getValues()[i]);
-                    }
-                }
-
-                final Row item = new Row(row.getGroupKey(), values, row.getDepth());
+                final Row item = new Row(row.getGroupKey(), row.getValues(), row.getDepth());
                 copy.add(item);
             }
         }
         return copy;
     }
 
-    private VisResult mapVisResult(final stroom.query.api.VisResult visResult) {
+    private VisResult mapVisResult(final FlatResult visResult) {
         String json = null;
         String error = visResult.getError();
 
         if (error == null) {
             try {
-                final Field[] fields = visResult.getStructure();
+                final List<Field> fields = visResult.getStructure();
                 if (fields != null && visResult.getValues() != null) {
-                    int valueOffset = 3;
+                    int valueOffset = 0;
 
                     final Map<Integer, List<String>> typeMap = new HashMap<>();
                     int maxDepth = 0;
                     for (final Field field : fields) {
-                        String type = Type.GENERAL.name();
-                        if (field.getFormat() != null && field.getFormat().getType() != null) {
-                            type = field.getFormat().getType().name();
-                        }
-                        typeMap.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(type);
-
-                        if (field.getGroup() != null) {
-                            maxDepth = Math.max(maxDepth, field.getGroup());
-                        } else {
+                        // Ignore key and depth fields.
+                        if (field.getName() != null && field.getName().startsWith(":")) {
                             valueOffset++;
+
+                        } else {
+                            String type = Type.GENERAL.name();
+                            if (field.getFormat() != null && field.getFormat().getType() != null) {
+                                type = field.getFormat().getType().name();
+                            }
+                            typeMap.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(type);
+
+                            if (field.getGroup() != null) {
+                                maxDepth = Math.max(maxDepth, field.getGroup());
+                                valueOffset++;
+                            }
                         }
                     }
 
@@ -166,12 +160,11 @@ public class SearchResponseMapper {
                         types[group] = row;
                     }
 
-                    final int valueCount = 3 + fields.length - valueOffset;
+                    final int valueCount = fields.size() - valueOffset;
 
-
-                    final Map<Object, List<Object[]>> map = new HashMap<>();
-                    for (final Object[] row : visResult.getValues()) {
-                        map.computeIfAbsent(row[0], k -> new ArrayList<>()).add(row);
+                    final Map<Object, List<List<Object>>> map = new HashMap<>();
+                    for (final List<Object> row : visResult.getValues()) {
+                        map.computeIfAbsent(row.get(0), k -> new ArrayList<>()).add(row);
                     }
 
                     final Store store = getStore(null, map, types, valueCount, maxDepth, 0);
@@ -195,19 +188,19 @@ public class SearchResponseMapper {
         return new VisResult(json, visResult.getSize(), error);
     }
 
-    private Store getStore(final Object key, final Map<Object, List<Object[]>> map, final String[][] types, final int valueCount, final int maxDepth, final int depth) {
+    private Store getStore(final Object key, final Map<Object, List<List<Object>>> map, final String[][] types, final int valueCount, final int maxDepth, final int depth) {
         Store store = null;
 
-        final List<Object[]> rows = map.get(key);
+        final List<List<Object>> rows = map.get(key);
         if (rows != null) {
             final List<Object> values = new ArrayList<>();
             final Double[] min = new Double[valueCount];
             final Double[] max = new Double[valueCount];
             final Double[] sum = new Double[valueCount];
 
-            for (final Object[] row : rows) {
+            for (final List<Object> row : rows) {
                 if (depth < maxDepth) {
-                    final Store childStore = getStore(row[1], map, types, valueCount, maxDepth, depth + 1);
+                    final Store childStore = getStore(row.get(1), map, types, valueCount, maxDepth, depth + 1);
                     if (childStore != null) {
                         values.add(childStore);
 
@@ -218,11 +211,10 @@ public class SearchResponseMapper {
                         }
                     }
                 } else {
-                    final Object[] vals = new Object[valueCount];
-                    System.arraycopy(row, row.length - valueCount, vals, 0, valueCount);
+                    final List<Object> vals = row.subList(row.size() - valueCount, row.size());
                     values.add(vals);
                     for (int i = 0; i < valueCount; i++) {
-                        final Double dbl = TypeConverter.getDouble(vals[i]);
+                        final Double dbl = TypeConverter.getDouble(vals.get(i));
                         if (dbl != null) {
                             min[i] = min(min[i], dbl);
                             max[i] = max(max[i], dbl);

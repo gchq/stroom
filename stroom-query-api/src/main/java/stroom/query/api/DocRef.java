@@ -20,6 +20,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.HasDisplayValue;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
@@ -28,15 +31,20 @@ import java.io.Serializable;
 @JsonPropertyOrder({"type", "id", "uuid", "name"})
 @XmlType(name = "DocRef", propOrder = {"type", "id", "uuid", "name"})
 @XmlRootElement(name = "doc")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable {
     private static final long serialVersionUID = -2121399789820829359L;
 
-    protected String type;
-    protected String uuid;
-    protected String name;
+    @XmlElement
+    private String type;
+    @XmlElement
+    private String uuid;
+    @XmlElement
+    private String name;
 
     @Deprecated
-    protected Long id;
+    @XmlElement
+    private Long id;
 
     public DocRef() {
     }
@@ -56,24 +64,12 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable
         return type;
     }
 
-    public void setType(final String value) {
-        this.type = value;
-    }
-
     public String getUuid() {
         return uuid;
     }
 
-    public void setUuid(final String uuid) {
-        this.uuid = uuid;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(final String name) {
-        this.name = name;
     }
 
     @Deprecated

@@ -5,20 +5,26 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.shared.HasDisplayValue;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.List;
 
 @JsonPropertyOrder({"type", "name", "queryable", "conditions"})
 @XmlType(name = "DataSourceField", propOrder = {"type", "name", "queryable", "conditions"})
-public class DataSourceField implements Serializable, HasDisplayValue {
+@XmlAccessorType(XmlAccessType.FIELD)
+public final class DataSourceField implements Serializable, HasDisplayValue {
     private static final long serialVersionUID = 1272545271946712570L;
 
+    @XmlElement
     private DataSourceFieldType type;
+    @XmlElement
     private String name;
+    @XmlElement
     private Boolean queryable;
 
     /**
@@ -26,62 +32,38 @@ public class DataSourceField implements Serializable, HasDisplayValue {
      * can be null in which case a default set will be returned. Not persisted
      * in the XML
      */
-    private Condition[] conditions;
+    @XmlElementWrapper(name = "conditions")
+    @XmlElement(name = "condition")
+    private List<Condition> conditions;
 
-    public DataSourceField() {
+    private DataSourceField() {
     }
 
-    public DataSourceField(final DataSourceFieldType type, final String name) {
-        this.type = type;
-        this.name = name;
-    }
-
-    public DataSourceField(final DataSourceFieldType type, final String name, final Boolean queryable, final Condition[] conditions) {
+    public DataSourceField(final DataSourceFieldType type, final String name, final Boolean queryable, final List<Condition> conditions) {
         this.type = type;
         this.name = name;
         this.queryable = queryable;
         this.conditions = conditions;
     }
 
-    @XmlElement
     public DataSourceFieldType getType() {
         return type;
     }
 
-    public void setType(final DataSourceFieldType type) {
-        this.type = type;
-    }
-
-    @XmlElement
     public String getName() {
         return name;
     }
 
-    public void setName(final String name) {
-        this.name = name;
-    }
-
-    @XmlElementWrapper(name = "conditions")
-    @XmlElement(name = "condition")
-    public Condition[] getConditions() {
-        return conditions;
-    }
-
-    public void setConditions(final Condition[] conditions) {
-        this.conditions = conditions;
-    }
-
-    @XmlElement
     public Boolean getQueryable() {
         return queryable;
     }
 
-    public void setQueryable(final Boolean queryable) {
-        this.queryable = queryable;
-    }
-
     public boolean queryable() {
         return queryable != null && queryable;
+    }
+
+    public List<Condition> getConditions() {
+        return conditions;
     }
 
     @JsonIgnore
@@ -101,8 +83,7 @@ public class DataSourceField implements Serializable, HasDisplayValue {
         if (type != that.type) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (queryable != null ? !queryable.equals(that.queryable) : that.queryable != null) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(conditions, that.conditions);
+        return conditions != null ? conditions.equals(that.conditions) : that.conditions == null;
     }
 
     @Override
@@ -110,7 +91,7 @@ public class DataSourceField implements Serializable, HasDisplayValue {
         int result = type != null ? type.hashCode() : 0;
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (queryable != null ? queryable.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(conditions);
+        result = 31 * result + (conditions != null ? conditions.hashCode() : 0);
         return result;
     }
 
@@ -120,7 +101,7 @@ public class DataSourceField implements Serializable, HasDisplayValue {
                 "type=" + type +
                 ", name='" + name + '\'' +
                 ", queryable=" + queryable +
-                ", conditions=" + Arrays.toString(conditions) +
+                ", conditions=" + conditions +
                 '}';
     }
 
