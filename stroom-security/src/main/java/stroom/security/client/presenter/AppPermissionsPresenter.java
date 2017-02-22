@@ -64,21 +64,29 @@ public class AppPermissionsPresenter extends
     }
 
     private void refresh() {
-        // Fetch permissions and populate table.
-        final FetchUserAppPermissionsAction fetchUserAppPermissionsAction = new FetchUserAppPermissionsAction(
-                relatedUser);
-        dispatcher.execute(fetchUserAppPermissionsAction, new AsyncCallbackAdaptor<UserAppPermissions>() {
-            @Override
-            public void onSuccess(final UserAppPermissions userAppPermissions) {
-                AppPermissionsPresenter.this.userAppPermissions = userAppPermissions;
+        if (relatedUser == null) {
+            userAppPermissions = null;
+            final List<String> features = new ArrayList<String>();
+            getView().setRowData(0, features);
+            getView().setRowCount(features.size(), true);
 
-                final List<String> features = new ArrayList<String>(
-                        userAppPermissions.getAllPermissions());
-                Collections.sort(features);
-                getView().setRowData(0, features);
-                getView().setRowCount(features.size(), true);
-            }
-        });
+        } else {
+            // Fetch permissions and populate table.
+            final FetchUserAppPermissionsAction fetchUserAppPermissionsAction = new FetchUserAppPermissionsAction(
+                    relatedUser);
+            dispatcher.execute(fetchUserAppPermissionsAction, new AsyncCallbackAdaptor<UserAppPermissions>() {
+                @Override
+                public void onSuccess(final UserAppPermissions userAppPermissions) {
+                    AppPermissionsPresenter.this.userAppPermissions = userAppPermissions;
+
+                    final List<String> features = new ArrayList<String>(
+                            userAppPermissions.getAllPermissions());
+                    Collections.sort(features);
+                    getView().setRowData(0, features);
+                    getView().setRowCount(features.size(), true);
+                }
+            });
+        }
     }
 
     private void addColumns() {

@@ -56,7 +56,7 @@ public class FolderPermissionsTabPresenter
     public void setDocumentPermissions(DocumentPermissions documentPermissions, boolean group, ChangeSet<UserPermission> changeSet) {
         super.setDocumentPermissions(documentPermissions, group, changeSet);
 
-        final List<String> permissions = new ArrayList<String>();
+        final List<String> permissions = new ArrayList<>();
         for (final String permission : documentPermissions.getAllPermissions()) {
             if (permission.startsWith("Create")) {
                 permissions.add(permission);

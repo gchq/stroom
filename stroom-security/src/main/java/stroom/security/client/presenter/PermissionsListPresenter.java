@@ -118,21 +118,7 @@ public class PermissionsListPresenter
         changeSet.add(userPermission);
 
         // Add to the model.
-        Set<String> permissions = documentPermissions.getUserPermissions().get(userRef);
-        if (permissions == null) {
-            permissions = new HashSet<String>();
-            documentPermissions.getUserPermissions().put(userRef, permissions);
-        }
-        permissions.add(permission);
-
-
-        // TODO : Discuss - Not sure if we want to do this automatically as it would affect child documents if changes are cascaded.
-//        // Remove any lower permissions.
-//        String lowerPermission = DocumentPermissionNames.getLowerPermission(permission);
-//        while (lowerPermission != null) {
-//            removePermission(userRef, lowerPermission);
-//            lowerPermission = DocumentPermissionNames.getLowerPermission(lowerPermission);
-//        }
+        documentPermissions.getUserPermissions().computeIfAbsent(userRef, k -> new HashSet<>()).add(permission);
     }
 
     public void removePermission(final UserRef userRef, final String permission) {
@@ -145,9 +131,6 @@ public class PermissionsListPresenter
         final Set<String> permissions = documentPermissions.getUserPermissions().get(userRef);
         if (permissions != null) {
             permissions.remove(permission);
-            if (permissions.size() == 0) {
-                documentPermissions.getUserPermissions().remove(userRef);
-            }
         }
     }
 
