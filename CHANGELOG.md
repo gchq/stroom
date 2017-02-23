@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.11] - 2017-02-23
+
 * Issue **#127** : Entity reference replacement should now work with references to 'StatisticsDataSource'.
 
 * Issue **#125** : Fixed display of active tasks which was broken by changes to the task summary table selection model.
@@ -157,7 +159,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Intial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.11...HEAD
+[v5.0-beta.11]: https://github.com/gchq/stroom/compare/v5.0-beta.10...v5.0-beta.11
 [v5.0-beta.10]: https://github.com/gchq/stroom/compare/v5.0-beta.9...v5.0-beta.10
 [v5.0-beta.9]: https://github.com/gchq/stroom/compare/v5.0-beta.8...v5.0-beta.9
 [v5.0-beta.8]: https://github.com/gchq/stroom/compare/v5.0-beta.7...v5.0-beta.8
