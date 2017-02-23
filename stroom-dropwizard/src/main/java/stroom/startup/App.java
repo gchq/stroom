@@ -27,11 +27,11 @@ public class App extends Application<Config> {
         // We need to prime this otherwise we won't have a thread scope context and bean initialisation will fail
         ThreadScopeContextHolder.createContext();
 
-        ApplicationContexts.configure(configuration, environment);
+        ApplicationContexts.configure();
         Servlets.loadInto(environment);
         Filters.loadInto(environment);
         Listeners.loadInto(environment, ApplicationContexts.applicationContext);
-        ApplicationContexts.start();
+        ApplicationContexts.start(environment, configuration);
     }
 
 

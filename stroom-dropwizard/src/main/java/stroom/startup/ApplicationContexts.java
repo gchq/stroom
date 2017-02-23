@@ -1,23 +1,14 @@
 package stroom.startup;
 
 import io.dropwizard.setup.Environment;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
-import org.springframework.web.context.support.GenericWebApplicationContext;
 import stroom.Config;
-import stroom.util.spring.MyContextLoaderListener;
 
 public class ApplicationContexts {
 
     static AnnotationConfigWebApplicationContext applicationContext;
-    private static Config configuration;
-    private static Environment environment;
 
-    static void configure(Config config, Environment env) throws ClassNotFoundException {
-        configuration = config;
-        environment = env;
-        GenericWebApplicationContext parentApplicationContext = new GenericWebApplicationContext();
+    static void configure() throws ClassNotFoundException {
         applicationContext = new AnnotationConfigWebApplicationContext();
 
         // We register all the configuration beans so they'll be loaded when we call applicationContext.refresh().
@@ -40,7 +31,6 @@ public class ApplicationContexts {
 
         
 
-        applicationContext.setParent(parentApplicationContext);
         applicationContext.setConfigLocations(
                 "stroom.spring.ScopeConfiguration",
                 "stroom.spring.PersistenceConfiguration",
@@ -62,8 +52,7 @@ public class ApplicationContexts {
 
     }
 
-    static void start(){
-        ((GenericWebApplicationContext)applicationContext.getParent()).refresh();
+    static void start(Environment environment, Config configuration){
         applicationContext.refresh();
         applicationContext.getBeanFactory().registerSingleton("dwConfiguration", configuration);
         applicationContext.getBeanFactory().registerSingleton("dwEnvironment", environment);
