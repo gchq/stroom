@@ -38,7 +38,7 @@
   <parent>
     <groupId>stroom</groupId>
     <artifactId>stroom</artifactId>
-    <version>5.0-beta.11</version>
+    <version>5.0-beta.12-SNAPSHOT</version>
   </parent>
 
   <artifactId>stroom-security-api</artifactId>
