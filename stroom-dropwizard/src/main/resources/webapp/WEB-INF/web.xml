@@ -56,8 +56,8 @@
 
     <!-- Log4J filter -->
     <!--<filter>-->
-        <!--<filter-name>log4jFilter</filter-name>-->
-        <!--<filter-class>stroom.util.logging.Log4JFilter</filter-class>-->
+        <!--<filter-name>loggingFilter</filter-name>-->
+        <!--<filter-class>stroom.util.logging.LoggingFilterer</filter-class>-->
     <!--</filter>-->
 
     <!-- Spring Security filter -->
