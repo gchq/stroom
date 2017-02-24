@@ -16,16 +16,16 @@
   -->
 <web-app>
     <!-- Application display name and context -->
-    <display-name>Stroom</display-name>
+    <!--<display-name>Stroom</display-name>-->
 
     <!--<listener>-->
         <!--<listener-class>stroom.util.spring.MyContextLoaderListener</listener-class>-->
     <!--</listener>-->
 
-    <context-param>
-        <param-name>log4jRefreshInterval</param-name>
-        <param-value>10000</param-value>
-    </context-param>
+    <!--<context-param>-->
+        <!--<param-name>log4jRefreshInterval</param-name>-->
+        <!--<param-value>10000</param-value>-->
+    <!--</context-param>-->
     <!--<context-param>-->
         <!--<param-name>contextClass</param-name>-->
         <!--<param-value>org.springframework.web.context.support.AnnotationConfigWebApplicationContext</param-value>-->
@@ -49,10 +49,10 @@
             <!--stroom.security.spring.SecurityConfiguration-->
         <!--</param-value>-->
     <!--</context-param>-->
-    <context-param>
-        <param-name>spring.profiles.active</param-name>
-        <param-value>production,PROD_SECURITY</param-value>
-    </context-param>
+    <!--<context-param>-->
+        <!--<param-name>spring.profiles.active</param-name>-->
+        <!--<param-value>production,PROD_SECURITY</param-value>-->
+    <!--</context-param>-->
 
     <!-- Log4J filter -->
     <!--<filter>-->
