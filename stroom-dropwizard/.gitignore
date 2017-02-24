@@ -2,7 +2,7 @@
 /.externalToolBuilders/
 /gwt-DevMode/
 /gwt-SuperDevMode/
-/gwt-unitCache/
+**/gwt-unitCache/
 /.project
 /.settings/
 /target/
