@@ -11,8 +11,8 @@ public class Servlets {
     @SuppressWarnings("unchecked")
     static void loadInto(Environment environment) throws ClassNotFoundException {
         addServlet(environment, Servlets.newLog4jServlet(), "", null);
-        addServlet(environment, Servlets.newUpgradeDispatcherServlet(), "/", new String[]{
-                "*.rpc",
+        addServlet(environment, Servlets.newUpgradeDispatcherServlet(), "/*.rpc", new String[]{
+                "/dispatch.rpc",
                 "/dynamic.css",
                 "/script",
                 "/datafeed",
@@ -50,22 +50,22 @@ public class Servlets {
         ServletHolder servlet = new ServletHolder(stroom.util.upgrade.UpgradeDispatcherServlet.class);
         servlet.setName("spring");
         servlet.setInitParameter("spring.profiles.active", "production,PROD_SECURITY");
-//        servlet.setInitParameter("upgrade-class", "stroom.upgrade.StroomUpgradeHandler");
+        servlet.setInitParameter("upgrade-class", "stroom.upgrade.StroomUpgradeHandler");
         servlet.setInitParameter("contextClass", "org.springframework.web.context.support.AnnotationConfigWebApplicationContext");
-//        servlet.setInitParameter("contextConfigLocation", "stroom.spring.ScopeConfiguration,\n" +
-//                "                stroom.spring.PersistenceConfiguration,\n" +
-//                "                stroom.spring.ServerComponentScanConfiguration,\n" +
-//                "                stroom.spring.ServerConfiguration,\n" +
-//                "                stroom.spring.CachedServiceConfiguration,\n" +
-//                "                stroom.logging.spring.EventLoggingConfiguration,\n" +
-//                "                stroom.index.spring.IndexConfiguration,\n" +
-//                "                stroom.search.spring.SearchConfiguration,\n" +
-//                "                stroom.script.spring.ScriptConfiguration,\n" +
-//                "                stroom.visualisation.spring.VisualisationConfiguration,\n" +
-//                "                stroom.dashboard.spring.DashboardConfiguration,\n" +
-//                "                stroom.spring.CoreClientConfiguration,\n" +
-//                "                stroom.statistics.spring.StatisticsConfiguration,\n" +
-//                "                stroom.security.spring.SecurityConfiguration");
+        servlet.setInitParameter("contextConfigLocation", "stroom.spring.ScopeConfiguration,\n" +
+                "                stroom.spring.PersistenceConfiguration,\n" +
+                "                stroom.spring.ServerComponentScanConfiguration,\n" +
+                "                stroom.spring.ServerConfiguration,\n" +
+                "                stroom.spring.CachedServiceConfiguration,\n" +
+                "                stroom.logging.spring.EventLoggingConfiguration,\n" +
+                "                stroom.index.spring.IndexConfiguration,\n" +
+                "                stroom.search.spring.SearchConfiguration,\n" +
+                "                stroom.script.spring.ScriptConfiguration,\n" +
+                "                stroom.visualisation.spring.VisualisationConfiguration,\n" +
+                "                stroom.dashboard.spring.DashboardConfiguration,\n" +
+                "                stroom.spring.CoreClientConfiguration,\n" +
+                "                stroom.statistics.spring.StatisticsConfiguration,\n" +
+                "                stroom.security.spring.SecurityConfiguration");
         return servlet;
     }
 
