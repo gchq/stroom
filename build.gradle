@@ -77,14 +77,6 @@ task buildUI(type: GradleBuild) {
     tasks = ['gwtDevMode']
 }
 
-task run(type: GradleBuild) {
-    tasks = [':stroom-app:jettyStart']
-}
-
-task debug(type: GradleBuild) {
-    tasks = [':stroom-app:jettyStartDebug']
-}
-
 task setupSampleData(type: GradleBuild) {
     tasks = [':stroom-integrationtest:setupSampleData']
 }
