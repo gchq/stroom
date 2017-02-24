@@ -24,6 +24,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Scope;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import stroom.cluster.server.ClusterCallServiceRPC;
 import stroom.datafeed.server.DataFeedServiceImpl;
@@ -52,7 +53,7 @@ import java.util.Properties;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-//@EnableWebMvc
+@EnableWebMvc
 @ComponentScan(basePackages = {"stroom"}, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class CoreClientConfiguration {
