@@ -22,6 +22,7 @@ import org.springframework.web.context.support.AnnotationConfigWebApplicationCon
 
 import javax.servlet.ServletContext;
 
+//TODO 2017-02-25 - Dropwizard migration: this is currently redundant
 public class MyContextLoaderListener extends ContextLoaderListener {
 
     private AnnotationConfigWebApplicationContext applicationContext;
