@@ -30,7 +30,7 @@ public class TableResult implements ComponentResult {
     private static final long serialVersionUID = -2964122512841756795L;
 
     @XmlElement
-    private List<Row> rows;
+    private String jsonData;
 
     @XmlElement
     private OffsetRange<Integer> resultRange;
@@ -45,12 +45,12 @@ public class TableResult implements ComponentResult {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public List<Row> getRows() {
-        return rows;
+    public String getJsonData() {
+        return jsonData;
     }
 
-    public void setRows(final List<Row> rows) {
-        this.rows = rows;
+    public void setJsonData(final String jsonData) {
+        this.jsonData = jsonData;
     }
 
     public OffsetRange<Integer> getResultRange() {
@@ -87,7 +87,7 @@ public class TableResult implements ComponentResult {
 
         final TableResult result = (TableResult) o;
         final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(rows, result.rows);
+        builder.append(jsonData, result.jsonData);
         builder.append(resultRange, result.resultRange);
         builder.append(totalResults, result.totalResults);
         builder.append(error, result.error);
@@ -97,7 +97,7 @@ public class TableResult implements ComponentResult {
     @Override
     public int hashCode() {
         final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(rows);
+        builder.append(jsonData);
         builder.append(resultRange);
         builder.append(totalResults);
         builder.append(error);
@@ -106,10 +106,10 @@ public class TableResult implements ComponentResult {
 
     @Override
     public String toString() {
-        if (rows == null) {
+        if (jsonData == null) {
             return "";
         }
 
-        return rows.size() + " rows";
+        return jsonData;//.size() + " rows";
     }
 }

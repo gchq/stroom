@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.dashboard.server;
 
 import stroom.util.shared.SharedObject;
 

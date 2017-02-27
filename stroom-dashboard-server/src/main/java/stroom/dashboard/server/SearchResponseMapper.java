@@ -18,15 +18,17 @@ package stroom.dashboard.server;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.TypeConverter;
 import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.Format.Type;
-import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.SearchResponse;
 import stroom.dashboard.shared.TableResult;
 import stroom.dashboard.shared.VisResult;
@@ -44,6 +46,8 @@ import java.util.Map.Entry;
 
 @Component
 public class SearchResponseMapper {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SearchResponseMapper.class);
+
     public SearchResponse mapResponse(final stroom.query.api.SearchResponse searchResponse) {
         if (searchResponse == null) {
             return null;
@@ -85,7 +89,8 @@ public class SearchResponseMapper {
             final stroom.query.api.TableResult tableResult = (stroom.query.api.TableResult) result;
             final TableResult copy = new TableResult();
 
-            copy.setRows(mapRows(tableResult.getRows()));
+            final String json = writeValueAsString(mapRows(tableResult.getRows()));
+            copy.setJsonData(json);
             if (tableResult.getResultRange() != null) {
                 copy.setResultRange(new OffsetRange<>(tableResult.getResultRange().getOffset().intValue(), tableResult.getResultRange().getLength().intValue()));
             }
@@ -168,17 +173,7 @@ public class SearchResponseMapper {
                     }
 
                     final Store store = getStore(null, map, types, valueCount, maxDepth, 0);
-
-                    final SimpleModule module = new SimpleModule();
-                    module.addSerializer(Double.class, new MyDoubleSerialiser());
-
-                    final ObjectMapper mapper = new ObjectMapper();
-                    mapper.registerModule(module);
-                    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                    mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-                    mapper.setSerializationInclusion(Include.NON_NULL);
-
-                    json = mapper.writeValueAsString(store);
+                    json = getMapper().writeValueAsString(store);
                 }
             } catch (final Exception e) {
                 error = e.getMessage();
@@ -371,6 +366,33 @@ public class SearchResponseMapper {
 //
 //        return mapped;
 //    }
+
+    private String writeValueAsString(final Object object) {
+        String json = null;
+
+        if (object != null) {
+            try {
+                json = getMapper().writeValueAsString(object);
+            } catch (final JsonProcessingException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+
+        return json;
+    }
+
+    private ObjectMapper getMapper() {
+        final SimpleModule module = new SimpleModule();
+        module.addSerializer(Double.class, new MyDoubleSerialiser());
+
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(module);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+
+        return mapper;
+    }
 
     public static class Store {
         private Object key;
