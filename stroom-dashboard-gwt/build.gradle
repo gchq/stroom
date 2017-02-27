@@ -1,3 +1,13 @@
+ext {
+    warDir = project(':stroom-app').file("src/main/webapp")
+    outputDir = "${warDir}/dashboard"
+    gwtBuildDir = "${project.buildDir}/gwt"
+    tmpDir = "${gwtBuildDir}/tmp"
+    workDir = "${gwtBuildDir}/work"
+    deployDir = "${gwtBuildDir}/deploy"
+    extraDir = "${gwtBuildDir}/extra"
+}
+
 dependencies {
     compile project(':stroom-dashboard-client')
 
@@ -21,20 +31,11 @@ dependencies {
 }
 
 task gwtCompile (dependsOn: classes, type: JavaExec) {
-    ext.gwtBuildDir = "${project.buildDir}/gwt"
-    def warDir = project(':stroom-app').file("src/main/webapp")
-    def workDir = "${gwtBuildDir}/work"
-    def tmpDir = "${gwtBuildDir}/tmp"
-    def deployDir = "${gwtBuildDir}/deploy"
-    def extraDir = "${gwtBuildDir}/extra"
-    def outputDir = "${warDir}/dashboard"
     def module = 'stroom.dashboard.DashboardApp'
 
-    workDir = tmpDir;
-
     doFirst {
-        file(outputDir).delete()
-        file(gwtBuildDir).delete()
+        delete outputDir
+        delete gwtBuildDir
         file(gwtBuildDir).mkdirs()
         file(tmpDir).mkdirs()
     }
@@ -43,51 +44,38 @@ task gwtCompile (dependsOn: classes, type: JavaExec) {
 
     classpath {
         [
-                sourceSets.main.java.srcDirs,           // Java source
-                sourceSets.main.output.resourcesDir,    // Generated resources
-                sourceSets.main.output.classesDir,      // Generated classes
-                sourceSets.main.compileClasspath,       // Deps
+            sourceSets.main.java.srcDirs,           // Java source
+            sourceSets.main.output.resourcesDir,    // Generated resources
+            sourceSets.main.output.classesDir,      // Generated classes
+            sourceSets.main.compileClasspath,       // Deps
         ]
     }
 
-    jvmArgs =
-            [
-                    "-Djava.io.tmpdir=${tmpDir}"
-            ]
-
     args =
-            [
-                    '-logLevel', 'INFO',
-                    '-workDir', workDir,
-                    '-XfragmentCount', '5',
-                    '-optimize', '9',
-                    '-failOnError',
-                    '-localWorkers', '5',
-                    '-war', warDir,
-                    '-deploy', deployDir,
-                    '-extra', extraDir,
-                    '-strict',
-                    module                               // Your GWT module
-            ]
+        [
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-XfragmentCount', '5',
+            '-optimize', '9',
+            '-failOnError',
+            '-localWorkers', '5',
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            '-strict',
+            module                                  // Your GWT module
+        ]
 
+    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = '1G'
     maxHeapSize = '4G'
 }
 
-task gwtDevMode (dependsOn: classes, type: JavaExec) {
-    ext.gwtBuildDir = "${project.buildDir}/gwt"
-    def warDir = project(':stroom-app').file("src/main/webapp")
-    def workDir = "${gwtBuildDir}/work"
-    def tmpDir = "${gwtBuildDir}/tmp"
-    def deployDir = "${gwtBuildDir}/deploy"
-    def extraDir = "${gwtBuildDir}/extra"
-    def outputDir = "${warDir}/dashboard"
+task gwtDraftCompile (dependsOn: classes, type: JavaExec) {
     def module = 'stroom.dashboard.DashboardAppSuperDevModeChrome'
 
-    workDir = tmpDir;
-
     doFirst {
-        file(outputDir).delete()
+        delete outputDir
         file(gwtBuildDir).mkdirs()
         file(tmpDir).mkdirs()
     }
@@ -96,28 +84,60 @@ task gwtDevMode (dependsOn: classes, type: JavaExec) {
 
     classpath {
         [
-                sourceSets.main.java.srcDirs,           // Java source
-                sourceSets.main.output.resourcesDir,    // Generated resources
-                sourceSets.main.output.classesDir,      // Generated classes
-                sourceSets.main.compileClasspath,       // Deps
+            sourceSets.main.java.srcDirs,           // Java source
+            sourceSets.main.output.resourcesDir,    // Generated resources
+            sourceSets.main.output.classesDir,      // Generated classes
+            sourceSets.main.compileClasspath,       // Deps
         ]
     }
 
     args =
         [
-                '-logLevel', 'INFO',
-                '-workDir', workDir,
-                '-draftCompile',                        // Speeds up compile with 25%
-                '-XfragmentCount', '0',
-                '-optimize', '0',
-                '-failOnError',
-                '-localWorkers', '5',
-                '-incremental',
-                '-war', warDir,
-                '-deploy', deployDir,
-                '-extra', extraDir,
-                '-strict',
-                module                                  // Your GWT module
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-draftCompile',                        // Speeds up compile with 25%
+            '-XfragmentCount', '0',
+            '-optimize', '0',
+            '-failOnError',
+            '-localWorkers', '5',
+            '-incremental',
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            '-strict',
+            module                                  // Your GWT module
+        ]
+
+    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
+    minHeapSize = '1G'
+    maxHeapSize = '4G'
+}
+
+task gwtSuperDevMode (dependsOn: classes, type: JavaExec) {
+    def module = 'stroom.dashboard.DashboardAppSuperDevModeChrome'
+
+    main = 'com.google.gwt.dev.DevMode'
+
+    classpath {
+        [
+            sourceSets.main.java.srcDirs,           // Java source
+            sourceSets.main.output.resourcesDir,    // Generated resources
+            sourceSets.main.output.classesDir,      // Generated classes
+            sourceSets.main.compileClasspath,       // Deps
+        ]
+    }
+
+    args =
+        [
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-failOnError',
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            '-strict',
+            '-noserver',
+            module                                  // Your GWT module
         ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
