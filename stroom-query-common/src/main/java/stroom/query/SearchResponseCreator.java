@@ -47,16 +47,11 @@ public class SearchResponseCreator {
     }
 
     public SearchResponse create(final SearchRequest searchRequest) {
-        final SearchResponse searchResponse = new SearchResponse();
-        final List<Result> results = new ArrayList<>(searchRequest.getResultRequests().size());
-
-        // The result handler could possibly have not been set yet if the
-        // AsyncSearchTask has not started execution.
-        searchResponse.setHighlights(store.getHighlights());
-        searchResponse.setComplete(store.isComplete());
+        List<Result> results = new ArrayList<>(searchRequest.getResultRequests().size());
+        final boolean complete = store.isComplete();
 
         // Provide results if this search is incremental or the search is complete.
-        if (searchRequest.incremental() || searchResponse.complete()) {
+        if (searchRequest.incremental() || complete) {
             // Copy the requested portion of the result cache into the result.
             for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
                 final String componentId = resultRequest.getComponentId();
@@ -74,9 +69,7 @@ public class SearchResponseCreator {
                                 result = resultCreator.create(data, resultRequest);
                             }
                         } catch (final Exception e) {
-                            final TableResult tableResult = new TableResult(componentId);
-                            tableResult.setError(e.getMessage());
-                            result = tableResult;
+                            result = new TableResult(componentId, null, null, null, e.getMessage());
                         }
                     }
 
@@ -119,14 +112,11 @@ public class SearchResponseCreator {
             }
         }
 
-        if (results.size() > 0) {
-            searchResponse.setResults(results);
+        if (results.size() == 0) {
+            results = null;
         }
 
-        // Deliver the latest results from the store.
-        searchResponse.setErrors(store.getErrors());
-
-        return searchResponse;
+        return new SearchResponse(store.getHighlights(), results, store.getErrors(), complete);
     }
 
     private ResultCreator getResultCreator(final String componentId,

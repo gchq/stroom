@@ -26,58 +26,39 @@ import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 
 @JsonPropertyOrder({"componentId", "rows", "resultRange", "totalResults", "error"})
-@XmlType(name = "TableResult", propOrder = {"rows", "resultRange", "totalResults", "error"})
-@XmlAccessorType(XmlAccessType.FIELD)
 public final class TableResult extends Result {
     private static final long serialVersionUID = -2964122512841756795L;
 
-    @XmlElementWrapper(name = "rows")
-    @XmlElement(name = "row")
     private List<Row> rows;
-    @XmlElement
     private OffsetRange resultRange;
-    @XmlElement
     private Integer totalResults;
-    @XmlElement
     private String error;
 
-    public TableResult() {
+    TableResult() {
     }
 
-    public TableResult(final String componentId) {
+    public TableResult(final String componentId, final List<Row> rows, final OffsetRange resultRange, final Integer totalResults, final String error) {
         super(componentId);
+        this.rows = rows;
+        this.resultRange = resultRange;
+        this.totalResults = totalResults;
+        this.error = error;
     }
 
     public List<Row> getRows() {
         return rows;
     }
 
-    public void setRows(final List<Row> rows) {
-        this.rows = rows;
-    }
-
     public OffsetRange getResultRange() {
         return resultRange;
-    }
-
-    public void setResultRange(final OffsetRange resultRange) {
-        this.resultRange = resultRange;
     }
 
     public Integer getTotalResults() {
         return totalResults;
     }
 
-    public void setTotalResults(final Integer totalResults) {
-        this.totalResults = totalResults;
-    }
-
     public String getError() {
         return error;
-    }
-
-    public void setError(final String error) {
-        this.error = error;
     }
 
     @Override

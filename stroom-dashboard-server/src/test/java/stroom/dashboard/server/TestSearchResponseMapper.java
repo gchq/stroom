@@ -18,7 +18,9 @@ package stroom.dashboard.server;
 
 import org.junit.Test;
 import stroom.query.api.Field;
+import stroom.query.api.FieldBuilder;
 import stroom.query.api.FlatResult;
+import stroom.query.api.Format;
 import stroom.query.api.Format.Type;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Row;
@@ -39,29 +41,17 @@ public class TestSearchResponseMapper {
     }
 
     private SearchResponse getSearchResponse() {
-        final SearchResponse searchResponse = new SearchResponse();
-        searchResponse.setHighlights(Arrays.asList("highlight1", "highlight2"));
-        searchResponse.setErrors(Arrays.asList("some error"));
-        searchResponse.setComplete(false);
-
         final List<Row> rows = Collections.singletonList(new Row("groupKey", Arrays.asList("test"), 5));
-
-        final TableResult tableResult = new TableResult("table-1234");
-        tableResult.setError("tableResultError");
-        tableResult.setTotalResults(1);
-        tableResult.setResultRange(new OffsetRange(1, 2));
-        tableResult.setRows(rows);
-        searchResponse.setResults(Arrays.asList(tableResult, getVisResult1()));
-
-        return searchResponse;
+        final TableResult tableResult = new TableResult("table-1234", rows, new OffsetRange(1, 2), 1, "tableResultError");
+        return new SearchResponse(Arrays.asList("highlight1", "highlight2"), Arrays.asList(tableResult, getVisResult1()), Arrays.asList("some error"), false);
     }
 
     private FlatResult getVisResult1() {
         List<Field> structure = new ArrayList<>();
-        structure.add(new Field("val1", Type.GENERAL));
-        structure.add(new Field("val2", Type.NUMBER));
-        structure.add(new Field("val3", Type.NUMBER));
-        structure.add(new Field("val4", Type.GENERAL));
+        structure.add(new FieldBuilder().name("val1").format(Type.GENERAL).build());
+        structure.add(new FieldBuilder().name("val2").format(Type.NUMBER).build());
+        structure.add(new FieldBuilder().name("val3").format(Type.NUMBER).build());
+        structure.add(new FieldBuilder().name("val4").format(Type.GENERAL).build());
 
         List<List<Object>> data = new ArrayList<>();
         data.add(Arrays.asList("test0", 0.4, 234, "this0"));

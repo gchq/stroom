@@ -42,7 +42,7 @@ public final class Query implements Serializable {
     @XmlElement(name = "param")
     private List<Param> params;
 
-    public Query() {
+    private Query() {
     }
 
     public Query(final DocRef dataSource, final ExpressionOperator expression) {
@@ -59,24 +59,12 @@ public final class Query implements Serializable {
         return dataSource;
     }
 
-    public void setDataSource(final DocRef dataSource) {
-        this.dataSource = dataSource;
-    }
-
     public ExpressionOperator getExpression() {
         return expression;
     }
 
-    public void setExpression(final ExpressionOperator expression) {
-        this.expression = expression;
-    }
-
     public List<Param> getParams() {
         return params;
-    }
-
-    public void setParams(final List<Param> params) {
-        this.params = params;
     }
 
     @Override

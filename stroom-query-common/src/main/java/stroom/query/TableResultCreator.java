@@ -66,13 +66,7 @@ public class TableResultCreator implements ResultCreator {
             error = e.getMessage();
         }
 
-        final TableResult tableResult = new TableResult(resultRequest.getComponentId());
-        tableResult.setRows(resultList);
-        tableResult.setResultRange(new OffsetRange(offset, resultList.size()));
-        tableResult.setTotalResults(totalResults);
-        tableResult.setError(error);
-
-        return tableResult;
+        return new TableResult(resultRequest.getComponentId(), resultList, new OffsetRange(offset, resultList.size()), totalResults, error);
     }
 
     private int addTableResults(final Data data, final List<Field> fields, final int offset,

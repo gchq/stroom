@@ -46,55 +46,35 @@ public final class SearchRequest implements Serializable {
     @XmlElement
     private Boolean incremental;
 
-    public SearchRequest() {
+    private SearchRequest() {
     }
 
-    public SearchRequest(final QueryKey key, final Query query, final List<ResultRequest> resultRequests,
-                         final String dateTimeLocale) {
+    public SearchRequest(final QueryKey key, final Query query, final List<ResultRequest> resultRequests, final String dateTimeLocale, final Boolean incremental) {
         this.key = key;
         this.query = query;
         this.resultRequests = resultRequests;
         this.dateTimeLocale = dateTimeLocale;
+        this.incremental = incremental;
     }
 
     public QueryKey getKey() {
         return key;
     }
 
-    public void setKey(final QueryKey key) {
-        this.key = key;
-    }
-
     public Query getQuery() {
         return query;
-    }
-
-    public void setQuery(final Query query) {
-        this.query = query;
     }
 
     public List<ResultRequest> getResultRequests() {
         return resultRequests;
     }
 
-    public void setResultRequests(final List<ResultRequest> resultRequests) {
-        this.resultRequests = resultRequests;
-    }
-
     public String getDateTimeLocale() {
         return dateTimeLocale;
     }
 
-    public void setDateTimeLocale(final String dateTimeLocale) {
-        this.dateTimeLocale = dateTimeLocale;
-    }
-
     public Boolean getIncremental() {
         return incremental;
-    }
-
-    public void setIncremental(final Boolean incremental) {
-        this.incremental = incremental;
     }
 
     public boolean incremental() {

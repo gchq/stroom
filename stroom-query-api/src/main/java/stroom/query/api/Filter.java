@@ -35,7 +35,7 @@ public final class Filter implements Serializable {
     @XmlElement
     private String excludes;
 
-    public Filter() {
+    private Filter() {
     }
 
     public Filter(String includes, String excludes) {
@@ -47,16 +47,8 @@ public final class Filter implements Serializable {
         return includes;
     }
 
-    public void setIncludes(final String includes) {
-        this.includes = includes;
-    }
-
     public String getExcludes() {
         return excludes;
-    }
-
-    public void setExcludes(final String excludes) {
-        this.excludes = excludes;
     }
 
     @Override

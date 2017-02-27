@@ -43,6 +43,7 @@ import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.query.api.DateTimeFormat;
 import stroom.query.api.DocRef;
+import stroom.query.api.FieldBuilder;
 import stroom.query.api.Format.Type;
 import stroom.query.api.NumberFormat;
 import stroom.query.api.Param;
@@ -52,6 +53,7 @@ import stroom.query.api.ResultRequest;
 import stroom.query.api.ResultRequest.ResultStyle;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.TableSettings;
+import stroom.query.api.TableSettingsBuilder;
 import stroom.query.api.TimeZone.Use;
 import stroom.util.shared.OffsetRange;
 import stroom.visualisation.shared.Visualisation;
@@ -83,12 +85,7 @@ public class SearchRequestMapper {
             return null;
         }
 
-        final stroom.query.api.SearchRequest copy = new stroom.query.api.SearchRequest();
-        copy.setKey(new QueryKey(queryKey.getUuid()));
-        copy.setQuery(mapQuery(searchRequest));
-        copy.setResultRequests(mapResultRequests(searchRequest));
-        copy.setDateTimeLocale(searchRequest.getDateTimeLocale());
-        copy.setIncremental(searchRequest.getSearch().getIncremental());
+        final stroom.query.api.SearchRequest copy = new stroom.query.api.SearchRequest(new QueryKey(queryKey.getUuid()), mapQuery(searchRequest), mapResultRequests(searchRequest), searchRequest.getDateTimeLocale(), searchRequest.getSearch().getIncremental());
 
         return copy;
     }
@@ -98,22 +95,16 @@ public class SearchRequestMapper {
             return null;
         }
 
-        final Query query = new Query();
-        query.setDataSource(searchRequest.getSearch().getDataSourceRef());
-
-        query.setExpression(searchRequest.getSearch().getExpression());
-
+        List<Param> params = null;
         if (searchRequest.getSearch().getParamMap() != null && searchRequest.getSearch().getParamMap().size() > 0) {
-            final List<Param> params = new ArrayList<>(searchRequest.getSearch().getParamMap().size());
+            params = new ArrayList<>(searchRequest.getSearch().getParamMap().size());
             for (final Entry<String, String> entry : searchRequest.getSearch().getParamMap().entrySet()) {
                 final Param param = new Param(entry.getKey(), entry.getValue());
                 params.add(param);
             }
-
-            query.setParams(params);
         }
 
-        return query;
+        return new Query(searchRequest.getSearch().getDataSourceRef(), searchRequest.getSearch().getExpression(), params);
     }
 
     private List<ResultRequest> mapResultRequests(final stroom.dashboard.shared.SearchRequest searchRequest) {
@@ -127,31 +118,19 @@ public class SearchRequestMapper {
             final ComponentResultRequest componentResultRequest = entry.getValue();
             if (componentResultRequest instanceof TableResultRequest) {
                 final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
-                final stroom.query.api.ResultRequest copy = new stroom.query.api.ResultRequest();
-                copy.setComponentId(componentId);
-                copy.setFetchData(tableResultRequest.wantsData());
+
                 final TableSettings tableSettings = mapTableSettings(tableResultRequest.getTableSettings());
-                copy.setMappings(Collections.singletonList(tableSettings));
-                copy.setRequestedRange(mapOffsetRange(tableResultRequest.getRequestedRange()));
-                copy.setOpenGroups(mapCollection(String.class, tableResultRequest.getOpenGroups()));
-                copy.setResultStyle(ResultStyle.TABLE);
+
+                final stroom.query.api.ResultRequest copy = new stroom.query.api.ResultRequest(componentId, Collections.singletonList(tableSettings), mapOffsetRange(tableResultRequest.getRequestedRange()), mapCollection(String.class, tableResultRequest.getOpenGroups()), ResultStyle.TABLE, tableResultRequest.wantsData());
                 resultRequests.add(copy);
 
             } else if (componentResultRequest instanceof VisResultRequest) {
                 final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
-                final stroom.query.api.ResultRequest copy = new stroom.query.api.ResultRequest();
-                copy.setComponentId(componentId);
-                copy.setFetchData(visResultRequest.wantsData());
-
-//                final VisStructure visStructure = mapStructure(visResultRequest.getVisDashboardSettings());
 
                 final TableSettings parentTableSettings = mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings());
                 final TableSettings childTableSettings = mapVisSettingsToTableSettings(visResultRequest.getVisDashboardSettings(), parentTableSettings);
 
-                copy.setMappings(Arrays.asList(parentTableSettings, childTableSettings));
-                copy.setRequestedRange(null);
-                copy.setOpenGroups(null);
-                copy.setResultStyle(ResultStyle.FLAT);
+                final stroom.query.api.ResultRequest copy = new stroom.query.api.ResultRequest(componentId, Arrays.asList(parentTableSettings, childTableSettings), null, null, ResultStyle.FLAT, visResultRequest.wantsData());
                 resultRequests.add(copy);
 
 //
@@ -181,13 +160,14 @@ public class SearchRequestMapper {
             return null;
         }
 
-        final TableSettings tableSettings = new TableSettings();
-        tableSettings.setQueryId(tableComponentSettings.getQueryId());
-        tableSettings.setFields(mapFields(tableComponentSettings.getFields()));
-        tableSettings.setExtractValues(tableComponentSettings.extractValues());
-        tableSettings.setExtractionPipeline(tableComponentSettings.getExtractionPipeline());
-        tableSettings.setMaxResults(mapIntArray(tableComponentSettings.getMaxResults()));
-        tableSettings.setShowDetail(tableComponentSettings.getShowDetail());
+        final TableSettings tableSettings = new TableSettingsBuilder()
+                .queryId(tableComponentSettings.getQueryId())
+                .fields(mapFields(tableComponentSettings.getFields()))
+                .extractValues(tableComponentSettings.extractValues())
+                .extractionPipeline(tableComponentSettings.getExtractionPipeline())
+                .maxResults(mapIntArray(tableComponentSettings.getMaxResults()))
+                .showDetail(tableComponentSettings.getShowDetail())
+                .build();
 
         return tableSettings;
     }
@@ -199,14 +179,15 @@ public class SearchRequestMapper {
 
         final List<stroom.query.api.Field> list = new ArrayList<>(fields.size());
         for (final Field field : fields) {
-            stroom.query.api.Field fld = new stroom.query.api.Field();
-            fld.setName(field.getName());
-            fld.setExpression(field.getExpression());
-            fld.setSort(mapSort(field.getSort()));
-            fld.setFilter(mapFilter(field.getFilter()));
-            fld.setFormat(mapFormat(field.getFormat()));
-            fld.setGroup(field.getGroup());
-            list.add(fld);
+            final FieldBuilder builder = new FieldBuilder()
+                    .name(field.getName())
+                    .expression(field.getExpression())
+                    .sort(mapSort(field.getSort()))
+                    .filter(mapFilter(field.getFilter()))
+                    .format(mapFormat(field.getFormat()))
+                    .group(field.getGroup());
+
+            list.add(builder.build());
         }
 
         return list;
@@ -258,11 +239,7 @@ public class SearchRequestMapper {
             sortDirection = SortDirection.valueOf(sort.getDirection().name());
         }
 
-        final stroom.query.api.Sort copy = new stroom.query.api.Sort();
-        copy.setDirection(sortDirection);
-        copy.setOrder(sort.getOrder());
-
-        return copy;
+        return new stroom.query.api.Sort(sort.getOrder(), sortDirection);
     }
 
     private stroom.query.api.Filter mapFilter(final Filter filter) {
@@ -270,11 +247,7 @@ public class SearchRequestMapper {
             return null;
         }
 
-        final stroom.query.api.Filter copy = new stroom.query.api.Filter();
-        copy.setIncludes(filter.getIncludes());
-        copy.setExcludes(filter.getExcludes());
-
-        return copy;
+        return new stroom.query.api.Filter(filter.getIncludes(), filter.getExcludes());
     }
 
     private stroom.query.api.Format mapFormat(final Format format) {
@@ -282,14 +255,13 @@ public class SearchRequestMapper {
             return null;
         }
 
-        final stroom.query.api.Format copy = new stroom.query.api.Format();
-        if (format.getType() != null) {
-            copy.setType(Type.valueOf(format.getType().name()));
-        }
-        copy.setNumberFormat(mapNumberFormat(format.getSettings()));
-        copy.setDateTimeFormat(mapDateTimeFormat(format.getSettings()));
+        Type type = null;
 
-        return copy;
+        if (format.getType() != null) {
+            type = Type.valueOf(format.getType().name());
+        }
+
+        return new stroom.query.api.Format(type, mapNumberFormat(format.getSettings()), mapDateTimeFormat(format.getSettings()));
     }
 
     private stroom.query.api.NumberFormat mapNumberFormat(final FormatSettings formatSettings) {
@@ -299,8 +271,7 @@ public class SearchRequestMapper {
 
         final NumberFormatSettings numberFormatSettings = (NumberFormatSettings) formatSettings;
 
-        final NumberFormat copy = new NumberFormat(numberFormatSettings.getDecimalPlaces(), numberFormatSettings.getUseSeparator());
-        return copy;
+        return new NumberFormat(numberFormatSettings.getDecimalPlaces(), numberFormatSettings.getUseSeparator());
     }
 
     private stroom.query.api.DateTimeFormat mapDateTimeFormat(final FormatSettings formatSettings) {
@@ -310,8 +281,7 @@ public class SearchRequestMapper {
 
         final DateTimeFormatSettings dateTimeFormatSettings = (DateTimeFormatSettings) formatSettings;
 
-        final DateTimeFormat copy = new DateTimeFormat(dateTimeFormatSettings.getPattern(), mapTimeZone(dateTimeFormatSettings.getTimeZone()));
-        return copy;
+        return new DateTimeFormat(dateTimeFormatSettings.getPattern(), mapTimeZone(dateTimeFormatSettings.getTimeZone()));
     }
 
     private stroom.query.api.TimeZone mapTimeZone(final TimeZone timeZone) {
@@ -319,9 +289,7 @@ public class SearchRequestMapper {
             return null;
         }
 
-        final stroom.query.api.TimeZone copy = new stroom.query.api.TimeZone(Use.valueOf(timeZone.getUse().name()), timeZone.getId(), timeZone.getOffsetHours(), timeZone.getOffsetMinutes());
-
-        return copy;
+        return new stroom.query.api.TimeZone(Use.valueOf(timeZone.getUse().name()), timeZone.getId(), timeZone.getOffsetHours(), timeZone.getOffsetMinutes());
     }
 
 //    private TableSettings visStructureToTableSettings(final VisStructure visStructure, final TableSettings parentTableSettings) {
@@ -381,21 +349,22 @@ public class SearchRequestMapper {
 //        return tableSettings;
 //    }
 
-    private stroom.query.api.Field convertField(final VisField visField, final Map<String, stroom.query.api.Format> formatMap) {
-        final stroom.query.api.Field field = new stroom.query.api.Field();
-        field.setFormat(new stroom.query.api.Format(Type.GENERAL));
+    private FieldBuilder convertField(final VisField visField, final Map<String, stroom.query.api.Format> formatMap) {
+        final FieldBuilder builder = new FieldBuilder();
+
+        builder.format(Type.GENERAL);
 
         if (visField.getId() != null) {
             final stroom.query.api.Format format = formatMap.get(visField.getId());
             if (format != null) {
-                field.setFormat(format);
+                builder.format(format);
             }
 
-            field.setExpression("${" + visField.getId() + "}");
+            builder.expression("${" + visField.getId() + "}");
         }
-        field.setSort(visField.getSort());
+        builder.sort(visField.getSort());
 
-        return field;
+        return builder;
     }
 
 
@@ -442,10 +411,10 @@ public class SearchRequestMapper {
 
                     int group = 0;
                     while (nest != null) {
-                        stroom.query.api.Field field = convertField(nest.getKey(), formatMap);
-                        field.setGroup(group++);
+                        final FieldBuilder builder = convertField(nest.getKey(), formatMap);
+                        builder.group(group++);
 
-                        fields.add(field);
+                        fields.add(builder.build());
 
                         // Get limit from nest.
                         Integer limit = null;
@@ -468,15 +437,16 @@ public class SearchRequestMapper {
 
                         if (values.getFields() != null) {
                             for (final VisField visField : values.getFields()) {
-                                fields.add(convertField(visField, formatMap));
+                                fields.add(convertField(visField, formatMap).build());
                             }
                         }
                     }
 
-                    tableSettings = new TableSettings();
-                    tableSettings.setFields(fields);
-                    tableSettings.setMaxResults(limits);
-                    tableSettings.setShowDetail(true);
+                    tableSettings = new TableSettingsBuilder()
+                        .fields(fields)
+                        .maxResults(limits)
+                        .showDetail(true)
+                        .build();
                 }
             }
 
@@ -559,7 +529,6 @@ public class SearchRequestMapper {
 
         Boolean enabled = settingResolver.resolveBoolean(sort.getEnabled());
         if (enabled != null && enabled) {
-            final stroom.query.api.Sort copy = new stroom.query.api.Sort();
             SortDirection direction = SortDirection.ASCENDING;
 
             String dir = settingResolver.resolveString(sort.getDirection());
@@ -569,10 +538,7 @@ public class SearchRequestMapper {
                 }
             }
 
-            copy.setDirection(direction);
-            copy.setOrder(settingResolver.resolveInteger(sort.getPriority()));
-
-            return copy;
+            return new stroom.query.api.Sort(settingResolver.resolveInteger(sort.getPriority()), direction);
         }
 
         return null;

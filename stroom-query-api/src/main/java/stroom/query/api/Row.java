@@ -40,7 +40,7 @@ public final class Row implements Serializable {
     @XmlElement
     private Integer depth;
 
-    public Row() {
+    private Row() {
     }
 
     public Row(final String groupKey, final List<String> values, final Integer depth) {
@@ -54,24 +54,12 @@ public final class Row implements Serializable {
         return groupKey;
     }
 
-    public void setGroupKey(final String groupKey) {
-        this.groupKey = groupKey;
-    }
-
     public List<String> getValues() {
         return values;
     }
 
-    public void setValues(final List<String> values) {
-        this.values = values;
-    }
-
     public Integer getDepth() {
         return depth;
-    }
-
-    public void setDepth(final Integer depth) {
-        this.depth = depth;
     }
 
     @Override

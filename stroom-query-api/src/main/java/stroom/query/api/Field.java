@@ -47,15 +47,6 @@ public final class Field implements Serializable {
     public Field() {
     }
 
-    public Field(final String name) {
-        this.name = name;
-    }
-
-    public Field(final String name, final Type type) {
-        this.name = name;
-        this.format = new Format(type);
-    }
-
     public Field(String name, String expression, Sort sort, Filter filter, Format format, Integer group) {
         this.name = name;
         this.expression = expression;
@@ -69,48 +60,24 @@ public final class Field implements Serializable {
         return name;
     }
 
-    public void setName(final String name) {
-        this.name = name;
-    }
-
     public String getExpression() {
         return expression;
-    }
-
-    public void setExpression(final String expression) {
-        this.expression = expression;
     }
 
     public Sort getSort() {
         return sort;
     }
 
-    public void setSort(final Sort sort) {
-        this.sort = sort;
-    }
-
     public Filter getFilter() {
         return filter;
-    }
-
-    public void setFilter(final Filter filter) {
-        this.filter = filter;
     }
 
     public Format getFormat() {
         return format;
     }
 
-    public void setFormat(final Format format) {
-        this.format = format;
-    }
-
     public Integer getGroup() {
         return group;
-    }
-
-    public void setGroup(final Integer group) {
-        this.group = group;
     }
 
     public Field copy() {

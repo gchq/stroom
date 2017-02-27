@@ -30,6 +30,7 @@ import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Field;
+import stroom.query.api.FieldBuilder;
 import stroom.query.api.Format;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Query;
@@ -100,8 +101,7 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         final List<ResultRequest> resultRequests = new ArrayList<>(componentIds.size());
 
         for (final String componentId : componentIds) {
-            final TableSettings tableSettings = createTableSettings(index);
-            tableSettings.setExtractValues(extractValues);
+            final TableSettings tableSettings = createTableSettings(index, extractValues);
 
             final ResultRequest tableResultRequest = new ResultRequest(componentId, tableSettings);
             resultRequests.add(tableResultRequest);
@@ -109,7 +109,7 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final Query query = new Query(dataSourceRef, expressionIn.build());
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, DateTimeZone.UTC.getID());
+        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, DateTimeZone.UTC.getID(), true);
 
         SearchResponse searchResponse = searchService.search(searchRequest);
 
@@ -187,21 +187,20 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         }
     }
 
-    private TableSettings createTableSettings(final Index index) {
-        final Field idField = new Field("Id");
-        idField.setExpression(ParamUtil.makeParam("StreamId"));
+    private TableSettings createTableSettings(final Index index, final boolean extractValues) {
+        final Field idField = new FieldBuilder()
+                .name("Id")
+                .expression(ParamUtil.makeParam("StreamId"))
+                .build();
 
-        final Field timeField = new Field("Event Time");
-        timeField.setExpression(ParamUtil.makeParam("EventTime"));
-        timeField.setFormat(new Format(Format.Type.DATE_TIME));
-
-        final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(Arrays.asList(idField, timeField));
+        final Field timeField = new FieldBuilder()
+                .name("Event Time")
+                .expression(ParamUtil.makeParam("EventTime"))
+                .format(Format.Type.DATE_TIME)
+                .build();
 
         final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultPipeline();
-        tableSettings.setExtractionPipeline(DocRefUtil.create(resultPipeline));
-
-        return tableSettings;
+        return new TableSettings(null, Arrays.asList(idField, timeField), extractValues, DocRefUtil.create(resultPipeline), null, null);
     }
 
     private ExpressionBuilder buildExpression(final String userField, final String userTerm, final String from,

@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.mapreduce.UnsafePairQueue;
 import stroom.query.api.Field;
+import stroom.query.api.FieldBuilder;
 import stroom.query.api.Format;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.ResultRequest;
@@ -28,6 +29,7 @@ import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
+import stroom.query.api.TableSettingsBuilder;
 import stroom.query.format.FieldFormatter;
 import stroom.query.format.FormatterFactory;
 import stroom.util.shared.HasTerminate;
@@ -49,12 +51,13 @@ public class TestTablePayloadHandler {
 //        final DataSourceField indexField = new DataSourceField(DataSourceFieldType.FIELD, "Text");
 //        dataSourceFieldsMap.put(indexField);
 
-        final Field field = new Field("Text");
-        field.setExpression(ParamUtil.makeParam("Text"));
-        field.setFormat(new Format(Format.Type.TEXT));
+        final Field field = new FieldBuilder()
+                .name("Text")
+                .expression(ParamUtil.makeParam("Text"))
+                .format(Format.Type.TEXT)
+                .build();
 
-        final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(Collections.singletonList(field));
+        final TableSettings tableSettings = new TableSettingsBuilder().fields(Collections.singletonList(field)).build();
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
@@ -95,12 +98,13 @@ public class TestTablePayloadHandler {
 //        indexField.setFieldType(IndexFieldType.FIELD);
 //        dataSourceFieldsMap.put(indexField);
 
-        final Field field = new Field("Text");
-        field.setExpression(ParamUtil.makeParam("Text"));
-        field.setSort(sort);
+        final Field field = new FieldBuilder()
+                .name("Text")
+                .expression(ParamUtil.makeParam("Text"))
+                .sort(sort)
+                .build();
 
-        final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(Collections.singletonList(field));
+        final TableSettings tableSettings = new TableSettingsBuilder().fields(Collections.singletonList(field)).build();
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
@@ -137,12 +141,13 @@ public class TestTablePayloadHandler {
 //        indexField.setFieldType(IndexFieldType.ID);
 //        dataSourceFieldsMap.put(indexField);
 
-        final Field field = new Field("Number");
-        field.setExpression(ParamUtil.makeParam("Number"));
-        field.setSort(sort);
+        final Field field = new FieldBuilder()
+                .name("Number")
+                .expression(ParamUtil.makeParam("Number"))
+                .sort(sort)
+                .build();
 
-        final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(Collections.singletonList(field));
+        final TableSettings tableSettings = new TableSettingsBuilder().fields(Collections.singletonList(field)).build();
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
@@ -174,21 +179,24 @@ public class TestTablePayloadHandler {
 
 //        final DataSourceFieldsMap dataSourceFieldsMap = new DataSourceFieldsMap();
 
-        final Field count = new Field("Count");
-        count.setSort(sort);
-        count.setExpression("count()");
+        final Field count = new FieldBuilder()
+                .name("Count")
+                .expression("count()")
+                .sort(sort)
+                .build();
 
 //        final IndexField indexField = new IndexField();
 //        indexField.setFieldName("Text");
 //        indexField.setFieldType(IndexFieldType.FIELD);
 //        dataSourceFieldsMap.put(indexField);
 
-        final Field field = new Field("Text");
-        field.setExpression(ParamUtil.makeParam("Text"));
-        field.setGroup(0);
+        final Field field = new FieldBuilder()
+                .name("Text")
+                .expression(ParamUtil.makeParam("Text"))
+                .group(0)
+                .build();
 
-        final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(Collections.singletonList(field));
+        final TableSettings tableSettings = new TableSettingsBuilder().fields(Collections.singletonList(field)).build();
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
@@ -220,21 +228,24 @@ public class TestTablePayloadHandler {
 
 //        final DataSourceFieldsMap dataSourceFieldsMap = new DataSourceFieldsMap();
 
-        final Field count = new Field("Count");
-        count.setExpression("count()");
+        final Field count = new FieldBuilder()
+                .name("Count")
+                .expression("count()")
+                .build();
 
 //        final IndexField indexField = new IndexField();
 //        indexField.setFieldName("Text");
 //        indexField.setFieldType(IndexFieldType.FIELD);
 //        dataSourceFieldsMap.put(indexField);
 
-        final Field field = new Field("Text");
-        field.setExpression(ParamUtil.makeParam("Text"));
-        field.setGroup(0);
-        field.setSort(sort);
+        final Field field = new FieldBuilder()
+                .name("Text")
+                .expression(ParamUtil.makeParam("Text"))
+                .sort(sort)
+                .group(0)
+                .build();
 
-        final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(Arrays.asList(field, count));
+        final TableSettings tableSettings = new TableSettingsBuilder().fields(Arrays.asList(field, count)).build();
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());
@@ -266,21 +277,24 @@ public class TestTablePayloadHandler {
 
 //        final DataSourceFieldsMap dataSourceFieldsMap = new DataSourceFieldsMap();
 
-        final Field count = new Field("Count");
-        count.setExpression("count()");
+        final Field count = new FieldBuilder()
+                .name("Count")
+                .expression("count()")
+                .build();
 
 //        final IndexField indexField = new IndexField();
 //        indexField.setFieldName("Text");
 //        indexField.setFieldType(IndexFieldType.FIELD);
 //        dataSourceFieldsMap.put(indexField);
 
-        final Field field = new Field("Text");
-        field.setExpression(ParamUtil.makeParam("Text"));
-        field.setSort(sort);
-        field.setGroup(1);
+        final Field field = new FieldBuilder()
+                .name("Text")
+                .expression(ParamUtil.makeParam("Text"))
+                .sort(sort)
+                .group(1)
+                .build();
 
-        final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(Arrays.asList(field, count));
+        final TableSettings tableSettings = new TableSettingsBuilder().fields(Arrays.asList(field, count)).build();
 
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), null, Collections.emptyMap());

@@ -45,7 +45,7 @@ public final class ResultRequest implements Serializable {
     @XmlElement
     private Boolean fetchData;
 
-    public ResultRequest() {
+    private ResultRequest() {
     }
 
     public ResultRequest(final String componentId) {
@@ -66,56 +66,37 @@ public final class ResultRequest implements Serializable {
         this.requestedRange = requestedRange;
     }
 
-    public String getComponentId() {
-        return componentId;
+    public ResultRequest(final String componentId, final List<TableSettings> mappings, final OffsetRange requestedRange, final List<String> openGroups, final ResultStyle resultStyle, final Boolean fetchData) {
+        this.componentId = componentId;
+        this.mappings = mappings;
+        this.requestedRange = requestedRange;
+        this.openGroups = openGroups;
+        this.resultStyle = resultStyle;
+        this.fetchData = fetchData;
     }
 
-    public void setComponentId(final String componentId) {
-        this.componentId = componentId;
+    public String getComponentId() {
+        return componentId;
     }
 
     public List<TableSettings> getMappings() {
         return mappings;
     }
 
-    public void setMappings(final List<TableSettings> mappings) {
-        this.mappings = mappings;
-    }
-
     public OffsetRange getRequestedRange() {
         return requestedRange;
-    }
-
-    public void setRequestedRange(final OffsetRange requestedRange) {
-        this.requestedRange = requestedRange;
-    }
-
-    public void setRange(final int offset, final int length) {
-        requestedRange = new OffsetRange(offset, length);
     }
 
     public List<String> getOpenGroups() {
         return openGroups;
     }
 
-    public void setOpenGroups(final List<String> openGroups) {
-        this.openGroups = openGroups;
-    }
-
     public ResultStyle getResultStyle() {
         return resultStyle;
     }
 
-    public void setResultStyle(final ResultStyle resultStyle) {
-        this.resultStyle = resultStyle;
-    }
-
     public Boolean getFetchData() {
         return fetchData;
-    }
-
-    public void setFetchData(final Boolean fetchData) {
-        this.fetchData = fetchData;
     }
 
     public boolean fetchData() {

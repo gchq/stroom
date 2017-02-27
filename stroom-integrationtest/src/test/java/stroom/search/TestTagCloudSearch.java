@@ -30,6 +30,7 @@ import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Field;
+import stroom.query.api.FieldBuilder;
 import stroom.query.api.Format;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Query;
@@ -79,22 +80,22 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
         final DocRef dataSourceRef = DocRefUtil.create(index);
 
         // Create text field.
-        final Field fldText = new Field("Text");
-        fldText.setExpression(ParamUtil.makeParam("Text"));
-        fldText.setGroup(0);
-        fldText.setFormat(new Format(Format.Type.TEXT));
+        final Field fldText = new FieldBuilder()
+                .name("Text")
+                .expression(ParamUtil.makeParam("Text"))
+                .group(0)
+                .format(Format.Type.TEXT)
+                .build();
 
         // Create count field.
-        final Field fldCount = new Field("Count");
-        fldCount.setExpression("count()");
-        fldCount.setFormat(new Format(Format.Type.NUMBER));
-
-        final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(Arrays.asList(fldText, fldCount));
+        final Field fldCount = new FieldBuilder()
+                .name("Count")
+                .expression("count()")
+                .format(Format.Type.NUMBER)
+                .build();
 
         final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultTextPipeline();
-        tableSettings.setExtractionPipeline(DocRefUtil.create(resultPipeline));
-        tableSettings.setExtractValues(true);
+        final TableSettings tableSettings = new TableSettings(null, Arrays.asList(fldText, fldCount), true, DocRefUtil.create(resultPipeline), null, null);
 
         final ExpressionBuilder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
         final Query query = new Query(dataSourceRef, expression.build());
@@ -105,7 +106,7 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
 //        final Query query = new Query(dataSourceRef, expression);
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, DateTimeZone.UTC.getID());
+        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, DateTimeZone.UTC.getID(), true);
 
         SearchResponse searchResponse = searchService.search(searchRequest);
 
