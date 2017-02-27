@@ -38,7 +38,6 @@ import stroom.datasource.api.DataSourceField.DataSourceFieldType;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.ItemListBox;
 import stroom.query.api.DocRef;
-import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
@@ -67,7 +66,7 @@ public class TermEditor extends Composite {
     private final List<Widget> activeWidgets = new ArrayList<>();
     private final List<HandlerRegistration> registrations = new ArrayList<>();
 
-    private ExpressionTerm term;
+    private Term term;
     private List<DataSourceField> indexFields;
     private boolean reading;
     private boolean editing;
@@ -136,7 +135,7 @@ public class TermEditor extends Composite {
         }
     }
 
-    public void startEdit(final ExpressionTerm term) {
+    public void startEdit(final Term term) {
         if (!editing) {
             this.term = term;
 
@@ -163,7 +162,7 @@ public class TermEditor extends Composite {
         }
     }
 
-    private void read(final ExpressionTerm term) {
+    private void read(final Term term) {
         reading = true;
 
         // Select the current value.
@@ -184,7 +183,7 @@ public class TermEditor extends Composite {
         reading = false;
     }
 
-    private void write(final ExpressionTerm term) {
+    private void write(final Term term) {
         if (fieldListBox.getSelectedItem() != null && conditionListBox.getSelectedItem() != null) {
             DocRef dictionaryRef = null;
 

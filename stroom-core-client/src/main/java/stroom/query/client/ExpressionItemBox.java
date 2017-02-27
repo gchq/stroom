@@ -23,45 +23,18 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import stroom.pipeline.structure.client.view.Box;
-import stroom.query.api.ExpressionItem;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
-public class ExpressionItemBox extends Box<ExpressionItem> {
-    public interface Style extends CssResource {
-        String DEFAULT = "ExpressionItemBox.css";
-
-        String background();
-
-        String selectable();
-
-        String backgroundSelected();
-
-        String backgroundSelectedDisabled();
-
-        String hotspot();
-
-        String image();
-
-        String label();
-
-        String labelDisabled();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source(Style.DEFAULT)
-        Style style();
-    }
-
+public class ExpressionItemBox extends Box<Item> {
     private static Resources resources;
-
     private final SimplePanel background = new SimplePanel();
-    private final TreeLayout<ExpressionItem> treeLayout;
-    private final ExpressionItem expressionItem;
+    private final TreeLayout<Item> treeLayout;
+    private final Item expressionItem;
     private boolean selected;
     private Widget innerWidget;
 
-    public ExpressionItemBox(final TreeLayout<ExpressionItem> treeLayout, final ExpressionItem expressionItem,
+    public ExpressionItemBox(final TreeLayout<Item> treeLayout, final Item expressionItem,
                              final boolean allowSelection) {
         this.treeLayout = treeLayout;
         this.expressionItem = expressionItem;
@@ -125,10 +98,10 @@ public class ExpressionItemBox extends Box<ExpressionItem> {
     }
 
     private boolean isEnabled() {
-        final DefaultTreeForTreeLayout<ExpressionItem> tree = (DefaultTreeForTreeLayout<ExpressionItem>) treeLayout
+        final DefaultTreeForTreeLayout<Item> tree = (DefaultTreeForTreeLayout<Item>) treeLayout
                 .getTree();
 
-        ExpressionItem item = expressionItem;
+        Item item = expressionItem;
         while (item != null) {
             if (!item.enabled()) {
                 return false;
@@ -140,7 +113,32 @@ public class ExpressionItemBox extends Box<ExpressionItem> {
     }
 
     @Override
-    public ExpressionItem getItem() {
+    public Item getItem() {
         return expressionItem;
+    }
+
+    public interface Style extends CssResource {
+        String DEFAULT = "ExpressionItemBox.css";
+
+        String background();
+
+        String selectable();
+
+        String backgroundSelected();
+
+        String backgroundSelectedDisabled();
+
+        String hotspot();
+
+        String image();
+
+        String label();
+
+        String labelDisabled();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source(Style.DEFAULT)
+        Style style();
     }
 }

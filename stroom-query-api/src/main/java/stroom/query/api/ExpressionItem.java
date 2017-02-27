@@ -44,7 +44,7 @@ public abstract class ExpressionItem implements Serializable {
     @XmlElement
     private Boolean enabled;
 
-    public ExpressionItem() {
+    ExpressionItem() {
     }
 
     public ExpressionItem(final Boolean enabled) {
@@ -53,10 +53,6 @@ public abstract class ExpressionItem implements Serializable {
 
     public Boolean getEnabled() {
         return enabled;
-    }
-
-    public void setEnabled(final Boolean enabled) {
-        this.enabled = enabled;
     }
 
     public boolean enabled() {

@@ -41,7 +41,7 @@ public final class ExpressionTerm extends ExpressionItem {
     @XmlElement
     private DocRef dictionary;
 
-    public ExpressionTerm() {
+    private ExpressionTerm() {
     }
 
     public ExpressionTerm(final String field, final Condition condition, final String value) {
@@ -60,37 +60,20 @@ public final class ExpressionTerm extends ExpressionItem {
         this.dictionary = dictionary;
     }
 
-
     public String getField() {
         return field;
-    }
-
-    public void setField(final String field) {
-        this.field = field;
     }
 
     public Condition getCondition() {
         return condition;
     }
 
-    public void setCondition(final Condition condition) {
-        this.condition = condition;
-    }
-
     public String getValue() {
         return value;
     }
 
-    public void setValue(final String value) {
-        this.value = value;
-    }
-
     public DocRef getDictionary() {
         return dictionary;
-    }
-
-    public void setDictionary(final DocRef dictionary) {
-        this.dictionary = dictionary;
     }
 
     @Override

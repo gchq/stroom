@@ -42,7 +42,7 @@ public final class ExpressionOperator extends ExpressionItem {
     })
     private List<ExpressionItem> children;
 
-    public ExpressionOperator() {
+    private ExpressionOperator() {
     }
 
     public ExpressionOperator(final Boolean enabled, final Op op, final List<ExpressionItem> children) {
@@ -55,16 +55,8 @@ public final class ExpressionOperator extends ExpressionItem {
         return op;
     }
 
-    public void setOp(final Op op) {
-        this.op = op;
-    }
-
     public List<ExpressionItem> getChildren() {
         return children;
-    }
-
-    public void setChildren(final List<ExpressionItem> children) {
-        this.children = children;
     }
 
     @Override
