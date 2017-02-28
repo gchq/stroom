@@ -19,7 +19,7 @@ package stroom.dashboard.client.table;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+@JsType(isNative = true, namespace = "stroom")
 public class Row {
     String groupKey;
     String[] values;
@@ -27,9 +27,4 @@ public class Row {
 
     public Row() {
     }
-
-//    // JSNI is used for setting/getting properties
-//    public final native String getGroupKey() /*-{ return this.groupKey; }-*/;
-//    public final native List<String> getValues() /*-{ return this.values; }-*/;
-//    public final native int getDepth() /*-{ return this.depth; }-*/;
 }

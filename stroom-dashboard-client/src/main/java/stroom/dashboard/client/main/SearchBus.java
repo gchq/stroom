@@ -16,18 +16,23 @@
 
 package stroom.dashboard.client.main;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.web.bindery.autobean.shared.AutoBean;
+import com.google.web.bindery.autobean.shared.AutoBeanCodex;
+import com.google.web.bindery.autobean.shared.AutoBeanUtils;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.query.api.QueryKey;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
+import stroom.dispatch.client.AsyncCallbackAdaptor;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestService;
 import stroom.security.client.event.LogoutEvent;
 
 import java.util.HashMap;
@@ -41,6 +46,7 @@ public class SearchBus {
     private static final int QUICK_POLL_INTERVAL = 10;
 
     private final ClientDispatchAsync dispatcher;
+    private final RestService restService;
 
     private final Map<DashboardQueryKey, SearchModel> activeSearchMap = new HashMap<>();
     private final Timer pollingTimer;
@@ -49,8 +55,10 @@ public class SearchBus {
     private boolean polling;
 
     @Inject
-    public SearchBus(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+    public SearchBus(final EventBus eventBus, final ClientDispatchAsync dispatcher, final RestService restService) {
         this.dispatcher = dispatcher;
+        this.restService = restService;
+
         pollingTimer = new Timer() {
             @Override
             public void run() {
@@ -59,12 +67,7 @@ public class SearchBus {
         };
 
         // Listen for logout events.
-        eventBus.addHandler(LogoutEvent.getType(), new LogoutEvent.LogoutHandler() {
-            @Override
-            public void onLogout(final LogoutEvent event) {
-                reset();
-            }
-        });
+        eventBus.addHandler(LogoutEvent.getType(), event -> reset());
     }
 
     private void reset() {
@@ -105,6 +108,31 @@ public class SearchBus {
             final SearchRequest searchAction = searchModel.getRequest();
             searchActionMap.put(queryKey, searchAction);
         }
+
+//        final JsDocRef jsDocRef = JavaScriptObject.createObject().cast();
+//        jsDocRef.setName("test");
+//        jsDocRef.setType("typew");
+//        jsDocRef.setUuid("uuid");
+//
+//        final JsExpressionOperator innerOp1 = JavaScriptObject.createObject().cast();
+//        final JsExpressionOperator innerOp2 = JavaScriptObject.createObject().cast();
+//        final JsExpressionOperator expression = JavaScriptObject.createObject().cast();
+//        final JsExpressionItem[] array = (JsExpressionItem[]) (Object) JavaScriptObject.createArray(2).cast();
+//        array[0] = innerOp1;
+//        array[1] = innerOp2;
+//
+//        expression.setChildren(array);
+//
+//        final JsSearch jsSearch = JavaScriptObject.createObject().cast();
+//        jsSearch.setDataSourceRef(jsDocRef);
+//        jsSearch.setExpression(expression);
+//
+//
+//        String json = JsonUtils.stringify(jsSearch);
+//
+//        final Response response = restService.send("rest/dashboard/poll", json);
+//        response.onSuccess(GWT::log);
+
 
         final SearchBusPollAction action = new SearchBusPollAction(searchActionMap);
         dispatcher.execute(action, false, new AsyncCallbackAdaptor<SearchBusPollResult>() {

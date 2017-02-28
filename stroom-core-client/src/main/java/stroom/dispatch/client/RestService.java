@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.dispatch.client;
 
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
-
-@JsType(isNative = true, namespace = "stroom")
-public class TableResult {
-    Row[] rows;
-    OffsetRange resultRange;
-    int totalResults;
-    String error;
-
-    public TableResult() {
+public interface RestService {
+    interface SuccessHandler {
+        void handle(String json);
     }
+
+    interface FailureHandler {
+        void handle(Throwable e);
+    }
+
+    interface Response {
+        void onSuccess(SuccessHandler handler);
+
+        void onFailure(FailureHandler handler);
+    }
+
+    Response send(String path, String json);
 }

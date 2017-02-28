@@ -37,6 +37,7 @@ import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
+import stroom.dashboard.client.table.JsonUtil;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
@@ -263,7 +264,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public void setData(final String json) {
         if (visSettings != null && visSettings.getVisualisation() != null) {
             if (json != null) {
-                final VisResult visResult = stroom.dashboard.client.table.JSONUtil.parse(json);
+                final VisResult visResult = JsonUtil.parse(json);
 
                 currentSettings = getJSONSettings();
                 currentData = (JavaScriptObject) visResult.store;//getJSONData(visResult);

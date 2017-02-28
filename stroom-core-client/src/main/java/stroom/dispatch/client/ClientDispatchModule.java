@@ -23,5 +23,6 @@ public class ClientDispatchModule extends AbstractGinModule {
     @Override
     protected void configure() {
         bind(ClientDispatchAsync.class).to(ClientDispatchAsyncImpl.class).in(Singleton.class);
+        bind(RestService.class).to(RestServiceImpl.class).in(Singleton.class);
     }
 }
