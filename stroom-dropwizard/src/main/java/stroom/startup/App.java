@@ -4,6 +4,8 @@ import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.eclipse.jetty.server.session.HashSessionManager;
+import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.util.resource.PathResource;
 import stroom.Config;
 import stroom.security.spring.SecurityConfiguration;
@@ -38,6 +40,10 @@ public class App extends Application<Config> {
         Servlets.loadInto(environment);
         Filters.loadInto(environment);
         Listeners.loadInto(environment, ApplicationContexts.rootContext);
+
+        HashSessionManager manager = new HashSessionManager();
+        SessionHandler sessions = new SessionHandler(manager);
+        environment.servlets().setSessionHandler(sessions);
 
         // If we don't set the baseResource then servlets might not be able to find files.
         environment.servlets().setBaseResource(new PathResource(Paths.get("src/main/resources/webapp/")));
