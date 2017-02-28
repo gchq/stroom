@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.search.spring;
-
 
 import org.glassfish.jersey.server.ResourceConfig;
-import stroom.search.server.HelloResource;
+import stroom.dashboard.server.SearchBusPollResource;
 import stroom.search.server.SearchResource;
 
 
 public class JerseyApplication extends ResourceConfig {
     public JerseyApplication() {
-        register(HelloResource.class);
         register(SearchResource.class);
+        register(SearchBusPollResource.class);
     }
 }
