@@ -14,9 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.dashboard.client.table;
 
-import java.io.Serializable;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
+import stroom.query.api.Row;
 
-public interface ComponentResult extends Serializable {
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+public class OffsetRange {
+    int offset;
+    int length;
+
+    public OffsetRange() {
+    }
 }

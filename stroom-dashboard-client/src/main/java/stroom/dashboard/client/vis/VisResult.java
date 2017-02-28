@@ -14,30 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.dashboard.client.vis;
 
-public class VisResult extends JSONResult implements ComponentResult {
-    private static final long serialVersionUID = 3826654996795750099L;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
 
-    private long dataPoints;
-    private String error;
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+public class VisResult {
+    Object store;
+    long dataPoints;
+    String error;
 
     public VisResult() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public VisResult(final String json, final long dataPoints, final String error) {
-        super(json);
-        this.dataPoints = dataPoints;
-        this.error = error;
-    }
-
-    public String getError() {
-        return error;
-    }
-
-    @Override
-    public String toString() {
-        return dataPoints + " data points";
     }
 }

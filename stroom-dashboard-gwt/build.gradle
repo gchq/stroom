@@ -145,4 +145,11 @@ task gwtSuperDevMode (dependsOn: classes, type: JavaExec) {
     maxHeapSize = '4G'
 }
 
+task gwtClean {
+    delete outputDir
+    delete gwtBuildDir
+    file(gwtBuildDir).mkdirs()
+    file(tmpDir).mkdirs()
+}
+
 build.dependsOn('gwtCompile')

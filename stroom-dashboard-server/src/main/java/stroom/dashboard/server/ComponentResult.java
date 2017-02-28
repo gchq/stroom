@@ -14,23 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.dashboard.server;
 
-import stroom.dashboard.shared.ComponentResultRequest;
-import stroom.dashboard.shared.ComponentSettings;
+import java.io.Serializable;
 
-public interface ResultComponent {
-    ComponentSettings getSettings();
-
-    ComponentResultRequest getResultRequest();
-
-    void reset();
-
-    void startSearch();
-
-    void endSearch();
-
-    void setWantsData(boolean wantsData);
-
-    void setData(String json);
+public interface ComponentResult extends Serializable {
 }

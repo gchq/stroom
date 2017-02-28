@@ -19,7 +19,6 @@ package stroom.dashboard.client.table;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -46,7 +45,6 @@ import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
@@ -58,7 +56,6 @@ import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
-import stroom.dashboard.shared.TableResult;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -74,7 +71,6 @@ import stroom.node.shared.ClientProperties;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.util.shared.Expander;
-import stroom.util.shared.OffsetRange;
 import stroom.util.shared.ParamUtil;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
@@ -344,25 +340,25 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     }
 
     @Override
-    public void setData(final ComponentResult result) {
+    public void setData(final String json) {
         ignoreRangeChange = true;
 
 //        if (!paused) {
         lastExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
         currentExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
 
-        if (result != null && result instanceof TableResult) {
+        if (json != null) {
             // Don't refresh the table unless the results have changed.
-            final TableResult tableResult = (TableResult) result;
-            final Row[] values = JSONUtil.parse(tableResult.getJsonData());
-            final OffsetRange<Integer> valuesRange = tableResult.getResultRange();
+            final TableResult tableResult = JSONUtil.parse(json);
+            final Row[] values = tableResult.rows;
+            final OffsetRange valuesRange = tableResult.resultRange;
 
             // Only set data in the table if we have got some results and
             // they have changed.
-            if (valuesRange.getOffset() == 0 || values.length > 0) {
+            if (valuesRange.offset == 0 || values.length > 0) {
                 updateColumns();
-                getView().setRowData(valuesRange.getOffset(), Arrays.asList(values));
-                getView().setRowCount(tableResult.getTotalResults(), true);
+                getView().setRowData(valuesRange.offset, Arrays.asList(values));
+                getView().setRowCount(tableResult.totalResults, true);
             }
 
             // Enable download of current results.

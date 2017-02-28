@@ -18,7 +18,6 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TimeZones;
-import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Search;
@@ -30,7 +29,6 @@ import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
-import stroom.query.api.QueryKey;
 import stroom.util.client.KVMapUtil;
 
 import java.util.HashMap;
@@ -240,7 +238,7 @@ public class SearchModel {
             final String componentId = entry.getKey();
             final ResultComponent resultComponent = entry.getValue();
             if (result.getResults() != null && result.getResults().containsKey(componentId)) {
-                final ComponentResult res = result.getResults().get(componentId);
+                final String res = result.getResults().get(componentId);
                 resultComponent.setData(res);
             }
 

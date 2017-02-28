@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.dashboard.server;
 
+import stroom.query.api.Row;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.OffsetRange;
@@ -30,7 +31,7 @@ public class TableResult implements ComponentResult {
     private static final long serialVersionUID = -2964122512841756795L;
 
     @XmlElement
-    private String jsonData;
+    private List<Row> rows;
 
     @XmlElement
     private OffsetRange<Integer> resultRange;
@@ -45,12 +46,12 @@ public class TableResult implements ComponentResult {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public String getJsonData() {
-        return jsonData;
+    public List<Row> getRows() {
+        return rows;
     }
 
-    public void setJsonData(final String jsonData) {
-        this.jsonData = jsonData;
+    public void setRows(final List<Row> rows) {
+        this.rows = rows;
     }
 
     public OffsetRange<Integer> getResultRange() {
@@ -87,7 +88,7 @@ public class TableResult implements ComponentResult {
 
         final TableResult result = (TableResult) o;
         final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(jsonData, result.jsonData);
+        builder.append(rows, result.rows);
         builder.append(resultRange, result.resultRange);
         builder.append(totalResults, result.totalResults);
         builder.append(error, result.error);
@@ -97,7 +98,7 @@ public class TableResult implements ComponentResult {
     @Override
     public int hashCode() {
         final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(jsonData);
+        builder.append(rows);
         builder.append(resultRange);
         builder.append(totalResults);
         builder.append(error);
@@ -106,10 +107,10 @@ public class TableResult implements ComponentResult {
 
     @Override
     public String toString() {
-        if (jsonData == null) {
+        if (rows == null) {
             return "";
         }
 
-        return jsonData;//.size() + " rows";
+        return rows.size() + " rows";
     }
 }

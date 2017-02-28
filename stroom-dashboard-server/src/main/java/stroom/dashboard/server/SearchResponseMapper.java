@@ -17,7 +17,6 @@
 package stroom.dashboard.server;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,11 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.TypeConverter;
-import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.dashboard.shared.TableResult;
-import stroom.dashboard.shared.VisResult;
+import stroom.dashboard.server.VisResult.Store;
 import stroom.query.api.Field;
 import stroom.query.api.FlatResult;
 import stroom.query.api.Result;
@@ -57,7 +54,7 @@ public class SearchResponseMapper {
 
         if (searchResponse.getResults() != null) {
             for (final Result result : searchResponse.getResults()) {
-                copy.addResult(result.getComponentId(), mapResult(result));
+                copy.addResult(result.getComponentId(), writeValueAsString(mapResult(result)));
             }
         }
 
@@ -89,8 +86,7 @@ public class SearchResponseMapper {
             final stroom.query.api.TableResult tableResult = (stroom.query.api.TableResult) result;
             final TableResult copy = new TableResult();
 
-            final String json = writeValueAsString(mapRows(tableResult.getRows()));
-            copy.setJsonData(json);
+            copy.setRows(tableResult.getRows());
             if (tableResult.getResultRange() != null) {
                 copy.setResultRange(new OffsetRange<>(tableResult.getResultRange().getOffset().intValue(), tableResult.getResultRange().getLength().intValue()));
             }
@@ -120,7 +116,7 @@ public class SearchResponseMapper {
     }
 
     private VisResult mapVisResult(final FlatResult visResult) {
-        String json = null;
+        Store store = null;
         String error = visResult.getError();
 
         if (error == null) {
@@ -172,15 +168,14 @@ public class SearchResponseMapper {
                         map.computeIfAbsent(row.get(0), k -> new ArrayList<>()).add(row);
                     }
 
-                    final Store store = getStore(null, map, types, valueCount, maxDepth, 0);
-                    json = getMapper().writeValueAsString(store);
+                    store = getStore(null, map, types, valueCount, maxDepth, 0);
                 }
             } catch (final Exception e) {
                 error = e.getMessage();
             }
         }
 
-        return new VisResult(json, visResult.getSize(), error);
+        return new VisResult(store, visResult.getSize(), error);
     }
 
     private Store getStore(final Object key, final Map<Object, List<List<Object>>> map, final String[][] types, final int valueCount, final int maxDepth, final int depth) {
@@ -392,50 +387,5 @@ public class SearchResponseMapper {
         mapper.setSerializationInclusion(Include.NON_NULL);
 
         return mapper;
-    }
-
-    public static class Store {
-        private Object key;
-        private Object[] values;
-        private Double[] min;
-        private Double[] max;
-        private Double[] sum;
-        private String[] types;
-        private String keyType;
-
-        @JsonProperty("key")
-        public Object getKey() {
-            return key;
-        }
-
-        @JsonProperty("keyType")
-        public String getKeyType() {
-            return keyType;
-        }
-
-        @JsonProperty("values")
-        public Object[] getValues() {
-            return values;
-        }
-
-        @JsonProperty("types")
-        public String[] getTypes() {
-            return types;
-        }
-
-        @JsonProperty("min")
-        public Double[] getMin() {
-            return min;
-        }
-
-        @JsonProperty("max")
-        public Double[] getMax() {
-            return max;
-        }
-
-        @JsonProperty("sum")
-        public Double[] getSum() {
-            return sum;
-        }
     }
 }

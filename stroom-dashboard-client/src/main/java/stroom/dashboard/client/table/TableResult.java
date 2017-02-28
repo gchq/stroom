@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.dashboard.client.table;
 
-import stroom.dashboard.shared.ComponentResultRequest;
-import stroom.dashboard.shared.ComponentSettings;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
 
-public interface ResultComponent {
-    ComponentSettings getSettings();
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+public class TableResult {
+    Row[] rows;
+    OffsetRange resultRange;
+    int totalResults;
+    String error;
 
-    ComponentResultRequest getResultRequest();
-
-    void reset();
-
-    void startSearch();
-
-    void endSearch();
-
-    void setWantsData(boolean wantsData);
-
-    void setData(String json);
+    public TableResult() {
+    }
 }

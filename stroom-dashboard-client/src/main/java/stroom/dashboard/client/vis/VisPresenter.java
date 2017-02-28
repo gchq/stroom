@@ -39,16 +39,14 @@ import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentResultRequest;
+import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.FetchVisualisationAction;
+import stroom.dashboard.shared.VisComponentSettings;
+import stroom.dashboard.shared.VisResultRequest;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.query.api.DocRef;
-import stroom.dashboard.shared.ComponentResult;
-import stroom.dashboard.shared.ComponentResultRequest;
-import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.VisComponentSettings;
-import stroom.dashboard.shared.VisResult;
-import stroom.dashboard.shared.VisResultRequest;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.Script;
@@ -262,15 +260,15 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     @Override
-    public void setData(final ComponentResult result) {
+    public void setData(final String json) {
         if (visSettings != null && visSettings.getVisualisation() != null) {
-            if (result != null && result instanceof VisResult) {
-                final VisResult visResult = (VisResult) result;
+            if (json != null) {
+                final VisResult visResult = stroom.dashboard.client.table.JSONUtil.parse(json);
 
                 currentSettings = getJSONSettings();
-                currentData = getJSONData(visResult);
+                currentData = (JavaScriptObject) visResult.store;//getJSONData(visResult);
                 if (currentError == null) {
-                    currentError = visResult.getError();
+                    currentError = visResult.error;
                 }
             }
 
@@ -310,17 +308,17 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         updateStatusMessage();
     }
 
-    private JavaScriptObject getJSONData(final VisResult visResult) {
-        JavaScriptObject data = null;
-
-        // Turn JSON result text into an object.
-        final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(visResult.getJSON()));
-        if (dataObject != null) {
-            data = dataObject.getJavaScriptObject();
-        }
-
-        return data;
-    }
+//    private JavaScriptObject getJSONData(final VisResult visResult) {
+//        JavaScriptObject data = null;
+//
+//        // Turn JSON result text into an object.
+//        final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(visResult.getJSON()));
+//        if (dataObject != null) {
+//            data = dataObject.getJavaScriptObject();
+//        }
+//
+//        return data;
+//    }
 
     private JavaScriptObject getJSONSettings() {
         JavaScriptObject settings = null;
