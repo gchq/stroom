@@ -43,8 +43,6 @@ import java.util.Map.Entry;
 
 @Component
 public class SearchResponseMapper {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SearchResponseMapper.class);
-
     public SearchResponse mapResponse(final stroom.query.api.SearchResponse searchResponse) {
         if (searchResponse == null) {
             return null;
@@ -54,7 +52,7 @@ public class SearchResponseMapper {
 
         if (searchResponse.getResults() != null) {
             for (final Result result : searchResponse.getResults()) {
-                copy.addResult(result.getComponentId(), writeValueAsString(mapResult(result)));
+                copy.addResult(result.getComponentId(), JsonUtil.writeValueAsString(mapResult(result)));
             }
         }
 
@@ -361,31 +359,4 @@ public class SearchResponseMapper {
 //
 //        return mapped;
 //    }
-
-    private String writeValueAsString(final Object object) {
-        String json = null;
-
-        if (object != null) {
-            try {
-                json = getMapper().writeValueAsString(object);
-            } catch (final JsonProcessingException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-        }
-
-        return json;
-    }
-
-    private ObjectMapper getMapper() {
-        final SimpleModule module = new SimpleModule();
-        module.addSerializer(Double.class, new MyDoubleSerialiser());
-
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(module);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
-    }
 }
