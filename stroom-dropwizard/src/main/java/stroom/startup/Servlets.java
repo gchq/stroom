@@ -10,8 +10,8 @@ public class Servlets {
      */
     @SuppressWarnings("unchecked")
     static void loadInto(Environment environment) throws ClassNotFoundException {
-        addServlet(environment, Servlets.newLog4jServlet(), "", null);
-        addServlet(environment, Servlets.newUpgradeDispatcherServlet(), "/*.rpc", new String[]{
+        addServlet(environment, Servlets.newLog4jServlet(), 1,"", null);
+        addServlet(environment, Servlets.newUpgradeDispatcherServlet(), 3, "/*.rpc", new String[]{
                 "/dispatch.rpc",
                 "/dynamic.css",
                 "/script",
@@ -25,18 +25,20 @@ public class Servlets {
                 "/sessionList",
                 "/gwtRequest"
         });
-        addServlet(environment, Servlets.newServletContainer(), "/rest/*", null);
+        addServlet(environment, Servlets.newServletContainer(), 1, "/rest/*", null);
     }
 
     private static void addServlet(
             Environment environment,
             ServletHolder servletHolder,
+            int loadOnStartup,
             String servletMapping,
             String[] furtherServletMappings){
         environment.getApplicationContext().addServlet(servletHolder, servletMapping);
         if(furtherServletMappings != null && furtherServletMappings.length > 0){
             servletHolder.getRegistration().addMapping(furtherServletMappings);
         }
+        servletHolder.getRegistration().setLoadOnStartup(loadOnStartup);
     }
 
     private static ServletHolder newLog4jServlet() {
