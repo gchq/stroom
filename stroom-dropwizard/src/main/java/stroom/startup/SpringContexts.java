@@ -14,27 +14,9 @@ public class SpringContexts {
 
         applicationContext = new AnnotationConfigWebApplicationContext();
         applicationContext.setParent(rootContext);
-
-
-        // We register all the configuration beans so they'll be loaded when we call applicationContext.refresh().
-        applicationContext.register(stroom.security.spring.SecurityConfiguration.class,
-                stroom.spring.ScopeConfiguration.class,
-                stroom.spring.PersistenceConfiguration.class,
-                stroom.spring.ServerComponentScanConfiguration.class,
-                stroom.spring.ServerConfiguration.class,
-                stroom.spring.CachedServiceConfiguration.class,
-                stroom.logging.spring.EventLoggingConfiguration.class,
-                stroom.index.spring.IndexConfiguration.class,
-                stroom.search.spring.SearchConfiguration.class,
-                stroom.script.spring.ScriptConfiguration.class,
-                stroom.visualisation.spring.VisualisationConfiguration.class,
-                stroom.dashboard.spring.DashboardConfiguration.class,
-                stroom.spring.CoreClientConfiguration.class,
-                stroom.statistics.spring.StatisticsConfiguration.class,
-                Config.class
-        );
-
         applicationContext.registerShutdownHook();
+
+        // We don't need to register @Configuration classes here because they're loaded in SpringContexts.newUpgradeDispatcherServlet(...)
     }
 
     static void start(Environment environment, Config configuration){
