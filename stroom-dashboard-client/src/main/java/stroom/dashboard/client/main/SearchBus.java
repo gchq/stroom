@@ -128,7 +128,7 @@ public class SearchBus {
 //        jsSearch.setExpression(expression);
 //
 //
-//        String json = JsonUtils.stringify(jsSearch);
+//        String json = JsonUtils.encode(jsSearch);
 //
 //        final Response response = restService.send("rest/dashboard/poll", json);
 //        response.onSuccess(GWT::log);

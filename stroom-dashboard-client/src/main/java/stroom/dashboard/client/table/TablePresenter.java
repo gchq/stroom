@@ -349,7 +349,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
 
         if (json != null) {
             // Don't refresh the table unless the results have changed.
-            final TableResult tableResult = JsonUtil.parse(json);
+            final TableResult tableResult = JsonUtil.decode(json);
 
             final Row[] values = tableResult.rows;
             final OffsetRange valuesRange = tableResult.resultRange;

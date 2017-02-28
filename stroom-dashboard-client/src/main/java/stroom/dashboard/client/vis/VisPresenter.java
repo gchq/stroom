@@ -264,7 +264,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public void setData(final String json) {
         if (visSettings != null && visSettings.getVisualisation() != null) {
             if (json != null) {
-                final VisResult visResult = JsonUtil.parse(json);
+                final VisResult visResult = JsonUtil.decode(json);
 
                 currentSettings = getJSONSettings();
                 currentData = (JavaScriptObject) visResult.store;//getJSONData(visResult);
