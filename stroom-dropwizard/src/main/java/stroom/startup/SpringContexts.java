@@ -4,7 +4,7 @@ import io.dropwizard.setup.Environment;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import stroom.Config;
 
-public class ApplicationContexts {
+public class SpringContexts {
 
     static AnnotationConfigWebApplicationContext applicationContext;
     static AnnotationConfigWebApplicationContext rootContext;
@@ -38,6 +38,9 @@ public class ApplicationContexts {
     }
 
     static void start(Environment environment, Config configuration){
+        // We need to set the servlet context otherwise there will be no default servlet handling.
+        applicationContext.setServletContext(environment.getApplicationContext().getServletContext());
+
         rootContext.refresh();
         rootContext.start();
         applicationContext.refresh();

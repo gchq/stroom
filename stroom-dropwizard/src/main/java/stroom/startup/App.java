@@ -3,16 +3,7 @@ package stroom.startup;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
-import org.eclipse.jetty.server.session.HashSessionManager;
-import org.eclipse.jetty.server.session.SessionHandler;
-import org.eclipse.jetty.util.resource.PathResource;
 import stroom.Config;
-import stroom.security.spring.SecurityConfiguration;
-import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.thread.ThreadScopeContextHolder;
-
-import java.nio.file.Paths;
 
 public class App extends Application<Config> {
     public static void main(String[] args) throws Exception {
@@ -25,36 +16,12 @@ public class App extends Application<Config> {
     }
 
     @Override
-    public void run(Config configuration, Environment environment) throws Exception {
-        // We want Stroom to use the root path so we need to move Dropwizard's path.
-        environment.jersey().setUrlPattern("/api/*");
-
-        // We need to set this otherwise we won't have all the beans we need.
-        System.setProperty("spring.profiles.active", String.format("%s,%s", StroomSpringProfiles.PROD, SecurityConfiguration.PROD_SECURITY));
-
-
-        // We need to prime this otherwise we won't have a thread scope context and bean initialisation will fail
-        ThreadScopeContextHolder.createContext();
-
-        ApplicationContexts.configure();
+    public void run(Config configuration, io.dropwizard.setup.Environment environment) throws Exception {
+        Environment.configure(environment);
+        SpringContexts.configure();
         Servlets.loadInto(environment);
         Filters.loadInto(environment);
-        Listeners.loadInto(environment, ApplicationContexts.rootContext);
-
-        HashSessionManager manager = new HashSessionManager();
-        SessionHandler sessions = new SessionHandler(manager);
-        environment.servlets().setSessionHandler(sessions);
-
-        // If we don't set the baseResource then servlets might not be able to find files.
-        environment.servlets().setBaseResource(new PathResource(Paths.get("src/main/resources/webapp/")));
-
-        // We need to set the servlet context otherwise there will be no default servlet handling.
-        ApplicationContexts.applicationContext.setServletContext(environment.getApplicationContext().getServletContext());
-
-        ApplicationContexts.start(environment, configuration);
-
+        Listeners.loadInto(environment, SpringContexts.rootContext);
+        SpringContexts.start(environment, configuration);
     }
-
-
-
 }
