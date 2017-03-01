@@ -63,7 +63,7 @@ public class Search implements Serializable {
         this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), "UTC", true);
     }
 
-    public Search(final DocRef adataSourceRef, final ExpressionOperator expression,
+    public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
                   final Map<String, ComponentSettings> componentSettingsMap, final Map<String, String> paramMap,
                   final String dateTimeLocale, final Boolean incremental) {
         this.dataSourceRef = dataSourceRef;
