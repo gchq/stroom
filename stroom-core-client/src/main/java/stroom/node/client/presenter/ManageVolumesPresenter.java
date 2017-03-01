@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,25 +16,18 @@
 
 package stroom.node.client.presenter;
 
-import stroom.data.grid.client.DoubleClickEvent;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.EntityServiceLoadAction;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceDeleteAction;
+import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.node.client.view.WrapperView;
 import stroom.node.shared.FlushVolumeStatusAction;
 import stroom.node.shared.Volume;
@@ -46,7 +39,6 @@ import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.List;
 

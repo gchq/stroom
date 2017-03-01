@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -51,19 +51,15 @@ import java.util.List;
 public class ExpressionTreePanel extends TreePanel<ExpressionItem> {
     private static final double HORIZONTAL_SEPARATION = 20;
     private static final double VERTICAL_SEPARATION = 0;
-
-    private TreeRenderer2<ExpressionItem> renderer;
-    private TreeLayout<ExpressionItem> treeLayout;
-
     private final LayeredCanvas canvas;
-    private ExpressionItemRenderer cellRenderer;
-
     private final FlowPanel panel;
     private final FlowPanel boxPanel;
-    private DefaultTreeForTreeLayout<ExpressionItem> tree;
-
     private final OperatorEditor operatorEditor;
     private final TermEditor termEditor;
+    private TreeRenderer2<ExpressionItem> renderer;
+    private TreeLayout<ExpressionItem> treeLayout;
+    private ExpressionItemRenderer cellRenderer;
+    private DefaultTreeForTreeLayout<ExpressionItem> tree;
 
     public ExpressionTreePanel(final Provider<EntityDropDownPresenter> dictionaryProvider) {
         final EntityDropDownPresenter dictionaryPresenter = dictionaryProvider.get();
@@ -109,14 +105,6 @@ public class ExpressionTreePanel extends TreePanel<ExpressionItem> {
         style.setPosition(Position.ABSOLUTE);
         style.setLeft(0, Unit.PX);
         style.setTop(0, Unit.PX);
-    }
-
-    @Override
-    public void setTree(final DefaultTreeForTreeLayout<ExpressionItem> tree) {
-        this.tree = tree;
-        if (treeLayout != null) {
-            treeLayout.setTree(tree);
-        }
     }
 
     @Override
@@ -176,6 +164,14 @@ public class ExpressionTreePanel extends TreePanel<ExpressionItem> {
     @Override
     public DefaultTreeForTreeLayout<ExpressionItem> getTree() {
         return tree;
+    }
+
+    @Override
+    public void setTree(final DefaultTreeForTreeLayout<ExpressionItem> tree) {
+        this.tree = tree;
+        if (treeLayout != null) {
+            treeLayout.setTree(tree);
+        }
     }
 
     public void setFields(final List<DataSourceField> fields) {

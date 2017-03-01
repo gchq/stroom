@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,6 +30,10 @@ import stroom.index.server.IndexShardWriter;
 import stroom.index.server.MockIndexShardWriter;
 import stroom.index.server.MockIndexShardWriterCache;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexField.AnalyzerType;
+import stroom.index.shared.IndexFieldType;
+import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShardKey;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -42,10 +46,6 @@ import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexField.AnalyzerType;
-import stroom.index.shared.IndexFieldType;
-import stroom.index.shared.IndexFields;
 import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.date.DateUtil;

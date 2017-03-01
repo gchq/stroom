@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,10 +22,10 @@ import org.springframework.transaction.TransactionException;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseEntity;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
+import stroom.query.api.DocRef;
 import stroom.security.shared.DocumentPermissionKeySet;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;

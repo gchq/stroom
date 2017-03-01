@@ -35,7 +35,6 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
-import stroom.query.api.DocRef;
 import stroom.pipeline.shared.FetchPipelineDataAction;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.PipelineStepAction;
@@ -52,6 +51,7 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
+import stroom.query.api.DocRef;
 import stroom.streamstore.client.presenter.ClassificationUiHandlers;
 import stroom.streamstore.client.presenter.DataPresenter;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -128,6 +128,30 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         saveButton = addButtonLeft(GlyphIcons.SAVE);
     }
 
+    private static String replace(final String path, final String type, final String replacement) {
+        String newPath = path;
+        final String param = "${" + type + "}";
+        int start = newPath.indexOf(param);
+        while (start != -1) {
+            final int end = start + param.length();
+            newPath = newPath.substring(0, start) + replacement + newPath.substring(end);
+            start = newPath.indexOf(param, end);
+        }
+
+        return newPath;
+    }
+
+//    private ImageButtonView addButtonLeft(final String title, final ImageResource enabledImage,
+//                                          final ImageResource disabledImage) {
+//        if (leftButtons == null) {
+//            leftButtons = new ButtonPanel();
+//            getView().addWidgetLeft(leftButtons);
+//        }
+//
+//        final ImageButtonView button = leftButtons.add(title, enabledImage, disabledImage, true);
+//        return button;
+//    }
+
     @Override
     protected void onBind() {
         registerHandler(
@@ -158,17 +182,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             }
         }));
     }
-
-//    private ImageButtonView addButtonLeft(final String title, final ImageResource enabledImage,
-//                                          final ImageResource disabledImage) {
-//        if (leftButtons == null) {
-//            leftButtons = new ButtonPanel();
-//            getView().addWidgetLeft(leftButtons);
-//        }
-//
-//        final ImageButtonView button = leftButtons.add(title, enabledImage, disabledImage, true);
-//        return button;
-//    }
 
     private GlyphButtonView addButtonLeft(final GlyphIcon preset) {
         if (leftButtons == null) {
@@ -510,18 +523,5 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
     public interface HasVisible {
         void setVisible(boolean visible);
-    }
-
-    private static String replace(final String path, final String type, final String replacement) {
-        String newPath = path;
-        final String param = "${" + type + "}";
-        int start = newPath.indexOf(param);
-        while (start != -1) {
-            final int end = start + param.length();
-            newPath = newPath.substring(0, start) + replacement + newPath.substring(end);
-            start = newPath.indexOf(param, end);
-        }
-
-        return newPath;
     }
 }

@@ -16,18 +16,17 @@
 
 package stroom.pipeline.server.factory;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
-import stroom.query.api.DocRef;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.server.SupportsCodeInjection;
 import stroom.pipeline.server.filter.SAXEventRecorder;
 import stroom.pipeline.server.filter.SAXRecordDetector;
 import stroom.pipeline.server.filter.SplitFilter;
 import stroom.pipeline.server.filter.XMLFilter;
-import stroom.pipeline.server.filter.XSLTFilter;
 import stroom.pipeline.server.parser.AbstractParser;
-import stroom.pipeline.server.parser.CombinedParser;
 import stroom.pipeline.server.reader.InputStreamElement;
 import stroom.pipeline.server.reader.InputStreamRecordDetectorElement;
 import stroom.pipeline.server.reader.ReaderRecordDetectorElement;
@@ -45,10 +44,9 @@ import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.query.api.DocRef;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;

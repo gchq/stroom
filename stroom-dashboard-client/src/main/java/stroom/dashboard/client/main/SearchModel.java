@@ -21,16 +21,15 @@ import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
-import stroom.query.api.QueryKey;
 import stroom.util.client.KVMapUtil;
 
 import java.util.HashMap;
@@ -133,10 +132,6 @@ public class SearchModel {
                 currentExpression = builder.build();
 
                 currentQueryKey = new DashboardQueryKey(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
-                currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, incremental);
-                currentQueryKey = new UniqueQueryKey(currentQueryKey.getDashboardId(),
-                        currentQueryKey.getDashboardName(), currentQueryKey.getQueryId(),
-                        RandomId.createDiscrimiator());
                 currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, timeZones.getTimeZone(), incremental);
                 activeSearch = currentSearch;
 
@@ -315,11 +310,6 @@ public class SearchModel {
         return indexLoader;
     }
 
-    public void setInitialQueryKey(final QueryKeyImpl initialQueryKey) {
-        destroy();
-        currentQueryKey = new UniqueQueryKey(initialQueryKey.getDashboardId(), initialQueryKey.getDashboardName(),
-                initialQueryKey.getQueryId(), RandomId.createDiscrimiator());
-    }
     public void setDashboardUUID(final DashboardUUID dashboardUUID) {
         this.dashboardUUID = dashboardUUID;
         destroy();

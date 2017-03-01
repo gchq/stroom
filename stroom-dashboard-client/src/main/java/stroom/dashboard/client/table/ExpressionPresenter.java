@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,11 +25,11 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
+import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.ValidateExpressionAction;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.dashboard.shared.Field;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;

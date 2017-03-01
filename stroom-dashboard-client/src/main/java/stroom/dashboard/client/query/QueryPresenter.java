@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -52,6 +52,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.explorer.client.presenter.EntityChooser;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.client.event.ChangeDataEvent;

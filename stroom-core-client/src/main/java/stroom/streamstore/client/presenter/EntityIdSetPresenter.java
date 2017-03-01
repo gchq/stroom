@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package stroom.streamstore.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
@@ -84,7 +83,7 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
     private void createList(final boolean enabled) {
         if (enabled) {
             selectionModel = new MySingleSelectionModel<DocRef>();
-            list = new CellTableViewImpl<DocRef>(true, (Resources) GWT.create(DefaultResources.class));
+            list = new CellTableViewImpl<DocRef>(true, GWT.create(DefaultResources.class));
 
             registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
                 @Override
@@ -94,7 +93,7 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
             }));
         } else {
             selectionModel = null;
-            list = new CellTableViewImpl<DocRef>(false, (Resources) GWT.create(DisabledResources.class));
+            list = new CellTableViewImpl<DocRef>(false, GWT.create(DisabledResources.class));
         }
 
         // Text.

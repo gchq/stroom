@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,7 @@
 package stroom.security.shared;
 
 import stroom.query.api.DocRef;
+import stroom.security.shared.User.UserStatus;
 import stroom.util.shared.SharedObject;
 
 public class UserRef extends DocRef implements SharedObject {
@@ -35,7 +36,7 @@ public class UserRef extends DocRef implements SharedObject {
     }
 
     public UserRef(final String type, final String uuid, final String name, final boolean group, final boolean enabled) {
-        super(type, null, uuid, name);
+        super(type, uuid, name);
         this.group = group;
         this.enabled = enabled;
     }

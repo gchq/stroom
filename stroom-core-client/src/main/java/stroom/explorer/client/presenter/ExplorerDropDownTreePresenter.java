@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,10 +24,10 @@ import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.Folder;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
+import stroom.query.api.DocRef;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.util.client.SelectionType;
@@ -174,6 +174,14 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
             this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
         }
 
+        private static ExplorerData resolve(final ExplorerData selection) {
+            if (selection == ExplorerTreeModel.NULL_SELECTION) {
+                return null;
+            }
+
+            return selection;
+        }
+
         @Override
         protected void setInitialSelectedItem(final ExplorerData selection) {
             super.setInitialSelectedItem(selection);
@@ -184,14 +192,6 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         protected void doSelect(final ExplorerData selection, final SelectionType selectionType) {
             super.doSelect(selection, selectionType);
             explorerDropDownTreePresenter.setSelectedTreeItem(resolve(selection), selectionType, false);
-        }
-
-        private static ExplorerData resolve(final ExplorerData selection) {
-            if (selection == ExplorerTreeModel.NULL_SELECTION) {
-                return null;
-            }
-
-            return selection;
         }
     }
 }

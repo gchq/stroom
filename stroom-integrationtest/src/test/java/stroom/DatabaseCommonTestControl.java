@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,32 +16,13 @@
 
 package stroom;
 
-import java.io.File;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
+import net.sf.ehcache.CacheManager;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
-
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.index.server.IndexShardWriterCache;
-import stroom.index.server.IndexShardWriterImpl;
-import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.Index;
-import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardService;
-import stroom.script.shared.Script;
-import stroom.security.server.DocumentPermission;
-import stroom.security.server.Permission;
-import stroom.security.server.UserGroupUser;
-import stroom.security.shared.User;
-import stroom.visualisation.shared.Visualisation;
 import stroom.dictionary.shared.Dictionary;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
@@ -50,6 +31,12 @@ import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.importexport.server.ImportExportSerializer.ImportMode;
+import stroom.index.server.IndexShardWriterCache;
+import stroom.index.server.IndexShardWriterImpl;
+import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.Index;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardService;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
 import stroom.lifecycle.LifecycleServiceImpl;
@@ -63,6 +50,11 @@ import stroom.node.shared.VolumeState;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
+import stroom.script.shared.Script;
+import stroom.security.server.DocumentPermission;
+import stroom.security.server.Permission;
+import stroom.security.server.UserGroupUser;
+import stroom.security.shared.User;
 import stroom.statistics.shared.StatisticStore;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
@@ -78,8 +70,14 @@ import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
 import stroom.test.StroomCoreServerTestFileUtil;
+import stroom.visualisation.shared.Visualisation;
 import stroom.xmlschema.shared.XMLSchema;
-import net.sf.ehcache.CacheManager;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>

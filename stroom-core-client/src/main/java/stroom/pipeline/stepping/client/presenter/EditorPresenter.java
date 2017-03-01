@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,7 +30,6 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
-import stroom.entity.shared.DocRef;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.EntityServiceLoadAction;
@@ -46,6 +45,7 @@ import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
+import stroom.query.api.DocRef;
 import stroom.util.shared.Indicators;
 import stroom.xmleditor.client.event.ChangeFilterEvent;
 import stroom.xmleditor.client.event.ChangeFilterEvent.ChangeFilterHandler;
@@ -56,14 +56,9 @@ import stroom.xmleditor.client.presenter.ReadOnlyXMLEditorPresenter;
 import stroom.xmleditor.client.presenter.XMLEditorPresenter;
 
 public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorView> implements HasDirtyHandlers {
-    public interface EditorView extends View {
-        void setCodeView(View view);
-
-        void setInputView(View view);
-
-        void setOutputView(View view);
-    }
-
+    private final ClientDispatchAsync dispatcher;
+    private final Provider<XMLEditorPresenter> editorProvider;
+    private final Provider<ReadOnlyXMLEditorPresenter> readOnlyEditorProvider;
     private String elementId;
     private PipelineElementType elementType;
     private DocRef entityRef;
@@ -71,19 +66,11 @@ public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorVie
     private boolean refreshRequired = true;
     private boolean loaded;
     private boolean dirtyCode;
-
-    private final ClientDispatchAsync dispatcher;
-
     private Entity entity;
     private Indicators codeIndicators;
-
-    private final Provider<XMLEditorPresenter> editorProvider;
-    private final Provider<ReadOnlyXMLEditorPresenter> readOnlyEditorProvider;
-
     private XMLEditorPresenter codePresenter;
     private ReadOnlyXMLEditorPresenter inputPresenter;
     private ReadOnlyXMLEditorPresenter outputPresenter;
-
     @Inject
     public EditorPresenter(final EventBus eventBus, final EditorView view,
                            final Provider<XMLEditorPresenter> editorProvider,
@@ -232,20 +219,20 @@ public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorVie
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
-    public void setElementId(final String elementId) {
-        this.elementId = elementId;
-    }
-
     public String getElementId() {
         return elementId;
     }
 
-    public void setElementType(final PipelineElementType elementType) {
-        this.elementType = elementType;
+    public void setElementId(final String elementId) {
+        this.elementId = elementId;
     }
 
     public PipelineElementType getElementType() {
         return elementType;
+    }
+
+    public void setElementType(final PipelineElementType elementType) {
+        this.elementType = elementType;
     }
 
     public void setEntityRef(final DocRef entityRef) {
@@ -326,5 +313,13 @@ public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorVie
         editorPresenter.getIndicatorsOption().setOn(true);
         editorPresenter.getLineNumbersOption().setAvailable(true);
         editorPresenter.getLineNumbersOption().setOn(false);
+    }
+
+    public interface EditorView extends View {
+        void setCodeView(View view);
+
+        void setInputView(View view);
+
+        void setOutputView(View view);
     }
 }

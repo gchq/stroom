@@ -22,7 +22,6 @@ import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.Node;
-import stroom.query.api.DocRef;
 import stroom.query.api.Query;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
@@ -743,7 +742,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             }
         }
 
-        final Search search = new Search(queryData.getDataSource(), queryData.getExpression(), null, Collections.emptyMap(), false);
+        final Query query = new Query(queryData.getDataSource(), queryData.getExpression());
 
         // Update the tracker status message.
         tracker.setStatus("Searching...");

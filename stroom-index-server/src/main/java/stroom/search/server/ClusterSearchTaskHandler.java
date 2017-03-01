@@ -298,7 +298,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                         SearchExpressionQuery query = null;
                         try {
                             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, search.getDateTimeLocale(), task.getNow());
+                                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, task.getDateTimeLocale(), task.getNow());
                             query = searchExpressionQueryBuilder.buildQuery(version, expression);
 
                             // Make sure the query was created successfully.

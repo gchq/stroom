@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,8 +30,6 @@ import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.EntityEditPresenter;
-import stroom.entity.shared.SharedDocRef;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceCopyAction;
 import stroom.entity.shared.EntityServiceCreateAction;
@@ -42,9 +40,11 @@ import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.entity.shared.HasFolder;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.event.HighlightExplorerItemEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.shared.EntityData;
+import stroom.query.api.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.task.client.TaskEndEvent;
@@ -567,7 +567,7 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
 
     public void create(final String type, final String name, final DocRef folder, final PermissionInheritance permissionInheritance,
             final CreateCallback callback) {
-        dispatcher.execute(new EntityServiceCreateAction(type, name, folder, permissionInheritance), new AsyncCallbackAdaptor<DocRef>() {
+        dispatcher.execute(new EntityServiceCreateAction(type, name, folder, permissionInheritance), new AsyncCallbackAdaptor<SharedDocRef>() {
             @Override
             public void onSuccess(final SharedDocRef result) {
                 callback.onCreate(result);

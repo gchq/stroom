@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,7 +30,6 @@ import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
-import stroom.entity.shared.StringCriteria;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -49,9 +48,10 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
     private final MySingleSelectionModel<QueryEntity> selectionModel;
     private QueryPresenter queryPresenter;
     private long currentDashboardId;
+
     @Inject
     public QueryHistoryPresenter(final EventBus eventBus, final QueryHistoryView view,
-            final ExpressionTreePresenter expressionPresenter, final ClientDispatchAsync dispatcher) {
+                                 final ExpressionTreePresenter expressionPresenter, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.dispatcher = dispatcher;
         this.expressionPresenter = expressionPresenter;
@@ -108,10 +108,10 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
                 selectionModel.clear();
 
                 String lastExpression = null;
-                final List<Query> dedupedList = new ArrayList<>(result.getSize());
-                for (final Query query : result) {
-                    if (query != null && query.getQueryData() != null && query.getQueryData().getExpression() != null) {
-                        final String expression = query.getQueryData().getExpression().toString();
+                final List<QueryEntity> dedupedList = new ArrayList<>(result.getSize());
+                for (final QueryEntity query : result) {
+                    if (query != null && query.getQuery() != null && query.getQuery().getExpression() != null) {
+                        final String expression = query.getQuery().getExpression().toString();
                         if (lastExpression == null || !lastExpression.equals(expression)) {
                             dedupedList.add(query);
                         }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,12 +16,12 @@
 
 package stroom.entity.client.event;
 
-import stroom.query.api.DocRef;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.query.api.DocRef;
 
 public class CreateEntityEvent extends GwtEvent<CreateEntityEvent.Handler> {
     private static Type<Handler> TYPE;

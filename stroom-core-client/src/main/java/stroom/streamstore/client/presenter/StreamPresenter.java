@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,11 +16,22 @@
 
 package stroom.streamstore.client.presenter;
 
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.AlertCallback;
 import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
@@ -29,14 +40,13 @@ import stroom.dispatch.client.ExportFileCompleteHandler;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.SharedDocRef;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
+import stroom.entity.shared.SharedDocRef;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
@@ -62,20 +72,6 @@ import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.Arrays;
 import java.util.List;

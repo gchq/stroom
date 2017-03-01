@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,12 +18,12 @@ package stroom.entity.server;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityService;
 import stroom.entity.shared.FindService;
+import stroom.query.api.DocRef;
 
 import java.util.Collection;
 import java.util.List;

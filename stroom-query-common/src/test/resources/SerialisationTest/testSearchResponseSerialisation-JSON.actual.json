@@ -1,52 +1,113 @@
 {
-  "highlights" : [ "highlight1", "highlight2" ],
-  "errors" : [ "some error" ],
-  "complete" : false,
-  "results" : [ {
-    "type" : "table",
-    "componentId" : "table-1234",
-    "rows" : [ {
-      "groupKey" : "groupKey",
-      "values" : [ "test" ],
-      "depth" : 5
-    } ],
-    "resultRange" : {
-      "offset" : 1,
-      "length" : 2
+  "highlights": [
+    "highlight1",
+    "highlight2"
+  ],
+  "errors": [
+    "some error"
+  ],
+  "complete": false,
+  "results": [
+    {
+      "type": "table",
+      "componentId": "table-1234",
+      "rows": [
+        {
+          "groupKey": "groupKey",
+          "values": [
+            "test"
+          ],
+          "depth": 5
+        }
+      ],
+      "resultRange": {
+        "offset": 1,
+        "length": 2
+      },
+      "totalResults": 1,
+      "error": "tableResultError"
     },
-    "totalResults" : 1,
-    "error" : "tableResultError"
-  }, {
-    "type" : "vis",
-    "componentId" : "vis-1234",
-    "structure": [
-      {
-        "name": "val1",
-        "format": {
-          "type": "GENERAL"
+    {
+      "type": "vis",
+      "componentId": "vis-1234",
+      "structure": [
+        {
+          "name": "val1",
+          "format": {
+            "type": "GENERAL"
+          }
+        },
+        {
+          "name": "val2",
+          "format": {
+            "type": "NUMBER"
+          }
+        },
+        {
+          "name": "val3",
+          "format": {
+            "type": "NUMBER"
+          }
+        },
+        {
+          "name": "val4",
+          "format": {
+            "type": "GENERAL"
+          }
         }
-      },
-      {
-        "name": "val2",
-        "format": {
-          "type": "NUMBER"
-        }
-      },
-      {
-        "name": "val3",
-        "format": {
-          "type": "NUMBER"
-        }
-      },
-      {
-        "name": "val4",
-        "format": {
-          "type": "GENERAL"
-      }
-      }
-    ],
-    "values" : [ [ "test0", 0.4, 234, "this0" ], [ "test1", 0.5, 25634, "this1" ], [ "test2", 0.6, 27, "this2" ], [ "test3", 0.7, 344, "this3" ], [ "test4", 0.2, 8984, "this4" ], [ "test5", 0.33, 3244, "this5" ], [ "test6", 34.66, 44, "this6" ], [ "test7", 2.33, 74, "this7" ] ],
-    "size" : 200,
-    "error" : "visResultError"
-  } ]
+      ],
+      "values": [
+        [
+          "test0",
+          0.4,
+          234,
+          "this0"
+        ],
+        [
+          "test1",
+          0.5,
+          25634,
+          "this1"
+        ],
+        [
+          "test2",
+          0.6,
+          27,
+          "this2"
+        ],
+        [
+          "test3",
+          0.7,
+          344,
+          "this3"
+        ],
+        [
+          "test4",
+          0.2,
+          8984,
+          "this4"
+        ],
+        [
+          "test5",
+          0.33,
+          3244,
+          "this5"
+        ],
+        [
+          "test6",
+          34.66,
+          44,
+          "this6"
+        ],
+        [
+          "test7",
+          2.33,
+          74,
+          "this7"
+        ]
+      ],
+      "size": 200,
+      "error": "visResultError"
+    }
+  ]
 }

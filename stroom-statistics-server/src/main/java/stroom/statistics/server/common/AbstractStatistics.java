@@ -144,7 +144,7 @@ public abstract class AbstractStatistics implements Statistics {
 
         // if we have got here then we have a single BETWEEN date term, so parse
         // it.
-        final Range<Long> range = extractRange(dateTerm, search.getDateTimeLocale(), nowEpochMilli);
+        final Range<Long> range = extractRange(dateTerm, nowEpochMilli);
 
         final List<ExpressionTerm> termNodesInFilter = new ArrayList<>();
         findAllTermNodes(topLevelExpressionOperator, termNodesInFilter);
@@ -270,7 +270,7 @@ public abstract class AbstractStatistics implements Statistics {
         return rolledUpStatisticEvent;
     }
 
-    private static Range<Long> extractRange(final ExpressionTerm dateTerm, final String timeZoneId, final long nowEpochMilli) {
+    private static Range<Long> extractRange(final ExpressionTerm dateTerm, final long nowEpochMilli) {
         long rangeFrom = 0;
         long rangeTo = Long.MAX_VALUE;
 
@@ -281,9 +281,9 @@ public abstract class AbstractStatistics implements Statistics {
         }
 
         final DateExpressionParser dateExpressionParser = new DateExpressionParser();
-        rangeFrom = dateExpressionParser.parse(dateArr[0], timeZoneId, nowEpochMilli).toInstant().toEpochMilli();
+        rangeFrom = dateExpressionParser.parse(dateArr[0], nowEpochMilli).toInstant().toEpochMilli();
         // add one to make it exclusive
-        rangeTo = dateExpressionParser.parse(dateArr[1], timeZoneId, nowEpochMilli).toInstant().toEpochMilli() + 1;
+        rangeTo = dateExpressionParser.parse(dateArr[1], nowEpochMilli).toInstant().toEpochMilli() + 1;
 
         final Range<Long> range = new Range<>(rangeFrom, rangeTo);
 

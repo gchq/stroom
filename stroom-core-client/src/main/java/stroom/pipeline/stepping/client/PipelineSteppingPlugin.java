@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,15 +24,16 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
+import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
+import stroom.query.api.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.Stream;

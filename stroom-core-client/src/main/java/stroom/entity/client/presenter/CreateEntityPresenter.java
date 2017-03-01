@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,22 +16,6 @@
 
 package stroom.entity.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
-import stroom.entity.client.event.CreateEntityEvent;
-import stroom.entity.client.event.ShowCreateEntityDialogEvent;
-import stroom.query.api.DocRef;
-import stroom.entity.shared.Folder;
-import stroom.entity.shared.PermissionInheritance;
-import stroom.explorer.client.presenter.EntityTreePresenter;
-import stroom.explorer.shared.EntityData;
-import stroom.explorer.shared.ExplorerData;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.HasDisplayValue;
-import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -40,6 +24,21 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+import stroom.alert.client.event.AlertEvent;
+import stroom.entity.client.event.CreateEntityEvent;
+import stroom.entity.client.event.ShowCreateEntityDialogEvent;
+import stroom.entity.shared.Folder;
+import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.client.presenter.EntityTreePresenter;
+import stroom.explorer.shared.EntityData;
+import stroom.explorer.shared.ExplorerData;
+import stroom.query.api.DocRef;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class CreateEntityPresenter
         extends MyPresenter<CreateEntityPresenter.CreateEntityView, CreateEntityPresenter.CreateEntityProxy>

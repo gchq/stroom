@@ -30,11 +30,11 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.client.table.FormatPresenter.FormatView;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.TimeZone;
 import stroom.dashboard.shared.TimeZone.Use;
+import stroom.item.client.ItemListBox;
+import stroom.item.client.StringListBox;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

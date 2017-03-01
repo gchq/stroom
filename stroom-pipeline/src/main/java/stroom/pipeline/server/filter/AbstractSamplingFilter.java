@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,9 +16,6 @@
 
 package stroom.pipeline.server.filter;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
@@ -28,15 +25,9 @@ import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.shared.ElementIcons;
-import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
-import stroom.util.spring.StroomSpringProfiles;
 
-import javax.annotation.Resource;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -67,8 +58,7 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @throws SAXException
-     *             Not thrown.
+     * @throws SAXException Not thrown.
      * @see AbstractXMLFilter#startProcessing()
      */
     @Override
@@ -118,10 +108,8 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param locator
-     *            an object that can return the location of any SAX document
-     *            event
-     *
+     * @param locator an object that can return the location of any SAX document
+     *                event
      * @see Locator
      * @see AbstractXMLFilter#setDocumentLocator(Locator)
      */
@@ -132,9 +120,7 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @throws SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @throws SAXException any SAX exception, possibly wrapping another exception
      * @see #endDocument
      * @see AbstractXMLFilter#startDocument()
      */
@@ -145,9 +131,7 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @throws SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @throws SAXException any SAX exception, possibly wrapping another exception
      * @see #startDocument
      * @see AbstractXMLFilter#endDocument()
      */
@@ -158,18 +142,14 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param prefix
-     *            the Namespace prefix being declared. An empty string is used
-     *            for the default element namespace, which has no prefix.
-     * @param uri
-     *            the Namespace URI the prefix is mapped to
-     * @throws SAXException
-     *             the client may throw an exception during processing
-     *
+     * @param prefix the Namespace prefix being declared. An empty string is used
+     *               for the default element namespace, which has no prefix.
+     * @param uri    the Namespace URI the prefix is mapped to
+     * @throws SAXException the client may throw an exception during processing
      * @see #endPrefixMapping
      * @see #startElement
      * @see AbstractXMLFilter#startPrefixMapping(String,
-     *      String)
+     * String)
      */
     @Override
     public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
@@ -178,12 +158,9 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param prefix
-     *            the prefix that was being mapped. This is the empty string
-     *            when a default mapping scope ends.
-     * @throws SAXException
-     *             the client may throw an exception during processing
-     *
+     * @param prefix the prefix that was being mapped. This is the empty string
+     *               when a default mapping scope ends.
+     * @throws SAXException the client may throw an exception during processing
      * @see #startPrefixMapping
      * @see #endElement
      * @see AbstractXMLFilter#endPrefixMapping(String)
@@ -195,28 +172,22 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @param atts
-     *            the attributes attached to the element. If there are no
-     *            attributes, it shall be an empty Attributes object. The value
-     *            of this object after startElement returns is undefined
-     * @throws SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @param atts      the attributes attached to the element. If there are no
+     *                  attributes, it shall be an empty Attributes object. The value
+     *                  of this object after startElement returns is undefined
+     * @throws SAXException any SAX exception, possibly wrapping another exception
      * @see #endElement
      * @see Attributes
      * @see org.xml.sax.helpers.AttributesImpl
      * @see AbstractXMLFilter#startElement(String,
-     *      String, String, Attributes)
+     * String, String, Attributes)
      */
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -226,21 +197,16 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @throws SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @throws SAXException any SAX exception, possibly wrapping another exception
      * @see AbstractXMLFilter#endElement(String,
-     *      String, String)
+     * String, String)
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -249,19 +215,14 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     * @throws SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
+     * @throws SAXException any SAX exception, possibly wrapping another exception
      * @see #ignorableWhitespace
      * @see Locator
      * @see AbstractXMLFilter#characters(char[],
-     *      int, int)
+     * int, int)
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
@@ -270,18 +231,13 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     * @throws SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
+     * @throws SAXException any SAX exception, possibly wrapping another exception
      * @see #characters
      * @see AbstractXMLFilter#ignorableWhitespace(char[],
-     *      int, int)
+     * int, int)
      */
     @Override
     public void ignorableWhitespace(final char[] ch, final int start, final int length) throws SAXException {
@@ -290,17 +246,13 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param target
-     *            the processing instruction target
-     * @param data
-     *            the processing instruction data, or null if none was supplied.
-     *            The data does not include any whitespace separating it from
-     *            the target
-     * @throws SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param target the processing instruction target
+     * @param data   the processing instruction data, or null if none was supplied.
+     *               The data does not include any whitespace separating it from
+     *               the target
+     * @throws SAXException any SAX exception, possibly wrapping another exception
      * @see AbstractXMLFilter#processingInstruction(String,
-     *      String)
+     * String)
      */
     @Override
     public void processingInstruction(final String target, final String data) throws SAXException {
@@ -309,13 +261,10 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param name
-     *            the name of the skipped entity. If it is a parameter entity,
-     *            the name will begin with '%', and if it is the external DTD
-     *            subset, it will be the string "[dtd]"
-     * @throws SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param name the name of the skipped entity. If it is a parameter entity,
+     *             the name will begin with '%', and if it is the external DTD
+     *             subset, it will be the string "[dtd]"
+     * @throws SAXException any SAX exception, possibly wrapping another exception
      * @see AbstractXMLFilter#skippedEntity(String)
      */
     @Override

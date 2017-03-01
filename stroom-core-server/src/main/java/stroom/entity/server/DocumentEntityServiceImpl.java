@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,8 +22,6 @@ import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.FolderService;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
@@ -31,9 +29,11 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
+import stroom.entity.shared.FolderService;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.query.api.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
@@ -59,18 +59,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     protected static final String[] STANDARD_PERMISSIONS = new String[]{DocumentPermissionNames.USE,
             DocumentPermissionNames.READ, DocumentPermissionNames.UPDATE, DocumentPermissionNames.DELETE, DocumentPermissionNames.OWNER};
-
-    // TODO : REMOVE WHEN WE REMOVE FOLDER REFERENCES FROM ENTITIES.
-    @Resource
-    private FolderService folderService;
-
     private final StroomEntityManager entityManager;
     private final SecurityContext securityContext;
     private final EntityServiceHelper<E> entityServiceHelper;
     private final FindServiceHelper<E, C> findServiceHelper;
-
     private final QueryAppender<E, C> queryAppender;
-
+    // TODO : REMOVE WHEN WE REMOVE FOLDER REFERENCES FROM ENTITIES.
+    @Resource
+    private FolderService folderService;
     private String entityType;
 
     protected DocumentEntityServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext) {

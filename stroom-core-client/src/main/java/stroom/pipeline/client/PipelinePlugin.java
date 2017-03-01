@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,12 +26,12 @@ import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditPresenter;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.client.presenter.ProcessorPresenter;
+import stroom.query.api.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamtask.shared.StreamProcessor;
 
