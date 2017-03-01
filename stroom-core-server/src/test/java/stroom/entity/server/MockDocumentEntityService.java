@@ -18,13 +18,13 @@ package stroom.entity.server;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.entity.shared.DocRef;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.PermissionInheritance;
 
 import java.util.ArrayList;

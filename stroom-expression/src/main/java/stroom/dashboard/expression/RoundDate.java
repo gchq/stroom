@@ -17,23 +17,11 @@
 package stroom.dashboard.expression;
 
 import java.text.ParseException;
-
-import org.joda.time.DateTime;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 public abstract class RoundDate extends AbstractFunction {
-    public abstract static class RoundDateCalculator implements RoundCalculator {
-        private static final long serialVersionUID = 1099553839843710283L;
-
-        @Override
-        public Double calc(final Double value) {
-            DateTime dateTime = new DateTime(value.longValue());
-            dateTime = adjust(dateTime);
-            return Double.valueOf(dateTime.getMillis());
-        }
-
-        protected abstract DateTime adjust(DateTime dateTime);
-    }
-
     private Function function = null;
 
     public RoundDate(final String name) {
@@ -64,4 +52,17 @@ public abstract class RoundDate extends AbstractFunction {
     }
 
     protected abstract RoundCalculator getCalculator();
+
+    public abstract static class RoundDateCalculator implements RoundCalculator {
+        private static final long serialVersionUID = 1099553839843710283L;
+
+        @Override
+        public Double calc(final Double value) {
+            LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(value.longValue()), ZoneOffset.UTC);
+            dateTime = adjust(dateTime);
+            return (double) dateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
+        }
+
+        protected abstract LocalDateTime adjust(LocalDateTime dateTime);
+    }
 }

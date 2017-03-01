@@ -21,12 +21,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
+import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.entity.shared.DocRef;
+import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.query.shared.Automate;
-import stroom.query.shared.DataSource;
-import stroom.query.shared.QueryData;
+import stroom.query.api.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
@@ -37,7 +36,7 @@ public class BasicQuerySettingsPresenter
 
     @Inject
     public BasicQuerySettingsPresenter(final EventBus eventBus, final BasicQuerySettingsView view,
-            final EntityDropDownPresenter dataSourceSelectionPresenter) {
+                                       final EntityDropDownPresenter dataSourceSelectionPresenter) {
         super(eventBus, view);
         this.dataSourceSelectionPresenter = dataSourceSelectionPresenter;
 
@@ -45,7 +44,7 @@ public class BasicQuerySettingsPresenter
 
 //        final String[] types = dataSourceTypes.getTypes();
 //        dataSourceSelectionPresenter.setIncludedTypes(types);
-        dataSourceSelectionPresenter.setTags(DataSource.DATA_SOURCE);
+        dataSourceSelectionPresenter.setTags("DataSource");
         dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 //        dataSourceSelectionPresenter.setSelectionTypes(types);
     }
@@ -62,7 +61,7 @@ public class BasicQuerySettingsPresenter
     public void read(final ComponentConfig componentData) {
         super.read(componentData);
 
-        final QueryData settings = (QueryData) componentData.getSettings();
+        final QueryComponentSettings settings = (QueryComponentSettings) componentData.getSettings();
         setDataSource(settings.getDataSource());
 
         Automate automate = settings.getAutomate();
@@ -80,7 +79,7 @@ public class BasicQuerySettingsPresenter
     public void write(final ComponentConfig componentData) {
         super.write(componentData);
 
-        final QueryData settings = (QueryData) componentData.getSettings();
+        final QueryComponentSettings settings = (QueryComponentSettings) componentData.getSettings();
         settings.setDataSource(getDataSource());
 
         Automate automate = settings.getAutomate();
@@ -120,7 +119,7 @@ public class BasicQuerySettingsPresenter
             return true;
         }
 
-        final QueryData settings = (QueryData) componentData.getSettings();
+        final QueryComponentSettings settings = (QueryComponentSettings) componentData.getSettings();
         Automate automate = settings.getAutomate();
         if (automate == null) {
             automate = new Automate();

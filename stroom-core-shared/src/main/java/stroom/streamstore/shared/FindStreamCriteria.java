@@ -30,7 +30,6 @@ import stroom.entity.shared.OrderBy;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.shared.QueryData;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;

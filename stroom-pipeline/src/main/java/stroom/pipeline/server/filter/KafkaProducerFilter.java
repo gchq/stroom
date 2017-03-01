@@ -4,6 +4,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
+import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.StroomKafkaProducer;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -22,18 +23,17 @@ import javax.inject.Inject;
 @ConfigurableElement(type = "KafkaProducerFilter", category = PipelineElementType.Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS,
         PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.STREAM)
-public class KafkaProducerFilter extends TestFilter {
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(KafkaProducerFilter.class);
+public class KafkaProducerFilter extends AbstractSamplingFilter {
+    private final ErrorReceiverProxy errorReceiverProxy;
+    private final StroomKafkaProducer stroomKafkaProducer;
 
-
-    private StroomKafkaProducer stroomKafkaProducer;
     private String recordKey;
     private String topic;
 
     @Inject
-    public KafkaProducerFilter(StroomKafkaProducer stroomKafkaProducer){
+    public KafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory, final StroomKafkaProducer stroomKafkaProducer) {
+        super(errorReceiverProxy, locationFactory);
+        this.errorReceiverProxy = errorReceiverProxy;
         this.stroomKafkaProducer = stroomKafkaProducer;
     }
 

@@ -22,9 +22,8 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-
-import stroom.query.shared.ExpressionItem;
 import stroom.pipeline.structure.client.view.Box;
+import stroom.query.api.ExpressionItem;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
@@ -63,7 +62,7 @@ public class ExpressionItemBox extends Box<ExpressionItem> {
     private Widget innerWidget;
 
     public ExpressionItemBox(final TreeLayout<ExpressionItem> treeLayout, final ExpressionItem expressionItem,
-            final boolean allowSelection) {
+                             final boolean allowSelection) {
         this.treeLayout = treeLayout;
         this.expressionItem = expressionItem;
 
@@ -131,7 +130,7 @@ public class ExpressionItemBox extends Box<ExpressionItem> {
 
         ExpressionItem item = expressionItem;
         while (item != null) {
-            if (!item.isEnabled()) {
+            if (!item.enabled()) {
                 return false;
             }
             item = tree.getParent(item);

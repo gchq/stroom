@@ -31,11 +31,11 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.FindQueryCriteria;
-import stroom.dashboard.shared.Query;
+import stroom.dashboard.shared.QueryEntity;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.EntityServiceFindAction;
@@ -43,9 +43,9 @@ import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.StringCriteria;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.Query;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.QueryData;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;
@@ -62,7 +62,7 @@ import stroom.widget.util.client.MySingleSelectionModel;
 public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesPresenter.QueryFavouritesView> {
     private final ClientDispatchAsync dispatcher;
     private final ExpressionTreePresenter expressionPresenter;
-    private final MySingleSelectionModel<Query> selectionModel;
+    private final MySingleSelectionModel<QueryEntity> selectionModel;
     private final NamePresenter namePresenter;
     private final GlyphButtonView createButton;
     private final GlyphButtonView editButton;
@@ -103,14 +103,14 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
             @Override
             public void onSelectionChange(final SelectionChangeEvent event) {
-                final Query query = selectionModel.getSelectedObject();
+                final QueryEntity query = selectionModel.getSelectedObject();
 
-                if (query == null || query.getQueryData() == null) {
+                if (query == null || query.getQuery() == null) {
                     expressionPresenter.read(null);
                     editButton.setEnabled(false);
                     deleteButton.setEnabled(false);
                 } else {
-                    expressionPresenter.read(query.getQueryData().getExpression());
+                    expressionPresenter.read(query.getQuery().getExpression());
                     editButton.setEnabled(true);
                     deleteButton.setEnabled(true);
                 }
@@ -139,16 +139,14 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                     AlertEvent.fireWarn(QueryFavouritesPresenter.this, "You must provide a name", null);
 
                                 } else {
-                                    final QueryData queryData = new QueryData();
-                                    queryData.setDataSource(currentDataSource);
-                                    queryData.setExpression(currentExpression);
-                                    final Query query = new Query();
-                                    query.setQueryData(queryData);
-                                    query.setDashboard(Dashboard.createStub(currentDashboardId));
-                                    query.setName(entityName);
-                                    query.setFavourite(true);
+                                    final Query query = new Query(currentDataSource, currentExpression);
+                                    final QueryEntity queryEntity = new QueryEntity();
+                                    queryEntity.setQuery(query);
+                                    queryEntity.setDashboard(Dashboard.createStub(currentDashboardId));
+                                    queryEntity.setName(entityName);
+                                    queryEntity.setFavourite(true);
 
-                                    save(query, autoClose, ok);
+                                    save(queryEntity, autoClose, ok);
                                 }
                             } else {
                                 HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
@@ -173,7 +171,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
             @Override
             public void onClick(final ClickEvent event) {
                 if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    final Query query = selectionModel.getSelectedObject();
+                    final QueryEntity query = selectionModel.getSelectedObject();
                     if (query != null) {
                         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                             @Override
@@ -216,7 +214,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
             @Override
             public void onClick(final ClickEvent event) {
                 if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    final Query query = selectionModel.getSelectedObject();
+                    final QueryEntity query = selectionModel.getSelectedObject();
                     if (query != null) {
                         ConfirmEvent.fire(QueryFavouritesPresenter.this,
                                 "Are you sure you want to delete this favourite?", new ConfirmCallback() {
@@ -254,10 +252,10 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         criteria.setFavourite(true);
         criteria.setPageRequest(new PageRequest(0L, 100));
 
-        final EntityServiceFindAction<FindQueryCriteria, Query> action = new EntityServiceFindAction<>(criteria);
-        dispatcher.execute(action, new AsyncCallbackAdaptor<ResultList<Query>>() {
+        final EntityServiceFindAction<FindQueryCriteria, QueryEntity> action = new EntityServiceFindAction<>(criteria);
+        dispatcher.execute(action, new AsyncCallbackAdaptor<ResultList<QueryEntity>>() {
             @Override
-            public void onSuccess(final ResultList<Query> result) {
+            public void onSuccess(final ResultList<QueryEntity> result) {
                 selectionModel.clear();
                 getView().getCellList().setRowData(result);
                 getView().getCellList().setRowCount(result.size(), true);
@@ -284,36 +282,36 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
     private void close(final boolean ok) {
         if (ok) {
-            final Query query = selectionModel.getSelectedObject();
-            if (query != null && query.getQueryData() != null && query.getQueryData().getExpression() != null) {
-                queryPresenter.setExpression(query.getQueryData().getExpression());
+            final QueryEntity query = selectionModel.getSelectedObject();
+            if (query != null && query.getQuery() != null && query.getQuery().getExpression() != null) {
+                queryPresenter.setExpression(query.getQuery().getExpression());
             }
         }
 
         HidePopupEvent.fire(queryPresenter, QueryFavouritesPresenter.this);
     }
 
-    private void save(final Query query, final boolean autoClose, final boolean ok) {
-        dispatcher.execute(new EntityServiceSaveAction<Query>(query), new AsyncCallbackAdaptor<Query>() {
+    private void save(final QueryEntity query, final boolean autoClose, final boolean ok) {
+        dispatcher.execute(new EntityServiceSaveAction<QueryEntity>(query), new AsyncCallbackAdaptor<QueryEntity>() {
             @Override
-            public void onSuccess(final Query result) {
+            public void onSuccess(final QueryEntity result) {
                 refresh(false);
                 HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
             }
         });
     }
 
-    private void delete(final Query query) {
-        dispatcher.execute(new EntityServiceDeleteAction<Query>(query), new AsyncCallbackAdaptor<Query>() {
+    private void delete(final QueryEntity query) {
+        dispatcher.execute(new EntityServiceDeleteAction<QueryEntity>(query), new AsyncCallbackAdaptor<QueryEntity>() {
             @Override
-            public void onSuccess(final Query result) {
+            public void onSuccess(final QueryEntity result) {
                 refresh(false);
             }
         });
     }
 
     public interface QueryFavouritesView extends View {
-        CellList<Query> getCellList();
+        CellList<QueryEntity> getCellList();
 
         void setExpressionView(View view);
 

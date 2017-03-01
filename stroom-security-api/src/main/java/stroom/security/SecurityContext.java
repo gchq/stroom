@@ -38,6 +38,8 @@ public interface SecurityContext {
      */
     String getUserId();
 
+    String getToken();
+
     /**
      * Check if the user associated with this security context is logged in.
      *

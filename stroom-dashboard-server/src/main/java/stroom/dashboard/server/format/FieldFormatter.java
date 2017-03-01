@@ -16,7 +16,7 @@
 
 package stroom.dashboard.server.format;
 
-import stroom.query.shared.Field;
+import stroom.dashboard.shared.Field;
 
 import java.util.HashMap;
 import java.util.Map;

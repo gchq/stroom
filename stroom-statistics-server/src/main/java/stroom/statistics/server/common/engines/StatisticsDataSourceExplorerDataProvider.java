@@ -23,7 +23,6 @@ import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
 import stroom.explorer.shared.EntityData;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.shared.DataSource;
 import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.FindStatisticsEntityCriteria;
 import stroom.statistics.common.StatisticStoreEntityService;
@@ -45,8 +44,9 @@ public class StatisticsDataSourceExplorerDataProvider
     private static final StroomLogger LOGGER = StroomLogger.getLogger(StatisticsDataSourceExplorerDataProvider.class);
 
     private static final Set<String> tags = new HashSet<>();
+
     static {
-        tags.add(DataSource.DATA_SOURCE);
+        tags.add("DataSource");
     }
 
     private final StatisticStoreEntityService statisticsDataSourceService;

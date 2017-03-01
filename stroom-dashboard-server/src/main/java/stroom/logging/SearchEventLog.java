@@ -16,8 +16,8 @@
 
 package stroom.logging;
 
-import stroom.entity.shared.DocRef;
-import stroom.query.shared.ExpressionOperator;
+import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionOperator;
 
 public interface SearchEventLog {
     void search(DocRef dataSourceRef, ExpressionOperator expression);

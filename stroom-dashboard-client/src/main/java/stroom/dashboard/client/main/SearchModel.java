@@ -18,21 +18,20 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TimeZones;
-import stroom.dashboard.shared.QueryKeyImpl;
-import stroom.dashboard.shared.UniqueQueryKey;
-import stroom.entity.shared.DocRef;
-import stroom.query.shared.ComponentResult;
-import stroom.query.shared.ComponentResultRequest;
-import stroom.query.shared.ComponentSettings;
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.QueryKey;
-import stroom.query.shared.Search;
-import stroom.query.shared.SearchRequest;
-import stroom.query.shared.SearchResponse;
+import stroom.dashboard.shared.ComponentResult;
+import stroom.dashboard.shared.ComponentResultRequest;
+import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.Search;
+import stroom.dashboard.shared.SearchRequest;
+import stroom.dashboard.shared.SearchResponse;
+import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionBuilder;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.QueryKey;
 import stroom.util.client.KVMapUtil;
-import stroom.util.client.RandomId;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,13 +46,14 @@ public class SearchModel {
     private Map<String, String> currentParameterMap;
     private ExpressionOperator currentExpression;
     private SearchResponse currentResult;
-    private UniqueQueryKey currentQueryKey;
+    private DashboardUUID dashboardUUID;
+    private DashboardQueryKey currentQueryKey;
     private Search currentSearch;
     private Search activeSearch;
     private Mode mode = Mode.INACTIVE;
 
     public SearchModel(final SearchBus searchBus, final QueryPresenter queryPresenter, final IndexLoader indexLoader,
-            final TimeZones timeZones) {
+                       final TimeZones timeZones) {
         this.searchBus = searchBus;
         this.queryPresenter = queryPresenter;
         this.indexLoader = indexLoader;
@@ -97,28 +97,27 @@ public class SearchModel {
     public void search(final ExpressionOperator expression, final String params, final boolean incremental) {
         // Toggle the request mode or start a new search.
         switch (mode) {
-        case ACTIVE:
-            // Tell every component not to want data.
-            setWantsData(false);
-            setMode(Mode.PAUSED);
-            break;
-        case INACTIVE:
-            reset();
-            startNewSearch(expression, params, incremental);
-            break;
-        case PAUSED:
-            // Tell every component that it should want data.
-            setWantsData(true);
-            setMode(Mode.ACTIVE);
-            break;
+            case ACTIVE:
+                // Tell every component not to want data.
+                setWantsData(false);
+                setMode(Mode.PAUSED);
+                break;
+            case INACTIVE:
+                reset();
+                startNewSearch(expression, params, incremental);
+                break;
+            case PAUSED:
+                // Tell every component that it should want data.
+                setWantsData(true);
+                setMode(Mode.ACTIVE);
+                break;
         }
     }
 
     /**
      * Begin executing a new search using the supplied query expression.
      *
-     * @param expression
-     *            The expression to search with.
+     * @param expression The expression to search with.
      */
     private void startNewSearch(final ExpressionOperator expression, final String params, final boolean incremental) {
         final Map<String, ComponentSettings> resultComponentMap = createResultComponentMap();
@@ -129,10 +128,12 @@ public class SearchModel {
                 currentParameterMap = KVMapUtil.parse(params);
 
                 // Replace any parameters in the expression.
-                final ExpressionOperator copy = expression.copy();
-                replaceExpressionParameters(copy, currentParameterMap);
-                currentExpression = copy;
+                final ExpressionBuilder builder = new ExpressionBuilder(expression.getEnabled(), expression.getOp());
+                replaceExpressionParameters(builder, expression, currentParameterMap);
+                currentExpression = builder.build();
 
+                currentQueryKey = new DashboardQueryKey(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
+                currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, incremental);
                 currentQueryKey = new UniqueQueryKey(currentQueryKey.getDashboardId(),
                         currentQueryKey.getDashboardName(), currentQueryKey.getQueryId(),
                         RandomId.createDiscrimiator());
@@ -158,15 +159,19 @@ public class SearchModel {
         }
     }
 
-    private void replaceExpressionParameters(final ExpressionOperator operator, final Map<String, String> paramMap) {
-        for (ExpressionItem item : operator.getChildren()) {
-            if (item instanceof ExpressionOperator) {
-                replaceExpressionParameters((ExpressionOperator) item, paramMap);
-            } else if (item instanceof ExpressionTerm) {
-                final ExpressionTerm term = (ExpressionTerm) item;
-                final String value = term.getValue();
-                final String replaced = KVMapUtil.replaceParameters(value, paramMap);
-                term.setValue(replaced);
+    private void replaceExpressionParameters(final ExpressionBuilder builder, final ExpressionOperator operator, final Map<String, String> paramMap) {
+        if (operator.getChildren() != null) {
+            for (ExpressionItem child : operator.getChildren()) {
+                if (child instanceof ExpressionOperator) {
+                    final ExpressionOperator childOperator = (ExpressionOperator) child;
+                    final ExpressionBuilder childBuilder = builder.addOperator(childOperator.getEnabled(), childOperator.getOp());
+                    replaceExpressionParameters(childBuilder, childOperator, paramMap);
+                } else if (child instanceof ExpressionTerm) {
+                    final ExpressionTerm term = (ExpressionTerm) child;
+                    final String value = term.getValue();
+                    final String replaced = KVMapUtil.replaceParameters(value, paramMap);
+                    builder.addTerm(term.getEnabled(), term.getField(), term.getCondition(), replaced, term.getDictionary());
+                }
             }
         }
     }
@@ -298,7 +303,7 @@ public class SearchModel {
         return currentSearch != null;
     }
 
-    public QueryKey getCurrentQueryKey() {
+    public DashboardQueryKey getCurrentQueryKey() {
         return currentQueryKey;
     }
 
@@ -314,6 +319,11 @@ public class SearchModel {
         destroy();
         currentQueryKey = new UniqueQueryKey(initialQueryKey.getDashboardId(), initialQueryKey.getDashboardName(),
                 initialQueryKey.getQueryId(), RandomId.createDiscrimiator());
+    }
+    public void setDashboardUUID(final DashboardUUID dashboardUUID) {
+        this.dashboardUUID = dashboardUUID;
+        destroy();
+        currentQueryKey = new DashboardQueryKey(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
     }
 
     public SearchResponse getCurrentResult() {

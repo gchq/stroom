@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.dashboard.shared.FindQueryCriteria;
-import stroom.dashboard.shared.Query;
+import stroom.dashboard.shared.QueryEntity;
 import stroom.dashboard.shared.QueryService;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.CriteriaLoggingUtil;
@@ -30,7 +30,7 @@ import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.SQLUtil;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.EntityServiceException;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
@@ -43,7 +43,7 @@ import java.util.UUID;
 @Component("queryService")
 @Transactional
 @AutoMarshal
-public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQueryCriteria> implements QueryService {
+public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, FindQueryCriteria> implements QueryService {
     private final SecurityContext securityContext;
 
     @Inject
@@ -53,8 +53,8 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
     }
 
     @Override
-    public Class<Query> getEntityClass() {
-        return Query.class;
+    public Class<QueryEntity> getEntityClass() {
+        return QueryEntity.class;
     }
 
     @Override
@@ -65,9 +65,9 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
     // TODO : Remove this when document entities no longer reference a folder.
     // Don't do any create permission checking as a query doesn't live in a folder and all users are allowed to create queries.
     @Override
-    public Query create(final DocRef folder, final String name) throws RuntimeException {
+    public QueryEntity create(final DocRef folder, final String name) throws RuntimeException {
         // Create a new entity instance.
-        Query entity;
+        QueryEntity entity;
         try {
             entity = getEntityClass().newInstance();
         } catch (final IllegalAccessException | InstantiationException e) {
@@ -98,7 +98,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
     }
 
     @Override
-    protected QueryAppender<Query, FindQueryCriteria> createQueryAppender(final StroomEntityManager entityManager) {
+    protected QueryAppender<QueryEntity, FindQueryCriteria> createQueryAppender(final StroomEntityManager entityManager) {
         return new QueryQueryAppender(entityManager);
     }
 
@@ -108,7 +108,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
         return null;
     }
 
-    private static class QueryQueryAppender extends QueryAppender<Query, FindQueryCriteria> {
+    private static class QueryQueryAppender extends QueryAppender<QueryEntity, FindQueryCriteria> {
         public QueryQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }

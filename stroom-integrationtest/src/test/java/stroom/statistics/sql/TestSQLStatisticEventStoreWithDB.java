@@ -22,10 +22,11 @@ import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.Search;
+import stroom.query.api.ExpressionBuilder;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.Query;
 import stroom.statistics.common.RolledUpStatisticEvent;
 import stroom.statistics.common.StatisticDataPoint;
 import stroom.statistics.common.StatisticDataSet;
@@ -192,20 +193,20 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     }
 
     private StatisticDataSet doSearch(final List<StatisticTag> searchTags, final ExpressionOperator.Op op) {
-        final ExpressionOperator rootOperator = new ExpressionOperator(op);
+        final ExpressionBuilder rootOperator = new ExpressionBuilder(op);
         rootOperator
-                .addChild(new ExpressionTerm(StatisticStoreEntity.FIELD_NAME_DATE_TIME, Condition.BETWEEN, DATE_RANGE));
+                .addTerm(StatisticStoreEntity.FIELD_NAME_DATE_TIME, Condition.BETWEEN, DATE_RANGE);
 
         for (final StatisticTag tag : searchTags) {
-            rootOperator.addChild(new ExpressionTerm(tag.getTag(), Condition.EQUALS, tag.getValue()));
+            rootOperator.addTerm(tag.getTag(), Condition.EQUALS, tag.getValue());
         }
 
-        final Search search = new Search(null, rootOperator, null);
+        final Query query = new Query(null, rootOperator.build(), null);
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName(STAT_NAME);
         dataSource.setRollUpType(StatisticRollUpType.NONE);
 
-        return sqlStatisticEventStore.searchStatisticsData(search, dataSource);
+        return sqlStatisticEventStore.searchStatisticsData(query, dataSource);
     }
 
     private void assertDataSetSize(final StatisticDataSet dataSet, final int size) {

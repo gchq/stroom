@@ -19,15 +19,15 @@ package stroom.dashboard.client.main;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import stroom.dashboard.shared.FetchIndexFieldsAction;
+import stroom.dashboard.shared.DataSourceFields;
+import stroom.dashboard.shared.DataSourceFieldsMap;
+import stroom.dashboard.shared.FetchDataSourceFieldsAction;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
-import stroom.query.shared.IndexFields;
-import stroom.query.shared.IndexFieldsMap;
+import stroom.query.api.DocRef;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,7 +39,7 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
     private DocRef loadedDataSourceRef;
     private List<String> indexFieldNames;
-    private IndexFieldsMap indexFieldsMap;
+    private DataSourceFieldsMap dataSourceFieldsMap;
     private int loadCount;
 
     public IndexLoader(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
@@ -59,18 +59,18 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
     public void loadDataSource(final DocRef dataSourceRef) {
         if (dataSourceRef != null) {
-            dispatcher.execute(new FetchIndexFieldsAction(dataSourceRef), new AsyncCallbackAdaptor<IndexFields>() {
+            dispatcher.execute(new FetchDataSourceFieldsAction(dataSourceRef), new AsyncCallbackAdaptor<DataSourceFields>() {
                 @Override
-                public void onSuccess(final IndexFields result) {
+                public void onSuccess(final DataSourceFields result) {
                     loadedDataSourceRef = dataSourceRef;
 
                     if (result != null) {
-                        indexFieldNames = new ArrayList<String>(result.getFieldNames());
-                        indexFieldsMap = new IndexFieldsMap(result);
+                        dataSourceFieldsMap = new DataSourceFieldsMap(result.getFields());
+                        indexFieldNames = new ArrayList<>(dataSourceFieldsMap.keySet());
                         Collections.sort(indexFieldNames);
                     } else {
+                        dataSourceFieldsMap = new DataSourceFieldsMap();
                         indexFieldNames = new ArrayList<>();
-                        indexFieldsMap = new IndexFieldsMap();
                     }
 
                     loadCount++;
@@ -80,7 +80,7 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
         } else {
             loadedDataSourceRef = null;
             indexFieldNames = null;
-            indexFieldsMap = null;
+            dataSourceFieldsMap = null;
             loadCount++;
             ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
         }
@@ -94,8 +94,8 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
         return indexFieldNames;
     }
 
-    public IndexFieldsMap getIndexFieldsMap() {
-        return indexFieldsMap;
+    public DataSourceFieldsMap getDataSourceFieldsMap() {
+        return dataSourceFieldsMap;
     }
 
     public int getLoadCount() {

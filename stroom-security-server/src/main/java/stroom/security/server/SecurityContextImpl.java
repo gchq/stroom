@@ -16,6 +16,9 @@
 
 package stroom.security.server;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTCreationException;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.UnavailableSecurityManagerException;
 import org.apache.shiro.session.InvalidSessionException;
@@ -26,7 +29,7 @@ import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionException;
 import stroom.entity.server.GenericEntityService;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityService;
 import stroom.security.SecurityContext;
@@ -42,7 +45,8 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import javax.persistence.RollbackException;
+import javax.persistence.PersistenceException;
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,6 +54,9 @@ import java.util.Set;
 @Profile(SecurityConfiguration.PROD_SECURITY)
 @Scope(value = StroomScope.PROTOTYPE, proxyMode = ScopedProxyMode.INTERFACES)
 class SecurityContextImpl implements SecurityContext {
+    public static final String ISSUER = "stroom";
+    public static final String SECRET = "some-secret";
+
     private static final StroomLogger LOGGER = StroomLogger.getLogger(SecurityContextImpl.class);
     private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", "INTERNAL_PROCESSING_USER", false, true);
     private final UserPermissionsCache userPermissionCache;
@@ -71,7 +78,7 @@ class SecurityContextImpl implements SecurityContext {
     public void pushUser(final String name) {
         UserRef userRef = INTERNAL_PROCESSING_USER;
         if (name != null && !"INTERNAL_PROCESSING_USER".equals(name)) {
-            userRef = userService.getUserByName(name);
+            userRef = userService.getUserRefByName(name);
         }
 
         if (userRef == null) {
@@ -132,6 +139,19 @@ class SecurityContextImpl implements SecurityContext {
             return null;
         }
         return userRef.getName();
+    }
+
+    @Override
+    public String getToken() {
+        try {
+            return JWT.create().withIssuer(ISSUER).withSubject(getUserId()).sign(Algorithm.HMAC256(SECRET));
+        } catch (final JWTCreationException e) {
+            LOGGER.error(e.getMessage(), e);
+        } catch (final UnsupportedEncodingException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        return null;
     }
 
     @Override
@@ -209,88 +229,53 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
-    public void clearDocumentPermissions(final String documentType, final String documentUuid) {
+    public void createInitialDocumentPermissions(final String documentType, final String documentUuid, final String folderUuid) {
         // Get the current user.
         final UserRef userRef = getUserRef();
 
         // If no user is present then don't create permissions.
         if (userRef != null) {
-            if (hasDocumentPermission(documentType, documentUuid, DocumentPermissionNames.OWNER)) {
-                final DocRef docRef = new DocRef(documentType, documentUuid);
-                documentPermissionService.clearDocumentPermissions(docRef);
+            final DocRef docRef = new DocRef(documentType, documentUuid);
 
-                // Make sure the cache updates for the current user.
-                userPermissionCache.remove(userRef);
-                // Make sure cache updates for the document.
-                documentPermissionsCache.remove(docRef);
+            // Make the current user the owner of the new document.
+            documentPermissionService.addPermission(userRef, docRef, DocumentPermissionNames.OWNER);
+
+            // Inherit permissions from the parent folder if there is one.
+            // TODO : This should be part of the explorer service.
+            if (folderUuid != null) {
+                addInheritedPermissions(documentType, documentUuid, folderUuid);
             }
+
+            // Make sure the cache updates for the current user.
+            userPermissionCache.remove(userRef);
         }
     }
 
-    @Override
-    public void addDocumentPermissions(final String sourceType, final String sourceUuid, final String documentType, final String documentUuid, final boolean owner) {
-        // Get the current user.
-        final UserRef userRef = getUserRef();
+    private void addInheritedPermissions(final String documentType, final String documentUuid, final String folderUuid) {
+        final DocRef docRef = new DocRef(documentType, documentUuid);
 
-        // If no user is present then don't create permissions.
-        if (userRef != null) {
-            if (owner || hasDocumentPermission(documentType, documentUuid, DocumentPermissionNames.OWNER)) {
-                final DocRef docRef = new DocRef(documentType, documentUuid);
+        final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(new DocRef(Folder.ENTITY_TYPE, folderUuid));
+        if (documentPermissions != null) {
+            final Map<UserRef, Set<String>> userPermissions = documentPermissions.getUserPermissions();
+            if (userPermissions != null && userPermissions.size() > 0) {
+                final EntityService<?> entityService = genericEntityService.getEntityService(documentType);
+                if (entityService != null && entityService instanceof DocumentEntityService) {
+                    final DocumentEntityService<?> documentEntityService = (DocumentEntityService) entityService;
+                    final String[] allowedPermissions = documentEntityService.getPermissions();
 
-                if (owner) {
-                    // Make the current user the owner of the new document.
-                    try {
-                        documentPermissionService.addPermission(userRef, docRef, DocumentPermissionNames.OWNER);
-                    } catch (final RollbackException | TransactionException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                    } catch (final Exception e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                }
+                    for (final Map.Entry<UserRef, Set<String>> entry : userPermissions.entrySet()) {
+                        final UserRef userRef = entry.getKey();
+                        final Set<String> permissions = entry.getValue();
 
-                // Inherit permissions from the parent folder if there is one.
-                // TODO : This should be part of the explorer service.
-                copyPermissions(sourceType, sourceUuid, documentType, documentUuid);
-
-                // Make sure the cache updates for the current user.
-                userPermissionCache.remove(userRef);
-                // Make sure cache updates for the document.
-                documentPermissionsCache.remove(docRef);
-            }
-        }
-    }
-
-    private void copyPermissions(final String sourceType, final String sourceUuid, final String destType, final String destUuid) {
-        if (sourceType != null && sourceUuid != null) {
-            final DocRef sourceDocRef = new DocRef(sourceType, sourceUuid);
-
-            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(sourceDocRef);
-            if (documentPermissions != null) {
-                final Map<UserRef, Set<String>> userPermissions = documentPermissions.getUserPermissions();
-                if (userPermissions != null && userPermissions.size() > 0) {
-
-                    final DocRef destDocRef = new DocRef(destType, destUuid);
-                    final EntityService<?> entityService = genericEntityService.getEntityService(destDocRef.getType());
-                    if (entityService != null && entityService instanceof DocumentEntityService) {
-                        final DocumentEntityService<?> documentEntityService = (DocumentEntityService) entityService;
-                        final String[] allowedPermissions = documentEntityService.getPermissions();
-
-                        for (final Map.Entry<UserRef, Set<String>> entry : userPermissions.entrySet()) {
-                            final UserRef userRef = entry.getKey();
-                            final Set<String> permissions = entry.getValue();
-
-                            for (final String allowedPermission : allowedPermissions) {
-                                if (permissions.contains(allowedPermission)) {
-//                                    // Don't allow owner permissions to be inherited.
-//                                    if (!DocumentPermissionNames.OWNER.equals(allowedPermission)) {
+                        for (final String allowedPermission : allowedPermissions) {
+                            if (permissions.contains(allowedPermission)) {
+                                // Don't allow owner permissions to be inherited.
+                                if (!DocumentPermissionNames.OWNER.equals(allowedPermission)) {
                                     try {
-                                        documentPermissionService.addPermission(userRef, destDocRef, allowedPermission);
-                                    } catch (final RollbackException | TransactionException e) {
-                                        LOGGER.debug(e.getMessage(), e);
-                                    } catch (final Exception e) {
-                                        LOGGER.error(e.getMessage(), e);
+                                        documentPermissionService.addPermission(userRef, docRef, allowedPermission);
+                                    } catch (final PersistenceException e) {
+                                        // Ignore.
                                     }
-//                                    }
                                 }
                             }
                         }

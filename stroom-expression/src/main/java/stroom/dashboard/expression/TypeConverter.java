@@ -16,8 +16,6 @@
 
 package stroom.dashboard.expression;
 
-import stroom.util.date.DateUtil;
-
 import java.math.BigDecimal;
 
 public final class TypeConverter {
@@ -62,10 +60,10 @@ public final class TypeConverter {
         return obj.toString();
     }
 
-	public static String doubleToString(final Double dbl) {
-		final BigDecimal bigDecimal = BigDecimal.valueOf(dbl);
-		return bigDecimal.stripTrailingZeros().toPlainString();
-	}
+    public static String doubleToString(final Double dbl) {
+        final BigDecimal bigDecimal = BigDecimal.valueOf(dbl);
+        return bigDecimal.stripTrailingZeros().toPlainString();
+    }
 
     public static String escape(final String string) {
         return "'" + string.replaceAll("'", "''") + "'";

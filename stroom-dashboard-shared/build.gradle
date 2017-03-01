@@ -1,3 +1,4 @@
 dependencies {
     compile project(':stroom-query-api')
+    compile project(':stroom-entity-shared')
 }

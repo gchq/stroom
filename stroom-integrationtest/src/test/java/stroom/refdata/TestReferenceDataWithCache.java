@@ -21,7 +21,7 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.cache.CacheManagerAutoCloseable;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FolderService;
 import stroom.feed.shared.Feed;

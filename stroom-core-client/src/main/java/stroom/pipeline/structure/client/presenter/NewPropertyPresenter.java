@@ -32,7 +32,8 @@ import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.SharedDocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.EntityReferenceFindAction;
 import stroom.entity.shared.ResultList;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
@@ -314,10 +315,10 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             final FindStreamTypeCriteria findStreamTypeCriteria = new FindStreamTypeCriteria();
             findStreamTypeCriteria.obtainPurpose().add(Purpose.PROCESSED);
             dispatcher.execute(new EntityReferenceFindAction<>(findStreamTypeCriteria),
-                    new AsyncCallbackAdaptor<ResultList<DocRef>>() {
+                    new AsyncCallbackAdaptor<ResultList<SharedDocRef>>() {
                         @Override
-                        public void onSuccess(final ResultList<DocRef> result) {
-                            for (final DocRef streamType : result) {
+                        public void onSuccess(final ResultList<SharedDocRef> result) {
+                            for (final SharedDocRef streamType : result) {
                                 streamTypesWidget.addItem(streamType.getName());
                             }
                             streamTypesWidget.setSelected(currentStreamType);

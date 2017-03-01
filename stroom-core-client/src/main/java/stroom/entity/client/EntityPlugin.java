@@ -30,7 +30,8 @@ import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.EntityEditPresenter;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.SharedDocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceCopyAction;
 import stroom.entity.shared.EntityServiceCreateAction;
@@ -568,7 +569,7 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
             final CreateCallback callback) {
         dispatcher.execute(new EntityServiceCreateAction(type, name, folder, permissionInheritance), new AsyncCallbackAdaptor<DocRef>() {
             @Override
-            public void onSuccess(final DocRef result) {
+            public void onSuccess(final SharedDocRef result) {
                 callback.onCreate(result);
             }
         });

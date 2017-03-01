@@ -17,73 +17,72 @@
 package stroom.dashboard.expression;
 
 public class Equals extends AbstractManyChildFunction {
-	private static class Gen extends AbstractManyChildGenerator {
-		private static final long serialVersionUID = 217968020285584214L;
+    public static final String NAME = "=";
+    public static final String ALIAS = "equals";
+    private final boolean usingOperator;
 
-		public Gen(final Generator[] childGenerators) {
-			super(childGenerators);
-		}
+    public Equals(final String name) {
+        super(name, 2, 2);
+        usingOperator = name.length() == 1;
 
-		@Override
-		public void set(final String[] values) {
-			for (final Generator generator : childGenerators) {
-				generator.set(values);
-			}
-		}
+    }
 
-		@Override
-		public Object eval() {
-			String retVal = "false";
-			final Object a = childGenerators[0].eval();
-			final Object b = childGenerators[1].eval();
+    @Override
+    protected Generator createGenerator(final Generator[] childGenerators) {
+        return new Gen(childGenerators);
+    }
 
-			if (a.toString().equals(b.toString())) {
-				retVal = "true";
-			}
+    @Override
+    public void appendString(final StringBuilder sb) {
+        if (usingOperator) {
+            appendParams(sb);
+        } else {
+            super.appendString(sb);
+        }
+    }
 
-			return retVal;
-		}
-	}
+    @Override
+    protected void appendParams(final StringBuilder sb) {
+        if (usingOperator) {
+            if (params != null) {
+                for (int i = 0; i < params.length; i++) {
+                    final Object param = params[i];
+                    appendParam(sb, param);
+                    if (i < params.length - 1) {
+                        sb.append(name);
+                    }
+                }
+            }
+        } else {
+            super.appendParams(sb);
+        }
+    }
 
-	public static final String NAME = "=";
-	public static final String ALIAS = "equals";
+    private static class Gen extends AbstractManyChildGenerator {
+        private static final long serialVersionUID = 217968020285584214L;
 
-	private final boolean usingOperator;
+        public Gen(final Generator[] childGenerators) {
+            super(childGenerators);
+        }
 
-	public Equals(final String name) {
-		super(name, 2, 2);
-		usingOperator = name.length() == 1;
+        @Override
+        public void set(final String[] values) {
+            for (final Generator generator : childGenerators) {
+                generator.set(values);
+            }
+        }
 
-	}
+        @Override
+        public Object eval() {
+            String retVal = "false";
+            final Object a = childGenerators[0].eval();
+            final Object b = childGenerators[1].eval();
 
-	@Override
-	protected Generator createGenerator(final Generator[] childGenerators) {
-		return new Gen(childGenerators);
-	}
+            if (a.toString().equals(b.toString())) {
+                retVal = "true";
+            }
 
-	@Override
-	public void appendString(final StringBuilder sb) {
-		if (usingOperator) {
-			appendParams(sb);
-		} else {
-			super.appendString(sb);
-		}
-	}
-
-	@Override
-	protected void appendParams(final StringBuilder sb) {
-		if (usingOperator) {
-			if (params != null) {
-				for (int i = 0; i < params.length; i++) {
-					final Object param = params[i];
-					appendParam(sb, param);
-					if (i < params.length - 1) {
-						sb.append(name);
-					}
-				}
-			}
-		} else {
-			super.appendParams(sb);
-		}
-	}
+            return retVal;
+        }
+    }
 }

@@ -17,7 +17,7 @@
 package stroom.dashboard.server.download;
 
 import stroom.dashboard.server.format.FieldFormatter;
-import stroom.query.shared.Field;
+import stroom.dashboard.shared.Field;
 
 import java.io.BufferedWriter;
 import java.io.IOException;

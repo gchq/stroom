@@ -27,13 +27,13 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.TermQuery;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexConstants;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexField.AnalyzerType;
+import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
 import stroom.node.shared.Volume;
-import stroom.query.shared.IndexConstants;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexField.AnalyzerType;
-import stroom.query.shared.IndexFields;
 import stroom.search.server.IndexShardSearcherImpl;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.AbstractCommandLineTool;
@@ -169,13 +169,12 @@ public class BenchmarkIndex extends AbstractCommandLineTool {
         indexFields = IndexFields.createStreamIndexFields();
 
         for (final String arg : docArgs) {
-            final IndexField indexField = IndexField.createField(arg, AnalyzerType.WHITESPACE, false, false, true,
-                    false);
+            final IndexField indexField = IndexField.createField(arg, AnalyzerType.WHITESPACE, false);
             indexFields.add(indexField);
         }
 
-        indexFields.add(IndexField.createField("multifield", AnalyzerType.WHITESPACE, false, false, true, false));
-        indexFields.add(IndexField.createField("dupfield", AnalyzerType.WHITESPACE, false, false, true, false));
+        indexFields.add(IndexField.createField("multifield", AnalyzerType.WHITESPACE, false));
+        indexFields.add(IndexField.createField("dupfield", AnalyzerType.WHITESPACE, false));
     }
 
     @Override

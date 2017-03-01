@@ -19,11 +19,11 @@ package stroom.dashboard.expression;
 import java.text.ParseException;
 
 public class Brackets extends AbstractFunction {
+    private Function function;
+
     public Brackets() {
         super("", 1, 1);
     }
-
-    private Function function;
 
     @Override
     public void setParams(final Object[] params) throws ParseException {

@@ -16,15 +16,17 @@
 
 package stroom.query.client;
 
-import java.util.List;
-
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
+import stroom.query.api.ExpressionBuilder;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+
+import java.util.List;
 
 public class ExpressionModel {
     public DefaultTreeForTreeLayout<ExpressionItem> getTreeFromExpression(final ExpressionOperator expression) {
-        final DefaultTreeForTreeLayout<ExpressionItem> tree = new DefaultTreeForTreeLayout<ExpressionItem>(expression);
+        final DefaultTreeForTreeLayout<ExpressionItem> tree = new DefaultTreeForTreeLayout<>(expression);
         addChildrenToTree(tree, expression);
         return tree;
     }
@@ -32,15 +34,16 @@ public class ExpressionModel {
     public ExpressionOperator getExpressionFromTree(final DefaultTreeForTreeLayout<ExpressionItem> tree) {
         final ExpressionItem item = tree.getRoot();
         if (item != null && item instanceof ExpressionOperator) {
-            final ExpressionOperator parent = (ExpressionOperator) item;
-            addChildrenFromTree(tree, parent);
-            return parent;
+            final ExpressionOperator source = (ExpressionOperator) item;
+            final ExpressionBuilder dest = new ExpressionBuilder(source.getEnabled(), source.getOp());
+            addChildrenFromTree(source, dest, tree);
+            return dest.build();
         }
         return null;
     }
 
     private void addChildrenToTree(final DefaultTreeForTreeLayout<ExpressionItem> tree,
-            final ExpressionOperator parent) {
+                                   final ExpressionOperator parent) {
         if (parent != null) {
             final List<ExpressionItem> children = parent.getChildren();
             if (children != null) {
@@ -54,19 +57,16 @@ public class ExpressionModel {
         }
     }
 
-    private void addChildrenFromTree(final DefaultTreeForTreeLayout<ExpressionItem> tree,
-            final ExpressionOperator parent) {
-        if (parent.getChildren() != null) {
-            parent.getChildren().clear();
-        }
-
-        final List<ExpressionItem> children = tree.getChildren(parent);
-
+    private void addChildrenFromTree(final ExpressionOperator source, final ExpressionBuilder dest, final DefaultTreeForTreeLayout<ExpressionItem> tree) {
+        final List<ExpressionItem> children = tree.getChildren(source);
         if (children != null) {
             for (final ExpressionItem child : children) {
-                parent.addChild(child);
                 if (child instanceof ExpressionOperator) {
-                    addChildrenFromTree(tree, (ExpressionOperator) child);
+                    final ExpressionOperator childSource = (ExpressionOperator) child;
+                    final ExpressionBuilder childDest = dest.addOperator(childSource.getEnabled(), childSource.getOp());
+                    addChildrenFromTree(childSource, childDest, tree);
+                } else if (child instanceof ExpressionTerm) {
+                    dest.addTerm((ExpressionTerm) child);
                 }
             }
         }

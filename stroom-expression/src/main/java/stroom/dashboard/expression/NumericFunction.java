@@ -17,34 +17,6 @@
 package stroom.dashboard.expression;
 
 public abstract class NumericFunction extends AbstractManyChildFunction {
-    private static class Gen extends AbstractManyChildGenerator {
-        private static final long serialVersionUID = 217968020285584214L;
-
-        private final Calculator calculator;
-
-        public Gen(final Generator[] childGenerators, final Calculator calculator) {
-            super(childGenerators);
-            this.calculator = calculator;
-        }
-
-        @Override
-        public void set(final String[] values) {
-            for (final Generator generator : childGenerators) {
-                generator.set(values);
-            }
-        }
-
-        @Override
-        public Object eval() {
-            Double value = null;
-            for (final Generator gen : childGenerators) {
-                value = calculator.calc(value, gen.eval());
-            }
-
-            return value;
-        }
-    }
-
     private final boolean usingOperator;
 
     public NumericFunction(final String name, final int minParams, final int maxParams) {
@@ -82,6 +54,34 @@ public abstract class NumericFunction extends AbstractManyChildFunction {
             }
         } else {
             super.appendParams(sb);
+        }
+    }
+
+    private static class Gen extends AbstractManyChildGenerator {
+        private static final long serialVersionUID = 217968020285584214L;
+
+        private final Calculator calculator;
+
+        public Gen(final Generator[] childGenerators, final Calculator calculator) {
+            super(childGenerators);
+            this.calculator = calculator;
+        }
+
+        @Override
+        public void set(final String[] values) {
+            for (final Generator generator : childGenerators) {
+                generator.set(values);
+            }
+        }
+
+        @Override
+        public Object eval() {
+            Double value = null;
+            for (final Generator gen : childGenerators) {
+                value = calculator.calc(value, gen.eval());
+            }
+
+            return value;
         }
     }
 }

@@ -18,9 +18,40 @@
     <!-- Application display name and context -->
     <display-name>Stroom</display-name>
 
+    <listener>
+        <listener-class>stroom.util.spring.MyContextLoaderListener</listener-class>
+    </listener>
+
     <context-param>
         <param-name>log4jRefreshInterval</param-name>
         <param-value>10000</param-value>
+    </context-param>
+    <context-param>
+        <param-name>contextClass</param-name>
+        <param-value>org.springframework.web.context.support.AnnotationConfigWebApplicationContext</param-value>
+    </context-param>
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>
+            stroom.spring.ScopeConfiguration,
+            stroom.spring.PersistenceConfiguration,
+            stroom.spring.ServerComponentScanConfiguration,
+            stroom.spring.ServerConfiguration,
+            stroom.spring.CachedServiceConfiguration,
+            stroom.logging.spring.EventLoggingConfiguration,
+            stroom.index.spring.IndexConfiguration,
+            stroom.search.spring.SearchConfiguration,
+            stroom.script.spring.ScriptConfiguration,
+            stroom.visualisation.spring.VisualisationConfiguration,
+            stroom.dashboard.spring.DashboardConfiguration,
+            stroom.spring.CoreClientConfiguration,
+            stroom.statistics.spring.StatisticsConfiguration,
+            stroom.security.spring.SecurityConfiguration
+        </param-value>
+    </context-param>
+    <context-param>
+        <param-name>spring.profiles.active</param-name>
+        <param-value>production,PROD_SECURITY</param-value>
     </context-param>
 
     <!-- Log4J filter -->
@@ -46,7 +77,14 @@
         <filter-name>threadScopeContextFilter</filter-name>
         <filter-class>stroom.util.thread.ThreadScopeContextFilter</filter-class>
     </filter>
-
+    <!--<filter>-->
+        <!--<filter-name>jwtSecurityFilter</filter-name>-->
+        <!--<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>-->
+        <!--<init-param>-->
+            <!--<param-name>contextAttribute</param-name>-->
+            <!--<param-value>org.springframework.web.servlet.FrameworkServlet.CONTEXT.spring</param-value>-->
+        <!--</init-param>-->
+    <!--</filter>-->
     <filter>
         <filter-name>clusterCallCertificateRequiredFilter</filter-name>
         <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
@@ -75,6 +113,7 @@
             <param-value>true</param-value>
         </init-param>
     </filter>
+
     <filter-mapping>
         <filter-name>upgradeFilter</filter-name>
         <url-pattern>/*</url-pattern>
@@ -83,6 +122,10 @@
         <filter-name>threadScopeContextFilter</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>
+    <!--<filter-mapping>-->
+        <!--<filter-name>jwtSecurityFilter</filter-name>-->
+        <!--<url-pattern>/*</url-pattern>-->
+    <!--</filter-mapping>-->
     <filter-mapping>
         <filter-name>rejectPostFilter</filter-name>
         <url-pattern>/*</url-pattern>
@@ -124,10 +167,10 @@
             <param-name>spring.profiles.active</param-name>
             <param-value>production,PROD_SECURITY</param-value>
         </init-param>
-        <!--<init-param>-->
-        <!--<param-name>upgrade-class</param-name>-->
-        <!--<param-value>stroom.upgrade.StroomUpgradeHandler</param-value>-->
-        <!--</init-param>-->
+        <init-param>
+            <param-name>upgrade-class</param-name>
+            <param-value>stroom.upgrade.StroomUpgradeHandler</param-value>
+        </init-param>
         <init-param>
             <param-name>contextClass</param-name>
             <param-value>org.springframework.web.context.support.AnnotationConfigWebApplicationContext</param-value>
@@ -153,6 +196,24 @@
         </init-param>
         <load-on-startup>3</load-on-startup>
     </servlet>
+
+    <servlet>
+        <servlet-name>SpringApplication</servlet-name>
+        <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>javax.ws.rs.Application</param-name>
+            <param-value>stroom.search.spring.JerseyApplication</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SpringApplication</servlet-name>
+        <url-pattern>/rest/*</url-pattern>
+    </servlet-mapping>
 
     <!-- Deal with requests to the dispatch servlet -->
     <servlet-mapping>

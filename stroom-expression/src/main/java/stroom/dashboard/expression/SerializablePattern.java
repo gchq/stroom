@@ -21,23 +21,23 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SerializablePattern implements Serializable {
-	private static final long serialVersionUID = 3482210112462557773L;
+    private static final long serialVersionUID = 3482210112462557773L;
 
-	private final String regex;
-	private transient volatile Pattern pattern;
+    private final String regex;
+    private transient volatile Pattern pattern;
 
-	public SerializablePattern(final String regex) {
-		this.regex = regex;
-	}
+    public SerializablePattern(final String regex) {
+        this.regex = regex;
+    }
 
-	public Matcher matcher(final CharSequence input) {
-		return getOrCreatePattern().matcher(input);
-	}
+    public Matcher matcher(final CharSequence input) {
+        return getOrCreatePattern().matcher(input);
+    }
 
-	public Pattern getOrCreatePattern() {
-		if (pattern == null) {
-			pattern = Pattern.compile(regex);
-		}
-		return pattern;
-	}
+    public Pattern getOrCreatePattern() {
+        if (pattern == null) {
+            pattern = Pattern.compile(regex);
+        }
+        return pattern;
+    }
 }

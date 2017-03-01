@@ -25,9 +25,9 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
-import stroom.query.shared.Field;
-import stroom.query.shared.Filter;
-import stroom.query.shared.Sort;
+import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.Filter;
+import stroom.dashboard.shared.Sort;
 
 import java.util.ArrayList;
 import java.util.List;

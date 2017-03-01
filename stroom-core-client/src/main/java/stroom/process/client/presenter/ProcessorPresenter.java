@@ -28,7 +28,8 @@ import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefs;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
@@ -45,16 +46,18 @@ import stroom.process.shared.LoadEntityIdSetAction;
 import stroom.process.shared.SetId;
 import stroom.process.shared.StreamProcessorFilterRow;
 import stroom.process.shared.StreamProcessorRow;
+import stroom.query.api.ExpressionBuilder;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.QueryData;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.StreamFilterPresenter;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
@@ -71,7 +74,9 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
         implements HasRead<BaseEntity> {
@@ -226,16 +231,10 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     dispatcher.execute(new EntityServiceLoadAction<NamedEntity>(dataSourceRef, null), new AsyncCallbackAdaptor<NamedEntity>() {
                         @Override
                         public void onSuccess(final NamedEntity result) {
-                            final ExpressionTerm ds = new ExpressionTerm();
-                            ds.setField("Data Source");
-                            ds.setCondition(Condition.EQUALS);
-                            ds.setValue(result.getName());
-
-                            final ExpressionOperator operator = new ExpressionOperator(Op.AND);
-                            operator.addChild(ds);
-                            operator.addChild(expression);
-
-                            expressionPresenter.read(operator);
+                            final ExpressionBuilder builder = new ExpressionBuilder(Op.AND);
+                            builder.addTerm("Data Source", Condition.EQUALS, result.getName());
+                            builder.addOperator(expression);
+                            expressionPresenter.read(builder.build());
                         }
                     });
                 } else {
@@ -259,78 +258,69 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 }
                 entitySetMap.put(streamTypeSetId, findStreamCriteria.getStreamTypeIdSet());
 
-                // Load entities.
-                dispatcher.execute(new LoadEntityIdSetAction(entitySetMap),
-                        new AsyncCallbackAdaptor<SharedMap<SetId, SharedList<DocRef>>>() {
-                            @Override
-                            public void onSuccess(final SharedMap<SetId, SharedList<DocRef>> result) {
-                                final SharedList<DocRef> folders = result.get(folderSetId);
-                                final SharedList<DocRef> feedsInclude = result.get(feedIncludeSetId);
-                                final SharedList<DocRef> feedsExclude = result.get(feedExcludeSetId);
-                                final SharedList<DocRef> streamTypes = result.get(streamTypeSetId);
+                    // Load entities.
+                    dispatcher.execute(new LoadEntityIdSetAction(entitySetMap),
+                            new AsyncCallbackAdaptor<SharedMap<SetId, DocRefs>>() {
+                                @Override
+                                public void onSuccess(final SharedMap<SetId, DocRefs> result) {
+                                    final DocRefs folders = result.get(folderSetId);
+                                    final DocRefs feedsInclude = result.get(feedIncludeSetId);
+                                    final DocRefs feedsExclude = result.get(feedExcludeSetId);
+                                    final DocRefs streamTypes = result.get(streamTypeSetId);
 
-                                final ExpressionOperator operator = new ExpressionOperator(Op.AND);
-                                addEntityListTerm(operator, folders, "Folder");
-                                addEntityListTerm(operator, feedsInclude, "Feed");
+                                    final ExpressionBuilder operator = new ExpressionBuilder(Op.AND);
+                                    addEntityListTerm(operator, folders, "Folder");
+                                    addEntityListTerm(operator, feedsInclude, "Feed");
 
-                                if (feedsExclude != null && feedsExclude.size() > 0) {
-                                    final ExpressionOperator not = new ExpressionOperator(Op.NOT);
-                                    addEntityListTerm(not, feedsExclude, "Feed");
-                                    operator.addChild(not);
+                                    if (feedsExclude != null && feedsExclude.iterator().hasNext()) {
+                                        final ExpressionBuilder not = operator.addOperator(Op.NOT);
+                                        addEntityListTerm(not, feedsExclude, "Feed");
+                                    }
+
+                                    addEntityListTerm(operator, streamTypes, "Stream Type");
+                                    addIdTerm(operator, findStreamCriteria.getStreamIdSet(), "Stream Id");
+                                    addIdTerm(operator, findStreamCriteria.getParentStreamIdSet(), "Parent Stream Id");
+                                    addPeriodTerm(operator, findStreamCriteria.getCreatePeriod(), "Creation time");
+                                    addPeriodTerm(operator, findStreamCriteria.getEffectivePeriod(), "Effective time");
+
+                                    expressionPresenter.read(operator.build());
                                 }
-
-                                addEntityListTerm(operator, streamTypes, "Stream Type");
-                                addIdTerm(operator, findStreamCriteria.getStreamIdSet(), "Stream Id");
-                                addIdTerm(operator, findStreamCriteria.getParentStreamIdSet(), "Parent Stream Id");
-                                addPeriodTerm(operator, findStreamCriteria.getCreatePeriod(), "Creation time");
-                                addPeriodTerm(operator, findStreamCriteria.getEffectivePeriod(), "Effective time");
-
-                                expressionPresenter.read(operator);
-                            }
-                        });
+                            });
+                }
             }
         }
-    }
 
-    private void addEntityListTerm(final ExpressionOperator operator, final SharedList<DocRef> entities,
+    private void addEntityListTerm(final ExpressionBuilder operator, final DocRefs entities,
                                    final String label) {
-        if (entities != null && entities.size() > 0) {
-            if (entities.size() > 1) {
-                final ExpressionOperator or = new ExpressionOperator(Op.OR);
+        if (entities != null) {
+            final List<DocRef> list = new ArrayList<>(entities.getDoc());
 
-                Collections.sort(entities, new EntityReferenceComparator());
-                for (final DocRef entity : entities) {
+            if (list.size() > 1) {
+                final ExpressionBuilder or = operator.addOperator(Op.OR);
+
+                Collections.sort(list, new EntityReferenceComparator());
+                for (final DocRef entity : list) {
                     addEntity(or, entity, label);
                 }
 
-                if (or.getChildren() != null && or.getChildren().size() > 0) {
-                    operator.addChild(or);
-                }
-            } else {
-                final DocRef entity = entities.get(0);
+            } else if (list.size() > 0) {
+                final DocRef entity = list.get(0);
                 addEntity(operator, entity, label);
             }
         }
     }
 
-    private void addEntity(final ExpressionOperator operator, final DocRef entity, final String label) {
+    private void addEntity(final ExpressionBuilder operator, final DocRef entity, final String label) {
         if (entity != null) {
-            final ExpressionTerm term = new ExpressionTerm();
-            term.setField(label);
-            term.setCondition(Condition.EQUALS);
-            term.setValue(entity.getName());
-            operator.addChild(term);
+            operator.addTerm(label, Condition.EQUALS, entity.getName());
         }
     }
 
-    private void addIdTerm(final ExpressionOperator operator, final EntityIdSet<?> entities, final String label) {
+    private void addIdTerm(final ExpressionBuilder operator, final EntityIdSet<?> entities, final String label) {
         if (entities != null && entities.size() > 0) {
-            final ExpressionTerm term = new ExpressionTerm();
-            term.setField(label);
+            Condition condition = Condition.EQUALS;
             if (entities.size() > 1) {
-                term.setCondition(Condition.IN);
-            } else {
-                term.setCondition(Condition.EQUALS);
+                condition = Condition.IN;
             }
 
             final StringBuilder sb = new StringBuilder();
@@ -343,34 +333,30 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             if (sb.length() > 0) {
                 sb.setLength(sb.length() - 1);
             }
-            term.setValue(sb.toString());
 
-            operator.addChild(term);
+            operator.addTerm(label, condition, sb.toString());
         }
     }
 
-    private void addPeriodTerm(final ExpressionOperator operator, final Period period, final String label) {
+    private void addPeriodTerm(final ExpressionBuilder operator, final Period period, final String label) {
         if (period != null && (period.getFrom() != null || period.getTo() != null)) {
-            final ExpressionTerm term = new ExpressionTerm();
-            term.setField(label);
+            Condition condition = null;
 
             final StringBuilder sb = new StringBuilder();
             if (period.getFrom() != null && period.getTo() != null) {
-                term.setCondition(Condition.BETWEEN);
+                condition = Condition.BETWEEN;
                 sb.append(ClientDateUtil.createDateTimeString(period.getFrom()));
                 sb.append(" and ");
                 sb.append(ClientDateUtil.createDateTimeString(period.getTo()));
             } else if (period.getFrom() != null) {
-                term.setCondition(Condition.GREATER_THAN);
+                condition = Condition.GREATER_THAN;
                 sb.append(ClientDateUtil.createDateTimeString(period.getFrom()));
             } else if (period.getTo() != null) {
-                term.setCondition(Condition.LESS_THAN);
+                condition = Condition.LESS_THAN;
                 sb.append(ClientDateUtil.createDateTimeString(period.getTo()));
             }
 
-            term.setValue(sb.toString());
-
-            operator.addChild(term);
+            operator.addTerm(label, condition, sb.toString());
         }
     }
 

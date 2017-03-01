@@ -32,12 +32,12 @@ import org.apache.lucene.util.Version;
 import org.joda.time.DateTime;
 import stroom.index.server.analyzer.AnalyzerFactory;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexField.AnalyzerType;
+import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardService;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexField.AnalyzerType;
-import stroom.query.shared.IndexFields;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.logging.LoggerPrintStream;
 import stroom.util.logging.StroomLogger;
@@ -319,8 +319,10 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     // is unlocked.
                     try {
                         final Path lockFile = dir.resolve(IndexWriter.WRITE_LOCK_NAME);
-                        Files.delete(lockFile);
-                    } catch (final InvalidPathException e) {
+                        if (Files.isRegularFile(lockFile)) {
+                            Files.delete(lockFile);
+                        }
+                    } catch (final IOException e) {
                         // There is no lock file so ignore.
                     }
 
@@ -721,11 +723,15 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     private synchronized void refreshEntity() {
         try {
             // Update the size of the index.
-            if (dir != null) {
+            if (dir != null && Files.isDirectory(dir)) {
                 final AtomicLong totalSize = new AtomicLong();
-                Files.list(dir).forEach(file -> {
-                    totalSize.addAndGet(file.toFile().length());
-                });
+                try {
+                    Files.list(dir).forEach(file -> {
+                        totalSize.addAndGet(file.toFile().length());
+                    });
+                } catch (final IOException e) {
+                    LOGGER.error(e.getMessage());
+                }
                 indexShard.setFileSize(totalSize.get());
             }
 

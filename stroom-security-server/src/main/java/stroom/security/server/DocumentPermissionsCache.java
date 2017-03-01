@@ -19,7 +19,7 @@ package stroom.security.server;
 import net.sf.ehcache.CacheManager;
 import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.security.shared.DocumentPermissions;
 
 import javax.inject.Inject;

@@ -17,7 +17,7 @@
 package stroom.streamstore.client.view;
 
 import stroom.entity.client.EntityItemListBox;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.streamstore.client.presenter.EntityChoicePresenter.EntityChoiceView;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;

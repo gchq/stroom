@@ -19,7 +19,7 @@ package stroom.entity.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.entity.client.event.CreateEntityEvent;
 import stroom.entity.client.event.ShowCreateEntityDialogEvent;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.client.presenter.EntityTreePresenter;

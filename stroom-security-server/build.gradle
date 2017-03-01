@@ -10,6 +10,9 @@ dependencies {
     compile 'javax.mail:mail:1.4.7'
     compile 'org.springframework:spring-context-support:4.3.4.RELEASE'
 
+    // JWT Support
+    compile 'com.auth0:java-jwt:3.1.0'
+
     testCompile project(path: ':stroom-entity-shared', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')

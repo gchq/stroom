@@ -17,12 +17,13 @@
 package stroom.search.server;
 
 import stroom.dashboard.expression.FieldIndexMap;
+import stroom.index.shared.IndexConstants;
+import stroom.query.Coprocessor;
 import stroom.query.Payload;
-import stroom.query.shared.IndexConstants;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-public class EventCoprocessor implements Coprocessor<EventCoprocessorSettings> {
+public class EventCoprocessor implements Coprocessor {
     private final EventRef minEvent;
     private final long maxStreams;
     private final long maxEvents;

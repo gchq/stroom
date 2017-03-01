@@ -16,7 +16,7 @@
 
 package stroom.refdata;
 
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;

@@ -17,7 +17,7 @@
 package stroom.script.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;

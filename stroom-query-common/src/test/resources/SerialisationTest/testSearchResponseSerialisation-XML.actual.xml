@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<searchResponse>
+    <highlights>
+        <highlight>highlight1</highlight>
+        <highlight>highlight2</highlight>
+    </highlights>
+    <errors>
+        <error>some error</error>
+    </errors>
+    <complete>false</complete>
+    <results>
+        <table>
+            <componentId>table-1234</componentId>
+            <rows>
+                <row>
+                    <groupKey>groupKey</groupKey>
+                    <values>
+                        <value>test</value>
+                    </values>
+                    <depth>5</depth>
+                </row>
+            </rows>
+            <resultRange>
+                <offset>1</offset>
+                <length>2</length>
+            </resultRange>
+            <totalResults>1</totalResults>
+            <error>tableResultError</error>
+        </table>
+        <vis>
+            <componentId>vis-1234</componentId>
+            <error>visResultError</error>
+            <size>200</size>
+            <structure>
+                <name>val1</name>
+                <format>
+                    <type>GENERAL</type>
+                </format>
+            </structure>
+            <structure>
+                <name>val2</name>
+                <format>
+                    <type>NUMBER</type>
+                </format>
+            </structure>
+            <structure>
+                <name>val3</name>
+                <format>
+                    <type>NUMBER</type>
+                </format>
+            </structure>
+            <structure>
+                <name>val4</name>
+                <format>
+                    <type>GENERAL</type>
+                </format>
+            </structure>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test0
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">0.4
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">234
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this0
+                </item>
+            </values>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test1
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">0.5
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">25634
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this1
+                </item>
+            </values>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test2
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">0.6
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">27
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this2
+                </item>
+            </values>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test3
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">0.7
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">344
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this3
+                </item>
+            </values>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test4
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">0.2
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">8984
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this4
+                </item>
+            </values>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test5
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">0.33
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">3244
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this5
+                </item>
+            </values>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test6
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">34.66
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">44
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this6
+                </item>
+            </values>
+            <values>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">test7
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:double">2.33
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:int">74
+                </item>
+                <item xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:type="xs:string">this7
+                </item>
+            </values>
+        </vis>
+    </results>
+</searchResponse>

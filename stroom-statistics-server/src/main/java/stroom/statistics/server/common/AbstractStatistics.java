@@ -17,22 +17,40 @@
 package stroom.statistics.server.common;
 
 import org.springframework.stereotype.Component;
+import stroom.datasource.api.DataSourceField;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.DateExpressionParser;
-import stroom.query.shared.*;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.statistics.common.*;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.Query;
+import stroom.statistics.common.CommonStatisticConstants;
+import stroom.statistics.common.FilterTermsTree;
+import stroom.statistics.common.FilterTermsTreeBuilder;
+import stroom.statistics.common.FindEventCriteria;
+import stroom.statistics.common.RolledUpStatisticEvent;
+import stroom.statistics.common.StatisticEvent;
+import stroom.statistics.common.StatisticStoreCache;
+import stroom.statistics.common.StatisticStoreValidator;
+import stroom.statistics.common.StatisticTag;
+import stroom.statistics.common.Statistics;
 import stroom.statistics.common.rollup.RollUpBitMask;
 import stroom.statistics.shared.CustomRollUpMask;
 import stroom.statistics.shared.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.util.logging.StroomLogger;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Component
 public abstract class AbstractStatistics implements Statistics {
@@ -53,7 +71,7 @@ public abstract class AbstractStatistics implements Statistics {
         this.propertyService = propertyService;
     }
 
-    protected static FindEventCriteria buildCriteria(final Search search, final StatisticStoreEntity dataSource) {
+    protected static FindEventCriteria buildCriteria(final Query query, final StatisticStoreEntity dataSource) {
         LOGGER.trace(String.format("buildCriteria called for statistic %s", dataSource.getName()));
 
         // Get the current time in millis since epoch.
@@ -63,11 +81,11 @@ public abstract class AbstractStatistics implements Statistics {
         // AND
         // Date Time between 2014-10-22T23:00:00.000Z,2014-10-23T23:00:00.000Z
 
-        final ExpressionOperator topLevelExpressionOperator = search.getExpression();
+        final ExpressionOperator topLevelExpressionOperator = query.getExpression();
 
-        if (topLevelExpressionOperator == null || topLevelExpressionOperator.getType() == null) {
+        if (topLevelExpressionOperator == null || topLevelExpressionOperator.getOp() == null) {
             throw new IllegalArgumentException(
-                    "The top level operator for the query must be one of [" + Op.values() + "]");
+                    "The top level operator for the query must be one of [" + ExpressionOperator.Op.values() + "]");
         }
 
         final List<ExpressionItem> childExpressions = topLevelExpressionOperator.getChildren();
@@ -101,7 +119,7 @@ public abstract class AbstractStatistics implements Statistics {
                         }
                     }
                 } else if (expressionItem instanceof ExpressionOperator) {
-                    if (((ExpressionOperator) expressionItem).getType() == null) {
+                    if (((ExpressionOperator) expressionItem).getOp() == null) {
                         throw new IllegalArgumentException(
                                 "An operator in the query is missing a type, it should be one of " + Op.values());
                     }
@@ -119,7 +137,7 @@ public abstract class AbstractStatistics implements Statistics {
         }
 
         // ensure the value field is not used in the query terms
-        if (search.getExpression().contains(StatisticStoreEntity.FIELD_NAME_VALUE)) {
+        if (contains(query.getExpression(), StatisticStoreEntity.FIELD_NAME_VALUE)) {
             throw new UnsupportedOperationException("Search queries containing the field '"
                     + StatisticStoreEntity.FIELD_NAME_VALUE + "' are not supported.  Please remove it from the query");
         }
@@ -129,8 +147,7 @@ public abstract class AbstractStatistics implements Statistics {
         final Range<Long> range = extractRange(dateTerm, search.getDateTimeLocale(), nowEpochMilli);
 
         final List<ExpressionTerm> termNodesInFilter = new ArrayList<>();
-
-        ExpressionItem.findAllTermNodes(topLevelExpressionOperator, termNodesInFilter);
+        findAllTermNodes(topLevelExpressionOperator, termNodesInFilter);
 
         final Set<String> rolledUpFieldNames = new HashSet<>();
 
@@ -176,6 +193,47 @@ public abstract class AbstractStatistics implements Statistics {
         }
 
         return criteria;
+    }
+
+    /**
+     * Recursive method to populates the passed list with all enabled
+     * {@link ExpressionTerm} nodes found in the tree.
+     */
+    public static void findAllTermNodes(final ExpressionItem node, final List<ExpressionTerm> termsFound) {
+        // Don't go any further down this branch if this node is disabled.
+        if (node.enabled()) {
+            if (node instanceof ExpressionTerm) {
+                final ExpressionTerm termNode = (ExpressionTerm) node;
+
+                termsFound.add(termNode);
+
+            } else if (node instanceof ExpressionOperator) {
+                for (final ExpressionItem childNode : ((ExpressionOperator) node).getChildren()) {
+                    findAllTermNodes(childNode, termsFound);
+                }
+            }
+        }
+    }
+
+    public static boolean contains(final ExpressionItem expressionItem, final String fieldToFind) {
+        boolean hasBeenFound = false;
+
+        if (expressionItem instanceof ExpressionOperator) {
+            if (((ExpressionOperator) expressionItem).getChildren() != null) {
+                for (final ExpressionItem item : ((ExpressionOperator) expressionItem).getChildren()) {
+                    hasBeenFound = contains(item, fieldToFind);
+                    if (hasBeenFound) {
+                        break;
+                    }
+                }
+            }
+        } else {
+            if (((ExpressionTerm) expressionItem).getField() != null) {
+                hasBeenFound = ((ExpressionTerm) expressionItem).getField().equals(fieldToFind);
+            }
+        }
+
+        return hasBeenFound;
     }
 
     // TODO could go futher up the chain so is store agnostic
@@ -373,7 +431,7 @@ public abstract class AbstractStatistics implements Statistics {
         return statisticsDataSourceCache.getStatisticsDataSource(statisticName, engineName);
     }
 
-    public IndexFields getSupportedFields(final IndexFields indexFields) {
+    public List<DataSourceField> getSupportedFields(final List<DataSourceField> indexFields) {
         final Set<String> blackList = getIndexFieldBlackList();
 
         if (blackList.size() == 0) {
@@ -384,9 +442,9 @@ public abstract class AbstractStatistics implements Statistics {
             // construct an anonymous class instance that will filter out black
             // listed index fields, as supplied by the
             // sub-class
-            final IndexFields supportedIndexFields = new IndexFields();
-            indexFields.getIndexFields().stream()
-                    .filter(indexField -> !blackList.contains(indexField.getFieldName()))
+            final List<DataSourceField> supportedIndexFields = new ArrayList<>();
+            indexFields.stream()
+                    .filter(indexField -> !blackList.contains(indexField.getName()))
                     .forEach(supportedIndexFields::add);
 
             return supportedIndexFields;
@@ -419,6 +477,4 @@ public abstract class AbstractStatistics implements Statistics {
             return Collections.emptyList();
         }
     }
-
-    public abstract StatisticDataSet searchStatisticsData(final Search search, final StatisticStoreEntity dataSource);
 }

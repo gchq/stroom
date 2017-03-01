@@ -45,7 +45,7 @@ public class TestXMLSchemaServiceImpl extends AbstractCoreIntegrationTest {
 
         List<XMLSchema> list = xmlSchemaService.find(criteria);
         Assert.assertNotNull(list);
-        Assert.assertEquals(7, list.size());
+        Assert.assertEquals(8, list.size());
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setNamespaceURI("event-logging:3");

@@ -16,7 +16,9 @@
 
 package stroom.entity.shared;
 
-public class EntityReferenceFindAction<C extends BaseCriteria> extends FindAction<C, DocRef> {
+import stroom.query.api.DocRef;
+
+public class EntityReferenceFindAction<C extends BaseCriteria> extends FindAction<C, SharedDocRef> {
     private static final long serialVersionUID = 800905016214418723L;
 
     public EntityReferenceFindAction() {

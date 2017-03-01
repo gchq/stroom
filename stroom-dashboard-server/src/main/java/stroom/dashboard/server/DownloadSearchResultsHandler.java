@@ -17,19 +17,12 @@
 package stroom.dashboard.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.server.download.DelimitedTarget;
-import stroom.dashboard.server.download.ExcelTarget;
-import stroom.dashboard.server.download.SearchResultWriter;
-import stroom.dashboard.server.format.FieldFormatter;
-import stroom.dashboard.server.format.FormatterFactory;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DownloadSearchResultsAction;
+import stroom.dashboard.shared.Search;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.logging.SearchEventLog;
-import stroom.query.ResultStore;
-import stroom.query.shared.Field;
-import stroom.query.shared.Search;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
@@ -41,11 +34,7 @@ import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Pattern;
 
 @TaskHandlerBean(task = DownloadSearchResultsAction.class)
@@ -100,53 +89,53 @@ public class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSe
             throw EntityServiceExceptionUtil.create(ex);
         }
 
-        return new ResourceGeneration(resourceKey, new ArrayList<String>());
+        return new ResourceGeneration(resourceKey, new ArrayList<>());
     }
 
     private void download(final ActiveQuery activeQuery, final String componentId, final File file,
             final String fileType, final boolean sample, final int percent, final String dateTimeLocale) {
-        final FormatterFactory formatterFactory = new FormatterFactory(dateTimeLocale);
-        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
-
-        try {
-            // The result handler could possibly have not been set yet if the
-            // AsyncSearchTask has not started execution.
-            final ResultStore resultStore = activeQuery.getSearchResultCollector().getResultStore(componentId);
-            if (resultStore == null) {
-                throw new EntityServiceException("Search has not started yet");
-            }
-
-            final OutputStream outputStream = new FileOutputStream(file);
-            SearchResultWriter.Target target = null;
-
-            // Write delimited file.
-            switch (fileType) {
-            case "CSV":
-                target = new DelimitedTarget(fieldFormatter, outputStream, ",");
-                break;
-            case "TSV":
-                target = new DelimitedTarget(fieldFormatter, outputStream, "\t");
-                break;
-            case "EXCEL":
-                target = new ExcelTarget(outputStream);
-                break;
-            }
-
-            if (target == null) {
-                throw new RuntimeException("No target created for file type: " + fileType);
-            }
-
-            final ComponentResultCreator componentResultCreator = activeQuery.getComponentResultCreatorMap()
-                    .get(componentId);
-            final TableComponentResultCreator tableComponentResultCreator = (TableComponentResultCreator) componentResultCreator;
-            final List<Field> fields = tableComponentResultCreator.getFields();
-
-            final SampleGenerator sampleGenerator = new SampleGenerator(sample, percent);
-            final SearchResultWriter searchResultWriter = new SearchResultWriter(resultStore, fields, sampleGenerator);
-            searchResultWriter.write(target);
-
-        } catch (final IOException e) {
-            throw EntityServiceExceptionUtil.create(e);
-        }
+//        final FormatterFactory formatterFactory = new FormatterFactory(dateTimeLocale);
+//        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
+//
+//        try {
+//            // The result handler could possibly have not been set yet if the
+//            // AsyncSearchTask has not started execution.
+//            final ResultStore resultStore = activeQuery.getSearchResultCollector().getResultStore(componentId);
+//            if (resultStore == null) {
+//                throw new EntityServiceException("Search has not started yet");
+//            }
+//
+//            final OutputStream outputStream = new FileOutputStream(file);
+//            SearchResultWriter.Target target = null;
+//
+//            // Write delimited file.
+//            switch (fileType) {
+//            case "CSV":
+//                target = new DelimitedTarget(fieldFormatter, outputStream, ",");
+//                break;
+//            case "TSV":
+//                target = new DelimitedTarget(fieldFormatter, outputStream, "\t");
+//                break;
+//            case "EXCEL":
+//                target = new ExcelTarget(outputStream);
+//                break;
+//            }
+//
+//            if (target == null) {
+//                throw new RuntimeException("No target created for file type: " + fileType);
+//            }
+//
+//            final ComponentResultCreator componentResultCreator = activeQuery.getComponentResultCreatorMap()
+//                    .get(componentId);
+//            final TableComponentResultCreator tableComponentResultCreator = (TableComponentResultCreator) componentResultCreator;
+//            final List<Field> fields = tableComponentResultCreator.getFields();
+//
+//            final SampleGenerator sampleGenerator = new SampleGenerator(sample, percent);
+//            final SearchResultWriter searchResultWriter = new SearchResultWriter(resultStore, fields, sampleGenerator);
+//            searchResultWriter.write(target);
+//
+//        } catch (final IOException e) {
+//            throw EntityServiceExceptionUtil.create(e);
+//        }
     }
 }

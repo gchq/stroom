@@ -17,7 +17,7 @@
 package stroom.importexport.server;
 
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.util.logging.StroomLogger;
 import javassist.Modifier;
 

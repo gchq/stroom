@@ -16,32 +16,32 @@
 
 package stroom.search.server;
 
+import stroom.index.shared.IndexField;
 import stroom.node.shared.Node;
-import stroom.query.shared.CoprocessorSettings;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.Search;
+import stroom.query.CoprocessorSettings;
+import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.api.Query;
 import stroom.task.cluster.ClusterTask;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
 public class ClusterSearchTask extends ClusterTask<NodeResult> {
     private static final long serialVersionUID = -1305243739417365803L;
 
-    private final Search search;
+    private final Query query;
     private final List<Long> shards;
     private final Node targetNode;
     private final IndexField[] storedFields;
     private final int resultSendFrequency;
-    private final Map<Integer, CoprocessorSettings> coprocessorMap;
+    private final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap;
     private final long now;
 
-    public ClusterSearchTask(final String sessionId, final String userName, final String taskName, final Search search,
+    public ClusterSearchTask(final String sessionId, final String userName, final String taskName, final Query query,
                              final List<Long> shards, final Node targetNode, final IndexField[] storedFields,
-                             final int resultSendFrequency, final Map<Integer, CoprocessorSettings> coprocessorMap, final long now) {
+                             final int resultSendFrequency, final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap, final long now) {
         super(sessionId, userName, taskName);
-        this.search = search;
+        this.query = query;
         this.shards = shards;
         this.targetNode = targetNode;
         this.storedFields = storedFields;
@@ -54,8 +54,8 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
         return targetNode;
     }
 
-    public Search getSearch() {
-        return search;
+    public Query getQuery() {
+        return query;
     }
 
     public List<Long> getShards() {
@@ -70,7 +70,7 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
         return resultSendFrequency;
     }
 
-    public Map<Integer, CoprocessorSettings> getCoprocessorMap() {
+    public Map<CoprocessorKey, CoprocessorSettings> getCoprocessorMap() {
         return coprocessorMap;
     }
 

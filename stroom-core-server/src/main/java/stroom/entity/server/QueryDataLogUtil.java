@@ -18,10 +18,7 @@ package stroom.entity.server;
 
 import java.util.List;
 
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm;
+
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.dictionary.shared.FindDictionaryCriteria;
@@ -29,6 +26,10 @@ import event.logging.BaseAdvancedQueryItem;
 import event.logging.BaseAdvancedQueryOperator;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
 
 public class QueryDataLogUtil {
     public static void appendExpressionItem(final List<BaseAdvancedQueryItem> items,
@@ -37,7 +38,7 @@ public class QueryDataLogUtil {
             return;
         }
 
-        if (item.isEnabled()) {
+        if (item.enabled()) {
             if (item instanceof ExpressionOperator) {
                 appendOperator(items, dictionaryService, (ExpressionOperator) item);
             } else {
@@ -98,9 +99,9 @@ public class QueryDataLogUtil {
     private static void appendOperator(final List<BaseAdvancedQueryItem> items,
             final DictionaryService dictionaryService, final ExpressionOperator exp) {
         BaseAdvancedQueryOperator operator;
-        if (exp.getType() == Op.NOT) {
+        if (exp.getOp() == Op.NOT) {
             operator = new BaseAdvancedQueryOperator.Not();
-        } else if (exp.getType() == Op.OR) {
+        } else if (exp.getOp() == Op.OR) {
             operator = new BaseAdvancedQueryOperator.Or();
         } else {
             operator = new BaseAdvancedQueryOperator.And();

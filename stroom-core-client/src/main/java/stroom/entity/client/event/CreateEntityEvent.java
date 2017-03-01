@@ -16,20 +16,22 @@
 
 package stroom.entity.client.event;
 
+import stroom.query.api.DocRef;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
-import stroom.entity.shared.DocRef;
 import stroom.entity.shared.PermissionInheritance;
 
 public class CreateEntityEvent extends GwtEvent<CreateEntityEvent.Handler> {
     private static Type<Handler> TYPE;
+
     private final MyPresenter<?, ?> presenter;
     private final String entityType;
     private final DocRef folder;
     private final String entityName;
     private final PermissionInheritance permissionInheritance;
+
     private CreateEntityEvent(final MyPresenter<?, ?> presenter, final String entityType, final DocRef folder,
                               final String entityName, final PermissionInheritance permissionInheritance) {
         this.presenter = presenter;

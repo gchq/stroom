@@ -19,10 +19,10 @@ package stroom.dashboard.server.format;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import stroom.dashboard.expression.TypeConverter;
-import stroom.query.shared.DateTimeFormatSettings;
-import stroom.query.shared.FormatSettings;
-import stroom.query.shared.TimeZone;
-import stroom.query.shared.TimeZone.Use;
+import stroom.dashboard.shared.DateTimeFormatSettings;
+import stroom.dashboard.shared.FormatSettings;
+import stroom.dashboard.shared.TimeZone;
+import stroom.dashboard.shared.TimeZone.Use;
 import stroom.util.date.DateUtil;
 
 public class DateFormatter implements Formatter {

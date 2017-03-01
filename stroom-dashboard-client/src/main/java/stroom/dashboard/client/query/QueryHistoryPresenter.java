@@ -23,7 +23,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.shared.FindQueryCriteria;
-import stroom.dashboard.shared.Query;
+import stroom.dashboard.shared.QueryEntity;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
@@ -46,7 +46,7 @@ import java.util.List;
 public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresenter.QueryHistoryView> {
     private final ClientDispatchAsync dispatcher;
     private final ExpressionTreePresenter expressionPresenter;
-    private final MySingleSelectionModel<Query> selectionModel;
+    private final MySingleSelectionModel<QueryEntity> selectionModel;
     private QueryPresenter queryPresenter;
     private long currentDashboardId;
     @Inject
@@ -70,12 +70,12 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
             @Override
             public void onSelectionChange(final SelectionChangeEvent event) {
-                final Query query = selectionModel.getSelectedObject();
+                final QueryEntity query = selectionModel.getSelectedObject();
 
-                if (query == null || query.getQueryData() == null) {
+                if (query == null || query.getQuery() == null) {
                     expressionPresenter.read(null);
                 } else {
-                    expressionPresenter.read(query.getQueryData().getExpression());
+                    expressionPresenter.read(query.getQuery().getExpression());
                 }
             }
         }));
@@ -101,10 +101,10 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         criteria.setFavourite(false);
         criteria.setPageRequest(new PageRequest(0L, 100));
 
-        final EntityServiceFindAction<FindQueryCriteria, Query> action = new EntityServiceFindAction<>(criteria);
-        dispatcher.execute(action, new AsyncCallbackAdaptor<ResultList<Query>>() {
+        final EntityServiceFindAction<FindQueryCriteria, QueryEntity> action = new EntityServiceFindAction<>(criteria);
+        dispatcher.execute(action, new AsyncCallbackAdaptor<ResultList<QueryEntity>>() {
             @Override
-            public void onSuccess(final ResultList<Query> result) {
+            public void onSuccess(final ResultList<QueryEntity> result) {
                 selectionModel.clear();
 
                 String lastExpression = null;
@@ -145,9 +145,9 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
 
     private void close(final boolean ok) {
         if (ok) {
-            final Query query = selectionModel.getSelectedObject();
-            if (query != null && query.getQueryData() != null && query.getQueryData().getExpression() != null) {
-                queryPresenter.setExpression(query.getQueryData().getExpression());
+            final QueryEntity query = selectionModel.getSelectedObject();
+            if (query != null && query.getQuery() != null && query.getQuery().getExpression() != null) {
+                queryPresenter.setExpression(query.getQuery().getExpression());
             }
         }
 
@@ -155,7 +155,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
     }
 
     public interface QueryHistoryView extends View {
-        CellList<Query> getCellList();
+        CellList<QueryEntity> getCellList();
 
         void setExpressionView(View view);
     }

@@ -16,9 +16,10 @@
 
 package stroom.search.server;
 
+import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.Data;
 import stroom.query.Payload;
 import stroom.query.ResultHandler;
-import stroom.query.ResultStore;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.HasTerminate;
 
@@ -36,9 +37,9 @@ public class EventSearchResultHandler implements ResultHandler {
     private volatile EventRefs streamReferences;
 
     @Override
-    public void handle(final Map<Integer, Payload> payloadMap, final HasTerminate hasTerminate) {
+    public void handle(final Map<CoprocessorKey, Payload> payloadMap, final HasTerminate hasTerminate) {
         if (payloadMap != null) {
-            for (final Entry<Integer, Payload> entry : payloadMap.entrySet()) {
+            for (final Entry<CoprocessorKey, Payload> entry : payloadMap.entrySet()) {
                 final Payload payload = entry.getValue();
                 if (payload != null && payload instanceof EventRefsPayload) {
                     final EventRefsPayload eventRefsPayload = (EventRefsPayload) payload;
@@ -144,7 +145,7 @@ public class EventSearchResultHandler implements ResultHandler {
     }
 
     @Override
-    public ResultStore getResultStore(final String componentId) {
+    public Data getResultStore(final String componentId) {
         return null;
     }
 }

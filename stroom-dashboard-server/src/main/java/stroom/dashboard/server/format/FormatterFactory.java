@@ -16,8 +16,8 @@
 
 package stroom.dashboard.server.format;
 
-import stroom.query.shared.Field;
-import stroom.query.shared.Format.Type;
+import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.Format.Type;
 
 public class FormatterFactory {
     private final String dateTimeLocale;

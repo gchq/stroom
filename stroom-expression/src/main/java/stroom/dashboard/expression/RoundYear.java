@@ -16,24 +16,9 @@
 
 package stroom.dashboard.expression;
 
-import org.joda.time.DateTime;
+import java.time.LocalDateTime;
 
 public class RoundYear extends RoundDate {
-    public static class Calc extends RoundDateCalculator {
-        private static final long serialVersionUID = -5893918049538006730L;
-
-        @Override
-        protected DateTime adjust(final DateTime dateTime) {
-            DateTime result = new DateTime(dateTime.getYear(), 1, 1, 0, 0, 0, 0);
-            if (dateTime.getMonthOfYear() > 6 || (dateTime.getMonthOfYear() == 6 && (dateTime.getMillisOfSecond() > 0
-                    || dateTime.getSecondOfMinute() > 0 || dateTime.getMinuteOfHour() > 0 || dateTime.getHourOfDay() > 0
-                    || dateTime.getDayOfMonth() > 1))) {
-                result = result.plusYears(1);
-            }
-            return result;
-        }
-    }
-
     public static final String NAME = "roundYear";
     private static final Calc CALC = new Calc();
 
@@ -44,5 +29,18 @@ public class RoundYear extends RoundDate {
     @Override
     protected RoundCalculator getCalculator() {
         return CALC;
+    }
+
+    public static class Calc extends RoundDateCalculator {
+        private static final long serialVersionUID = -5893918049538006730L;
+
+        @Override
+        protected LocalDateTime adjust(final LocalDateTime dateTime) {
+            LocalDateTime result = dateTime.toLocalDate().withDayOfYear(1).atStartOfDay();
+            if (dateTime.isAfter(result.plusMonths(6))) {
+                result = result.plusYears(1);
+            }
+            return result;
+        }
     }
 }

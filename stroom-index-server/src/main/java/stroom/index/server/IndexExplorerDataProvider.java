@@ -25,7 +25,6 @@ import stroom.explorer.shared.EntityData;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
-import stroom.query.shared.DataSource;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -38,7 +37,7 @@ public class IndexExplorerDataProvider extends AbstractExplorerDataProvider<Inde
     private static final Set<String> tags = new HashSet<>();
 
     static {
-        tags.add(DataSource.DATA_SOURCE);
+        tags.add("DataSource");
     }
 
     private final IndexService indexService;

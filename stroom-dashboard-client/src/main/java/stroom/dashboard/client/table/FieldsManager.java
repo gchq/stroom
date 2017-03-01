@@ -26,10 +26,10 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import stroom.data.grid.client.DataGridViewImpl.Heading;
 import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
-import stroom.query.shared.Field;
-import stroom.query.shared.Sort;
-import stroom.query.shared.Sort.SortDirection;
-import stroom.query.shared.TableSettings;
+import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.Sort;
+import stroom.dashboard.shared.Sort.SortDirection;
+import stroom.dashboard.shared.TableComponentSettings;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -60,7 +60,7 @@ public class FieldsManager implements HeadingListener {
     private final MenuListPresenter menuListPresenter;
     private int fieldsStartIndex;
     private boolean busy;
-    private TableSettings tableSettings;
+    private TableComponentSettings tableSettings;
     public FieldsManager(final TablePresenter tablePresenter, final MenuListPresenter menuListPresenter,
                          final ExpressionPresenter expressionPresenter, final FormatPresenter formatPresenter,
                          final FilterPresenter filterPresenter) {
@@ -123,7 +123,7 @@ public class FieldsManager implements HeadingListener {
         this.busy = busy;
     }
 
-    public void setTableSettings(final TableSettings tableSettings) {
+    public void setTableSettings(final TableComponentSettings tableSettings) {
         this.tableSettings = tableSettings;
     }
 

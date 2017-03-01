@@ -16,7 +16,7 @@
 
 package stroom.refdata;
 
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.feed.shared.Feed;
 import stroom.streamstore.shared.Stream;
 import stroom.task.server.TaskManager;

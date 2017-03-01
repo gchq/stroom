@@ -20,13 +20,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.FolderService;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.importexport.server.ImportExportSerializer.ImportMode;
-import stroom.query.shared.DataSource;
+import stroom.datasource.api.DataSource;
 import stroom.statistics.server.common.StatisticsDataSourceProvider;
 import stroom.statistics.shared.StatisticField;
 import stroom.statistics.shared.StatisticStore;
@@ -138,6 +138,6 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
 
         final DataSource statisticsDataSource4 = statisticsDataSourceProvider.getDataSource(uuid);
 
-        Assert.assertNotNull(statisticsDataSource4.getIndexFieldsObject());
+        Assert.assertNotNull(statisticsDataSource4.getFields());
     }
 }

@@ -16,34 +16,37 @@
 
 package stroom.streamstore.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.EntityItemListBox;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.EntityReferenceFindAction;
-import stroom.entity.shared.ResultList;
-import stroom.item.client.ItemListBox;
-import stroom.query.shared.Condition;
-import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
-import stroom.streamstore.shared.StreamAttributeCondition;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.AsyncCallbackAdaptor;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.client.EntityItemListBox;
+import stroom.entity.shared.SharedDocRef;
+import stroom.query.api.DocRef;
+import stroom.entity.shared.EntityReferenceFindAction;
+import stroom.entity.shared.ResultList;
+import stroom.item.client.ItemListBox;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
+import stroom.streamstore.shared.StreamAttributeCondition;
 
 public class StreamAttributePresenter extends MyPresenterWidget<StreamAttributePresenter.StreamAttributeView> {
     @Inject
     public StreamAttributePresenter(final EventBus eventBus, final StreamAttributeView view,
-            final ClientDispatchAsync dispatcher) {
+                                    final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
 
         final EntityReferenceFindAction<FindStreamAttributeKeyCriteria> findAction = new EntityReferenceFindAction<FindStreamAttributeKeyCriteria>(
                 new FindStreamAttributeKeyCriteria());
-        dispatcher.execute(findAction, new AsyncCallbackAdaptor<ResultList<DocRef>>() {
+        dispatcher.execute(findAction, new AsyncCallbackAdaptor<ResultList<SharedDocRef>>() {
             @Override
-            public void onSuccess(final ResultList<DocRef> resultList) {
-                view.getStreamAttributeKey().addItems(resultList);
+            public void onSuccess(final ResultList<SharedDocRef> resultList) {
+                for (final SharedDocRef docRef : resultList) {
+                    view.getStreamAttributeKey().addItem(docRef);
+                }
             }
         });
     }

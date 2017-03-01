@@ -16,30 +16,30 @@
 
 package stroom.dashboard.server;
 
-import stroom.query.SearchResultCollector;
-import stroom.query.shared.ComponentResult;
-
-import java.util.HashMap;
-import java.util.Map;
+import stroom.query.api.DocRef;
 
 public class ActiveQuery {
-    private final Map<String, ComponentResultCreator> componentResultCreatorMap = new HashMap<>();
-    private final Map<String, ComponentResult> lastResults = new HashMap<>();
-    private final SearchResultCollector searchResultCollector;
+    private final DocRef docRef;
+    private final long creationTime;
 
-    public ActiveQuery(final SearchResultCollector searchResultCollector) {
-        this.searchResultCollector = searchResultCollector;
+    public ActiveQuery(final DocRef docRef) {
+        this.docRef = docRef;
+        this.creationTime = System.currentTimeMillis();
     }
 
-    public SearchResultCollector getSearchResultCollector() {
-        return searchResultCollector;
+    public DocRef getDocRef() {
+        return docRef;
     }
 
-    public Map<String, ComponentResultCreator> getComponentResultCreatorMap() {
-        return componentResultCreatorMap;
+    public long getCreationTime() {
+        return creationTime;
     }
 
-    public Map<String, ComponentResult> getLastResults() {
-        return lastResults;
+    @Override
+    public String toString() {
+        return "ActiveQuery{" +
+                "docRef=" + docRef +
+                ", creationTime=" + creationTime +
+                '}';
     }
 }

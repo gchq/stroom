@@ -23,7 +23,7 @@ public abstract class AbstractNoChildGenerator extends AbstractGenerator {
     }
 
     @Override
-    public void addChildKey(final String group) {
+    public void addChildKey(final Object key) {
     }
 
     @Override

@@ -22,7 +22,8 @@ import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.FolderService;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
@@ -38,6 +39,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.EqualsUtil;
 
+import javax.annotation.Resource;
 import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,6 +59,10 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     protected static final String[] STANDARD_PERMISSIONS = new String[]{DocumentPermissionNames.USE,
             DocumentPermissionNames.READ, DocumentPermissionNames.UPDATE, DocumentPermissionNames.DELETE, DocumentPermissionNames.OWNER};
+
+    // TODO : REMOVE WHEN WE REMOVE FOLDER REFERENCES FROM ENTITIES.
+    @Resource
+    private FolderService folderService;
 
     private final StroomEntityManager entityManager;
     private final SecurityContext securityContext;
@@ -131,9 +137,8 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
         // TODO : Remove this when document entities no longer reference a folder.
         Folder folder = null;
-        if (folderRef != null && folderRef.getId() != null) {
-            folder = new Folder();
-            folder.setId(folderRef.getId());
+        if (folderRef != null && folderRef.getUuid() != null) {
+            folder = folderService.loadByUuid(folderRef.getUuid());
         }
         entity.setFolder(folder);
 

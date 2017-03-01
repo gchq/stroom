@@ -32,11 +32,11 @@ import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.ExplorerData;
-import stroom.query.shared.Field;
-import stroom.query.shared.VisDashboardSettings;
+import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.VisComponentSettings;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.EqualsBuilder;
@@ -175,7 +175,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         final List<Component> list = getComponents().getComponentsByType(TablePresenter.TYPE.getId());
         getView().setTableList(list);
 
-        final VisDashboardSettings settings = (VisDashboardSettings) componentData.getSettings();
+        final VisComponentSettings settings = (VisComponentSettings) componentData.getSettings();
         getView().setTable(getComponents().get(settings.getTableId()));
         updateFieldNames(getView().getTable());
 
@@ -198,7 +198,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     public void write(final ComponentConfig componentData) {
         super.write(componentData);
 
-        final VisDashboardSettings settings = (VisDashboardSettings) componentData.getSettings();
+        final VisComponentSettings settings = (VisComponentSettings) componentData.getSettings();
 
         settings.setTableId(getTableId());
         settings.setVisualisation(getSelectedVisualisation());
@@ -232,7 +232,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
             return true;
         }
 
-        final VisDashboardSettings settings = (VisDashboardSettings) componentData.getSettings();
+        final VisComponentSettings settings = (VisComponentSettings) componentData.getSettings();
 
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(settings.getTableId(), getTableId());

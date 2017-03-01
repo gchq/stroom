@@ -16,7 +16,7 @@
 
 package stroom.entity.client;
 
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.item.client.ItemListBox;
 
 import java.util.Set;

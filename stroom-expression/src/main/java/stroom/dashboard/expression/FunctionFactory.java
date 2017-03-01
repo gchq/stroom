@@ -57,26 +57,26 @@ public class FunctionFactory {
         add(Replace.class, Replace.NAME);
         add(Concat.class, Concat.NAME);
 
-		add(StringLength.class, StringLength.NAME);
-		add(UpperCase.class, UpperCase.NAME);
-		add(LowerCase.class, LowerCase.NAME);
-		add(Substring.class, Substring.NAME);
-		add(Decode.class, Decode.NAME);
+        add(StringLength.class, StringLength.NAME);
+        add(UpperCase.class, UpperCase.NAME);
+        add(LowerCase.class, LowerCase.NAME);
+        add(Substring.class, Substring.NAME);
+        add(Decode.class, Decode.NAME);
 
-		add(Count.class, Count.NAME);
-		add(CountGroups.class, CountGroups.NAME);
+        add(Count.class, Count.NAME);
+        add(CountGroups.class, CountGroups.NAME);
 
         add(Power.class, Power.NAME, Power.ALIAS);
         add(Divide.class, Divide.NAME, Divide.ALIAS);
         add(Multiply.class, Multiply.NAME, Multiply.ALIAS);
         add(Add.class, Add.NAME, Add.ALIAS);
-		add(Subtract.class, Subtract.NAME, Subtract.ALIAS);
+        add(Subtract.class, Subtract.NAME, Subtract.ALIAS);
         add(Negate.class, Negate.NAME);
         add(Equals.class, Equals.NAME, Equals.ALIAS);
         add(GreaterThan.class, GreaterThan.NAME, GreaterThan.ALIAS);
         add(LessThan.class, LessThan.NAME, LessThan.ALIAS);
-		add(GreaterThanOrEqualTo.class, GreaterThanOrEqualTo.NAME, GreaterThanOrEqualTo.ALIAS);
-		add(LessThanOrEqualTo.class, LessThanOrEqualTo.NAME, LessThanOrEqualTo.ALIAS);
+        add(GreaterThanOrEqualTo.class, GreaterThanOrEqualTo.NAME, GreaterThanOrEqualTo.ALIAS);
+        add(LessThanOrEqualTo.class, LessThanOrEqualTo.NAME, LessThanOrEqualTo.ALIAS);
 
         add(Random.class, Random.NAME);
     }

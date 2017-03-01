@@ -17,10 +17,10 @@
 package stroom.search.server.extraction;
 
 import stroom.dashboard.expression.FieldIndexMap;
-import stroom.entity.shared.DocRef;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.query.Coprocessor;
+import stroom.query.api.DocRef;
 import stroom.search.server.ClusterSearchTask;
-import stroom.search.server.Coprocessor;
 import stroom.search.server.Event;
 import stroom.search.server.extraction.ExtractionTask.ResultReceiver;
 import stroom.search.server.shard.TransferList;
@@ -42,7 +42,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
     private final StreamMapCreator streamMapCreator;
     private final TransferList<String[]> storedData;
     private final FieldIndexMap extractionFieldIndexMap;
-    private final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap;
+    private final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap;
     private final ErrorReceiver errorReceiver;
 
     private final Queue<Task<?>> taskQueue = new ConcurrentLinkedQueue<>();
@@ -51,7 +51,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
 
     public ExtractionTaskProducer(final ClusterSearchTask clusterSearchTask, final StreamMapCreator streamMapCreator,
             final TransferList<String[]> storedData, final FieldIndexMap extractionFieldIndexMap,
-            final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap, final ErrorReceiver errorReceiver,
+            final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap, final ErrorReceiver errorReceiver,
             final int maxThreadsPerTask) {
         super(maxThreadsPerTask);
 
@@ -96,9 +96,9 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
         int created = 0;
         long[] eventIds = null;
 
-        for (final Entry<DocRef, Set<Coprocessor<?>>> entry : extractionCoprocessorsMap.entrySet()) {
+        for (final Entry<DocRef, Set<Coprocessor>> entry : extractionCoprocessorsMap.entrySet()) {
             final DocRef pipelineRef = entry.getKey();
-            final Set<Coprocessor<?>> coprocessors = entry.getValue();
+            final Set<Coprocessor> coprocessors = entry.getValue();
 
             if (pipelineRef != null) {
                 // This set of coprocessors require result extraction so invoke
@@ -106,7 +106,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
                 final ResultReceiver resultReceiver = new ResultReceiver() {
                     @Override
                     public void receive(final String[] values) {
-                        for (final Coprocessor<?> coprocessor : coprocessors) {
+                        for (final Coprocessor coprocessor : coprocessors) {
                             try {
                                 coprocessor.receive(values);
                             } catch (final Exception e) {
@@ -141,7 +141,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
             } else {
                 // Pass raw values to coprocessors that are not requesting
                 // values to be extracted.
-                for (final Coprocessor<?> coprocessor : coprocessors) {
+                for (final Coprocessor coprocessor : coprocessors) {
                     for (final Event event : events) {
                         coprocessor.receive(event.getValues());
                     }

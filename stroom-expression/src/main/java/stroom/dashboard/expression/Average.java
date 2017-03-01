@@ -17,6 +17,36 @@
 package stroom.dashboard.expression;
 
 public class Average extends AbstractManyChildFunction implements AggregateFunction {
+    public static final String NAME = "average";
+    public static final String ALIAS = "mean";
+    private final Add.Calc calculator = new Add.Calc();
+
+    public Average(final String name) {
+        super(name, 1, Integer.MAX_VALUE);
+    }
+
+    @Override
+    public Generator createGenerator() {
+        // If we only have a single param then we are operating in aggregate
+        // mode.
+        if (isAggregate()) {
+            final Generator childGenerator = functions[0].createGenerator();
+            return new AggregateGen(childGenerator, calculator);
+        }
+
+        return super.createGenerator();
+    }
+
+    @Override
+    protected Generator createGenerator(final Generator[] childGenerators) {
+        return new Gen(childGenerators, calculator);
+    }
+
+    @Override
+    public boolean isAggregate() {
+        return functions.length == 1;
+    }
+
     private static class AggregateGen extends AbstractSingleChildGenerator {
         private static final long serialVersionUID = -6770724151493320673L;
 
@@ -86,36 +116,5 @@ public class Average extends AbstractManyChildFunction implements AggregateFunct
 
             return cur / childGenerators.length;
         }
-    }
-
-    public static final String NAME = "average";
-    public static final String ALIAS = "mean";
-
-    private final Add.Calc calculator = new Add.Calc();
-
-    public Average(final String name) {
-        super(name, 1, Integer.MAX_VALUE);
-    }
-
-    @Override
-    public Generator createGenerator() {
-        // If we only have a single param then we are operating in aggregate
-        // mode.
-        if (isAggregate()) {
-            final Generator childGenerator = functions[0].createGenerator();
-            return new AggregateGen(childGenerator, calculator);
-        }
-
-        return super.createGenerator();
-    }
-
-    @Override
-    protected Generator createGenerator(final Generator[] childGenerators) {
-        return new Gen(childGenerators, calculator);
-    }
-
-    @Override
-    public boolean isAggregate() {
-        return functions.length == 1;
     }
 }

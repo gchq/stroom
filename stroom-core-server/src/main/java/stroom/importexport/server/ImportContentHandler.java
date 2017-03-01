@@ -16,16 +16,19 @@
 
 package stroom.importexport.server;
 
-import stroom.entity.shared.DocRef;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+import stroom.query.api.DocRef;
 
 public abstract class ImportContentHandler extends DefaultHandler {
     int depth = 0;
 
     private StringBuilder content = new StringBuilder();
-    private DocRef docRef;
+    private String type;
+    private String uuid;
+    private String name;
+    private boolean inDoc;
 
     abstract void handleAttribute(String property, Object value);
 
@@ -33,7 +36,10 @@ public abstract class ImportContentHandler extends DefaultHandler {
     public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
         super.startElement(uri, localName, qName, attributes);
         if (depth == 3 && localName.equals("doc")) {
-            docRef = new DocRef();
+            type = null;
+            uuid = null;
+            name = null;
+            inDoc = true;
         }
 
         content.setLength(0);
@@ -44,19 +50,22 @@ public abstract class ImportContentHandler extends DefaultHandler {
     public void endElement(String uri, String localName, String qName) throws SAXException {
         super.endElement(uri, localName, qName);
         if (depth == 2) {
-            if (docRef != null) {
-                handleAttribute(localName, docRef);
-                docRef = null;
+            if (inDoc) {
+                handleAttribute(localName, new DocRef(type, uuid, name));
+                type = null;
+                uuid = null;
+                name = null;
+                inDoc = false;
             } else {
                 handleAttribute(localName, content.toString());
             }
-        } else if (docRef != null) {
+        } else if (inDoc) {
             if ("type".equals(localName)) {
-                docRef.setType(content.toString());
+                type = content.toString();
             } else if ("uuid".equals(localName)) {
-                docRef.setUuid(content.toString());
+                uuid = content.toString();
             } else if ("name".equals(localName)) {
-                docRef.setName(content.toString());
+                name = content.toString();
             }
         }
 

@@ -23,11 +23,11 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import stroom.query.shared.DateTimeFormatSettings;
-import stroom.query.shared.Field;
-import stroom.query.shared.Format.Type;
-import stroom.query.shared.FormatSettings;
-import stroom.query.shared.NumberFormatSettings;
+import stroom.dashboard.shared.DateTimeFormatSettings;
+import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.Format.Type;
+import stroom.dashboard.shared.FormatSettings;
+import stroom.dashboard.shared.NumberFormatSettings;
 
 import java.io.IOException;
 import java.io.OutputStream;

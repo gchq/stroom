@@ -17,10 +17,11 @@
 package stroom.search.server;
 
 import stroom.node.shared.Node;
+import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.Data;
 import stroom.query.Payload;
 import stroom.query.ResultHandler;
-import stroom.query.ResultStore;
-import stroom.query.SearchResultCollector;
+import stroom.query.Store;
 import stroom.task.cluster.ClusterResultCollector;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.cluster.CollectorId;
@@ -32,6 +33,7 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -40,7 +42,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ClusterSearchResultCollector implements SearchResultCollector, ClusterResultCollector<NodeResult> {
+public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult> {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterSearchResultCollector.class);
 
     private final ClusterResultCollectorCache clusterResultCollectorCache;
@@ -77,7 +79,6 @@ public class ClusterSearchResultCollector implements SearchResultCollector, Clus
                 resultHandler);
     }
 
-    @Override
     public void start() {
         // Start asynchronous search execution.
         taskManager.execAsync(task, new TaskCallback<VoidResult>() {
@@ -125,7 +126,7 @@ public class ClusterSearchResultCollector implements SearchResultCollector, Clus
 
     @Override
     public void onSuccess(final Node node, final NodeResult result) {
-        final Map<Integer, Payload> payloadMap = result.getPayloadMap();
+        final Map<CoprocessorKey, Payload> payloadMap = result.getPayloadMap();
         final List<String> errors = result.getErrors();
 
         if (payloadMap != null) {
@@ -163,40 +164,41 @@ public class ClusterSearchResultCollector implements SearchResultCollector, Clus
     }
 
     @Override
-    public String getErrors() {
-        final StringBuilder sb = new StringBuilder();
+    public List<String> getErrors() {
+        if (errors == null || errors.size() == 0) {
+            return null;
+        }
+
+        final List<String> err = new ArrayList<>();
         for (final Entry<Node, Set<String>> entry : errors.entrySet()) {
             final Node node = entry.getKey();
             final Set<String> errors = entry.getValue();
 
             if (errors.size() > 0) {
-                sb.append("Node: ");
-                sb.append(node.getName());
-                sb.append("\n");
+                err.add("Node: " + node.getName());
 
                 for (final String error : errors) {
-                    sb.append("\t");
-                    sb.append(error);
-                    sb.append("\n");
+                    err.add("\t" + error);
                 }
             }
         }
 
-        // Remove last new line.
-        if (sb.length() > 0) {
-            sb.setLength(sb.length() - 1);
+        return err;
+    }
+
+    @Override
+    public List<String> getHighlights() {
+        if (highlights == null || highlights.size() == 0) {
+            return null;
         }
-
-        return sb.toString();
+        return new ArrayList<>(highlights);
     }
 
     @Override
-    public Set<String> getHighlights() {
-        return highlights;
-    }
+    public Data getData(final String componentId) {
+        // Keep the cluster result collector cache fresh.
+        clusterResultCollectorCache.get(getId());
 
-    @Override
-    public ResultStore getResultStore(final String componentId) {
         return resultHandler.getResultStore(componentId);
     }
 

@@ -33,7 +33,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.client.event.CurrentUserChangedEvent;

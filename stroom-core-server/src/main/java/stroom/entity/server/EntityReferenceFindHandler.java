@@ -22,10 +22,10 @@ import event.logging.Query.Advanced;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityReferenceFindAction;
 import stroom.entity.shared.ResultList;
+import stroom.entity.shared.SharedDocRef;
 import stroom.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -36,7 +36,7 @@ import java.util.List;
 
 @TaskHandlerBean(task = EntityReferenceFindAction.class)
 class EntityReferenceFindHandler
-        extends AbstractTaskHandler<EntityReferenceFindAction<BaseCriteria>, ResultList<DocRef>> {
+        extends AbstractTaskHandler<EntityReferenceFindAction<BaseCriteria>, ResultList<SharedDocRef>> {
     private final EntityServiceBeanRegistry beanRegistry;
     private final EntityEventLog entityEventLog;
 
@@ -48,7 +48,7 @@ class EntityReferenceFindHandler
 
     @SuppressWarnings("unchecked")
     @Override
-    public ResultList<DocRef> exec(final EntityReferenceFindAction<BaseCriteria> action) {
+    public ResultList<SharedDocRef> exec(final EntityReferenceFindAction<BaseCriteria> action) {
         BaseResultList<BaseEntity> resultList = null;
 
         final And and = new And();
@@ -76,11 +76,11 @@ class EntityReferenceFindHandler
             throw e;
         }
 
-        ResultList<DocRef> docRefs = null;
+        ResultList<SharedDocRef> docRefs = null;
         if (resultList != null && resultList.size() > 0) {
-            final List<DocRef> list = new ArrayList<>(resultList.size());
+            final List<SharedDocRef> list = new ArrayList<>(resultList.size());
             for (final BaseEntity baseEntity : resultList) {
-                list.add(DocRefUtil.create(baseEntity));
+                list.add(SharedDocRef.create(DocRefUtil.create(baseEntity)));
             }
             docRefs = new BaseResultList<>(list, Long.valueOf(resultList.getStart()),
                     Long.valueOf(resultList.getSize()), (resultList.getStart() + list.size() < resultList.getSize()));

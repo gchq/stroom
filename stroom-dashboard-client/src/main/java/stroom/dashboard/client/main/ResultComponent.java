@@ -16,9 +16,9 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.query.shared.ComponentResult;
-import stroom.query.shared.ComponentResultRequest;
-import stroom.query.shared.ComponentSettings;
+import stroom.dashboard.shared.ComponentResult;
+import stroom.dashboard.shared.ComponentResultRequest;
+import stroom.dashboard.shared.ComponentSettings;
 
 public interface ResultComponent {
     ComponentSettings getSettings();

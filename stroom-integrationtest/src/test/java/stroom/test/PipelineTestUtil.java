@@ -16,7 +16,7 @@
 
 package stroom.test;
 
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;

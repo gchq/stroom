@@ -16,8 +16,9 @@
 
 package stroom.search.server.sender;
 
+import stroom.query.Coprocessor;
+import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.search.server.ClusterSearchTask;
-import stroom.search.server.Coprocessor;
 import stroom.search.server.NodeResult;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.ThreadPoolImpl;
@@ -33,14 +34,14 @@ public class SenderTask extends ServerTask<VoidResult> {
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stroom Result Sender", 5, 0, Integer.MAX_VALUE);
 
     private final ClusterSearchTask clusterSearchTask;
-    private final Map<Integer, Coprocessor<?>> coprocessorMap;
+    private final Map<CoprocessorKey, Coprocessor> coprocessorMap;
     private final TaskCallback<NodeResult> callback;
     private final long frequency;
     private final AtomicBoolean sendingComplete;
     private final AtomicBoolean searchComplete;
     private final LinkedBlockingDeque<String> errors;
 
-    public SenderTask(final ClusterSearchTask clusterSearchTask, final Map<Integer, Coprocessor<?>> coprocessorMap,
+    public SenderTask(final ClusterSearchTask clusterSearchTask, final Map<CoprocessorKey, Coprocessor> coprocessorMap,
             final TaskCallback<NodeResult> callback, final long frequency, final AtomicBoolean sendingComplete,
             final AtomicBoolean searchComplete, final LinkedBlockingDeque<String> errors) {
         super(clusterSearchTask);
@@ -57,7 +58,7 @@ public class SenderTask extends ServerTask<VoidResult> {
         return clusterSearchTask;
     }
 
-    public Map<Integer, Coprocessor<?>> getCoprocessorMap() {
+    public Map<CoprocessorKey, Coprocessor> getCoprocessorMap() {
         return coprocessorMap;
     }
 

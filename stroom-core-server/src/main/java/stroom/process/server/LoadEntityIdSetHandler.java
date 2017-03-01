@@ -18,7 +18,9 @@ package stroom.process.server;
 
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.SharedDocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
 import stroom.process.shared.LoadEntityIdSetAction;
@@ -33,13 +35,13 @@ import java.util.Map.Entry;
 
 @TaskHandlerBean(task = LoadEntityIdSetAction.class)
 public class LoadEntityIdSetHandler
-        extends AbstractTaskHandler<LoadEntityIdSetAction, SharedMap<SetId, SharedList<DocRef>>> {
+        extends AbstractTaskHandler<LoadEntityIdSetAction, SharedMap<SetId, DocRefs>> {
     @Resource
     private GenericEntityService genericEntityService;
 
     @Override
-    public SharedMap<SetId, SharedList<DocRef>> exec(final LoadEntityIdSetAction action) {
-        final SharedMap<SetId, SharedList<DocRef>> result = new SharedMap<SetId, SharedList<DocRef>>();
+    public SharedMap<SetId, DocRefs> exec(final LoadEntityIdSetAction action) {
+        final SharedMap<SetId, DocRefs> result = new SharedMap<>();
 
         final SharedMap<SetId, EntityIdSet<?>> map = action.getEntitySetMap();
         if (map != null) {
@@ -47,7 +49,7 @@ public class LoadEntityIdSetHandler
                 final SetId setId = entry.getKey();
                 final EntityIdSet<?> entityIdSet = entry.getValue();
 
-                final SharedList<DocRef> list = createList(setId.getEntityType(), entityIdSet);
+                final DocRefs list = createList(setId.getEntityType(), entityIdSet);
                 if (list != null) {
                     result.put(setId, list);
                 }
@@ -57,11 +59,11 @@ public class LoadEntityIdSetHandler
         return result;
     }
 
-    private SharedList<DocRef> createList(final String entityType, final EntityIdSet<?> entityIdSet) {
-        SharedList<DocRef> entityList = null;
+    private DocRefs createList(final String entityType, final EntityIdSet<?> entityIdSet) {
+        DocRefs entityList = null;
         if (entityType != null && entityIdSet != null && entityIdSet.getSet() != null && entityIdSet.size() > 0) {
             if (entityList == null) {
-                entityList = new SharedList<DocRef>(entityIdSet.size());
+                entityList = new DocRefs();
             }
 
             for (final Long id : entityIdSet.getSet()) {

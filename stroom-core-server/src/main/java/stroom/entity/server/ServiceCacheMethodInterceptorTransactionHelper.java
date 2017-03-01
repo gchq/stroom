@@ -16,23 +16,26 @@
 
 package stroom.entity.server;
 
-import stroom.entity.shared.EntityService;
-import stroom.entity.shared.HasLoadById;
-import stroom.entity.shared.HasLoadByUuid;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.entity.shared.EntityService;
+import stroom.entity.shared.HasLoadById;
+import stroom.entity.shared.HasLoadByUuid;
+import stroom.query.api.DocRef;
 
 @Component
 @Transactional(readOnly = true)
 public class ServiceCacheMethodInterceptorTransactionHelper {
     public Object transaction_getEntity(final EntityService<?> entityService,
                                         final ServiceCacheMethodInterceptor.EntityIdKey entityKey) {
-        if (entityKey.docRef.getId() != null && entityService instanceof HasLoadById) {
+        DocRef docRef = entityKey.docRef;
+
+        if (docRef.getId() != null && entityService instanceof HasLoadById) {
             if (entityKey.fetchSet == null) {
-                return ((HasLoadById) entityService).loadById(entityKey.docRef.getId());
+                return ((HasLoadById) entityService).loadById(docRef.getId());
             } else {
-                return ((HasLoadById) entityService).loadById(entityKey.docRef.getId(), entityKey.fetchSet);
+                return ((HasLoadById) entityService).loadById(docRef.getId(), entityKey.fetchSet);
             }
         }
 

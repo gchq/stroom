@@ -26,22 +26,22 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.cell.list.client.CustomCellList;
 import stroom.dashboard.client.query.QueryHistoryPresenter.QueryHistoryView;
-import stroom.dashboard.shared.Query;
+import stroom.dashboard.shared.QueryEntity;
 
 public class QueryHistoryViewImpl extends ViewImpl implements QueryHistoryView {
     private final Widget widget;
     @UiField(provided = true)
-    CustomCellList<Query> cellList;
+    CustomCellList<QueryEntity> cellList;
     @UiField
     SimplePanel bottom;
     @Inject
     public QueryHistoryViewImpl(final Binder binder) {
-        cellList = new CustomCellList<Query>(new QueryCell());
+        cellList = new CustomCellList<QueryEntity>(new QueryCell());
         widget = binder.createAndBindUi(this);
     }
 
     @Override
-    public CellList<Query> getCellList() {
+    public CellList<QueryEntity> getCellList() {
         return cellList;
     }
 

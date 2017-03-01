@@ -1,0 +1,101 @@
+{
+  "key" : {
+    "uuid" : "1234"
+  },
+  "query" : {
+    "dataSource" : {
+      "type" : "docRefType",
+      "uuid" : "docRefUuid",
+      "name" : "docRefName"
+    },
+    "expression" : {
+      "type" : "operator",
+      "op" : "AND",
+      "children" : [ {
+        "type" : "term",
+        "field" : "field1",
+        "condition" : "EQUALS",
+        "value" : "value1"
+      }, {
+        "type" : "operator",
+        "op" : "AND"
+      }, {
+        "type" : "term",
+        "field" : "field2",
+        "condition" : "BETWEEN",
+        "value" : "value2"
+      } ]
+    },
+    "params" : [ {
+      "key" : "param1",
+      "value" : "val1"
+    }, {
+      "key" : "param2",
+      "value" : "val2"
+    } ]
+  },
+  "resultRequests" : [ {
+    "componentId" : "componentX",
+    "mappings": [
+      {
+      "queryId" : "someQueryId",
+      "fields" : [ {
+        "name" : "name1",
+        "expression" : "expression1",
+        "sort" : {
+          "order" : 1,
+          "direction" : "ASCENDING"
+        },
+        "filter" : {
+          "includes" : "include1",
+          "excludes" : "exclude1"
+        },
+        "format" : {
+          "type" : "NUMBER",
+          "numberFormat" : {
+            "decimalPlaces" : 1,
+            "useSeparator" : false
+          }
+        },
+        "group" : 1
+      }, {
+        "name" : "name2",
+        "expression" : "expression2",
+        "sort" : {
+          "order" : 2,
+          "direction" : "DESCENDING"
+        },
+        "filter" : {
+          "includes" : "include2",
+          "excludes" : "exclude2"
+        },
+        "format" : {
+          "type" : "DATE_TIME",
+          "dateTimeFormat" : {
+            "pattern" : "yyyy-MM-dd'T'HH:mm:ss",
+            "timeZone" : {
+              "use" : "OFFSET",
+              "offsetHours" : 2,
+              "offsetMinutes" : 30
+            }
+          }
+        },
+        "group" : 2
+      } ],
+      "extractValues" : false,
+      "extractionPipeline" : {
+        "type" : "docRefType2",
+        "uuid" : "docRefUuid2",
+        "name" : "docRefName2"
+      },
+      "maxResults" : [ 1, 2 ]
+      }
+    ],
+    "requestedRange" : {
+      "offset" : 1,
+      "length" : 100
+    },
+    "resultStyle": "TABLE"
+  } ],
+  "dateTimeLocale" : "en-gb"
+}

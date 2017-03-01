@@ -27,11 +27,11 @@ import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.server.DataSourceProviderRegistry;
+import stroom.datasource.api.DataSource;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.server.QueryDataLogUtil;
-import stroom.entity.shared.DocRef;
-import stroom.query.shared.DataSource;
-import stroom.query.shared.ExpressionOperator;
+import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.Insecure;
 import stroom.util.logging.StroomLogger;
 
@@ -66,7 +66,7 @@ public class SearchEventLogImpl implements SearchEventLog {
 
     @Override
     public void batchSearch(final DocRef dataSourceRef, final ExpressionOperator expression,
-            final Exception ex) {
+                            final Exception ex) {
         search("Batch search", dataSourceRef, expression, ex);
     }
 
@@ -77,13 +77,13 @@ public class SearchEventLogImpl implements SearchEventLog {
 
     @Override
     public void downloadResults(final DocRef dataSourceRef, final ExpressionOperator expression,
-            final Exception ex) {
+                                final Exception ex) {
         downloadResults("Download search results", dataSourceRef, expression, ex);
     }
 
     @Override
     public void downloadResults(final String type, final DocRef dataSourceRef,
-            final ExpressionOperator expression, final Exception ex) {
+                                final ExpressionOperator expression, final Exception ex) {
         try {
             final String dataSourceName = getDataSourceName(dataSourceRef);
 
@@ -113,7 +113,7 @@ public class SearchEventLogImpl implements SearchEventLog {
 
     @Override
     public void search(final String type, final DocRef dataSourceRef, final ExpressionOperator expression,
-            final Exception ex) {
+                       final Exception ex) {
         try {
             String dataSourceName = getDataSourceName(dataSourceRef);
             if (dataSourceName == null || dataSourceName.isEmpty()) {
@@ -137,17 +137,17 @@ public class SearchEventLogImpl implements SearchEventLog {
         }
     }
 
-    public String getDataSourceName(final DocRef dataSourceRef) {
-        if (dataSourceRef == null) {
+    public String getDataSourceName(final DocRef docRef) {
+        if (docRef == null) {
             return null;
         }
 
-        final DataSource dataSource = dataSourceProviderRegistry.getDataSource(dataSourceRef);
-        if (dataSource == null) {
-            return null;
-        }
+//        final DataSource dataSource = dataSourceProviderRegistry.getDataSource(docRef);
+//        if (dataSource == null) {
+//            return null;
+//        }
 
-        return dataSource.getName();
+        return docRef.getName();
     }
 
     private Query getQuery(final ExpressionOperator expression) {

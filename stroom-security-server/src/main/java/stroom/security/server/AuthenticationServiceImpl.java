@@ -120,7 +120,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         eventLog.logon(userName, false, e.getMessage(), AuthenticateOutcomeReason.INCORRECT_USERNAME_OR_PASSWORD);
 
         if (userName != null && userName.length() > 0) {
-            final UserRef userRef = userService.getUserByName(userName);
+            final UserRef userRef = userService.getUserRefByName(userName);
             if (userRef != null) {
                 // Increment the number of login failures.
                 final User user = userService.loadByUuid(userRef.getUuid());
@@ -312,7 +312,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public Boolean emailPasswordReset(final String userName) throws RuntimeException {
-        final UserRef userRef = userService.getUserByName(userName);
+        final UserRef userRef = userService.getUserRefByName(userName);
         if (userRef != null) {
             final User user = userService.loadByUuid(userRef.getUuid());
             if (user != null) {

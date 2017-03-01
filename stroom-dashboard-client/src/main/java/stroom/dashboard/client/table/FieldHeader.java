@@ -17,7 +17,7 @@
 package stroom.dashboard.client.table;
 
 import com.google.gwt.user.cellview.client.Header;
-import stroom.query.shared.Field;
+import stroom.dashboard.shared.Field;
 
 public class FieldHeader extends Header<Field> {
     private final Field field;

@@ -19,8 +19,8 @@ package stroom.index.server;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.FieldType.NumericType;
 import org.apache.lucene.index.IndexOptions;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFieldType;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFieldType;
 
 public final class FieldTypeFactory {
     private static final int DEFAULT_PRECISION_STEP = 4;

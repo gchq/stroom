@@ -63,6 +63,10 @@ public class MyCredentialsMatcher implements CredentialsMatcher {
             LOGGER.error(e.getMessage(), e);
         }
 
+        if (token instanceof JWTAuthenticationToken) {
+            return info != null;
+        }
+
         return false;
     }
 }

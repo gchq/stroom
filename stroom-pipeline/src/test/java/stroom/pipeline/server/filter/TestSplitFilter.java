@@ -132,7 +132,7 @@ public class TestSplitFilter extends StroomUnitTest {
         splitter.setSplitDepth(splitDepth);
         splitter.setSplitCount(splitCount);
 
-        final TestFilter testFilter = new TestFilter();
+        final TestFilter testFilter = new TestFilter(null, null);
 
         final TestSAXEventFilter testSAXEventFilter = new TestSAXEventFilter();
 

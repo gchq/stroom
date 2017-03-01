@@ -17,9 +17,9 @@
 package stroom.entity.server;
 
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.logging.EntityEventLog;
+import stroom.query.api.DocRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 

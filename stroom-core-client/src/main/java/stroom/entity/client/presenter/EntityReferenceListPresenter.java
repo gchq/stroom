@@ -22,7 +22,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.EntityServiceFindReferenceAction;
 import stroom.entity.shared.ResultList;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;

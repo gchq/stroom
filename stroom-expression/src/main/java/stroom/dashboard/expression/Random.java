@@ -19,22 +19,6 @@ package stroom.dashboard.expression;
 import java.text.ParseException;
 
 public class Random extends AbstractFunction {
-    private static class Gen extends AbstractNoChildGenerator {
-        private static final long serialVersionUID = -7551073465232523106L;
-
-        private Object value;
-
-        @Override
-        public void set(final String[] values) {
-            value = Math.random();
-        }
-
-        @Override
-        public Object eval() {
-            return value;
-        }
-    }
-
     public static final String NAME = "random";
 
     public Random(final String name) {
@@ -54,5 +38,21 @@ public class Random extends AbstractFunction {
     @Override
     public boolean hasAggregate() {
         return false;
+    }
+
+    private static class Gen extends AbstractNoChildGenerator {
+        private static final long serialVersionUID = -7551073465232523106L;
+
+        private Object value;
+
+        @Override
+        public void set(final String[] values) {
+            value = Math.random();
+        }
+
+        @Override
+        public Object eval() {
+            return value;
+        }
     }
 }

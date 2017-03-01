@@ -17,8 +17,9 @@
 package stroom.search.server.sender;
 
 import org.springframework.context.annotation.Scope;
+import stroom.query.Coprocessor;
+import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.Payload;
-import stroom.search.server.Coprocessor;
 import stroom.search.server.NodeResult;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -61,9 +62,9 @@ public class SenderTaskHandler extends AbstractTaskHandler<SenderTask, VoidResul
             final boolean searchComplete = task.getSearchComplete().get();
 
             // Produce payloads for each coprocessor.
-            Map<Integer, Payload> payloadMap = null;
+            Map<CoprocessorKey, Payload> payloadMap = null;
             if (task.getCoprocessorMap() != null && task.getCoprocessorMap().size() > 0) {
-                for (final Entry<Integer, Coprocessor<?>> entry : task.getCoprocessorMap().entrySet()) {
+                for (final Entry<CoprocessorKey, Coprocessor> entry : task.getCoprocessorMap().entrySet()) {
                     final Payload payload = entry.getValue().createPayload();
                     if (payload != null) {
                         if (payloadMap == null) {

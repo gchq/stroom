@@ -16,6 +16,13 @@
 
 package stroom.importexport.client.presenter;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteHandler;
@@ -36,13 +43,6 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tickbox.client.view.TickBox;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.Set;
 
@@ -54,7 +54,7 @@ public class ExportConfigPresenter
 
     @Inject
     public ExportConfigPresenter(final EventBus eventBus, final ExportConfigView view, final ExportProxy proxy,
-            final EntityCheckTreePresenter folderCheckTreePresenter, final ClientDispatchAsync clientDispatchAsync) {
+                                 final EntityCheckTreePresenter folderCheckTreePresenter, final ClientDispatchAsync clientDispatchAsync) {
         super(eventBus, view, proxy);
         this.folderCheckTreePresenter = folderCheckTreePresenter;
         this.clientDispatchAsync = clientDispatchAsync;

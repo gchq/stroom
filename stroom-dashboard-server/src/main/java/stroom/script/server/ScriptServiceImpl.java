@@ -23,7 +23,7 @@ import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.script.shared.FindScriptCriteria;

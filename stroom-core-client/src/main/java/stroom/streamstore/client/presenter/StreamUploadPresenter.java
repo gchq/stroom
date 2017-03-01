@@ -22,7 +22,7 @@ import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityItemListBox;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.streamstore.client.view.FileData;
 import stroom.streamstore.client.view.FileData.Status;
 import stroom.streamstore.shared.UploadDataAction;

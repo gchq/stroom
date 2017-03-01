@@ -31,7 +31,8 @@ import stroom.data.table.client.CellTableViewImpl.DisabledResources;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefs;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
@@ -116,23 +117,25 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
             }
 
             final LoadEntityIdSetAction action = new LoadEntityIdSetAction(loadMap);
-            dispatcher.execute(action, new AsyncCallbackAdaptor<SharedMap<SetId, SharedList<DocRef>>>() {
+            dispatcher.execute(action, new AsyncCallbackAdaptor<SharedMap<SetId, DocRefs>>() {
                 @Override
-                public void onSuccess(final SharedMap<SetId, SharedList<DocRef>> result) {
-                    final SharedList<DocRef> included = result.get(includeSetId);
-                    final SharedList<DocRef> excluded = result.get(excludeSetId);
+                public void onSuccess(final SharedMap<SetId, DocRefs> result) {
+                    final DocRefs included = result.get(includeSetId);
+                    final DocRefs excluded = result.get(excludeSetId);
 
                     data = new ArrayList<String>();
-                    if (included != null && included.size() > 0) {
-                        Collections.sort(included, new EntityReferenceComparator());
-                        for (final DocRef entity : included) {
+                    if (included != null && included.getDoc().size() > 0) {
+                        final List<DocRef> refs = new ArrayList<>(included.getDoc());
+                        Collections.sort(refs, new EntityReferenceComparator());
+                        for (final DocRef entity : refs) {
                             data.add("+ " + entity.getName());
                         }
                     }
 
-                    if (excluded != null && excluded.size() > 0) {
-                        Collections.sort(excluded, new EntityReferenceComparator());
-                        for (final DocRef entity : excluded) {
+                    if (excluded != null && excluded.getDoc().size() > 0) {
+                        final List<DocRef> refs = new ArrayList<>(excluded.getDoc());
+                        Collections.sort(refs, new EntityReferenceComparator());
+                        for (final DocRef entity : refs) {
                             data.add("- " + entity.getName());
                         }
                     }

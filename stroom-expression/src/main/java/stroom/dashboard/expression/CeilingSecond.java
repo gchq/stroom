@@ -16,23 +16,10 @@
 
 package stroom.dashboard.expression;
 
-import org.joda.time.DateTime;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class CeilingSecond extends RoundDate {
-    public static class Calc extends RoundDateCalculator {
-        private static final long serialVersionUID = -5893918049538006730L;
-
-        @Override
-        protected DateTime adjust(final DateTime dateTime) {
-            DateTime result = new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(),
-                    dateTime.getHourOfDay(), dateTime.getMinuteOfHour(), dateTime.getSecondOfMinute(), 0);
-            if (dateTime.getMillisOfSecond() > 0) {
-                result = result.plusSeconds(1);
-            }
-            return result;
-        }
-    }
-
     public static final String NAME = "ceilingSecond";
     private static final Calc CALC = new Calc();
 
@@ -43,5 +30,18 @@ public class CeilingSecond extends RoundDate {
     @Override
     protected RoundCalculator getCalculator() {
         return CALC;
+    }
+
+    public static class Calc extends RoundDateCalculator {
+        private static final long serialVersionUID = -5893918049538006730L;
+
+        @Override
+        protected LocalDateTime adjust(final LocalDateTime dateTime) {
+            LocalDateTime result = dateTime.truncatedTo(ChronoUnit.SECONDS);
+            if (dateTime.isAfter(result)) {
+                result = result.plusSeconds(1);
+            }
+            return result;
+        }
     }
 }

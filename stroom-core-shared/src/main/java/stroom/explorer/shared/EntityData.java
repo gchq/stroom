@@ -16,7 +16,7 @@
 
 package stroom.explorer.shared;
 
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.NamedEntity;
 import stroom.util.shared.SharedObject;

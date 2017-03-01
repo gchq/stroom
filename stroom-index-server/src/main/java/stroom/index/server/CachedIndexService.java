@@ -27,9 +27,9 @@ import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.Clearable;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexService;
-import stroom.query.shared.IndexFields;
-import stroom.query.shared.IndexFieldsMap;
+import stroom.search.server.IndexFieldsMap;
 
 import javax.annotation.Resource;
 
@@ -43,6 +43,7 @@ public class CachedIndexService implements Clearable, InitializingBean, EntityEv
     private CacheManager cacheManager;
     @Resource
     private IndexService indexService;
+
     public CachedIndexService() {
         final CacheConfiguration cacheConfiguration = new CacheConfiguration("Index Fields Map Cache",
                 MAX_CACHE_ENTRIES);

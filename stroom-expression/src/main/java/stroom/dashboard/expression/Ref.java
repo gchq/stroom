@@ -17,6 +17,37 @@
 package stroom.dashboard.expression;
 
 public class Ref extends AbstractFunction {
+    private static final NullGen NULL_GEN = new NullGen();
+    private final String text;
+    private final int fieldIndex;
+
+    public Ref(final String text, final int fieldIndex) {
+        super(text, 0, 0);
+        this.text = text;
+        this.fieldIndex = fieldIndex;
+    }
+
+    @Override
+    public Generator createGenerator() {
+        // If the field index is less than 0 then we will always return null so
+        // get the null generator.
+        if (fieldIndex < 0) {
+            return NULL_GEN;
+        } else {
+            return new Gen(fieldIndex);
+        }
+    }
+
+    @Override
+    public void appendString(final StringBuilder sb) {
+        sb.append(text);
+    }
+
+    @Override
+    public boolean hasAggregate() {
+        return false;
+    }
+
     private static class NullGen extends AbstractNoChildGenerator {
         private static final long serialVersionUID = 8153777070911899616L;
 
@@ -49,37 +80,5 @@ public class Ref extends AbstractFunction {
         public Object eval() {
             return current;
         }
-    }
-
-    private static final NullGen NULL_GEN = new NullGen();
-
-    private final String text;
-    private final int fieldIndex;
-
-    public Ref(final String text, final int fieldIndex) {
-        super(text, 0, 0);
-        this.text = text;
-        this.fieldIndex = fieldIndex;
-    }
-
-    @Override
-    public Generator createGenerator() {
-        // If the field index is less than 0 then we will always return null so
-        // get the null generator.
-        if (fieldIndex < 0) {
-            return NULL_GEN;
-        } else {
-            return new Gen(fieldIndex);
-        }
-    }
-
-    @Override
-    public void appendString(final StringBuilder sb) {
-        sb.append(text);
-    }
-
-    @Override
-    public boolean hasAggregate() {
-        return false;
     }
 }

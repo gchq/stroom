@@ -16,24 +16,10 @@
 
 package stroom.dashboard.expression;
 
-import org.joda.time.DateTime;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class RoundMinute extends RoundDate {
-    public static class Calc extends RoundDateCalculator {
-        private static final long serialVersionUID = -5893918049538006730L;
-
-        @Override
-        protected DateTime adjust(final DateTime dateTime) {
-            DateTime result = new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(),
-                    dateTime.getHourOfDay(), dateTime.getMinuteOfHour(), 0, 0);
-            if (dateTime.getSecondOfMinute() > 30
-                    || (dateTime.getSecondOfMinute() == 30 && dateTime.getMillisOfSecond() > 0)) {
-                result = result.plusMinutes(1);
-            }
-            return result;
-        }
-    }
-
     public static final String NAME = "roundMinute";
     private static final Calc CALC = new Calc();
 
@@ -44,5 +30,18 @@ public class RoundMinute extends RoundDate {
     @Override
     protected RoundCalculator getCalculator() {
         return CALC;
+    }
+
+    public static class Calc extends RoundDateCalculator {
+        private static final long serialVersionUID = -5893918049538006730L;
+
+        @Override
+        protected LocalDateTime adjust(final LocalDateTime dateTime) {
+            LocalDateTime result = dateTime.truncatedTo(ChronoUnit.MINUTES);
+            if (dateTime.isAfter(result.plusSeconds(30))) {
+                result = result.plusMinutes(1);
+            }
+            return result;
+        }
     }
 }

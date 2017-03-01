@@ -18,7 +18,7 @@ package stroom.pipeline.server.factory;
 
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.server.SupportsCodeInjection;
 import stroom.pipeline.server.filter.SAXEventRecorder;

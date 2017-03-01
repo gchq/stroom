@@ -18,29 +18,28 @@ package stroom.dashboard.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.Dashboard;
-import stroom.dashboard.shared.Query;
-import stroom.dashboard.shared.QueryKeyImpl;
+import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.dashboard.shared.QueryEntity;
 import stroom.dashboard.shared.QueryService;
+import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
+import stroom.dashboard.shared.SearchRequest;
+import stroom.dashboard.shared.SearchResponse;
 import stroom.logging.SearchEventLog;
-import stroom.query.SearchDataSourceProvider;
-import stroom.query.SearchResultCollector;
-import stroom.query.shared.QueryData;
-import stroom.query.shared.QueryKey;
-import stroom.query.shared.Search;
-import stroom.query.shared.SearchRequest;
-import stroom.query.shared.SearchResponse;
+import stroom.query.api.DocRef;
+import stroom.query.api.Param;
+import stroom.query.api.Query;
 import stroom.security.SecurityContext;
-import stroom.task.cluster.ClusterResultCollector;
-import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -50,25 +49,24 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
     private transient static final StroomLogger LOGGER = StroomLogger.getLogger(SearchBusPollActionHandler.class);
 
     private final QueryService queryService;
-    private final SearchResultCreator searchResultCreator;
     private final SearchEventLog searchEventLog;
-    private final SearchDataSourceProviderRegistry searchDataSourceProviderRegistry;
+    private final DataSourceProviderRegistry searchDataSourceProviderRegistry;
     private final ActiveQueriesManager searchSessionManager;
-    private final ClusterResultCollectorCache clusterResultCollectorCache;
+    private final SearchRequestMapper searchRequestMapper;
     private final SecurityContext securityContext;
 
     @Inject
-    SearchBusPollActionHandler(final QueryService queryService, final SearchResultCreator searchResultCreator,
+    SearchBusPollActionHandler(final QueryService queryService,
                                final SearchEventLog searchEventLog,
-                               final SearchDataSourceProviderRegistry searchDataSourceProviderRegistry,
+                               final DataSourceProviderRegistry searchDataSourceProviderRegistry,
                                final ActiveQueriesManager searchSessionManager,
-                               final ClusterResultCollectorCache clusterResultCollectorCache, final SecurityContext securityContext) {
+                               final SearchRequestMapper searchRequestMapper,
+                               final SecurityContext securityContext) {
         this.queryService = queryService;
-        this.searchResultCreator = searchResultCreator;
         this.searchEventLog = searchEventLog;
         this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
         this.searchSessionManager = searchSessionManager;
-        this.clusterResultCollectorCache = clusterResultCollectorCache;
+        this.searchRequestMapper = searchRequestMapper;
         this.securityContext = securityContext;
     }
 
@@ -83,7 +81,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                         "Only the following search queries should be active for session '");
                 sb.append(action.getSessionId());
                 sb.append("'\n");
-                for (final QueryKey queryKey : action.getSearchActionMap().keySet()) {
+                for (final DashboardQueryKey queryKey : action.getSearchActionMap().keySet()) {
                     sb.append("\t");
                     sb.append(queryKey.toString());
                 }
@@ -92,20 +90,29 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
             final String searchSessionId = action.getSessionId() + "_" + action.getApplicationInstanceId();
             final ActiveQueries searchSession = searchSessionManager.get(searchSessionId);
-            final Map<QueryKey, SearchResponse> searchResultMap = new HashMap<>();
+            final Map<DashboardQueryKey, SearchResponse> searchResultMap = new HashMap<>();
 
-            // First kill off any queries that are no longer required by the UI.
+//            // Fix query keys so they have session and user info.
+//            for (final Entry<DashboardQueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
+//                final QueryKey queryKey = entry.getValues().getQueryKey();
+//                queryKey.setSessionId(action.getSessionId());
+//                queryKey.setUserId(action.getUserId());
+//            }
+
+            // Kill off any queries that are no longer required by the UI.
             searchSession.destroyUnusedQueries(action.getSearchActionMap().keySet());
 
             // Get query results for every active query.
-            for (final Entry<QueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
-                final QueryKey queryKey = entry.getKey();
+            for (final Entry<DashboardQueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
+                final DashboardQueryKey queryKey = entry.getKey();
+
                 final SearchRequest searchRequest = entry.getValue();
 
-                final SearchResponse searchResponse = processRequest(action.getSessionId(), action.getUserId(),
-                        searchSession, queryKey, searchRequest);
-                if (searchResponse != null) {
-                    searchResultMap.put(queryKey, searchResponse);
+                if (searchRequest != null && searchRequest.getSearch() != null) {
+                    final SearchResponse searchResponse = processRequest(searchSession, queryKey, searchRequest);
+                    if (searchResponse != null) {
+                        searchResultMap.put(queryKey, searchResponse);
+                    }
                 }
             }
 
@@ -115,107 +122,95 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
         }
     }
 
-    private SearchResponse processRequest(final String sessionId, final String userId, final ActiveQueries activeQueries,
-                                          final QueryKey queryKey, final SearchRequest searchRequest) {
+    private SearchResponse processRequest(final ActiveQueries activeQueries, final DashboardQueryKey queryKey, final SearchRequest searchRequest) {
         SearchResponse result = null;
 
+        boolean newSearch = false;
+        final Search search = searchRequest.getSearch();
+
         try {
-            // Make sure we have active queries for all current UI queries.
-            // Note: This also ensures that the active query cache is kept alive
-            // for all open UI components.
-            ActiveQuery activeQuery = activeQueries.getExistingQuery(queryKey);
+            synchronized (SearchBusPollActionHandler.class) {
+                // Make sure we have active queries for all current UI queries.
+                // Note: This also ensures that the active query cache is kept alive
+                // for all open UI components.
+                ActiveQuery activeQuery = activeQueries.getExistingQuery(queryKey);
 
-            // If the query doesn't have an active query for this query key then
-            // this is new.
-            if (activeQuery == null) {
-                // Create a collector for this query.
-                final SearchResultCollector newCollector = createCollector(sessionId, userId, queryKey, searchRequest);
+                // If the query doesn't have an active query for this query key then
+                // this is new.
+                if (activeQuery == null) {
+                    newSearch = true;
 
-                // Create a new active query to store the result collector and
-                // any other state that we wish to maintain for the duration of
-                // the query.
-                final ActiveQuery newQuery = new ActiveQuery(newCollector);
+                    // Store the new active query for this query.
+                    activeQuery = activeQueries.addNewQuery(queryKey, search.getDataSourceRef());
 
-                // Store the new active query for this query.
-                activeQueries.addNewQuery(queryKey, newQuery);
-
-                // Start asynchronous search execution.
-                newCollector.start();
-
-                activeQuery = newQuery;
-            }
-
-            // Keep the cluster result collector cache fresh.
-            if (activeQuery != null && activeQuery.getSearchResultCollector() instanceof ClusterResultCollector<?>) {
-                clusterResultCollectorCache
-                        .get(((ClusterResultCollector<?>) activeQuery.getSearchResultCollector()).getId());
+                    // Add this search to the history so the user can get back to this
+                    // search again.
+                    storeSearchHistory(queryKey, search);
+                }
             }
 
             // Perform the search or update results.
-            if (searchRequest != null && activeQuery != null) {
-                result = searchResultCreator.createResult(activeQuery, searchRequest);
+            final DocRef dataSourceRef = search.getDataSourceRef();
+            if (dataSourceRef == null || dataSourceRef.getUuid() == null) {
+                throw new RuntimeException("No search data source has been specified");
             }
+
+            // Get the data source provider for this query.
+            final DataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry.getDataSourceProvider(dataSourceRef);
+
+            if (dataSourceProvider == null) {
+                throw new RuntimeException(
+                        "No search provider found for '" + dataSourceRef.getType() + "' data source");
+            }
+
+            stroom.query.api.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
+            stroom.query.api.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
+            result = new SearchResponseMapper().mapResponse(searchResponse);
+
+            if (newSearch) {
+                // Log this search action for the current user.
+                searchEventLog.search(search.getDataSourceRef(), search.getExpression());
+            }
+
         } catch (final Exception e) {
             LOGGER.debug(e.getMessage(), e);
 
+            if (newSearch) {
+                searchEventLog.search(search.getDataSourceRef(), search.getExpression(), e);
+            }
+
             result = new SearchResponse();
-            result.setErrors(e.getMessage());
+            if (e.getMessage() == null) {
+                result.setErrors(e.getClass().getName());
+            } else {
+                result.setErrors(e.getClass().getName() + ": " + e.getMessage());
+            }
             result.setComplete(true);
         }
 
         return result;
     }
 
-    private SearchResultCollector createCollector(final String sessionId, final String userId, final QueryKey queryKey,
-                                                  final SearchRequest searchRequest) {
-        final Search search = searchRequest.getSearch();
+    private void storeSearchHistory(final DashboardQueryKey queryKey, final Search search) {
         try {
-            if (search.getDataSourceRef() == null || search.getDataSourceRef().getUuid() == null) {
-                throw new RuntimeException("No search data source has been specified");
+            // Add this search to the history so the user can get back to
+            // this search again.
+            List<Param> params;
+            if (search.getParamMap() != null && search.getParamMap().size() > 0) {
+                params = new ArrayList<>(search.getParamMap().size());
+                for (final Entry<String, String> entry : search.getParamMap().entrySet()) {
+                    params.add(new Param(entry.getKey(), entry.getValue()));
+                }
+            } else {
+                params = null;
             }
-            final SearchDataSourceProvider searchDataSourceProvider = searchDataSourceProviderRegistry
-                    .getProvider(search.getDataSourceRef().getType());
-            if (searchDataSourceProvider == null) {
-                throw new RuntimeException(
-                        "No search provider found for '" + search.getDataSourceRef().getType() + "' data source");
-            }
 
-            // Create a collector for this search.
-            final SearchResultCollector searchResultCollector = searchDataSourceProvider.createCollector(sessionId,
-                    userId, queryKey, searchRequest);
+            final Query query = new Query(search.getDataSourceRef(), search.getExpression(), params);
+            final QueryEntity queryEntity = queryService.create(null, "History");
 
-            // Add this search to the history so the user can get back to this
-            // search again.
-            storeSearchHistory(queryKey, search);
-
-            // Log this search action for the current user.
-            searchEventLog.search(search.getDataSourceRef(), search.getExpression());
-
-            return searchResultCollector;
-
-        } catch (final Exception e) {
-            searchEventLog.search(search.getDataSourceRef(), search.getExpression(), e);
-            throw e;
-        }
-    }
-
-    private void storeSearchHistory(final QueryKey queryKey, final Search search) {
-        try {
-            if (queryKey instanceof QueryKeyImpl) {
-                final QueryKeyImpl queryKeyImpl = (QueryKeyImpl) queryKey;
-
-                // Add this search to the history so the user can get back to
-                // this search again.
-                final QueryData queryData = new QueryData();
-                queryData.setDataSource(search.getDataSourceRef());
-                queryData.setExpression(search.getExpression());
-
-                final Query query = queryService.create(null, "History");
-
-                query.setDashboard(Dashboard.createStub(queryKeyImpl.getDashboardId()));
-                query.setQueryData(queryData);
-                queryService.save(query);
-            }
+            queryEntity.setDashboard(Dashboard.createStub(queryKey.getDashboardId()));
+            queryEntity.setQuery(query);
+            queryService.save(queryEntity);
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }

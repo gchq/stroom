@@ -40,7 +40,7 @@ import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.event.ReloadEntityEvent;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.EntityData;

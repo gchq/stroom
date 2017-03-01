@@ -27,14 +27,14 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import stroom.cache.CacheManagerAutoCloseable;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFields;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.logging.StroomLogger;
@@ -95,7 +95,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
     }
 
     private void doTest(final int threadSize, final int jobSize, final int numberOfIndexes,
-            final int shardsPerPartition, final int maxDocumentsPerIndexShard) throws InterruptedException {
+                        final int shardsPerPartition, final int maxDocumentsPerIndexShard) throws InterruptedException {
         final IndexField indexField = IndexField.createField("test");
         final IndexFields indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(indexField);
@@ -195,7 +195,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         private final int testNumber;
 
         public IndexThread(final IndexShardWriterCacheImpl indexShardPoolImpl, final IndexShardKey indexShardKey,
-                final IndexField indexField, final int testNumber) {
+                           final IndexField indexField, final int testNumber) {
             this.indexShardPoolImpl = indexShardPoolImpl;
             this.indexShardKey = indexShardKey;
             this.indexField = indexField;

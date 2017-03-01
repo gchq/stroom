@@ -16,41 +16,50 @@
 
 package stroom.dashboard.server;
 
-import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.DocRef;
-import stroom.query.shared.DataSource;
-import stroom.query.shared.DataSourceProvider;
-import stroom.util.spring.StroomBeanStore;
+import stroom.query.api.DocRef;
+import stroom.security.SecurityContext;
+import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
+import javax.inject.Inject;
 
 @Component
-public class DataSourceProviderRegistry implements InitializingBean {
-    private final Map<String, DataSourceProvider> providers = new HashMap<String, DataSourceProvider>();
+@Scope(StroomScope.PROTOTYPE)
+public class DataSourceProviderRegistry {//implements InitializingBean {
+//    private final Map<String, DataSourceProvider> providers = new HashMap<>();
+//
+//    private final StroomBeanStore stroomBeanStore;
+//
 
-    @Resource
-    private StroomBeanStore stroomBeanStore;
+    private final  SecurityContext securityContext;
 
-    public DataSource getDataSource(final DocRef dataSourceRef) {
-        if (dataSourceRef != null && dataSourceRef.getType() != null) {
-            final DataSourceProvider provider = providers.get(dataSourceRef.getType());
-            if (provider != null && dataSourceRef.getUuid() != null) {
-                final DataSource dataSource = provider.getDataSource(dataSourceRef.getUuid());
-                return dataSource;
-            }
-        }
-        return null;
+    @Inject
+    public DataSourceProviderRegistry(final SecurityContext securityContext) {
+        this.securityContext = securityContext;
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        for (final String beanName : stroomBeanStore.getStroomBeanByType(DataSourceProvider.class)) {
-            final Object bean = stroomBeanStore.getBean(beanName);
-            final DataSourceProvider dataSourceProvider = (DataSourceProvider) bean;
-            providers.put(dataSourceProvider.getEntityType(), dataSourceProvider);
-        }
+    //    @Inject
+//    public DataSourceProviderRegistry(final StroomBeanStore stroomBeanStore) {
+//        this.stroomBeanStore = stroomBeanStore;
+//    }
+
+    public DataSourceProvider getDataSourceProvider(final DocRef dataSourceRef) {
+        return new RemoteDataSourceProvider(securityContext);
+//
+//        if (dataSourceRef != null && dataSourceRef.getType() != null) {
+//            final DataSourceProvider provider = providers.get(dataSourceRef.getType());
+//            return provider;
+//        }
+//        return null;
     }
+//
+//    @Override
+//    public void afterPropertiesSet() throws Exception {
+//        for (final String beanName : stroomBeanStore.getStroomBeanByType(DataSourceProvider.class)) {
+//            final Object bean = stroomBeanStore.getBean(beanName);
+//            final DataSourceProvider dataSourceProvider = (DataSourceProvider) bean;
+//            providers.put(dataSourceProvider.getType(), dataSourceProvider);
+//        }
+//    }
 }

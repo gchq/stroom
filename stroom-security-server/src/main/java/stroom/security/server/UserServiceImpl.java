@@ -159,7 +159,7 @@ public class UserServiceImpl implements UserService {
 
     @Insecure
     @Override
-    public UserRef getUserByName(final String name) {
+    public UserRef getUserRefByName(final String name) {
         final FindUserCriteria findUserCriteria = new FindUserCriteria(name, false);
         final BaseResultList<User> users = find(findUserCriteria);
         if (users != null) {
@@ -174,7 +174,7 @@ public class UserServiceImpl implements UserService {
 
     @Insecure
     @Override
-    public UserRef getUserGroupByName(final String name) {
+    public UserRef getUserGroupRefByName(final String name) {
         final FindUserCriteria findUserCriteria = new FindUserCriteria(name, true);
         final BaseResultList<User> users = find(findUserCriteria);
         if (users != null) {
@@ -308,6 +308,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public final User loadByUuid(final String uuid, final Set<String> fetchSet) throws RuntimeException {
         return entityServiceHelper.loadByUuid(uuid, fetchSet);
+    }
+
+    @Insecure
+    @Override
+    public final User loadByUuidInsecure(final String uuid) throws RuntimeException {
+        return entityServiceHelper.loadByUuid(uuid);
     }
 
     @Override

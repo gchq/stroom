@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,9 +68,9 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                 // If we don't have a pipeline id then try to guess one for the
                 // supplied stream.
                 dispatcher.execute(new GetPipelineForStreamAction(event.getStreamId(), event.getChildStreamId()),
-                        new AsyncCallbackAdaptor<DocRef>() {
+                        new AsyncCallbackAdaptor<SharedDocRef>() {
                             @Override
-                            public void onSuccess(final DocRef result) {
+                            public void onSuccess(final SharedDocRef result) {
                                 choosePipeline(result, event.getStreamId(), event.getEventId(),
                                         event.getChildStreamType());
                             }
@@ -79,7 +79,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         }
     }
 
-    private void choosePipeline(final DocRef initialPipelineRef, final long streamId, final long eventId,
+    private void choosePipeline(final SharedDocRef initialPipelineRef, final long streamId, final long eventId,
                                 final StreamType childStreamType) {
         final EntityChooser chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Step With");

@@ -16,7 +16,7 @@
 
 package stroom.streamstore.server.udload;
 
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.util.shared.VoidResult;
 import stroom.util.task.ServerTask;
 

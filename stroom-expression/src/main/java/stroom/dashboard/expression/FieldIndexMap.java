@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FieldIndexMap {
-    private final Map<String, Integer> map = new HashMap<String, Integer>();
+    private final Map<String, Integer> fieldToPos = new HashMap<>();
     private final boolean autoCreate;
     private int index;
 
@@ -37,12 +37,11 @@ public class FieldIndexMap {
     }
 
     public int create(final String fieldName, final boolean forceCreation) {
-        Integer currentIndex = map.get(fieldName);
-        if (currentIndex == null && (autoCreate || forceCreation)) {
-            currentIndex = Integer.valueOf(index);
-            index++;
-            map.put(fieldName, currentIndex);
+        if (autoCreate || forceCreation) {
+            return fieldToPos.computeIfAbsent(fieldName, k -> index++);
         }
+
+        Integer currentIndex = fieldToPos.get(fieldName);
         if (currentIndex == null) {
             return -1;
         }
@@ -50,7 +49,7 @@ public class FieldIndexMap {
     }
 
     public int get(final String fieldName) {
-        final Integer currentIndex = map.get(fieldName);
+        final Integer currentIndex = fieldToPos.get(fieldName);
         if (currentIndex == null) {
             return -1;
         }
@@ -58,6 +57,6 @@ public class FieldIndexMap {
     }
 
     public int size() {
-        return map.size();
+        return fieldToPos.size();
     }
 }

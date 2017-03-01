@@ -72,7 +72,6 @@
 
     <inherits name="stroom.query.Query"/>
 
-    <inherits name="stroom.datasource.DataSource"/>
     <inherits name="stroom.statistics.Statistics"/>
     <inherits name="stroom.benchmark.Benchmark"/>
     <inherits name="stroom.streamstore.StreamStore"/>

@@ -18,22 +18,18 @@ package stroom.query.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
-
-import stroom.query.client.TermEditor.Resources;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
 import stroom.item.client.ItemListBox;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.client.TermEditor.Resources;
 
 public class OperatorEditor extends Composite {
     private final FlowPanel layout;
-    private final ItemListBox<ExpressionOperator.Op> listBox;
+    private final ItemListBox<Op> listBox;
     private ExpressionOperator operator;
 
     private boolean reading;
@@ -53,13 +49,10 @@ public class OperatorEditor extends Composite {
 
         fixStyle(listBox, 50);
 
-        listBox.addSelectionHandler(new SelectionHandler<ExpressionOperator.Op>() {
-            @Override
-            public void onSelection(final SelectionEvent<Op> event) {
-                if (!reading && operator != null) {
-                    operator.setType(event.getSelectedItem());
-                    fireDirty();
-                }
+        listBox.addSelectionHandler(event -> {
+            if (!reading && operator != null) {
+                operator.setOp(event.getSelectedItem());
+                fireDirty();
             }
         });
 
@@ -78,14 +71,9 @@ public class OperatorEditor extends Composite {
             this.operator = operator;
 
             // Select the current value.
-            listBox.setSelectedItem(operator.getType());
+            listBox.setSelectedItem(operator.getOp());
 
-            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-                @Override
-                public void execute() {
-                    layout.setVisible(true);
-                }
-            });
+            Scheduler.get().scheduleDeferred(() -> layout.setVisible(true));
 
             reading = false;
             editing = true;

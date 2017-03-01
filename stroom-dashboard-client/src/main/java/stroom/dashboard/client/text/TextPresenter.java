@@ -29,7 +29,7 @@ import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.TextSettings;
+import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.pipeline.shared.AbstractFetchDataResult;
@@ -38,7 +38,7 @@ import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.query.shared.ComponentSettings;
+import stroom.dashboard.shared.ComponentSettings;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.Stream;
 import stroom.util.shared.EqualsUtil;
@@ -55,7 +55,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     private final ReadOnlyXMLEditorPresenter xmlPresenter;
     private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
-    private TextSettings textSettings;
+    private TextComponentSettings textSettings;
     private List<FetchDataAction> fetchDataQueue;
     private Timer delayedFetchDataTimer;
     private Long currentStreamId;
@@ -339,18 +339,18 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         return TYPE;
     }
 
-    private TextSettings getSettings() {
+    private TextComponentSettings getSettings() {
         ComponentSettings settings = getComponentData().getSettings();
-        if (settings == null || !(settings instanceof TextSettings)) {
+        if (settings == null || !(settings instanceof TextComponentSettings)) {
             settings = createSettings();
             getComponentData().setSettings(settings);
         }
 
-        return (TextSettings) settings;
+        return (TextComponentSettings) settings;
     }
 
     private ComponentSettings createSettings() {
-        return new TextSettings();
+        return new TextComponentSettings();
     }
 
     @Override

@@ -22,7 +22,7 @@ import stroom.entity.shared.OrderBy;
 import stroom.entity.shared.SQLNameConstants;
 
 public class FindQueryCriteria extends FindDocumentEntityCriteria {
-    public static final OrderBy ORDER_BY_TIME = new OrderBy("Time", "createTime", Query.CREATE_TIME);
+    public static final OrderBy ORDER_BY_TIME = new OrderBy("Time", "createTime", QueryEntity.CREATE_TIME);
     public static final OrderBy ORDER_BY_NAME = new OrderBy("Name", "name", SQLNameConstants.NAME);
     private static final long serialVersionUID = -4421720204507720754L;
 

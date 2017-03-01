@@ -16,6 +16,8 @@
 
 package stroom.entity.shared;
 
+import stroom.query.api.DocRef;
+
 import java.util.Set;
 
 public class EntityServiceLoadAction<E extends Entity> extends Action<E> {
