@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
-<%@page import="stroom.util.config.StroomProperties"%>
 
 <!--
   ~ Copyright 2016 Crown Copyright
@@ -22,7 +21,8 @@
 <html class="stroom">
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <title><%=StroomProperties.getProperty("stroom.pageTitle", "Stroom")%></title>
+    <!-- TODO: restore this templating -->
+    <title>Stroom</title>
 
     <link rel="shortcut icon" href="dashboard.ico" type="image/x-icon" />
 
@@ -63,9 +63,11 @@
 
     <script type="text/javascript" src='dashboard/dashboard.nocache.js'></script>
   </head>
-  
-  <!-- <body class="stroom-body" oncontextmenu="return false;"> -->
-  <body class="stroom-body" <%=StroomProperties.getProperty("stroom.ui.oncontextmenu", "oncontextmenu=\"return false;\"")%>>
+
+  <!-- TODO restore this as a configurable option -->
+  <!-- Set this to true to enable the browser's context menu -->
+  <!-- <body class="stroom-body" oncontextmenu="return true;"> -->
+  <body class="stroom-body" oncontextmenu="return false;">
       <!-- Add history support -->
     <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
     
