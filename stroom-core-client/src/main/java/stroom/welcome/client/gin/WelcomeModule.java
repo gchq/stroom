@@ -16,7 +16,7 @@
 
 package stroom.welcome.client.gin;
 
-import stroom.app.client.gin.PluginModule;
+import stroom.core.client.gin.PluginModule;
 import stroom.welcome.client.WelcomePlugin;
 import stroom.welcome.client.presenter.WelcomePresenter;
 import stroom.welcome.client.presenter.WelcomePresenter.WelcomeView;

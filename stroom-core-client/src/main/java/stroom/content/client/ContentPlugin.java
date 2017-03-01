@@ -20,11 +20,10 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-
-import stroom.app.client.ContentManager;
-import stroom.app.client.ContentManager.CloseCallback;
-import stroom.app.client.ContentManager.CloseHandler;
-import stroom.app.client.presenter.Plugin;
+import stroom.core.client.ContentManager;
+import stroom.core.client.ContentManager.CloseCallback;
+import stroom.core.client.ContentManager.CloseHandler;
+import stroom.core.client.presenter.Plugin;
 import stroom.data.table.client.Refreshable;
 import stroom.widget.tab.client.presenter.TabData;
 

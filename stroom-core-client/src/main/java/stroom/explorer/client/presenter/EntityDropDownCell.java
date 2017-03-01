@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,15 +16,13 @@
 
 package stroom.explorer.client.presenter;
 
+import com.google.inject.Inject;
 import stroom.cell.dropdowntree.client.DropDownCell;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.entity.shared.DocRef;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
-import com.google.inject.Inject;
-
-import java.util.Set;
+import stroom.query.api.DocRef;
 
 public class EntityDropDownCell extends DropDownCell<DocRef> {
     private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
@@ -34,7 +32,7 @@ public class EntityDropDownCell extends DropDownCell<DocRef> {
     @Inject
     public EntityDropDownCell(final ExplorerDropDownTreePresenter explorerDropDownTreePresenter) {
         this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
-        setUnselectedText("None");
+        changeSelection(null);
 
         explorerDropDownTreePresenter.addDataSelectionHandler(new DataSelectionHandler<ExplorerData>() {
             @Override
@@ -44,15 +42,13 @@ public class EntityDropDownCell extends DropDownCell<DocRef> {
         });
     }
 
-    public void setUnselectedText(final String unselectedText) {
-        this.unselectedText = unselectedText;
-        explorerDropDownTreePresenter.setUnselectedText(unselectedText);
-        changeSelection(null);
-    }
-
     @Override
     protected String getUnselectedText() {
         return unselectedText;
+    }
+
+    public void setUnselectedText(final String unselectedText) {
+        this.unselectedText = unselectedText;
     }
 
     public void setIncludedTypes(final String... includedTypes) {
@@ -73,7 +69,7 @@ public class EntityDropDownCell extends DropDownCell<DocRef> {
 
     @Override
     public void showPopup(final DocRef value) {
-        explorerDropDownTreePresenter.setSelectedEntityReference(value, false);
+        explorerDropDownTreePresenter.setSelectedEntityReference(value);
         explorerDropDownTreePresenter.show();
     }
 

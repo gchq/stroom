@@ -19,33 +19,28 @@ package stroom.explorer.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-
 import stroom.explorer.shared.ExplorerData;
+import stroom.widget.util.client.MultiSelectionModel;
 
 public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onShow(ShowExplorerMenuEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
-    private final ExplorerData explorerData;
+    private final MultiSelectionModel<ExplorerData> selectionModel;
     private final int x;
     private final int y;
 
-    private ShowExplorerMenuEvent(final ExplorerData explorerData, final int x, final int y) {
-        this.explorerData = explorerData;
+    private ShowExplorerMenuEvent(final MultiSelectionModel<ExplorerData> selectionModel, final int x, final int y) {
+        this.selectionModel = selectionModel;
         this.x = x;
         this.y = y;
     }
 
-    public static void fire(final HasHandlers handlers, final ExplorerData explorerData, final int x, final int y) {
-        handlers.fireEvent(new ShowExplorerMenuEvent(explorerData, x, y));
+    public static void fire(final HasHandlers handlers, final MultiSelectionModel<ExplorerData> selectionModel, final int x, final int y) {
+        handlers.fireEvent(new ShowExplorerMenuEvent(selectionModel, x, y));
     }
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
@@ -60,8 +55,8 @@ public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handle
         handler.onShow(this);
     }
 
-    public ExplorerData getExplorerData() {
-        return explorerData;
+    public MultiSelectionModel<ExplorerData> getSelectionModel() {
+        return selectionModel;
     }
 
     public int getX() {
@@ -70,5 +65,9 @@ public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handle
 
     public int getY() {
         return y;
+    }
+
+    public interface Handler extends EventHandler {
+        void onShow(ShowExplorerMenuEvent event);
     }
 }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,14 +24,15 @@ import stroom.cache.server.ParserFactoryPool;
 import stroom.cache.server.StoredParserFactory;
 import stroom.entity.shared.VersionedEntityDecorator;
 import stroom.pipeline.server.LocationFactoryProxy;
+import stroom.pipeline.server.SupportsCodeInjection;
 import stroom.pipeline.server.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverterService;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -48,7 +49,7 @@ import javax.inject.Inject;
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.ROLE_HAS_CODE }, icon = ElementIcons.TEXT)
-public class DSParser extends AbstractParser {
+public class DSParser extends AbstractParser implements SupportsCodeInjection {
     private final ParserFactoryPool parserFactoryPool;
     private final TextConverterService textConverterService;
     private String injectedCode;
@@ -122,6 +123,7 @@ public class DSParser extends AbstractParser {
         }
     }
 
+    @Override
     public void setInjectedCode(final String injectedCode) {
         this.injectedCode = injectedCode;
     }

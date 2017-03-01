@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,18 +16,16 @@
 
 package stroom.xmlschema.server;
 
-import java.util.List;
-
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 import stroom.xmlschema.shared.XMLSchemaService;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 public class TestXMLSchemaServiceImpl extends AbstractCoreIntegrationTest {
     @Resource
@@ -45,7 +43,7 @@ public class TestXMLSchemaServiceImpl extends AbstractCoreIntegrationTest {
 
         List<XMLSchema> list = xmlSchemaService.find(criteria);
         Assert.assertNotNull(list);
-        Assert.assertEquals(7, list.size());
+        Assert.assertEquals(8, list.size());
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setNamespaceURI("event-logging:3");

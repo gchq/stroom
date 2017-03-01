@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,9 @@
 
 package stroom.explorer.shared;
 
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.NamedEntity;
+import stroom.query.api.DocRef;
 import stroom.util.shared.SharedObject;
 
 import java.util.Set;
@@ -56,7 +57,7 @@ public class EntityData implements ExplorerData, SharedObject {
         if (entity == null) {
             return null;
         }
-        return new EntityData(iconUrl, DocRef.create(entity), nodeState);
+        return new EntityData(iconUrl, DocRefUtil.create(entity), nodeState);
     }
 
     public static EntityData create(final String iconUrl, final DocRef docRef, final NodeState nodeState) {

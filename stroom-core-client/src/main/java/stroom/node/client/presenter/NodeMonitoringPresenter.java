@@ -19,10 +19,7 @@ package stroom.node.client.presenter;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -41,7 +38,11 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntitySaveTask;
 import stroom.entity.client.SaveQueue;
 import stroom.entity.shared.EntityServiceSaveAction;
-import stroom.node.shared.*;
+import stroom.node.shared.ClusterNodeInfo;
+import stroom.node.shared.ClusterNodeInfoAction;
+import stroom.node.shared.FetchNodeInfoAction;
+import stroom.node.shared.Node;
+import stroom.node.shared.NodeInfoResult;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
@@ -53,7 +54,6 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.util.client.MySingleSelectionModel;
 
 public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<NodeInfoResult>> implements Refreshable {
     private final ClientDispatchAsync dispatcher;
@@ -62,7 +62,6 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     private final ActionDataProvider<NodeInfoResult> dataProvider;
     private final SaveQueue<Node> saveQueue;
 
-    private final MySingleSelectionModel<NodeInfoResult> selectionModel;
     private final GlyphButtonView editButton;
     private final Provider<NodeEditPresenter> nodeEditPresenterProvider;
 
@@ -76,10 +75,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         this.nodeEditPresenterProvider = nodeEditPresenterProvider;
         initTableColumns();
         dataProvider = new ActionDataProvider<NodeInfoResult>(dispatcher, action);
-        dataProvider.addDataDisplay(getView());
-
-        selectionModel = new MySingleSelectionModel<NodeInfoResult>();
-        getView().setSelectionModel(selectionModel);
+        dataProvider.addDataDisplay(getView().getDataDisplay());
 
         saveQueue = new SaveQueue<Node>(dispatcher);
 
@@ -89,18 +85,10 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
     @Override
     protected void onBind() {
-        registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                enableButtons();
-            }
-        }));
-        registerHandler(editButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onEdit(selectionModel.getSelectedObject());
-                }
+        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> enableButtons()));
+        registerHandler(editButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onEdit(getView().getSelectionModel().getSelected());
             }
         }));
     }
@@ -326,7 +314,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     }
 
     private void enableButtons() {
-        final NodeInfoResult selected = selectionModel.getSelectedObject();
+        final NodeInfoResult selected = getView().getSelectionModel().getSelected();
         editButton.setEnabled(selected != null);
     }
 

@@ -16,26 +16,26 @@
 
 package stroom.folder.client;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.entity.shared.Folder;
 import stroom.explorer.shared.DocumentType;
-import stroom.pipeline.processor.client.presenter.ProcessorPresenter;
+import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
 import stroom.streamstore.client.presenter.StreamTaskPresenter;
+import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.client.ImageUtil;
 import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
-import com.google.gwt.user.client.ui.Image;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 
 public class FolderRootPresenter extends LinkTabPanelPresenter implements TabData {
     private static final TabData DATA = new TabDataImpl("Data");
@@ -51,24 +51,19 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements TabDat
             final Provider<StreamTaskPresenter> streamTaskPresenterProvider) {
         super(eventBus, view);
 
-        // if (securityContext.hasAppPermission(Stream.ENTITY_TYPE, DocumentPermissionNames.READ)) {
+        if (securityContext.hasAppPermission(Stream.VIEW_DATA_PERMISSION)) {
             addTab(DATA);
             tabContentProvider.add(DATA, streamPresenterProvider);
-        //  }
+        }
+
         if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
             addTab(PROCESSORS);
             tabContentProvider.add(PROCESSORS, processorPresenterProvider);
-        }
-        if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
             addTab(TASKS);
             tabContentProvider.add(TASKS, streamTaskPresenterProvider);
         }
 
-        //   if (securityContext.hasAppPermission(Stream.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            selectTab(DATA);
-        //  }
-
-        tabContentProvider.read(null);
+        selectTab(DATA);
     }
 
     @Override

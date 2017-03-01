@@ -1,0 +1,52 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+dependencies {
+    compile project(':stroom-dashboard-shared')
+    compile project(':stroom-core-server')
+
+    compile project(':stroom-expression')
+
+    compile 'org.apache.poi:poi-ooxml:3.15'
+
+    // Jersey Client
+    compile 'org.glassfish.jersey.core:jersey-client:2.25.1'
+
+//    compile 'org.glassfish.jersey.core:jersey-jetty-connector:2.25.1'
+    
+//    compile project(':stroom-security-server')
+//    compile project(':stroom-pipeline')
+//    compile project(':stroom-index')
+//    compile project(':stroom-statistics-server')
+//    compile project(':stroom-statistics-client')
+//    compile project(':stroom-util')
+//    compile project(':stroom-security-client-api')
+//    compile project(':stroom-util-shared')
+//    compile project(':stroom-util')
+//    compile project(':stroom-entity-shared')
+//    compile project(':stroom-query-api')
+//    compile project(':stroom-core-client-widget')
+//    compile project(':stroom-core-client')
+//    compile project(':stroom-core-shared')
+//    compile project(':stroom-pipeline')
+//    compile project(':stroom-index')
+//    compile project(':stroom-statistics-client')
+//    compile project(':stroom-statistics-api')
+//    compile project(':stroom-statistics-shared')
+    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+}

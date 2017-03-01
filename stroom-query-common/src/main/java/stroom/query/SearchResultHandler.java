@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,45 +16,48 @@
 
 package stroom.query;
 
+import stroom.mapreduce.UnsafePairQueue;
+import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.api.TableSettings;
+import stroom.util.shared.HasTerminate;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import stroom.query.shared.CoprocessorSettings;
-import stroom.query.shared.TableSettings;
-import stroom.mapreduce.UnsafePairQueue;
-import stroom.util.shared.HasTerminate;
-
 public class SearchResultHandler implements ResultHandler {
-    private final CoprocessorMap coprocessorMap;
-    private final Map<Integer, TablePayloadHandler> handlerMap = new HashMap<>();
+    private final CoprocessorSettingsMap coprocessorSettingsMap;
+    private final Map<CoprocessorKey, TablePayloadHandler> handlerMap = new HashMap<>();
     private final AtomicBoolean complete = new AtomicBoolean();
 
-    public SearchResultHandler(final CoprocessorMap coprocessorMap) {
-        this.coprocessorMap = coprocessorMap;
+    public SearchResultHandler(final CoprocessorSettingsMap coprocessorSettingsMap, final List<Integer> defaultStoreTrimSizes) {
+        this.coprocessorSettingsMap = coprocessorSettingsMap;
 
-        for (final Entry<Integer, CoprocessorSettings> entry : coprocessorMap.getMap().entrySet()) {
+        for (final Entry<CoprocessorKey, CoprocessorSettings> entry : coprocessorSettingsMap.getMap().entrySet()) {
+            final CoprocessorKey coprocessorKey = entry.getKey();
             final CoprocessorSettings coprocessorSettings = entry.getValue();
             if (coprocessorSettings instanceof TableCoprocessorSettings) {
-                final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) entry.getValue();
+                final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) coprocessorSettings;
                 final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
-                handlerMap.put(entry.getKey(), new TablePayloadHandler(tableSettings.getFields(),
-                        tableSettings.showDetail(), tableSettings.getMaxResults()));
+                final TrimSettings trimSettings = new TrimSettings(tableSettings.getMaxResults(), defaultStoreTrimSizes);
+                handlerMap.put(coprocessorKey, new TablePayloadHandler(tableSettings.getFields(),
+                        tableSettings.showDetail(), trimSettings));
             }
         }
     }
 
     @Override
-    public void handle(final Map<Integer, Payload> payloadMap, final HasTerminate hasTerminate) {
+    public void handle(final Map<CoprocessorKey, Payload> payloadMap, final HasTerminate hasTerminate) {
         if (payloadMap != null) {
-            for (final Entry<Integer, Payload> entry : payloadMap.entrySet()) {
+            for (final Entry<CoprocessorKey, Payload> entry : payloadMap.entrySet()) {
                 final Payload payload = entry.getValue();
                 if (payload instanceof TablePayload) {
                     final TablePayload tablePayload = (TablePayload) payload;
 
                     final TablePayloadHandler payloadHandler = handlerMap.get(entry.getKey());
-                    final UnsafePairQueue<String, Item> newQueue = tablePayload.getQueue();
+                    final UnsafePairQueue<Key, Item> newQueue = tablePayload.getQueue();
                     if (newQueue != null) {
                         payloadHandler.addQueue(newQueue, hasTerminate);
                     }
@@ -64,18 +67,18 @@ public class SearchResultHandler implements ResultHandler {
     }
 
     public TablePayloadHandler getPayloadHandler(final String componentId) {
-        final Integer coprocessorId = coprocessorMap.getCoprocessorId(componentId);
-        if (coprocessorId == null) {
+        final CoprocessorKey coprocessorKey = coprocessorSettingsMap.getCoprocessorKey(componentId);
+        if (coprocessorKey == null) {
             return null;
         }
 
-        return handlerMap.get(coprocessorId);
+        return handlerMap.get(coprocessorKey);
     }
 
     @Override
     public boolean shouldTerminateSearch() {
         boolean terminate = false;
-        if (handlerMap.size() == coprocessorMap.getMap().size()) {
+        if (handlerMap.size() == coprocessorSettingsMap.getMap().size()) {
             terminate = true;
             for (final PayloadHandler payloadHandler : handlerMap.values()) {
                 if (!payloadHandler.shouldTerminateSearch()) {
@@ -89,20 +92,20 @@ public class SearchResultHandler implements ResultHandler {
     }
 
     @Override
-    public void setComplete(final boolean complete) {
-        this.complete.set(complete);
-    }
-
-    @Override
     public boolean isComplete() {
         return complete.get();
     }
 
     @Override
-    public ResultStore getResultStore(final String componentId) {
+    public void setComplete(final boolean complete) {
+        this.complete.set(complete);
+    }
+
+    @Override
+    public Data getResultStore(final String componentId) {
         final TablePayloadHandler tablePayloadHandler = getPayloadHandler(componentId);
         if (tablePayloadHandler != null) {
-            return tablePayloadHandler.getResultStore();
+            return tablePayloadHandler.getData();
         }
         return null;
     }

@@ -16,17 +16,17 @@
 
 package stroom.statistics.server.common.engines;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.entity.shared.BaseResultList;
-import stroom.explorer.server.TreeModel;
+import stroom.explorer.server.TreeModelImpl;
 import stroom.explorer.shared.ExplorerData;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.FindStatisticsEntityCriteria;
 import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.shared.StatisticStoreEntity;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
@@ -70,7 +70,7 @@ public class StatisticsDataSourceExplorerDataProviderTest {
         final StatisticsDataSourceExplorerDataProvider explorerDataProvider = new StatisticsDataSourceExplorerDataProvider(
                 null, mockStatisticsDataSourceService, stroomPropertyService);
 
-        explorerDataProvider.addItems(new TreeModel() {
+        explorerDataProvider.addItems(new TreeModelImpl() {
             @Override
             public void add(ExplorerData parent, ExplorerData child) {
             }

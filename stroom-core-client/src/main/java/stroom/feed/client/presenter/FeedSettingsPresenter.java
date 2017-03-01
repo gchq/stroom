@@ -29,10 +29,8 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.security.client.ClientSecurityContext;
-import stroom.app.client.event.DirtyKeyDownHander;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.EntitySettingsPresenter;
@@ -44,6 +42,7 @@ import stroom.feed.shared.FetchSupportedEncodingsAction;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
+import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.StreamTypeUiManager;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.EqualsUtil;
@@ -53,26 +52,6 @@ import stroom.widget.tickbox.client.view.TickBox;
 
 public class FeedSettingsPresenter extends EntitySettingsPresenter<FeedSettingsPresenter.FeedSettingsView, Feed>
         implements HasRead<Feed>, HasWrite<Feed> {
-    public interface FeedSettingsView extends View {
-        TextArea getDescription();
-
-        TextBox getClassification();
-
-        TickBox getReference();
-
-        StringListBox getDataEncoding();
-
-        StringListBox getContextEncoding();
-
-        ItemListBox<StreamType> getStreamType();
-
-        ItemListBox<SupportedRetentionAge> getRetentionAge();
-
-        ItemListBox<FeedStatus> getFeedStatus();
-
-        void setReadOnly(boolean readOnly);
-    }
-
     @Inject
     public FeedSettingsPresenter(final EventBus eventBus, final FeedSettingsView view,
             final ClientSecurityContext securityContext, final StreamTypeUiManager streamTypeUiManager,
@@ -201,5 +180,25 @@ public class FeedSettingsPresenter extends EntitySettingsPresenter<FeedSettingsP
     @Override
     public String getType() {
         return Feed.ENTITY_TYPE;
+    }
+
+    public interface FeedSettingsView extends View {
+        TextArea getDescription();
+
+        TextBox getClassification();
+
+        TickBox getReference();
+
+        StringListBox getDataEncoding();
+
+        StringListBox getContextEncoding();
+
+        ItemListBox<StreamType> getStreamType();
+
+        ItemListBox<SupportedRetentionAge> getRetentionAge();
+
+        ItemListBox<FeedStatus> getFeedStatus();
+
+        void setReadOnly(boolean readOnly);
     }
 }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,15 @@
 
 package stroom.statistics.sql;
 
+import org.apache.commons.pool2.BasePooledObjectFactory;
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
+import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.shared.Search;
+import stroom.query.api.Query;
 import stroom.statistics.common.FindEventCriteria;
 import stroom.statistics.common.RolledUpStatisticEvent;
 import stroom.statistics.common.StatisticDataPoint;
@@ -35,13 +42,6 @@ import stroom.statistics.shared.StatisticType;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
-import org.apache.commons.pool2.BasePooledObjectFactory;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -59,27 +59,16 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class SQLStatisticEventStore extends AbstractStatistics {
     public static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticEventStore.class);
-
-    static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.stats.sql.search.maxResults";
-
     public static final String ENGINE_NAME = "sql";
-
-    private final SQLStatisticCache statisticCache;
-
-    private final DataSource cachedSqlDataSource;
-    private final StroomPropertyService propertyService;
-
+    static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.stats.sql.search.maxResults";
     private static final int DEFAULT_POOL_SIZE = 10;
     private static final long DEFAULT_SIZE_THRESHOLD = 1000000L;
-
     private static final Set<String> BLACK_LISTED_INDEX_FIELDS = new HashSet<>(
             Arrays.asList(StatisticStoreEntity.FIELD_NAME_MIN_VALUE, StatisticStoreEntity.FIELD_NAME_MAX_VALUE));
-
     /**
      * Keep half the time out our SQL insert threshold
      */
     private static final long DEFAULT_AGE_MS_THRESHOLD = TimeUnit.MINUTES.toMillis(5);
-
     // @formatter:off
     private static final String STAT_QUERY_SKELETON = "" + "select " + "K." + SQLStatisticNames.NAME + ", " + "V."
             + SQLStatisticNames.PRECISION + ", " + "V." + SQLStatisticNames.TIME_MS + ", " + "V."
@@ -89,22 +78,25 @@ public class SQLStatisticEventStore extends AbstractStatistics {
             + SQLStatisticNames.SQL_STATISTIC_KEY_FOREIGN_KEY + ") " + "WHERE K." + SQLStatisticNames.NAME + " LIKE ? "
             + "AND K." + SQLStatisticNames.NAME + " REGEXP ? " + "AND V." + SQLStatisticNames.TIME_MS + " >= ? "
             + "AND V." + SQLStatisticNames.TIME_MS + " < ?";
+    private final SQLStatisticCache statisticCache;
+    private final DataSource cachedSqlDataSource;
+    private final StroomPropertyService propertyService;
 
     // @formatter:on
     /**
      * SQL for testing querying the stat/tag names
-     *
+     * <p>
      * create table test (name varchar(255)) ENGINE=InnoDB DEFAULT
      * CHARSET=latin1;
-     *
+     * <p>
      * insert into test values ('StatName1');
-     *
+     * <p>
      * insert into test values ('StatName2¬Tag1¬Val1¬Tag2¬Val2');
-     *
+     * <p>
      * insert into test values ('StatName2¬Tag2¬Val2¬Tag1¬Val1');
-     *
+     * <p>
      * select * from test where name REGEXP '^StatName1(¬|$)';
-     *
+     * <p>
      * select * from test where name REGEXP '¬Tag1¬Val1(¬|$)';
      */
 
@@ -114,38 +106,32 @@ public class SQLStatisticEventStore extends AbstractStatistics {
 
     private GenericObjectPool<SQLStatisticAggregateMap> objectPool;
 
-    private class ObjectFactory extends BasePooledObjectFactory<SQLStatisticAggregateMap> {
-        @Override
-        public SQLStatisticAggregateMap create() throws Exception {
-            return createAggregateMap();
-        }
+    @Inject
+    public SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
+                                  final StatisticStoreCache statisticsDataSourceCache, final SQLStatisticCache statisticCache,
+                                  final DataSource cachedSqlDataSource, final StroomPropertyService propertyService) {
+        super(statisticsDataSourceValidator, statisticsDataSourceCache, propertyService);
+        this.statisticCache = statisticCache;
+        this.cachedSqlDataSource = cachedSqlDataSource;
+        this.propertyService = propertyService;
 
-        @Override
-        public PooledObject<SQLStatisticAggregateMap> wrap(final SQLStatisticAggregateMap obj) {
-            return new DefaultPooledObject<>(obj);
-        }
+        initPool(getObjectPoolConfig());
+    }
 
-        @Override
-        public void destroyObject(final PooledObject<SQLStatisticAggregateMap> p) throws Exception {
-            super.destroyObject(p);
-            destroyAggregateMap(p.getObject());
-        }
+    public SQLStatisticEventStore(final int poolSize, final long aggregatorSizeThreshold, final long poolAgeMsThreshold,
+                                  final StatisticStoreValidator statisticsDataSourceValidator,
+                                  final StatisticStoreCache statisticsDataSourceCache, final SQLStatisticCache statisticCache,
+                                  final DataSource cachedSqlDataSource, final StroomPropertyService propertyService) {
+        super(statisticsDataSourceValidator, statisticsDataSourceCache, propertyService);
+        this.statisticCache = statisticCache;
+        this.cachedSqlDataSource = cachedSqlDataSource;
 
-        /**
-         * Should we give this item back to the pool
-         */
-        @Override
-        public boolean validateObject(final PooledObject<SQLStatisticAggregateMap> p) {
-            if (p.getObject().size() >= aggregatorSizeThreshold) {
-                return false;
-            }
-            final long age = System.currentTimeMillis() - p.getCreateTime();
-            if (age > poolAgeMsThreshold) {
-                return false;
-            }
+        this.aggregatorSizeThreshold = aggregatorSizeThreshold;
+        this.poolAgeMsThreshold = poolAgeMsThreshold;
+        this.poolSize = poolSize;
+        this.propertyService = propertyService;
 
-            return super.validateObject(p);
-        }
+        initPool(getObjectPoolConfig());
     }
 
     @Override
@@ -173,34 +159,6 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         config.setTestOnReturn(true);
 
         return config;
-    }
-
-    @Inject
-    public SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
-            final StatisticStoreCache statisticsDataSourceCache, final SQLStatisticCache statisticCache,
-            final DataSource cachedSqlDataSource, final StroomPropertyService propertyService) {
-        super(statisticsDataSourceValidator, statisticsDataSourceCache, propertyService);
-        this.statisticCache = statisticCache;
-        this.cachedSqlDataSource = cachedSqlDataSource;
-        this.propertyService = propertyService;
-
-        initPool(getObjectPoolConfig());
-    }
-
-    public SQLStatisticEventStore(final int poolSize, final long aggregatorSizeThreshold, final long poolAgeMsThreshold,
-            final StatisticStoreValidator statisticsDataSourceValidator,
-            final StatisticStoreCache statisticsDataSourceCache, final SQLStatisticCache statisticCache,
-            final DataSource cachedSqlDataSource, final StroomPropertyService propertyService) {
-        super(statisticsDataSourceValidator, statisticsDataSourceCache, propertyService);
-        this.statisticCache = statisticCache;
-        this.cachedSqlDataSource = cachedSqlDataSource;
-
-        this.aggregatorSizeThreshold = aggregatorSizeThreshold;
-        this.poolAgeMsThreshold = poolAgeMsThreshold;
-        this.poolSize = poolSize;
-        this.propertyService = propertyService;
-
-        initPool(getObjectPoolConfig());
     }
 
     @Override
@@ -241,7 +199,7 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     }
 
     private boolean isStatisticEventInsideProcessingThreshold(final StatisticEvent statisticEvent,
-            final Long optionalEventProcessingThresholdMs) {
+                                                              final Long optionalEventProcessingThresholdMs) {
         return statisticEvent
                 .getTimeMs() > (optionalEventProcessingThresholdMs != null ? optionalEventProcessingThresholdMs : 0);
     }
@@ -333,9 +291,8 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         return true;
     }
 
-    @Override
-    public StatisticDataSet searchStatisticsData(final Search search, final StatisticStoreEntity dataSource) {
-        final FindEventCriteria criteria = buildCriteria(search, dataSource);
+    public StatisticDataSet searchStatisticsData(final Query query, final StatisticStoreEntity dataSource) {
+        final FindEventCriteria criteria = buildCriteria(query, dataSource);
         return performStatisticQuery(dataSource, criteria);
     }
 
@@ -354,15 +311,15 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         throw new UnsupportedOperationException("Code waiting to be written");
     }
 
-    // @Override
-    // public void refreshMetadata() {
-    // throw new UnsupportedOperationException("Code waiting to be written");
-    // }
-
     @Override
     public String toString() {
         return "numActive=" + objectPool.getNumActive() + ", numIdle=" + objectPool.getNumIdle();
     }
+
+    // @Override
+    // public void refreshMetadata() {
+    // throw new UnsupportedOperationException("Code waiting to be written");
+    // }
 
     public int getNumActive() {
         return objectPool.getNumActive();
@@ -373,7 +330,7 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     }
 
     private StatisticDataSet performStatisticQuery(final StatisticStoreEntity dataSource,
-            final FindEventCriteria criteria) {
+                                                   final FindEventCriteria criteria) {
         final Set<StatisticDataPoint> dataPoints = new HashSet<StatisticDataPoint>();
 
         // TODO need to fingure out how we get the precision
@@ -427,11 +384,10 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     }
 
     /**
-     * @param columnValue
-     *            The value from the STAT_KEY.NAME column which could be of the
-     *            form 'StatName' or 'StatName¬Tag1¬Tag1Val1¬Tag2¬Tag2Val1'
+     * @param columnValue The value from the STAT_KEY.NAME column which could be of the
+     *                    form 'StatName' or 'StatName¬Tag1¬Tag1Val1¬Tag2¬Tag2Val1'
      * @return A list of {@link StatisticTag} objects built from the tag/value
-     *         token pairs in the string or an empty list if there are none.
+     * token pairs in the string or an empty list if there are none.
      */
     private List<StatisticTag> extractStatisticTagsFromColumn(final String columnValue) {
         final String[] tokens = columnValue.split(SQLStatisticConstants.NAME_SEPARATOR);
@@ -459,7 +415,7 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     }
 
     private PreparedStatement buildSearchPreparedStatement(final StatisticStoreEntity dataSource,
-            final FindEventCriteria criteria, final Connection connection) throws SQLException {
+                                                           final FindEventCriteria criteria, final Connection connection) throws SQLException {
         final RollUpBitMask rollUpBitMask = AbstractStatistics.buildRollUpBitMaskFromCriteria(criteria, dataSource);
 
         final String statNameWithMask = dataSource.getName() + rollUpBitMask.asHexString();
@@ -499,5 +455,39 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         }
 
         return ps;
+    }
+
+    private class ObjectFactory extends BasePooledObjectFactory<SQLStatisticAggregateMap> {
+        @Override
+        public SQLStatisticAggregateMap create() throws Exception {
+            return createAggregateMap();
+        }
+
+        @Override
+        public PooledObject<SQLStatisticAggregateMap> wrap(final SQLStatisticAggregateMap obj) {
+            return new DefaultPooledObject<>(obj);
+        }
+
+        @Override
+        public void destroyObject(final PooledObject<SQLStatisticAggregateMap> p) throws Exception {
+            super.destroyObject(p);
+            destroyAggregateMap(p.getObject());
+        }
+
+        /**
+         * Should we give this item back to the pool
+         */
+        @Override
+        public boolean validateObject(final PooledObject<SQLStatisticAggregateMap> p) {
+            if (p.getObject().size() >= aggregatorSizeThreshold) {
+                return false;
+            }
+            final long age = System.currentTimeMillis() - p.getCreateTime();
+            if (age > poolAgeMsThreshold) {
+                return false;
+            }
+
+            return super.validateObject(p);
+        }
     }
 }

@@ -19,58 +19,50 @@ package stroom.explorer.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-
 import stroom.explorer.shared.ExplorerData;
+import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.SelectionType;
 
 public class ExplorerTreeSelectEvent extends GwtEvent<ExplorerTreeSelectEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onSelect(ExplorerTreeSelectEvent event);
+    private static Type<ExplorerTreeSelectEvent.Handler> TYPE;
+    private final MultiSelectionModel<ExplorerData> selectionModel;
+    private final SelectionType selectionType;
+
+    public ExplorerTreeSelectEvent(final MultiSelectionModel<ExplorerData> selectionModel, final SelectionType selectionType) {
+        this.selectionModel = selectionModel;
+        this.selectionType = selectionType;
     }
 
-    private static Type<Handler> TYPE;
-
-    private final ExplorerData selectedItem;
-    private final boolean doubleSelect;
-    private final boolean rightClick;
-
-    private ExplorerTreeSelectEvent(final ExplorerData selectedItem, final boolean doubleSelect,
-            final boolean rightClick) {
-        this.selectedItem = selectedItem;
-        this.doubleSelect = doubleSelect;
-        this.rightClick = rightClick;
+    public static void fire(final HasHandlers source, final MultiSelectionModel<ExplorerData> selectionModel, final SelectionType selectionType) {
+        source.fireEvent(new ExplorerTreeSelectEvent(selectionModel, selectionType));
     }
 
-    public static void fire(final HasHandlers source, final ExplorerData selectedItem, final boolean doubleSelect,
-            final boolean rightClick) {
-        source.fireEvent(new ExplorerTreeSelectEvent(selectedItem, doubleSelect, rightClick));
-    }
-
-    public static Type<Handler> getType() {
+    public static Type<ExplorerTreeSelectEvent.Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
 
     @Override
-    public Type<Handler> getAssociatedType() {
+    public Type<ExplorerTreeSelectEvent.Handler> getAssociatedType() {
         return getType();
     }
 
     @Override
-    protected void dispatch(final Handler handler) {
+    protected void dispatch(final ExplorerTreeSelectEvent.Handler handler) {
         handler.onSelect(this);
     }
 
-    public ExplorerData getSelectedItem() {
-        return selectedItem;
+    public MultiSelectionModel<ExplorerData> getSelectionModel() {
+        return selectionModel;
     }
 
-    public boolean isDoubleSelect() {
-        return doubleSelect;
+    public SelectionType getSelectionType() {
+        return selectionType;
     }
 
-    public boolean isRightClick() {
-        return rightClick;
+    public interface Handler extends EventHandler {
+        void onSelect(ExplorerTreeSelectEvent event);
     }
 }

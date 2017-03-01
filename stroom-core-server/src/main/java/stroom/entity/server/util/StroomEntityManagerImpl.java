@@ -16,26 +16,26 @@
 
 package stroom.entity.server.util;
 
-import stroom.entity.server.event.EntityEvent;
-import stroom.entity.server.event.EntityEventBus;
-import stroom.entity.shared.Entity;
-import stroom.entity.shared.AuditedEntity;
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.EntityAction;
-import stroom.entity.shared.SummaryDataRow;
-import stroom.security.SecurityContext;
-import stroom.util.logging.StroomLogger;
-import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.EqualsUtil;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.entity.server.event.EntityEvent;
+import stroom.entity.server.event.EntityEventBus;
+import stroom.entity.shared.AuditedEntity;
+import stroom.entity.shared.BaseCriteria;
+import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.Entity;
+import stroom.entity.shared.EntityAction;
+import stroom.entity.shared.SummaryDataRow;
+import stroom.security.SecurityContext;
+import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
+import stroom.util.shared.EqualsUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -125,7 +125,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
 
             if (performChecksAndEvents) {
                 final EntityEventBus eventBus = eventBusProvider.get();
-                EntityEvent.fire(eventBus, DocRef.create(updatedEntity), EntityAction.UPDATE);
+                EntityEvent.fire(eventBus, DocRefUtil.create(updatedEntity), EntityAction.UPDATE);
             }
 
             return updatedEntity;
@@ -138,7 +138,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
 
         if (performChecksAndEvents) {
             final EntityEventBus eventBus = eventBusProvider.get();
-            EntityEvent.fire(eventBus, DocRef.create(entity), EntityAction.ADD);
+            EntityEvent.fire(eventBus, DocRefUtil.create(entity), EntityAction.ADD);
         }
 
         return entity;
@@ -231,7 +231,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
         final Entity dbEntity = internalSaveEntity(entity, false);
         entityManager.remove(dbEntity);
         final EntityEventBus eventBus = eventBusProvider.get();
-        EntityEvent.fire(eventBus, DocRef.create(dbEntity), EntityAction.DELETE);
+        EntityEvent.fire(eventBus, DocRefUtil.create(dbEntity), EntityAction.DELETE);
         return Boolean.TRUE;
     }
 

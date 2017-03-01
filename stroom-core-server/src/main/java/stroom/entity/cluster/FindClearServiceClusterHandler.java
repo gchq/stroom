@@ -18,6 +18,8 @@ package stroom.entity.cluster;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.FindClearService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -26,25 +28,34 @@ import stroom.util.spring.StroomBeanStore;
 
 @TaskHandlerBean(task = FindClearServiceClusterTask.class)
 public class FindClearServiceClusterHandler extends AbstractTaskHandler<FindClearServiceClusterTask<?>, VoidResult> {
+    private Logger LOGGER = LoggerFactory.getLogger(FindClearServiceClusterHandler.class);
+
     @Resource
     private StroomBeanStore stroomBeanStore;
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public VoidResult exec(final FindClearServiceClusterTask<?> task) {
-        if (task == null) {
-            throw new RuntimeException("No task supplied");
-        }
-        if (task.getBeanClass() == null) {
-            throw new RuntimeException("No task bean class supplied");
+        try {
+            if (task == null) {
+                throw new RuntimeException("No task supplied");
+            }
+
+            if (task.getBeanClass() == null) {
+                throw new RuntimeException("No task bean class supplied");
+            }
+
+            final Object obj = stroomBeanStore.getBean(task.getBeanClass());
+            if (obj == null) {
+                throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
+            }
+
+            ((FindClearService) obj).findClear(task.getCriteria());
+
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
-        final Object obj = stroomBeanStore.getBean(task.getBeanClass());
-        if (obj == null) {
-            throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
-        }
-
-        ((FindClearService) obj).findClear(task.getCriteria());
         return new VoidResult();
     }
 }

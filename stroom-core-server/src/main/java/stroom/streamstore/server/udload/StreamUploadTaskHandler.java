@@ -16,8 +16,9 @@
 
 package stroom.streamstore.server.udload;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
-import stroom.entity.shared.FolderService;
+import stroom.entity.shared.EntityServiceException;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.statistic.server.MetaDataStatistic;
@@ -41,9 +42,11 @@ import stroom.util.spring.StroomScope;
 import stroom.util.task.MonitorImpl;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.zip.*;
+import stroom.util.zip.HeaderMap;
+import stroom.util.zip.StroomHeaderArguments;
 import stroom.util.zip.StroomStreamProcessor;
-import org.springframework.context.annotation.Scope;
+import stroom.util.zip.StroomZipFile;
+import stroom.util.zip.StroomZipFileType;
 
 import javax.annotation.Resource;
 import java.io.FileInputStream;
@@ -69,8 +72,6 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
     private StreamTypeService streamTypeService;
     @Resource(name = "cachedFeedService")
     private FeedService feedService;
-    @Resource(name = "cachedFolderService")
-    private FolderService folderService;
     // @Resource
     private MetaDataStatistic metaDataStatistics;
 
@@ -85,6 +86,16 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
     }
 
     private void uploadData(final StreamUploadTask task) throws RuntimeException {
+        if (task.getFeed() == null) {
+            throw new EntityServiceException("Feed not set!");
+        }
+        if (task.getStreamType() == null) {
+            throw new EntityServiceException("Stream Type not set!");
+        }
+        if (task.getFileName() == null) {
+            throw new EntityServiceException("File not set!");
+        }
+
         final Monitor progressMonitor = new MonitorImpl(taskMonitor);
 
         final String name = task.getFileName().toUpperCase();
@@ -108,7 +119,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
 
         if (name.endsWith(FILE_SEPERATOR + StroomHeaderArguments.COMPRESSION_ZIP)) {
             metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
-            uploadZipFile(task, progressMonitor, task, metaMap);
+            uploadZipFile(progressMonitor, task, metaMap);
         } else {
             if (name.endsWith(FILE_SEPERATOR + StroomHeaderArguments.COMPRESSION_GZIP)) {
                 metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_GZIP);
@@ -116,12 +127,12 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
             if (name.endsWith(FILE_SEPERATOR + GZ)) {
                 metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_GZIP);
             }
-            uploadStreamFile(task, progressMonitor, task, metaMap);
+            uploadStreamFile(task, task, metaMap);
         }
     }
 
-    private void uploadZipFile(final StreamUploadTask task, final Monitor progressMonitor,
-            final StreamUploadTask streamUploadTask, final HeaderMap headerMap) {
+    private void uploadZipFile(final Monitor progressMonitor,
+                               final StreamUploadTask streamUploadTask, final HeaderMap headerMap) {
         StroomZipFile stroomZipFile = null;
         try {
             progressMonitor.info("Zip");
@@ -145,8 +156,8 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
         }
     }
 
-    private void uploadStreamFile(final StreamUploadTask task, final Monitor progressMonitor,
-            final StreamUploadTask streamUploadTask, final HeaderMap headerMap) {
+    private void uploadStreamFile(final StreamUploadTask task,
+                                  final StreamUploadTask streamUploadTask, final HeaderMap headerMap) {
         try {
             final StreamType streamType = streamTypeService.loadByName(task.getStreamType().getName());
             final Feed feed = feedService.loadByUuid(task.getFeed().getUuid());
@@ -238,7 +249,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
     }
 
     private boolean streamToStream(final InputStream inputStream, final OutputStream outputStream,
-            final StreamProgressMonitor streamProgressMonitor) throws IOException {
+                                   final StreamProgressMonitor streamProgressMonitor) throws IOException {
         final byte[] buffer = readThreadLocalBuffer.getBuffer();
         int len;
         while ((len = StreamUtil.eagerRead(inputStream, buffer)) != -1) {

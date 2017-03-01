@@ -16,7 +16,7 @@
 
 package stroom.dispatch.client;
 
-import stroom.dispatch.shared.Action;
+import stroom.entity.shared.Action;
 import stroom.util.shared.SharedObject;
 
 public interface ClientDispatchAsync {

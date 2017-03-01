@@ -31,36 +31,21 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
 /**
  * Helper class for resources.
  */
 public final class StreamUtil {
     /**
-     * A wrapper on ByteArrayOutputStream to add direct use of charset without
-     * charset name.
-     */
-    private static class MyByteArrayOutputStream extends ByteArrayOutputStream {
-        public synchronized String toString(final Charset charset) {
-            return new String(buf, 0, count, charset);
-        }
-    }
-
-    /**
      * Buffer size to use.
      */
     public static final int BUFFER_SIZE = 8192;
-
-    private static final ByteSlice ZERO_BYTES = new ByteSlice(new byte[0]);
-
     // TODO 2016-04-20: Replace all references to "UTF-8" (throughout the
     // code-base) with a reference to StandardCharsets.UTF_8. Possibly remove
     // the default charset name just leaving default charset.
     public static final String DEFAULT_CHARSET_NAME = "UTF-8";
     public static final Charset DEFAULT_CHARSET = Charset.forName(DEFAULT_CHARSET_NAME);
     public static final Locale DEFAULT_LOCALE = Locale.ENGLISH;
-
+    private static final ByteSlice ZERO_BYTES = new ByteSlice(new byte[0]);
     private StreamUtil() {
         // NA Utility
     }
@@ -405,7 +390,7 @@ public final class StreamUtil {
         };
     }
 
-    @SuppressWarnings(value = "DM_DEFAULT_ENCODING", justification = "PrintWriter does not take a charset")
+    @SuppressWarnings(value = "DM_DEFAULT_ENCODING") // PrintWriter does not take a charset
     public static String exceptionCallStack(final Throwable throwable) {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final PrintWriter printWriter = new PrintWriter(byteArrayOutputStream);
@@ -440,5 +425,15 @@ public final class StreamUtil {
             return ZERO_BYTES;
         }
         return new ByteSlice(string.getBytes(DEFAULT_CHARSET));
+    }
+
+    /**
+     * A wrapper on ByteArrayOutputStream to add direct use of charset without
+     * charset name.
+     */
+    private static class MyByteArrayOutputStream extends ByteArrayOutputStream {
+        public synchronized String toString(final Charset charset) {
+            return new String(buf, 0, count, charset);
+        }
     }
 }

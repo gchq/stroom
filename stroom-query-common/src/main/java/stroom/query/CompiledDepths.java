@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,9 +16,9 @@
 
 package stroom.query;
 
-import java.util.List;
+import stroom.query.api.Field;
 
-import stroom.query.shared.Field;
+import java.util.List;
 
 public class CompiledDepths {
     private final int maxGroupDepth;
@@ -27,18 +27,23 @@ public class CompiledDepths {
     private final boolean hasGroupBy;
 
     public CompiledDepths(final List<Field> fields, boolean showDetail) {
-        depths = new int[fields.size()];
         int maxGroupDepth = -1;
 
-        for (int i = 0; i < fields.size(); i++) {
-            final Field field = fields.get(i);
-            // Create compiled field.
-            int groupDepth = -1;
-            if (field.getGroup() != null) {
-                groupDepth = field.getGroup();
+        if (fields == null) {
+            depths = new int[0];
+        } else {
+            depths = new int[fields.size()];
+
+            int i = 0;
+            for (final Field field : fields) {
+                // Create compiled field.
+                int groupDepth = -1;
+                if (field.getGroup() != null) {
+                    groupDepth = field.getGroup();
+                }
+                maxGroupDepth = Math.max(maxGroupDepth, groupDepth);
+                depths[i++] = groupDepth;
             }
-            maxGroupDepth = Math.max(maxGroupDepth, groupDepth);
-            depths[i] = groupDepth;
         }
 
         this.maxGroupDepth = maxGroupDepth;

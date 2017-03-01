@@ -49,6 +49,5 @@ public class ClusterEntityEventTaskHandler implements TaskHandler<ClusterEntityE
             // Ignore errors thrown returning result.
             LOGGER.trace(t.getMessage(), t);
         }
-        callback.onSuccess(VoidResult.INSTANCE);
     }
 }

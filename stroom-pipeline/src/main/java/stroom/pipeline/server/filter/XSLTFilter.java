@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,6 +31,7 @@ import stroom.entity.shared.StringCriteria;
 import stroom.entity.shared.VersionedEntityDecorator;
 import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.LocationFactoryProxy;
+import stroom.pipeline.server.SupportsCodeInjection;
 import stroom.pipeline.server.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.ErrorReceiverIdDecorator;
@@ -39,9 +40,9 @@ import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.writer.PathCreator;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.XSLTService;
@@ -72,7 +73,7 @@ import java.util.List;
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.ROLE_HAS_CODE }, icon = ElementIcons.XSLT)
-public class XSLTFilter extends AbstractXMLFilter {
+public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjection {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(XSLTFilter.class);
     private static final int DEFAULT_MAX_ELEMENTS = 1000000;
 
@@ -660,6 +661,7 @@ public class XSLTFilter extends AbstractXMLFilter {
         pipelineReferences.add(pipelineReference);
     }
 
+    @Override
     public void setInjectedCode(final String injectedCode) {
         this.injectedCode = injectedCode;
     }

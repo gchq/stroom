@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,20 +16,21 @@
 
 package stroom.refdata;
 
+import org.joda.time.DateTime;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import stroom.cache.CacheManagerAutoCloseable;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
+import stroom.query.api.DocRef;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomUnitTest;
 import stroom.util.test.StroomJUnit4ClassRunner;
-import org.joda.time.DateTime;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import stroom.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +63,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
             }
         };
 
-        DocRef feedRef = DocRef.create(referenceFeed);
+        DocRef feedRef = DocRefUtil.create(referenceFeed);
 
         try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
             final EffectiveStreamCache effectiveStreamPool = new EffectiveStreamCache(cacheManager, mockStreamStore,

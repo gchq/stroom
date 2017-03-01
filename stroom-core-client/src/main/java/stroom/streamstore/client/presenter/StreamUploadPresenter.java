@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,13 +16,19 @@
 
 package stroom.streamstore.client.presenter;
 
+import com.google.gwt.user.client.ui.FileUpload;
+import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.presenter.AlertCallback;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityItemListBox;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.DocRef;
 import stroom.streamstore.client.view.FileData;
 import stroom.streamstore.client.view.FileData.Status;
 import stroom.streamstore.shared.UploadDataAction;
@@ -34,19 +40,14 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import com.google.gwt.user.client.ui.FileUpload;
-import com.google.gwt.user.client.ui.FormPanel;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresenter.DataUploadView> {
     private DocRef feed;
     private StreamPresenter streamPresenter;
+
     @Inject
     public StreamUploadPresenter(final EventBus eventBus, final DataUploadView view,
-            final ClientDispatchAsync dispatcher) {
+                                 final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
 
         view.getForm().setAction(dispatcher.getImportFileURL());
@@ -55,6 +56,15 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
 
         final AbstractSubmitCompleteHandler submitCompleteHandler = new AbstractSubmitCompleteHandler("Uploading Data",
                 this) {
+            @Override
+            public void onSubmit(final SubmitEvent event) {
+                if (!valid()) {
+                    event.cancel();
+                } else {
+                    super.onSubmit(event);
+                }
+            }
+
             @Override
             protected void onSuccess(final ResourceKey resourceKey) {
                 final String fileName = getView().getFileUpload().getFilename();
@@ -84,12 +94,8 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
             }
         };
 
-        registerHandler(getForm().addSubmitHandler(submitCompleteHandler));
-        registerHandler(getForm().addSubmitCompleteHandler(submitCompleteHandler));
-    }
-
-    public FormPanel getForm() {
-        return getView().getForm();
+        registerHandler(getView().getForm().addSubmitHandler(submitCompleteHandler));
+        registerHandler(getView().getForm().addSubmitCompleteHandler(submitCompleteHandler));
     }
 
     public boolean valid() {
@@ -116,7 +122,7 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
         return true;
     }
 
-    public void submit() {
+    private void submit() {
         getView().getForm().submit();
     }
 
@@ -154,12 +160,7 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
     }
 
     private void error(final String message) {
-        AlertEvent.fireError(this, message, new AlertCallback() {
-            @Override
-            public void onClose() {
-                enableButtons();
-            }
-        });
+        AlertEvent.fireError(this, message, this::enableButtons);
     }
 
     private void disableButtons() {

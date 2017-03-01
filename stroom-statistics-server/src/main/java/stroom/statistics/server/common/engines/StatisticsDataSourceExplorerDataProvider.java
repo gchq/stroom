@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,20 +16,18 @@
 
 package stroom.statistics.server.common.engines;
 
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.FolderService;
 import stroom.explorer.server.AbstractExplorerDataProvider;
 import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
 import stroom.explorer.shared.EntityData;
-import stroom.explorer.shared.ExplorerData;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.shared.DataSource;
 import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.FindStatisticsEntityCriteria;
 import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.util.logging.StroomLogger;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -37,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @ProvidesExplorerData
@@ -47,8 +44,9 @@ public class StatisticsDataSourceExplorerDataProvider
     private static final StroomLogger LOGGER = StroomLogger.getLogger(StatisticsDataSourceExplorerDataProvider.class);
 
     private static final Set<String> tags = new HashSet<>();
+
     static {
-        tags.add(DataSource.DATA_SOURCE);
+        tags.add("DataSource");
     }
 
     private final StatisticStoreEntityService statisticsDataSourceService;

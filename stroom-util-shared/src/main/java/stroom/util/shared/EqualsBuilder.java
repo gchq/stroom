@@ -54,12 +54,54 @@ public class EqualsBuilder {
         return this;
     }
 
+    public EqualsBuilder append(final long[] lhs, final long[] rhs) {
+        if (!isEquals) {
+            return this;
+        }
+        if (lhs == rhs) {
+            return this;
+        }
+        if (lhs == null || rhs == null) {
+            isEquals = false;
+            return this;
+        }
+        if (lhs.length != rhs.length) {
+            isEquals = false;
+            return this;
+        }
+        for (int i = 0; i < lhs.length && isEquals; ++i) {
+            append(lhs[i], rhs[i]);
+        }
+        return this;
+    }
+
     public EqualsBuilder append(final int lhs, final int rhs) {
         if (!isEquals) {
             return this;
         }
 
         isEquals = (lhs == rhs);
+        return this;
+    }
+
+    public EqualsBuilder append(int[] lhs, int[] rhs) {
+        if (isEquals == false) {
+            return this;
+        }
+        if (lhs == rhs) {
+            return this;
+        }
+        if (lhs == null || rhs == null) {
+            isEquals = false;
+            return this;
+        }
+        if (lhs.length != rhs.length) {
+            isEquals = false;
+            return this;
+        }
+        for (int i = 0; i < lhs.length && isEquals; ++i) {
+            append(lhs[i], rhs[i]);
+        }
         return this;
     }
 
@@ -72,12 +114,54 @@ public class EqualsBuilder {
         return this;
     }
 
+    public EqualsBuilder append(final short[] lhs, final short[] rhs) {
+        if (!isEquals) {
+            return this;
+        }
+        if (lhs == rhs) {
+            return this;
+        }
+        if (lhs == null || rhs == null) {
+            isEquals = false;
+            return this;
+        }
+        if (lhs.length != rhs.length) {
+            isEquals = false;
+            return this;
+        }
+        for (int i = 0; i < lhs.length && isEquals; ++i) {
+            append(lhs[i], rhs[i]);
+        }
+        return this;
+    }
+
     public EqualsBuilder append(final char lhs, final char rhs) {
         if (!isEquals) {
             return this;
         }
 
         isEquals = (lhs == rhs);
+        return this;
+    }
+
+    public EqualsBuilder append(final char[] lhs, final char[] rhs) {
+        if (!isEquals) {
+            return this;
+        }
+        if (lhs == rhs) {
+            return this;
+        }
+        if (lhs == null || rhs == null) {
+            isEquals = false;
+            return this;
+        }
+        if (lhs.length != rhs.length) {
+            isEquals = false;
+            return this;
+        }
+        for (int i = 0; i < lhs.length && isEquals; ++i) {
+            append(lhs[i], rhs[i]);
+        }
         return this;
     }
 
@@ -90,12 +174,54 @@ public class EqualsBuilder {
         return this;
     }
 
+    public EqualsBuilder append(final byte[] lhs, final byte[] rhs) {
+        if (!isEquals) {
+            return this;
+        }
+        if (lhs == rhs) {
+            return this;
+        }
+        if (lhs == null || rhs == null) {
+            isEquals = false;
+            return this;
+        }
+        if (lhs.length != rhs.length) {
+            isEquals = false;
+            return this;
+        }
+        for (int i = 0; i < lhs.length && isEquals; ++i) {
+            append(lhs[i], rhs[i]);
+        }
+        return this;
+    }
+
     public EqualsBuilder append(final double lhs, final double rhs) {
         if (!isEquals) {
             return this;
         }
 
         isEquals = (lhs == rhs);
+        return this;
+    }
+
+    public EqualsBuilder append(final double[] lhs, final double[] rhs) {
+        if (!isEquals) {
+            return this;
+        }
+        if (lhs == rhs) {
+            return this;
+        }
+        if (lhs == null || rhs == null) {
+            isEquals = false;
+            return this;
+        }
+        if (lhs.length != rhs.length) {
+            isEquals = false;
+            return this;
+        }
+        for (int i = 0; i < lhs.length && isEquals; ++i) {
+            append(lhs[i], rhs[i]);
+        }
         return this;
     }
 
@@ -108,12 +234,54 @@ public class EqualsBuilder {
         return this;
     }
 
+    public EqualsBuilder append(final float[] lhs, final float[] rhs) {
+        if (!isEquals) {
+            return this;
+        }
+        if (lhs == rhs) {
+            return this;
+        }
+        if (lhs == null || rhs == null) {
+            isEquals = false;
+            return this;
+        }
+        if (lhs.length != rhs.length) {
+            isEquals = false;
+            return this;
+        }
+        for (int i = 0; i < lhs.length && isEquals; ++i) {
+            append(lhs[i], rhs[i]);
+        }
+        return this;
+    }
+
     public EqualsBuilder append(final boolean lhs, final boolean rhs) {
         if (!isEquals) {
             return this;
         }
 
         isEquals = (lhs == rhs);
+        return this;
+    }
+
+    public EqualsBuilder append(final boolean[] lhs, final boolean[] rhs) {
+        if (!isEquals) {
+            return this;
+        }
+        if (lhs == rhs) {
+            return this;
+        }
+        if (lhs == null || rhs == null) {
+            isEquals = false;
+            return this;
+        }
+        if (lhs.length != rhs.length) {
+            isEquals = false;
+            return this;
+        }
+        for (int i = 0; i < lhs.length && isEquals; ++i) {
+            append(lhs[i], rhs[i]);
+        }
         return this;
     }
 

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  ~ Copyright 2016 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<parameters>
+    <parameter>
+        <description>The temporary directory location</description>
+        <name>@@TEMP_DIR@@</name>
+        <value>/tmp</value>
+    </parameter>
+    <parameter>
+        <description>Unique node name for the install (a name not a FQDN)</description>
+        <name>@@NODE@@</name>
+        <value>node</value>
+        <regEx>[a-zA-Z0-9-_]+</regEx>
+    </parameter>
+    <parameter>
+        <description>Name of the rack (to group nodes together)</description>
+        <name>@@RACK@@</name>
+        <value>rack</value>
+        <regEx>[a-zA-Z0-9-_]+</regEx>
+    </parameter>
+    <parameter>
+        <description>HTTP prefix to use</description>
+        <name>@@PORT_PREFIX@@</name>
+        <value>80</value>
+        <regEx>[0-9]{2}</regEx>
+    </parameter>
+    <parameter>
+        <description>JDBC class name</description>
+        <name>@@JDBC_CLASSNAME@@</name>
+        <value>com.mysql.jdbc.Driver</value>
+    </parameter>
+    <parameter>
+        <description>JDBC URL (jdbc:mysql://[HOST]/[DBNAME])</description>
+        <name>@@JDBC_URL@@</name>
+        <value>jdbc:mysql://localhost/stroom?useUnicode=yes&amp;characterEncoding=UTF-8</value>
+    </parameter>
+    <parameter>
+        <description>Database username</description>
+        <name>@@DB_USERNAME@@</name>
+        <value> </value>
+    </parameter>
+    <parameter>
+        <description>Database password</description>
+        <name>@@DB_PASSWORD@@</name>
+        <value> </value>
+    </parameter>
+    <parameter>
+        <description>JPA Dialect</description>
+        <name>@@JPA_DIALECT@@</name>
+        <value>org.hibernate.dialect.MySQLInnoDBDialect</value>
+    </parameter>
+    <parameter>
+        <description>Optional tomcat JVM settings</description>
+        <name>@@JAVA_OPTS@@</name>
+        <value>-Xms1g -Xmx8g</value>
+    </parameter>
+    <parameter>
+        <description>Comma delimited list of enabled statistics engines. Current valid values are 'sql'. 'sql' is the standard engine.</description>
+        <name>@@STATS_ENGINES@@</name>
+        <value>sql</value>
+        <regEx>((sql),?)+</regEx>
+    </parameter>
+    <parameter>
+        <description>Enables the auto import of any content packs found in ${CATALINA_BASE}/contentPackImport/ on application startup</description>
+        <name>@@CONTENT_PACK_IMPORT_ENABLED@@</name>
+        <value>true</value>
+        <regEx>(true|false)</regEx>
+    </parameter>
+    <parameter>
+        <description>If no existing volumes are present a default volume will be created on application start. The volume will live in the volumes sub directory of the Stroom installation directory</description>
+        <name>@@CREATE_DEFAULT_VOLUME_ON_START@@</name>
+        <value>true</value>
+        <regEx>(true|false)</regEx>
+    </parameter>
+</parameters>

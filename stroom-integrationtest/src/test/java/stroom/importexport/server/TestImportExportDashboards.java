@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,8 @@
 
 package stroom.importexport.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.dashboard.shared.ComponentConfig;
@@ -23,10 +25,13 @@ import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardService;
 import stroom.dashboard.shared.FindDashboardCriteria;
+import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.dictionary.shared.FindDictionaryCriteria;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityActionConfirmation;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
@@ -39,13 +44,10 @@ import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.QueryData;
-import stroom.query.shared.TableSettings;
-import stroom.query.shared.VisDashboardSettings;
+import stroom.query.api.ExpressionBuilder;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.resource.server.ResourceStore;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;
@@ -53,8 +55,6 @@ import stroom.util.shared.ResourceKey;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
 import stroom.visualisation.shared.VisualisationService;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -122,43 +122,43 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
             final Res res = new Res();
             res.setData("Test Data");
 
-            Script script = scriptService.create(DocRef.create(group2), "Test Script");
+            Script script = scriptService.create(DocRefUtil.create(group2), "Test Script");
             script.setResource(res);
             script = scriptService.save(script);
 
-            vis = visualisationService.create(DocRef.create(group2), "Test Vis");
-            vis.setScriptRef(DocRef.create(script));
+            vis = visualisationService.create(DocRefUtil.create(group2), "Test Vis");
+            vis.setScriptRef(DocRefUtil.create(script));
             vis = visualisationService.save(vis);
             Assert.assertEquals(1, commonTestControl.countEntity(Visualisation.class));
         }
 
-        PipelineEntity pipelineEntity = pipelineEntityService.create(DocRef.create(group1), "Test Pipeline");
+        PipelineEntity pipelineEntity = pipelineEntityService.create(DocRefUtil.create(group1), "Test Pipeline");
         pipelineEntity = pipelineEntityService.save(pipelineEntity);
         Assert.assertEquals(1, commonTestControl.countEntity(PipelineEntity.class));
 
-        Index index = indexService.create(DocRef.create(group1), "Test Index");
+        Index index = indexService.create(DocRefUtil.create(group1), "Test Index");
         index = indexService.save(index);
         Assert.assertEquals(1, commonTestControl.countEntity(Index.class));
 
-        Dictionary dictionary = dictionaryService.create(DocRef.create(group1), "Test Dictionary");
+        Dictionary dictionary = dictionaryService.create(DocRefUtil.create(group1), "Test Dictionary");
         dictionary = dictionaryService.save(dictionary);
         Assert.assertEquals(1, commonTestControl.countEntity(Dictionary.class));
 
         // Create query.
-        final QueryData queryData = new QueryData();
-        queryData.setDataSource(DocRef.create(index));
-        queryData.setExpression(createExpression(dictionary));
+        final QueryComponentSettings queryComponentSettings = new QueryComponentSettings();
+        queryComponentSettings.setDataSource(DocRefUtil.create(index));
+        queryComponentSettings.setExpression(createExpression(dictionary).build());
 
         final ComponentConfig query = new ComponentConfig();
         query.setId("query-1234");
         query.setName("Query");
         query.setType("query");
-        query.setSettings(queryData);
+        query.setSettings(queryComponentSettings);
 
         // Create table.
-        final TableSettings tableSettings = new TableSettings();
+        final TableComponentSettings tableSettings = new TableComponentSettings();
         tableSettings.setExtractValues(true);
-        tableSettings.setExtractionPipeline(DocRef.create(pipelineEntity));
+        tableSettings.setExtractionPipeline(DocRefUtil.create(pipelineEntity));
 
         final ComponentConfig table = new ComponentConfig();
         table.setId("table-1234");
@@ -167,10 +167,10 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         table.setSettings(tableSettings);
 
         // Create visualisation.
-        final VisDashboardSettings visSettings = new VisDashboardSettings();
+        final VisComponentSettings visSettings = new VisComponentSettings();
         visSettings.setTableId("table-1234");
         visSettings.setTableSettings(tableSettings);
-        visSettings.setVisualisation(DocRef.create(vis));
+        visSettings.setVisualisation(DocRefUtil.create(vis));
 
         final ComponentConfig visualisation = new ComponentConfig();
         visualisation.setId("visualisation-1234");
@@ -188,7 +188,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final DashboardConfig dashboardData = new DashboardConfig();
         dashboardData.setComponents(components);
 
-        Dashboard dashboard = dashboardService.create(DocRef.create(group1), "Test Dashboard");
+        Dashboard dashboard = dashboardService.create(DocRefUtil.create(group1), "Test Dashboard");
         dashboard.setDashboardData(dashboardData);
         dashboard = dashboardService.save(dashboard);
         Assert.assertEquals(1, commonTestControl.countEntity(Dashboard.class));
@@ -248,20 +248,20 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final Dashboard loadedDashboard = dashboardService.find(new FindDashboardCriteria()).getFirst();
         final List<ComponentConfig> loadedComponents = loadedDashboard.getDashboardData().getComponents();
         final ComponentConfig loadedQuery = loadedComponents.get(0);
-        final QueryData loadedQueryData = (QueryData) loadedQuery.getSettings();
+        final QueryComponentSettings loadedQueryData = (QueryComponentSettings) loadedQuery.getSettings();
         final ComponentConfig loadedTable = loadedComponents.get(1);
-        final TableSettings loadedTableSettings = (TableSettings) loadedTable.getSettings();
+        final TableComponentSettings loadedTableSettings = (TableComponentSettings) loadedTable.getSettings();
         final ComponentConfig loadedVis = loadedComponents.get(2);
-        final VisDashboardSettings loadedVisSettings = (VisDashboardSettings) loadedVis.getSettings();
+        final VisComponentSettings loadedVisSettings = (VisComponentSettings) loadedVis.getSettings();
 
         // Verify all entity references have been restored.
-        Assert.assertEquals(DocRef.create(loadedIndex), loadedQueryData.getDataSource());
-        Assert.assertEquals(DocRef.create(loadedDictionary),
+        Assert.assertEquals(DocRefUtil.create(loadedIndex), loadedQueryData.getDataSource());
+        Assert.assertEquals(DocRefUtil.create(loadedDictionary),
                 ((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDictionary());
-        Assert.assertEquals(DocRef.create(loadedPipeline), loadedTableSettings.getExtractionPipeline());
+        Assert.assertEquals(DocRefUtil.create(loadedPipeline), loadedTableSettings.getExtractionPipeline());
 
         if (!skipVisExport || skipVisCreation) {
-            Assert.assertEquals(DocRef.create(loadedVisualisation), loadedVisSettings.getVisualisation());
+            Assert.assertEquals(DocRefUtil.create(loadedVisualisation), loadedVisSettings.getVisualisation());
         } else {
             Assert.assertNotNull(loadedVisSettings.getVisualisation());
             Assert.assertNotNull(loadedVisSettings.getVisualisation().getType());
@@ -280,10 +280,10 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         Assert.assertEquals(0, commonTestControl.countEntity(Dashboard.class));
     }
 
-    private ExpressionOperator createExpression(final Dictionary dictionary) {
-        final ExpressionOperator root = new ExpressionOperator(Op.AND);
-        root.addChild(new ExpressionTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z"));
-        root.addChild(new ExpressionTerm("User", Condition.IN_DICTIONARY, DocRef.create(dictionary)));
+    private ExpressionBuilder createExpression(final Dictionary dictionary) {
+        final ExpressionBuilder root = new ExpressionBuilder(Op.AND);
+        root.addTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z");
+        root.addTerm("User", Condition.IN_DICTIONARY, DocRefUtil.create(dictionary));
         return root;
     }
 }

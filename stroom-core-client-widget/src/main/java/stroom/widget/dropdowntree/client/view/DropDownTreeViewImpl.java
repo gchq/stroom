@@ -16,35 +16,24 @@
 
 package stroom.widget.dropdowntree.client.view;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter.DropDownTreeView;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreeUiHandlers;
 
 public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandlers>implements DropDownTreeView {
-    public interface Binder extends UiBinder<Widget, DropDownTreeViewImpl> {
-    }
-
     private final Widget widget;
-
-    @UiField
-    Label label;
     @UiField
     QuickFilter nameFilter;
     @UiField
     SimplePanel treeContainer;
-
     @Inject
     public DropDownTreeViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -66,22 +55,13 @@ public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandl
         treeContainer.setWidget(widget);
     }
 
-    @Override
-    public void setUnselectedText(final String unselectedText) {
-        label.setText(unselectedText);
-    }
-
-    @UiHandler("label")
-    public void onLabelClick(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().unselect();
-        }
-    }
-
     @UiHandler("nameFilter")
     public void onNameFilterChange(final ValueChangeEvent<String> event) {
         if (getUiHandlers() != null) {
             getUiHandlers().nameFilterChanged(nameFilter.getText());
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, DropDownTreeViewImpl> {
     }
 }

@@ -1,0 +1,70 @@
+rootProject.name = 'stroom'
+
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Shared projects.
+include 'stroom-util-shared'
+include 'stroom-entity-shared'
+
+// API projects
+include 'stroom-query-api'
+include 'stroom-security-api'
+include 'stroom-statistics-api'
+
+// More shared projects.
+include 'stroom-core-shared'
+include 'stroom-security-shared'
+include 'stroom-index-shared'
+include 'stroom-statistics-shared'
+include 'stroom-dashboard-shared'
+
+// Client projects
+include 'stroom-security-client-api'
+include 'stroom-core-client-widget'
+include 'stroom-core-client'
+include 'stroom-security-client'
+include 'stroom-index-client'
+include 'stroom-statistics-client'
+include 'stroom-dashboard-client'
+
+// GWT compilation projects.
+include 'stroom-dashboard-gwt'
+include 'stroom-app-gwt'
+
+// Common test project
+include 'stroom-test-common'
+
+// Server projects
+include 'stroom-config'
+include 'stroom-remote'
+
+include 'stroom-util'
+include 'stroom-core-server'
+include 'stroom-pipeline'
+include 'stroom-expression'
+include 'stroom-query-common'
+include 'stroom-security-server'
+include 'stroom-index-server'
+include 'stroom-statistics-server'
+include 'stroom-dashboard-server'
+
+// Package it all together.
+include 'stroom-app'
+include 'stroom-app-distribution'
+
+// Integration tests.
+include 'stroom-integrationtest'

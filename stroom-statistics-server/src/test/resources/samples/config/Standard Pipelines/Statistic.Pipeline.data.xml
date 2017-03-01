@@ -50,7 +50,7 @@
          </link>
          <link>
             <from>xsltFilter</from>
-            <to>statisticFilter</to>
+            <to>statisticsFilter</to>
          </link>
       </add>
    </links>

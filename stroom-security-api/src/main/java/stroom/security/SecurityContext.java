@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,6 +37,8 @@ public interface SecurityContext {
      * @return The id of the user associated with this security context.
      */
     String getUserId();
+
+    String getToken();
 
     /**
      * Check if the user associated with this security context is logged in.
@@ -85,5 +87,7 @@ public interface SecurityContext {
      */
     boolean hasDocumentPermission(String documentType, String documentUuid, String permission);
 
-    void createInitialDocumentPermissions(String documentType, String documentUuid, String folderUuid);
+    void clearDocumentPermissions(String documentType, String documentUuid);
+
+    void addDocumentPermissions(String sourceType, String sourceUuid, String documentType, String documentUuid, boolean owner);
 }

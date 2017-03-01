@@ -16,30 +16,28 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.security.PrivilegedExceptionAction;
-import java.util.Optional;
-import java.util.function.Consumer;
-
-import javax.annotation.Resource;
-
-import stroom.util.logging.StroomLogger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
+
+import javax.annotation.Resource;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.security.PrivilegedExceptionAction;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Creates an output stream for a file on an Hadoop Distributed File System
@@ -66,6 +64,68 @@ public class HDFSFileAppender extends AbstractAppender {
 
     private Configuration conf;
     private UserGroupInformation userGroupInformation;
+
+    public static Configuration buildConfiguration(final String hdfsUri) {
+        final Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", hdfsUri);
+        conf.set("fs.automatic.close", "true");
+        conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+        // conf.set("fs.file.impl",
+        // org.apache.hadoop.fs.LocalFileSystem.class.getName());
+        return conf;
+    }
+
+    public static FileSystem getHDFS(final Configuration conf) {
+        final FileSystem hdfs;
+
+        try {
+            // Will return a cached instance keyed on the passed conf object
+            hdfs = FileSystem.get(conf);
+        } catch (final IOException e) {
+            final String msg = "Error getting HDFS FileSystem object for " + conf.get("fs.defaultFS");
+            LOGGER.error(msg, e);
+            throw new RuntimeException(msg, e);
+        }
+        return hdfs;
+
+    }
+
+    public static UserGroupInformation buildRemoteUser(final Optional<String> runAsUser) {
+        final String user = runAsUser.orElseGet(() -> {
+            try {
+                return UserGroupInformation.getCurrentUser().getUserName();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        // userGroupInformation =
+        // UserGroupInformation.createProxyUser(runAsUser,
+        // UserGroupInformation.getLoginUser());
+        return UserGroupInformation.createRemoteUser(user);
+
+    }
+
+    public static void runOnHDFS(final UserGroupInformation userGroupInformation, final Configuration conf,
+                                 final Consumer<FileSystem> func) {
+        try {
+            userGroupInformation.doAs(new PrivilegedExceptionAction<Void>() {
+                @Override
+                public Void run() throws Exception {
+                    final FileSystem hdfs = getHDFS(conf);
+
+                    // run the passed lambda
+                    func.accept(hdfs);
+
+                    return null;
+                }
+            });
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (final IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
+    }
 
     @Override
     public void startProcessing() {
@@ -125,16 +185,6 @@ public class HDFSFileAppender extends AbstractAppender {
         return new Path(path.replaceAll(":", "-"));
     }
 
-    public static Configuration buildConfiguration(final String hdfsUri) {
-        final Configuration conf = new Configuration();
-        conf.set("fs.defaultFS", hdfsUri);
-        conf.set("fs.automatic.close", "true");
-        conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
-        // conf.set("fs.file.impl",
-        // org.apache.hadoop.fs.LocalFileSystem.class.getName());
-        return conf;
-    }
-
     private Configuration getConfiguration() {
         if (conf == null) {
             conf = buildConfiguration(hdfsUri);
@@ -147,64 +197,12 @@ public class HDFSFileAppender extends AbstractAppender {
         return getHDFS(conf);
     }
 
-    public static FileSystem getHDFS(final Configuration conf) {
-        final FileSystem hdfs;
-
-        try {
-            // Will return a cached instance keyed on the passed conf object
-            hdfs = FileSystem.get(conf);
-        } catch (final IOException e) {
-            final String msg = "Error getting HDFS FileSystem object for " + conf.get("fs.defaultFS");
-            LOGGER.error(msg, e);
-            throw new RuntimeException(msg, e);
-        }
-        return hdfs;
-
-    }
-
-    public static UserGroupInformation buildRemoteUser(final Optional<String> runAsUser) {
-        final String user = runAsUser.orElseGet(() -> {
-            try {
-                return UserGroupInformation.getCurrentUser().getUserName();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        // userGroupInformation =
-        // UserGroupInformation.createProxyUser(runAsUser,
-        // UserGroupInformation.getLoginUser());
-        return UserGroupInformation.createRemoteUser(user);
-
-    }
-
     private UserGroupInformation getUserGroupInformation() throws IOException {
         if (userGroupInformation == null) {
             userGroupInformation = buildRemoteUser(Optional.ofNullable(runAsUser));
         }
 
         return userGroupInformation;
-    }
-
-    public static void runOnHDFS(final UserGroupInformation userGroupInformation, final Configuration conf,
-                                 final Consumer<FileSystem> func) {
-        try {
-            userGroupInformation.doAs(new PrivilegedExceptionAction<Void>() {
-                @Override
-                public Void run() throws Exception {
-                    final FileSystem hdfs = getHDFS(conf);
-
-                    // run the passed lambda
-                    func.accept(hdfs);
-
-                    return null;
-                }
-            });
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (final IOException ioe) {
-            throw new RuntimeException(ioe);
-        }
     }
 
     private HDFSLockedOutputStream getHDFSLockedOutputStream(final Path filePath) throws IOException {

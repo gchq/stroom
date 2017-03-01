@@ -19,15 +19,14 @@ package stroom.pipeline.client;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.ClientSecurityContext;
-import stroom.app.client.ContentManager;
+import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.pipeline.client.presenter.XSLTPresenter;
 import stroom.pipeline.shared.XSLT;
+import stroom.security.client.ClientSecurityContext;
 
 public class XSLTPlugin extends EntityPlugin<XSLT> {
     private final Provider<XSLTPresenter> editorProvider;

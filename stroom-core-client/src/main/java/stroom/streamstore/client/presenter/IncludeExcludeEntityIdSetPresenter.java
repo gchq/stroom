@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,34 +16,33 @@
 
 package stroom.streamstore.client.presenter;
 
-import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.CellTableViewImpl;
-import stroom.data.table.client.CellTableViewImpl.DisabledResources;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.EntityReferenceComparator;
-import stroom.entity.shared.IncludeExcludeEntityIdSet;
-import stroom.pipeline.processor.shared.LoadEntityIdSetAction;
-import stroom.pipeline.processor.shared.SetId;
-import stroom.util.shared.SharedList;
-import stroom.util.shared.SharedMap;
-import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.data.table.client.CellTableView;
+import stroom.data.table.client.CellTableViewImpl;
+import stroom.data.table.client.CellTableViewImpl.DisabledResources;
+import stroom.dispatch.client.AsyncCallbackAdaptor;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.EntityIdSet;
+import stroom.entity.shared.EntityReferenceComparator;
+import stroom.entity.shared.IncludeExcludeEntityIdSet;
+import stroom.process.shared.LoadEntityIdSetAction;
+import stroom.process.shared.SetId;
+import stroom.query.api.DocRef;
+import stroom.util.shared.SharedMap;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,22 +51,14 @@ import java.util.List;
 public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
         extends MyPresenterWidget<IncludeExcludeEntityIdSetPresenter.IncludeExcludeEntityIdSetView>
         implements IncludeExcludeEntityIdSetUiHandlers {
-    public interface IncludeExcludeEntityIdSetView extends View, HasUiHandlers<IncludeExcludeEntityIdSetUiHandlers> {
-        void setListView(View view);
-
-        void setEditEnabled(boolean enabled);
-    }
-
     private final IncludeExcludeEntityIdSetPopupPresenter popupPresenter;
     private final ClientDispatchAsync dispatcher;
     private CellTableView<String> list;
     private List<String> data;
     private boolean enabled = true;
-
     private String type;
     private boolean groupedEntity;
     private IncludeExcludeEntityIdSet<T> includeExcludeEntityIdSet;
-
     @Inject
     public IncludeExcludeEntityIdSetPresenter(final EventBus eventBus, final IncludeExcludeEntityIdSetView view,
                                               final IncludeExcludeEntityIdSetPopupPresenter popupPresenter, final ClientDispatchAsync dispatcher) {
@@ -81,7 +72,7 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
     }
 
     private void createList() {
-        list = new CellTableViewImpl<String>(false, (Resources) GWT.create(DisabledResources.class));
+        list = new CellTableViewImpl<String>(false, GWT.create(DisabledResources.class));
 
         // Text.
         final Column<String, String> textColumn = new Column<String, String>(new TextCell()) {
@@ -124,23 +115,25 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
             }
 
             final LoadEntityIdSetAction action = new LoadEntityIdSetAction(loadMap);
-            dispatcher.execute(action, new AsyncCallbackAdaptor<SharedMap<SetId, SharedList<DocRef>>>() {
+            dispatcher.execute(action, new AsyncCallbackAdaptor<SharedMap<SetId, DocRefs>>() {
                 @Override
-                public void onSuccess(final SharedMap<SetId, SharedList<DocRef>> result) {
-                    final SharedList<DocRef> included = result.get(includeSetId);
-                    final SharedList<DocRef> excluded = result.get(excludeSetId);
+                public void onSuccess(final SharedMap<SetId, DocRefs> result) {
+                    final DocRefs included = result.get(includeSetId);
+                    final DocRefs excluded = result.get(excludeSetId);
 
                     data = new ArrayList<String>();
-                    if (included != null && included.size() > 0) {
-                        Collections.sort(included, new EntityReferenceComparator());
-                        for (final DocRef entity : included) {
+                    if (included != null && included.getDoc().size() > 0) {
+                        final List<DocRef> refs = new ArrayList<>(included.getDoc());
+                        Collections.sort(refs, new EntityReferenceComparator());
+                        for (final DocRef entity : refs) {
                             data.add("+ " + entity.getName());
                         }
                     }
 
-                    if (excluded != null && excluded.size() > 0) {
-                        Collections.sort(excluded, new EntityReferenceComparator());
-                        for (final DocRef entity : excluded) {
+                    if (excluded != null && excluded.getDoc().size() > 0) {
+                        final List<DocRef> refs = new ArrayList<>(excluded.getDoc());
+                        Collections.sort(refs, new EntityReferenceComparator());
+                        for (final DocRef entity : refs) {
                             data.add("- " + entity.getName());
                         }
                     }
@@ -186,6 +179,10 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
                 "Choose Feeds To Include And Exclude", popupUiHandlers);
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
 
@@ -201,7 +198,9 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
         }
     }
 
-    public boolean isEnabled() {
-        return enabled;
+    public interface IncludeExcludeEntityIdSetView extends View, HasUiHandlers<IncludeExcludeEntityIdSetUiHandlers> {
+        void setListView(View view);
+
+        void setEditEnabled(boolean enabled);
     }
 }

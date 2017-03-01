@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,10 +24,10 @@ import java.io.Serializable;
  * the array being immutable: as a minimum, the caller is required to ensure
  * that the array contents will not change so long as the CharSlice remains in
  * existence.
- *
+ * <p>
  * This class should be more efficient than String because it avoids copying the
  * characters unnecessarily.
- *
+ * <p>
  * The methods in the class don't check their arguments. Incorrect arguments
  * will generally result in exceptions from lower-level classes.
  */
@@ -45,8 +45,7 @@ public final class CharSlice implements CharSequence, Serializable {
     /**
      * Create a CharSlice that maps to the whole of a char[] array
      *
-     * @param array
-     *            the char[] array
+     * @param array the char[] array
      */
     public CharSlice(char[] array) {
         this.array = array;
@@ -57,12 +56,9 @@ public final class CharSlice implements CharSequence, Serializable {
     /**
      * Create a CharSlice that maps to a section of a char[] array
      *
-     * @param array
-     *            the char[] array
-     * @param start
-     *            position of the first character to be included
-     * @param length
-     *            number of characters to be included
+     * @param array  the char[] array
+     * @param start  position of the first character to be included
+     * @param length number of characters to be included
      */
     public CharSlice(char[] array, int start, int length) {
         this.array = array;
@@ -89,9 +85,8 @@ public final class CharSlice implements CharSequence, Serializable {
      * Set the length of this character sequence, without changing the array and
      * start offset to which it is bound
      *
-     * @param length
-     *            the new length of the CharSlice (which must be less than the
-     *            existing length, though this is not enforced)
+     * @param length the new length of the CharSlice (which must be less than the
+     *               existing length, though this is not enforced)
      */
     public void setLength(int length) {
         count = length;
@@ -103,12 +98,10 @@ public final class CharSlice implements CharSequence, Serializable {
      * zero, the next at index one, and so on, as for array indexing.
      * </p>
      *
-     * @param index
-     *            the index of the character to be returned
+     * @param index the index of the character to be returned
      * @return the specified character
-     * @throws java.lang.IndexOutOfBoundsException
-     *             if the <tt>index</tt> argument is negative or not less than
-     *             <tt>length()</tt>
+     * @throws java.lang.IndexOutOfBoundsException if the <tt>index</tt> argument is negative or not less than
+     *                                             <tt>length()</tt>
      */
     public char charAt(int index) {
         return array[offset + index];
@@ -122,17 +115,12 @@ public final class CharSlice implements CharSequence, Serializable {
      * empty sequence is returned.
      * </p>
      *
-     * @param start
-     *            the start index, inclusive
-     * @param end
-     *            the end index, exclusive
-     *
+     * @param start the start index, inclusive
+     * @param end   the end index, exclusive
      * @return the specified subsequence
-     *
-     * @throws java.lang.IndexOutOfBoundsException
-     *             if <tt>start</tt> or <tt>end</tt> are negative, if
-     *             <tt>end</tt> is greater than <tt>length()</tt>, or if
-     *             <tt>start</tt> is greater than <tt>end</tt>
+     * @throws java.lang.IndexOutOfBoundsException if <tt>start</tt> or <tt>end</tt> are negative, if
+     *                                             <tt>end</tt> is greater than <tt>length()</tt>, or if
+     *                                             <tt>start</tt> is greater than <tt>end</tt>
      */
     public CharSequence subSequence(int start, int end) {
         return new CharSlice(array, offset + start, end - start);
@@ -153,7 +141,7 @@ public final class CharSlice implements CharSequence, Serializable {
                 return false;
             }
             int limit = offset + count;
-            for (int j = offset, k = cs2.offset; j < limit;) {
+            for (int j = offset, k = cs2.offset; j < limit; ) {
                 if (array[j++] != cs2.array[k++]) {
                     return false;
                 }
@@ -179,10 +167,9 @@ public final class CharSlice implements CharSequence, Serializable {
      * Get the index of a specific character in the sequence. Returns -1 if not
      * found. This method mimics {@link String#indexOf}
      *
-     * @param c
-     *            the character to be found
+     * @param c the character to be found
      * @return the position of the first occurrence of that character, or -1 if
-     *         not found.
+     * not found.
      */
     public int indexOf(char c) {
         int end = offset + count;
@@ -198,12 +185,10 @@ public final class CharSlice implements CharSequence, Serializable {
      * Returns a new character sequence that is a subsequence of this sequence.
      * Unlike subSequence, this is guaranteed to return a String.
      *
-     * @param start
-     *            position of the first character to be included (relative to
-     *            the start of the CharSlice, not the underlying array)
-     * @param end
-     *            position of the first character <b>not</b> to be included
-     *            (relative to the start of the CharSlice)
+     * @param start position of the first character to be included (relative to
+     *              the start of the CharSlice, not the underlying array)
+     * @param end   position of the first character <b>not</b> to be included
+     *              (relative to the start of the CharSlice)
      * @return the substring, as a String object
      */
     public String substring(int start, int end) {
@@ -214,10 +199,8 @@ public final class CharSlice implements CharSequence, Serializable {
      * Append the contents to another array at a given offset. The caller is
      * responsible for ensuring that sufficient space is available.
      *
-     * @param destination
-     *            the array to which the characters will be copied
-     * @param destOffset
-     *            the offset in the target array where the copy will start
+     * @param destination the array to which the characters will be copied
+     * @param destOffset  the offset in the target array where the copy will start
      */
     public void copyTo(char[] destination, int destOffset) {
         System.arraycopy(array, offset, destination, destOffset, count);
@@ -228,14 +211,10 @@ public final class CharSlice implements CharSequence, Serializable {
      * responsible for ensuring that sufficient space is available. Otherwise
      * this behaves like String.getChars()
      *
-     * @param start
-     *            offset of first character to be copied
-     * @param end
-     *            offset of the first character that is not copied
-     * @param destination
-     *            the array to which the characters will be copied
-     * @param destOffset
-     *            the offset in the target array where the copy will start
+     * @param start       offset of first character to be copied
+     * @param end         offset of the first character that is not copied
+     * @param destination the array to which the characters will be copied
+     * @param destOffset  the offset in the target array where the copy will start
      */
     public void getChars(int start, int end, char[] destination, int destOffset) {
         System.arraycopy(array, offset + start, destination, destOffset, end - start);

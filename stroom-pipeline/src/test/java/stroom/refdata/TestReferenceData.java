@@ -16,8 +16,12 @@
 
 package stroom.refdata;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.xml.sax.SAXException;
 import stroom.cache.CacheManagerAutoCloseable;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Range;
 import stroom.feed.server.MockFeedService;
 import stroom.feed.shared.Feed;
@@ -30,15 +34,11 @@ import stroom.refdata.impl.MockReferenceDataLoader;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.StroomLogger;
-import stroom.util.test.StroomUnitTest;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.xml.sax.SAXException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,9 +59,9 @@ public class TestReferenceData extends StroomUnitTest {
         final PipelineEntity pipeline2 = pipelineEntityService.create(null, "TEST_PIPELINE_2");
 
         final List<PipelineReference> pipelineReferences = new ArrayList<>();
-        pipelineReferences.add(new PipelineReference(DocRef.create(pipeline1), DocRef.create(feed1),
+        pipelineReferences.add(new PipelineReference(DocRefUtil.create(pipeline1), DocRefUtil.create(feed1),
                 StreamType.REFERENCE.getName()));
-        pipelineReferences.add(new PipelineReference(DocRef.create(pipeline2), DocRef.create(feed2),
+        pipelineReferences.add(new PipelineReference(DocRefUtil.create(pipeline2), DocRefUtil.create(feed2),
                 StreamType.REFERENCE.getName()));
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
@@ -101,21 +101,21 @@ public class TestReferenceData extends StroomUnitTest {
             mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("1111"), false);
             mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("2222"), false);
         }
-        referenceData.put(new MapStoreCacheKey(DocRef.create(pipeline), 1), mapStoreBuilder.getMapStore());
+        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 1), mapStoreBuilder.getMapStore());
 
         mapStoreBuilder = new MapStoreBuilderImpl(null);
         for (final String mapName : mapNames) {
             mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("A1111"), false);
             mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("A2222"), false);
         }
-        referenceData.put(new MapStoreCacheKey(DocRef.create(pipeline), 2), mapStoreBuilder.getMapStore());
+        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 2), mapStoreBuilder.getMapStore());
 
         mapStoreBuilder = new MapStoreBuilderImpl(null);
         for (final String mapName : mapNames) {
             mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("B1111"), false);
             mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("B2222"), false);
         }
-        referenceData.put(new MapStoreCacheKey(DocRef.create(pipeline), 3), mapStoreBuilder.getMapStore());
+        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 3), mapStoreBuilder.getMapStore());
     }
 
     private void checkData(final ReferenceData data, final List<PipelineReference> pipelineReferences,
@@ -150,8 +150,8 @@ public class TestReferenceData extends StroomUnitTest {
         final PipelineEntity pipelineEntity = new PipelineEntity();
         final List<PipelineReference> pipelineReferences = new ArrayList<>();
 
-        pipelineReferences.add(new PipelineReference(DocRef.create(pipelineEntity),
-                DocRef.create(feed1), StreamType.REFERENCE.getName()));
+        pipelineReferences.add(new PipelineReference(DocRefUtil.create(pipelineEntity),
+                DocRefUtil.create(feed1), StreamType.REFERENCE.getName()));
 
         final ErrorReceiver errorReceiver = new FatalErrorReceiver();
 
@@ -172,7 +172,7 @@ public class TestReferenceData extends StroomUnitTest {
             final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
             mapStoreBuilder.setEvents("CARD_NUMBER_TO_PF_NUMBER", "011111", getEventsFromString("091111"), false);
             mapStoreBuilder.setEvents("NUMBER_TO_SID", "091111", getEventsFromString("user1"), false);
-            referenceData.put(new MapStoreCacheKey(DocRef.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
+            referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
 
             Assert.assertEquals("091111", getStringFromEvents(referenceData.getValue(pipelineReferences, errorReceiver,
                     0, "CARD_NUMBER_TO_PF_NUMBER", "011111")));
@@ -195,8 +195,8 @@ public class TestReferenceData extends StroomUnitTest {
         final PipelineEntity pipelineEntity = new PipelineEntity();
         final List<PipelineReference> pipelineReferences = new ArrayList<>();
 
-        pipelineReferences.add(new PipelineReference(DocRef.create(pipelineEntity),
-                DocRef.create(feed1), StreamType.REFERENCE.getName()));
+        pipelineReferences.add(new PipelineReference(DocRefUtil.create(pipelineEntity),
+                DocRefUtil.create(feed1), StreamType.REFERENCE.getName()));
 
         final ErrorReceiver errorReceiver = new FatalErrorReceiver();
 
@@ -217,7 +217,7 @@ public class TestReferenceData extends StroomUnitTest {
             final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
             mapStoreBuilder.setEvents("IP_TO_LOC", new Range<>(2L, 30L), getEventsFromString("here"), false);
             mapStoreBuilder.setEvents("IP_TO_LOC", new Range<>(500L, 2000L), getEventsFromString("there"), false);
-            referenceData.put(new MapStoreCacheKey(DocRef.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
+            referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
 
             Assert.assertEquals("here", getStringFromEvents(
                     referenceData.getValue(pipelineReferences, errorReceiver, 0, "IP_TO_LOC", "10")));

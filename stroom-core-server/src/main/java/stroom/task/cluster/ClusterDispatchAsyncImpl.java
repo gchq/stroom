@@ -131,7 +131,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                     clusterCallService.call(sourceNode, targetNode, ClusterWorkerImpl.BEAN_NAME,
                             ClusterWorkerImpl.EXEC_ASYNC_METHOD, ClusterWorkerImpl.EXEC_ASYNC_METHOD_ARGS,
                             new Object[]{clusterTask, sourceNode, sourceTaskId, collectorId});
-                } catch (final Exception t) {
+                } catch (final Throwable t) {
                     LOGGER.debug(t.getMessage(), t);
                     collector.onFailure(targetNode, t);
                 }

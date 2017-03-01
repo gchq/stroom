@@ -19,15 +19,14 @@ package stroom.dictionary.client;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.ClientSecurityContext;
-import stroom.app.client.ContentManager;
+import stroom.core.client.ContentManager;
 import stroom.dictionary.client.presenter.DictionaryPresenter;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.entity.client.presenter.EntityEditPresenter;
+import stroom.security.client.ClientSecurityContext;
 
 public class DictionaryPlugin extends EntityPlugin<Dictionary> {
     private final Provider<DictionaryPresenter> editorProvider;

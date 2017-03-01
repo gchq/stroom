@@ -1,0 +1,181 @@
+ext {
+    warDir = project(':stroom-app').file("src/main/webapp")
+    outputDir = "${warDir}/stroom"
+
+    gwtBuildDir = "${project.buildDir}/gwt"
+    tmpDir = "${gwtBuildDir}/tmp"
+    workDir = "${gwtBuildDir}/work"
+    deployDir = "${gwtBuildDir}/deploy"
+    extraDir = "${gwtBuildDir}/extra"
+}
+
+dependencies {
+    compile project(':stroom-index-client')
+    compile project(':stroom-statistics-client')
+    compile project(':stroom-dashboard-client')
+
+    compile project(path: ':stroom-dashboard-client', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-dashboard-shared', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-query-api', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-entity-shared', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-util-shared', configuration: 'sourceArtifacts')
+
+    compile project(path: ':stroom-security-client', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-security-shared', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-security-api', configuration: 'sourceArtifacts')
+
+    compile project(path: ':stroom-core-client', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-security-client-api', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-core-client-widget', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-core-shared', configuration: 'sourceArtifacts')
+
+    compile project(path: ':stroom-index-client', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-index-shared', configuration: 'sourceArtifacts')
+
+    compile project(path: ':stroom-statistics-client', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-statistics-shared', configuration: 'sourceArtifacts')
+    compile project(path: ':stroom-statistics-api', configuration: 'sourceArtifacts')
+
+    compile 'com.google.gwt.inject:gin:2.1.2'
+    compile 'com.google.gwt:gwt-dev:2.8.0'
+}
+
+task gwtCompile (dependsOn: classes, type: JavaExec) {
+    def module = 'stroom.app.App'
+
+    doFirst {
+        delete outputDir
+        delete gwtBuildDir
+
+        file(gwtBuildDir).mkdirs()
+        file(tmpDir).mkdirs()
+        file(workDir).mkdirs()
+        file(deployDir).mkdirs()
+        file(extraDir).mkdirs()
+    }
+
+    main = 'com.google.gwt.dev.Compiler'
+
+    classpath {
+        [
+                sourceSets.main.java.srcDirs,           // Java source
+                sourceSets.main.output.resourcesDir,    // Generated resources
+                sourceSets.main.output.classesDir,      // Generated classes
+                sourceSets.main.compileClasspath,       // Deps
+        ]
+    }
+
+    args =
+            [
+                    '-logLevel', 'INFO',
+                    '-workDir', workDir,
+                    '-XfragmentCount', '5',
+                    '-optimize', '9',
+                    '-failOnError',
+                    '-localWorkers', '5',
+                    '-war', warDir,
+                    '-deploy', deployDir,
+                    '-extra', extraDir,
+                    '-strict',
+                    module                                  // Your GWT module
+            ]
+
+    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
+    minHeapSize = '1G'
+    maxHeapSize = '4G'
+}
+
+task gwtDraftCompile (dependsOn: classes, type: JavaExec) {
+    def module = 'stroom.app.AppSuperDevModeChrome'
+
+    doFirst {
+        delete outputDir
+
+        file(gwtBuildDir).mkdirs()
+        file(tmpDir).mkdirs()
+        file(workDir).mkdirs()
+        file(deployDir).mkdirs()
+        file(extraDir).mkdirs()
+    }
+
+    main = 'com.google.gwt.dev.Compiler'
+
+    classpath {
+        [
+                sourceSets.main.java.srcDirs,           // Java source
+                sourceSets.main.output.resourcesDir,    // Generated resources
+                sourceSets.main.output.classesDir,      // Generated classes
+                sourceSets.main.compileClasspath,       // Deps
+        ]
+    }
+
+    args =
+            [
+                    '-logLevel', 'INFO',
+                    '-workDir', workDir,
+                    '-draftCompile',                        // Speeds up compile with 25%
+                    '-XfragmentCount', '0',
+                    '-optimize', '0',
+                    '-failOnError',
+                    '-localWorkers', '5',
+                    '-incremental',
+                    '-war', warDir,
+                    '-deploy', deployDir,
+                    '-extra', extraDir,
+                    '-strict',
+                    module                                  // Your GWT module
+            ]
+
+    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
+    minHeapSize = '1G'
+    maxHeapSize = '4G'
+}
+
+task gwtSuperDevMode (dependsOn: classes, type: JavaExec) {
+    def module = 'stroom.app.AppSuperDevModeChrome'
+
+    doFirst {
+        file(gwtBuildDir).mkdirs()
+        file(tmpDir).mkdirs()
+        file(workDir).mkdirs()
+        file(deployDir).mkdirs()
+        file(extraDir).mkdirs()
+    }
+
+    main = 'com.google.gwt.dev.DevMode'
+
+    classpath {
+        [
+                sourceSets.main.java.srcDirs,           // Java source
+                sourceSets.main.output.resourcesDir,    // Generated resources
+                sourceSets.main.output.classesDir,      // Generated classes
+                sourceSets.main.compileClasspath,       // Deps
+        ]
+    }
+
+    args =
+            [
+                    '-logLevel', 'INFO',
+                    '-workDir', workDir,
+                    '-failOnError',
+                    '-war', warDir,
+                    '-deploy', deployDir,
+                    '-extra', extraDir,
+                    '-strict',
+                    '-noserver',
+                    module                                  // Your GWT module
+            ]
+
+    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
+    minHeapSize = '1G'
+    maxHeapSize = '4G'
+}
+
+task gwtClean {
+    delete outputDir
+    delete gwtBuildDir
+    file(gwtBuildDir).mkdirs()
+    file(tmpDir).mkdirs()
+}
+
+build.dependsOn('gwtCompile')

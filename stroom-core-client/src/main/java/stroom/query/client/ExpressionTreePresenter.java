@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,6 @@
 
 package stroom.query.client;
 
-import java.util.List;
-
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -25,44 +23,32 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.IndexField;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
+import stroom.datasource.api.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.util.client.MySingleSelectionModel;
 
+import java.util.List;
+
 public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePresenter.ExpressionTreeView>
         implements HasRead<ExpressionOperator>, HasWrite<ExpressionOperator>, HasDataSelectionHandlers<ExpressionItem>,
         HasContextMenuHandlers {
-    public interface ExpressionTreeView extends View, HasContextMenuHandlers, HasUiHandlers<ExpressionUiHandlers> {
-        void setTree(DefaultTreeForTreeLayout<ExpressionItem> model);
-
-        void setSelectionModel(MySingleSelectionModel<ExpressionItem> selectionModel);
-
-        void setFields(List<IndexField> fields);
-
-        void endEditing();
-
-        void refresh();
-    }
-
     private DefaultTreeForTreeLayout<ExpressionItem> tree;
     private MySingleSelectionModel<ExpressionItem> selectionModel;
     private ExpressionUiHandlers uiHandlers;
-
     @Inject
     public ExpressionTreePresenter(final EventBus eventBus, final ExpressionTreeView view,
-            final ClientDispatchAsync dispatcher) {
+                                   final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         selectionModel = new MySingleSelectionModel<>();
         view.setSelectionModel(selectionModel);
@@ -73,12 +59,9 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         super.onBind();
 
         if (selectionModel != null) {
-            registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-                @Override
-                public void onSelectionChange(final SelectionChangeEvent event) {
-                    DataSelectionEvent.fire(ExpressionTreePresenter.this, selectionModel.getSelectedObject(), false);
-                    getView().refresh();
-                }
+            registerHandler(selectionModel.addSelectionChangeHandler(event -> {
+                DataSelectionEvent.fire(ExpressionTreePresenter.this, selectionModel.getSelectedObject(), false);
+                getView().refresh();
             }));
         }
     }
@@ -91,8 +74,8 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         return selectionModel.addSelectionChangeHandler(handler);
     }
 
-    public void setFields(final List<IndexField> indexFields) {
-        getView().setFields(indexFields);
+    public void setFields(final List<DataSourceField> fields) {
+        getView().setFields(fields);
     }
 
     @Override
@@ -110,7 +93,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
         final ExpressionOperator r = new ExpressionModel().getExpressionFromTree(tree);
         if (r != null) {
-            root.setType(r.getType());
+            root.setOp(r.getOp());
             root.setChildren(r.getChildren());
         }
     }
@@ -127,7 +110,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         if (selectionModel != null) {
             final ExpressionItem selectedItem = selectionModel.getSelectedObject();
             if (selectedItem != null) {
-                selectedItem.setEnabled(!selectedItem.isEnabled());
+                selectedItem.setEnabled(!selectedItem.enabled());
 
                 fireDirty();
 
@@ -233,17 +216,29 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         getView().setUiHandlers(uiHandlers);
     }
 
+    public MySingleSelectionModel<ExpressionItem> getSelectionModel() {
+        return selectionModel;
+    }
+
     public void setSelectionModel(final MySingleSelectionModel<ExpressionItem> selectionModel) {
         this.selectionModel = selectionModel;
         getView().setSelectionModel(selectionModel);
     }
 
-    public MySingleSelectionModel<ExpressionItem> getSelectionModel() {
-        return selectionModel;
-    }
-
     @Override
     public HandlerRegistration addContextMenuHandler(final Handler handler) {
         return getView().addContextMenuHandler(handler);
+    }
+
+    public interface ExpressionTreeView extends View, HasContextMenuHandlers, HasUiHandlers<ExpressionUiHandlers> {
+        void setTree(DefaultTreeForTreeLayout<ExpressionItem> model);
+
+        void setSelectionModel(MySingleSelectionModel<ExpressionItem> selectionModel);
+
+        void setFields(List<DataSourceField> fields);
+
+        void endEditing();
+
+        void refresh();
     }
 }

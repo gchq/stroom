@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,18 +16,19 @@
 
 package stroom.index;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.server.util.BaseEntityDeProxyProcessor;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FolderService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexService;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFields;
-import org.junit.Assert;
-import org.junit.Test;
+import stroom.query.api.DocRef;
 
 import javax.annotation.Resource;
 
@@ -42,7 +43,7 @@ public class TestIndexServiceImpl extends AbstractCoreIntegrationTest {
 
     @Override
     protected void onBefore() {
-        final DocRef testFolder = DocRef.create(folderService.create(null, "Test Group"));
+        final DocRef testFolder = DocRefUtil.create(folderService.create(null, "Test Group"));
         refIndex = indexService.create(testFolder, "Ref index");
         testIndex = indexService.create(testFolder, "Test index");
 

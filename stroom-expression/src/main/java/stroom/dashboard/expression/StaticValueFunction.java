@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,21 +19,6 @@ package stroom.dashboard.expression;
 import java.text.ParseException;
 
 public class StaticValueFunction implements Function, Appendable {
-    private static class Gen extends AbstractNoChildGenerator {
-        private static final long serialVersionUID = -7551073465232523106L;
-
-        private final Object value;
-
-        public Gen(final Object value) {
-            this.value = value;
-        }
-
-        @Override
-        public Object eval() {
-            return value;
-        }
-    }
-
     private final Object value;
     private final Generator gen;
 
@@ -72,5 +57,20 @@ public class StaticValueFunction implements Function, Appendable {
     @Override
     public boolean hasAggregate() {
         return false;
+    }
+
+    private static class Gen extends AbstractNoChildGenerator {
+        private static final long serialVersionUID = -7551073465232523106L;
+
+        private final Object value;
+
+        public Gen(final Object value) {
+            this.value = value;
+        }
+
+        @Override
+        public Object eval() {
+            return value;
+        }
     }
 }

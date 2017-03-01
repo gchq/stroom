@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,11 +16,13 @@
 
 package stroom.refdata;
 
-import stroom.entity.shared.DocRef;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.query.api.DocRef;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
@@ -29,8 +31,6 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.xml.event.EventList;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;

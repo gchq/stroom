@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,9 +16,6 @@
 
 package stroom.query.client;
 
-import java.util.List;
-
-import stroom.security.shared.DocumentPermissionNames;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -28,14 +25,14 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Provider;
-
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.IndexField;
 import stroom.data.grid.client.MouseHelper;
+import stroom.datasource.api.DataSourceField;
 import stroom.dictionary.shared.Dictionary;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
+import stroom.query.api.ExpressionItem;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
@@ -49,22 +46,20 @@ import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultConfiguration;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
+import java.util.List;
+
 public class ExpressionTreePanel extends TreePanel<ExpressionItem> {
     private static final double HORIZONTAL_SEPARATION = 20;
     private static final double VERTICAL_SEPARATION = 0;
-
-    private TreeRenderer2<ExpressionItem> renderer;
-    private TreeLayout<ExpressionItem> treeLayout;
-
     private final LayeredCanvas canvas;
-    private ExpressionItemRenderer cellRenderer;
-
     private final FlowPanel panel;
     private final FlowPanel boxPanel;
-    private DefaultTreeForTreeLayout<ExpressionItem> tree;
-
     private final OperatorEditor operatorEditor;
     private final TermEditor termEditor;
+    private TreeRenderer2<ExpressionItem> renderer;
+    private TreeLayout<ExpressionItem> treeLayout;
+    private ExpressionItemRenderer cellRenderer;
+    private DefaultTreeForTreeLayout<ExpressionItem> tree;
 
     public ExpressionTreePanel(final Provider<EntityDropDownPresenter> dictionaryProvider) {
         final EntityDropDownPresenter dictionaryPresenter = dictionaryProvider.get();
@@ -110,14 +105,6 @@ public class ExpressionTreePanel extends TreePanel<ExpressionItem> {
         style.setPosition(Position.ABSOLUTE);
         style.setLeft(0, Unit.PX);
         style.setTop(0, Unit.PX);
-    }
-
-    @Override
-    public void setTree(final DefaultTreeForTreeLayout<ExpressionItem> tree) {
-        this.tree = tree;
-        if (treeLayout != null) {
-            treeLayout.setTree(tree);
-        }
     }
 
     @Override
@@ -179,7 +166,15 @@ public class ExpressionTreePanel extends TreePanel<ExpressionItem> {
         return tree;
     }
 
-    public void setFields(final List<IndexField> fields) {
+    @Override
+    public void setTree(final DefaultTreeForTreeLayout<ExpressionItem> tree) {
+        this.tree = tree;
+        if (treeLayout != null) {
+            treeLayout.setTree(tree);
+        }
+    }
+
+    public void setFields(final List<DataSourceField> fields) {
         termEditor.setFields(fields);
     }
 

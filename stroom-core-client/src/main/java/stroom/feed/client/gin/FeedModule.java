@@ -16,7 +16,7 @@
 
 package stroom.feed.client.gin;
 
-import stroom.app.client.gin.PluginModule;
+import stroom.core.client.gin.PluginModule;
 import stroom.feed.client.FeedPlugin;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter;

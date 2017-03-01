@@ -16,9 +16,13 @@
 
 package stroom.entity.client.presenter;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.NamedEntity;
 import stroom.security.client.ClientSecurityContext;
@@ -27,10 +31,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.Set;
 
@@ -81,7 +81,7 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
 
         if (entity.isPersistent()) {
             // Reload it so we always have the latest version
-            final EntityServiceLoadAction<E> action = new EntityServiceLoadAction<E>(DocRef.create(entity),
+            final EntityServiceLoadAction<E> action = new EntityServiceLoadAction<E>(DocRefUtil.create(entity),
                     getEntityFetchSet());
             dispatcher.execute(action, new AsyncCallbackAdaptor<E>() {
                 @Override

@@ -16,16 +16,16 @@
 
 package stroom.refdata;
 
-import stroom.cache.CacheManagerAutoCloseable;
-import stroom.entity.shared.DocRef;
-import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.util.test.StroomUnitTest;
-import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.xml.event.EventList;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import stroom.cache.CacheManagerAutoCloseable;
+import stroom.entity.shared.DocRefUtil;
+import stroom.feed.shared.Feed;
+import stroom.pipeline.shared.PipelineEntity;
+import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+import stroom.xml.event.EventList;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestCache extends StroomUnitTest {
@@ -53,7 +53,7 @@ public class TestCache extends StroomUnitTest {
                 feed.setName("test " + i);
                 feed.setReference(true);
                 feed.setId(i);
-                final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(DocRef.create(pipelineEntity), 1);
+                final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 1);
                 final MapStore mapStore = mapStoreCache.get(mapStorePoolKey);
                 final EventList eventList = mapStore.getEvents("TEST_MAP_NAME", "TEST_KEY_NAME");
                 if (eventString == null) {
@@ -70,7 +70,7 @@ public class TestCache extends StroomUnitTest {
                 feed.setName("test " + i);
                 feed.setReference(true);
                 feed.setId(i);
-                final MapStoreCacheKey mapStoreCacheKey = new MapStoreCacheKey(DocRef.create(pipelineEntity), 1);
+                final MapStoreCacheKey mapStoreCacheKey = new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 1);
                 final MapStore mapStore = mapStoreCache.get(mapStoreCacheKey);
                 final EventList eventList = mapStore.getEvents("TEST_MAP_NAME", "TEST_KEY_NAME");
                 if (eventString == null) {

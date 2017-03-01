@@ -61,6 +61,8 @@ import org.joda.time.format.DateTimeFormatter;
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -75,6 +77,8 @@ public final class SetupSampleDataBean {
 
     private static final String STATS_COUNT_FEED_NAME = "COUNT_FEED";
     private static final String STATS_VALUE_FEED_NAME = "VALUE_FEED";
+    private static final String STATS_COUNT_API_FEED_NAME = "COUNT_V3";
+    private static final String STATS_COUNT_API_DATA_FILE = "./stroom-integrationtest/src/test/resources/SetupSampleDataBean_COUNT_V3.xml";
 
     private static final int LOAD_CYCLES = 10;
 
@@ -342,6 +346,21 @@ public final class SetupSampleDataBean {
         } catch (final RuntimeException e) {
             LOGGER.warn(String.format("Feed %s does not exist so cannot load the sample value statistics data.",
                     STATS_VALUE_FEED_NAME));
+        }
+
+        try{
+            final Feed apiFeed = dataLoader.getFeed(STATS_COUNT_API_FEED_NAME);
+            String sampleData = new String(Files.readAllBytes(Paths.get(STATS_COUNT_API_DATA_FILE)));
+
+            dataLoader.loadInputStream(
+                    apiFeed,
+                    "Sample statistics count data for export to API",
+                    StreamUtil.stringToStream(sampleData),
+                    false,
+                    startTime);
+        } catch (final RuntimeException | IOException e) {
+            LOGGER.warn(String.format("Feed %s does not exist so cannot load the sample count for export to API statistics data.",
+                    STATS_COUNT_API_FEED_NAME));
         }
 
     }

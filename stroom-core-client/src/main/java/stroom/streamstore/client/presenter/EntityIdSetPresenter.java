@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,15 @@
 
 package stroom.streamstore.client.presenter;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.table.client.CellTableView;
@@ -25,28 +34,19 @@ import stroom.data.table.client.CellTableViewImpl.DisabledResources;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
 import stroom.entity.shared.Folder;
-import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
+import stroom.explorer.client.presenter.EntityChooser;
 import stroom.explorer.shared.ExplorerData;
-import stroom.pipeline.processor.shared.LoadEntityIdSetAction;
-import stroom.pipeline.processor.shared.SetId;
+import stroom.process.shared.LoadEntityIdSetAction;
+import stroom.process.shared.SetId;
+import stroom.query.api.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedMap;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.CellTable.Resources;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.ArrayList;
@@ -55,15 +55,7 @@ import java.util.List;
 
 public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter.EntityIdSetView>
         implements EntityIdSetUiHandlers {
-    public interface EntityIdSetView extends View, HasUiHandlers<EntityIdSetUiHandlers> {
-        void setListView(View view);
-
-        void setAddEnabled(boolean enabled);
-
-        void setRemoveEnabled(boolean enabled);
-    }
-
-    private final ExplorerDropDownTreePresenter treePresenter;
+    private final EntityChooser treePresenter;
     private final EntityChoicePresenter choicePresenter;
     private final ClientDispatchAsync dispatcher;
     private final StreamTypeUiManager streamTypeUiManager;
@@ -75,7 +67,7 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
 
     @Inject
     public EntityIdSetPresenter(final EventBus eventBus, final EntityIdSetView view,
-                                final ExplorerDropDownTreePresenter treePresenter, final EntityChoicePresenter choicePresenter,
+                                final EntityChooser treePresenter, final EntityChoicePresenter choicePresenter,
                                 final StreamTypeUiManager streamTypeUiManager, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.treePresenter = treePresenter;
@@ -91,7 +83,7 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
     private void createList(final boolean enabled) {
         if (enabled) {
             selectionModel = new MySingleSelectionModel<DocRef>();
-            list = new CellTableViewImpl<DocRef>(true, (Resources) GWT.create(DefaultResources.class));
+            list = new CellTableViewImpl<DocRef>(true, GWT.create(DefaultResources.class));
 
             registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
                 @Override
@@ -101,7 +93,7 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
             }));
         } else {
             selectionModel = null;
-            list = new CellTableViewImpl<DocRef>(false, (Resources) GWT.create(DisabledResources.class));
+            list = new CellTableViewImpl<DocRef>(false, GWT.create(DisabledResources.class));
         }
 
         // Text.
@@ -148,31 +140,31 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
         if (entityIdSet != null && entityIdSet.getSet() != null) {
             // Load the entities.
             final SetId key = new SetId(type, type);
-            final SharedMap<SetId, EntityIdSet<?>> loadMap = new SharedMap<SetId, EntityIdSet<?>>();
+            final SharedMap<SetId, EntityIdSet<?>> loadMap = new SharedMap<>();
             loadMap.put(key, entityIdSet);
             final LoadEntityIdSetAction action = new LoadEntityIdSetAction(loadMap);
-            dispatcher.execute(action, new AsyncCallbackAdaptor<SharedMap<SetId, SharedList<DocRef>>>() {
+            dispatcher.execute(action, new AsyncCallbackAdaptor<SharedMap<SetId, DocRefs>>() {
                 @Override
-                public void onSuccess(final SharedMap<SetId, SharedList<DocRef>> result) {
-                    final SharedList<DocRef> list = result.get(key);
-                    if (list != null) {
-                        Collections.sort(list, new EntityReferenceComparator());
-                        data = list;
+                public void onSuccess(final SharedMap<SetId, DocRefs> result) {
+                    final DocRefs docRefs = result.get(key);
+                    if (docRefs != null) {
+                        data = new ArrayList<>(docRefs.getDoc());
+                        Collections.sort(data, new EntityReferenceComparator());
                     } else {
-                        data = new ArrayList<DocRef>();
+                        data = new ArrayList<>();
                     }
                     refresh();
                 }
             });
         } else {
-            this.data = new ArrayList<DocRef>();
+            this.data = new ArrayList<>();
             refresh();
         }
 
         if (!groupedEntity) {
             final List<DocRef> data = new ArrayList<DocRef>();
             for (final StreamType streamType : streamTypeUiManager.getRootStreamTypeList()) {
-                data.add(DocRef.create(streamType));
+                data.add(DocRefUtil.create(streamType));
             }
             choicePresenter.setData(data);
         } else {
@@ -188,7 +180,9 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
     public <T extends BaseEntity> void write(final EntityIdSet<T> entityIdSet) {
         entityIdSet.clear();
         for (final DocRef docRef : data) {
-            entityIdSet.add(docRef.getId());
+            if (docRef != null) {
+                entityIdSet.add(docRef.getId());
+            }
         }
     }
 
@@ -230,6 +224,10 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
         return selectionModel.getSelectedObject();
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
 
@@ -246,7 +244,11 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
         }
     }
 
-    public boolean isEnabled() {
-        return enabled;
+    public interface EntityIdSetView extends View, HasUiHandlers<EntityIdSetUiHandlers> {
+        void setListView(View view);
+
+        void setAddEnabled(boolean enabled);
+
+        void setRemoveEnabled(boolean enabled);
     }
 }

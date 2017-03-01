@@ -58,7 +58,6 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         dataProvider.setAllowNoConstraint(false);
     }
 
-    @Override
     public void setSelectedStream(final StreamAttributeMap streamAttributeMap, final boolean fireEvents,
             final boolean showSystemFiles) {
         if (streamAttributeMap == null) {
@@ -81,7 +80,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             setCriteria(criteria);
         }
 
-        setSelectedStreamInternal(streamAttributeMap, fireEvents);
+        getSelectionModel().setSelected(streamAttributeMap);
     }
 
     @Override

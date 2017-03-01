@@ -16,26 +16,24 @@
 
 package stroom.pipeline.server.filter;
 
-import java.util.List;
-
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ErrorStatistics;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.util.spring.StroomScope;
 import stroom.xml.event.Event;
 import stroom.xml.event.simple.SimpleEventList;
 import stroom.xml.event.simple.StartElement;
 import stroom.xml.event.simple.StartPrefixMapping;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * Filters out records that have raised an error or warning during processing.

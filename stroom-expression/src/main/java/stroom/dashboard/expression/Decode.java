@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,59 +20,12 @@ import java.io.Serializable;
 import java.text.ParseException;
 
 public class Decode extends AbstractFunction implements Serializable {
-    private static class Gen extends AbstractSingleChildGenerator {
-        private static final long serialVersionUID = 8153777070911899616L;
-
-        private final String[] str;
-
-        public Gen(final Generator childGenerator, final String... str) {
-            super(childGenerator);
-            this.str = str;
-        }
-
-        @Override
-        public void set(final String[] values) {
-            childGenerator.set(values);
-        }
-
-        @Override
-        public Object eval() {
-            final Object val = childGenerator.eval();
-
-            final SerializablePattern[] test = new SerializablePattern[str.length / 2];
-            final String[] result = new String[str.length / 2];
-
-            int j = 0;
-            for (int i = 0; i < str.length - 1; i++) {
-                if (i % 2 == 0) {
-                    test[j] = new SerializablePattern(str[i]);
-                } else {
-                    result[j] = str[i];
-                    j++;
-                }
-            }
-
-            String newValue = str[str.length - 1];
-            for (int i = 0; i < test.length; i++) {
-                if (test[i].matcher(TypeConverter.getString(val)).matches()) {
-                    newValue = result[i];
-                    break;
-                }
-            }
-
-            return newValue;
-        }
-    }
-
-    private static final long serialVersionUID = -305845496003936297L;
     public static final String NAME = "decode";
-
+    private static final long serialVersionUID = -305845496003936297L;
     private Generator gen;
     private Function function = null;
     private boolean hasAggregate;
-
     private String[] str;
-
     private SerializablePattern[] test;
     private String[] result;
     private String otherwise;
@@ -117,7 +70,7 @@ public class Decode extends AbstractFunction implements Serializable {
             hasAggregate = function.hasAggregate();
         } else {
             /*
-			 * Optimise replacement of static input in case user does something
+             * Optimise replacement of static input in case user does something
 			 * stupid.
 			 */
             for (int i = 0; i < test.length; i++) {
@@ -144,5 +97,49 @@ public class Decode extends AbstractFunction implements Serializable {
     @Override
     public boolean hasAggregate() {
         return hasAggregate;
+    }
+
+    private static class Gen extends AbstractSingleChildGenerator {
+        private static final long serialVersionUID = 8153777070911899616L;
+
+        private final String[] str;
+
+        public Gen(final Generator childGenerator, final String... str) {
+            super(childGenerator);
+            this.str = str;
+        }
+
+        @Override
+        public void set(final String[] values) {
+            childGenerator.set(values);
+        }
+
+        @Override
+        public Object eval() {
+            final Object val = childGenerator.eval();
+
+            final SerializablePattern[] test = new SerializablePattern[str.length / 2];
+            final String[] result = new String[str.length / 2];
+
+            int j = 0;
+            for (int i = 0; i < str.length - 1; i++) {
+                if (i % 2 == 0) {
+                    test[j] = new SerializablePattern(str[i]);
+                } else {
+                    result[j] = str[i];
+                    j++;
+                }
+            }
+
+            String newValue = str[str.length - 1];
+            for (int i = 0; i < test.length; i++) {
+                if (test[i].matcher(TypeConverter.getString(val)).matches()) {
+                    newValue = result[i];
+                    break;
+                }
+            }
+
+            return newValue;
+        }
     }
 }

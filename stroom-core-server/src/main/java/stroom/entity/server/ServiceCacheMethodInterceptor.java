@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,23 +16,24 @@
 
 package stroom.entity.server;
 
-import stroom.entity.shared.Clearable;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.Entity;
-import stroom.entity.shared.EntityService;
-import stroom.entity.shared.EntityServiceException;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 import com.googlecode.ehcache.annotations.key.ListCacheKeyGenerator;
 import com.googlecode.ehcache.annotations.key.ReadOnlyList;
-import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.framework.Advised;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
+import stroom.entity.shared.Clearable;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.Entity;
+import stroom.entity.shared.EntityService;
+import stroom.entity.shared.EntityServiceException;
+import stroom.query.api.DocRef;
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
 
 import javax.annotation.Resource;
 import java.io.Serializable;
@@ -51,11 +52,11 @@ public class ServiceCacheMethodInterceptor implements MethodInterceptor, Initial
     ServiceCacheMethodInterceptorTransactionHelper serviceCacheMethodInterceptorTransactionHelper;
     @Resource
     private CacheManager cacheManager;
-    private Cache cache;
+    private Ehcache cache;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        cache = cacheManager.getCache("serviceCache");
+        cache = cacheManager.getEhcache("serviceCache");
     }
 
     @Override
@@ -111,13 +112,12 @@ public class ServiceCacheMethodInterceptor implements MethodInterceptor, Initial
 
         if (method.getParameterTypes().length >= 1) {
             if (long.class.isAssignableFrom(method.getParameterTypes()[0])) {
-                docRef = new DocRef();
-                docRef.setType(type);
-                docRef.setId((Long) invocation.getArguments()[0]);
+                final long id = (Long) invocation.getArguments()[0];
+                docRef = new DocRef(type, String.valueOf(id));
+                docRef.setId(id);
             } else if (String.class.isAssignableFrom(method.getParameterTypes()[0])) {
-                docRef = new DocRef();
-                docRef.setType(type);
-                docRef.setUuid((String) invocation.getArguments()[0]);
+                final String uuid = (String) invocation.getArguments()[0];
+                docRef = new DocRef(type, uuid);
             } else if (Entity.class.isAssignableFrom(method.getParameterTypes()[0])) {
                 final Entity entity = (Entity) invocation.getArguments()[0];
                 // If no entity has been supplied to load then return null.
@@ -125,7 +125,7 @@ public class ServiceCacheMethodInterceptor implements MethodInterceptor, Initial
                     return null;
                 }
 
-                docRef = DocRef.create(entity);
+                docRef = DocRefUtil.create(entity);
             } else {
                 throw new EntityServiceException("Unexpected parameter type: " + method.getParameterTypes()[0].getName());
             }

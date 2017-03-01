@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,34 +17,6 @@
 package stroom.dashboard.expression;
 
 public abstract class NumericFunction extends AbstractManyChildFunction {
-    private static class Gen extends AbstractManyChildGenerator {
-        private static final long serialVersionUID = 217968020285584214L;
-
-        private final Calculator calculator;
-
-        public Gen(final Generator[] childGenerators, final Calculator calculator) {
-            super(childGenerators);
-            this.calculator = calculator;
-        }
-
-        @Override
-        public void set(final String[] values) {
-            for (final Generator generator : childGenerators) {
-                generator.set(values);
-            }
-        }
-
-        @Override
-        public Object eval() {
-            Double value = null;
-            for (final Generator gen : childGenerators) {
-                value = calculator.calc(value, gen.eval());
-            }
-
-            return value;
-        }
-    }
-
     private final boolean usingOperator;
 
     public NumericFunction(final String name, final int minParams, final int maxParams) {
@@ -82,6 +54,34 @@ public abstract class NumericFunction extends AbstractManyChildFunction {
             }
         } else {
             super.appendParams(sb);
+        }
+    }
+
+    private static class Gen extends AbstractManyChildGenerator {
+        private static final long serialVersionUID = 217968020285584214L;
+
+        private final Calculator calculator;
+
+        public Gen(final Generator[] childGenerators, final Calculator calculator) {
+            super(childGenerators);
+            this.calculator = calculator;
+        }
+
+        @Override
+        public void set(final String[] values) {
+            for (final Generator generator : childGenerators) {
+                generator.set(values);
+            }
+        }
+
+        @Override
+        public Object eval() {
+            Double value = null;
+            for (final Generator gen : childGenerators) {
+                value = calculator.calc(value, gen.eval());
+            }
+
+            return value;
         }
     }
 }
