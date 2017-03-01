@@ -137,13 +137,13 @@ public abstract class BaseEntity extends Entity implements HasType, HasId, Share
         return stub;
     }
 
-    public void setStub(final boolean stub) {
-        this.stub = stub;
-    }
-
     public void setStub(final long stubId) {
         setId(stubId);
         setStub(true);
+    }
+
+    public void setStub(final boolean stub) {
+        this.stub = stub;
     }
 
     /**

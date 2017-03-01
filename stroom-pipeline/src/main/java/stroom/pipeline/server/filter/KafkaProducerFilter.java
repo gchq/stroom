@@ -57,7 +57,7 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
         ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, recordKey, getOutput());
         try{
             stroomKafkaProducer.send(newRecord, errorReceiverProxy);
-        } catch(RuntimeException e){
+        } catch (RuntimeException e) {
             errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", e);
         }
     }
