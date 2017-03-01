@@ -17,17 +17,19 @@
 package stroom.explorer.client.presenter;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.HasData;
-import com.google.gwt.view.client.SelectionModel;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.explorer.shared.*;
+import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.explorer.shared.FetchExplorerDataAction;
+import stroom.explorer.shared.FetchExplorerDataResult;
+import stroom.explorer.shared.FindExplorerDataCriteria;
+import stroom.explorer.shared.SimpleExplorerItem;
+import stroom.explorer.shared.TreeStructure;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -211,12 +213,12 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
         ensureVisible = null;
     }
 
-    public void setIncludeNullSelection(final boolean includeNullSelection) {
-        this.includeNullSelection = includeNullSelection;
-    }
-
     public boolean isIncludeNullSelection() {
         return includeNullSelection;
+    }
+
+    public void setIncludeNullSelection(final boolean includeNullSelection) {
+        this.includeNullSelection = includeNullSelection;
     }
 
     private class NameFilterTimer extends Timer {

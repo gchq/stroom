@@ -24,7 +24,6 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-
 import stroom.alert.client.event.AlertEvent;
 import stroom.entity.client.EntityTabData;
 import stroom.entity.client.event.SaveAsEntityEvent;
@@ -39,16 +38,6 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 public class SaveAsEntityPresenter
         extends MyPresenter<SaveAsEntityPresenter.SaveAsEntityView, SaveAsEntityPresenter.SaveAsEntityProxy>
         implements ShowSaveAsEntityDialogEvent.Handler, PopupUiHandlers {
-    public interface SaveAsEntityView extends View, HasUiHandlers<PopupUiHandlers> {
-        String getName();
-
-        void setName(String name);
-    }
-
-    @ProxyCodeSplit
-    public interface SaveAsEntityProxy extends Proxy<SaveAsEntityPresenter> {
-    }
-
     private EntityTabData tabData;
     private NamedEntity entity;
 
@@ -99,5 +88,15 @@ public class SaveAsEntityPresenter
     @Override
     public void onHide(final boolean autoClose, final boolean ok) {
         // Do nothing.
+    }
+
+    public interface SaveAsEntityView extends View, HasUiHandlers<PopupUiHandlers> {
+        String getName();
+
+        void setName(String name);
+    }
+
+    @ProxyCodeSplit
+    public interface SaveAsEntityProxy extends Proxy<SaveAsEntityPresenter> {
     }
 }

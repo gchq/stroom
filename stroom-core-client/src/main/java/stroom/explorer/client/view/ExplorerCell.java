@@ -1,6 +1,5 @@
 package stroom.explorer.client.view;
 
-import stroom.explorer.shared.ExplorerData;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
@@ -9,60 +8,16 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.shared.*;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import stroom.explorer.shared.ExplorerData;
 import stroom.util.client.ImageUtil;
 
 public class ExplorerCell extends AbstractCell<ExplorerData> {
-    public interface Style extends CssResource {
-        /**
-         * The path to the default CSS styles used by this resource.
-         */
-        String DEFAULT_CSS = "stroom/explorer/client/view/ExplorerCell.css";
-
-        String outer();
-
-        String expander();
-
-        String icon();
-
-        String text();
-    }
-
-    interface Resources extends ClientBundle {
-        ImageResource open();
-
-        ImageResource closed();
-
-        ImageResource leaf();
-
-        @Source(Style.DEFAULT_CSS)
-        Style style();
-    }
-
-    interface Template extends SafeHtmlTemplates {
-//        @Template("<div class=\"{0}\" style=\"width:{1}px\"></div>")
-//        SafeHtml indent(String indentClass, int indent);
-
-        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-        SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
-
-        @Template("<div class=\"{0}\"><img src=\"{1}\" /></div>")
-        SafeHtml icon(String iconClass, SafeUri iconUrl);
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml text(String textClass, SafeHtml text);
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml outer(String outerClass, SafeHtml content);
-
-        /**
-         * The wrapper around the image vertically aligned to the middle.
-         */
-        @Template("")
-        SafeHtml imageWrapperMiddle(SafeStyles styles, SafeHtml image);
-    }
-
     private static Template template;
     private static Resources resources;
 
@@ -144,5 +99,54 @@ public class ExplorerCell extends AbstractCell<ExplorerData> {
         final AbstractImagePrototype proto = AbstractImagePrototype.create(res);
         final SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
         return image;
+    }
+
+    public interface Style extends CssResource {
+        /**
+         * The path to the default CSS styles used by this resource.
+         */
+        String DEFAULT_CSS = "stroom/explorer/client/view/ExplorerCell.css";
+
+        String outer();
+
+        String expander();
+
+        String icon();
+
+        String text();
+    }
+
+    interface Resources extends ClientBundle {
+        ImageResource open();
+
+        ImageResource closed();
+
+        ImageResource leaf();
+
+        @Source(Style.DEFAULT_CSS)
+        Style style();
+    }
+
+    interface Template extends SafeHtmlTemplates {
+//        @Template("<div class=\"{0}\" style=\"width:{1}px\"></div>")
+//        SafeHtml indent(String indentClass, int indent);
+
+        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
+        SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
+
+        @Template("<div class=\"{0}\"><img src=\"{1}\" /></div>")
+        SafeHtml icon(String iconClass, SafeUri iconUrl);
+
+        @Template("<div class=\"{0}\">{1}</div>")
+        SafeHtml text(String textClass, SafeHtml text);
+
+        @Template("<div class=\"{0}\">{1}</div>")
+        SafeHtml outer(String outerClass, SafeHtml content);
+
+        /**
+         * The wrapper around the image vertically aligned to the middle.
+         */
+        @Template("")
+        SafeHtml imageWrapperMiddle(SafeStyles styles, SafeHtml image);
     }
 }

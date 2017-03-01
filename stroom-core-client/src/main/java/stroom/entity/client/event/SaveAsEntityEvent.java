@@ -20,17 +20,11 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
-
 import stroom.entity.client.EntityTabData;
 import stroom.entity.shared.PermissionInheritance;
 
 public class SaveAsEntityEvent extends GwtEvent<SaveAsEntityEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onSaveAs(final SaveAsEntityEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final PresenterWidget<?> dialog;
     private final EntityTabData tabData;
     private final String entityName;
@@ -44,7 +38,7 @@ public class SaveAsEntityEvent extends GwtEvent<SaveAsEntityEvent.Handler> {
     }
 
     public static void fire(final HasHandlers handlers, final PresenterWidget<?> dialog, final EntityTabData tabData,
-            final String entityName, final PermissionInheritance permissionInheritance) {
+                            final String entityName, final PermissionInheritance permissionInheritance) {
         handlers.fireEvent(new SaveAsEntityEvent(dialog, tabData, entityName, permissionInheritance));
     }
 
@@ -79,5 +73,9 @@ public class SaveAsEntityEvent extends GwtEvent<SaveAsEntityEvent.Handler> {
 
     public PermissionInheritance getPermissionInheritance() {
         return permissionInheritance;
+    }
+
+    public interface Handler extends EventHandler {
+        void onSaveAs(final SaveAsEntityEvent event);
     }
 }

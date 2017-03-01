@@ -23,21 +23,16 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.entity.client.presenter.MoveEntityPresenter.MoveEntityView;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.item.client.ItemListBox;
 
 public class MoveEntityViewImpl extends ViewImpl implements MoveEntityView {
-    public interface Binder extends UiBinder<Widget, MoveEntityViewImpl> {
-    }
-
+    private final Widget widget;
     @UiField
     SimplePanel foldersInner;
     @UiField
     ItemListBox<PermissionInheritance> permissionInheritance;
-
-    private final Widget widget;
 
     @Inject
     public MoveEntityViewImpl(final Binder binder) {
@@ -69,5 +64,8 @@ public class MoveEntityViewImpl extends ViewImpl implements MoveEntityView {
     @Override
     public void setPermissionInheritance(final PermissionInheritance permissionInheritance) {
         this.permissionInheritance.setSelectedItem(permissionInheritance);
+    }
+
+    public interface Binder extends UiBinder<Widget, MoveEntityViewImpl> {
     }
 }

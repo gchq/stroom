@@ -42,7 +42,6 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import javax.persistence.PersistenceException;
 import javax.persistence.RollbackException;
 import java.util.Map;
 import java.util.Set;
@@ -52,14 +51,12 @@ import java.util.Set;
 @Scope(value = StroomScope.PROTOTYPE, proxyMode = ScopedProxyMode.INTERFACES)
 class SecurityContextImpl implements SecurityContext {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(SecurityContextImpl.class);
-
+    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", "INTERNAL_PROCESSING_USER", false, true);
     private final UserPermissionsCache userPermissionCache;
     private final DocumentPermissionsCache documentPermissionsCache;
     private final UserService userService;
     private final DocumentPermissionService documentPermissionService;
     private final GenericEntityService genericEntityService;
-
-    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", "INTERNAL_PROCESSING_USER", false, true);
 
     @Inject
     SecurityContextImpl(final UserPermissionsCache userPermissionCache, final DocumentPermissionsCache documentPermissionsCache, final UserService userService, final DocumentPermissionService documentPermissionService, final GenericEntityService genericEntityService) {
@@ -286,13 +283,13 @@ class SecurityContextImpl implements SecurityContext {
                                 if (permissions.contains(allowedPermission)) {
 //                                    // Don't allow owner permissions to be inherited.
 //                                    if (!DocumentPermissionNames.OWNER.equals(allowedPermission)) {
-                                        try {
-                                            documentPermissionService.addPermission(userRef, destDocRef, allowedPermission);
-                                        } catch (final RollbackException | TransactionException e) {
-                                            LOGGER.debug(e.getMessage(), e);
-                                        } catch (final Exception e) {
-                                            LOGGER.error(e.getMessage(), e);
-                                        }
+                                    try {
+                                        documentPermissionService.addPermission(userRef, destDocRef, allowedPermission);
+                                    } catch (final RollbackException | TransactionException e) {
+                                        LOGGER.debug(e.getMessage(), e);
+                                    } catch (final Exception e) {
+                                        LOGGER.error(e.getMessage(), e);
+                                    }
 //                                    }
                                 }
                             }

@@ -135,7 +135,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
 
     private String getInfoHtml(final CacheNodeRow row) {
         final CacheInfo cacheInfo = row.getCacheInfo();
-        
+
         final StringBuilder sb = new StringBuilder();
         TooltipUtil.addHeading(sb, row.getNode().getName());
 

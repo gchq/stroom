@@ -29,16 +29,13 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.entity.client.presenter.CopyEntityPresenter.CopyEntityView;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.item.client.ItemListBox;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class CopyEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>implements CopyEntityView {
-    public interface Binder extends UiBinder<Widget, CopyEntityViewImpl> {
-    }
-
+    private final Widget widget;
     @UiField
     SimplePanel foldersOuter;
     @UiField
@@ -47,8 +44,6 @@ public class CopyEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>imple
     TextBox name;
     @UiField
     ItemListBox<PermissionInheritance> permissionInheritance;
-
-    private final Widget widget;
 
     @Inject
     public CopyEntityViewImpl(final Binder binder) {
@@ -93,15 +88,15 @@ public class CopyEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>imple
         foldersInner.setWidget(view.asWidget());
     }
 
-//    @Override
-//    public void setFoldersVisible(final boolean visible) {
-//        foldersOuter.setVisible(visible);
-//    }
-
     @Override
     public PermissionInheritance getPermissionInheritance() {
         return permissionInheritance.getSelectedItem();
     }
+
+//    @Override
+//    public void setFoldersVisible(final boolean visible) {
+//        foldersOuter.setVisible(visible);
+//    }
 
     @Override
     public void setPermissionInheritance(final PermissionInheritance permissionInheritance) {
@@ -118,5 +113,8 @@ public class CopyEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>imple
     @Override
     public void focus() {
         name.setFocus(true);
+    }
+
+    public interface Binder extends UiBinder<Widget, CopyEntityViewImpl> {
     }
 }

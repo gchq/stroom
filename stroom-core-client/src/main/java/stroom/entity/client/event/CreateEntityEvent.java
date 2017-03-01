@@ -24,18 +24,12 @@ import stroom.entity.shared.DocRef;
 import stroom.entity.shared.PermissionInheritance;
 
 public class CreateEntityEvent extends GwtEvent<CreateEntityEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onCreate(final CreateEntityEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final MyPresenter<?, ?> presenter;
     private final String entityType;
     private final DocRef folder;
     private final String entityName;
     private final PermissionInheritance permissionInheritance;
-
     private CreateEntityEvent(final MyPresenter<?, ?> presenter, final String entityType, final DocRef folder,
                               final String entityName, final PermissionInheritance permissionInheritance) {
         this.presenter = presenter;
@@ -85,5 +79,9 @@ public class CreateEntityEvent extends GwtEvent<CreateEntityEvent.Handler> {
 
     public PermissionInheritance getPermissionInheritance() {
         return permissionInheritance;
+    }
+
+    public interface Handler extends EventHandler {
+        void onCreate(final CreateEntityEvent event);
     }
 }

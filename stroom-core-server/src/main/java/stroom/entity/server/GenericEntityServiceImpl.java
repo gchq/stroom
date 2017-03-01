@@ -16,19 +16,19 @@
 
 package stroom.entity.server;
 
-import stroom.entity.shared.Entity;
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
+import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityService;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.HasLoadById;
 import stroom.entity.shared.HasLoadByName;
 import stroom.entity.shared.HasLoadByUuid;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

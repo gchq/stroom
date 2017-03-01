@@ -16,11 +16,11 @@
 
 package stroom.entity.client.event;
 
-import stroom.entity.shared.DocRef;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
+import stroom.entity.shared.DocRef;
 import stroom.entity.shared.PermissionInheritance;
 
 public class CopyEntityEvent extends GwtEvent<CopyEntityEvent.Handler> {
@@ -32,7 +32,7 @@ public class CopyEntityEvent extends GwtEvent<CopyEntityEvent.Handler> {
     private final PermissionInheritance permissionInheritance;
 
     private CopyEntityEvent(final PresenterWidget<?> presenter, final DocRef document,
-            final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
+                            final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
         this.presenter = presenter;
         this.document = document;
         this.folder = folder;

@@ -39,7 +39,6 @@ import stroom.util.config.StroomProperties;
 import stroom.util.shared.EqualsUtil;
 
 import javax.persistence.Transient;
-import javax.print.Doc;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -102,7 +101,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         entity.setName(name);
         setFolder(entity, folder);
         final E result = entityServiceHelper.create(entity);
-        final DocRef dest = DocRef.create(result);
+        final DocRef dest = DocRefUtil.create(result);
 
         // Create the initial user permissions for this new document.
         switch (permissionInheritance) {
@@ -333,7 +332,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     @Override
     public E copy(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
-        final DocRef source = DocRef.create(entity);
+        final DocRef source = DocRefUtil.create(entity);
 
         // Check that we can read the entity that we are going to copy.
         checkReadPermission(entity);
@@ -346,7 +345,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         setFolder(entity, folder);
 
         final E result = entityServiceHelper.create(entity);
-        final DocRef dest = DocRef.create(result);
+        final DocRef dest = DocRefUtil.create(result);
 
         if (permissionInheritance != null) {
             switch (permissionInheritance) {
@@ -374,7 +373,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         setFolder(entity, folder);
 
         final E result = save(entity);
-        final DocRef dest = DocRef.create(result);
+        final DocRef dest = DocRefUtil.create(result);
 
         if (permissionInheritance != null) {
             switch (permissionInheritance) {

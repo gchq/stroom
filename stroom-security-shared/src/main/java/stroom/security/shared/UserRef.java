@@ -34,6 +34,12 @@ public class UserRef extends DocRef {
         this.group = group;
     }
 
+    public UserRef(final String type, final String uuid, final String name, final boolean group, final boolean enabled) {
+        super(type, null, uuid, name);
+        this.group = group;
+        this.enabled = enabled;
+    }
+
     public static UserRef create(final User user) {
         if (user == null) {
             return null;
@@ -44,13 +50,6 @@ public class UserRef extends DocRef {
         final String name = user.getName();
 
         return new UserRef(type, uuid, name, user.isGroup(), UserStatus.ENABLED.equals(user.getStatus()));
-    }
-
-
-    public UserRef(final String type, final String uuid, final String name, final boolean group, final boolean enabled) {
-        super(type, null, uuid, name);
-        this.group = group;
-        this.enabled = enabled;
     }
 
     public boolean isGroup() {

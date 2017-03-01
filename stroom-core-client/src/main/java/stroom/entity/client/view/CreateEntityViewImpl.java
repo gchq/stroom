@@ -29,16 +29,13 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.entity.client.presenter.CreateEntityPresenter.CreateEntityView;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.item.client.ItemListBox;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class CreateEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>implements CreateEntityView {
-    public interface Binder extends UiBinder<Widget, CreateEntityViewImpl> {
-    }
-
+    private final Widget widget;
     @UiField
     SimplePanel foldersOuter;
     @UiField
@@ -47,8 +44,6 @@ public class CreateEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>imp
     TextBox name;
     @UiField
     ItemListBox<PermissionInheritance> permissionInheritance;
-
-    private final Widget widget;
 
     @Inject
     public CreateEntityViewImpl(final Binder binder) {
@@ -117,5 +112,8 @@ public class CreateEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>imp
                 name.setFocus(true);
             }
         });
+    }
+
+    public interface Binder extends UiBinder<Widget, CreateEntityViewImpl> {
     }
 }
