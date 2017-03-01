@@ -16,11 +16,12 @@
 
 package stroom.entity.client.event;
 
-import stroom.entity.shared.DocRef;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
+import stroom.entity.shared.DocRef;
+import stroom.entity.shared.PermissionInheritance;
 
 public class CreateEntityEvent extends GwtEvent<CreateEntityEvent.Handler> {
     public interface Handler extends EventHandler {
@@ -33,18 +34,20 @@ public class CreateEntityEvent extends GwtEvent<CreateEntityEvent.Handler> {
     private final String entityType;
     private final DocRef folder;
     private final String entityName;
+    private final PermissionInheritance permissionInheritance;
 
     private CreateEntityEvent(final MyPresenter<?, ?> presenter, final String entityType, final DocRef folder,
-            final String entityName) {
+                              final String entityName, final PermissionInheritance permissionInheritance) {
         this.presenter = presenter;
         this.entityType = entityType;
         this.folder = folder;
         this.entityName = entityName;
+        this.permissionInheritance = permissionInheritance;
     }
 
     public static void fire(final HasHandlers handlers, final MyPresenter<?, ?> presenter, final String entityType,
-            final DocRef folder, final String entityName) {
-        handlers.fireEvent(new CreateEntityEvent(presenter, entityType, folder, entityName));
+                            final DocRef folder, final String entityName, final PermissionInheritance permissionInheritance) {
+        handlers.fireEvent(new CreateEntityEvent(presenter, entityType, folder, entityName, permissionInheritance));
     }
 
     public static Type<Handler> getType() {
@@ -78,5 +81,9 @@ public class CreateEntityEvent extends GwtEvent<CreateEntityEvent.Handler> {
 
     public String getEntityName() {
         return entityName;
+    }
+
+    public PermissionInheritance getPermissionInheritance() {
+        return permissionInheritance;
     }
 }

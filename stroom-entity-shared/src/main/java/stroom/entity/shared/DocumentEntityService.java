@@ -22,6 +22,8 @@ import java.util.Set;
 public interface DocumentEntityService<E extends DocumentEntity> extends BaseEntityService<E>, HasLoadByUuid<E>, ProvidesNamePattern {
     E create(DocRef folder, String name) throws RuntimeException;
 
+    E create(DocRef folder, String name, PermissionInheritance permissionInheritance) throws RuntimeException;
+
     E loadByName(DocRef folder, String name) throws RuntimeException;
 
     E loadByName(DocRef folder, String name, Set<String> fetchSet) throws RuntimeException;
@@ -29,12 +31,12 @@ public interface DocumentEntityService<E extends DocumentEntity> extends BaseEnt
     /**
      * Copy the entity to the specified folder with the specified name.
      */
-    E copy(E entity, DocRef folder, String name);
+    E copy(E entity, DocRef folder, String name, PermissionInheritance permissionInheritance);
 
     /**
      * Move the entity to the specified folder.
      */
-    E move(E entity, DocRef folder);
+    E move(E entity, DocRef folder, PermissionInheritance permissionInheritance);
 
     List<E> findByFolder(DocRef folder, Set<String> fetchSet) throws RuntimeException;
 

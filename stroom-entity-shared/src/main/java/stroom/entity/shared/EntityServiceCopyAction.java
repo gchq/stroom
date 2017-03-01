@@ -20,15 +20,17 @@ public class EntityServiceCopyAction<E extends Entity> extends AbstractEntityAct
     private static final long serialVersionUID = 800905016214418723L;
     private DocRef folder;
     private String name;
+    private PermissionInheritance permissionInheritance;
 
     public EntityServiceCopyAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public EntityServiceCopyAction(final E entity, final DocRef folder, final String name) {
+    public EntityServiceCopyAction(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
         super(entity, "Copy: " + entity + " - " + name);
         this.folder = folder;
         this.name = name;
+        this.permissionInheritance = permissionInheritance;
     }
 
     public DocRef getFolder() {
@@ -37,5 +39,9 @@ public class EntityServiceCopyAction<E extends Entity> extends AbstractEntityAct
 
     public String getName() {
         return name;
+    }
+
+    public PermissionInheritance getPermissionInheritance() {
+        return permissionInheritance;
     }
 }

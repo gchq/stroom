@@ -27,6 +27,7 @@ public class EntityChooser extends ExplorerDropDownTreePresenter {
     EntityChooser(final EventBus eventBus, final DropDownTreeView view,
                   final ClientDispatchAsync dispatcher) {
         super(eventBus, view, dispatcher);
+        setIncludeNullSelection(false);
     }
 
     @Override

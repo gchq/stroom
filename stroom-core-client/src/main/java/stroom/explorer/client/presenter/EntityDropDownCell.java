@@ -34,7 +34,7 @@ public class EntityDropDownCell extends DropDownCell<DocRef> {
     @Inject
     public EntityDropDownCell(final ExplorerDropDownTreePresenter explorerDropDownTreePresenter) {
         this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
-        setUnselectedText("None");
+        changeSelection(null);
 
         explorerDropDownTreePresenter.addDataSelectionHandler(new DataSelectionHandler<ExplorerData>() {
             @Override
@@ -46,8 +46,6 @@ public class EntityDropDownCell extends DropDownCell<DocRef> {
 
     public void setUnselectedText(final String unselectedText) {
         this.unselectedText = unselectedText;
-        explorerDropDownTreePresenter.setUnselectedText(unselectedText);
-        changeSelection(null);
     }
 
     @Override

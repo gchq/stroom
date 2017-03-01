@@ -99,9 +99,10 @@ public class ExplorerCell extends AbstractCell<ExplorerData> {
                         expanderIcon = getImageHtml(resources.closed());
                         break;
                 }
-            } else {
-                expanderIcon = getImageHtml(resources.leaf());
             }
+//            else {
+//                expanderIcon = getImageHtml(resources.leaf());
+//            }
 
             int indent = item.getDepth();
 //            if (item.isLeaf()) {
@@ -111,11 +112,23 @@ public class ExplorerCell extends AbstractCell<ExplorerData> {
 
 //            final SafeHtml indentHtml = template.indent(style.indent(), indent);
 
-            final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
-            final SafeHtml expanderHtml = template.expander(style.expander(), paddingLeft, expanderIcon);
-            final SafeUri safeUri = UriUtils.fromTrustedString(ImageUtil.getImageURL() + item.getIconUrl());
-            final SafeHtml iconHtml = template.icon(style.icon(), safeUri);
-            final SafeHtml textHtml = template.text(style.text(), SafeHtmlUtils.fromString(item.getDisplayValue()));
+            SafeHtml expanderHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
+            SafeHtml iconHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
+            SafeHtml textHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
+
+            if (expanderIcon != null) {
+                final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
+                expanderHtml = template.expander(style.expander(), paddingLeft, expanderIcon);
+            }
+
+            if (item.getIconUrl() != null) {
+                final SafeUri safeUri = UriUtils.fromTrustedString(ImageUtil.getImageURL() + item.getIconUrl());
+                iconHtml = template.icon(style.icon(), safeUri);
+            }
+
+            if (item.getDisplayValue() != null) {
+                textHtml = template.text(style.text(), SafeHtmlUtils.fromString(item.getDisplayValue()));
+            }
 
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
             content.append(expanderHtml);

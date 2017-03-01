@@ -68,6 +68,10 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
-    public void createInitialDocumentPermissions(final String documentType, final String documentUuid, final String folderUuid) {
+    public void clearDocumentPermissions(final String documentType, final String documentUuid) {
+    }
+
+    @Override
+    public void addDocumentPermissions(final String sourceType, final String sourceUuid, final String documentType, final String documentUuid, final boolean owner) {
     }
 }

@@ -138,12 +138,16 @@ public class DocumentPermissionsTabPresenter
 
     private void remove() {
         final UserRef userRef = userListPresenter.getSelectionModel().getSelected();
+        userListPresenter.getSelectionModel().clear();
+
         if (userRef != null) {
-            final Set<String> permissionsToRemove = documentPermissions.getUserPermissions().get(userRef);
-            if (permissionsToRemove != null) {
+            final Set<String> currentPermissions = documentPermissions.getUserPermissions().get(userRef);
+            if (currentPermissions != null) {
+                final Set<String> permissionsToRemove = new HashSet<>(currentPermissions);
                 for (final String permission : permissionsToRemove) {
                     permissionsListPresenter.removePermission(userRef, permission);
                 }
+                documentPermissions.getUserPermissions().remove(userRef);
             }
 
             refreshUserList();

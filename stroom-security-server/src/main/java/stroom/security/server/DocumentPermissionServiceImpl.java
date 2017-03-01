@@ -17,6 +17,7 @@
 package stroom.security.server;
 
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.util.SQLBuilder;
@@ -25,10 +26,12 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityService;
+import stroom.entity.shared.SQLNameConstants;
 import stroom.security.shared.DocumentPermissionKey;
 import stroom.security.shared.DocumentPermissionKeySet;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
+import stroom.security.shared.User.UserStatus;
 import stroom.security.shared.UserRef;
 import stroom.util.logging.StroomLogger;
 
@@ -40,15 +43,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Transactional
+@Transactional(propagation = Propagation.REQUIRES_NEW)
 @Component
 public class DocumentPermissionServiceImpl implements DocumentPermissionService {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(DocumentPermissionServiceImpl.class);
 
-    private static final String SQL_INSERT_USER_PERMISSIONS;
-    private static final String SQL_DELETE_USER_PERMISSIONS;
+    private static final String SQL_INSERT_PERMISSION;
+    private static final String SQL_DELETE_PERMISSION;
     private static final String SQL_GET_PERMISSION_FOR_DOCUMENT;
     private static final String SQL_GET_PERMISSION_KEYSET_FOR_USER;
+    private static final String SQL_DELETE_DOCUMENT_PERMISSIONS;
+    private static final String SQL_DELETE_USER_PERMISSIONS;
 
     static {
         final StringBuilder sql = new StringBuilder();
@@ -66,7 +71,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         sql.append(DocumentPermission.PERMISSION);
         sql.append(")");
         sql.append(" VALUES (?,?,?,?,?)");
-        SQL_INSERT_USER_PERMISSIONS = sql.toString();
+        SQL_INSERT_PERMISSION = sql.toString();
     }
 
     static {
@@ -85,6 +90,29 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         sql.append(" AND ");
         sql.append(DocumentPermission.PERMISSION);
         sql.append(" = ?");
+        SQL_DELETE_PERMISSION = sql.toString();
+    }
+
+    static {
+        final StringBuilder sql = new StringBuilder();
+        sql.append("DELETE FROM ");
+        sql.append(DocumentPermission.TABLE_NAME);
+        sql.append(" WHERE ");
+        sql.append(DocumentPermission.DOC_TYPE);
+        sql.append(" = ?");
+        sql.append(" AND ");
+        sql.append(DocumentPermission.DOC_UUID);
+        sql.append(" = ?");
+        SQL_DELETE_DOCUMENT_PERMISSIONS = sql.toString();
+    }
+
+    static {
+        final StringBuilder sql = new StringBuilder();
+        sql.append("DELETE FROM ");
+        sql.append(DocumentPermission.TABLE_NAME);
+        sql.append(" WHERE ");
+        sql.append(DocumentPermission.USER_UUID);
+        sql.append(" = ?");
         SQL_DELETE_USER_PERMISSIONS = sql.toString();
     }
 
@@ -97,6 +125,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         sql.append(User.NAME);
         sql.append(", user.");
         sql.append(User.GROUP);
+        sql.append(", user.");
+        sql.append(SQLNameConstants.STATUS);
         sql.append(", doc.");
         sql.append(DocumentPermission.PERMISSION);
 
@@ -187,16 +217,12 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 final String uuid = (String) arr[0];
                 final String name = (String) arr[1];
                 final boolean group = (Boolean) arr[2];
-                final String permission = (String) arr[3];
+                final byte status = (Byte) arr[3];
+                final String permission = (String) arr[4];
 
-                final UserRef userRef = new UserRef(User.ENTITY_TYPE, uuid, name, group);
+                final UserRef userRef = new UserRef(User.ENTITY_TYPE, uuid, name, group, UserStatus.ENABLED.getPrimitiveValue() == status);
 
-                Set<String> permissions = userPermissions.get(userRef);
-                if (permissions == null) {
-                    permissions = new HashSet<>();
-                    userPermissions.put(userRef, permissions);
-                }
-                permissions.add(permission);
+                userPermissions.computeIfAbsent(userRef, k -> new HashSet<>()).add(permission);
             });
 
         } catch (final RuntimeException e) {
@@ -240,12 +266,12 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     @Override
     public void addPermission(final UserRef userRef, final DocRef document, final String permission) {
         try {
-            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_INSERT_USER_PERMISSIONS, 1, userRef.getUuid(), document.getType(), document.getUuid(), permission);
+            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_INSERT_PERMISSION, 1, userRef.getUuid(), document.getType(), document.getUuid(), permission);
             entityManager.executeNativeUpdate(sqlBuilder);
         } catch (final PersistenceException e) {
             // Expected exception.
             LOGGER.debug("addPermission()", e);
-            throw e;
+//            throw e;
         } catch (final RuntimeException e) {
             LOGGER.error("addPermission()", e);
             throw e;
@@ -255,10 +281,32 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     @Override
     public void removePermission(final UserRef userRef, final DocRef document, final String permission) {
         try {
-            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_DELETE_USER_PERMISSIONS, userRef.getUuid(), document.getType(), document.getUuid(), permission);
+            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_DELETE_PERMISSION, userRef.getUuid(), document.getType(), document.getUuid(), permission);
             entityManager.executeNativeUpdate(sqlBuilder);
         } catch (final RuntimeException e) {
             LOGGER.error("removePermission()", e);
+            throw e;
+        }
+    }
+
+    @Override
+    public void clearDocumentPermissions(final DocRef document) {
+        try {
+            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_DELETE_DOCUMENT_PERMISSIONS, document.getType(), document.getUuid());
+            entityManager.executeNativeUpdate(sqlBuilder);
+        } catch (final RuntimeException e) {
+            LOGGER.error("clearDocumentPermissions()", e);
+            throw e;
+        }
+    }
+
+    @Override
+    public void clearUserPermissions(final UserRef userRef) {
+        try {
+            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_DELETE_USER_PERMISSIONS, userRef.getUuid());
+            entityManager.executeNativeUpdate(sqlBuilder);
+        } catch (final RuntimeException e) {
+            LOGGER.error("clearUserPermissions()", e);
             throw e;
         }
     }

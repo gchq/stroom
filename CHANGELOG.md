@@ -10,6 +10,32 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.11] - 2017-02-23
+
+* Issue **#127** : Entity reference replacement should now work with references to 'StatisticsDataSource'.
+
+* Issue **#125** : Fixed display of active tasks which was broken by changes to the task summary table selection model.
+
+* Issue **#121** : Fixed cache clearing.
+
+* Issue **#122** : Improved the look of the cache screen.
+
+* Issue **#106** : Disabled users and groups are now displayed with greyed out icon in the UI.
+
+* Issue **#132** : The explorer tree is now cleared on login so that users with different permissions do not see the previous users items.
+
+* Issue **#128** : Improved error handling during login.
+
+* Issue **#130** : Users with no permissions are no longer able to open folders including the root System folder to attempt data browsing.
+
+* Issue **#120** : Entity chooser now treats 'None' as a special root level explorer node so that it can be selected in the same way as other nodes, e.g. visibly selected and responsive to double click.
+
+* Issue **#129** : Fixed NPE.
+
+* Issue **#119** : User permissions dialog now clears permissions when a user or group is deleted.
+
+* Issue **#115** : User permissions on documents can now be inherited from parent folders on create, copy and move.
+
 ## [v5.0-beta.10] - 2017-02-07
 
 * Issue **#109** : Added packetSize="65536" property to AJP connector in server.xml template.
@@ -134,7 +160,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Intial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.11...HEAD
+[v5.0-beta.11]: https://github.com/gchq/stroom/compare/v5.0-beta.10...v5.0-beta.11
 [v5.0-beta.10]: https://github.com/gchq/stroom/compare/v5.0-beta.9...v5.0-beta.10
 [v5.0-beta.9]: https://github.com/gchq/stroom/compare/v5.0-beta.8...v5.0-beta.9
 [v5.0-beta.8]: https://github.com/gchq/stroom/compare/v5.0-beta.7...v5.0-beta.8

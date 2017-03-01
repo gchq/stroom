@@ -16,11 +16,14 @@
 
 package stroom.cache.client.presenter;
 
+import com.google.gwt.cell.client.ButtonCell;
+import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import stroom.cache.shared.CacheClearAction;
 import stroom.cache.shared.CacheRow;
 import stroom.cache.shared.FetchCacheRowAction;
 import stroom.data.grid.client.DataGridView;
@@ -40,12 +43,28 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheRow>
                               final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<CacheRow>(true));
 
-        getView().addColumn(new Column<CacheRow, String>(new TextCell()) {
+        // Name
+        getView().addResizableColumn(new Column<CacheRow, String>(new TextCell()) {
             @Override
             public String getValue(final CacheRow row) {
                 return row.getCacheName();
             }
-        }, "Name");
+        }, "Name", 400);
+
+        // Clear.
+        final Column<CacheRow, String> clearColumn = new Column<CacheRow, String>(new ButtonCell()) {
+            @Override
+            public String getValue(final CacheRow row) {
+                return "Clear";
+            }
+        };
+        clearColumn.setFieldUpdater(new FieldUpdater<CacheRow, String>() {
+            @Override
+            public void update(final int index, final CacheRow row, final String value) {
+                dispatcher.execute(new CacheClearAction(row.getCacheName(), null), null);
+            }
+        });
+        getView().addColumn(clearColumn, "</br>", 50);
 
         getView().addEndColumn(new EndColumn<CacheRow>());
 

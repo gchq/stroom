@@ -21,10 +21,12 @@ import stroom.entity.client.event.CreateEntityEvent;
 import stroom.entity.client.event.ShowCreateEntityDialogEvent;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.Folder;
+import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.HasDisplayValue;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -62,6 +64,8 @@ public class CreateEntityPresenter
     @ProxyEvent
     @Override
     public void onCreate(final ShowCreateEntityDialogEvent event) {
+        getView().setPermissionInheritance(PermissionInheritance.INHERIT);
+
         entityType = event.getEntityType();
 
         entityTreePresenter.setSelectedItem(null);
@@ -119,7 +123,7 @@ public class CreateEntityPresenter
                     AlertEvent.fireWarn(CreateEntityPresenter.this,
                             "You must provide a name for the new " + entityType.toLowerCase(), null);
                 } else {
-                    CreateEntityEvent.fire(this, this, entityType, folder, entityName);
+                    CreateEntityEvent.fire(this, this, entityType, folder, entityName, getView().getPermissionInheritance());
                 }
             }
         } else {
@@ -151,6 +155,10 @@ public class CreateEntityPresenter
         void setFoldersVisible(final boolean visible);
 
         void focus();
+
+        PermissionInheritance getPermissionInheritance();
+
+        void setPermissionInheritance(PermissionInheritance permissionInheritance);
     }
 
     @ProxyCodeSplit

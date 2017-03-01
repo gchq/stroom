@@ -34,8 +34,10 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.SimpleExplorerItem;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.HasNodeState;
+import stroom.util.shared.HasNodeState.NodeState;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.DoubleSelectTest;
 import stroom.widget.util.client.MultiSelectEvent;
@@ -220,7 +222,11 @@ public class ExplorerTree extends AbstractExporerTree {
         setSelectedItem(selection);
     }
 
-    protected void setSelectedItem(final ExplorerData selection) {
+    protected void setSelectedItem(ExplorerData selection) {
+        if (treeModel.isIncludeNullSelection() && selection == null) {
+            selection = ExplorerTreeModel.NULL_SELECTION;
+        }
+
         doSelect(selection, new SelectionType(false, false));
     }
 

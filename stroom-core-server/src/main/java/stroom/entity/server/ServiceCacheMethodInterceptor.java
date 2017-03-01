@@ -16,6 +16,14 @@
 
 package stroom.entity.server;
 
+import net.sf.ehcache.Ehcache;
+import stroom.entity.shared.Clearable;
+import stroom.entity.shared.DocRef;
+import stroom.entity.shared.Entity;
+import stroom.entity.shared.EntityService;
+import stroom.entity.shared.EntityServiceException;
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
 import com.googlecode.ehcache.annotations.key.ListCacheKeyGenerator;
 import com.googlecode.ehcache.annotations.key.ReadOnlyList;
 import net.sf.ehcache.Cache;
@@ -26,14 +34,6 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.framework.Advised;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.Clearable;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.Entity;
-import stroom.entity.shared.EntityService;
-import stroom.entity.shared.EntityServiceException;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 
 import javax.annotation.Resource;
 import java.io.Serializable;
@@ -52,11 +52,11 @@ public class ServiceCacheMethodInterceptor implements MethodInterceptor, Initial
     ServiceCacheMethodInterceptorTransactionHelper serviceCacheMethodInterceptorTransactionHelper;
     @Resource
     private CacheManager cacheManager;
-    private Cache cache;
+    private Ehcache cache;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        cache = cacheManager.getCache("serviceCache");
+        cache = cacheManager.getEhcache("serviceCache");
     }
 
     @Override

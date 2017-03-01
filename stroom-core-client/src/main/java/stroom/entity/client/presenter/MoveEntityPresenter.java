@@ -29,6 +29,7 @@ import stroom.entity.shared.Folder;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.ExplorerData;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.entity.shared.PermissionInheritance;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -57,6 +58,8 @@ public class MoveEntityPresenter
     @ProxyEvent
     @Override
     public void onMove(final ShowMoveEntityDialogEvent event) {
+        getView().setPermissionInheritance(PermissionInheritance.INHERIT);
+
         this.explorerDataList = event.getExplorerDataList();
 
         entityTreePresenter.setSelectedItem(null);
@@ -85,7 +88,7 @@ public class MoveEntityPresenter
     public void onHideRequest(final boolean autoClose, final boolean ok) {
         if (ok) {
             final ExplorerData folder = entityTreePresenter.getSelectedItem();
-            MoveEntityEvent.fire(MoveEntityPresenter.this, MoveEntityPresenter.this, folder, explorerDataList);
+            MoveEntityEvent.fire(MoveEntityPresenter.this, MoveEntityPresenter.this, folder, explorerDataList, getView().getPermissionInheritance());
         } else {
             HidePopupEvent.fire(MoveEntityPresenter.this, MoveEntityPresenter.this, autoClose, ok);
         }
@@ -98,6 +101,10 @@ public class MoveEntityPresenter
 
     public interface MoveEntityView extends View {
         void setFolderView(View view);
+
+        PermissionInheritance getPermissionInheritance();
+
+        void setPermissionInheritance(PermissionInheritance permissionInheritance);
     }
 
     @ProxyCodeSplit

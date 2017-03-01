@@ -30,6 +30,7 @@ import stroom.entity.client.EntityTabData;
 import stroom.entity.client.event.SaveAsEntityEvent;
 import stroom.entity.client.event.ShowSaveAsEntityDialogEvent;
 import stroom.entity.shared.NamedEntity;
+import stroom.entity.shared.PermissionInheritance;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -84,7 +85,7 @@ public class SaveAsEntityPresenter
                 AlertEvent.fireWarn(SaveAsEntityPresenter.this, "You must provide a new name for " + entity.getName(),
                         null);
             } else {
-                SaveAsEntityEvent.fire(this, this, tabData, entityName);
+                SaveAsEntityEvent.fire(this, this, tabData, entityName, PermissionInheritance.NONE);
             }
         } else {
             HidePopupEvent.fire(this, this, autoClose, ok);

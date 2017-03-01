@@ -25,6 +25,7 @@ import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.PermissionInheritance;
 import stroom.script.shared.FindScriptCriteria;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;
@@ -53,7 +54,7 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
     }
 
     @Override
-    public Script copy(final Script entity, final DocRef folder, final String name) {
+    public Script copy(final Script entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
         // Load resources or dependencies if we don't have them. This can happen
         // as they are loaded lazily by the UI and so won't always be available
         // on the entity being saved.
@@ -71,7 +72,7 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
             }
         }
 
-        return super.copy(entity, folder, name);
+        return super.copy(entity, folder, name, permissionInheritance);
     }
 
     @Override

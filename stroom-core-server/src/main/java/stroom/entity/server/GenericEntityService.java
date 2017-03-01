@@ -56,7 +56,7 @@ public interface GenericEntityService {
 
     <E extends Entity> E save(E entity);
 
-    <E extends DocumentEntity> E saveAs(E entity, DocRef folder, String name);
+//    <E extends DocumentEntity> E saveAs(E entity, DocRef folder, String name);
 
     <E extends Entity> Boolean delete(E entity);
 

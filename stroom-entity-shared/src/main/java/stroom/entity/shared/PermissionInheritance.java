@@ -14,10 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.widget.dropdowntree.client.presenter;
+package stroom.entity.shared;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.util.shared.HasDisplayValue;
 
-public interface DropDownTreeUiHandlers extends UiHandlers {
-    void nameFilterChanged(String text);
+public enum PermissionInheritance implements HasDisplayValue {
+    NONE("None"), COMBINED("Combined"), INHERIT("Inherit");
+
+    private final String displayValue;
+
+    PermissionInheritance(final String displayValue) {
+        this.displayValue = displayValue;
+    }
+
+    @Override
+    public String getDisplayValue() {
+        return displayValue;
+    }
 }

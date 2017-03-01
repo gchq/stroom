@@ -19,17 +19,23 @@ package stroom.entity.shared;
 public class EntityServiceMoveAction<E extends Entity> extends AbstractEntityAction<E> {
     private static final long serialVersionUID = 800905016214418723L;
     private DocRef folder;
+    private PermissionInheritance permissionInheritance;
 
     public EntityServiceMoveAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public EntityServiceMoveAction(final E entity, final DocRef folder) {
+    public EntityServiceMoveAction(final E entity, final DocRef folder, final PermissionInheritance permissionInheritance) {
         super(entity, "Move: " + entity);
         this.folder = folder;
+        this.permissionInheritance = permissionInheritance;
     }
 
     public DocRef getFolder() {
         return folder;
+    }
+
+    public PermissionInheritance getPermissionInheritance() {
+        return permissionInheritance;
     }
 }

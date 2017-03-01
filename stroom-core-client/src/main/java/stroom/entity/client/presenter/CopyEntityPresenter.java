@@ -33,6 +33,7 @@ import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.entity.shared.PermissionInheritance;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -64,6 +65,7 @@ public class CopyEntityPresenter
     @ProxyEvent
     @Override
     public void onCopy(final ShowCopyEntityDialogEvent event) {
+        getView().setPermissionInheritance(PermissionInheritance.INHERIT);
         explorerDataList = event.getExplorerDataList();
         copyNextEntity();
     }
@@ -137,7 +139,7 @@ public class CopyEntityPresenter
                         "You must provide a name for the new " + entity.getType().toLowerCase(), null);
             } else {
                 CopyEntityEvent.fire(CopyEntityPresenter.this, CopyEntityPresenter.this, entity.getDocRef(),
-                        folder, entityName);
+                        folder, entityName, getView().getPermissionInheritance());
             }
             // }
         } else {
@@ -168,6 +170,10 @@ public class CopyEntityPresenter
         void setFolderView(View view);
 
         void focus();
+
+        PermissionInheritance getPermissionInheritance();
+
+        void setPermissionInheritance(PermissionInheritance permissionInheritance);
     }
 
     @ProxyCodeSplit

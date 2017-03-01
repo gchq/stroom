@@ -23,32 +23,45 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-
 import stroom.cache.shared.CacheClearAction;
+import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheNodeRow;
 import stroom.cache.shared.CacheRow;
 import stroom.cache.shared.FetchCacheNodeRowAction;
+import stroom.cell.info.client.InfoColumn;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.streamstore.client.presenter.ActionDataProvider;
+import stroom.widget.button.client.GlyphIcon;
+import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
-public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<CacheNodeRow>>implements HasRead<CacheRow> {
+public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<CacheNodeRow>> implements HasRead<CacheRow> {
     private static final int SMALL_COL = 90;
     private static final int MEDIUM_COL = 150;
 
     private final FetchCacheNodeRowAction action = new FetchCacheNodeRowAction();
     private final ClientDispatchAsync dispatcher;
+    private final TooltipPresenter tooltipPresenter;
+
     private ActionDataProvider<CacheNodeRow> dataProvider;
 
     @Inject
     public CacheNodeListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-            final TooltipPresenter tooltipPresenter) {
+                                  final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<CacheNodeRow>(false));
         this.dispatcher = dispatcher;
+        this.tooltipPresenter = tooltipPresenter;
+
+        // Info.
+        addInfoColumn();
 
         // Node.
         getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
@@ -58,34 +71,13 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
             }
         }, "Node", MEDIUM_COL);
 
-        // Cache Hits.
+        // Hits.
         getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
             @Override
             public String getValue(final CacheNodeRow row) {
                 return Long.toString(row.getCacheInfo().getCacheHits());
             }
-        }, "Cache Hits:", SMALL_COL);
-        // In Memory Hits.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getInMemoryHits());
-            }
-        }, "Memory", SMALL_COL);
-        // Off Heap Hits.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getOffHeapHits());
-            }
-        }, "Off Heap", SMALL_COL);
-        // On Disk Hits.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getOnDiskHits());
-            }
-        }, "Disk", SMALL_COL);
+        }, "Hits", SMALL_COL);
 
         // Misses.
         getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
@@ -93,96 +85,15 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
             public String getValue(final CacheNodeRow row) {
                 return Long.toString(row.getCacheInfo().getCacheMisses());
             }
-        }, "Cache Misses:", SMALL_COL);
-        // In Memory Misses.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getInMemoryMisses());
-            }
-        }, "Memory", SMALL_COL);
-        // Off Heap Misses.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getOffHeapMisses());
-            }
-        }, "Off Heap", SMALL_COL);
-        // On Disk Misses.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getOnDiskMisses());
-            }
-        }, "Disk", SMALL_COL);
+        }, "Misses", SMALL_COL);
 
-        // Object Count.
+        // Objects.
         getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
             @Override
             public String getValue(final CacheNodeRow row) {
                 return Long.toString(row.getCacheInfo().getObjectCount());
             }
-        }, "Object Count:", SMALL_COL);
-        // Memory Store Object Count.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getMemoryStoreObjectCount());
-            }
-        }, "Memory", SMALL_COL);
-        // Off Heap Store Object Count.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getOffHeapStoreObjectCount());
-            }
-        }, "Off Heap", SMALL_COL);
-        // Disk Store Object Count.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getDiskStoreObjectCount());
-            }
-        }, "Disk", SMALL_COL);
-
-        // Average Get Time.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Float.toString(row.getCacheInfo().getAverageGetTime());
-            }
-        }, "Average Get Time", MEDIUM_COL);
-        // Eviction Count.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getEvictionCount());
-            }
-        }, "Eviction Count", MEDIUM_COL);
-
-        // Searches Per Second.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getSearchesPerSecond());
-            }
-        }, "Searches Per Second", MEDIUM_COL);
-
-        // Average Search Time.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getAverageSearchTime());
-            }
-        }, "Average Search Time", MEDIUM_COL);
-
-        // Writer Queue Size.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getWriterQueueSize());
-            }
-        }, "Writer Queue Size", MEDIUM_COL);
+        }, "Objects", SMALL_COL);
 
         // Clear.
         final Column<CacheNodeRow, String> clearColumn = new Column<CacheNodeRow, String>(new ButtonCell()) {
@@ -197,8 +108,70 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                 dispatcher.execute(new CacheClearAction(row.getCacheInfo().getName(), row.getNode()), null);
             }
         });
-        getView().addColumn(clearColumn, "</br>");
+        getView().addColumn(clearColumn, "</br>", 50);
+
         getView().addEndColumn(new EndColumn<CacheNodeRow>());
+    }
+
+    private void addInfoColumn() {
+        // Info column.
+        final InfoColumn<CacheNodeRow> infoColumn = new InfoColumn<CacheNodeRow>() {
+            @Override
+            public GlyphIcon getValue(final CacheNodeRow object) {
+                return GlyphIcons.INFO;
+            }
+
+            @Override
+            protected void showInfo(final CacheNodeRow row, final int x, final int y) {
+                final String html = getInfoHtml(row);
+                tooltipPresenter.setHTML(html);
+                final PopupPosition popupPosition = new PopupPosition(x, y);
+                ShowPopupEvent.fire(CacheNodeListPresenter.this, tooltipPresenter, PopupType.POPUP,
+                        popupPosition, null);
+            }
+        };
+        getView().addColumn(infoColumn, "<br/>", 17);
+    }
+
+    private String getInfoHtml(final CacheNodeRow row) {
+        final CacheInfo cacheInfo = row.getCacheInfo();
+        
+        final StringBuilder sb = new StringBuilder();
+        TooltipUtil.addHeading(sb, row.getNode().getName());
+
+        TooltipUtil.addBreak(sb);
+
+        TooltipUtil.addHeading(sb, "Cache Hits");
+        TooltipUtil.addRowData(sb, "Memory", cacheInfo.getInMemoryHits());
+        TooltipUtil.addRowData(sb, "Off Heap", cacheInfo.getOffHeapHits());
+        TooltipUtil.addRowData(sb, "Disk", cacheInfo.getOnDiskHits());
+        TooltipUtil.addRowData(sb, "Total", cacheInfo.getCacheHits());
+
+        TooltipUtil.addBreak(sb);
+
+        TooltipUtil.addHeading(sb, "Cache Misses");
+        TooltipUtil.addRowData(sb, "Memory", cacheInfo.getInMemoryMisses());
+        TooltipUtil.addRowData(sb, "Off Heap", cacheInfo.getOffHeapMisses());
+        TooltipUtil.addRowData(sb, "Disk", cacheInfo.getOnDiskMisses());
+        TooltipUtil.addRowData(sb, "Total", cacheInfo.getCacheMisses());
+
+        TooltipUtil.addBreak(sb);
+
+        TooltipUtil.addHeading(sb, "Objects");
+        TooltipUtil.addRowData(sb, "Memory", cacheInfo.getMemoryStoreObjectCount());
+        TooltipUtil.addRowData(sb, "Off Heap", cacheInfo.getOffHeapStoreObjectCount());
+        TooltipUtil.addRowData(sb, "Disk", cacheInfo.getDiskStoreObjectCount());
+        TooltipUtil.addRowData(sb, "Total", cacheInfo.getObjectCount());
+
+        TooltipUtil.addBreak(sb);
+
+        TooltipUtil.addRowData(sb, "Average Get Time", cacheInfo.getAverageGetTime());
+        TooltipUtil.addRowData(sb, "Eviction Count", cacheInfo.getEvictionCount());
+        TooltipUtil.addRowData(sb, "Searches Per Second", cacheInfo.getSearchesPerSecond());
+        TooltipUtil.addRowData(sb, "Average Search Time", cacheInfo.getAverageSearchTime());
+        TooltipUtil.addRowData(sb, "Writer Queue Size", cacheInfo.getWriterQueueSize());
+
+        return sb.toString();
     }
 
     @Override

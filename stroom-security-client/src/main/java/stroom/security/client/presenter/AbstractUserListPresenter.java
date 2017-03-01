@@ -46,11 +46,19 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
         dataGridView.addColumn(new Column<UserRef, GlyphIcon>(new FACell()) {
             @Override
             public GlyphIcon getValue(final UserRef userRef) {
-                if (!userRef.isGroup()) {
-                    return GlyphIcons.USER;
+                if (userRef.isEnabled()) {
+                    if (!userRef.isGroup()) {
+                        return GlyphIcons.USER;
+                    }
+
+                    return GlyphIcons.USER_GROUP;
                 }
 
-                return GlyphIcons.USER_GROUP;
+                if (!userRef.isGroup()) {
+                    return GlyphIcons.USER_DISABLED;
+                }
+
+                return GlyphIcons.USER_GROUP_DISABLED;
             }
         }, "</br>", 20);
 

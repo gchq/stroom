@@ -95,33 +95,40 @@ public class DBRealm extends AuthenticatingRealm {
 
     private AuthenticationInfo authenticateWithCertificate(final CertificateAuthenticationToken token)
             throws AuthenticationException {
-        if (!allowCertificateAuthentication()) {
-            throw new EntityServiceException("Certificate authentication is not allowed");
-        }
+        try {
+            if (!allowCertificateAuthentication()) {
+                throw new EntityServiceException("Certificate authentication is not allowed");
+            }
 
-        final Pattern pattern = getPattern();
+            final Pattern pattern = getPattern();
 
-        if (pattern == null) {
-            throw new EntityServiceException("No valid certificateDNPattern found");
-        }
+            if (pattern == null) {
+                throw new EntityServiceException("No valid certificateDNPattern found");
+            }
 
-        final String dn = (String) token.getCredentials();
-        final String username = CertificateUtil.extractUserIdFromDN(dn, pattern);
+            final String dn = (String) token.getCredentials();
+            final String username = CertificateUtil.extractUserIdFromDN(dn, pattern);
 
-        if (LOGGER.isDebugEnabled()) {
-            final String cn = CertificateUtil.extractCNFromDN(dn);
-            LOGGER.debug("authenticate() - dn=" + dn + ", cn=" + cn + ", userId=" + username);
-        }
+            if (LOGGER.isDebugEnabled()) {
+                final String cn = CertificateUtil.extractCNFromDN(dn);
+                LOGGER.debug("authenticate() - dn=" + dn + ", cn=" + cn + ", userId=" + username);
+            }
 
-        final User user = loadUserByUsername(username);
+            final User user = loadUserByUsername(username);
 
-        if (StringUtils.hasText(username) && user == null) {
-            throw new EntityServiceException(username + " does not exist");
-        }
+            if (StringUtils.hasText(username) && user == null) {
+                throw new EntityServiceException(username + " does not exist");
+            }
 
-        if (user != null) {
-            check(user);
-            return new SimpleAuthenticationInfo(user, user.getPasswordHash(), getName());
+            if (user != null) {
+                check(user);
+                return new SimpleAuthenticationInfo(user, user.getPasswordHash(), getName());
+            }
+        } catch (final AuthenticationException e) {
+            throw e;
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new BadCredentialsException(e.getMessage());
         }
 
         return null;
@@ -129,22 +136,29 @@ public class DBRealm extends AuthenticatingRealm {
 
     private AuthenticationInfo authenticateWithUsernamePassword(final UsernamePasswordToken token)
             throws AuthenticationException {
-        final String username = token.getUsername();
+        try {
+            final String username = token.getUsername();
 
-        // Null username is invalid
-        if (username == null) {
-            throw new AccountException("Null user names are not allowed by this realm.");
-        }
+            // Null username is invalid
+            if (username == null) {
+                throw new AccountException("Null user names are not allowed by this realm.");
+            }
 
-        final User user = loadUserByUsername(username);
+            final User user = loadUserByUsername(username);
 
-        if (StringUtils.hasText(username) && user == null) {
-            throw new BadCredentialsException("Bad Credentials");
-        }
+            if (StringUtils.hasText(username) && user == null) {
+                throw new BadCredentialsException("Bad Credentials");
+            }
 
-        if (user != null) {
-            check(user);
-            return new SimpleAuthenticationInfo(user, user.getPasswordHash(), getName());
+            if (user != null) {
+                check(user);
+                return new SimpleAuthenticationInfo(user, user.getPasswordHash(), getName());
+            }
+        } catch (final AuthenticationException e) {
+            throw e;
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new BadCredentialsException(e.getMessage());
         }
 
         return null;
@@ -187,33 +201,29 @@ public class DBRealm extends AuthenticatingRealm {
     }
 
     private User loadUserByUsername(final String username) throws DataAccessException {
-        if (!doneCreateOrRefreshAdminRole) {
-            doneCreateOrRefreshAdminRole = true;
-            createOrRefreshAdminUserGroup();
-        }
-
-        UserRef userRef = userService.getUserByName(username);
         User user = null;
-        if (userRef == null) {
-            // The requested system user does not exist.
-            if (UserService.INITIAL_ADMIN_ACCOUNT.equals(username)) {
-                userRef = createOrRefreshAdmin();
+
+        try {
+            if (!doneCreateOrRefreshAdminRole) {
+                doneCreateOrRefreshAdminRole = true;
+                createOrRefreshAdminUserGroup();
             }
-        }
 
-        if (userRef != null) {
-            user = userService.loadByUuid(userRef.getUuid());
-        }
+            UserRef userRef = userService.getUserByName(username);
+            if (userRef == null) {
+                // The requested system user does not exist.
+                if (UserService.INITIAL_ADMIN_ACCOUNT.equals(username)) {
+                    userRef = createOrRefreshAdmin();
+                }
+            }
 
-//        // If the requested user doesn't exist then return null.
-//        if (user == null) {
-//            return null;
-//        }
-//
-//        final String message = getMaintenanceMessage();
-//        if (StringUtils.hasText(message)) {
-//            throw new EntityServiceException(message);
-//        }
+            if (userRef != null) {
+                user = userService.loadByUuid(userRef.getUuid());
+            }
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            throw e;
+        }
 
         return user;
     }

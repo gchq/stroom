@@ -25,6 +25,7 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
+import stroom.entity.shared.PermissionInheritance;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;
@@ -90,8 +91,8 @@ public class TestFolderServiceImpl extends AbstractCoreIntegrationTest {
     public void testVersionCheck() {
         // commonTestControl.deleteAll();
         Folder dbGroupV1 = folderService.create(null, "Testing");
-        Folder dbGroupV2 = folderService.copy(dbGroupV1, null, "TestingV2");
-        Folder dbGroupV3 = folderService.copy(dbGroupV2, null, "TestingV3");
+        Folder dbGroupV2 = folderService.copy(dbGroupV1, null, "TestingV2", PermissionInheritance.INHERIT);
+        Folder dbGroupV3 = folderService.copy(dbGroupV2, null, "TestingV3", PermissionInheritance.INHERIT);
 
         // Make sure we can't save a stale object.
         try {

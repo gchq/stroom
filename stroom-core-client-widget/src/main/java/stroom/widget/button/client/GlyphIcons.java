@@ -57,6 +57,8 @@ public final class GlyphIcons {
     public static final GlyphIcon UPLOAD = new GlyphIcon("fa fa-arrow-up", GREEN, "Upload", true);
     public static final GlyphIcon USER = new GlyphIcon("fa fa-user", BLUE, "User", true);
     public static final GlyphIcon USER_GROUP = new GlyphIcon("fa fa-users", BLUE, "User Group", true);
+    public static final GlyphIcon USER_DISABLED = new GlyphIcon("fa fa-user", GREY, "User", true);
+    public static final GlyphIcon USER_GROUP_DISABLED = new GlyphIcon("fa fa-users", GREY, "User Group", true);
     public static final GlyphIcon VOLUMES = new GlyphIcon("fa fa-hdd-o", GREY, "Volumes", true);
 
     private GlyphIcons() {
