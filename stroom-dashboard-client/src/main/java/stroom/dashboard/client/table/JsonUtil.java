@@ -11,7 +11,7 @@ public class JsonUtil {
         return (T) obj;
     }
 
-    public static native String encode(Object obj) /*-{
-        return $wnd.JSON.encode(obj);
+    public static native String encode(final Object obj) /*-{
+        return $wnd.JSON.stringify(obj);
     }-*/;
 }
