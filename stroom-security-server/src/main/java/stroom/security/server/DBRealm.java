@@ -244,7 +244,7 @@ public class DBRealm extends AuthenticatingRealm {
             }
 
             if (userRef != null) {
-                user = userService.loadByUuid(userRef.getUuid());
+                user = userService.loadByUuidInsecure(userRef.getUuid());
             }
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);

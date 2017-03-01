@@ -1,3 +1,29 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+ext {
+    warDir = project(':stroom-app').file("src/main/webapp")
+    outputDir = "${warDir}/dashboard"
+    gwtBuildDir = "${project.buildDir}/gwt"
+    tmpDir = "${gwtBuildDir}/tmp"
+    workDir = "${gwtBuildDir}/work"
+    deployDir = "${gwtBuildDir}/deploy"
+    extraDir = "${gwtBuildDir}/extra"
+}
+
 dependencies {
     compile project(':stroom-dashboard-client')
 
@@ -21,20 +47,11 @@ dependencies {
 }
 
 task gwtCompile (dependsOn: classes, type: JavaExec) {
-    ext.gwtBuildDir = "${project.buildDir}/gwt"
-    def warDir = project(':stroom-app').file("src/main/webapp")
-    def workDir = "${gwtBuildDir}/work"
-    def tmpDir = "${gwtBuildDir}/tmp"
-    def deployDir = "${gwtBuildDir}/deploy"
-    def extraDir = "${gwtBuildDir}/extra"
-    def outputDir = "${warDir}/dashboard"
     def module = 'stroom.dashboard.DashboardApp'
 
-    workDir = tmpDir;
-
     doFirst {
-        file(outputDir).delete()
-        file(gwtBuildDir).delete()
+        delete outputDir
+        delete gwtBuildDir
         file(gwtBuildDir).mkdirs()
         file(tmpDir).mkdirs()
     }
@@ -49,11 +66,6 @@ task gwtCompile (dependsOn: classes, type: JavaExec) {
                 sourceSets.main.compileClasspath,       // Deps
         ]
     }
-
-    jvmArgs =
-            [
-                    "-Djava.io.tmpdir=${tmpDir}"
-            ]
 
     args =
             [
@@ -67,27 +79,19 @@ task gwtCompile (dependsOn: classes, type: JavaExec) {
                     '-deploy', deployDir,
                     '-extra', extraDir,
                     '-strict',
-                    module                               // Your GWT module
+                    module                                  // Your GWT module
             ]
 
+    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = '1G'
     maxHeapSize = '4G'
 }
 
-task gwtDevMode (dependsOn: classes, type: JavaExec) {
-    ext.gwtBuildDir = "${project.buildDir}/gwt"
-    def warDir = project(':stroom-app').file("src/main/webapp")
-    def workDir = "${gwtBuildDir}/work"
-    def tmpDir = "${gwtBuildDir}/tmp"
-    def deployDir = "${gwtBuildDir}/deploy"
-    def extraDir = "${gwtBuildDir}/extra"
-    def outputDir = "${warDir}/dashboard"
+task gwtDraftCompile (dependsOn: classes, type: JavaExec) {
     def module = 'stroom.dashboard.DashboardAppSuperDevModeChrome'
 
-    workDir = tmpDir;
-
     doFirst {
-        file(outputDir).delete()
+        delete outputDir
         file(gwtBuildDir).mkdirs()
         file(tmpDir).mkdirs()
     }
@@ -104,25 +108,64 @@ task gwtDevMode (dependsOn: classes, type: JavaExec) {
     }
 
     args =
-        [
-                '-logLevel', 'INFO',
-                '-workDir', workDir,
-                '-draftCompile',                        // Speeds up compile with 25%
-                '-XfragmentCount', '0',
-                '-optimize', '0',
-                '-failOnError',
-                '-localWorkers', '5',
-                '-incremental',
-                '-war', warDir,
-                '-deploy', deployDir,
-                '-extra', extraDir,
-                '-strict',
-                module                                  // Your GWT module
-        ]
+            [
+                    '-logLevel', 'INFO',
+                    '-workDir', workDir,
+                    '-draftCompile',                        // Speeds up compile with 25%
+                    '-XfragmentCount', '0',
+                    '-optimize', '0',
+                    '-failOnError',
+                    '-localWorkers', '5',
+                    '-incremental',
+                    '-war', warDir,
+                    '-deploy', deployDir,
+                    '-extra', extraDir,
+                    '-strict',
+                    module                                  // Your GWT module
+            ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = '1G'
     maxHeapSize = '4G'
+}
+
+task gwtSuperDevMode (dependsOn: classes, type: JavaExec) {
+    def module = 'stroom.dashboard.DashboardAppSuperDevModeChrome'
+
+    main = 'com.google.gwt.dev.DevMode'
+
+    classpath {
+        [
+                sourceSets.main.java.srcDirs,           // Java source
+                sourceSets.main.output.resourcesDir,    // Generated resources
+                sourceSets.main.output.classesDir,      // Generated classes
+                sourceSets.main.compileClasspath,       // Deps
+        ]
+    }
+
+    args =
+            [
+                    '-logLevel', 'INFO',
+                    '-workDir', workDir,
+                    '-failOnError',
+                    '-war', warDir,
+                    '-deploy', deployDir,
+                    '-extra', extraDir,
+                    '-strict',
+                    '-noserver',
+                    module                                  // Your GWT module
+            ]
+
+    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
+    minHeapSize = '1G'
+    maxHeapSize = '4G'
+}
+
+task gwtClean {
+    delete outputDir
+    delete gwtBuildDir
+    file(gwtBuildDir).mkdirs()
+    file(tmpDir).mkdirs()
 }
 
 build.dependsOn('gwtCompile')
