@@ -23,7 +23,7 @@ public class Environment {
         environment.servlets().setBaseResource(new PathResource(Paths.get("src/main/resources/webapp/")));
 
         // We want Stroom to use the root path so we need to move Dropwizard's path.
-        environment.jersey().setUrlPattern("/api/*");
+        environment.jersey().setUrlPattern("/rest/*");
 
         // We need to set this otherwise we won't have all the beans we need.
         System.setProperty("spring.profiles.active", String.format("%s,%s", StroomSpringProfiles.PROD, SecurityConfiguration.PROD_SECURITY));
