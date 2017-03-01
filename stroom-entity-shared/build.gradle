@@ -8,4 +8,5 @@ dependencies {
     compile 'javax.validation:validation-api:1.0.0.GA'
 
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
+    compile 'com.google.jsinterop:jsinterop-annotations:1.0.1'
 }

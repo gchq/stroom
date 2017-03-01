@@ -16,15 +16,11 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.web.bindery.autobean.shared.AutoBean;
-import com.google.web.bindery.autobean.shared.AutoBeanCodex;
-import com.google.web.bindery.autobean.shared.AutoBeanUtils;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.dashboard.client.table.JsonUtil;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
@@ -104,6 +100,14 @@ public class SearchBus {
         final Map<DashboardQueryKey, SearchRequest> searchActionMap = new HashMap<>();
         for (final Entry<DashboardQueryKey, SearchModel> entry : activeSearchMap.entrySet()) {
             final DashboardQueryKey queryKey = entry.getKey();
+
+
+
+            final String json = JsonUtil.encode(queryKey);
+            final DashboardQueryKey test = JsonUtil.decode(json);
+
+
+
             final SearchModel searchModel = entry.getValue();
             final SearchRequest searchAction = searchModel.getRequest();
             searchActionMap.put(queryKey, searchAction);

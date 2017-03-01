@@ -114,7 +114,7 @@ public class TestSearchRequestMapper {
     @Test
     public void testRequest() throws Exception {
         final SearchRequestMapper mapper = new SearchRequestMapper(new MockVisualisationService());
-        final stroom.query.api.SearchRequest result = mapper.mapRequest(new DashboardQueryKey("test", 1), getSearchRequest());
+        final stroom.query.api.SearchRequest result = mapper.mapRequest(DashboardQueryKey.create("test", 1), getSearchRequest());
 
         test(result, stroom.query.api.SearchRequest.class, "testRequest");
     }

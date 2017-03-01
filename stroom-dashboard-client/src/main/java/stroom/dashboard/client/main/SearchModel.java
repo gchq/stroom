@@ -130,7 +130,7 @@ public class SearchModel {
                 replaceExpressionParameters(builder, expression, currentParameterMap);
                 currentExpression = builder.build();
 
-                currentQueryKey = new DashboardQueryKey(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
+                currentQueryKey = DashboardQueryKey.create(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
                 currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, incremental);
                 activeSearch = currentSearch;
 
@@ -312,7 +312,7 @@ public class SearchModel {
     public void setDashboardUUID(final DashboardUUID dashboardUUID) {
         this.dashboardUUID = dashboardUUID;
         destroy();
-        currentQueryKey = new DashboardQueryKey(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
+        currentQueryKey = DashboardQueryKey.create(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
     }
 
     public SearchResponse getCurrentResult() {
