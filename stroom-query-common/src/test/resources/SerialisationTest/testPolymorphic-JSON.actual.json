@@ -1,14 +1,11 @@
 {
-  "list": [
-    {
-      "type": "sub1",
-      "num": 2,
-      "num2": 5
-    },
-    {
-      "type": "sub2",
-      "num": 8,
-      "str": "test"
-    }
-  ]
+  "list" : [ {
+    "type" : "sub1",
+    "num" : 2,
+    "num2" : 5
+  }, {
+    "type" : "sub2",
+    "num" : 8,
+    "str" : "test"
+  } ]
 }
