@@ -5,6 +5,8 @@ import org.eclipse.jetty.servlet.ServletHolder;
 
 public class Servlets {
 
+    public static ServletHolder upgradeServlet = null;
+
     /**
      * Load all servlets.
      */
@@ -25,7 +27,6 @@ public class Servlets {
                 "/sessionList",
                 "/gwtRequest"
         });
-        addServlet(environment, Servlets.newServletContainer(), 1, "/rest/*", null);
     }
 
     private static void addServlet(
@@ -68,14 +69,7 @@ public class Servlets {
                 "                stroom.spring.CoreClientConfiguration,\n" +
                 "                stroom.statistics.spring.StatisticsConfiguration,\n" +
                 "                stroom.security.spring.SecurityConfiguration");
-        return servlet;
-    }
-
-    private static ServletHolder newServletContainer(){
-        ServletHolder servlet = new ServletHolder(org.glassfish.jersey.servlet.ServletContainer.class);
-        servlet.setName("SpringApplication");
-        servlet.setInitParameter("javax.ws.rs.Application", "stroom.search.spring.JerseyApplication");
-        servlet.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
+        upgradeServlet = servlet;
         return servlet;
     }
 }

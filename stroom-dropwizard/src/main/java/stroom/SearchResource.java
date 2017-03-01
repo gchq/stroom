@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.search.server;
+package stroom;
 
-import org.springframework.stereotype.Component;
+import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.health.HealthCheck;
 import stroom.datasource.api.DataSource;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
@@ -25,31 +26,27 @@ import stroom.query.api.DocRef;
 import stroom.query.api.QueryKey;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchResponse;
+import stroom.search.server.IndexDataSourceFieldUtil;
+import stroom.search.server.SearchResultCreatorManager;
 import stroom.search.server.SearchResultCreatorManager.Key;
 
-import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Component
 @Path("/index")
+@Produces(MediaType.APPLICATION_JSON)
 public class SearchResource {
-    private final SearchResultCreatorManager searchResultCreatorManager;
-    private final IndexService indexService;
-
-    @Inject
-    public SearchResource(final SearchResultCreatorManager searchResultCreatorManager, final IndexService indexService) {
-        this.searchResultCreatorManager = searchResultCreatorManager;
-        this.indexService = indexService;
-    }
+    private SearchResultCreatorManager searchResultCreatorManager;
+    private IndexService indexService;
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/dataSource")
+    @Timed
     public DataSource getDataSource(final DocRef docRef) {
         final Index index = indexService.loadByUuid(docRef.getUuid());
         return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index));
@@ -59,6 +56,7 @@ public class SearchResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/search")
+    @Timed
     public SearchResponse search(final SearchRequest request) {
 //        final SearchResponseCreator searchResponseCreator = searchResultCreatorCache.computeIfAbsent(request.getValues(), k -> new SearchResponseCreator(luceneSearchStoreFactory.create(request)));
 
@@ -70,8 +68,36 @@ public class SearchResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/destroy")
+    @Timed
     public Boolean destroy(final QueryKey queryKey) {
         searchResultCreatorManager.remove(new Key(queryKey));
         return Boolean.TRUE;
+    }
+
+    public void setSearchResultCreatorManager(SearchResultCreatorManager searchResultCreatorManager) {
+        this.searchResultCreatorManager = searchResultCreatorManager;
+    }
+
+    public void setIndexService(IndexService indexService) {
+        this.indexService = indexService;
+    }
+
+    public HealthCheck.Result getHealth() {
+        if(searchResultCreatorManager == null || indexService == null) {
+            StringBuilder errorMessageBuilder = new StringBuilder();
+            errorMessageBuilder.append("Dependency error!");
+            String searchResultCreatorManagerMessage = " 'searchResultCreatorManager' has not been set!";
+            String indexServiceMessage = " 'indexService' has not been set!";
+            if(searchResultCreatorManager == null){
+                errorMessageBuilder.append(searchResultCreatorManagerMessage);
+            }
+            if(indexService == null){
+                errorMessageBuilder.append(indexServiceMessage);
+            }
+            return HealthCheck.Result.unhealthy(errorMessageBuilder.toString());
+        }
+        else{
+            return HealthCheck.Result.healthy();
+        }
     }
 }

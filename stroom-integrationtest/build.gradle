@@ -15,6 +15,7 @@ dependencies {
     testCompile project(path: ':stroom-index-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-dropwizard', configuration: 'testArtifacts')
 
     // Use default DB config.
     compile project(':stroom-config')
