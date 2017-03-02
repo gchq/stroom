@@ -16,7 +16,6 @@
 
 package stroom.dashboard.server;
 
-import org.joda.time.DateTimeZone;
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.FetchTimeZonesAction;
 import stroom.dashboard.shared.TimeZoneData;
@@ -25,6 +24,7 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +35,7 @@ import java.util.List;
 public class FetchTimeZonesHandler extends AbstractTaskHandler<FetchTimeZonesAction, TimeZoneData> {
     @Override
     public TimeZoneData exec(final FetchTimeZonesAction action) {
-        final List<String> ids = new ArrayList<>(DateTimeZone.getAvailableIDs());
+        final List<String> ids = new ArrayList<>(ZoneId.getAvailableZoneIds());
         Collections.sort(ids);
 
         return new TimeZoneData(ids);

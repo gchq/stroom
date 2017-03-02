@@ -17,7 +17,6 @@
 package stroom.streamstore.server.fs;
 
 import org.hibernate.LazyInitializationException;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
@@ -65,6 +64,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -610,7 +611,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final Feed sample = setupFeed(feed);
         final Stream stream = Stream.createStream(type, sample,
-                new DateTime(year, month, N1, N13, 0, 0, 0).getMillis());
+                ZonedDateTime.of(year, month, N1, N13, 0, 0, 0, ZoneOffset.UTC).toInstant().toEpochMilli());
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));

@@ -16,23 +16,19 @@
 
 package stroom.entity.server.util;
 
-import java.util.Locale;
-
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-
 import stroom.entity.shared.Period;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 /**
  * Utility class work working with Period objects. Here partly due to GWT not
  * wanting to import all of apache commons.
  */
 public final class PeriodUtil {
-    static {
-        // Set the default timezone and locale for all date time operations.
-        DateTimeZone.setDefault(DateTimeZone.UTC);
-        Locale.setDefault(Locale.ROOT);
-    }
+    private static final ZoneOffset UTC = ZoneOffset.UTC;
 
     private PeriodUtil() {
         // NA for this utility
@@ -42,7 +38,9 @@ public final class PeriodUtil {
      * Create a period up to a date with a number of day offset.
      */
     public static Period createToDateWithOffset(final long to, final int days) {
-        return new Period(null, new DateTime(to).plusDays(days).getMillis());
+        final ZonedDateTime dateTime = Instant.ofEpochMilli(to).atZone(UTC);
+        final long millis = dateTime.plusDays(days).toInstant().toEpochMilli();
+        return new Period(null, millis);
     }
 
     /**
@@ -52,8 +50,10 @@ public final class PeriodUtil {
      *            e.g. 2001
      */
     public static Period createYearPeriod(final Integer year) {
-        final DateTime startOfYear = new DateTime(year, 1, 1, 0, 0, 0, 0);
-        return new Period(startOfYear.getMillis(), startOfYear.plusYears(1).getMillis());
+        final ZonedDateTime dateTime = LocalDate.of(year, 1, 1).atStartOfDay(UTC);
+        final long from = dateTime.toInstant().toEpochMilli();
+        final long to = dateTime.plusYears(1).toInstant().toEpochMilli();
+        return new Period(from, to);
     }
 
     /**
@@ -63,8 +63,10 @@ public final class PeriodUtil {
      *            e.g. 2001
      */
     public static Period createYearMonthPeriod(final Integer year, final Integer month) {
-        final DateTime startOfMonth = new DateTime(year, month, 1, 0, 0, 0, 0);
-        return new Period(startOfMonth.getMillis(), startOfMonth.plusMonths(1).getMillis());
+        final ZonedDateTime dateTime = LocalDate.of(year, month, 1).atStartOfDay(UTC);
+        final long from = dateTime.toInstant().toEpochMilli();
+        final long to = dateTime.plusMonths(1).toInstant().toEpochMilli();
+        return new Period(from, to);
     }
 
     /**
@@ -78,8 +80,10 @@ public final class PeriodUtil {
      *            e.g. 31
      */
     public static Period createYearMonthDayPeriod(final Integer year, final Integer month, final Integer day) {
-        final DateTime startOfDay = new DateTime(year, month, day, 0, 0, 0, 0);
-        return new Period(startOfDay.getMillis(), startOfDay.plusDays(1).getMillis());
+        final ZonedDateTime dateTime = LocalDate.of(year, month, day).atStartOfDay(UTC);
+        final long from = dateTime.toInstant().toEpochMilli();
+        final long to = dateTime.plusDays(1).toInstant().toEpochMilli();
+        return new Period(from, to);
     }
 
     /**
@@ -93,7 +97,9 @@ public final class PeriodUtil {
      *            e.g. 31
      */
     public static long createDate(final Integer year, final Integer month, final Integer day) {
-        return new DateTime(year, month, day, 0, 0, 0, 0).getMillis();
+        final ZonedDateTime dateTime = LocalDate.of(year, month, day).atStartOfDay(UTC);
+        final long millis = dateTime.toInstant().toEpochMilli();
+        return millis;
     }
 
     public static int getPrecision(final long duration, int pointsRequired) {
