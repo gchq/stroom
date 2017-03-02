@@ -19,9 +19,7 @@ package stroom.search;
 import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonIndexingTest;
-import stroom.SearchResource;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.shared.DocRefUtil;
@@ -29,21 +27,9 @@ import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.DocRef;
-import stroom.query.api.ExpressionBuilder;
+import stroom.query.api.*;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.query.api.Field;
-import stroom.query.api.Format;
-import stroom.query.api.Query;
-import stroom.query.api.QueryKey;
-import stroom.query.api.Result;
-import stroom.query.api.ResultRequest;
-import stroom.query.api.Row;
-import stroom.query.api.SearchRequest;
-import stroom.query.api.SearchResponse;
-import stroom.query.api.TableResult;
-import stroom.query.api.TableSettings;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
@@ -55,16 +41,11 @@ import stroom.util.shared.ParamUtil;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
+public class TestInteractiveSearch extends AbstractSearchTest {
     @Resource
     private CommonIndexingTest commonIndexingTest;
     @Resource
@@ -73,8 +54,6 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
     private DictionaryService dictionaryService;
     @Resource
     private TaskManager taskManager;
-    @Resource
-    private SearchResource searchService;
 
     @Override
     protected boolean doSingleSetup() {
@@ -404,18 +383,18 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         final Query query = new Query(dataSourceRef, expressionIn.build());
         final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, DateTimeZone.UTC.getID());
 
-        SearchResponse searchResponse = searchService.search(searchRequest);
+        SearchResponse searchResponse = search(searchRequest);
 
         try {
             while (!searchResponse.complete()) {
-                searchResponse = searchService.search(searchRequest);
+                searchResponse = search(searchRequest);
 
                 if (!searchResponse.complete()) {
                     ThreadUtil.sleep(1000);
                 }
             }
         } finally {
-            searchService.destroy(queryKey);
+            destroy(queryKey);
         }
 
         final Map<String, List<Row>> rows = new HashMap<>();

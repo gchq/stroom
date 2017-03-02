@@ -21,47 +21,27 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonIndexingTest;
-import stroom.SearchResource;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.DocRef;
-import stroom.query.api.ExpressionBuilder;
+import stroom.query.api.*;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.query.api.Field;
-import stroom.query.api.Format;
-import stroom.query.api.OffsetRange;
-import stroom.query.api.Query;
-import stroom.query.api.QueryKey;
-import stroom.query.api.ResultRequest;
-import stroom.query.api.Row;
-import stroom.query.api.SearchRequest;
-import stroom.query.api.SearchResponse;
-import stroom.query.api.TableResult;
-import stroom.query.api.TableSettings;
 import stroom.util.shared.ParamUtil;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
-public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
+public class TestTagCloudSearch extends AbstractSearchTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestTagCloudSearch.class);
     private static boolean doneSetup;
     @Resource
     private CommonIndexingTest commonIndexingTest;
     @Resource
     private IndexService indexService;
-    @Resource
-    private SearchResource searchService;
 
     @Override
     public void onBefore() {
@@ -108,18 +88,18 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
 //        final Query query = new Query(dataSourceRef, expression);
         final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, DateTimeZone.UTC.getID());
 
-        SearchResponse searchResponse = searchService.search(searchRequest);
+        SearchResponse searchResponse = search(searchRequest);
 
         try {
             while (!searchResponse.complete()) {
-                searchResponse = searchService.search(searchRequest);
+                searchResponse = search(searchRequest);
 
                 if (!searchResponse.complete()) {
                     ThreadUtil.sleep(1000);
                 }
             }
         } finally {
-            searchService.destroy(queryKey);
+            destroy(queryKey);
         }
 
         final List<Row> values = new ArrayList<>();
