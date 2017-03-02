@@ -6,10 +6,10 @@ import stroom.Config;
 
 public class SpringContexts {
 
-    static AnnotationConfigWebApplicationContext applicationContext;
-    static AnnotationConfigWebApplicationContext rootContext;
+    final AnnotationConfigWebApplicationContext applicationContext;
+    final AnnotationConfigWebApplicationContext rootContext;
 
-    static void configure() throws ClassNotFoundException {
+    public SpringContexts() throws ClassNotFoundException {
         rootContext = new AnnotationConfigWebApplicationContext();
 
         applicationContext = new AnnotationConfigWebApplicationContext();
@@ -19,7 +19,7 @@ public class SpringContexts {
         // We don't need to register @Configuration classes here because they're loaded in SpringContexts.newUpgradeDispatcherServlet(...)
     }
 
-    static void start(Environment environment, Config configuration){
+    public void start(Environment environment, Config configuration){
         // We need to set the servlet context otherwise there will be no default servlet handling.
         applicationContext.setServletContext(environment.getApplicationContext().getServletContext());
 

@@ -19,18 +19,20 @@ public class App extends Application<Config> {
 
     @Override
     public void run(Config configuration, io.dropwizard.setup.Environment environment) throws Exception {
-        Environment.configure(environment);
-        SpringContexts.configure();
-        Servlets.loadInto(environment);
-        Filters.loadInto(environment);
-        Listeners.loadInto(environment, SpringContexts.rootContext);
+        // The order in which the following are run is important.
 
-        SpringContexts.start(environment, configuration);
+        Environment.configure(environment);
+        SpringContexts springContexts = new SpringContexts();
+        Servlets servlets = new Servlets(environment);
+        Filters.loadInto(environment);
+        Listeners.loadInto(environment, springContexts.rootContext);
+
+        springContexts.start(environment, configuration);
 
         SearchResource searchResource = new SearchResource();
         environment.jersey().register(searchResource);
 
-        new Thread(() -> APIs.register(Servlets.upgradeServlet, searchResource))
+        new Thread(() -> APIs.register(servlets.upgradeDispatcherServletHolder, searchResource))
                 .start();
 
 

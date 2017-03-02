@@ -10,6 +10,7 @@ import java.util.EnumSet;
 import java.util.Map;
 
 public class Filters {
+
     /**
      * Load all filters.
      */

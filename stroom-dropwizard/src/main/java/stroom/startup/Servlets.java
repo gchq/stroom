@@ -5,15 +5,15 @@ import org.eclipse.jetty.servlet.ServletHolder;
 
 public class Servlets {
 
-    public static ServletHolder upgradeServlet = null;
+    final ServletHolder upgradeDispatcherServletHolder;
+    final ServletHolder loggingServletHolder;
 
-    /**
-     * Load all servlets.
-     */
-    @SuppressWarnings("unchecked")
-    static void loadInto(Environment environment) throws ClassNotFoundException {
-        addServlet(environment, Servlets.newLog4jServlet(), 1,"", null);
-        addServlet(environment, Servlets.newUpgradeDispatcherServlet(), 3, "/*.rpc", new String[]{
+    public Servlets(Environment environment){
+        loggingServletHolder = Servlets.newLog4jServlet();
+        upgradeDispatcherServletHolder = Servlets.newUpgradeDispatcherServlet();
+
+        addServlet(environment, loggingServletHolder, 1,"", null);
+        addServlet(environment, upgradeDispatcherServletHolder, 3, "/*.rpc", new String[]{
                 "/dispatch.rpc",
                 "/dynamic.css",
                 "/script",
@@ -69,7 +69,6 @@ public class Servlets {
                 "                stroom.spring.CoreClientConfiguration,\n" +
                 "                stroom.statistics.spring.StatisticsConfiguration,\n" +
                 "                stroom.security.spring.SecurityConfiguration");
-        upgradeServlet = servlet;
         return servlet;
     }
 }
