@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonIndexingTest;
+import stroom.SearchResource;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
@@ -42,7 +43,6 @@ import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
-import stroom.search.server.SearchResource;
 import stroom.util.shared.ParamUtil;
 import stroom.util.thread.ThreadUtil;
 

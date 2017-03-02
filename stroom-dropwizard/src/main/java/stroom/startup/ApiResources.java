@@ -9,8 +9,20 @@ import stroom.util.upgrade.UpgradeDispatcherServlet;
 
 import javax.servlet.ServletException;
 
-public class APIs {
-    public static void register(ServletHolder upgradeDispatcherServletHolder, SearchResource searchResource) {
+public class ApiResources {
+
+    final SearchResource searchResource;
+
+    public ApiResources(io.dropwizard.setup.Environment environment, ServletHolder upgradeDispatcherServlerHolder){
+        searchResource = new SearchResource();
+        environment.jersey().register(searchResource);
+
+        new Thread(() -> register(upgradeDispatcherServlerHolder, searchResource))
+                .start();
+
+    }
+
+    public void register(ServletHolder upgradeDispatcherServletHolder, SearchResource searchResource) {
 
         boolean apisAreNotYetConfigured = true;
         while (apisAreNotYetConfigured) {

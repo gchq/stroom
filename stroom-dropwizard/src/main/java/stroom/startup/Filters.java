@@ -11,37 +11,52 @@ import java.util.Map;
 
 public class Filters {
 
-    /**
-     * Load all filters.
-     */
-    @SuppressWarnings("unchecked")
-    static void loadInto(Environment environment) throws ClassNotFoundException {
-        addFilter(environment, "loggingFilter", "stroom.util.logging.LoggingFilter", null, "/*");
-        addFilter(environment, "upgradeFilter", "stroom.util.upgrade.UpgradeDispatcherFilter", null, "/*");
-        addFilter(environment, "threadScopeContextFilter", "stroom.util.thread.ThreadScopeContextFilter", null, "/*");
-        addFilter(environment, "rejectPostFilter", "stroom.servlet.RejectPostFilter",
-                ImmutableMap.<String, String>builder().put("rejectUri", "/").build(), "/*");
-        addFilter(environment, "clusterCallCertificateRequiredFilter", "org.springframework.web.filter.DelegatingFilterProxy",
-                ImmutableMap.<String, String>builder().put("contextAttribute", "org.springframework.web.servlet.FrameworkServlet.CONTEXT.spring").build(),
-                "/clustercall.rpc");
-        addFilter(environment, "exportCertificateRequiredFilter", "org.springframework.web.filter.DelegatingFilterProxy",
-                ImmutableMap.<String, String>builder().put("contextAttribute", "org.springframework.web.servlet.FrameworkServlet.CONTEXT.spring").build(),
-                "/export/*");
-        addFilter(environment, "shiroFilter", "org.springframework.web.filter.DelegatingFilterProxy",
+    private static final String MATCH_ALL_PATHS = "/*";
+
+    private Environment environment;
+
+    final FilterHolder loggingFilterHolder;
+    final FilterHolder upgradeFilterHolder;
+    final FilterHolder threadScopeContextFilterHolder;
+    final FilterHolder rejectPostFilterHolder;
+    final FilterHolder clusterCallCertificateRequiredFilterHolder;
+    final FilterHolder exportCertificateRequiredFilterHolder;
+    final FilterHolder shiroFilterHolder;
+
+    public Filters(Environment environment) throws ClassNotFoundException {
+        this.environment = environment;
+
+        loggingFilterHolder = createFilter("stroom.util.logging.LoggingFilter", "loggingFilter", null);
+        addFilter(loggingFilterHolder, MATCH_ALL_PATHS);
+
+        upgradeFilterHolder = createFilter("stroom.util.upgrade.UpgradeDispatcherFilter", "upgradeFilter", null);
+        addFilter(upgradeFilterHolder, MATCH_ALL_PATHS);
+
+        threadScopeContextFilterHolder = createFilter("stroom.util.thread.ThreadScopeContextFilter", "threadScopeContextFilter", null);
+        addFilter(threadScopeContextFilterHolder, MATCH_ALL_PATHS);
+
+        rejectPostFilterHolder = createFilter("stroom.servlet.RejectPostFilter", "rejectPostFilter",
+                ImmutableMap.<String, String>builder().put("rejectUri", "/").build());
+        addFilter(rejectPostFilterHolder, MATCH_ALL_PATHS);
+
+        clusterCallCertificateRequiredFilterHolder = createFilter("org.springframework.web.filter.DelegatingFilterProxy",
+                "clusterCallCertificateRequiredFilter",
+                ImmutableMap.<String, String>builder().put("contextAttribute", "org.springframework.web.servlet.FrameworkServlet.CONTEXT.spring").build());
+        addFilter(clusterCallCertificateRequiredFilterHolder, "/clustercall.rpc");
+
+        exportCertificateRequiredFilterHolder = createFilter("org.springframework.web.filter.DelegatingFilterProxy",
+                "exportCertificateRequiredFilter",
+                ImmutableMap.<String, String>builder().put("contextAttribute", "org.springframework.web.servlet.FrameworkServlet.CONTEXT.spring").build());
+        addFilter(exportCertificateRequiredFilterHolder, "/export/*");
+
+        shiroFilterHolder = createFilter("org.springframework.web.filter.DelegatingFilterProxy", "shiroFilter",
                 ImmutableMap.<String, String>builder()
                         .put("contextAttribute", "org.springframework.web.servlet.FrameworkServlet.CONTEXT.spring")
-                        .put("targetFilterLifecycle", "true").build(),
-                "/*");
+                        .put("targetFilterLifecycle", "true").build());
+        addFilter(shiroFilterHolder, MATCH_ALL_PATHS);
     }
 
-    private static void addFilter(Environment environment, String name, String clazz, Map<String, String> initParams, String urlPattern) throws ClassNotFoundException {
-        environment.getApplicationContext().addFilter(
-                createFilter(clazz, name, initParams),
-                urlPattern,
-                EnumSet.of(DispatcherType.REQUEST));
-    }
-
-    private static FilterHolder createFilter(String clazz, String name, Map<String, String> initParams) throws ClassNotFoundException {
+    private FilterHolder createFilter(String clazz, String name, Map<String, String> initParams) throws ClassNotFoundException {
         FilterHolder filterHolder = new FilterHolder((Class<? extends Filter>) Class.forName(clazz));
         filterHolder.setName(name);
 
@@ -53,5 +68,12 @@ public class Filters {
         }
 
         return filterHolder;
+    }
+
+    private void addFilter(FilterHolder filterHolder, String urlPattern) throws ClassNotFoundException {
+        environment.getApplicationContext().addFilter(
+                filterHolder,
+                urlPattern,
+                EnumSet.of(DispatcherType.REQUEST));
     }
 }

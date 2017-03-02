@@ -6,8 +6,15 @@ import org.springframework.web.context.support.AnnotationConfigWebApplicationCon
 import stroom.servlet.SessionListListener;
 
 public class Listeners {
-    static void loadInto(Environment environment, AnnotationConfigWebApplicationContext rootContext){
-        environment.servlets().addServletListeners(new ContextLoaderListener(rootContext));
-        environment.servlets().addServletListeners(new SessionListListener());
+
+    final ContextLoaderListener rootContextListener;
+    final SessionListListener sessionListListener;
+
+    public Listeners(Environment environment, AnnotationConfigWebApplicationContext rootContext){
+        rootContextListener = new ContextLoaderListener(rootContext);
+        environment.servlets().addServletListeners(rootContextListener);
+
+        sessionListListener = new SessionListListener();
+        environment.servlets().addServletListeners(sessionListListener);
     }
 }
