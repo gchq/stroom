@@ -2,6 +2,31 @@ plugins {
   id 'com.github.johnrengelman.shadow' version '1.2.4'
 }
 
+jar {
+    manifest {
+        attributes(
+                "Implementation-Title": "Stroom",
+                "Implementation-Version": version,
+                "Main-Class" : "stroom.startup.App"
+        )
+    }
+}
+
+import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
+
+shadowJar {
+    // Allows us to build fat jars with lots of files
+    zip64 true
+
+    // A transformer to merges files in META-INF/services
+    mergeServiceFiles()
+
+    // A transformer to merge spring's generated config files, e.g. spring.handlers and spring.schemas
+    transform(ServiceFileTransformer) {
+        include 'META-INF/spring.*'
+    }
+}
+
 configurations {
     all {
         resolutionStrategy.eachDependency { DependencyResolveDetails details ->
