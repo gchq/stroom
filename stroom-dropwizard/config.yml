@@ -1,10 +1,20 @@
 server:
-    type: simple
-    applicationContextPath: /
-    adminContextPath: /admin
-    connector:
-        type: http
-        port: 8080
+  type: simple
+  applicationContextPath: /
+  adminContextPath: /admin
+  connector:
+    type: http
+    port: 8080
 
 logging:
-    level: INFO
+  level: ERROR
+  loggers:
+    "stroom":
+      level: INFO
+      additive: true
+  appenders:
+    - type: console
+#    - type: file
+#      currentLogFilename: stroom.log
+#      archivedLogFilenamePattern: stroom-%d.log.gz
+#      archivedFileCount: 10
