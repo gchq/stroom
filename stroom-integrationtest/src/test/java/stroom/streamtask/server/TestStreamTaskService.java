@@ -18,7 +18,6 @@ package stroom.streamtask.server;
 
 import javax.annotation.Resource;
 
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -38,6 +37,10 @@ import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.StreamTaskService;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.task.server.TaskMonitorImpl;
+
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 public class TestStreamTaskService extends AbstractCoreIntegrationTest {
     @Resource
@@ -81,8 +84,8 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         Assert.assertEquals(1, streamTaskService.find(criteria).size());
 
         findStreamCriteria.setCreatePeriod(
-                new Period(new DateTime(findStreamCriteria.getCreatePeriod().getFrom()).plusYears(100).getMillis(),
-                        new DateTime(findStreamCriteria.getCreatePeriod().getTo()).plusYears(100).getMillis()));
+                new Period(Instant.ofEpochMilli(findStreamCriteria.getCreatePeriod().getFrom()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli(),
+                        Instant.ofEpochMilli(findStreamCriteria.getCreatePeriod().getTo()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
         Assert.assertEquals(0, streamTaskService.find(criteria).size());
 
         Assert.assertNotNull(streamStore.loadStreamById(file1.getId()));

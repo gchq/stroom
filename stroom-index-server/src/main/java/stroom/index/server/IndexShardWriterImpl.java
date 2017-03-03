@@ -29,7 +29,6 @@ import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.store.SimpleFSLockFactory;
 import org.apache.lucene.util.Version;
-import org.joda.time.DateTime;
 import stroom.index.server.analyzer.AnalyzerFactory;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
@@ -48,6 +47,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -537,7 +538,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             if (index.getRetentionDayAge() != null && indexShard.getPartitionToTime() != null) {
                 // See if this index shard is older than the index retention
                 // period.
-                final long retentionTime = new DateTime().minusDays(index.getRetentionDayAge()).getMillis();
+                final long retentionTime = ZonedDateTime.now(ZoneOffset.UTC).minusDays(index.getRetentionDayAge()).toInstant().toEpochMilli();
                 final long shardAge = indexShard.getPartitionToTime();
 
                 if (shardAge < retentionTime) {

@@ -22,7 +22,6 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
-import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
@@ -43,6 +42,8 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 @Component
 @Secured(User.MANAGE_USERS_PERMISSION)
@@ -204,7 +205,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setPasswordHash(newHash);
 
         // Set the expiry.
-        user.setPasswordExpiryMs(getExpiryDate().getMillis());
+        user.setPasswordExpiryMs(getExpiryDate().toInstant().toEpochMilli());
 
         // Write event log data for password change.
         eventLog.changePassword(user.getName());
@@ -281,9 +282,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return httpServletRequestHolder.getSessionId() != null;
     }
 
-    private DateTime getExpiryDate() {
+    private ZonedDateTime getExpiryDate() {
         // Get the current number of milliseconds.
-        final DateTime expiryDate = new DateTime();
+        final ZonedDateTime expiryDate = ZonedDateTime.now(ZoneOffset.UTC);
         // Days to expiry will be 90 days.
         return expiryDate.plusDays(getDaysToPasswordExpiry());
     }

@@ -158,10 +158,10 @@ public final class FileSystemUtil {
         return allDirs;
     }
 
-    public static boolean updateLastModified(final Collection<File> files, final Date lastModified) {
+    public static boolean updateLastModified(final Collection<File> files, final long lastModified) {
         boolean allOk = true;
         for (File file : files) {
-            allOk &= file.setLastModified(lastModified.getTime());
+            allOk &= file.setLastModified(lastModified);
         }
         return allOk;
     }

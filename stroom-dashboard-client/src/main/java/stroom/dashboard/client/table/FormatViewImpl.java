@@ -43,9 +43,20 @@ import java.util.List;
 
 public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers>implements FormatView {
     public static final List<String> STANDARD_FORMATS = Arrays
-            .asList("yyyy-MM-dd'T'HH:mm:ss.SSS", "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
-                    "yyyy-MM-dd'T'HH:mm:ss.SSS ZZZ", "dd/MM/yyyy HH:mm:ss", "dd/MM/yy HH:mm:ss", "MM/dd/yyyy HH:mm:ss",
-                    "d MMM yyyy HH:mm:ss", "yyyy-MM-dd", "dd/MM/yyyy", "dd/MM/yy", "MM/dd/yyyy", "d MMM yyyy");
+            .asList("yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS xx",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS xxx",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS VV",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                    "dd/MM/yyyy HH:mm:ss",
+                    "dd/MM/yy HH:mm:ss",
+                    "MM/dd/yyyy HH:mm:ss",
+                    "d MMM yyyy HH:mm:ss",
+                    "yyyy-MM-dd",
+                    "dd/MM/yyyy",
+                    "dd/MM/yy",
+                    "MM/dd/yyyy",
+                    "d MMM yyyy");
 
     private static final int ROW_COUNT = 8;
     private final Widget widget;

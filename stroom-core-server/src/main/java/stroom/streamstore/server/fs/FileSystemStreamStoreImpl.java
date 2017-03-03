@@ -21,7 +21,6 @@ import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
-import org.joda.time.DateTimeZone;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
@@ -114,12 +113,6 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         set.add(Feed.ENTITY_TYPE);
         set.add(StreamType.ENTITY_TYPE);
         SOURCE_FETCH_SET = set;
-    }
-
-    static {
-        // Set the default timezone and locale for all date time operations.
-        DateTimeZone.setDefault(DateTimeZone.UTC);
-        Locale.setDefault(Locale.ROOT);
     }
 
     private final StroomEntityManager entityManager;
