@@ -17,6 +17,7 @@
 package stroom.node.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -27,19 +28,19 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.node.shared.Volume;
 import stroom.util.client.BorderUtil;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;
 
 public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>> {
-    private final MySingleSelectionModel<Volume> selectionModel;
+//    private final SelectionModel<Volume> selectionModel;
 
     @Inject
     public VolumeListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<Volume>(true));
+        super(eventBus, new DataGridViewImpl<Volume>(true, true));
 
-        selectionModel = new MySingleSelectionModel<Volume>();
-        getView().setSelectionModel(selectionModel);
+//        selectionModel = new MySingleSelectionModel<>();
+//        getView().setSelectionModel(selectionModel);
 
         // Add a border to the list.
         BorderUtil.addBorder(getWidget().getElement());
@@ -119,7 +120,15 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
         getView().setRowCount(volumes.size());
     }
 
-    public MySingleSelectionModel<Volume> getSelectionModel() {
-        return selectionModel;
+//    public HandlerRegistration addSelectionHandler(DataGridSelectEvent.Handler handler) {
+//        return getView().addSelectionHandler(handler);
+//    }
+
+    public MultiSelectionModel<Volume> getSelectionModel() {
+        return getView().getSelectionModel();
     }
+//
+//    public void setSelectionModel(final SelectionModel<Volume> selectionModel) {
+//        getView().setSelectionModel(selectionModel);
+//    }
 }

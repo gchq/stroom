@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,8 @@ import java.util.Set;
 public interface DocumentEntityService<E extends DocumentEntity> extends BaseEntityService<E>, HasLoadByUuid<E>, ProvidesNamePattern {
     E create(DocRef folder, String name) throws RuntimeException;
 
+    E create(DocRef folder, String name, PermissionInheritance permissionInheritance) throws RuntimeException;
+
     E loadByName(DocRef folder, String name) throws RuntimeException;
 
     E loadByName(DocRef folder, String name, Set<String> fetchSet) throws RuntimeException;
@@ -31,12 +33,12 @@ public interface DocumentEntityService<E extends DocumentEntity> extends BaseEnt
     /**
      * Copy the entity to the specified folder with the specified name.
      */
-    E copy(E entity, DocRef folder, String name);
+    E copy(E entity, DocRef folder, String name, PermissionInheritance permissionInheritance);
 
     /**
      * Move the entity to the specified folder.
      */
-    E move(E entity, DocRef folder);
+    E move(E entity, DocRef folder, PermissionInheritance permissionInheritance);
 
     List<E> findByFolder(DocRef folder, Set<String> fetchSet) throws RuntimeException;
 

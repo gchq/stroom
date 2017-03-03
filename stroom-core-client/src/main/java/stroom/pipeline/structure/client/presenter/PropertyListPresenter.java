@@ -18,24 +18,28 @@ package stroom.pipeline.structure.client.presenter;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import stroom.data.grid.client.*;
+import stroom.data.grid.client.DataGridView;
+import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.EndColumn;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.data.*;
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyType;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
+import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.util.shared.HasDisplayValue;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
@@ -44,7 +48,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -68,8 +71,6 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
         }
     }
 
-    private final MySingleSelectionModel<PipelineProperty> selectionModel;
-
     private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:bold\">");
     private static final SafeHtml REMOVED = SafeHtmlUtils
             .fromSafeConstant("<div style=\"font-weight:bold;text-decoration:line-through\">");
@@ -92,9 +93,6 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
         super(eventBus, new DataGridViewImpl<PipelineProperty>(true));
         this.newPropertyPresenter = newPropertyPresenter;
 
-        selectionModel = new MySingleSelectionModel<PipelineProperty>();
-        getView().setSelectionModel(selectionModel);
-
         editButton = getView().addButton(GlyphIcons.EDIT);
         editButton.setTitle("Edit Property");
 
@@ -103,24 +101,15 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
     @Override
     protected void onBind() {
-        registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                enableButtons();
+        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
+            enableButtons();
+            if (event.getSelectionType().isDoubleSelect()) {
+                onEdit(getView().getSelectionModel().getSelected());
             }
         }));
-        registerHandler(getView().addDoubleClickHandler(new DoubleClickEvent.Handler() {
-            @Override
-            public void onDoubleClick(final DoubleClickEvent event) {
-                onEdit(selectionModel.getSelectedObject());
-            }
-        }));
-        registerHandler(editButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onEdit(selectionModel.getSelectedObject());
-                }
+        registerHandler(editButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onEdit(getView().getSelectionModel().getSelected());
             }
         }));
     }
@@ -429,13 +418,13 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     }
 
     private void refresh() {
-        selectionModel.clear();
+        getView().getSelectionModel().clear();
         getView().setRowData(0, defaultProperties);
         getView().setRowCount(defaultProperties.size());
     }
 
     private void enableButtons() {
-        final PipelineProperty selected = selectionModel.getSelectedObject();
+        final PipelineProperty selected = getView().getSelectionModel().getSelected();
         editButton.setEnabled(selected != null);
     }
 

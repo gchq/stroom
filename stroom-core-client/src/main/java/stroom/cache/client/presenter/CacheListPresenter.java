@@ -16,12 +16,14 @@
 
 package stroom.cache.client.presenter;
 
+import com.google.gwt.cell.client.ButtonCell;
+import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-
+import stroom.cache.shared.CacheClearAction;
 import stroom.cache.shared.CacheRow;
 import stroom.cache.shared.FetchCacheRowAction;
 import stroom.data.grid.client.DataGridView;
@@ -30,33 +32,47 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
 
 public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheRow>> {
-    private final MySingleSelectionModel<CacheRow> selectionModel = new MySingleSelectionModel<>();
     private final FetchCacheRowAction action = new FetchCacheRowAction();
     private ActionDataProvider<CacheRow> dataProvider;
 
     @Inject
     public CacheListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-            final TooltipPresenter tooltipPresenter) {
+                              final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<CacheRow>(true));
-        getView().setSelectionModel(selectionModel);
 
-        getView().addColumn(new Column<CacheRow, String>(new TextCell()) {
+        // Name
+        getView().addResizableColumn(new Column<CacheRow, String>(new TextCell()) {
             @Override
             public String getValue(final CacheRow row) {
                 return row.getCacheName();
             }
-        }, "Name");
+        }, "Name", 400);
+
+        // Clear.
+        final Column<CacheRow, String> clearColumn = new Column<CacheRow, String>(new ButtonCell()) {
+            @Override
+            public String getValue(final CacheRow row) {
+                return "Clear";
+            }
+        };
+        clearColumn.setFieldUpdater(new FieldUpdater<CacheRow, String>() {
+            @Override
+            public void update(final int index, final CacheRow row, final String value) {
+                dispatcher.execute(new CacheClearAction(row.getCacheName(), null), null);
+            }
+        });
+        getView().addColumn(clearColumn, "</br>", 50);
 
         getView().addEndColumn(new EndColumn<CacheRow>());
 
         dataProvider = new ActionDataProvider<CacheRow>(dispatcher, action);
-        dataProvider.addDataDisplay(getView());
+        dataProvider.addDataDisplay(getView().getDataDisplay());
     }
 
-    public MySingleSelectionModel<CacheRow> getSelectionModel() {
-        return selectionModel;
+    public MultiSelectionModel<CacheRow> getSelectionModel() {
+        return getView().getSelectionModel();
     }
 }

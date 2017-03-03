@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,12 +16,6 @@
 
 package stroom.statistics.sql;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
-import stroom.query.api.DocRef;
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,15 +25,20 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-
 import stroom.node.server.MockStroomPropertyService;
+import stroom.query.api.DocRef;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticStoreCache;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.util.concurrent.AtomicSequence;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 import stroom.util.thread.ThreadUtil;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestSQLStatisticEventStore extends StroomUnitTest {
@@ -48,9 +47,24 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     private final AtomicLong eventCount = new AtomicLong();
     private final AtomicSequence atomicSequence = new AtomicSequence(10);
     private final MockStroomPropertyService propertyService = new MockStroomPropertyService();
+    private final StatisticStoreCache mockStatisticsDataSourceCache = new StatisticStoreCache() {
+        @Override
+        public StatisticStoreEntity getStatisticsDataSource(final String statisticName, final String engineName) {
+            final StatisticStoreEntity statisticsDataSource = new StatisticStoreEntity();
+            statisticsDataSource.setEngineName(engineName);
+            statisticsDataSource.setName(statisticName);
+            statisticsDataSource.setPrecision(1000L);
+
+            return statisticsDataSource;
+        }
+
+        @Override
+        public StatisticStoreEntity getStatisticsDataSource(final DocRef docRef) {
+            return null;
+        }
+    };
     @Mock
     private SQLStatisticCache mockSqlStatisticCache;
-
     @Captor
     private ArgumentCaptor<SQLStatisticAggregateMap> aggregateMapCaptor;
 
@@ -71,23 +85,6 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
         eventCount.incrementAndGet();
         return new StatisticEvent(timeMs, "NAME" + atomicSequence.next(), null, 1L);
     }
-
-    private final StatisticStoreCache mockStatisticsDataSourceCache = new StatisticStoreCache() {
-        @Override
-        public StatisticStoreEntity getStatisticsDataSource(final String statisticName, final String engineName) {
-            final StatisticStoreEntity statisticsDataSource = new StatisticStoreEntity();
-            statisticsDataSource.setEngineName(engineName);
-            statisticsDataSource.setName(statisticName);
-            statisticsDataSource.setPrecision(1000L);
-
-            return statisticsDataSource;
-        }
-
-        @Override
-        public StatisticStoreEntity getStatisticsDataSource(final DocRef docRef) {
-            return null;
-        }
-    };
 
     @Test
     public void test() {

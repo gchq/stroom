@@ -36,8 +36,7 @@
   },
   "resultRequests" : [ {
     "componentId" : "componentSettingsMapKey",
-    "mappings": [
-      {
+    "mappings" : [ {
       "queryId" : "someQueryId",
       "fields" : [ {
         "name" : "name1",
@@ -89,14 +88,13 @@
         "name" : "docRefName2"
       },
       "maxResults" : [ 1, 2 ]
-      }
-    ],
+    } ],
     "requestedRange" : {
       "offset" : 0,
       "length" : 100
     },
-    "resultStyle": "TABLE",
-    "fetchData": true
+    "resultStyle" : "TABLE",
+    "fetchData" : true
   } ],
   "dateTimeLocale" : "en-gb",
   "incremental" : true

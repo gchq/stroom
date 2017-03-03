@@ -17,15 +17,12 @@
 package stroom.index.client.presenter;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.data.grid.client.DoubleClickEvent;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
@@ -43,7 +40,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -58,8 +55,6 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
     private final VolumeStatusListPresenter volumeStatusListPresenter;
     private final GlyphButtonView addButton;
     private final GlyphButtonView removeButton;
-    private final MySingleSelectionModel<Volume> selectionModel;
-    private Volume selectedElement;
     private List<Volume> volumes;
 
     @Inject
@@ -71,7 +66,8 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
 
         view.setView(volumeListPresenter.getView());
 
-        selectionModel = volumeListPresenter.getSelectionModel();
+//        volumeStatusListPresenter.setSelectionModel(new MySingleSelectionModel<>());
+//        volumeListPresenter.setSelectionModel(new MultiSelectionModel<>());
 
         addButton = volumeListPresenter.getView().addButton(GlyphIcons.ADD);
         addButton.setTitle("Add Volume");
@@ -83,28 +79,14 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
     protected void onBind() {
         super.onBind();
 
-        registerHandler(addButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                onAdd(event);
-            }
+        registerHandler(addButton.addClickHandler(event -> onAdd(event)));
+        registerHandler(removeButton.addClickHandler(event -> onRemove(event)));
+        registerHandler(volumeListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            final MultiSelectionModel<Volume> selectionModel = volumeListPresenter.getSelectionModel();
+            removeButton.setEnabled(selectionModel.getSelectedItems().size() > 0);
         }));
-        registerHandler(removeButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                onRemove(event);
-            }
-        }));
-        registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                selectedElement = selectionModel.getSelectedObject();
-                removeButton.setEnabled(selectedElement != null);
-            }
-        }));
-        registerHandler(volumeStatusListPresenter.getView().addDoubleClickHandler(new DoubleClickEvent.Handler() {
-            @Override
-            public void onDoubleClick(final DoubleClickEvent event) {
+        registerHandler(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
                 addVolume(true);
             }
         }));
@@ -125,19 +107,24 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
 
         final PopupSize popupSize = new PopupSize(600, 400, true);
         volumeStatusListPresenter.refresh();
+        final MultiSelectionModel<Volume> selectionModel = (MultiSelectionModel<Volume>) volumeStatusListPresenter.getSelectionModel();
+        selectionModel.clear();
         ShowPopupEvent.fire(this, volumeStatusListPresenter, PopupType.OK_CANCEL_DIALOG, null, popupSize,
                 "Add Volume To Index", popupUiHandlers, true);
     }
 
     private void addVolume(final boolean ok) {
         if (ok) {
-            final Volume volume = volumeStatusListPresenter.getSelectionModel().getSelectedObject();
-            if (volume != null) {
-                if (volume != null && !volumes.contains(volume)) {
-                    volumes.add(volume);
-                    sortVolumes();
-                    DirtyEvent.fire(IndexVolumeListPresenter.this, true);
-                    refresh();
+            final MultiSelectionModel<Volume> selectionModel = (MultiSelectionModel<Volume>) volumeStatusListPresenter.getSelectionModel();
+            final List<Volume> selected = selectionModel.getSelectedItems();
+            if (selected != null && selected.size() > 0) {
+                for (final Volume vol : selected) {
+                    if (vol != null && !volumes.contains(vol)) {
+                        volumes.add(vol);
+                        sortVolumes();
+                        DirtyEvent.fire(IndexVolumeListPresenter.this, true);
+                        refresh();
+                    }
                 }
             }
         }
@@ -146,15 +133,21 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
     }
 
     public void onRemove(final ClickEvent event) {
-        final Volume volume = selectionModel.getSelectedObject();
-        if (volume != null) {
+        final MultiSelectionModel<Volume> selectionModel = (MultiSelectionModel<Volume>) volumeListPresenter.getSelectionModel();
+        final List<Volume> selected = selectionModel.getSelectedItems();
+        if (selected != null && selected.size() > 0) {
+            String message = "Are you sure you want to remove this volume as a possible destination for this index?";
+            if (selected.size() > 1) {
+                message = "Are you sure you want to remove these volumes as possible destinations for this index?";
+            }
+
             ConfirmEvent.fire(this,
-                    "Are you sure you want to remove this volume as a possible destination for this index?",
+                    message,
                     new ConfirmCallback() {
                         @Override
                         public void onResult(final boolean result) {
                             if (result) {
-                                volumes.remove(volume);
+                                volumes.removeAll(selected);
                                 selectionModel.clear();
                                 DirtyEvent.fire(IndexVolumeListPresenter.this, true);
                                 refresh();

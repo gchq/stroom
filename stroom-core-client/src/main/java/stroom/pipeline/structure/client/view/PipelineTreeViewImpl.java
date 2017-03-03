@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,7 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter.PipelineTreeView;
 import stroom.pipeline.structure.client.presenter.PipelineTreeUiHandlers;
+import stroom.pipeline.structure.client.presenter.StructureValidationUtil;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
@@ -46,25 +47,16 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         layoutPanel = new DraggableTreePanel<PipelineElement>(treePanel, subTreePanel) {
             @Override
             protected boolean isValidTarget(final PipelineElement parent, final PipelineElement child) {
-                if (parent.getElementType().hasRole(PipelineElementType.ROLE_WRITER)) {
-                    final List<PipelineElement> children = treePanel.getTree().getChildren(parent);
-                    if (children != null && children.size() > 0) {
-                        return false;
-                    }
-                    return child.getElementType().hasRole(PipelineElementType.ROLE_DESTINATION);
+                final PipelineElementType parentType = parent.getElementType();
+                final PipelineElementType childType = child.getElementType();
+                int childCount = 0;
+
+                final List<PipelineElement> children = treePanel.getTree().getChildren(parent);
+                if (children != null) {
+                    childCount = children.size();
                 }
 
-                if (parent.getElementType().hasRole(PipelineElementType.ROLE_DESTINATION)) {
-                    return false;
-                }
-
-                if (parent.getElementType().hasRole(PipelineElementType.ROLE_SOURCE)) {
-                    return child.getElementType().hasRole(PipelineElementType.ROLE_DESTINATION)
-                            || child.getElementType().hasRole(PipelineElementType.ROLE_READER)
-                            || child.getElementType().hasRole(PipelineElementType.ROLE_PARSER);
-                }
-
-                return !child.getElementType().hasRole(PipelineElementType.ROLE_DESTINATION);
+                return StructureValidationUtil.isValidChildType(parentType, childType, childCount);
             }
 
             @Override

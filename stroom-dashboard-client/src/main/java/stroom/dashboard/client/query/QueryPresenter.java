@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -52,8 +52,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
-import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.client.presenter.EntityChooser;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.client.event.ChangeDataEvent;
@@ -107,7 +106,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ExpressionTreePresenter expressionPresenter;
     private final QueryHistoryPresenter historyPresenter;
     private final QueryFavouritesPresenter favouritesPresenter;
-    private final Provider<ExplorerDropDownTreePresenter> pipelineSelection;
+    private final Provider<EntityChooser> pipelineSelection;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final Resources resources;
     private final MenuListPresenter menuListPresenter;
@@ -137,7 +136,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
                           final ExpressionTreePresenter expressionPresenter, final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
-                          final Provider<ExplorerDropDownTreePresenter> pipelineSelection,
+                          final Provider<EntityChooser> pipelineSelection,
                           final ProcessorLimitsPresenter processorLimitsPresenter, final Resources resources,
                           final MenuListPresenter menuListPresenter, final ClientDispatchAsync dispatcher,
                           final ClientSecurityContext securityContext, final ClientPropertyCache clientPropertyCache,
@@ -388,17 +387,14 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         queryData.setDataSource(queryComponentSettings.getDataSource());
         queryData.setExpression(root);
 
-        final ExplorerDropDownTreePresenter chooser = pipelineSelection.get();
+        final EntityChooser chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
         chooser.setIncludedTypes(PipelineEntity.ENTITY_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.USE);
-        chooser.addDataSelectionHandler(new DataSelectionHandler<ExplorerData>() {
-            @Override
-            public void onSelection(final DataSelectionEvent<ExplorerData> event) {
-                final DocRef pipeline = chooser.getSelectedEntityReference();
-                if (pipeline != null) {
-                    setProcessorLimits(queryData, pipeline);
-                }
+        chooser.addDataSelectionHandler(event -> {
+            final DocRef pipeline = chooser.getSelectedEntityReference();
+            if (pipeline != null) {
+                setProcessorLimits(queryData, pipeline);
             }
         });
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,31 +112,6 @@ public class SearchBus {
             final SearchRequest searchAction = searchModel.getRequest();
             searchActionMap.put(queryKey, searchAction);
         }
-
-//        final JsDocRef jsDocRef = JavaScriptObject.createObject().cast();
-//        jsDocRef.setName("test");
-//        jsDocRef.setType("typew");
-//        jsDocRef.setUuid("uuid");
-//
-//        final JsExpressionOperator innerOp1 = JavaScriptObject.createObject().cast();
-//        final JsExpressionOperator innerOp2 = JavaScriptObject.createObject().cast();
-//        final JsExpressionOperator expression = JavaScriptObject.createObject().cast();
-//        final JsExpressionItem[] array = (JsExpressionItem[]) (Object) JavaScriptObject.createArray(2).cast();
-//        array[0] = innerOp1;
-//        array[1] = innerOp2;
-//
-//        expression.setChildren(array);
-//
-//        final JsSearch jsSearch = JavaScriptObject.createObject().cast();
-//        jsSearch.setDataSourceRef(jsDocRef);
-//        jsSearch.setExpression(expression);
-//
-//
-//        String json = JsonUtils.encode(jsSearch);
-//
-//        final Response response = restService.send("rest/dashboard/poll", json);
-//        response.onSuccess(GWT::log);
-
 
         final SearchBusPollAction action = new SearchBusPollAction(searchActionMap);
         dispatcher.execute(action, false, new AsyncCallbackAdaptor<SearchBusPollResult>() {

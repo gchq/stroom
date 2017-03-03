@@ -76,7 +76,7 @@ public class EntityServiceFindActionDataProvider<C extends BaseCriteria, E exten
             // dataProvider.addChangeDataHandler(changeDataHandler);
             // }
             // pendingChangeHandlers.clear();
-            dataProvider.addDataDisplay(view);
+            dataProvider.addDataDisplay(view.getDataDisplay());
 
         } else {
             dataProvider.refresh();

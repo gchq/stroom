@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,7 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
+import stroom.entity.shared.PermissionInheritance;
 import stroom.query.api.DocRef;
 
 import java.util.ArrayList;
@@ -44,6 +45,11 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 
     @Override
     public E create(final DocRef folder, final String name) throws RuntimeException {
+        return create(folder, name, PermissionInheritance.NONE);
+    }
+
+    @Override
+    public E create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
         // Create a new entity instance.
         E entity;
         try {
@@ -157,7 +163,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     }
 
     @Override
-    public E copy(final E entity, final DocRef folder, final String name) {
+    public E copy(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
         // This is going to be a copy so clear the persistence so save will create a new DB entry.
         entity.clearPersistence();
 
@@ -169,7 +175,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     }
 
     @Override
-    public E move(final E entity, final DocRef folder) {
+    public E move(final E entity, final DocRef folder, final PermissionInheritance permissionInheritance) {
         setFolder(entity, folder);
         return save(entity);
     }

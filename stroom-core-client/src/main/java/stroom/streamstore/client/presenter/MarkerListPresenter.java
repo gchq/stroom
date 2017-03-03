@@ -46,6 +46,7 @@ import stroom.util.shared.Summary;
 import stroom.util.shared.TreeRow;
 import stroom.xmleditor.client.view.LeftBar;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -163,8 +164,9 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
                         }
                     }
 
+                    // Make summery items bold.
                     final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                    builder.appendHtmlConstant("<div style=\"position:absolute;top:4px;overflow:visible;font-weight:bold;\">");
+                    builder.appendHtmlConstant("<div style=\"font-weight:bold;\">");
                     builder.appendEscaped(sb.toString());
                     builder.appendHtmlConstant("</div>");
 
@@ -241,10 +243,18 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
     public void setData(final List<Marker> markers, final int start, final int count) {
         if (markers == null) {
             // Reset visible range.
-            getView().setVisibleRangeAndClearData(new Range(0, 100), false);
+            getView().setRowData(0, new ArrayList<>());
+            getView().setRowCount(0);
         } else {
             getView().setRowData(start, markers);
             getView().setRowCount(count);
+
+            // Make summary rows span multiple columns.
+            for (int i = 0; i < markers.size(); i++) {
+                if (markers.get(i) instanceof Summary) {
+                    getView().getRowElement(i).getCells().getItem(2).setColSpan(5);
+                }
+            }
         }
     }
 

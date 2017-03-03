@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,7 +29,6 @@ import stroom.entity.server.util.BaseEntityUtil;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.server.util.XMLUtil;
 import stroom.entity.shared.BaseEntity;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
@@ -46,6 +45,7 @@ import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.Res;
 import stroom.pipeline.shared.ExtensionProvider;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.query.api.DocRef;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;

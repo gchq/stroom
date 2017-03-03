@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,39 +16,18 @@
 
 package stroom.dashboard.shared;
 
+import stroom.util.shared.HasDisplayValue;
+import stroom.util.shared.SharedObject;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
-import stroom.util.shared.HasDisplayValue;
-import stroom.util.shared.SharedObject;
-
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "timeZone", propOrder = { "use", "id", "offsetHours", "offsetMinutes" })
 public class TimeZone implements SharedObject {
-    public enum Use implements HasDisplayValue {
-        LOCAL("Local"), UTC("UTC"), ID("Id"), OFFSET("Offset");
-
-        private final String displayValue;
-
-        Use(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-
-        @Override
-        public String toString() {
-            return getDisplayValue();
-        }
-    }
-
     private static final long serialVersionUID = 1200175661441813029L;
-
     @XmlElement(name = "use")
     private Use use;
     @XmlElement(name = "id")
@@ -57,7 +36,6 @@ public class TimeZone implements SharedObject {
     private Integer offsetHours;
     @XmlElement(name = "offsetMinutes")
     private Integer offsetMinutes;
-
     public TimeZone() {
         // Default constructor necessary for GWT serialisation.
     }
@@ -110,5 +88,25 @@ public class TimeZone implements SharedObject {
 
     public Integer getOffsetMinutes() {
         return offsetMinutes;
+    }
+
+    public enum Use implements HasDisplayValue {
+        LOCAL("Local"), UTC("UTC"), ID("Id"), OFFSET("Offset");
+
+        private final String displayValue;
+
+        Use(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
+
+        @Override
+        public String toString() {
+            return getDisplayValue();
+        }
     }
 }

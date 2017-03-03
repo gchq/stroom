@@ -20,10 +20,10 @@ import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionItem;
@@ -131,7 +131,7 @@ public class SearchModel {
                 currentExpression = builder.build();
 
                 currentQueryKey = DashboardQueryKey.create(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
-                currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, incremental);
+                currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, timeZones.getTimeZone(), incremental);
                 activeSearch = currentSearch;
 
                 // Let the query presenter know search is active.
@@ -180,7 +180,7 @@ public class SearchModel {
             if (resultComponentMap != null) {
                 final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
                 if (dataSourceRef != null) {
-                    currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, true);
+                    currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, timeZones.getTimeZone(), true);
                     activeSearch = currentSearch;
 
                     // Tell the refreshing component that it should want data.
@@ -238,7 +238,7 @@ public class SearchModel {
             final String componentId = entry.getKey();
             final ResultComponent resultComponent = entry.getValue();
             if (result.getResults() != null && result.getResults().containsKey(componentId)) {
-                final String res = result.getResults().get(componentId);
+                final ComponentResult res = result.getResults().get(componentId);
                 resultComponent.setData(res);
             }
 
@@ -290,7 +290,7 @@ public class SearchModel {
             requestMap.put(componentId, componentResultRequest);
         }
 
-        return new SearchRequest(search, requestMap, timeZones.getTimeZone());
+        return new SearchRequest(search, requestMap);
     }
 
     public boolean isSearching() {

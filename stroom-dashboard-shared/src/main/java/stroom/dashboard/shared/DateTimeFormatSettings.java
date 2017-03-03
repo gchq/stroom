@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,10 +28,8 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "dateTimeFormatSettings", propOrder = { "pattern", "timeZone" })
 public class DateTimeFormatSettings implements FormatSettings {
-    private static final long serialVersionUID = 9145624653060319801L;
-
     public static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
-
+    private static final long serialVersionUID = 9145624653060319801L;
     @XmlElement(name = "pattern")
     private String pattern;
     @XmlElement(name = "timeZone")

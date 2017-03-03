@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -261,15 +261,15 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     @Override
-    public void setData(final String json) {
+    public void setData(final ComponentResult result) {
         if (visSettings != null && visSettings.getVisualisation() != null) {
-            if (json != null) {
-                final VisResult visResult = JsonUtil.decode(json);
+            if (result != null && result instanceof VisResult) {
+                final VisResult visResult = (VisResult) result;
 
                 currentSettings = getJSONSettings();
-                currentData = (JavaScriptObject) visResult.store;//getJSONData(visResult);
+                currentData = getJSONData(visResult);
                 if (currentError == null) {
-                    currentError = visResult.error;
+                    currentError = visResult.getError();
                 }
             }
 
@@ -309,17 +309,17 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         updateStatusMessage();
     }
 
-//    private JavaScriptObject getJSONData(final VisResult visResult) {
-//        JavaScriptObject data = null;
-//
-//        // Turn JSON result text into an object.
-//        final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(visResult.getJSON()));
-//        if (dataObject != null) {
-//            data = dataObject.getJavaScriptObject();
-//        }
-//
-//        return data;
-//    }
+    private JavaScriptObject getJSONData(final VisResult visResult) {
+        JavaScriptObject data = null;
+
+        // Turn JSON result text into an object.
+        final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(visResult.getJSON()));
+        if (dataObject != null) {
+            data = dataObject.getJavaScriptObject();
+        }
+
+        return data;
+    }
 
     private JavaScriptObject getJSONSettings() {
         JavaScriptObject settings = null;

@@ -119,7 +119,7 @@ public class EntityEventBusImpl implements EntityEventBus {
                 try {
                     handler.onChange(event);
                 } catch (final Exception e) {
-                    LOGGER.error(e);
+                    LOGGER.error(e.getMessage(), e);
                 }
             }
         }

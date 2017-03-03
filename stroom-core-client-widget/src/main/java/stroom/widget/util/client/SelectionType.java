@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.event;
+package stroom.widget.util.client;
 
 public class SelectionType {
     private final boolean doubleSelect;

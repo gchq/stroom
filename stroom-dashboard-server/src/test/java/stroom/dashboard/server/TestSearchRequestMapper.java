@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -86,7 +86,7 @@ public class TestSearchRequestMapper {
         paramMap.put("param1", "val1");
         paramMap.put("param2", "val2");
 
-        final Search search = new Search(docRef, expressionOperator.build(), componentSettingsMap, paramMap, true);
+        final Search search = new Search(docRef, expressionOperator.build(), componentSettingsMap, paramMap, "en-gb", true);
 
         final Map<String, ComponentResultRequest> componentResultRequestMap = new HashMap<>();
         for (final Entry<String, ComponentSettings> entry : componentSettingsMap.entrySet()) {
@@ -96,7 +96,7 @@ public class TestSearchRequestMapper {
             componentResultRequestMap.put(entry.getKey(), tableResultRequest);
         }
 
-        SearchRequest searchRequest = new SearchRequest(search, componentResultRequestMap, "en-gb");
+        SearchRequest searchRequest = new SearchRequest(search, componentResultRequestMap);
 
         return searchRequest;
     }

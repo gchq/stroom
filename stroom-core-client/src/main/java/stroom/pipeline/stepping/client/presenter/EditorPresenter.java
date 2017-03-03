@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,14 +31,21 @@ import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.shared.Entity;
+import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.entity.shared.HasData;
+import stroom.entity.shared.ResultList;
+import stroom.entity.shared.StringCriteria;
+import stroom.pipeline.shared.FindTextConverterCriteria;
+import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.PipelineStepAction;
 import stroom.pipeline.shared.SteppingFilterSettings;
+import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
+import stroom.query.api.DocRef;
 import stroom.util.shared.Indicators;
 import stroom.xmleditor.client.event.ChangeFilterEvent;
 import stroom.xmleditor.client.event.ChangeFilterEvent.ChangeFilterHandler;
@@ -48,13 +55,13 @@ import stroom.xmleditor.client.presenter.BaseXMLEditorPresenter;
 import stroom.xmleditor.client.presenter.ReadOnlyXMLEditorPresenter;
 import stroom.xmleditor.client.presenter.XMLEditorPresenter;
 
-public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorView>implements HasDirtyHandlers {
+public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorView> implements HasDirtyHandlers {
     private final ClientDispatchAsync dispatcher;
     private final Provider<XMLEditorPresenter> editorProvider;
     private final Provider<ReadOnlyXMLEditorPresenter> readOnlyEditorProvider;
     private String elementId;
     private PipelineElementType elementType;
-    private PipelinePropertyValue propertyValue;
+    private DocRef entityRef;
     private PipelineStepAction pipelineStepAction;
     private boolean refreshRequired = true;
     private boolean loaded;
@@ -66,8 +73,8 @@ public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorVie
     private ReadOnlyXMLEditorPresenter outputPresenter;
     @Inject
     public EditorPresenter(final EventBus eventBus, final EditorView view,
-            final Provider<XMLEditorPresenter> editorProvider,
-            final Provider<ReadOnlyXMLEditorPresenter> readOnlyEditorProvider, final ClientDispatchAsync dispatcher) {
+                           final Provider<XMLEditorPresenter> editorProvider,
+                           final Provider<ReadOnlyXMLEditorPresenter> readOnlyEditorProvider, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.editorProvider = editorProvider;
         this.readOnlyEditorProvider = readOnlyEditorProvider;
@@ -78,23 +85,55 @@ public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorVie
         if (!loaded) {
             loaded = true;
 
-            if (elementType != null && elementType.hasRole(PipelineElementType.ROLE_HAS_CODE) && propertyValue != null
-                    && propertyValue.getEntity() != null) {
+            if (elementType != null && elementType.hasRole(PipelineElementType.ROLE_HAS_CODE) && entityRef != null) {
                 getView().setCodeView(getCodePresenter().getView());
 
                 try {
-                    dispatcher.execute(new EntityServiceLoadAction<>(propertyValue.getEntity(), null), new AsyncCallbackAdaptor<Entity>() {
+                    if (entityRef.getUuid() == null && entityRef.getName() != null) {
+                        if (TextConverter.ENTITY_TYPE.equals(entityRef.getType())) {
+                            final FindTextConverterCriteria criteria = new FindTextConverterCriteria();
+                            criteria.setName(new StringCriteria(entityRef.getName()));
+                            criteria.setOrderBy(FindXSLTCriteria.ORDER_BY_ID);
+                            final EntityServiceFindAction<FindTextConverterCriteria, TextConverter> findAction = new EntityServiceFindAction<>(criteria);
+                            dispatcher.execute(findAction, new AsyncCallbackAdaptor<ResultList<TextConverter>>() {
                                 @Override
-                                public void onSuccess(final Entity result) {
-                                    entity = result;
-                                    dirtyCode = false;
-                                    read();
+                                public void onSuccess(final ResultList<TextConverter> result) {
+                                    if (result != null && result.size() > 0) {
+                                        entity = result.get(0);
+                                        dirtyCode = false;
+                                        read();
+                                    }
                                 }
                             });
+                        } else if (XSLT.ENTITY_TYPE.equals(entityRef.getType())) {
+                            final FindXSLTCriteria criteria = new FindXSLTCriteria();
+                            criteria.setName(new StringCriteria(entityRef.getName()));
+                            criteria.setOrderBy(FindXSLTCriteria.ORDER_BY_ID);
+                            final EntityServiceFindAction<FindXSLTCriteria, XSLT> findAction = new EntityServiceFindAction<>(criteria);
+                            dispatcher.execute(findAction, new AsyncCallbackAdaptor<ResultList<XSLT>>() {
+                                @Override
+                                public void onSuccess(final ResultList<XSLT> result) {
+                                    if (result != null && result.size() > 0) {
+                                        entity = result.get(0);
+                                        dirtyCode = false;
+                                        read();
+                                    }
+                                }
+                            });
+                        }
+                    } else {
+                        dispatcher.execute(new EntityServiceLoadAction<>(entityRef, null), new AsyncCallbackAdaptor<Entity>() {
+                            @Override
+                            public void onSuccess(final Entity result) {
+                                entity = result;
+                                dirtyCode = false;
+                                read();
+                            }
+                        });
+                    }
                 } catch (final Exception e) {
                     AlertEvent.fireErrorFromException(this, e, null);
                 }
-
             }
 
             // We only care about seeing input if the element mutates the input
@@ -145,7 +184,7 @@ public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorVie
     }
 
     public void setCode(final String code, final int codeStartLineNo, final boolean formatCode,
-            final Indicators codeIndicators) {
+                        final Indicators codeIndicators) {
         if (codePresenter != null) {
             this.codeIndicators = codeIndicators;
             codePresenter.setText(code, codeStartLineNo, formatCode, null, codeIndicators, false);
@@ -160,7 +199,7 @@ public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorVie
     }
 
     public void setInput(final String input, final int inputStartLineNo, final boolean formatInput,
-            final Indicators inputIndicators) {
+                         final Indicators inputIndicators) {
         if (inputPresenter != null) {
             inputPresenter.getStylesOption().setOn(formatInput);
             inputPresenter.setText(input, inputStartLineNo, formatInput, null, inputIndicators, false);
@@ -168,7 +207,7 @@ public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorVie
     }
 
     public void setOutput(final String output, final int outputStartLineNo, final boolean formatOutput,
-            final Indicators outputIndicators) {
+                          final Indicators outputIndicators) {
         if (outputPresenter != null) {
             outputPresenter.getStylesOption().setOn(formatOutput);
             outputPresenter.setText(output, outputStartLineNo, formatOutput, null, outputIndicators, false);
@@ -196,8 +235,8 @@ public class EditorPresenter extends MyPresenterWidget<EditorPresenter.EditorVie
         this.elementType = elementType;
     }
 
-    public void setPropertyValue(final PipelinePropertyValue propertyValue) {
-        this.propertyValue = propertyValue;
+    public void setEntityRef(final DocRef entityRef) {
+        this.entityRef = entityRef;
     }
 
     public void setPipelineStepAction(final PipelineStepAction pipelineStepAction) {

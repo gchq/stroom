@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,9 @@
 
 package stroom.streamstore.server.tools;
 
+import org.joda.time.DateTime;
+import org.junit.Assert;
+import org.springframework.stereotype.Component;
 import stroom.CommonTestControl;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
@@ -24,6 +27,9 @@ import stroom.feed.shared.Feed.FeedStatus;
 import stroom.feed.shared.FeedService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexField.AnalyzerType;
+import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.server.parser.CombinedParser;
@@ -41,9 +47,6 @@ import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexField.AnalyzerType;
-import stroom.index.shared.IndexFields;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -56,12 +59,9 @@ import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessorService;
-import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.test.PipelineTestUtil;
+import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.StreamUtil;
-import org.joda.time.DateTime;
-import org.junit.Assert;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.ByteArrayInputStream;

@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,8 +22,6 @@ import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.FolderService;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
@@ -31,8 +29,11 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
+import stroom.entity.shared.FolderService;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.PermissionException;
+import stroom.entity.shared.PermissionInheritance;
+import stroom.query.api.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
@@ -58,18 +59,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     protected static final String[] STANDARD_PERMISSIONS = new String[]{DocumentPermissionNames.USE,
             DocumentPermissionNames.READ, DocumentPermissionNames.UPDATE, DocumentPermissionNames.DELETE, DocumentPermissionNames.OWNER};
-
-    // TODO : REMOVE WHEN WE REMOVE FOLDER REFERENCES FROM ENTITIES.
-    @Resource
-    private FolderService folderService;
-
     private final StroomEntityManager entityManager;
     private final SecurityContext securityContext;
     private final EntityServiceHelper<E> entityServiceHelper;
     private final FindServiceHelper<E, C> findServiceHelper;
-
     private final QueryAppender<E, C> queryAppender;
-
+    // TODO : REMOVE WHEN WE REMOVE FOLDER REFERENCES FROM ENTITIES.
+    @Resource
+    private FolderService folderService;
     private String entityType;
 
     protected DocumentEntityServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext) {
@@ -90,6 +87,11 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     @Override
     public E create(final DocRef folder, final String name) throws RuntimeException {
+        return create(folder, name, PermissionInheritance.NONE);
+    }
+
+    @Override
+    public E create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
         // Create a new entity instance.
         E entity;
         try {
@@ -100,16 +102,23 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
         entity.setName(name);
         setFolder(entity, folder);
-        entity = entityServiceHelper.create(entity);
+        final E result = entityServiceHelper.create(entity);
+        final DocRef dest = DocRefUtil.create(result);
 
         // Create the initial user permissions for this new document.
-        String folderUuid = null;
-        if (folder != null) {
-            folderUuid = folder.getUuid();
+        switch (permissionInheritance) {
+            case NONE:
+                addDocumentPermissions(null, dest, true);
+                break;
+            case COMBINED:
+                addDocumentPermissions(folder, dest, true);
+                break;
+            case INHERIT:
+                addDocumentPermissions(folder, dest, true);
+                break;
         }
-        securityContext.createInitialDocumentPermissions(entity.getType(), entity.getUuid(), folderUuid);
 
-        return entity;
+        return result;
     }
 
     // TODO : Temporary for query service.
@@ -323,20 +332,65 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     @Override
-    public E copy(final E entity, final DocRef folder, final String name) {
+    public E copy(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
+        final DocRef source = DocRefUtil.create(entity);
+
+        // Check that we can read the entity that we are going to copy.
+        checkReadPermission(entity);
+
         // This is going to be a copy so clear the persistence so save will create a new DB entry.
         entity.clearPersistence();
 
         entity.setName(name);
 
         setFolder(entity, folder);
-        return entityServiceHelper.create(entity);
+
+        final E result = entityServiceHelper.create(entity);
+        final DocRef dest = DocRefUtil.create(result);
+
+        if (permissionInheritance != null) {
+            switch (permissionInheritance) {
+                case NONE:
+                    addDocumentPermissions(source, dest, true);
+                    break;
+                case COMBINED:
+                    addDocumentPermissions(source, dest, true);
+                    addDocumentPermissions(folder, dest, true);
+                    break;
+                case INHERIT:
+                    addDocumentPermissions(folder, dest, true);
+                    break;
+            }
+        }
+
+        return result;
     }
 
     @Override
-    public E move(final E entity, final DocRef folder) {
+    public E move(final E entity, final DocRef folder, final PermissionInheritance permissionInheritance) {
+        // Check that we can read the entity that we are going to move.
+        checkReadPermission(entity);
+
         setFolder(entity, folder);
-        return save(entity);
+
+        final E result = save(entity);
+        final DocRef dest = DocRefUtil.create(result);
+
+        if (permissionInheritance != null) {
+            switch (permissionInheritance) {
+                case NONE:
+                    break;
+                case COMBINED:
+                    addDocumentPermissions(folder, dest, false);
+                    break;
+                case INHERIT:
+                    clearDocumentPermissions(dest);
+                    addDocumentPermissions(folder, dest, false);
+                    break;
+            }
+        }
+
+        return result;
     }
 
     @Override
@@ -524,7 +578,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
     }
 
-    protected final void checkUpdatePermission(final E entity) {
+    protected void checkUpdatePermission(final E entity) {
         if (!entity.isPersistent()) {
             throw new EntityServiceException("You cannot update an entity that has not been created");
         }
@@ -544,6 +598,37 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         if (!securityContext.hasDocumentPermission(entity.getType(), entity.getUuid(), DocumentPermissionNames.DELETE)) {
             throw new PermissionException("You do not have permission to delete " + getDocReference(entity));
         }
+    }
+
+    private void clearDocumentPermissions(final DocRef docRef) {
+        String docType = null;
+        String docUuid = null;
+
+        if (docRef != null) {
+            docType = docRef.getType();
+            docUuid = docRef.getUuid();
+        }
+
+        securityContext.clearDocumentPermissions(docType, docUuid);
+    }
+
+    private void addDocumentPermissions(final DocRef source, final DocRef dest, final boolean owner) {
+        String sourceType = null;
+        String sourceUuid = null;
+        String destType = null;
+        String destUuid = null;
+
+        if (source != null) {
+            sourceType = source.getType();
+            sourceUuid = source.getUuid();
+        }
+
+        if (dest != null) {
+            destType = dest.getType();
+            destUuid = dest.getUuid();
+        }
+
+        securityContext.addDocumentPermissions(sourceType, sourceUuid, destType, destUuid, owner);
     }
 
     public static final class EntityReferenceQuery {

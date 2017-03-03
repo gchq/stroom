@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package stroom.streamstore.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -32,13 +31,12 @@ import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefs;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
 import stroom.process.shared.LoadEntityIdSetAction;
 import stroom.process.shared.SetId;
-import stroom.util.shared.SharedList;
+import stroom.query.api.DocRef;
 import stroom.util.shared.SharedMap;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -74,7 +72,7 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
     }
 
     private void createList() {
-        list = new CellTableViewImpl<String>(false, (Resources) GWT.create(DisabledResources.class));
+        list = new CellTableViewImpl<String>(false, GWT.create(DisabledResources.class));
 
         // Text.
         final Column<String, String> textColumn = new Column<String, String>(new TextCell()) {

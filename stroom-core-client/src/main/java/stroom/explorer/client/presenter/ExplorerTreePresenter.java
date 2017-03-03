@@ -30,10 +30,10 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
+import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerItemEvent;
 import stroom.explorer.client.event.OpenExplorerTabEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
-import stroom.explorer.client.event.SelectionType;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerData;
@@ -46,6 +46,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.SelectionType;
 
 public class ExplorerTreePresenter
         extends MyPresenter<ExplorerTreePresenter.ExplorerTreeView, ExplorerTreePresenter.ExplorerTreeProxy>
@@ -93,7 +94,7 @@ public class ExplorerTreePresenter
         registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(typeFilterPresenter.getIncludedTypes())));
 
         // Fire events from the explorer tree globally.
-        registerHandler(explorerTree.addSelectionHandler(event -> getEventBus().fireEvent(event)));
+        registerHandler(explorerTree.getSelectionModel().addSelectionHandler(event -> getEventBus().fireEvent(new ExplorerTreeSelectEvent(explorerTree.getSelectionModel(), event.getSelectionType()))));
         registerHandler(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
     }
 
@@ -138,6 +139,7 @@ public class ExplorerTreePresenter
             }
         });
 
+        explorerTree.getTreeModel().clear();
         explorerTree.getTreeModel().reset();
         explorerTree.getTreeModel().setRequiredPermissions(DocumentPermissionNames.READ);
         explorerTree.getTreeModel().setIncludedTypeSet(null);

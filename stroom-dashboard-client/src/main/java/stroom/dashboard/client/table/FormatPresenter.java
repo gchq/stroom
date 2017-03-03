@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -70,7 +70,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
             getView().setWrap(false);
         }
 
-        final PopupSize popupSize = new PopupSize(390, 193, 390, 193, true);
+        final PopupSize popupSize = new PopupSize(390, 217, 390, 217, true);
         ShowPopupEvent.fire(tablePresenter, this, PopupType.OK_CANCEL_DIALOG, popupSize,
                 "Format '" + field.getName() + "'", this);
     }

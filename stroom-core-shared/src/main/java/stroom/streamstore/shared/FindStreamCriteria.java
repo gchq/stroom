@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -47,10 +47,8 @@ import java.util.List;
 @XmlRootElement
 public class FindStreamCriteria extends BaseCriteria
         implements HasFolderIdSet, Copyable<FindStreamCriteria>, HasIsConstrained, Matcher<Stream> {
-    private static final long serialVersionUID = -4777723504698304778L;
-
     public static final OrderBy ORDER_BY_CREATE_MS = new OrderBy("Create", "createMs", Stream.CREATE_MS);
-
+    private static final long serialVersionUID = -4777723504698304778L;
     /**
      * Keep up to date as it's used to cache SQL queries.
      */
@@ -78,6 +76,20 @@ public class FindStreamCriteria extends BaseCriteria
     private QueryData queryData;
 
     public FindStreamCriteria() {
+    }
+
+    public static final FindStreamCriteria createWithStream(final Stream stream) {
+        final FindStreamCriteria criteria = new FindStreamCriteria();
+        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
+        criteria.obtainStreamIdSet().add(stream);
+        return criteria;
+    }
+
+    public static final FindStreamCriteria createWithStreamType(final StreamType streamType) {
+        final FindStreamCriteria criteria = new FindStreamCriteria();
+        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
+        criteria.obtainStreamTypeIdSet().add(streamType);
+        return criteria;
     }
 
     @Override
@@ -146,20 +158,6 @@ public class FindStreamCriteria extends BaseCriteria
         return true;
     }
 
-    public static final FindStreamCriteria createWithStream(final Stream stream) {
-        final FindStreamCriteria criteria = new FindStreamCriteria();
-        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        criteria.obtainStreamIdSet().add(stream);
-        return criteria;
-    }
-
-    public static final FindStreamCriteria createWithStreamType(final StreamType streamType) {
-        final FindStreamCriteria criteria = new FindStreamCriteria();
-        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        criteria.obtainStreamTypeIdSet().add(streamType);
-        return criteria;
-    }
-
     @Override
     public boolean isConstrained() {
         if (streamProcessorIdSet != null && streamProcessorIdSet.isConstrained()) {
@@ -203,6 +201,10 @@ public class FindStreamCriteria extends BaseCriteria
         return streamProcessorIdSet;
     }
 
+    public void setStreamProcessorIdSet(final EntityIdSet<StreamProcessor> streamProcessorIdSet) {
+        this.streamProcessorIdSet = streamProcessorIdSet;
+    }
+
     public EntityIdSet<StreamProcessor> obtainStreamProcessorIdSet() {
         if (streamProcessorIdSet == null) {
             streamProcessorIdSet = new EntityIdSet<>();
@@ -210,12 +212,12 @@ public class FindStreamCriteria extends BaseCriteria
         return streamProcessorIdSet;
     }
 
-    public void setStreamProcessorIdSet(final EntityIdSet<StreamProcessor> streamProcessorIdSet) {
-        this.streamProcessorIdSet = streamProcessorIdSet;
-    }
-
     public CriteriaSet<StreamStatus> getStatusSet() {
         return statusSet;
+    }
+
+    public void setStatusSet(final CriteriaSet<StreamStatus> statusSet) {
+        this.statusSet = statusSet;
     }
 
     public CriteriaSet<StreamStatus> obtainStatusSet() {
@@ -225,13 +227,13 @@ public class FindStreamCriteria extends BaseCriteria
         return statusSet;
     }
 
-    public void setStatusSet(final CriteriaSet<StreamStatus> statusSet) {
-        this.statusSet = statusSet;
-    }
-
     @Override
     public FolderIdSet getFolderIdSet() {
         return folderIdSet;
+    }
+
+    public void setFolderIdSet(final FolderIdSet folderIdSet) {
+        this.folderIdSet = folderIdSet;
     }
 
     @Override
@@ -242,10 +244,6 @@ public class FindStreamCriteria extends BaseCriteria
         return folderIdSet;
     }
 
-    public void setFolderIdSet(final FolderIdSet folderIdSet) {
-        this.folderIdSet = folderIdSet;
-    }
-
     public IncludeExcludeEntityIdSet<Feed> getFeeds() {
         if (feedIdSet != null) {
             feeds = new IncludeExcludeEntityIdSet<Feed>();
@@ -254,6 +252,10 @@ public class FindStreamCriteria extends BaseCriteria
         }
 
         return feeds;
+    }
+
+    public void setFeeds(final IncludeExcludeEntityIdSet<Feed> feeds) {
+        this.feeds = feeds;
     }
 
     public IncludeExcludeEntityIdSet<Feed> obtainFeeds() {
@@ -267,10 +269,6 @@ public class FindStreamCriteria extends BaseCriteria
             feeds = new IncludeExcludeEntityIdSet<Feed>();
         }
         return feeds;
-    }
-
-    public void setFeeds(final IncludeExcludeEntityIdSet<Feed> feeds) {
-        this.feeds = feeds;
     }
 
     /**
@@ -314,6 +312,10 @@ public class FindStreamCriteria extends BaseCriteria
         return streamTypeIdSet;
     }
 
+    public void setStreamTypeIdSet(final EntityIdSet<StreamType> streamTypeIdSet) {
+        this.streamTypeIdSet = streamTypeIdSet;
+    }
+
     public EntityIdSet<StreamType> obtainStreamTypeIdSet() {
         if (streamTypeIdSet == null) {
             streamTypeIdSet = new EntityIdSet<>();
@@ -321,12 +323,12 @@ public class FindStreamCriteria extends BaseCriteria
         return streamTypeIdSet;
     }
 
-    public void setStreamTypeIdSet(final EntityIdSet<StreamType> streamTypeIdSet) {
-        this.streamTypeIdSet = streamTypeIdSet;
-    }
-
     public EntityIdSet<Stream> getStreamIdSet() {
         return streamIdSet;
+    }
+
+    public void setStreamIdSet(final EntityIdSet<Stream> streamIdSet) {
+        this.streamIdSet = streamIdSet;
     }
 
     public EntityIdSet<Stream> obtainStreamIdSet() {
@@ -336,12 +338,12 @@ public class FindStreamCriteria extends BaseCriteria
         return streamIdSet;
     }
 
-    public void setStreamIdSet(final EntityIdSet<Stream> streamIdSet) {
-        this.streamIdSet = streamIdSet;
-    }
-
     public IdRange getStreamIdRange() {
         return streamIdRange;
+    }
+
+    public void setStreamIdRange(final IdRange streamIdRange) {
+        this.streamIdRange = streamIdRange;
     }
 
     public IdRange obtainStreamIdRange() {
@@ -351,12 +353,12 @@ public class FindStreamCriteria extends BaseCriteria
         return streamIdRange;
     }
 
-    public void setStreamIdRange(final IdRange streamIdRange) {
-        this.streamIdRange = streamIdRange;
-    }
-
     public EntityIdSet<Stream> getParentStreamIdSet() {
         return parentStreamIdSet;
+    }
+
+    public void setParentStreamIdSet(final EntityIdSet<Stream> parentStreamIdSet) {
+        this.parentStreamIdSet = parentStreamIdSet;
     }
 
     public EntityIdSet<Stream> obtainParentStreamIdSet() {
@@ -366,12 +368,12 @@ public class FindStreamCriteria extends BaseCriteria
         return parentStreamIdSet;
     }
 
-    public void setParentStreamIdSet(final EntityIdSet<Stream> parentStreamIdSet) {
-        this.parentStreamIdSet = parentStreamIdSet;
-    }
-
     public Period getCreatePeriod() {
         return createPeriod;
+    }
+
+    public void setCreatePeriod(final Period createPeriod) {
+        this.createPeriod = createPeriod;
     }
 
     public Period obtainCreatePeriod() {
@@ -382,12 +384,12 @@ public class FindStreamCriteria extends BaseCriteria
 
     }
 
-    public void setCreatePeriod(final Period createPeriod) {
-        this.createPeriod = createPeriod;
-    }
-
     public Period getEffectivePeriod() {
         return effectivePeriod;
+    }
+
+    public void setEffectivePeriod(final Period effectivePeriod) {
+        this.effectivePeriod = effectivePeriod;
     }
 
     public Period obtainEffectivePeriod() {
@@ -397,12 +399,12 @@ public class FindStreamCriteria extends BaseCriteria
         return effectivePeriod;
     }
 
-    public void setEffectivePeriod(final Period effectivePeriod) {
-        this.effectivePeriod = effectivePeriod;
-    }
-
     public Period getStatusPeriod() {
         return statusPeriod;
+    }
+
+    public void setStatusPeriod(final Period statusPeriod) {
+        this.statusPeriod = statusPeriod;
     }
 
     public Period obtainStatusPeriod() {
@@ -412,12 +414,12 @@ public class FindStreamCriteria extends BaseCriteria
         return statusPeriod;
     }
 
-    public void setStatusPeriod(final Period statusPeriod) {
-        this.statusPeriod = statusPeriod;
-    }
-
     public List<StreamAttributeCondition> getAttributeConditionList() {
         return attributeConditionList;
+    }
+
+    public void setAttributeConditionList(final List<StreamAttributeCondition> attributeConditionList) {
+        this.attributeConditionList = attributeConditionList;
     }
 
     public List<StreamAttributeCondition> obtainAttributeConditionList() {
@@ -425,10 +427,6 @@ public class FindStreamCriteria extends BaseCriteria
             attributeConditionList = new ArrayList<>();
         }
         return attributeConditionList;
-    }
-
-    public void setAttributeConditionList(final List<StreamAttributeCondition> attributeConditionList) {
-        this.attributeConditionList = attributeConditionList;
     }
 
     public QueryData getQueryData() {

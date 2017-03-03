@@ -19,12 +19,9 @@ package stroom.streamstore.client.presenter;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-
 import stroom.cell.info.client.InfoColumn;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -47,20 +44,17 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
 
 public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<SummaryDataRow>>
-        implements SelectionChangeEvent.HasSelectionChangedHandlers, HasRead<BaseEntity> {
+        implements HasRead<BaseEntity> {
     private EntityServiceFindSummaryActionDataProvider<FindStreamTaskCriteria> dataProvider;
-    private final InterceptingSelectionChangeHandler interceptingSelectionChangeHandler = new InterceptingSelectionChangeHandler();
-    private final MySingleSelectionModel<SummaryDataRow> selectionModel = new MySingleSelectionModel<SummaryDataRow>();
+//    private final InterceptingSelectionChangeHandler interceptingSelectionChangeHandler = new InterceptingSelectionChangeHandler();
 
     @Inject
     public StreamTaskSummaryPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-            final TooltipPresenter tooltipPresenter) {
-        super(eventBus, new DataGridViewImpl<SummaryDataRow>(false));
-
-        getView().setSelectionModel(selectionModel);
+                                      final TooltipPresenter tooltipPresenter) {
+        super(eventBus, new DataGridViewImpl<SummaryDataRow>(true, false));
 
         // Info column.
         final InfoColumn<SummaryDataRow> infoColumn = new InfoColumn<SummaryDataRow>() {
@@ -138,26 +132,26 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
                 getView()) {
             @Override
             protected void afterDataChange(final ResultList<SummaryDataRow> data) {
-                final SummaryDataRow selected = selectionModel.getSelectedObject();
+                final SummaryDataRow selected = getView().getSelectionModel().getSelected();
                 if (selected != null) {
                     // Reselect the task set.
-                    selectionModel.setSelected(selected, false);
+                    getView().getSelectionModel().clear();
                     if (data != null && data.contains(selected)) {
-                        selectionModel.setSelected(selected, true);
+                        getView().getSelectionModel().setSelected(selected);
                     }
                 }
             }
         };
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(selectionModel.addSelectionChangeHandler(interceptingSelectionChangeHandler));
-    }
+//    @Override
+//    protected void onBind() {
+//        super.onBind();
+//        registerHandler(getView().addSelectionHandler().addSelectionChangeHandler(interceptingSelectionChangeHandler));
+//    }
 
-    public MySingleSelectionModel<SummaryDataRow> getSelectionModel() {
-        return selectionModel;
+    public MultiSelectionModel<SummaryDataRow> getSelectionModel() {
+        return getView().getSelectionModel();
     }
 
     private void setCriteria(final Folder folder) {
@@ -193,11 +187,6 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
         } else {
             setNullCriteria();
         }
-    }
-
-    @Override
-    public HandlerRegistration addSelectionChangeHandler(final Handler handler) {
-        return interceptingSelectionChangeHandler.addSelectionChangeHandler(handler);
     }
 
     private FindStreamTaskCriteria initCriteria() {

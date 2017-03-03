@@ -20,11 +20,9 @@ import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -43,13 +41,22 @@ import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.shared.ResultList;
 import stroom.statistics.client.common.presenter.StatisticsCustomMaskListPresenter.MaskHolder;
-import stroom.statistics.shared.*;
+import stroom.statistics.shared.CustomRollUpMask;
+import stroom.statistics.shared.RollUpBitMaskPermGenerationAction;
+import stroom.statistics.shared.StatisticField;
+import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticsDataSourceData;
+import stroom.statistics.shared.StatisticsDataSourceFieldChangeAction;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.util.client.MySingleSelectionModel;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGridView<MaskHolder>>
         implements HasRead<StatisticStoreEntity>, HasWrite<StatisticStoreEntity>, HasDirtyHandlers {
@@ -63,7 +70,6 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     private final GlyphButtonView removeButton;
     private final ImageButtonView autoGenerateButton;
 
-    private final MySingleSelectionModel<MaskHolder> selectionModel;
     private MaskHolder selectedElement;
 
     private StatisticStoreEntity statisticsDataSource;
@@ -77,9 +83,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     @Inject
     public StatisticsCustomMaskListPresenter(final EventBus eventBus, final Resources resources,
                                              final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<MaskHolder>(true));
-
-        selectionModel = (MySingleSelectionModel<MaskHolder>) getView().getSelectionModel();
+        super(eventBus, new DataGridViewImpl<MaskHolder>(true, true));
 
         newButton = getView().addButton(GlyphIcons.NEW_ITEM);
         newButton.setTitle("New roll-up permutation");
@@ -100,47 +104,32 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     protected void onBind() {
         super.onBind();
 
-        registerHandler(newButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onAdd(event);
-                }
+        registerHandler(newButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onAdd(event);
             }
         }));
 
-        registerHandler(removeButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onRemove(event);
-                }
+        registerHandler(removeButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onRemove(event);
             }
         }));
 
-        registerHandler(autoGenerateButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onAutoGenerate(event);
-                }
+        registerHandler(autoGenerateButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onAutoGenerate(event);
             }
         }));
 
-        registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                enableButtons();
-            }
-        }));
-
+        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> enableButtons()));
     }
 
     private void enableButtons() {
         autoGenerateButton.setEnabled(true);
 
         if (maskList != null && maskList.size() > 0) {
-            selectedElement = selectionModel.getSelectedObject();
+            selectedElement = getView().getSelectionModel().getSelected();
             final boolean enabled = selectedElement != null;
 
             removeButton.setEnabled(enabled);
@@ -225,11 +214,11 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     }
 
     private void onRemove(final ClickEvent event) {
-        final MaskHolder selectedMask = selectionModel.getSelectedObject();
-        if (maskList != null) {
-            maskList.remove(selectedMask);
+        final List<MaskHolder> list = getView().getSelectionModel().getSelectedItems();
+        if (maskList != null && list != null && list.size() > 0) {
+            maskList.removeAll(list);
 
-            selectionModel.clear();
+            getView().getSelectionModel().clear();
             // dataProvider.refresh();
             refreshModel();
 

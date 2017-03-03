@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -57,23 +57,23 @@ public class FilterTermsTreeBuilder {
     }
 
     private static PrintableNode convertNode(final ExpressionItem oldNode, final Set<String> fieldBlackList) {
-        PrintableNode newNode;
+        PrintableNode newNode = null;
 
         if (oldNode.enabled()) {
             if (oldNode instanceof ExpressionTerm) {
                 final ExpressionTerm termNode = (ExpressionTerm) oldNode;
-                newNode = convertTermNode(termNode, fieldBlackList);
+                if (termNode.getValue() != null && termNode.getValue().length() > 0) {
+                    newNode = convertTermNode(termNode, fieldBlackList);
+                }
             } else if (oldNode instanceof ExpressionOperator) {
                 newNode = convertOperatorNode((ExpressionOperator) oldNode, fieldBlackList);
             } else {
                 throw new RuntimeException("Node is of a type that we don't expect: " + oldNode.getClass().getName());
             }
-        } else {
-            // the node is disabled so just return null rather than including it
-            // in the new tree
-            newNode = null;
         }
 
+        // the node is disabled so just return null rather than including it
+        // in the new tree
         return newNode;
     }
 

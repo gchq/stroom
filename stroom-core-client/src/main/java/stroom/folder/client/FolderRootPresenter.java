@@ -29,6 +29,7 @@ import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
 import stroom.streamstore.client.presenter.StreamTaskPresenter;
+import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.client.ImageUtil;
 import stroom.widget.tab.client.presenter.Icon;
@@ -50,24 +51,19 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements TabDat
             final Provider<StreamTaskPresenter> streamTaskPresenterProvider) {
         super(eventBus, view);
 
-        // if (securityContext.hasAppPermission(Stream.ENTITY_TYPE, DocumentPermissionNames.READ)) {
+        if (securityContext.hasAppPermission(Stream.VIEW_DATA_PERMISSION)) {
             addTab(DATA);
             tabContentProvider.add(DATA, streamPresenterProvider);
-        //  }
+        }
+
         if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
             addTab(PROCESSORS);
             tabContentProvider.add(PROCESSORS, processorPresenterProvider);
-        }
-        if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
             addTab(TASKS);
             tabContentProvider.add(TASKS, streamTaskPresenterProvider);
         }
 
-        //   if (securityContext.hasAppPermission(Stream.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            selectTab(DATA);
-        //  }
-
-        tabContentProvider.read(null);
+        selectTab(DATA);
     }
 
     @Override

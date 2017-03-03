@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,7 +39,7 @@ import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
 import stroom.entity.shared.Folder;
-import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
+import stroom.explorer.client.presenter.EntityChooser;
 import stroom.explorer.shared.ExplorerData;
 import stroom.process.shared.LoadEntityIdSetAction;
 import stroom.process.shared.SetId;
@@ -55,7 +55,7 @@ import java.util.List;
 
 public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter.EntityIdSetView>
         implements EntityIdSetUiHandlers {
-    private final ExplorerDropDownTreePresenter treePresenter;
+    private final EntityChooser treePresenter;
     private final EntityChoicePresenter choicePresenter;
     private final ClientDispatchAsync dispatcher;
     private final StreamTypeUiManager streamTypeUiManager;
@@ -67,7 +67,7 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
 
     @Inject
     public EntityIdSetPresenter(final EventBus eventBus, final EntityIdSetView view,
-                                final ExplorerDropDownTreePresenter treePresenter, final EntityChoicePresenter choicePresenter,
+                                final EntityChooser treePresenter, final EntityChoicePresenter choicePresenter,
                                 final StreamTypeUiManager streamTypeUiManager, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.treePresenter = treePresenter;
