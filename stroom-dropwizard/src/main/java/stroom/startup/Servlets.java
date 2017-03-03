@@ -6,13 +6,10 @@ import org.eclipse.jetty.servlet.ServletHolder;
 public class Servlets {
 
     final ServletHolder upgradeDispatcherServletHolder;
-    final ServletHolder loggingServletHolder;
 
     public Servlets(Environment environment){
-        loggingServletHolder = Servlets.newLog4jServlet();
         upgradeDispatcherServletHolder = Servlets.newUpgradeDispatcherServlet();
 
-        addServlet(environment, loggingServletHolder, 1,"", null);
         addServlet(environment, upgradeDispatcherServletHolder, 3, "/*.rpc", new String[]{
                 "/dispatch.rpc",
                 "/dynamic.css",
@@ -40,13 +37,6 @@ public class Servlets {
             servletHolder.getRegistration().addMapping(furtherServletMappings);
         }
         servletHolder.getRegistration().setLoadOnStartup(loadOnStartup);
-    }
-
-    private static ServletHolder newLog4jServlet() {
-        ServletHolder servlet = new ServletHolder(stroom.util.logging.Log4JServlet.class);
-        servlet.setName("log4j");
-        servlet.setInitParameter("log4j", "classpath:log4j.xml");
-        return servlet;
     }
 
     private static ServletHolder newUpgradeDispatcherServlet() {
