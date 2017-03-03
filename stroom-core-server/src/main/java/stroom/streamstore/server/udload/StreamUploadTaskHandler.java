@@ -16,6 +16,8 @@
 
 package stroom.streamstore.server.udload;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
@@ -35,7 +37,6 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
@@ -58,7 +59,7 @@ import java.util.List;
 @TaskHandlerBean(task = StreamUploadTask.class)
 @Scope(value = StroomScope.TASK)
 public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, VoidResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StreamUploadTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamUploadTaskHandler.class);
 
     private static final String AGGREGATION_DELIMITER = "_";
     private static final String FILE_SEPERATOR = ".";
@@ -143,7 +144,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
                     .getBaseNameGroupedList(AGGREGATION_DELIMITER);
 
             for (int i = 0; i < groupedFileLists.size(); i++) {
-                progressMonitor.info("Zip %s/%s", i, groupedFileLists.size());
+                progressMonitor.info("Zip {}/{}", i, groupedFileLists.size());
 
                 uploadData(stroomZipFile, streamUploadTask, headerMap, groupedFileLists.get(i));
 
@@ -197,7 +198,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
             final int maxCount = fileList.size();
             for (final String inputBase : fileList) {
                 count++;
-                zipPartTaskMonitor.info("%s/%s", count, maxCount);
+                zipPartTaskMonitor.info("{}/{}", count, maxCount);
                 streamContents(stroomZipFile, metaMap, rawNestedStreamTarget, inputBase, StroomZipFileType.Data,
                         streamProgressMonitor);
                 streamContents(stroomZipFile, metaMap, rawNestedStreamTarget, inputBase, StroomZipFileType.Meta,

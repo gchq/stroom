@@ -17,6 +17,8 @@
 package stroom.index.server;
 
 import event.logging.BaseAdvancedQueryItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +40,6 @@ import stroom.node.shared.VolumeService;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
@@ -51,7 +52,7 @@ import java.util.Set;
 @Transactional
 public class IndexShardServiceImpl
         extends SystemEntityServiceImpl<IndexShard, FindIndexShardCriteria> implements IndexShardService {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexShardServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardServiceImpl.class);
 
     private static final String VOLUME_ERROR = "One or more volumes must been assigned to an index for a shard to be created";
 

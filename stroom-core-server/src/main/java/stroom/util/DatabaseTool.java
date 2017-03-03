@@ -21,11 +21,12 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.ConnectionUtil;
-import stroom.util.logging.StroomLogger;
 
 public class DatabaseTool extends AbstractCommandLineTool {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(DatabaseTool.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseTool.class);
 
     private String jdbcDriverClassName;
     private String jdbcDriverUrl;
@@ -58,7 +59,7 @@ public class DatabaseTool extends AbstractCommandLineTool {
                 throw new RuntimeException(ex);
             }
             connection = DriverManager.getConnection(jdbcDriverUrl, jdbcDriverUsername, jdbcDriverPassword);
-            LOGGER.info("getConnection() - Connected !! (%s,%s)", jdbcDriverClassName, jdbcDriverUrl);
+            LOGGER.info("getConnection() - Connected !! ({},{})", jdbcDriverClassName, jdbcDriverUrl);
         }
         return connection;
     }

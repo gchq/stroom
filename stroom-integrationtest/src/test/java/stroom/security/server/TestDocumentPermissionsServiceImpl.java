@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,8 @@ package stroom.security.server;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.transaction.TransactionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseEntity;
@@ -31,7 +33,6 @@ import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
-import stroom.util.logging.StroomLogger;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;
@@ -40,7 +41,7 @@ import javax.persistence.PersistenceException;
 import java.util.Set;
 
 public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestDocumentPermissionsServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestDocumentPermissionsServiceImpl.class);
 
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;

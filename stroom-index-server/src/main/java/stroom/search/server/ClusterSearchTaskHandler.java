@@ -18,6 +18,8 @@ package stroom.search.server;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.util.StringUtils;
@@ -54,7 +56,6 @@ import stroom.task.server.TaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskTerminatedException;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Location;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
@@ -84,7 +85,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
      * until the docs are drained from the queue.
      */
     public static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000000;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterSearchTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchTaskHandler.class);
     private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
     private final TaskManager taskManager;
@@ -444,7 +445,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
     @Override
     public void log(final Severity severity, final Location location, final String elementId, final String message,
                     final Throwable e) {
-        LOGGER.debug(e, e);
+        LOGGER.debug(e.getMessage(), e);
 
         if (e == null || !(e instanceof TaskTerminatedException)) {
             final String msg = MessageUtil.getMessage(message, e);

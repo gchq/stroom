@@ -35,6 +35,8 @@ import java.util.zip.ZipInputStream;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.test.StroomProcessTestFileUtil;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -56,7 +58,6 @@ import stroom.test.ComparisonHelper;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Indicators;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -68,7 +69,7 @@ import stroom.xml.converter.ds3.ref.VarMap;
 @Ignore("Removed test data")
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestDS3 extends StroomUnitTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestDS3.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestDS3.class);
 
     private final SchemaFilterFactory schemaFilterFactory = new SchemaFilterFactory();
 

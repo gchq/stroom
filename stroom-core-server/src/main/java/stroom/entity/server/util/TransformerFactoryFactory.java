@@ -16,12 +16,13 @@
 
 package stroom.entity.server.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.xml.transform.TransformerFactory;
 
-import stroom.util.logging.StroomLogger;
-
 public final class TransformerFactoryFactory {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TransformerFactoryFactory.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TransformerFactoryFactory.class);
 
     private static final String SAXON_TRANSFORMER_FACTORY = "net.sf.saxon.TransformerFactoryImpl";
     private static final String IMP_USED = "The transformer factory implementation being used is: ";
@@ -51,7 +52,7 @@ public final class TransformerFactoryFactory {
             sb.append(factory.getClass().getName());
             LOGGER.info(sb.toString());
         } catch (Exception ex) {
-            LOGGER.error(ex);
+            LOGGER.error("Unable to create new TransformerFactory!", ex);
         }
     }
 

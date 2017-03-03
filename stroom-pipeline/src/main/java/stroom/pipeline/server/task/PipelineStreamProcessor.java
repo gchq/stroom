@@ -26,7 +26,9 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -167,7 +169,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         }
     }
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(PipelineStreamProcessor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PipelineStreamProcessor.class);
 
     private static final String PROCESSING = "Processing:";
     private static final String FINISHED = "Finished:";
@@ -395,7 +397,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             // If we have found any to delete then delete them now.
             if (findDeleteStreamCriteria.obtainStreamIdSet().isConstrained()) {
                 final long deleteCount = streamStore.findDelete(findDeleteStreamCriteria);
-                LOGGER.info("checkSuperseded() - Removed %s", deleteCount);
+                LOGGER.info("checkSuperseded() - Removed {}", deleteCount);
             }
         }
     }
@@ -607,7 +609,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 LOGGER.trace("Error while processing stream task: id = " + streamSource.getStream().getId(), ex);
             }
         } else {
-            LOGGER.fatal(ex, ex);
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), ex.getMessage(), ex);
         }
     }
 

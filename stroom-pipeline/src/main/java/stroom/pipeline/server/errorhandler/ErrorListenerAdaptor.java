@@ -20,15 +20,16 @@ import javax.xml.transform.ErrorListener;
 import javax.xml.transform.SourceLocator;
 import javax.xml.transform.TransformerException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXParseException;
 
 import stroom.pipeline.server.LocationFactory;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
 public class ErrorListenerAdaptor implements ErrorListener {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ErrorListenerAdaptor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ErrorListenerAdaptor.class);
 
     private final String elementId;
     private final LocationFactory locationFactory;
@@ -57,7 +58,7 @@ public class ErrorListenerAdaptor implements ErrorListener {
     }
 
     private void log(final Severity severity, final TransformerException exception) {
-        LOGGER.debug(exception, exception);
+        LOGGER.debug("Logging a TransformedException.", exception);
 
         Location location = null;
 

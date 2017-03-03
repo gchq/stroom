@@ -17,6 +17,8 @@
 package stroom.entity.server.util;
 
 import org.hibernate.proxy.HibernateProxy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -34,7 +36,6 @@ import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.security.SecurityContext;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.EqualsUtil;
 
 import javax.inject.Inject;
@@ -56,7 +57,7 @@ import java.util.Set;
 @Component
 @Transactional
 public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactoryAware {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomEntityManagerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomEntityManagerImpl.class);
 
     private final Provider<EntityEventBus> eventBusProvider;
     private final Provider<StroomDatabaseInfo> stroomDatabaseInfoProvider;
@@ -154,7 +155,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
             rtn = Long.valueOf(query.executeUpdate());
             EntityServiceLogUtil.logUpdate(LOGGER, "executeNativeUpdate", logExecutionTime, rtn, sql);
         } catch (final RuntimeException e) {
-            LOGGER.debug("executeNativeUpdate - %s \"%s\"", sql, sql.toTraceString(), e);
+            LOGGER.debug("executeNativeUpdate - {} \"{}\"", new Object[]{ sql, sql.toTraceString()}, e);
             throw e;
         }
         return rtn;
@@ -196,7 +197,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
             }
             EntityServiceLogUtil.logUpdate(LOGGER, "executeQueryLongResult", logExecutionTime, rtn, sql);
         } catch (final RuntimeException e) {
-            LOGGER.debug("executeQueryLongResult - %s", sql, e);
+            LOGGER.debug("executeQueryLongResult - {}", sql, e);
             throw e;
         }
         return rtn;
@@ -318,7 +319,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
             EntityServiceLogUtil.logQuery(LOGGER, "executeQueryResultList", logExecutionTime, rtn, sql);
 
         } catch (final RuntimeException e) {
-            LOGGER.debug("executeQueryResultList() - %s", sql, e);
+            LOGGER.debug("executeQueryResultList() - {}", sql, e);
             throw e;
         }
         return rtn;
@@ -336,7 +337,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
             EntityServiceLogUtil.logQuery(LOGGER, "executeQueryResultList", logExecutionTime, rtn, sql);
 
         } catch (final RuntimeException e) {
-            LOGGER.debug("executeQueryResultList() - %s", sql, e);
+            LOGGER.debug("executeQueryResultList() - {}", sql, e);
             throw e;
         }
         return rtn;
@@ -354,7 +355,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
             EntityServiceLogUtil.logQuery(LOGGER, "executeNativeQueryResultList", logExecutionTime, rtn, sql);
 
         } catch (final RuntimeException e) {
-            LOGGER.debug("executeNativeQueryResultList() - %s", sql, e);
+            LOGGER.debug("executeNativeQueryResultList() - {}", sql, e);
             throw e;
         }
         return rtn;

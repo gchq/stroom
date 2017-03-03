@@ -1,5 +1,5 @@
 ext {
-    warDir = project(':stroom-app').file("src/main/webapp")
+    warDir = project(':stroom-dropwizard').file("src/main/resources/webapp")
     outputDir = "${warDir}/dashboard"
     gwtBuildDir = "${project.buildDir}/gwt"
     tmpDir = "${gwtBuildDir}/tmp"
@@ -44,27 +44,27 @@ task gwtCompile (dependsOn: classes, type: JavaExec) {
 
     classpath {
         [
-            sourceSets.main.java.srcDirs,           // Java source
-            sourceSets.main.output.resourcesDir,    // Generated resources
-            sourceSets.main.output.classesDir,      // Generated classes
-            sourceSets.main.compileClasspath,       // Deps
+                sourceSets.main.java.srcDirs,           // Java source
+                sourceSets.main.output.resourcesDir,    // Generated resources
+                sourceSets.main.output.classesDir,      // Generated classes
+                sourceSets.main.compileClasspath,       // Deps
         ]
     }
 
     args =
-        [
-            '-logLevel', 'INFO',
-            '-workDir', workDir,
-            '-XfragmentCount', '5',
-            '-optimize', '9',
-            '-failOnError',
-            '-localWorkers', '5',
-            '-war', warDir,
-            '-deploy', deployDir,
-            '-extra', extraDir,
-            '-strict',
-            module                                  // Your GWT module
-        ]
+            [
+                    '-logLevel', 'INFO',
+                    '-workDir', workDir,
+                    '-XfragmentCount', '5',
+                    '-optimize', '9',
+                    '-failOnError',
+                    '-localWorkers', '5',
+                    '-war', warDir,
+                    '-deploy', deployDir,
+                    '-extra', extraDir,
+                    '-strict',
+                    module                               // Your GWT module
+            ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = '1G'
@@ -84,28 +84,28 @@ task gwtDraftCompile (dependsOn: classes, type: JavaExec) {
 
     classpath {
         [
-            sourceSets.main.java.srcDirs,           // Java source
-            sourceSets.main.output.resourcesDir,    // Generated resources
-            sourceSets.main.output.classesDir,      // Generated classes
-            sourceSets.main.compileClasspath,       // Deps
+                sourceSets.main.java.srcDirs,           // Java source
+                sourceSets.main.output.resourcesDir,    // Generated resources
+                sourceSets.main.output.classesDir,      // Generated classes
+                sourceSets.main.compileClasspath,       // Deps
         ]
     }
 
     args =
         [
-            '-logLevel', 'INFO',
-            '-workDir', workDir,
-            '-draftCompile',                        // Speeds up compile with 25%
-            '-XfragmentCount', '0',
-            '-optimize', '0',
-            '-failOnError',
-            '-localWorkers', '5',
-            '-incremental',
-            '-war', warDir,
-            '-deploy', deployDir,
-            '-extra', extraDir,
-            '-strict',
-            module                                  // Your GWT module
+                '-logLevel', 'INFO',
+                '-workDir', workDir,
+                '-draftCompile',                        // Speeds up compile with 25%
+                '-XfragmentCount', '0',
+                '-optimize', '0',
+                '-failOnError',
+                '-localWorkers', '5',
+                '-incremental',
+                '-war', warDir,
+                '-deploy', deployDir,
+                '-extra', extraDir,
+                '-strict',
+                module                                  // Your GWT module
         ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]

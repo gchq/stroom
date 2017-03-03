@@ -16,9 +16,10 @@
 
 package stroom.entity.server.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.EntityServiceException;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import com.caucho.hessian.HessianException;
 import org.hibernate.PropertyValueException;
 
@@ -33,14 +34,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 
 public class EntityServiceExceptionUtil {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(EntityServiceExceptionUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EntityServiceExceptionUtil.class);
 
     /**
      * Handle an exception and throw a nice EntityServiceException
      */
     public static EntityServiceException create(final Throwable ex) throws EntityServiceException {
         if (ex instanceof EntityServiceException) {
-            LOGGER.trace("create() - %s", ex.getMessage());
+            LOGGER.trace("create() - {}", ex.getMessage());
 
             return (EntityServiceException) ex;
         } else {
@@ -126,7 +127,7 @@ public class EntityServiceExceptionUtil {
 
             // Log the exception otherwise we may never know what type of
             // exception this was.
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
         } else if (msg.startsWith("Incorrect key file for table")) {
             return "Unable to run query as data set too large";
         }
@@ -175,7 +176,7 @@ public class EntityServiceExceptionUtil {
             }
         }
 
-        LOGGER.warn("unwrap() - wrapping exception %s %s (increase log level to debug to see stack trace)",
+        LOGGER.warn("unwrap() - wrapping exception {} {} (increase log level to debug to see stack trace)",
                 rootEx.getMessage(), thEx.getMessage());
         LOGGER.debug("unwrap() - wrapping exception ", rootEx);
 

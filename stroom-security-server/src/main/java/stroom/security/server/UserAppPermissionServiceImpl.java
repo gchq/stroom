@@ -16,6 +16,8 @@
 
 package stroom.security.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -26,7 +28,6 @@ import stroom.security.Secured;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanMethod;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
@@ -48,7 +49,7 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
     private static final String SQL_INSERT_USER_PERMISSIONS;
     private static final String SQL_DELETE_USER_PERMISSIONS;
     private static final String SQL_GET_PERMISSION_KEYSET_FOR_USER;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(UserAppPermissionServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserAppPermissionServiceImpl.class);
 
     static {
         SQL_INSERT_USER_PERMISSIONS = ""
@@ -175,7 +176,7 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
 
             final Permission existingPermission = existingPermissionMap.remove(requiredPermission);
             if (existingPermission == null) {
-                LOGGER.info("createAll() - Persisting %s", requiredPermission);
+                LOGGER.info("createAll() - Persisting {}", requiredPermission);
                 Permission newPermission = Permission.create(
                         requiredPermission);
                 newPermission = entityManager.saveEntity(newPermission);
@@ -187,7 +188,7 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
 
         // Delete the remaining existing ones that are no longer needed.
         for (final Permission existingPermission : existingPermissionMap.values()) {
-            LOGGER.info("createAll() - Removing %s", existingPermission);
+            LOGGER.info("createAll() - Removing {}", existingPermission);
 
             // Delete old application permissions.
             sql = new SQLBuilder(false);

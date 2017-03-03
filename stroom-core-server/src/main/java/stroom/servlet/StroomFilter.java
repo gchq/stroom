@@ -16,7 +16,8 @@
 
 package stroom.servlet;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -35,7 +36,7 @@ import java.util.Enumeration;
  * </p>
  */
 public class StroomFilter implements Filter {
-    private static final Logger LOGGER = Logger.getLogger(StroomFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomFilter.class);
 
     /**
      * @see javax.servlet.Filter#destroy()

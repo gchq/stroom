@@ -16,9 +16,11 @@
 
 package stroom.entity.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.entity.shared.BaseEntity;
-import stroom.util.logging.StroomLogger;
 import javassist.Modifier;
 
 import javax.xml.bind.JAXBContext;
@@ -28,7 +30,7 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 
 public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marshaller<E, O> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(EntityMarshaller.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EntityMarshaller.class);
 
     private final JAXBContext jaxbContext;
 
@@ -36,7 +38,7 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
         try {
             jaxbContext = JAXBContext.newInstance(getObjectType());
         } catch (final JAXBException e) {
-            LOGGER.fatal(e, e);
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to create new JAXBContext for object type!", e);
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -57,9 +59,9 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
             final String data = XMLMarshallerUtil.marshal(jaxbContext, clone);
             setData(entity, data);
         } catch (final Exception e) {
-            LOGGER.debug("Problem marshaling %s %s", entity.getClass(), entity.getId(), e);
-            LOGGER.warn("Problem marshaling %s %s - %s (enable debug for full trace)", entity.getClass(),
-                    entity.getId(), String.valueOf(e));
+            LOGGER.debug("Problem marshaling {} {}", new Object[] {entity.getClass(), entity.getId()}, e);
+            LOGGER.warn("Problem marshaling {} {} - {} (enable debug for full trace)", new Object[]{ entity.getClass(),
+                    entity.getId(), String.valueOf(e)});
         }
         return entity;
     }
@@ -76,7 +78,7 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
             final O object = XMLMarshallerUtil.unmarshal(jaxbContext, getObjectType(), data);
             setObject(entity, object);
         } catch (final Exception e) {
-            LOGGER.debug(e, e);
+            LOGGER.debug("Unable to unmarshal entity!", e);
             LOGGER.warn(e.getMessage());
         }
         return entity;

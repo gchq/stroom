@@ -16,20 +16,21 @@
 
 package stroom.streamstore.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 
 @Component
 @Transactional
 public class StreamTypeServiceTransactionHelper {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StreamTypeServiceTransactionHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamTypeServiceTransactionHelper.class);
 
     @Resource
     private StroomEntityManager stroomEntityManager;
@@ -83,7 +84,7 @@ public class StreamTypeServiceTransactionHelper {
                     sql.append(")");
                     stroomEntityManager.executeNativeUpdate(sql);
                 } catch (final Exception ex) {
-                    LOGGER.error("init() - Added initial stream type %s", streamType, ex);
+                    LOGGER.error("init() - Added initial stream type {}", streamType, ex);
                 } finally {
                     sql.setLength(0);
                 }

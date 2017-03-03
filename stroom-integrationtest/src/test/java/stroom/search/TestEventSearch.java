@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonIndexingTest;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexCriteria;
@@ -56,14 +55,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class TestEventSearch extends AbstractCoreIntegrationTest {
+public class TestEventSearch extends AbstractSearchTest {
     private static boolean doneSetup;
     @Resource
     private CommonIndexingTest commonIndexingTest;
     @Resource
     private IndexService indexService;
-    @Resource
-    private SearchResource searchService;
 
     @Override
     public void onBefore() {
@@ -111,18 +108,18 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         final Query query = new Query(dataSourceRef, expressionIn.build());
         final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), true);
 
-        SearchResponse searchResponse = searchService.search(searchRequest);
+        SearchResponse searchResponse = search(searchRequest);
 
         try {
             while (!searchResponse.complete()) {
-                searchResponse = searchService.search(searchRequest);
+                searchResponse = search(searchRequest);
 
                 if (!searchResponse.complete()) {
                     ThreadUtil.sleep(1000);
                 }
             }
         } finally {
-            searchService.destroy(queryKey);
+            destroy(queryKey);
         }
 
         final Map<String, List<Row>> rows = new HashMap<>();

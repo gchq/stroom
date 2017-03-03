@@ -18,6 +18,8 @@ package stroom.streamtask.server;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.CommonTestScenarioCreator;
@@ -29,13 +31,12 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskMonitorImpl;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 import java.util.List;
 
 public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestStreamTaskCreator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestStreamTaskCreator.class);
 
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;

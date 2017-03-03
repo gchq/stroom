@@ -16,9 +16,10 @@
 
 package stroom.util.zip;
 
-import stroom.util.logging.StroomLogger;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
@@ -36,7 +37,7 @@ public class StroomZipFile implements Closeable {
     public static final StroomZipEntry SINGLE_CONTEXT_ENTRY = new StroomZipEntry(null, SINGLE_ENTRY_ZIP_BASE_NAME,
             StroomZipFileType.Context);
 
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StroomZipFile.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipFile.class);
 
     private final File file;
     private ZipFile zipFile;

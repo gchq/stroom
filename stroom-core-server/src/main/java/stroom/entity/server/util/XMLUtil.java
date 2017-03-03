@@ -16,8 +16,9 @@
 
 package stroom.entity.server.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.xml.SAXParserFactoryFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
@@ -41,7 +42,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 
 public final class XMLUtil {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(XMLUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(XMLUtil.class);
 
     public static final SAXParserFactory PARSER_FACTORY;
 

@@ -16,6 +16,8 @@
 
 package stroom.explorer.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.Advised;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.shared.BaseResultList;
@@ -30,13 +32,12 @@ import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.folder.server.FolderExplorerDataProvider;
 import stroom.folder.server.FolderRootExplorerDataProvider;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Named;
 
 public abstract class AbstractExplorerDataProvider<E extends DocumentEntity, C extends FindDocumentEntityCriteria>
         implements ExplorerDataProvider {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractExplorerDataProvider.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractExplorerDataProvider.class);
 
     private final FolderService folderService;
 

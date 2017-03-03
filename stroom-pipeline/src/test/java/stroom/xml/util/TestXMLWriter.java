@@ -30,7 +30,8 @@ import java.io.FileWriter;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.xml.SAXParserFactoryFactory;
 import org.apache.commons.io.output.ByteArrayOutputStream;
@@ -44,7 +45,7 @@ import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.FileUtil;
 
 public class TestXMLWriter extends StroomUnitTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestXMLWriter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestXMLWriter.class);
 
     public static final SAXParserFactory PARSER_FACTORY;
 

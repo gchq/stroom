@@ -22,6 +22,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -29,14 +31,13 @@ import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.Node;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
 
 @Scope(value = StroomScope.TASK)
 @Component
 public class ClusterDispatchAsyncHelper {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterDispatchAsyncHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDispatchAsyncHelper.class);
 
     private static final String CLUSTER_RESPONSE_TIMEOUT = "stroom.clusterResponseTimeout";
     private static final Long ONE_MINUTE = 60000L;

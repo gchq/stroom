@@ -24,13 +24,14 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import stroom.util.logging.StroomLogger;
 import org.apache.commons.lang.StringUtils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.writer.PathCreator;
 
 public class RollingFileDestination extends RollingDestination {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(RollingFileDestination.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RollingFileDestination.class);
 
     private static final int MAX_FAILED_RENAME_ATTEMPTS = 100;
     private static final int ONE_MINUTE = 60000;
@@ -69,11 +70,11 @@ public class RollingFileDestination extends RollingDestination {
         // Make sure we can create this path.
         try {
             if (file.exists()) {
-                LOGGER.debug("File exists for key=%s", key);
+                LOGGER.debug("File exists for key={}", key);
 
                 // I have a feeling that the OS might sometimes report that a
                 // file exists that has actually just been rolled.
-                LOGGER.warn("File exists for key=%s so rolling immediately", key);
+                LOGGER.warn("File exists for key={} so rolling immediately", key);
                 outputStream = new ByteCountOutputStream(new BufferedOutputStream(new FileOutputStream(file, true)));
 
                 // Roll the file.
@@ -199,7 +200,7 @@ public class RollingFileDestination extends RollingDestination {
         // Create the destination file.
         final File destFile = new File(dir, destFileName);
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Rolling file '%s' to '%s'", getFullPath(file), getFullPath(destFile));
+            LOGGER.debug("Rolling file '{}' to '{}'", getFullPath(file), getFullPath(destFile));
         }
 
         // Create source path.
@@ -221,7 +222,7 @@ public class RollingFileDestination extends RollingDestination {
         // If we have got valid paths for source and dest then attempt move.
         if (source != null && dest != null) {
             if (Files.isRegularFile(dest)) {
-                LOGGER.error("Failed to roll file '%s' to '%s' as target exists", getFullPath(file),
+                LOGGER.error("Failed to roll file '{}' to '{}' as target exists", getFullPath(file),
                         getFullPath(destFile));
             } else {
                 try {
@@ -249,7 +250,7 @@ public class RollingFileDestination extends RollingDestination {
 
                     if (dest != null && !Files.isRegularFile(dest)) {
                         if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("Renaming file '%s' to '%s'", getFullPath(file), getFullPath(failedFile));
+                            LOGGER.debug("Renaming file '{}' to '{}'", getFullPath(file), getFullPath(failedFile));
                         }
                         try {
                             Files.move(source, dest);
@@ -267,10 +268,10 @@ public class RollingFileDestination extends RollingDestination {
                     // Try to delete the file so we can continue to create a
                     // destination.
                     if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Deleting file '%s'", getFullPath(file));
+                        LOGGER.debug("Deleting file '{}'", getFullPath(file));
                     }
                     if (!Files.deleteIfExists(source)) {
-                        LOGGER.error("Failed to delete file '%s'", getFullPath(file));
+                        LOGGER.error("Failed to delete file '{}'", getFullPath(file));
                     }
                 }
             } catch (final Throwable t) {
@@ -297,14 +298,14 @@ public class RollingFileDestination extends RollingDestination {
 
     private void flush() throws IOException {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Flushing: %s", key);
+            LOGGER.debug("Flushing: {}", key);
         }
         outputStream.flush();
     }
 
     private void close() throws IOException {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Closing: %s", key);
+            LOGGER.debug("Closing: {}", key);
         }
         outputStream.close();
     }

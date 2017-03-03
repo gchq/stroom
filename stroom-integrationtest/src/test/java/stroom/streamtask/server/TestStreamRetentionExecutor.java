@@ -16,14 +16,10 @@
 
 package stroom.streamtask.server;
 
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.Resource;
-
-import stroom.util.logging.StroomLogger;
 import org.junit.Assert;
 import org.junit.Test;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
@@ -38,8 +34,11 @@ import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
 
+import javax.annotation.Resource;
+import java.util.concurrent.TimeUnit;
+
 public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestStreamRetentionExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestStreamRetentionExecutor.class);
 
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
@@ -62,8 +61,8 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
         final long timeOutsideRetentionPeriod = now - TimeUnit.DAYS.toMillis(RETENTION_PERIOD_DAYS)
                 - TimeUnit.MINUTES.toMillis(1);
 
-        LOGGER.info("now: %s", DateUtil.createNormalDateTimeString(now));
-        LOGGER.info("timeOutsideRetentionPeriod: %s", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
+        LOGGER.info("now: {}", DateUtil.createNormalDateTimeString(now));
+        LOGGER.info("timeOutsideRetentionPeriod: {}", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
         // save two streams, one inside retention period, one outside
         feed.setRetentionDayAge(RETENTION_PERIOD_DAYS);
@@ -122,7 +121,7 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
         Assert.assertEquals(2, streams.size());
 
         for (final Stream stream : streams) {
-            LOGGER.info("stream: %s, createMs: %s, statusMs: %s, status: %s", stream,
+            LOGGER.info("stream: {}, createMs: {}, statusMs: {}, status: {}", stream,
                     DateUtil.createNormalDateTimeString(stream.getCreateMs()),
                     DateUtil.createNormalDateTimeString(stream.getStatusMs()), stream.getStatus());
         }

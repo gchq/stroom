@@ -16,6 +16,8 @@
 
 package stroom.streamtask.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
 import stroom.jobsystem.server.JobTrackedSchedule;
@@ -50,7 +52,6 @@ import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomFrequencySchedule;
@@ -90,7 +91,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     public static final int MAX_DELETE_STREAM_RANGE = 10000;
     public static final int MAX_DELETE_COUNT = 50;
 
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(StreamTaskCreator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskCreatorImpl.class);
 
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamTaskCreatorTransactionHelper streamTaskTransactionHelper;
@@ -256,19 +257,19 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
 
     private void abandon(final StreamTask streamTask) {
         try {
-            LOGGER.warn("abandon() - %s", streamTask);
+            LOGGER.warn("abandon() - {}", streamTask);
             streamTaskHelper.changeTaskStatus(streamTask, null, TaskStatus.UNPROCESSED, null, null);
         } catch (final Throwable t) {
-            LOGGER.error("abandon() - %s", streamTask, t);
+            LOGGER.error("abandon() - {}", streamTask, t);
         }
     }
 
     private void release(final StreamTask streamTask) {
         try {
-            LOGGER.warn("release() - %s", streamTask);
+            LOGGER.warn("release() - {}", streamTask);
             streamTaskHelper.changeTaskStatus(streamTask, null, TaskStatus.UNPROCESSED, null, null);
         } catch (final Throwable t) {
-            LOGGER.error("release() - %s", streamTask, t);
+            LOGGER.error("release() - {}", streamTask, t);
         }
     }
 
@@ -349,7 +350,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         final long timeNowMs = System.currentTimeMillis();
         if (timeNowMs > nextPollMs.get()) {
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("isScheduled() - Yes as time has past (queueSize=%s)", getStreamTaskQueueSize());
+                LOGGER.trace("isScheduled() - Yes as time has past (queueSize={})", getStreamTaskQueueSize());
             }
             return true;
         }
@@ -392,7 +393,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 totalQueueSize = newTotalQueueSize;
             }
         } catch (final NumberFormatException e) {
-            LOGGER.error("doCreateTasks() - error reading %s", STREAM_TASKS_QUEUE_SIZE_PROPERTY, e);
+            LOGGER.error("doCreateTasks() - error reading {}", STREAM_TASKS_QUEUE_SIZE_PROPERTY, e);
         }
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
@@ -405,7 +406,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         findStreamProcessorFilterCriteria.setStreamProcessorFilterEnabled(true);
         final List<StreamProcessorFilter> filters = streamProcessorFilterService
                 .find(findStreamProcessorFilterCriteria);
-        LOGGER.trace("Found %s stream processor filters", filters.size());
+        LOGGER.trace("Found {} stream processor filters", filters.size());
 
         // Sort the stream processor filters by priority.
         Collections.sort(filters, StreamProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
@@ -478,7 +479,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         // Set the last stream details for the next call to this method.
         streamTaskCreatorRecentStreamDetails = recentStreamInfo;
 
-        LOGGER.debug("doCreateTasks() - Finished in %s", logExecutionTime);
+        LOGGER.debug("doCreateTasks() - Finished in {}", logExecutionTime);
     }
 
     private void createTasksForFilter(final TaskMonitor taskMonitor, final Node node,
@@ -496,7 +497,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
                 securityContext.pushUser(loadedFilter.getUpdateUser());
                 try {
-                    LOGGER.debug("createTasksForFilter() - streamProcessorFilter %s", loadedFilter.toString());
+                    LOGGER.debug("createTasksForFilter() - streamProcessorFilter {}", loadedFilter.toString());
 
                     // Only try and create tasks if the processor is enabled.
                     if (loadedFilter.isEnabled() && loadedFilter.getStreamProcessor().isEnabled()) {
@@ -586,7 +587,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                 // Here we do an optimisation and only bother
                                 // processing anything that we have had recent
                                 // stream data for if we were exhausted last time
-                                LOGGER.debug("createTasks() - Filter %s exhausted = %s", loadedFilter.getId(), exhausted);
+                                LOGGER.debug("createTasks() - Filter {} exhausted = {}", loadedFilter.getId(), exhausted);
                                 if (!exhausted || recentStreamInfo.isApplicable(loadedFilter, findStreamCriteria)) {
                                     if (StreamProcessorFilterTracker.COMPLETE.equals(tracker.getStatus())) {
                                         // If the tracker is complete we need to
@@ -617,7 +618,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                         } else {
                             // We terminated early so assume this filter is not
                             // exhausted
-                            LOGGER.debug("createTasks() - Filter %s no tasks needed at this time - assuming not exhausted",
+                            LOGGER.debug("createTasks() - Filter {} no tasks needed at this time - assuming not exhausted",
                                     loadedFilter.getId());
                             exhaustedFilterMap.put(loadedFilter.getId(), Boolean.FALSE);
                         }
@@ -661,19 +662,19 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                     if (modified != null) {
                         queue.add(modified);
                         count++;
-                        taskMonitor.info("Adding %s/%s non owned Tasks", count, size);
+                        taskMonitor.info("Adding {}/{} non owned Tasks", count, size);
                     }
 
                     if (taskMonitor.isTerminated()) {
                         break;
                     }
                 } catch (final Throwable t) {
-                    LOGGER.error("doCreateTasks() - Failed to grab non owned task %s", streamTask, t);
+                    LOGGER.error("doCreateTasks() - Failed to grab non owned task {}", streamTask, t);
                 }
             }
 
             if (count > 0) {
-                LOGGER.debug("doCreateTasks() - Added %s tasks that are no longer locked", count);
+                LOGGER.debug("doCreateTasks() - Added {} tasks that are no longer locked", count);
             }
         } catch (final Throwable t) {
             LOGGER.error(t.getMessage(), t);
@@ -772,8 +773,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 // Transfer the newly created (and available) tasks to the
                 // queue.
                 createdTasks.getAvailableTaskList().forEach(queue::add);
-                LOGGER.debug("createTasks() - Created %s tasks (tasksToCreate=%s) for filter %s",
-                        createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString());
+                LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}",
+                        new Object[] {createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString()});
 
                 exhaustedFilterMap.put(filter.getId(), resultSize == 0 || reachedLimit);
 
@@ -809,8 +810,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 streamQueryTime, map, node, recentStreamInfo, false);
         // Transfer the newly created (and available) tasks to the queue.
         createdTasks.getAvailableTaskList().forEach(queue::add);
-        LOGGER.debug("createTasks() - Created %s tasks (tasksToCreate=%s) for filter %s",
-                createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString());
+        LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}",
+                new Object[]{createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString()});
         exhaustedFilterMap.put(filter.getId(), createdTasks.getTotalTasksCreated() == 0);
     }
 
@@ -884,7 +885,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private void scheduleDelete() {
         if (nextDeleteMs.get() == 0) {
             nextDeleteMs.set(System.currentTimeMillis() + DELETE_INTERVAL_MS);
-            LOGGER.debug("scheduleDelete() - nextDeleteMs=%s", DateUtil.createNormalDateTimeString(nextDeleteMs.get()));
+            LOGGER.debug("scheduleDelete() - nextDeleteMs={}", DateUtil.createNormalDateTimeString(nextDeleteMs.get()));
         }
     }
 

@@ -16,6 +16,8 @@
 
 package stroom.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Period;
 import stroom.feed.server.FeedServiceImpl;
 import stroom.feed.shared.Feed;
@@ -33,7 +35,6 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.thread.ThreadScopeRunnable;
 import org.apache.commons.lang.StringUtils;
@@ -50,7 +51,8 @@ import java.util.List;
  * Handy tool to grep out content.
  */
 public class StreamGrepTool extends AbstractCommandLineTool {
-    static final StroomLogger LOGGER = StroomLogger.getLogger(StreamGrepTool.class);
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamGrepTool.class);
 
     private ApplicationContext appContext = null;
 

@@ -1,0 +1,71 @@
+plugins {
+  id 'com.github.johnrengelman.shadow' version '1.2.4'
+}
+
+jar {
+    manifest {
+        attributes(
+                "Implementation-Title": "Stroom",
+                "Implementation-Version": version,
+                "Main-Class" : "stroom.startup.App"
+        )
+    }
+}
+
+import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
+
+shadowJar {
+    // Allows us to build fat jars with lots of files
+    zip64 true
+
+    // A transformer to merges files in META-INF/services
+    mergeServiceFiles()
+
+    // A transformer to merge spring's generated config files, e.g. spring.handlers and spring.schemas
+    transform(ServiceFileTransformer) {
+        include 'META-INF/spring.*'
+    }
+}
+
+configurations {
+    all {
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            if (details.requested.name == 'log4j') {
+                details.useTarget "org.slf4j:log4j-over-slf4j:1.7.5"
+            }
+        }
+        exclude group: "org.slf4j", module: "slf4j-log4j12"
+        exclude group: "log4j", module: "log4j"
+    }
+}
+dependencies {
+
+    compile "ch.qos.logback:logback-classic:1.2.1"
+    compile "org.slf4j:log4j-over-slf4j:1.7.22"
+
+//  compile 'com.hmsonline:dropwizard-spring:0.6.0'
+    compile project(':stroom-core-server')
+    compile project(':stroom-index-server')
+    compile project(':stroom-statistics-server')
+    compile project(':stroom-dashboard-server')
+    compile project(':stroom-security-server')
+    compile "io.dropwizard:dropwizard-core:1.0.6"
+    compile "io.dropwizard:dropwizard-assets:1.0.6"
+
+    // TODO Added after adding shading
+    compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
+    compile group: 'org.glassfish.web', name: 'javax.el', version: '2.2.6'
+
+
+    compile 'org.springframework.security:spring-security-web:4.2.1.RELEASE'
+    compile "org.springframework.security:spring-security-web:4.2.1.RELEASE"
+    compile "org.springframework.security:spring-security-config:4.1.1.RELEASE"
+    compile "org.springframework.security:spring-security-aspects:4.2.1.RELEASE"
+    compile "org.springframework:spring-web:4.2.1.RELEASE"
+
+    compile "org.apache.geronimo.specs:geronimo-servlet_3.0_spec:1.0"
+
+
+}
+
+

@@ -16,13 +16,14 @@
 
 package stroom.statistics.sql;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.SQLUtil;
 import stroom.node.server.StroomPropertyService;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.scheduler.SimpleCronScheduler;
 import stroom.util.shared.ModelStringUtil;
@@ -135,7 +136,7 @@ public class SQLStatisticAggregationTransactionHelper {
 
     }
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticAggregationTransactionHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticAggregationTransactionHelper.class);
 
     // /**
     // * The number of records to add to the aggregate from the aggregate source
@@ -330,11 +331,11 @@ public class SQLStatisticAggregationTransactionHelper {
         final LogExecutionTime time = new LogExecutionTime();
         final String trace = SQLUtil.buildSQLTrace(sql, args);
 
-        taskMonitor.info("%s\n %s", prefix, trace);
+        taskMonitor.info("{}\n {}", prefix, trace);
 
         final int count = ConnectionUtil.executeUpdate(connection, sql, args);
 
-        logDebug("doAggretateSQL - %s - %s in %s - %s", prefix, ModelStringUtil.formatCsv(count), time, trace);
+        logDebug("doAggretateSQL - {} - {} in {} - {}", prefix, ModelStringUtil.formatCsv(count), time, trace);
         return count;
     }
 
@@ -343,11 +344,11 @@ public class SQLStatisticAggregationTransactionHelper {
         final LogExecutionTime time = new LogExecutionTime();
         final String trace = SQLUtil.buildSQLTrace(sql, args);
 
-        taskMonitor.info("%s\n %s", prefix, trace);
+        taskMonitor.info("{}\n {}", prefix, trace);
 
         final long result = ConnectionUtil.executeQueryLongResult(connection, sql, args);
 
-        logDebug("doAggretateSQL - %s - %s in %s - %s", prefix, ModelStringUtil.formatCsv(result), time, trace);
+        logDebug("doAggretateSQL - {} - {} in {} - {}", prefix, ModelStringUtil.formatCsv(result), time, trace);
         return result;
     }
 
@@ -441,7 +442,7 @@ public class SQLStatisticAggregationTransactionHelper {
 
         final Long retentionAgeMs = getStatsRetentionAgeMs();
 
-        LOGGER.debug("Deleting stats using a max processing age of %sms", retentionAgeMs);
+        LOGGER.debug("Deleting stats using a max processing age of {}ms", retentionAgeMs);
 
         if (retentionAgeMs != null) {
             // convert the max age into a time bucket so we can delete
@@ -451,7 +452,7 @@ public class SQLStatisticAggregationTransactionHelper {
                 connection = getConnection();
                 final long rowsAffected = doAggregateSQL_Update(connection, taskMonitor, "", DELETE_OLD_STATS,
                         Arrays.asList((Object) oldestTimeBucketToKeep));
-                LOGGER.info("Deleted %s stats with a time older than %s", rowsAffected,
+                LOGGER.info("Deleted {} stats with a time older than {}", rowsAffected,
                         DateUtil.createNormalDateTimeString(oldestTimeBucketToKeep));
                 return rowsAffected;
             } finally {
@@ -463,7 +464,7 @@ public class SQLStatisticAggregationTransactionHelper {
     }
 
     protected void logDebug(final Object... args) {
-        LOGGER.debug(args);
+        Arrays.asList(args).forEach(arg -> LOGGER.debug(arg.toString()));
     }
 
     public long aggregateConfigStage1(final TaskMonitor taskMonitor, final String prefix, final long batchSize,
@@ -528,7 +529,7 @@ public class SQLStatisticAggregationTransactionHelper {
 
                     if (rowsAffectedOnUpsert > 0 && rowsAffectedOnDelete == 0) {
                         LOGGER.error(
-                                "Deleted %s rows from SQL_STAT_VAL_SRC but didn't affect any rows in SQL_STAT_VAL, may have lost some stats",
+                                "Deleted {} rows from SQL_STAT_VAL_SRC but didn't affect any rows in SQL_STAT_VAL, may have lost some stats",
                                 rowsAffectedOnDelete);
                     }
                 }
@@ -620,7 +621,7 @@ public class SQLStatisticAggregationTransactionHelper {
     }
 
     public void truncateTable(final String tableName) throws SQLException {
-        LOGGER.debug(">>> %s", tableName);
+        LOGGER.debug(">>> {}", tableName);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try (Connection connection = getConnection()) {
             final String sql = TRUNCATE_TABLE_SQL + tableName;
@@ -630,16 +631,16 @@ public class SQLStatisticAggregationTransactionHelper {
             statement.execute(sql);
             statement.close();
 
-            LOGGER.debug("Truncated table %s in %sms", tableName, logExecutionTime.getDuration());
+            LOGGER.debug("Truncated table {} in {}ms", tableName, logExecutionTime.getDuration());
 
         } catch (final SQLException sqlException) {
-            LOGGER.error("truncating table %s", tableName, sqlException);
+            LOGGER.error("truncating table {}", tableName, sqlException);
             throw sqlException;
         }
     }
 
     public void clearTable(final String tableName) throws SQLException {
-        LOGGER.debug(">>> %s", tableName);
+        LOGGER.debug(">>> {}", tableName);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try (Connection connection = getConnection()) {
             final String sql = CLEAR_TABLE_SQL + tableName;
@@ -647,10 +648,10 @@ public class SQLStatisticAggregationTransactionHelper {
             statement.execute(sql);
             statement.close();
 
-            LOGGER.debug("Cleared table %s in %sms", tableName, logExecutionTime.getDuration());
+            LOGGER.debug("Cleared table {} in {}ms", tableName, logExecutionTime.getDuration());
 
         } catch (final SQLException sqlException) {
-            LOGGER.error("Clearing table %s", tableName, sqlException);
+            LOGGER.error("Clearing table {}", tableName, sqlException);
             throw sqlException;
         }
     }

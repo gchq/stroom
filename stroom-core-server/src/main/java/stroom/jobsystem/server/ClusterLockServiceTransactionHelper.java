@@ -22,8 +22,9 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +35,7 @@ import stroom.jobsystem.shared.ClusterLock;
 @Transactional
 @Component
 public class ClusterLockServiceTransactionHelper {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterLockServiceTransactionHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceTransactionHelper.class);
 
     @Resource
     private StroomEntityManager entityManager;
@@ -60,7 +61,7 @@ public class ClusterLockServiceTransactionHelper {
                 try {
                     save(clusterLock);
                 } catch (final Exception e) {
-                    LOGGER.warn("checkLockCreated() - %s %s", name, e.getMessage());
+                    LOGGER.warn("checkLockCreated() - {} {}", name, e.getMessage());
                 }
             }
             registeredLockSet.add(name);

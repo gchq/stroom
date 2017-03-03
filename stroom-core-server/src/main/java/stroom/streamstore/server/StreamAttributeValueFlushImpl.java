@@ -16,6 +16,8 @@
 
 package stroom.streamstore.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.node.server.StroomPropertyService;
 import stroom.streamstore.shared.Stream;
@@ -23,7 +25,6 @@ import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeKeyService;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
@@ -44,7 +45,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Component
 public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StreamAttributeValueFlushImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueFlushImpl.class);
 
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
@@ -141,7 +142,7 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
             if (batchInsert.size() > 0) {
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-                LOGGER.debug("flush() - Processing batch of %s, queue size is %s", batchInsert.size(), queue.size());
+                LOGGER.debug("flush() - Processing batch of {}, queue size is {}", batchInsert.size(), queue.size());
 
                 int skipCount = 0;
 
@@ -205,7 +206,7 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
                             }
                         } else {
                             skipCount++;
-                            LOGGER.debug("flush() - Skipping flush of old stream attributes %s %s",
+                            LOGGER.debug("flush() - Skipping flush of old stream attributes {} {}",
                                     asyncFlush.getStream(), DateUtil.createNormalDateTimeString(applicableStreamAgeMs));
                         }
                     }
@@ -218,11 +219,11 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
                 }
 
                 if (logExecutionTime.getDuration() > 1000) {
-                    LOGGER.warn("flush() - Saved %s updates, skipped %s, queue size is %s, completed in %s",
-                            batchUpdate.size(), skipCount, queue.size(), logExecutionTime);
+                    LOGGER.warn("flush() - Saved {} updates, skipped {}, queue size is {}, completed in {}",
+                            new Object[] {batchUpdate.size(), skipCount, queue.size(), logExecutionTime});
                 } else {
-                    LOGGER.debug("flush() - Saved %s updates, skipped %s, queue size is %s, completed in %s",
-                            batchUpdate.size(), skipCount, queue.size(), logExecutionTime);
+                    LOGGER.debug("flush() - Saved {} updates, skipped {}, queue size is {}, completed in {}",
+                            new Object[] {batchUpdate.size(), skipCount, queue.size(), logExecutionTime});
                 }
             }
         }

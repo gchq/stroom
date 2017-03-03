@@ -146,7 +146,7 @@ public class SteppingController {
             if (getTaskMonitor().isTerminated()) {
                 return true;
             }
-            getTaskMonitor().info("Processing stream - %s : [%s:%s]", streamInfo, currentStreamNo, currentRecordNo);
+            getTaskMonitor().info("Processing stream - {} : [{}:{}]", streamInfo, currentStreamNo, currentRecordNo);
         }
 
         // Move source location.

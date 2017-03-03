@@ -16,6 +16,8 @@
 
 package stroom.streamstore.server.udload;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
@@ -28,7 +30,6 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogItemProgress;
 import stroom.util.shared.Monitor;
 import stroom.util.spring.StroomScope;
@@ -49,7 +50,7 @@ import java.io.OutputStream;
 @TaskHandlerBean(task = StreamDownloadTask.class)
 @Scope(value = StroomScope.TASK)
 public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, StreamDownloadResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StreamDownloadTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamDownloadTaskHandler.class);
 
     private static final String AGGREGATION_DELIMITER = "_";
 
@@ -93,7 +94,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
             final String fileBasePath = data.getAbsolutePath().substring(0, data.getAbsolutePath().lastIndexOf(".zip"));
 
             final LogItemProgress logItemProgress = new LogItemProgress(0, list.size());
-            streamProgressMonitor.info("Stream %s", logItemProgress);
+            streamProgressMonitor.info("Stream {}", logItemProgress);
 
             for (final Stream stream : list) {
                 result.incrementRecordsWritten();
@@ -187,7 +188,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
                 while (dataInputStream.getNextEntry()) {
                     entryProgress++;
 
-                    streamProgressMonitor.info("Stream Input %s/%s", entryProgress, entryTotal);
+                    streamProgressMonitor.info("Stream Input {}/{}", entryProgress, entryTotal);
 
                     String basePartName = StroomFileNameUtil.getFilePathForId(id);
 

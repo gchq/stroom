@@ -16,6 +16,8 @@
 
 package stroom.benchmark.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -57,7 +59,6 @@ import stroom.task.server.AsyncTaskHelper;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
@@ -78,7 +79,9 @@ import java.util.concurrent.locks.ReentrantLock;
 public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // 20 min timeout
     public static final int TIME_OUT = 1000 * 60 * 20;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(BenchmarkClusterExecutor.class);
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkClusterExecutor.class);
+
     private static final String ROOT_TEST_NAME = "Benchmark-Cluster Test";
     private static final String EPS = "EPS";
     private static final String ERROR = "Error";
@@ -128,9 +131,9 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         // possible across the cluster. If execution of no tasks are possible
         // then we should skip this benchmark as we won't be able to process
         // anything.
-        LOGGER.info("Using benchmark stream count of %s", streamCount);
-        LOGGER.info("Using benchmark record count of %s", recordCount);
-        LOGGER.info("Using benchmark concurrent writers of %s", concurrentWriters);
+        LOGGER.info("Using benchmark stream count of {}", streamCount);
+        LOGGER.info("Using benchmark record count of {}", recordCount);
+        LOGGER.info("Using benchmark concurrent writers of {}", concurrentWriters);
 
         nodeSet.addAll(nodeService.find(new FindNodeCriteria()));
 
@@ -235,7 +238,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 LOGGER.info("Cluster benchmark complete");
             }
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to create benchmark!", e);
         }
     }
 
@@ -259,7 +262,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
         if (!isTerminated()) {
-            LOGGER.info("Adding %s data streams to the cluster", streamCount);
+            LOGGER.info("Adding {} data streams to the cluster", streamCount);
 
             LOGGER.info("Writing data");
             final AsyncTaskHelper<VoidResult> asyncTaskHelper = new AsyncTaskHelper<>(
@@ -283,7 +286,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                         rangeLock.unlock();
                     }
 
-                    infoInterval("Written Stream %s/%s", count, streamCount);
+                    infoInterval("Written Stream {}/{}", count, streamCount);
                 });
                 asyncTaskHelper.fork(writerTask);
             }
@@ -291,7 +294,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
             // Probe.addDuration("Writing data", elapsed * 1000000);
         }
-        LOGGER.info("Written data in range [%s..%s] within %s", minStreamId, maxStreamId, logExecutionTime);
+        LOGGER.info("Written data in range [{}..{}] within {}", minStreamId, maxStreamId, logExecutionTime);
         return new Period(logExecutionTime.getStartTime(), System.currentTimeMillis());
     }
 
@@ -305,7 +308,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
             final Period processPeriod = new Period(System.currentTimeMillis(), null);
 
             // Translate the data across the cluster.
-            LOGGER.info("Processing data %s", feed.getName());
+            LOGGER.info("Processing data {}", feed.getName());
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
             final FindStreamCriteria rawCriteria = new FindStreamCriteria();
@@ -342,7 +345,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                     completedTaskCount = streams.size();
                 }
 
-                info("Completed %s/%s translation tasks", completedTaskCount, streamCount);
+                info("Completed {}/{} translation tasks", completedTaskCount, streamCount);
 
                 if (completedTaskCount >= streamCount) {
                     complete = true;
@@ -356,7 +359,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
             // Record benchmark statistics if we weren't asked to stop.
             if (!isTerminated()) {
                 processPeriod.setToMs(System.currentTimeMillis());
-                LOGGER.info("Translated %s data in %s", feed.getName(), logExecutionTime);
+                LOGGER.info("Translated {} data in {}", feed.getName(), logExecutionTime);
                 recordTranslationStats(feed, processPeriod);
             }
 
@@ -401,7 +404,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // completedTaskCount = completedTasks.size();
     // }
     //
-    // info("Completed %s/%s index tasks", completedTaskCount,
+    // info("Completed {}/{} index tasks", completedTaskCount,
     // streamCount);
     //
     // if (completedTaskCount >= streamCount) {

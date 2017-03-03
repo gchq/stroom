@@ -16,6 +16,8 @@
 
 package stroom.search.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.index.server.LuceneVersionUtil;
@@ -35,7 +37,6 @@ import stroom.security.SecurityContext;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ import java.util.Set;
 @Component
 public class LuceneSearchStoreFactory {
     public static final String ENTITY_TYPE = Index.ENTITY_TYPE;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(LuceneSearchStoreFactory.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchStoreFactory.class);
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
 
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;

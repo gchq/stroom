@@ -16,6 +16,8 @@
 
 package stroom.search.server.extraction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexField;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
@@ -24,7 +26,6 @@ import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamPermissionException;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class StreamMapCreator {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StreamMapCreator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamMapCreator.class);
 
     private final ErrorReceiver errorReceiver;
     private final StreamStore streamStore;

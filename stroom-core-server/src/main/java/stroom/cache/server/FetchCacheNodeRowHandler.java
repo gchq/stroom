@@ -16,6 +16,8 @@
 
 package stroom.cache.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.cache.StroomCacheManager;
 import stroom.cache.shared.CacheInfo;
@@ -35,7 +37,6 @@ import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -48,7 +49,7 @@ import java.util.List;
 @Scope(StroomScope.TASK)
 @Secured(CacheRow.MANAGE_CACHE_PERMISSION)
 class FetchCacheNodeRowHandler extends AbstractTaskHandler<FetchCacheNodeRowAction, ResultList<CacheNodeRow>> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FetchCacheNodeRowHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FetchCacheNodeRowHandler.class);
 
     private final ClusterDispatchAsyncHelper dispatchHelper;
 
@@ -84,14 +85,14 @@ class FetchCacheNodeRowHandler extends AbstractTaskHandler<FetchCacheNodeRowActi
             final ClusterCallEntry<ResultList<CacheInfo>> response = collector.getResponse(node);
 
             if (response == null) {
-                LOGGER.debug("No response from node: %s", node);
+                LOGGER.debug("No response from node: {}", node);
             } else if (response.getError() != null) {
-                LOGGER.debug("Error from node: %s - %s", node, response.getError().getMessage());
+                LOGGER.debug("Error from node: {} - {}", node, response.getError().getMessage());
                 LOGGER.debug(response.getError().getMessage(), response.getError());
             } else {
                 final ResultList<CacheInfo> result = response.getResult();
                 if (result == null) {
-                    LOGGER.debug("No response object received from node: %s", node);
+                    LOGGER.debug("No response object received from node: {}", node);
                 } else {
                     for (final CacheInfo value : result) {
                         values.add(new CacheNodeRow(node, value));

@@ -4,11 +4,12 @@ import com.google.common.base.Strings;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
@@ -25,7 +26,7 @@ import java.util.Properties;
 @Component
 @Scope(StroomScope.SINGLETON)
 public class StroomKafkaProducer {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomKafkaProducer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomKafkaProducer.class);
 
     private Producer<String, String> producer = null;
     private static final String KAFKA_BOOTSTRAP_SERVERS = "kafka.bootstrap.servers";

@@ -20,12 +20,13 @@ import java.io.File;
 import java.time.Duration;
 import java.time.Period;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.test.StroomProcessTestFileUtil;
-import stroom.util.logging.StroomLogger;
 import org.junit.Test;
 
 public class TestFullTranslationTaskAndStepping extends TranslationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestFullTranslationTaskAndStepping.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestFullTranslationTaskAndStepping.class);
 
     @Override
     protected boolean doSingleSetup() {

@@ -19,8 +19,9 @@ package stroom.cache;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.cache.shared.CacheInfo;
-import stroom.util.logging.StroomLogger;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
@@ -37,7 +38,7 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
     }
 
     private static class CacheListener extends CacheEventListenerAdapter {
-        private static final StroomLogger LOGGER = StroomLogger.getLogger(CacheListener.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CacheListener.class);
 
         private final AbstractCacheBean<?, ?> parent;
 
@@ -87,7 +88,7 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
         }
     }
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractCacheBean.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractCacheBean.class);
 
     private final Ehcache cache;
 

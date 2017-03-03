@@ -22,14 +22,15 @@ import event.logging.AuthenticateOutcomeReason;
 import event.logging.Event;
 import event.logging.Event.EventDetail.Authenticate;
 import event.logging.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 
 @Component
 public class AuthenticationEventLog {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AuthenticationEventLog.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationEventLog.class);
 
     @Resource
     private StroomEventLoggingService eventLoggingService;
@@ -99,7 +100,7 @@ public class AuthenticationEventLog {
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to complete authenticationEvent!", e);
         }
     }
 }

@@ -16,14 +16,15 @@
 
 package stroom.entity.server.util;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class SQLBuilder {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SQLBuilder.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLBuilder.class);
     private static final boolean VALIDATE = true;
 
     private final List<Object> args;

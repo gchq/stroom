@@ -18,6 +18,8 @@ package stroom.refdata;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.cache.CacheManagerAutoCloseable;
@@ -33,7 +35,6 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.DocRef;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
@@ -45,7 +46,7 @@ import java.util.List;
 import java.util.TreeSet;
 
 public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestReferenceDataWithCache.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceDataWithCache.class);
     private static volatile DocRef folder;
     private final EventListBuilder builder = EventListBuilderFactory.createBuilder();
     @Resource
@@ -231,7 +232,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         try {
             builder.characters(ch, 0, ch.length);
         } catch (final SAXException e) {
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
         }
         final EventList eventList = builder.getEventList();
         builder.reset();

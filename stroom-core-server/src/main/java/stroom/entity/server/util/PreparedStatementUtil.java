@@ -16,7 +16,8 @@
 
 package stroom.entity.server.util;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -32,7 +33,7 @@ import java.util.List;
  * Utility Class
  */
 public class PreparedStatementUtil {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(PreparedStatementUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PreparedStatementUtil.class);
 
     public static void setArguments(final PreparedStatement ps, final List<Object> args) throws SQLException {
         if (args != null) {
@@ -62,7 +63,7 @@ public class PreparedStatementUtil {
         try {
             return connection.prepareStatement(sql);
         } catch (final SQLException sqlEx) {
-            LOGGER.error("prepareStatement() - %s %s", sql, sqlEx.getMessage());
+            LOGGER.error("prepareStatement() - {} {}", sql, sqlEx.getMessage());
             throw sqlEx;
         }
     }

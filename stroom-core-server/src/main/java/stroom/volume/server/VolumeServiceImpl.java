@@ -17,6 +17,8 @@
 package stroom.volume.server;
 
 import event.logging.BaseAdvancedQueryItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
@@ -42,7 +44,6 @@ import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomStartup;
@@ -88,7 +89,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     public static final Path DEFAULT_INDEX_VOLUME_SUBDIR = Paths.get("defaultIndexVolume");
     public static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(VolumeServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(VolumeServiceImpl.class);
 
     private static final Map<String, VolumeSelector> volumeSelectorMap;
     private static final int DEFAULT_RESILIENT_REPLICATION_COUNT = 1;
@@ -548,9 +549,9 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         String pathStr = path.toAbsolutePath().toString();
         try {
             Files.createDirectories(path);
-            LOGGER.info(String.format("Creating volume in %s on node %s",
+            LOGGER.info("Creating volume in {} on node {}",
                     pathStr,
-                    node.getName()));
+                    node.getName());
             final Volume vol = optVolume.orElseGet(Volume::new);
             vol.setPath(pathStr);
             vol.setNode(node);
@@ -559,7 +560,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             getDefaultVolumeLimit(path).ifPresent(vol::setBytesLimit);
             save(vol);
         } catch (IOException e) {
-            LOGGER.error("Unable to create volume due to an error creating directory %s", pathStr, e);
+            LOGGER.error("Unable to create volume due to an error creating directory {}", pathStr, e);
         }
     }
 

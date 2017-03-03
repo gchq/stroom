@@ -28,7 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
@@ -41,7 +42,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class StroomBeanStore implements InitializingBean, BeanFactoryAware, ApplicationContextAware {
-    private final StroomLogger LOGGER = StroomLogger.getLogger(StroomBeanStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomBeanStore.class);
 
     private static final String STROOM_CLASSES = "stroom.";
 
@@ -97,11 +98,11 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
         try {
             o = beanFactory.getBean(name);
         } catch (final Throwable t) {
-            LOGGER.error(t, t);
+            LOGGER.error("Unable to get bean!", t);
         }
 
         if (o == null) {
-            LOGGER.error("getBean() - %s returned null !!", name);
+            LOGGER.error("getBean() - {} returned null !!", name);
         }
 
         return o;
@@ -164,11 +165,11 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
         try {
             bean = beanFactory.getBean(stroomBeanClass);
         } catch (final Throwable t) {
-            LOGGER.error(t, t);
+            LOGGER.error("Unable to get bean!", t);
         }
 
         if (bean == null) {
-            LOGGER.error("getBean() - %s returned null !!", stroomBeanClass);
+            LOGGER.error("getBean() - {} returned null !!", stroomBeanClass);
         }
 
         return bean;
@@ -200,7 +201,7 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
                 }
 
                 if (beanClass.getName().contains("$")) {
-                    LOGGER.error("init() - UNABLE TO RESOVE BEAN CLASS ?? MAYBE SPRING IS NOLONGER USING CGLIB .... %s",
+                    LOGGER.error("init() - UNABLE TO RESOVE BEAN CLASS ?? MAYBE SPRING IS NOLONGER USING CGLIB .... {}",
                             beanClass.getName());
                 }
 
@@ -217,7 +218,7 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
             }
             Collections.sort(beanMethodList);
             for (final String string : beanMethodList) {
-                LOGGER.debug("init() - %s", string);
+                LOGGER.debug("init() - {}", string);
             }
         }
         initialised = true;

@@ -18,7 +18,8 @@ package stroom.entity.server.event;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 
 import stroom.task.server.TaskCallback;
@@ -30,7 +31,7 @@ import stroom.util.spring.StroomScope;
 @TaskHandlerBean(task = ClusterEntityEventTask.class)
 @Scope(StroomScope.TASK)
 public class ClusterEntityEventTaskHandler implements TaskHandler<ClusterEntityEventTask, VoidResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterEntityEventTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterEntityEventTaskHandler.class);
 
     @Resource
     private EntityEventBusImpl entityEventBusImpl;

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,6 +23,8 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.UnavailableSecurityManagerException;
 import org.apache.shiro.session.InvalidSessionException;
 import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
@@ -41,8 +43,8 @@ import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.security.spring.SecurityConfiguration;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
+import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
 import javax.persistence.RollbackException;
@@ -57,10 +59,9 @@ class SecurityContextImpl implements SecurityContext {
     public static final String ISSUER = "stroom";
     public static final String SECRET = "some-secret";
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SecurityContextImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
     private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", "INTERNAL_PROCESSING_USER", false, true);
     private final UserPermissionsCache userPermissionCache;
-    private final DocumentPermissionsCache documentPermissionsCache;
     private final UserService userService;
     private final DocumentPermissionService documentPermissionService;
     private final GenericEntityService genericEntityService;

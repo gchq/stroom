@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.filter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
@@ -28,7 +30,6 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.RecordCount;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
@@ -43,7 +44,8 @@ import javax.annotation.Resource;
 @ConfigurableElement(type = "RecordCountFilter", category = Category.FILTER, roles = { PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS }, icon = ElementIcons.RECORD_COUNT)
 public class RecordCountFilter extends AbstractXMLFilter implements RecordCounter {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(RecordCountFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RecordCountFilter.class);
+
     private static final int LOG_COUNT = 10000;
 
     private boolean countRead = true;

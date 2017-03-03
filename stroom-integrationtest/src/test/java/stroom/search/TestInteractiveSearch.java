@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonIndexingTest;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
@@ -46,7 +45,6 @@ import stroom.query.api.TableSettings;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
-import stroom.search.server.SearchResource;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
@@ -65,7 +63,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
+public class TestInteractiveSearch extends AbstractSearchTest {
     @Resource
     private CommonIndexingTest commonIndexingTest;
     @Resource
@@ -74,8 +72,6 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
     private DictionaryService dictionaryService;
     @Resource
     private TaskManager taskManager;
-    @Resource
-    private SearchResource searchService;
 
     @Override
     protected boolean doSingleSetup() {
@@ -404,18 +400,18 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         final Query query = new Query(dataSourceRef, expressionIn.build());
         final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), true);
 
-        SearchResponse searchResponse = searchService.search(searchRequest);
+        SearchResponse searchResponse = search(searchRequest);
 
         try {
             while (!searchResponse.complete()) {
-                searchResponse = searchService.search(searchRequest);
+                searchResponse = search(searchRequest);
 
                 if (!searchResponse.complete()) {
                     ThreadUtil.sleep(1000);
                 }
             }
         } finally {
-            searchService.destroy(queryKey);
+            destroy(queryKey);
         }
 
         final Map<String, List<Row>> rows = new HashMap<>();

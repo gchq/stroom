@@ -18,10 +18,11 @@ package stroom.util.config;
 
 import com.google.common.base.CaseFormat;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import stroom.util.io.CloseableUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomResourceLoaderUtil;
 import stroom.util.upgrade.UpgradeDispatcherSingleton;
 import stroom.util.web.ServletContextUtil;
@@ -38,7 +39,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class StroomProperties {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(StroomProperties.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomProperties.class);
 
     public static final String STROOM_TEMP = "stroom.temp";
 
@@ -108,7 +109,7 @@ public class StroomProperties {
                     // Ignore.
                 }
 
-                LOGGER.info("Using properties '%s' from '%s'", resourceName, path);
+                LOGGER.info("Using properties '{}' from '{}'", resourceName, path);
 
                 // Is this this web app property file?
                 if (Source.WAR.equals(source)) {
@@ -120,7 +121,7 @@ public class StroomProperties {
                     }
                 }
             } else {
-                LOGGER.info("Properties not found at '%s'", resourceName);
+                LOGGER.info("Properties not found at '{}'", resourceName);
             }
         } catch (final Exception e) {
             e.printStackTrace();
@@ -243,7 +244,7 @@ public class StroomProperties {
         value = replaceProperties(propertyName, value, cyclicCheckSet);
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("getProperty( %s ) returns '%s'", name, makeSafe(name, value));
+            LOGGER.debug("getProperty( {} ) returns '{}'", name, makeSafe(name, value));
         }
 
         // If magic NULL then we will set null as the property rather than blank
@@ -252,7 +253,7 @@ public class StroomProperties {
             value = MAGIC_NULL;
         }
         if (trace) {
-            LOGGER.info("getProperty( %s ) returns '%s'", name, makeSafe(name, value));
+            LOGGER.info("getProperty( {} ) returns '{}'", name, makeSafe(name, value));
         }
 
         return value;

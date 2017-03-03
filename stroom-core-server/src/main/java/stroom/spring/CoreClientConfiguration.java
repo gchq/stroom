@@ -16,6 +16,8 @@
 
 package stroom.spring;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -30,6 +32,7 @@ import stroom.dispatch.server.DispatchServiceImpl;
 import stroom.dispatch.shared.DispatchService;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.feed.server.RemoteFeedServiceRPC;
+import stroom.lifecycle.LifecycleServiceImpl;
 import stroom.servlet.DebugServlet;
 import stroom.servlet.DynamicCSSServlet;
 import stroom.servlet.EchoServlet;
@@ -39,7 +42,6 @@ import stroom.servlet.SessionListServlet;
 import stroom.servlet.SessionResourceStoreImpl;
 import stroom.servlet.StatusServlet;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 import stroom.util.thread.ThreadLocalBuffer;
 import stroom.util.zip.HeaderMap;
 import stroom.util.zip.HeaderMapFactory;
@@ -55,10 +57,15 @@ import java.util.Properties;
 @ComponentScan(basePackages = {"stroom"}, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class CoreClientConfiguration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(CoreClientConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CoreClientConfiguration.class);
 
     public CoreClientConfiguration() {
         LOGGER.info("CoreClientConfiguration loading...");
+    }
+
+    @Bean
+    public LifecycleServiceImpl lifecycleService() {
+        return new LifecycleServiceImpl();
     }
 
     @Bean

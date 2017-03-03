@@ -16,6 +16,8 @@
 
 package stroom.util.logging;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.test.StroomExpectedException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,7 +26,7 @@ import stroom.util.test.StroomJUnit4ClassRunner;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestStroomJUnit4ClassRunner {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestStroomJUnit4ClassRunner.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestStroomJUnit4ClassRunner.class);
 
     @Test
     @StroomExpectedException(exception = RuntimeException.class)

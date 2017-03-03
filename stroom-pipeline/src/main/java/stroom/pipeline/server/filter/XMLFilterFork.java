@@ -19,7 +19,8 @@ package stroom.pipeline.server.filter;
 import java.util.ArrayList;
 import java.util.List;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -35,7 +36,7 @@ import stroom.pipeline.server.factory.Processor;
  * For this reason it should be used only when necessary.
  */
 public class XMLFilterFork extends AbstractElement implements XMLFilter {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(XMLFilterFork.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(XMLFilterFork.class);
 
     private final XMLFilter[] filters;
 
@@ -57,7 +58,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.startProcessing();
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace("Unable to start processing!", t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -65,7 +66,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.startProcessing();
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace("Unable to start processing!", t2);
                     }
                 }
 
@@ -88,7 +89,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.endProcessing();
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace("Unable to end processing!", t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -96,7 +97,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.endProcessing();
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace("Unable to end processing!", t2);
                     }
                 }
 
@@ -119,7 +120,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.startStream();
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace("Unable to start stream!", t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -127,7 +128,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.startStream();
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace("Unable to start stream!", t2);
                     }
                 }
 
@@ -150,7 +151,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.endStream();
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace("Unable to end stream!", t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -158,7 +159,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.endStream();
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace("Unable to end stream!", t2);
                     }
                 }
 
@@ -205,7 +206,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.setDocumentLocator(locator);
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace("Unable to set locator", t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -213,7 +214,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.setDocumentLocator(locator);
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace("Unable to set locator!", t2);
                     }
                 }
 
@@ -241,7 +242,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.startDocument();
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace("Unable to start document!", t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -249,7 +250,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.startDocument();
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace("Unable to start document!", t2);
                     }
                 }
 
@@ -288,7 +289,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.endDocument();
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace("Unable to end document!", t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -296,7 +297,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.endDocument();
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace("Unable to end document!", t2);
                     }
                 }
 
@@ -355,7 +356,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.startPrefixMapping(prefix, uri);
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace("Unable to start prefix mapping!", t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -363,7 +364,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.startPrefixMapping(prefix, uri);
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace("Unable to start prefix mapping!", t2);
                     }
                 }
 
@@ -398,7 +399,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.endPrefixMapping(prefix);
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace("Unable to end prefix mapping!", t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -406,7 +407,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.endPrefixMapping(prefix);
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace("Unable to end prefix mapping!", t2);
                     }
                 }
 
@@ -494,7 +495,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.startElement(uri, localName, qName, atts);
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace("Unable to start element!", t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -502,7 +503,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.startElement(uri, localName, qName, atts);
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace("Unable to start element!", t2);
                     }
                 }
 
@@ -545,7 +546,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.endElement(uri, localName, qName);
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace("Unable to end element!", t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -553,7 +554,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.endElement(uri, localName, qName);
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace("Unable to end element!", t2);
                     }
                 }
 
@@ -623,7 +624,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.characters(ch, start, length);
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace(t1.getMessage(), t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -631,7 +632,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.characters(ch, start, length);
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace(t2.getMessage(), t2);
                     }
                 }
 
@@ -679,7 +680,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.ignorableWhitespace(ch, start, length);
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace(t1.getMessage(), t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -687,7 +688,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.ignorableWhitespace(ch, start, length);
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace(t2.getMessage(), t2);
                     }
                 }
 
@@ -731,7 +732,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.processingInstruction(target, data);
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace(t1.getMessage(), t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -739,7 +740,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.processingInstruction(target, data);
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace(t2.getMessage(), t2);
                     }
                 }
 
@@ -780,7 +781,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                 final XMLFilter filter = filters[i];
                 filter.skippedEntity(name);
             } catch (final Throwable t1) {
-                LOGGER.trace(t1, t1);
+                LOGGER.trace(t1.getMessage(), t1);
 
                 // Make sure the rest of the filters get the event.
                 for (i = i + 1; i < filters.length; i++) {
@@ -788,7 +789,7 @@ public class XMLFilterFork extends AbstractElement implements XMLFilter {
                     try {
                         f.skippedEntity(name);
                     } catch (final Throwable t2) {
-                        LOGGER.trace(t2, t2);
+                        LOGGER.trace(t2.getMessage(), t2);
                     }
                 }
 

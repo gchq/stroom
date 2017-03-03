@@ -16,11 +16,12 @@
 
 package stroom.util.zip;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.InitialByteArrayOutputStream;
 import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
 import stroom.util.io.StreamProgressMonitor;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Monitor;
 import stroom.util.task.TaskScopeContextHolder;
@@ -43,7 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Class that reads a nested directory tree of stroom zip files.
  */
 public abstract class StroomZipRepositoryProcessor {
-    private final StroomLogger LOGGER = StroomLogger.getLogger(StroomZipRepositoryProcessor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipRepositoryProcessor.class);
 
     public static final String LOCK_EXTENSION = ".lock";
     public static final String ZIP_EXTENSION = ".zip";
@@ -184,7 +185,7 @@ public abstract class StroomZipRepositoryProcessor {
             if (!monitor.isTerminated()) {
                 fileScan(stroomZipRepository, file);
             } else {
-                LOGGER.info("run() - Quit File Scan %s", file);
+                LOGGER.info("run() - Quit File Scan {}", file);
             }
         };
     }
@@ -195,7 +196,7 @@ public abstract class StroomZipRepositoryProcessor {
             if (!monitor.isTerminated()) {
                 processFeedFiles(stroomZipRepository, feed, fileList);
             } else {
-                LOGGER.info("run() - Quit Feed Aggregation %s", feed);
+                LOGGER.info("run() - Quit Feed Aggregation {}", feed);
             }
         };
     }
@@ -344,7 +345,7 @@ public abstract class StroomZipRepositoryProcessor {
             if (totalRead == 0) {
                 LOGGER.warn("sendEntry() - " + targetEntry + " IS BLANK");
             }
-            LOGGER.debug("sendEntry() - %s size is %s", targetEntry, totalRead);
+            LOGGER.debug("sendEntry() - {} size is {}", targetEntry, totalRead);
 
         }
     }

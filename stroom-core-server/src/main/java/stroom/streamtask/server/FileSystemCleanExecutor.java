@@ -16,6 +16,8 @@
 
 package stroom.streamtask.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.FindVolumeCriteria;
@@ -26,7 +28,6 @@ import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
@@ -44,6 +45,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,8 +56,7 @@ import java.util.Map;
 @Component
 @Scope(value = StroomScope.TASK)
 public class FileSystemCleanExecutor {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileSystemCleanExecutor.class);
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemCleanExecutor.class);
     @Resource
     private VolumeService volumeService;
     @Resource
@@ -103,7 +104,7 @@ public class FileSystemCleanExecutor {
     }
 
     private void logInfo(final Object... args) {
-        LOGGER.info(args);
+        Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
         taskMonitor.info(args);
     }
 
@@ -128,7 +129,7 @@ public class FileSystemCleanExecutor {
         // Load the node.
         asyncTaskHelper = new AsyncTaskHelper<>(null, taskMonitor, taskManager, batchSize);
 
-        logInfo("Starting file system clean task. oldAge = %s", ModelStringUtil.formatDurationString(oldAge));
+        logInfo("Starting file system clean task. oldAge = {}", ModelStringUtil.formatDurationString(oldAge));
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -217,6 +218,6 @@ public class FileSystemCleanExecutor {
             printWriterMap.values().forEach(CloseableUtil::closeLogAndIngoreException);
         }
 
-        logInfo("start() - Completed file system clean task in %s", logExecutionTime);
+        logInfo("start() - Completed file system clean task in {}", logExecutionTime);
     }
 }

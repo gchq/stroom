@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,10 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
-import javax.print.DocFlavor.STRING;
 
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 
 import stroom.entity.server.SupportsCriteriaLogging;
@@ -62,7 +60,7 @@ import event.logging.BaseAdvancedQueryItem;
 @Component
 public class StreamAttributeMapServiceImpl
         implements StreamAttributeMapService, SupportsCriteriaLogging<FindStreamAttributeMapCriteria> {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StreamAttributeMapServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapServiceImpl.class);
 
     @Resource(name = "cachedFeedService")
     private FeedService feedService;
@@ -271,7 +269,7 @@ public class StreamAttributeMapServiceImpl
                 try {
                     headerMap.read(new FileInputStream(manifest), true);
                 } catch (final IOException ioException) {
-                    LOGGER.error("loadAttributeMapFromFileSystem() %s", manifest, ioException);
+                    LOGGER.error("loadAttributeMapFromFileSystem() {}", manifest, ioException);
                 }
 
                 for (final String name : headerMap.keySet()) {

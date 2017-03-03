@@ -21,7 +21,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.springframework.stereotype.Component;
 
 import stroom.jobsystem.server.JobTrackedSchedule;
@@ -33,7 +35,7 @@ import stroom.util.spring.StroomSimpleCronSchedule;
 
 @Component
 public class SQLStatisticCacheImpl implements SQLStatisticCache {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticCacheImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticCacheImpl.class);
 
     /**
      * By default we only want to hold a million values in memory before
@@ -67,7 +69,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
             if (this.map.size() > maxSize) {
                 final SQLStatisticAggregateMap flushMap = this.map;
                 // Switch out the current map under lock.
-                LOGGER.debug("add() - Switch out the current map under lock. %s", flushMap);
+                LOGGER.debug("add() - Switch out the current map under lock. {}", flushMap);
 
                 this.map = aggregateMap;
 
@@ -106,7 +108,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
 
     private void doFlush(final boolean block, final SQLStatisticAggregateMap flushMap) {
         try {
-            LOGGER.debug("doFlush() - Locking %s", flushMap);
+            LOGGER.debug("doFlush() - Locking {}", flushMap);
 
             flushQueue.putLast(flushMap);
             if (block) {
@@ -134,7 +136,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
             }
 
         } catch (final InterruptedException e) {
-            LOGGER.fatal("doFlush() - No expecting InterruptedException", e);
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), "doFlush() - No expecting InterruptedException", e);
         }
     }
 

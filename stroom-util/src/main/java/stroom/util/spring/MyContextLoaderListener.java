@@ -17,18 +17,35 @@
 package stroom.util.spring;
 
 import org.springframework.web.context.ContextLoaderListener;
-import stroom.util.thread.ThreadScopeRunnable;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
-import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContext;
 
+//TODO 2017-02-25 - Dropwizard migration: this is currently redundant
 public class MyContextLoaderListener extends ContextLoaderListener {
-    @Override
-    public void contextInitialized(final ServletContextEvent event) {
-        new ThreadScopeRunnable() {
-            @Override
-            protected void exec() {
-                MyContextLoaderListener.super.contextInitialized(event);
-            }
-        }.run();
+
+    private AnnotationConfigWebApplicationContext applicationContext;
+
+    public MyContextLoaderListener(AnnotationConfigWebApplicationContext applicationContext){
+        this.applicationContext = applicationContext;
     }
+
+    @Override
+    protected WebApplicationContext createWebApplicationContext(ServletContext sc) {
+        sc.setInitParameter("contextClass",
+                "org.springframework.web.context.support.AnnotationConfigWebApplicationContext");
+        applicationContext.setServletContext(sc);
+        return super.createWebApplicationContext(sc);
+    }
+
+//    @Override
+//    public void contextInitialized(final ServletContextEvent event) {
+//        new ThreadScopeRunnable() {
+//            @Override
+//            protected void exec() {
+//                MyContextLoaderListener.super.contextInitialized(event);
+//            }
+//        }.run();
+//    }
 }

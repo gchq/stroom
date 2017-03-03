@@ -21,11 +21,12 @@ import java.util.HashMap;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.context.SmartLifecycle;
 
 import stroom.util.concurrent.AtomicSequence;
-import stroom.util.logging.StroomLogger;
 import stroom.util.thread.ThreadScopeContextHolder;
 
 /**
@@ -33,7 +34,7 @@ import stroom.util.thread.ThreadScopeContextHolder;
  * start is only called when the old bean has stopped.
  */
 public class StroomBeanLifeCycleReloadableContextBeanProcessor implements SmartLifecycle {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StroomBeanLifeCycleReloadableContextBeanProcessor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomBeanLifeCycleReloadableContextBeanProcessor.class);
 
     private static final HashMap<String, ArrayDeque<StroomBeanLifeCycleReloadableContextBeanProcessor>> nameInstanceStack = new HashMap<String, ArrayDeque<StroomBeanLifeCycleReloadableContextBeanProcessor>>();
     private static AtomicSequence instanceCount = new AtomicSequence();

@@ -21,7 +21,9 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -34,7 +36,7 @@ import stroom.util.spring.StroomScope;
 @Component
 @Scope(value = StroomScope.TASK)
 public class DefaultErrorWriter implements ErrorWriter {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(DefaultErrorWriter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultErrorWriter.class);
 
     private static final String NEW_LINE = "\n";
     private static final String OPEN_BRACKET = "[";
@@ -95,13 +97,13 @@ public class DefaultErrorWriter implements ErrorWriter {
                                 outputStream.write(sb.toString().getBytes());
                             }
                         } catch (final IOException e) {
-                            LOGGER.fatal("Unable to write to error stream", e);
+                            LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to write to error stream", e);
                         }
 
                         destinationProvider.returnDestination(destination);
                     }
                 } catch (final IOException e) {
-                    LOGGER.fatal("Unable to write to error stream", e);
+                    LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to write to error stream", e);
                 }
             }
         }

@@ -16,14 +16,16 @@
 
 package stroom.entity.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import stroom.entity.server.util.XMLMarshallerUtil;
-import stroom.util.logging.StroomLogger;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
 public class ObjectMarshaller<E> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ObjectMarshaller.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ObjectMarshaller.class);
 
     private final Class<E> clazz;
     private final JAXBContext jaxbContext;
@@ -33,7 +35,7 @@ public class ObjectMarshaller<E> {
         try {
             jaxbContext = JAXBContext.newInstance(clazz);
         } catch (final JAXBException e) {
-            LOGGER.fatal(e, e);
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to create a new JAXBContext!", e);
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -45,8 +47,8 @@ public class ObjectMarshaller<E> {
             try {
                 xml = XMLMarshallerUtil.marshal(jaxbContext, object);
             } catch( final Exception e){
-                LOGGER.debug("Problem marshalling %s", object, e);
-                LOGGER.warn("Problem marshalling %s - %s (enable debug for full trace)", object, String.valueOf(e));
+                LOGGER.debug("Problem marshalling {}", object, e);
+                LOGGER.warn("Problem marshalling {} - {} (enable debug for full trace)", object, String.valueOf(e));
             }
         }
 
@@ -59,8 +61,8 @@ public class ObjectMarshaller<E> {
             try {
                 object = XMLMarshallerUtil.unmarshal(jaxbContext, clazz, xml);
             } catch (final Exception e) {
-                LOGGER.debug("Problem unmarshalling\n%s", xml, e);
-                LOGGER.warn("Problem unmarshalling - %s(enable debug for full trace)", String.valueOf(e));
+                LOGGER.debug("Problem unmarshalling\n{}", xml, e);
+                LOGGER.warn("Problem unmarshalling - {}(enable debug for full trace)", String.valueOf(e));
             }
         }
         return object;

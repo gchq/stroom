@@ -16,10 +16,11 @@
 
 package stroom.search.spring;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-import stroom.util.logging.StroomLogger;
 
 @Configuration
 @ComponentScan(basePackages = { "stroom.search.server", "stroom.search.shared" }, excludeFilters = {
@@ -27,7 +28,7 @@ import stroom.util.logging.StroomLogger;
         // a component scan as configurations should be specified explicitly.
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class), })
 public class SearchConfiguration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SearchConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SearchConfiguration.class);
 
     public SearchConfiguration() {
         LOGGER.info("SearchConfiguration loading...");

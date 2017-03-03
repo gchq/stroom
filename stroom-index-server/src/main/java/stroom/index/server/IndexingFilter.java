@@ -18,6 +18,8 @@ package stroom.index.server;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
@@ -42,7 +44,6 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.search.server.IndexFieldsMap;
 import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
@@ -56,7 +57,7 @@ import javax.annotation.Resource;
 @ConfigurableElement(type = "IndexingFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.INDEX)
 public class IndexingFilter extends AbstractXMLFilter {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexingFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexingFilter.class);
 
     private static final String RECORD = "record";
     private static final String DATA = "data";

@@ -21,7 +21,8 @@ import java.util.UUID;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -39,7 +40,7 @@ import net.sf.ehcache.config.ConfigurationFactory;
 @Component
 public class ConfigurableEhCacheManagerFactoryBean
         implements FactoryBean<CacheManager>, InitializingBean, DisposableBean {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(ConfigurableEhCacheManagerFactoryBean.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurableEhCacheManagerFactoryBean.class);
 
     private org.springframework.core.io.Resource configLocation = new ClassPathResource(
             "META-INF/ehcache/stroomCoreServerEhCache.xml");

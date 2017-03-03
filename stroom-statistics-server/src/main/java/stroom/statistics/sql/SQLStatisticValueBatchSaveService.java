@@ -16,8 +16,9 @@
 
 package stroom.statistics.sql;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.ConnectionUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.sql.SQLSafe;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
@@ -39,7 +40,7 @@ import java.util.List;
 @Transactional
 @Component
 public class SQLStatisticValueBatchSaveService {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticValueBatchSaveService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticValueBatchSaveService.class);
 
     @Resource
     DataSource cachedSqlDataSource;
@@ -111,7 +112,7 @@ public class SQLStatisticValueBatchSaveService {
             try (Statement statement = connection.createStatement()) {
                 statement.executeUpdate(sql.toString());
 
-                LOGGER.debug("saveBatchStatisticValueSource_String() - Saved %s records in %s", batch.size(),
+                LOGGER.debug("saveBatchStatisticValueSource_String() - Saved {} records in {}", batch.size(),
                         logExecutionTime);
 
                 statement.close();
@@ -143,7 +144,7 @@ public class SQLStatisticValueBatchSaveService {
 
                 preparedStatement.executeBatch();
 
-                LOGGER.debug("saveBatchStatisticValueSource_PreparedStatement() - Saved %s records in %s", batch.size(),
+                LOGGER.debug("saveBatchStatisticValueSource_PreparedStatement() - Saved {} records in {}", batch.size(),
                         logExecutionTime);
 
                 preparedStatement.close();
@@ -180,17 +181,17 @@ public class SQLStatisticValueBatchSaveService {
                         savedCount++;
                     } catch (final Exception e) {
                         // log the error and carry on with the rest
-                        LOGGER.error(String.format(
-                                "Error while tyring to insert a SQL statistic record.  SQL: [%s], createMs: [%s], name: [%s], "
-                                        + "typePrimValue: [%s], type: [%s], value: [%s]",
+                        LOGGER.error(
+                                "Error while tyring to insert a SQL statistic record.  SQL: [{}], createMs: [{}], name: [{}], "
+                                        + "typePrimValue: [{}], type: [{}], value: [{}]",
                                 SAVE_CALL, item.getCreateMs(), item.getName(), item.getType().getPrimitiveValue(),
-                                item.getType().name(), item.getValue()), e);
+                                item.getType().name(), item.getValue(), e);
                         failedCount++;
                     }
                     preparedStatement.clearParameters();
                 }
 
-                LOGGER.debug("saveBatchStatisticValueSource_IndividualPreparedStatements() - Saved %s records in %s",
+                LOGGER.debug("saveBatchStatisticValueSource_IndividualPreparedStatements() - Saved {} records in {}",
                         batch.size(), logExecutionTime);
 
                 preparedStatement.close();
@@ -202,8 +203,8 @@ public class SQLStatisticValueBatchSaveService {
         }
 
         if (failedCount > 0) {
-            LOGGER.error(String.format("Failed to insert [%s] SQL statistic records out of a batch size of [%s]",
-                    failedCount, batch.size()));
+            LOGGER.error("Failed to insert [{}] SQL statistic records out of a batch size of [{}]",
+                    failedCount, batch.size());
         }
 
         return savedCount;

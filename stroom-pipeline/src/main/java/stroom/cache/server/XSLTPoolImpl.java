@@ -21,6 +21,8 @@ import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XsltCompiler;
 import net.sf.saxon.s9api.XsltExecutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.shared.VersionedEntityDecorator;
@@ -36,7 +38,6 @@ import stroom.pool.AbstractPoolCacheBean;
 import stroom.pool.PoolItem;
 import stroom.security.Insecure;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomBeanStore;
 
@@ -50,7 +51,7 @@ import java.util.List;
 @Component
 public class XSLTPoolImpl extends AbstractPoolCacheBean<VersionedEntityDecorator<XSLT>, StoredXsltExecutable>
         implements XSLTPool, EntityEvent.Handler {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(XSLTPool.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(XSLTPoolImpl.class);
 
     private final URIResolver uriResolver;
     private final StroomBeanStore beanStore;
@@ -117,7 +118,7 @@ public class XSLTPoolImpl extends AbstractPoolCacheBean<VersionedEntityDecorator
             xsltExecutable = xsltCompiler.compile(new StreamSource(StreamUtil.stringToStream(xslt.getData())));
 
         } catch (final SaxonApiException e) {
-            LOGGER.debug(e, e);
+            LOGGER.debug(e.getMessage(), e);
             errorReceiver.log(Severity.FATAL_ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
         }
 

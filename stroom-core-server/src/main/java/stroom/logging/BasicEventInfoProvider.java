@@ -21,6 +21,8 @@ import event.logging.Group;
 import event.logging.Groups;
 import event.logging.Object;
 import event.logging.util.EventLoggingUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
@@ -34,14 +36,13 @@ import stroom.feed.shared.FeedService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamTypeService;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 @Component
 public class BasicEventInfoProvider implements EventInfoProvider {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(BasicEventInfoProvider.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BasicEventInfoProvider.class);
 
     private final StreamTypeService streamTypeService;
     private final FeedService feedService;
@@ -78,12 +79,12 @@ public class BasicEventInfoProvider implements EventInfoProvider {
                             appendGroup(groups, parentGroup);
                         }
                     } catch (final Exception ex) {
-                        LOGGER.error(ex, ex);
+                        LOGGER.error("Unable to add folders!", ex);
                     }
 
                     return group;
                 } catch (final Exception ex) {
-                    LOGGER.error(ex, ex);
+                    LOGGER.error("Unable to set up groups!", ex);
                 }
             } else {
                 final String type = getObjectType(entity);
@@ -103,14 +104,14 @@ public class BasicEventInfoProvider implements EventInfoProvider {
                         final Feed feed = (Feed) entity;
                         description = feed.getDescription();
                     } catch (final Exception ex) {
-                        LOGGER.error(ex, ex);
+                        LOGGER.error("Unable to get feed description!", ex);
                     }
                 } else if (entity instanceof PipelineEntity) {
                     try {
                         final PipelineEntity pipelineEntity = (PipelineEntity) entity;
                         description = pipelineEntity.getDescription();
                     } catch (final Exception ex) {
-                        LOGGER.error(ex, ex);
+                        LOGGER.error("Unable to get pipeline description!", ex);
                     }
                 }
 
@@ -129,7 +130,7 @@ public class BasicEventInfoProvider implements EventInfoProvider {
                         object.setGroups(groups);
                         appendGroup(groups, folder);
                     } catch (final Exception ex) {
-                        LOGGER.error(ex, ex);
+                        LOGGER.error("Unable to configure groups!", ex);
                     }
                 }
 
@@ -151,7 +152,7 @@ public class BasicEventInfoProvider implements EventInfoProvider {
                         object.getData()
                                 .add(EventLoggingUtil.createData("Reference", Boolean.toString(feed.isReference())));
                     } catch (final Exception ex) {
-                        LOGGER.error(ex, ex);
+                        LOGGER.error("Unable to add unknown but useful data!", ex);
                     }
                 } else if (entity instanceof Stream) {
                     try {
@@ -165,7 +166,7 @@ public class BasicEventInfoProvider implements EventInfoProvider {
                                     streamTypeService.load(stream.getStreamType()).getDisplayValue()));
                         }
                     } catch (final Exception ex) {
-                        LOGGER.error(ex, ex);
+                        LOGGER.error("Unable to configure stream!", ex);
                     }
                 }
 

@@ -16,6 +16,8 @@
 
 package stroom.streamstore.server.fs;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.SupportsCriteriaLogging;
 import stroom.entity.server.util.StroomEntityManager;
@@ -33,7 +35,6 @@ import stroom.streamstore.server.StreamRange;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamTypeService;
 import stroom.streamstore.shared.StreamVolume;
-import stroom.util.logging.StroomLogger;
 import event.logging.BaseAdvancedQueryItem;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -69,7 +70,8 @@ public class FileSystemStreamMaintenanceService
     public static final String PREFIX_NODE = "Node - ";
     public static final String PREFIX_VOLUME = "Volume - ";
     public static final String PREFIX_FEED = "Feed - ";
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileSystemStreamMaintenanceService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamMaintenanceService.class);
+
     @Resource
     private StroomEntityManager entityManager;
     @Resource
@@ -155,14 +157,14 @@ public class FileSystemStreamMaintenanceService
         boolean allOk = true;
         if (file.isFile()) {
             if (!file.delete()) {
-                LOGGER.error("Failed to delete file %s", file.getAbsolutePath());
+                LOGGER.error("Failed to delete file {}", file.getAbsolutePath());
                 allOk = false;
             }
             final List<File> kids = FileSystemStreamTypeUtil.findAllDescendantStreamFileList(file);
 
             for (final File kid : kids) {
                 if (!kid.delete()) {
-                    LOGGER.error("Failed to delete file %s", kid.getAbsolutePath());
+                    LOGGER.error("Failed to delete file {}", kid.getAbsolutePath());
                     allOk = false;
                 }
             }
@@ -214,13 +216,13 @@ public class FileSystemStreamMaintenanceService
         }
 
         if (!directory.isDirectory()) {
-            LOGGER.debug("scanDirectory() - %s - Skipping as root is not a directory !!", directory);
+            LOGGER.debug("scanDirectory() - {} - Skipping as root is not a directory !!", directory);
             return result;
         }
         // Get the list of kids
         final String[] kids = directory.list();
 
-        LOGGER.debug("scanDirectory() - %s", directory.getAbsolutePath());
+        LOGGER.debug("scanDirectory() - {}", directory.getAbsolutePath());
 
         if (kids != null) {
             result.setFileCount(kids.length);
@@ -311,19 +313,19 @@ public class FileSystemStreamMaintenanceService
             if (lastModified < oldFileTime) {
                 if (doDeleete) {
                     if (deleteFile.delete()) {
-                        LOGGER.debug("tryDelete() - Deleted file %s", deleteFile.getAbsolutePath());
+                        LOGGER.debug("tryDelete() - Deleted file {}", deleteFile.getAbsolutePath());
                     } else {
-                        LOGGER.error("tryDelete() - Failed to delete file %s", deleteFile.getAbsolutePath());
+                        LOGGER.error("tryDelete() - Failed to delete file {}", deleteFile.getAbsolutePath());
                     }
                 }
                 result.addDelete(deleteFile.getAbsolutePath());
 
             } else {
-                LOGGER.debug("tryDelete() - File too new to delete %s", deleteFile.getAbsolutePath());
+                LOGGER.debug("tryDelete() - File too new to delete {}", deleteFile.getAbsolutePath());
                 result.incrementTooNewToDeleteCount();
             }
         } catch (final Exception ex) {
-            LOGGER.error("tryDelete() - Failed to delete file %s", deleteFile.getAbsolutePath(), ex);
+            LOGGER.error("tryDelete() - Failed to delete file {}", deleteFile.getAbsolutePath(), ex);
         }
     }
 
@@ -352,8 +354,11 @@ public class FileSystemStreamMaintenanceService
             } else {
                 // Case 2 - match
                 for (final String file : files) {
-                    LOGGER.debug("processDirectory() - %s/%s belongs to stream %s", directory, file,
-                            md.getStream().getId());
+                    LOGGER.debug("processDirectory() - {}/{} belongs to stream {}", new Object[]{
+                            directory,
+                            file,
+                            md.getStream().getId()
+                    });
                 }
             }
         }
@@ -361,7 +366,7 @@ public class FileSystemStreamMaintenanceService
         // Update any streams that don't have a matching file
         streamsKeyedByBaseName.keySet().stream()
                 .filter(streamBaseName -> !filesKeyedByBaseName.containsKey(streamBaseName))
-                .forEach(streamBaseName -> LOGGER.error("processDirectory() - Missing Files for %s/%s", directory,
+                .forEach(streamBaseName -> LOGGER.error("processDirectory() - Missing Files for {}/{}", directory,
                         streamBaseName));
     }
 

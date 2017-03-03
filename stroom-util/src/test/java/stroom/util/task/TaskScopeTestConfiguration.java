@@ -19,7 +19,8 @@ package stroom.util.task;
 import java.util.HashMap;
 import java.util.Map;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.spring.StroomScope;
 import org.springframework.beans.factory.config.CustomScopeConfigurer;
 import org.springframework.context.annotation.Bean;
@@ -33,7 +34,7 @@ import stroom.util.spring.StroomBeanStore;
  */
 @Configuration
 class TaskScopeTestConfiguration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TaskScopeTestConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskScopeTestConfiguration.class);
 
     public TaskScopeTestConfiguration() {
         LOGGER.info("TaskScopeConfiguration loading...");

@@ -16,11 +16,12 @@
 
 package stroom.util.zip;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.io.FilterOutputStreamProgressMonitor;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.io.StreamUtil;
 import stroom.util.io.WrappedOutputStream;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Monitor;
 
 import java.io.BufferedOutputStream;
@@ -33,7 +34,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class StroomZipOutputStream implements Closeable {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StroomZipOutputStream.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipOutputStream.class);
 
     public static final String LOCK_EXTENSION = ".lock";
 

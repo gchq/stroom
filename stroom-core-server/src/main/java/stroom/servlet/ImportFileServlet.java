@@ -21,10 +21,11 @@ import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.logging.StreamEventLog;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.PropertyMap;
 import stroom.util.shared.ResourceKey;
 
@@ -49,7 +50,7 @@ import java.util.Map;
 public final class ImportFileServlet extends HttpServlet {
     public static final String BEAN_NAME = "importFileServlet";
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ImportFileServlet.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImportFileServlet.class);
 
     private static final long serialVersionUID = 487567988479000995L;
 
@@ -109,7 +110,7 @@ public final class ImportFileServlet extends HttpServlet {
                 fields.put(item.getFieldName(), item);
             }
         } catch (final FileUploadException e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to get file items!", e);
         }
 
         return fields;

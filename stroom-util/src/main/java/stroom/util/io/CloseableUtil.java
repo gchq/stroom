@@ -16,13 +16,14 @@
 
 package stroom.util.io;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Closeable;
 import java.io.IOException;
 
-import stroom.util.logging.StroomLogger;
-
 public class CloseableUtil {
-    static StroomLogger LOGGER = StroomLogger.getLogger(CloseableUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CloseableUtil.class);
 
     public static void closeLogAndIngoreException(Closeable... closeableList) {
         try {

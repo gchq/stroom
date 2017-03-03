@@ -16,6 +16,8 @@
 
 package stroom.dashboard.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +32,6 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.query.api.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -40,7 +41,7 @@ import java.util.Arrays;
 @AutoMarshal
 public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, FindDashboardCriteria>
         implements DashboardService {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(DashboardServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardServiceImpl.class);
 
     private static final String[] PERMISSIONS = Arrays.copyOf(STANDARD_PERMISSIONS, STANDARD_PERMISSIONS.length + 1);
 

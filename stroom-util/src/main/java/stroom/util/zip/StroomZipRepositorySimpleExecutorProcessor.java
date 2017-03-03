@@ -16,15 +16,16 @@
 
 package stroom.util.zip;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.concurrent.SimpleExecutor;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Monitor;
 import stroom.util.thread.ThreadScopeRunnable;
 
 public abstract class StroomZipRepositorySimpleExecutorProcessor extends StroomZipRepositoryProcessor {
     private SimpleExecutor simpleExecutor;
 
-    private StroomLogger LOGGER = StroomLogger.getLogger(StroomZipRepositorySimpleExecutorProcessor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipRepositorySimpleExecutorProcessor.class);
     private int threadCount = 1;
 
     public StroomZipRepositorySimpleExecutorProcessor(final Monitor monitor) {

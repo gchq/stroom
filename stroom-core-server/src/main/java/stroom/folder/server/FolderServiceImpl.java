@@ -16,6 +16,8 @@
 
 package stroom.folder.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.UserManagerQueryUtil;
@@ -31,7 +33,6 @@ import stroom.entity.shared.FolderService;
 import stroom.entity.shared.HasFolder;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.CompareUtil;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,7 +47,7 @@ import java.util.List;
 @Transactional
 @Component("folderService")
 public class FolderServiceImpl extends DocumentEntityServiceImpl<Folder, FindFolderCriteria> implements FolderService {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FolderServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FolderServiceImpl.class);
 
     private final GenericEntityService genericEntityService;
     private volatile String[] permissions;

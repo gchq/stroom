@@ -16,8 +16,9 @@
 
 package stroom.streamtask.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.node.server.StroomPropertyService;
-import stroom.util.logging.StroomLogger;
 import org.springframework.util.StringUtils;
 
 import stroom.jobsystem.server.ClusterLockService;
@@ -26,8 +27,10 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.task.TaskMonitor;
 
+import java.util.Arrays;
+
 public abstract class AbstractBatchDeleteExecutor {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractBatchDeleteExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBatchDeleteExecutor.class);
 
     private final BatchIdTransactionHelper batchIdTransactionHelper;
     private final ClusterLockService clusterLockService;
@@ -69,7 +72,7 @@ public abstract class AbstractBatchDeleteExecutor {
                     if (age != null) {
                         delete(age);
                     }
-                    LOGGER.info(taskName + " - finished in %s", logExecutionTime);
+                    LOGGER.info(taskName + " - finished in {}", logExecutionTime);
                 }
             } catch (final Throwable t) {
                 LOGGER.error(t.getMessage(), t);
@@ -77,7 +80,7 @@ public abstract class AbstractBatchDeleteExecutor {
                 clusterLockService.releaseLock(clusterLockName);
             }
         } else {
-            LOGGER.info(taskName + " - Skipped as did not get lock in %s", logExecutionTime);
+            LOGGER.info(taskName + " - Skipped as did not get lock in {}", logExecutionTime);
         }
     }
 
@@ -97,7 +100,7 @@ public abstract class AbstractBatchDeleteExecutor {
             // the task completed successfully last time.
             count = getIdCount(total);
             if (count > 0) {
-                LOGGER.warn("%s ids found from previous delete that must not have completed successfully", count);
+                LOGGER.warn("{} ids found from previous delete that must not have completed successfully", count);
                 // Try and delete the remaining batch.
                 total += count;
                 deleteCurrentBatch(total);
@@ -121,7 +124,7 @@ public abstract class AbstractBatchDeleteExecutor {
                 } while (!taskMonitor.isTerminated() && count >= deleteBatchSize);
             }
 
-            LOGGER.debug("Deleted %s streams in %s.", total, logExecutionTime);
+            LOGGER.debug("Deleted {} streams in {}.", total, logExecutionTime);
         }
     }
 
@@ -131,23 +134,23 @@ public abstract class AbstractBatchDeleteExecutor {
         info("Creating temp id table");
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         batchIdTransactionHelper.createTempIdTable(tempIdTable);
-        LOGGER.debug("Created temp id table in %s", logExecutionTime);
+        LOGGER.debug("Created temp id table in {}", logExecutionTime);
     }
 
     private long getIdCount(final long total) {
-        info("Getting id count (total=%s)", total);
+        info("Getting id count (total={})", total);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final long count = batchIdTransactionHelper.getTempIdCount(tempIdTable);
-        LOGGER.debug("Got %s ids in %s", count, logExecutionTime);
+        LOGGER.debug("Got {} ids in {}", count, logExecutionTime);
         return count;
     }
 
     private long insertIntoTempIdTable(final long age, final int batchSize, final long total) {
-        info("Inserting ids for deletion into temp id table (total=%s)", total);
+        info("Inserting ids for deletion into temp id table (total={})", total);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final String sql = getTempIdSelectSql(age, batchSize);
         final long count = batchIdTransactionHelper.insertIntoTempIdTable(tempIdTable, sql.toString());
-        LOGGER.debug("Inserted %s ids in %s", count, logExecutionTime);
+        LOGGER.debug("Inserted {} ids in {}", count, logExecutionTime);
         return count;
     }
 
@@ -155,22 +158,22 @@ public abstract class AbstractBatchDeleteExecutor {
 
     protected final void deleteWithJoin(final String fromTable, final String fromColumn, final String type,
             final long total) {
-        info("Deleting %s (total=%s)", type, total);
+        info("Deleting {} (total={})", type, total);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final long count = batchIdTransactionHelper.deleteWithJoin(fromTable, fromColumn, tempIdTable, Stream.ID);
-        LOGGER.debug("Deleted %s %s in %s", count, type, logExecutionTime);
+        LOGGER.debug("Deleted {} {} in {}", new Object[]{count, type, logExecutionTime});
     }
 
     private void truncateTempIdTable(final long total) {
-        info("Truncating temp id table (total=%s)", total);
+        info("Truncating temp id table (total={})", total);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         batchIdTransactionHelper.truncateTempIdTable(tempIdTable);
-        LOGGER.debug("Truncated temp id table in %s", logExecutionTime);
+        LOGGER.debug("Truncated temp id table in {}", logExecutionTime);
     }
 
     private void info(final Object... args) {
         taskMonitor.info(args);
-        LOGGER.debug(args);
+        Arrays.asList(args).forEach(arg -> LOGGER.debug(arg.toString()));
     }
 
     private Long getDeleteAge(final String property) {
@@ -181,7 +184,7 @@ public abstract class AbstractBatchDeleteExecutor {
                 final long duration = ModelStringUtil.parseDurationString(durationString);
                 age = System.currentTimeMillis() - duration;
             } catch (final Exception ex) {
-                LOGGER.error("Error reading %s", property);
+                LOGGER.error("Error reading {}", property);
             }
         }
         return age;

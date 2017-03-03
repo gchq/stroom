@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,9 @@
 
 package stroom.pipeline.server.filter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
@@ -25,7 +28,6 @@ import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 
 import javax.xml.transform.ErrorListener;
@@ -41,7 +43,7 @@ import java.io.IOException;
  * XML pipeline. Many instances of this filter can be used.
  */
 public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(AbstractSamplingFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSamplingFilter.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
@@ -100,7 +102,7 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
             try {
                 errorListener.fatalError(new TransformerException(e.getMessage()));
             } catch (final TransformerException te) {
-                LOGGER.fatal(te, te);
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), te.getMessage(), te);
             }
         } finally {
             super.endProcessing();

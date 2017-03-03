@@ -16,14 +16,15 @@
 
 package stroom.util.thread;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.task.ServerTask;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class ThreadUtil {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ThreadUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ThreadUtil.class);
 
     private ThreadUtil() {
         // Utility class so hide constructor.

@@ -16,7 +16,8 @@
 
 package stroom.spring;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -46,7 +47,7 @@ import stroom.streamtask.server.StreamProcessorTaskFactory;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterNodeManagerImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamProcessorTaskFactory.class) })
 public class ServerComponentScanTestConfiguration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ServerComponentScanTestConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServerComponentScanTestConfiguration.class);
 
     public ServerComponentScanTestConfiguration() {
         LOGGER.info("CoreConfiguration loading...");

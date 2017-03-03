@@ -20,7 +20,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -33,7 +34,7 @@ import stroom.util.CharBuffer;
  * times to any MultiWayXMLFilters.
  */
 public class TestSAXEventFilter extends AbstractXMLFilter {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestSAXEventFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestSAXEventFilter.class);
 
     private static final String NEW_LINE = "\n";
     private static final String SPACE = " ";
@@ -296,7 +297,7 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
             output.write(out.getBytes());
             output.write(NEW_LINE.getBytes());
         } catch (IOException e) {
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
         }
 
         cb.clear();
@@ -315,7 +316,7 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
             output.write(type.getBytes());
             output.write(NEW_LINE.getBytes());
         } catch (IOException e) {
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
         }
     }
 

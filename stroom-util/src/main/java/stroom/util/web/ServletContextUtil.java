@@ -32,13 +32,27 @@ public class ServletContextUtil {
     }
 
     public static final String getWARName(ServletContext servletContext) {
-        final String fullPath = servletContext.getRealPath(".");
-        final String[] parts = fullPath.split("/");
+        final String fullPathUnavailableMessage = "[Full path is not available]";
+        String fullPath = null;
+        // Servlet context might not yet be loaded
+        if(servletContext != null) {
+            fullPath = servletContext.getRealPath(".");
+            if(fullPath != null) {
+                final String[] parts = fullPath.split("/");
 
-        if (WEBAPP.equals(parts[parts.length - 1])) {
-            return DEFAULT_NAME;
+                if (WEBAPP.equals(parts[parts.length - 1])) {
+                    return DEFAULT_NAME;
+                }
+
+                return parts[parts.length - 2];
+            }
+            else {
+                return fullPathUnavailableMessage;
+            }
+        }
+        else {
+            return fullPathUnavailableMessage;
         }
 
-        return parts[parts.length - 2];
     }
 }

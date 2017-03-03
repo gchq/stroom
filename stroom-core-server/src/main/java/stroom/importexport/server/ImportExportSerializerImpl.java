@@ -16,6 +16,8 @@
 
 package stroom.importexport.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.xml.sax.InputSource;
@@ -50,7 +52,6 @@ import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.ModelStringUtil;
 
@@ -88,7 +89,8 @@ import java.util.Set;
 
 @Component
 public class ImportExportSerializerImpl implements ImportExportSerializer {
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(ImportExportSerializerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportSerializerImpl.class);
+
     private static final Attributes2Impl BLANK_ATTRIBUTES = new Attributes2Impl();
     private static final Set<String> RESOURCE_FETCH_SET = Collections.singleton("all");
     private static final String YES = "yes";
@@ -307,7 +309,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                             importMode);
                     paths.remove(i);
                 } catch (final EntityDependencyServiceException e) {
-                    LOGGER.warn("performImport() - %s", e.getMessage());
+                    LOGGER.warn("performImport() - {}", e.getMessage());
                     exceptions.put(path, e);
 
                     // If it was a dependency not of the same type then this
@@ -441,7 +443,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
 
         init();
 
-        LOGGER.info("performExport() - %s %s", entityType, entity);
+        LOGGER.info("performExport() - {} {}", entityType, entity);
         try {
             final String name = entity.getName();
             final FileOutputStream fileOutputStream = new FileOutputStream(getXMLFile(dir, entityType, name));
@@ -592,7 +594,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                                                           final Map<String, EntityActionConfirmation> confirmMap, final ImportMode importMode) {
         init();
 
-        LOGGER.info("performImport() - %s %s", entityType, file);
+        LOGGER.info("performImport() - {} {}", entityType, file);
 
         try {
             final String entityActionPath = toPath(folder, name);
@@ -764,7 +766,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                             }
                         }
                     } catch (final Exception ex) {
-                        LOGGER.error(ex);
+                        LOGGER.error("Unable to add date!", ex);
                     }
                 }
             }

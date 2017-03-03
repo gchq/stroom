@@ -16,6 +16,8 @@
 
 package stroom.cluster.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.EntityAction;
@@ -27,7 +29,6 @@ import stroom.node.shared.Node;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadUtil;
@@ -46,7 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.ADD, EntityAction.DELETE, EntityAction.UPDATE})
 @Component(ClusterNodeManager.BEAN_NAME)
 public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.Handler {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterNodeManagerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterNodeManagerImpl.class);
 
     private static final int ONE_SECOND = 1000;
     private static final int ONE_MINUTE = 60 * ONE_SECOND;
