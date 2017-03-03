@@ -103,8 +103,8 @@ public class SearchBus {
 
 
 
-            final String json = JsonUtil.encode(queryKey);
-            final DashboardQueryKey test = JsonUtil.decode(json);
+//            final String json = JsonUtil.encode(queryKey);
+//            final DashboardQueryKey test = JsonUtil.decode(json);
 
 
 

@@ -16,22 +16,13 @@
 
 package stroom.streamstore.server;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import stroom.entity.server.util.StroomEntityManager;
+import event.logging.BaseAdvancedQueryItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
 import stroom.entity.server.SupportsCriteriaLogging;
 import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.PermissionException;
@@ -55,7 +46,16 @@ import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.zip.HeaderMap;
-import event.logging.BaseAdvancedQueryItem;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class StreamAttributeMapServiceImpl
@@ -117,7 +117,7 @@ public class StreamAttributeMapServiceImpl
      * Load attributes from database
      */
     private void loadAttributeMapFromDatabase(final FindStreamAttributeMapCriteria criteria,
-            final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList) {
+                                              final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList) {
         final Map<Long, StreamAttributeMap> streamMap = new HashMap<>();
 
         // Get a list of valid stream ids.
@@ -234,7 +234,7 @@ public class StreamAttributeMapServiceImpl
     }
 
     private void loadAttributeMapFromFileSystem(final FindStreamAttributeMapCriteria criteria,
-            final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList) {
+                                                final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList) {
         final List<StreamAttributeKey> allKeys = streamAttributeKeyService.findAll();
         final Map<String, StreamAttributeKey> keyMap = new HashMap<>();
         for (final StreamAttributeKey key : allKeys) {

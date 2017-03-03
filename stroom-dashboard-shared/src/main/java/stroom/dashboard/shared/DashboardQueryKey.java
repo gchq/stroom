@@ -16,18 +16,13 @@
 
 package stroom.dashboard.shared;
 
-import jsinterop.annotations.JsIgnore;
-import jsinterop.annotations.JsType;
-
-@JsType(isNative = true)
 public class DashboardQueryKey {
-    public String uuid;
-    public long dashboardId;
+    private String uuid;
+    private long dashboardId;
 
     public DashboardQueryKey() {
     }
 
-    @JsIgnore
     public static DashboardQueryKey create(final String uuid, final long dashboardId) {
         final DashboardQueryKey dashboardQueryKey = new DashboardQueryKey();
         dashboardQueryKey.uuid = uuid;
@@ -35,17 +30,14 @@ public class DashboardQueryKey {
         return dashboardQueryKey;
     }
 
-    @JsIgnore
     public String getUuid() {
         return uuid;
     }
 
-    @JsIgnore
     public long getDashboardId() {
         return dashboardId;
     }
 
-    @JsIgnore
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -57,7 +49,6 @@ public class DashboardQueryKey {
         return uuid != null ? uuid.equals(that.uuid) : that.uuid == null;
     }
 
-    @JsIgnore
     @Override
     public int hashCode() {
         int result = uuid != null ? uuid.hashCode() : 0;
@@ -65,7 +56,6 @@ public class DashboardQueryKey {
         return result;
     }
 
-    @JsIgnore
     @Override
     public String toString() {
         return "DashboardQueryKey{" +

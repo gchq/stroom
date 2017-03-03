@@ -398,21 +398,8 @@ public class TestInteractiveSearch extends AbstractSearchTest {
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final Query query = new Query(dataSourceRef, expressionIn.build());
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), true);
-
-        SearchResponse searchResponse = search(searchRequest);
-
-        try {
-            while (!searchResponse.complete()) {
-                searchResponse = search(searchRequest);
-
-                if (!searchResponse.complete()) {
-                    ThreadUtil.sleep(1000);
-                }
-            }
-        } finally {
-            destroy(queryKey);
-        }
+        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
+        final SearchResponse searchResponse = search(searchRequest);
 
         final Map<String, List<Row>> rows = new HashMap<>();
         if (searchResponse != null && searchResponse.getResults() != null) {
