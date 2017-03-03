@@ -16,7 +16,6 @@
 
 package stroom.streamstore.server.tools;
 
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.springframework.stereotype.Component;
 import stroom.CommonTestControl;
@@ -68,6 +67,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -137,9 +138,9 @@ public final class StoreCreationTool {
 
         // We need to ensure the reference data is older then the earliest event
         // we are going to see.
-        DateTime dateTime = new DateTime();
+        ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
         dateTime = dateTime.withYear(OLD_YEAR);
-        long effectiveMs = dateTime.getMillis();
+        long effectiveMs = dateTime.toInstant().toEpochMilli();
 
         // Always make sure effective date is unique.
         effectiveMs += effectiveMsOffset++;

@@ -16,7 +16,6 @@
 
 package stroom.pipeline.server.task;
 
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.shared.BaseResultList;
@@ -74,6 +73,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -255,12 +257,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             // We need to ensure the reference data is older then the earliest
             // event we are going to see. In the case of these component tests
             // we have some events from 2007.
-            DateTime dateTime = new DateTime();
+            ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
             dateTime = dateTime.withYear(OLD_YEAR);
+            long millis = dateTime.toInstant().toEpochMilli();
 
             // Create the stream.
-            final Stream stream = Stream.createStreamForTesting(streamType, feed, dateTime.getMillis(),
-                    dateTime.getMillis());
+            final Stream stream = Stream.createStreamForTesting(streamType, feed, millis,
+                    millis);
             final StreamTarget target = streamStore.openStreamTarget(stream);
 
             final InputStream inputStream = new BufferedInputStream(new FileInputStream(file));

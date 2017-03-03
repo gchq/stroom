@@ -16,7 +16,6 @@
 
 package stroom.refdata;
 
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,6 +31,8 @@ import stroom.util.date.DateUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,7 +58,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
                     final Stream stream = Stream.createStreamForTesting(StreamType.RAW_REFERENCE, referenceFeed,
                             workingDate, workingDate);
                     results.add(stream);
-                    workingDate = new DateTime(workingDate).plusDays(1).getMillis();
+                    workingDate = Instant.ofEpochMilli(workingDate).atZone(ZoneOffset.UTC).plusDays(1).toInstant().toEpochMilli();
                 }
                 return results;
             }

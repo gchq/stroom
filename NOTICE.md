@@ -133,7 +133,6 @@ The table below includes licences for all Maven dependencies. Not included in th
 | net.java.dev.jets3t                       | jets3t                                       | 0.9.0            | APL 2.0       |         |               |
 | org.codehaus.jettison                     | jettison                                     | 1.1              | APL 2.0       |         |               |
 | org.mortbay.jetty                         | jetty-sslengine                              | 6.1.26           | APL 2.0       |         |               |
-| joda-time                                 | joda-time                                    | 2.3              | APL 2.0       |         |               |
 | com.google.code.findbugs                  | jsr305                                       | 1.3.9            | APL 2.0       |         |               |
 | org.fusesource.leveldbjni                 | leveldbjni-all                               | 1.8              | APL 2.0       |         |               |
 | log4j                                     | log4j                                        | 1.2.17           | APL 2.0       |         |               |
