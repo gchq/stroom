@@ -206,7 +206,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setPasswordHash(newHash);
 
         // Set the expiry.
-        user.setPasswordExpiryMs(getExpiryDate().getMillis());
+        user.setPasswordExpiryMs(getExpiryDate().toInstant().toEpochMilli());
 
         // Write event log data for password change.
         eventLog.changePassword(user.getName());
@@ -283,9 +283,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return httpServletRequestHolder.getSessionId() != null;
     }
 
-    private DateTime getExpiryDate() {
+    private ZonedDateTime getExpiryDate() {
         // Get the current number of milliseconds.
-        final DateTime expiryDate = new DateTime();
+        final ZonedDateTime expiryDate = ZonedDateTime.now(ZoneOffset.UTC);
         // Days to expiry will be 90 days.
         return expiryDate.plusDays(getDaysToPasswordExpiry());
     }

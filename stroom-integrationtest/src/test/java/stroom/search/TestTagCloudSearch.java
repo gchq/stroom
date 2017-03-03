@@ -41,7 +41,6 @@ import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
-import stroom.search.server.SearchResource;
 import stroom.util.shared.ParamUtil;
 import stroom.util.thread.ThreadUtil;
 
@@ -104,21 +103,8 @@ public class TestTagCloudSearch extends AbstractSearchTest {
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
 //        final Query query = new Query(dataSourceRef, expression);
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), true);
-
-        SearchResponse searchResponse = search(searchRequest);
-
-        try {
-            while (!searchResponse.complete()) {
-                searchResponse = search(searchRequest);
-
-                if (!searchResponse.complete()) {
-                    ThreadUtil.sleep(1000);
-                }
-            }
-        } finally {
-            destroy(queryKey);
-        }
+        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
+        final SearchResponse searchResponse = search(searchRequest);
 
         final List<Row> values = new ArrayList<>();
         if (searchResponse != null) {

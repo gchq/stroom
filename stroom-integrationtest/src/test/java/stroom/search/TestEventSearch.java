@@ -40,7 +40,6 @@ import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
-import stroom.search.server.SearchResource;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.ParamUtil;
 import stroom.util.thread.ThreadUtil;
@@ -106,21 +105,8 @@ public class TestEventSearch extends AbstractSearchTest {
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final Query query = new Query(dataSourceRef, expressionIn.build());
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), true);
-
-        SearchResponse searchResponse = search(searchRequest);
-
-        try {
-            while (!searchResponse.complete()) {
-                searchResponse = search(searchRequest);
-
-                if (!searchResponse.complete()) {
-                    ThreadUtil.sleep(1000);
-                }
-            }
-        } finally {
-            destroy(queryKey);
-        }
+        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
+        final SearchResponse searchResponse = search(searchRequest);
 
         final Map<String, List<Row>> rows = new HashMap<>();
         if (searchResponse != null) {
