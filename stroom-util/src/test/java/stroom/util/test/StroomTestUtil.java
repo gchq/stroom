@@ -17,9 +17,6 @@
 package stroom.util.test;
 
 import org.apache.commons.io.FileUtils;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import stroom.util.io.FileUtil;
 import stroom.util.thread.ThreadUtil;
 
@@ -29,10 +26,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class StroomTestUtil {
-    private static final DateTimeFormatter FORMAT = DateTimeFormat.forPattern("yyyyMMdd_HHmmss_SSS")
-            .withZone(DateTimeZone.UTC);
+    private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS");
 
     public static File createRootTestDir(final File tempDir) throws IOException {
         return tempDir;
@@ -77,7 +76,7 @@ public class StroomTestUtil {
 
         File dir = null;
         for (int i = 0; i < 100; i++) {
-            dir = new File(parentDir, FORMAT.print(System.currentTimeMillis()));
+            dir = new File(parentDir, FORMAT.format(ZonedDateTime.now(ZoneOffset.UTC)));
             if (dir.mkdir()) {
                 break;
             } else {
@@ -104,22 +103,23 @@ public class StroomTestUtil {
     /**
      * Similar to the unix touch cammand. Sets the last modified time to now if the file
      * exists else, creates the file
+     *
      * @param file
      * @throws IOException
      */
     public static void touchFile(Path file) throws IOException {
 
-       if (Files.exists(file)){
-           if (!Files.isRegularFile(file)){
-               throw new RuntimeException(String.format("File %s is not a regular file", file.toAbsolutePath().toString()));
-           }
-           try {
-               Files.setLastModifiedTime(file, FileTime.from(Instant.now()));
-           } catch (IOException e) {
-               e.printStackTrace();
-           }
-       } else {
-               Files.createFile(file);
-       }
+        if (Files.exists(file)) {
+            if (!Files.isRegularFile(file)) {
+                throw new RuntimeException(String.format("File %s is not a regular file", file.toAbsolutePath().toString()));
+            }
+            try {
+                Files.setLastModifiedTime(file, FileTime.from(Instant.now()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            Files.createFile(file);
+        }
     }
 }

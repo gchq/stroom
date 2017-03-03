@@ -17,13 +17,14 @@
 package stroom.streamtask.server;
 
 import java.io.File;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 
 import javax.annotation.Resource;
 
 import stroom.util.logging.StroomLogger;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -73,7 +74,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         waitForTaskManagerToComplete();
 
-        final DateTime oldDate = new DateTime().plusDays(NEG_SIXTY);
+        final ZonedDateTime oldDate = ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY);
 
         // Write a file 2 files ... on we leave locked and the other not locked
         final Feed feed = commonTestScenarioCreator.createSimpleFeed();
@@ -90,7 +91,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         // API)
         lockstreamTarget1.close();
         final Collection<File> lockedFiles = streamMaintenanceService.findAllStreamFile(lockstreamTarget1.getStream());
-        FileSystemUtil.updateLastModified(lockedFiles, oldDate.toDate());
+        FileSystemUtil.updateLastModified(lockedFiles, oldDate.toInstant().toEpochMilli());
         streamMaintenanceService.find(FindStreamVolumeCriteria.create(lockstreamTarget1.getStream()));
         // // Hack making the last access time quite old
         // for (StreamVolume volume : volumeList) {
@@ -115,20 +116,20 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         // Copy something that is quite old into the same directory.
         final File oldfile = new File(directory, "oldfile.txt");
         FileUtil.createNewFile(oldfile);
-        FileUtil.setLastModified(oldfile, oldDate.getMillis());
+        FileUtil.setLastModified(oldfile, oldDate.toInstant().toEpochMilli());
 
         // Create a old sub directory;
         final File olddir = new File(directory, "olddir");
         FileUtil.mkdirs(olddir);
-        FileUtil.setLastModified(olddir, new DateTime().plusDays(NEG_SIXTY).getMillis());
+        FileUtil.setLastModified(olddir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
 
         final File newdir = new File(directory, "newdir");
         FileUtil.mkdirs(newdir);
-        FileUtil.setLastModified(newdir, new DateTime().plusDays(NEG_SIXTY).getMillis());
+        FileUtil.setLastModified(newdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
 
         final File oldfileinnewdir = new File(newdir, "oldfileinnewdir.txt");
         FileUtil.createNewFile(oldfileinnewdir);
-        FileUtil.setLastModified(oldfileinnewdir, new DateTime().plusDays(NEG_FOUR).getMillis());
+        FileUtil.setLastModified(oldfileinnewdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
 
         // Run the clean
         for (final Node node : nodeList) {

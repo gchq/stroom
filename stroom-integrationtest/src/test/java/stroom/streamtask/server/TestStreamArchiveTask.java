@@ -16,12 +16,14 @@
 
 package stroom.streamtask.server;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import javax.annotation.Resource;
 
 import stroom.util.config.StroomProperties;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -107,8 +109,8 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
             fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
         }
 
-        final DateTime oldDate = new DateTime().minusDays(SIXTY);
-        final DateTime newDate = new DateTime().minusDays(FIFTY);
+        final ZonedDateTime oldDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(SIXTY);
+        final ZonedDateTime newDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(FIFTY);
 
         // Write a file 2 files ... on we leave locked and the other not locked
         Feed feed = commonTestScenarioCreator.createSimpleFeed();
@@ -116,9 +118,9 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
         feed = feedService.save(feed);
 
         final Stream oldFile = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null,
-                oldDate.toDate().getTime());
+                oldDate.toInstant().toEpochMilli());
         final Stream newFile = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null,
-                newDate.toDate().getTime());
+                newDate.toInstant().toEpochMilli());
 
         final StreamTarget oldFileTarget = streamStore.openStreamTarget(oldFile);
         oldFileTarget.getOutputStream().write("MyTest".getBytes());
