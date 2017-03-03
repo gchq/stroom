@@ -22,7 +22,7 @@ dependencies {
 
 task gwtCompile (dependsOn: classes, type: JavaExec) {
     ext.gwtBuildDir = "${project.buildDir}/gwt"
-    def warDir = project(':stroom-dropwizard').file("src/main/resources/webapp")
+    def warDir = project(':stroom-dropwizard').file("src/main/resources/ui")
     def workDir = "${gwtBuildDir}/work"
     def tmpDir = "${gwtBuildDir}/tmp"
     def deployDir = "${gwtBuildDir}/deploy"
@@ -76,7 +76,7 @@ task gwtCompile (dependsOn: classes, type: JavaExec) {
 
 task gwtDevMode (dependsOn: classes, type: JavaExec) {
     ext.gwtBuildDir = "${project.buildDir}/gwt"
-    def warDir = project(':stroom-dropwizard').file("src/main/resources/webapp")
+    def warDir = project(':stroom-dropwizard').file("src/main/resources/ui")
     def workDir = "${gwtBuildDir}/work"
     def tmpDir = "${gwtBuildDir}/tmp"
     def deployDir = "${gwtBuildDir}/deploy"

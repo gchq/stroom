@@ -12,7 +12,7 @@ public class App extends Application<Config> {
 
     @Override
     public void initialize(Bootstrap<Config> bootstrap) {
-        bootstrap.addBundle(new AssetsBundle("/webapp", "/", "stroom.jsp", "webapp"));
+        bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom.jsp", "ui"));
     }
 
     @Override
