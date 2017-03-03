@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,6 @@ import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
-import org.joda.time.DateTimeZone;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
@@ -114,12 +113,6 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         set.add(Feed.ENTITY_TYPE);
         set.add(StreamType.ENTITY_TYPE);
         SOURCE_FETCH_SET = set;
-    }
-
-    static {
-        // Set the default timezone and locale for all date time operations.
-        DateTimeZone.setDefault(DateTimeZone.UTC);
-        Locale.setDefault(Locale.ROOT);
     }
 
     private final StroomEntityManager entityManager;
@@ -1389,7 +1382,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             appendStreamCriteria(criteria, sql);
 
             // Append order by criteria.
-            SQLUtil.appendOrderBy(sql, false, criteria, "S");
+//            SQLUtil.appendOrderBy(sql, false, criteria, "S");
             SQLUtil.applyRestrictionCriteria(criteria, sql);
 
         } else {
@@ -1432,7 +1425,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             appendStreamCriteria(criteria, sql);
 
             // Append order by criteria.
-            SQLUtil.appendOrderBy(sql, false, criteria, "S");
+//            SQLUtil.appendOrderBy(sql, false, criteria, "S");
             SQLUtil.applyRestrictionCriteria(criteria, sql);
 
             sql.append(")");

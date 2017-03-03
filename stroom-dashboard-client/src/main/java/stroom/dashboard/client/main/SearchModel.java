@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,16 +21,15 @@ import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
-import stroom.query.api.QueryKey;
 import stroom.util.client.KVMapUtil;
 
 import java.util.HashMap;
@@ -133,7 +132,7 @@ public class SearchModel {
                 currentExpression = builder.build();
 
                 currentQueryKey = new DashboardQueryKey(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
-                currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, incremental);
+                currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, timeZones.getTimeZone(), incremental);
                 activeSearch = currentSearch;
 
                 // Let the query presenter know search is active.
@@ -182,7 +181,7 @@ public class SearchModel {
             if (resultComponentMap != null) {
                 final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
                 if (dataSourceRef != null) {
-                    currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, true);
+                    currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, timeZones.getTimeZone(), true);
                     activeSearch = currentSearch;
 
                     // Tell the refreshing component that it should want data.
@@ -292,7 +291,7 @@ public class SearchModel {
             requestMap.put(componentId, componentResultRequest);
         }
 
-        return new SearchRequest(search, requestMap, timeZones.getTimeZone());
+        return new SearchRequest(search, requestMap);
     }
 
     public boolean isSearching() {

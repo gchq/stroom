@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,23 +20,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 
 public final class DateUtil {
     public static final int DATE_LENGTH = "2000-01-01T00:00:00.000Z".length();
     public static final DateTimeFormatter NORMAL_STROOM_TIME_FORMATTER = DateTimeFormatter
-            .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneOffset.UTC);
+            .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX");
     public static final long MIN_MS = 1000 * 60;
     public static final long HOUR_MS = MIN_MS * 60;
     public static final long DAY_MS = HOUR_MS * 24;
     private static final Logger LOGGER = LoggerFactory.getLogger(DateUtil.class);
     private static final String NULL = "NULL";
     private static final DateTimeFormatter FILE_TIME_STROOM_TIME_FORMATTER = DateTimeFormatter
-            .ofPattern("yyyy-MM-dd'T'HH'#'mm'#'ss,SSS'Z'").withZone(ZoneOffset.UTC);
+            .ofPattern("yyyy-MM-dd'T'HH'#'mm'#'ss,SSSXX");
     private static final String GMT_BST_GUESS = "GMT/BST";
     private static final ZoneId EUROPE_LONDON_TIME_ZONE = ZoneId.of("Europe/London");
 
@@ -75,19 +77,19 @@ public final class DateUtil {
             LOGGER.debug(e.getMessage(), e);
         }
 
-        DateTimeFormatter dateFormat = buildDateFormatter(pattern);
-        if (dateTimeZone != null) {
-            try {
-                dateTime = LocalDateTime.parse(value, dateFormat).atZone(dateTimeZone);
+        if (dateTimeZone == null) {
+            dateTimeZone = ZoneOffset.UTC;
+        }
 
-            } catch (final IllegalArgumentException e) {
-                LOGGER.debug(e.getMessage(), e);
+        final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern(pattern);
+        try {
+            dateTime = parse(dateFormat, value, dateTimeZone);
 
-                // We failed to use the time zone so try UTC.
-                dateTime = LocalDateTime.parse(value, dateFormat).atZone(ZoneOffset.UTC);
-            }
-        } else {
-            dateTime = LocalDateTime.parse(value, dateFormat).atZone(ZoneOffset.UTC);
+        } catch (final IllegalArgumentException e) {
+            LOGGER.debug(e.getMessage(), e);
+
+            // We failed to use the time zone so try UTC.
+            dateTime = parse(dateFormat, value, ZoneOffset.UTC);
         }
 
         if (dateTime == null) {
@@ -97,15 +99,22 @@ public final class DateUtil {
         return dateTime.toInstant().toEpochMilli();
     }
 
-    private static DateTimeFormatter buildDateFormatter(final String pattern) {
-        return DateTimeFormatter.ofPattern(pattern);
+    private static ZonedDateTime parse(final DateTimeFormatter formatter, final String value, final ZoneId zoneId) {
+        final TemporalAccessor temporalAccessor = formatter.parseBest(value, ZonedDateTime::from, LocalDateTime::from, LocalDate::from);
+        if (temporalAccessor instanceof ZonedDateTime) {
+            return ((ZonedDateTime) temporalAccessor).withZoneSameInstant(zoneId);
+        }
+        if (temporalAccessor instanceof LocalDateTime) {
+            return ((LocalDateTime) temporalAccessor).atZone(zoneId);
+        }
+        return ((LocalDate) temporalAccessor).atStartOfDay(zoneId);
     }
 
     /**
      * Create a 'normal' type date with the current system time.
      */
     public static String createNormalDateTimeString() {
-        return NORMAL_STROOM_TIME_FORMATTER.format(LocalDateTime.now(ZoneOffset.UTC));
+        return NORMAL_STROOM_TIME_FORMATTER.format(ZonedDateTime.now(ZoneOffset.UTC));
     }
 
     /**
@@ -124,7 +133,7 @@ public final class DateUtil {
      * @return string The date as a 'file' format date string.
      */
     public static String createFileDateTimeString() {
-        return FILE_TIME_STROOM_TIME_FORMATTER.format(LocalDateTime.now(ZoneOffset.UTC));
+        return FILE_TIME_STROOM_TIME_FORMATTER.format(ZonedDateTime.now(ZoneOffset.UTC));
     }
 
     /**
@@ -149,7 +158,7 @@ public final class DateUtil {
             throw new IllegalArgumentException("Unable to parse date: \"" + date + '"');
         }
 
-        final ZonedDateTime dateTime = LocalDateTime.parse(date, NORMAL_STROOM_TIME_FORMATTER).atZone(ZoneOffset.UTC);
+        final ZonedDateTime dateTime = parse(NORMAL_STROOM_TIME_FORMATTER, date, ZoneOffset.UTC);
         if (dateTime == null) {
             throw new IllegalArgumentException("Unable to parse date: \"" + date + '"');
         }
@@ -164,7 +173,7 @@ public final class DateUtil {
 
         try {
             // Try and parse the string an a standard ISO8601 date.
-            final ZonedDateTime dateTime = LocalDateTime.parse(date, NORMAL_STROOM_TIME_FORMATTER).atZone(ZoneOffset.UTC);
+            final ZonedDateTime dateTime = parse(NORMAL_STROOM_TIME_FORMATTER, date, ZoneOffset.UTC);
             return dateTime.toInstant().toEpochMilli();
 
         } catch (final Exception e) {
@@ -172,9 +181,5 @@ public final class DateUtil {
             // and get it as a long.
             return Long.parseLong(date);
         }
-    }
-
-    public static long localDateTimeToEpocMillis(final LocalDateTime localDateTime) {
-        return ZonedDateTime.of(localDateTime, ZoneOffset.UTC).toInstant().toEpochMilli();
     }
 }

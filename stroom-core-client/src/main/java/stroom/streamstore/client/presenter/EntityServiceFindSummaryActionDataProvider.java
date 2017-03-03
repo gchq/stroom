@@ -62,7 +62,7 @@ public abstract class EntityServiceFindSummaryActionDataProvider<C extends BaseC
             if (allowNoConstraint != null) {
                 dataProvider.setAllowNoConstraint(allowNoConstraint);
             }
-            dataProvider.addDataDisplay(view);
+            dataProvider.addDataDisplay(view.getDataDisplay());
 
         } else {
             dataProvider.refresh();

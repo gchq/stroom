@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,10 +39,8 @@ import javax.ws.rs.core.Response;
 
 public class RemoteDataSourceProvider implements DataSourceProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(RemoteDataSourceProvider.class);
-
-    private String url = "http://127.0.0.1:8080/rest/index";
-
     private final SecurityContext securityContext;
+    private String url = "http://127.0.0.1:8080/rest/index";
 
     public RemoteDataSourceProvider(final SecurityContext securityContext) {
         this.securityContext = securityContext;

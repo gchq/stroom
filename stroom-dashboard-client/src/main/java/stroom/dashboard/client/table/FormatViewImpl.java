@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,11 +30,11 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.client.table.FormatPresenter.FormatView;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.TimeZone;
 import stroom.dashboard.shared.TimeZone.Use;
+import stroom.item.client.ItemListBox;
+import stroom.item.client.StringListBox;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -43,9 +43,20 @@ import java.util.List;
 
 public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers>implements FormatView {
     public static final List<String> STANDARD_FORMATS = Arrays
-            .asList("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
-                    "yyyy-MM-dd'T'HH:mm:ss.SSS ZZZ", "dd/MM/yyyy HH:mm:ss", "dd/MM/yy HH:mm:ss", "MM/dd/yyyy HH:mm:ss",
-                    "d MMM yyyy HH:mm:ss", "yyyy-MM-dd", "dd/MM/yyyy", "dd/MM/yy", "MM/dd/yyyy", "d MMM yyyy");
+            .asList("yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS xx",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS xxx",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS VV",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                    "dd/MM/yyyy HH:mm:ss",
+                    "dd/MM/yy HH:mm:ss",
+                    "MM/dd/yyyy HH:mm:ss",
+                    "d MMM yyyy HH:mm:ss",
+                    "yyyy-MM-dd",
+                    "dd/MM/yyyy",
+                    "dd/MM/yy",
+                    "MM/dd/yyyy",
+                    "d MMM yyyy");
 
     private static final int ROW_COUNT = 8;
     private final Widget widget;

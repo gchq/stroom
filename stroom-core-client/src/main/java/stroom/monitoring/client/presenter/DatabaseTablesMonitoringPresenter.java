@@ -69,7 +69,7 @@ public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataG
         final FindSystemTableStatusAction action = new FindSystemTableStatusAction();
 
         dataProvider = new ActionDataProvider<SystemTableStatus>(dispatcher, action);
-        dataProvider.addDataDisplay(getView());
+        dataProvider.addDataDisplay(getView().getDataDisplay());
 
         dataProvider.refresh();
     }

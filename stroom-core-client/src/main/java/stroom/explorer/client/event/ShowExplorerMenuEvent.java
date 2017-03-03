@@ -19,8 +19,8 @@ package stroom.explorer.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.explorer.client.presenter.MultiSelectionModel;
 import stroom.explorer.shared.ExplorerData;
+import stroom.widget.util.client.MultiSelectionModel;
 
 public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handler> {
     private static Type<Handler> TYPE;

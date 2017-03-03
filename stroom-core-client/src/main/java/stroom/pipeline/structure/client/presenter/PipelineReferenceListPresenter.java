@@ -20,24 +20,28 @@ import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.grid.client.*;
+import stroom.data.grid.client.DataGridView;
+import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.EndColumn;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.data.*;
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelinePropertyType;
+import stroom.pipeline.shared.data.PipelineReference;
+import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -45,13 +49,16 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.util.client.MySingleSelectionModel;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridView<PipelineReference>>
         implements HasDirtyHandlers {
-    private final MySingleSelectionModel<PipelineReference> selectionModel;
+//    private final MySingleSelectionModel<PipelineReference> selectionModel;
 
     private enum State {
         INHERITED, ADDED, REMOVED
@@ -84,8 +91,8 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
         super(eventBus, new DataGridViewImpl<PipelineReference>(true));
         this.newPipelineReferencePresenter = newPipelineReferencePresenter;
 
-        selectionModel = new MySingleSelectionModel<PipelineReference>();
-        getView().setSelectionModel(selectionModel);
+//        selectionModel = new MySingleSelectionModel<PipelineReference>();
+//        getView().setSelectionModel(selectionModel);
 
         addButton = getView().addButton(GlyphIcons.NEW_ITEM);
         addButton.setTitle("New Reference");
@@ -104,40 +111,25 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 
     @Override
     protected void onBind() {
-        registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                enableButtons();
+        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
+            enableButtons();
+            if (event.getSelectionType().isDoubleSelect()) {
+                onEdit(getView().getSelectionModel().getSelected());
             }
         }));
-        registerHandler(getView().addDoubleClickHandler(new DoubleClickEvent.Handler() {
-            @Override
-            public void onDoubleClick(final DoubleClickEvent event) {
-                onEdit(selectionModel.getSelectedObject());
+        registerHandler(addButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onAdd(event);
             }
         }));
-        registerHandler(addButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onAdd(event);
-                }
+        registerHandler(editButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onEdit(getView().getSelectionModel().getSelected());
             }
         }));
-        registerHandler(editButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onEdit(selectionModel.getSelectedObject());
-                }
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onRemove();
-                }
+        registerHandler(removeButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onRemove();
             }
         }));
     }
@@ -315,7 +307,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
                                 added.add(pipelineReference);
                             }
 
-                            setDirty(true);
+                            setDirty(isNew || editor.isDirty());
                             refresh();
                             HidePopupEvent.fire(PipelineReferenceListPresenter.this, editor);
                         }
@@ -350,7 +342,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     }
 
     private void onRemove() {
-        final PipelineReference selected = selectionModel.getSelectedObject();
+        final PipelineReference selected = getView().getSelectionModel().getSelected();
         if (selected != null) {
             if (pipelineModel.getPipelineData().getAddedPipelineReferences().contains(selected)) {
                 pipelineModel.getPipelineData().getAddedPipelineReferences().remove(selected);
@@ -372,7 +364,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     private void refresh() {
         referenceStateMap.clear();
         references.clear();
-        selectionModel.clear();
+        getView().getSelectionModel().clear();
 
         if (currentElement != null) {
             final String id = currentElement.getId();
@@ -412,7 +404,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     protected void enableButtons() {
         addButton.setEnabled(propertyType != null);
 
-        final PipelineReference selected = selectionModel.getSelectedObject();
+        final PipelineReference selected = getView().getSelectionModel().getSelected();
         final State state = referenceStateMap.get(selected);
 
         editButton.setEnabled(State.ADDED.equals(state));

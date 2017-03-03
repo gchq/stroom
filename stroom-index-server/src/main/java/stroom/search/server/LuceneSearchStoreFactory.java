@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -81,7 +81,7 @@ public class LuceneSearchStoreFactory {
         final Index index = indexService.loadByUuid(query.getDataSource().getUuid());
 
         // Extract highlights.
-        final Set<String> highlights = getHighlights(index, query.getExpression(), nowEpochMilli);
+        final Set<String> highlights = getHighlights(index, query.getExpression(), searchRequest.getDateTimeLocale(), nowEpochMilli);
 
         // This is a new search so begin a new asynchronous search.
         final Node node = nodeCache.getDefaultNode();
@@ -92,7 +92,7 @@ public class LuceneSearchStoreFactory {
         // Create an asynchronous search task.
         final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
         final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(null, securityContext.getUserId(), searchName, query, node,
-                SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorSettingsMap.getMap(), nowEpochMilli);
+                SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorSettingsMap.getMap(), searchRequest.getDateTimeLocale(), nowEpochMilli);
 
         // Create a handler for search results.
         final SearchResultHandler resultHandler = new SearchResultHandler(coprocessorSettingsMap, getDefaultTrimSizes());
@@ -132,7 +132,7 @@ public class LuceneSearchStoreFactory {
      * Compiles the query, extracts terms and then returns them for use in hit
      * highlighting.
      */
-    private Set<String> getHighlights(final Index index, final ExpressionOperator expression, final long nowEpochMilli) {
+    private Set<String> getHighlights(final Index index, final ExpressionOperator expression, final String timeZoneId, final long nowEpochMilli) {
         Set<String> highlights = Collections.emptySet();
 
         try {
@@ -140,7 +140,7 @@ public class LuceneSearchStoreFactory {
             final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                    dictionaryService, indexFieldsMap, getMaxBooleanClauseCount(), nowEpochMilli);
+                    dictionaryService, indexFieldsMap, getMaxBooleanClauseCount(), timeZoneId, nowEpochMilli);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
                     .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expression);
 

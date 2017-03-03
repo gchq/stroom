@@ -8,10 +8,100 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 * Issue **#75** : Upgraded to Lucene 5.
 
+* Issue **135** : [BREAKING CHANGE] Removed JODA Time library and replaced with Java 7 Time API. This change breaks time zone output previously formatted with `ZZ` or `ZZZ`.
+
 ### Changed
+
+## [v5.0-beta.11] - 2017-02-23
+
+* Issue **#127** : Entity reference replacement should now work with references to 'StatisticsDataSource'.
+
+* Issue **#125** : Fixed display of active tasks which was broken by changes to the task summary table selection model.
+
+* Issue **#121** : Fixed cache clearing.
+
+* Issue **#122** : Improved the look of the cache screen.
+
+* Issue **#106** : Disabled users and groups are now displayed with greyed out icon in the UI.
+
+* Issue **#132** : The explorer tree is now cleared on login so that users with different permissions do not see the previous users items.
+
+* Issue **#128** : Improved error handling during login.
+
+* Issue **#130** : Users with no permissions are no longer able to open folders including the root System folder to attempt data browsing.
+
+* Issue **#120** : Entity chooser now treats 'None' as a special root level explorer node so that it can be selected in the same way as other nodes, e.g. visibly selected and responsive to double click.
+
+* Issue **#129** : Fixed NPE.
+
+* Issue **#119** : User permissions dialog now clears permissions when a user or group is deleted.
+
+* Issue **#115** : User permissions on documents can now be inherited from parent folders on create, copy and move.
+
+## [v5.0-beta.10] - 2017-02-07
+
+* Issue **#109** : Added packetSize="65536" property to AJP connector in server.xml template.
+
+* Issue **#100** : Various list of items in stroom now allow multi selection for add/remove purposes.
+
+* Issue **#112** : Removed 'pool' monitoring screen as all pools are now caches of one form or another.
+
+* Issue **#105** : Users were not seeing 'New' menu for folders that they had some create child doc permissions for. This was due to DocumentType not implementing equals() and is now fixed.
+
+* Issue **#111** : Fixed query favourites and history.
+
+* Issue **#91** : Only CombinedParser was allowing code to be injected during stepping. Now DSParser and XMLFragmentParser support code injection during stepping.
+
+* Issue **#107** : The UI now only shows new pipeline element items on the 'Add' menu that are allowed children of the selected element.
+
+* Issue **#113** : User names are now validated against a regex specified by the 'stroom.security.userNamePattern' property.
+
+* Issue **#116** : Rename is now only possible when a single explorer item is selected.
+
+* Issue **#114** : Fixed selection manager so that the explorer tree does not select items when a node expander is clicked.
+
+* Issue **#65** : Selection lists are now limited to 300px tall and show scrollbars if needed.
+
+* Issue **#50** : Defaults table result fields to use local time without outputting the timezone.
+
+* Issue **#15** : You can now express time zones in dashboard query expressions or just omit a time zone to use the locale of the browser.
+
+* Issue **#49** : Dynamic XSLT selection now works with pipeline stepping.
+
+## [v5.0-beta.9] - 2017-02-01
 * Issue **#63** : Entity selection control now shows current entity name even if it has changed since referencing entity was last saved.
 
 * Issue **#70** : You can now select multiple explorer rows with ctrl and shift key modifiers and perform bulk actions such as copy, move, rename and delete.
+
+* Issue **#85** : findDelete() no longer tries to add ORDER BY condition on UPDATE SQL when deleting streams.
+
+* Issue **#89** : Warnings should now be present in processing logs for reference data lookups that don't specify feed or stream type. This was previously throwing a NullPointerException.
+
+* Issue **#90** : Fixed entity selection dialog used outside of drop down selection control.
+
+* Issue **#88** : Pipeline reference edit dialog now correctly selects the current stream type.
+
+* Issue **#77** : Default index volume creation now sets stream status to INACTIVE rather than CLOSED and stream volume creation sets index status to INACTIVE rather than CLOSED.
+
+* Issue **#93** : Fixed code so that the 'Item' menu is now visible.
+
+* Issue **#97** : Index shard partition date range creation has been improved.
+
+* Issue **#94** : Statistics searches now ignore expression terms with null or empty values so that the use of substitution parameters can be optional.
+
+* Issue **#87** : Fixed explorer scrolling to the top by disabling keyboard selection.
+
+* Issue **#104** : 'Query' no longer appears as an item that a user can allow 'create' on for permissions within a folder.
+
+* Issue **#103** : Added 10 years as a supported data retention age.
+
+* Issue **#86** : The stream delete button is now re-enabled when new items are selected for deletion.
+
+* Issue **#81** : No exception will now be thrown if a client rejects a response for an EntityEvent.
+
+* Issue **#79** : The client node no longer tries to create directories on the file system for a volume that may be owned by another node.
+
+* Issue **#92** : Error summaries of multiple types no longer overlap each other at the top of the error markers list.
 
 ## [v5.0-beta.8] - 2016-12-21
 * Issue **#64** : Fixed Hessian serialisation of 'now' which was specified as a ZonedDateTime which cannot be serialised. This field is now a long representing millseconds since epoch.
@@ -72,7 +162,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Intial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.11...HEAD
+[v5.0-beta.11]: https://github.com/gchq/stroom/compare/v5.0-beta.10...v5.0-beta.11
+[v5.0-beta.10]: https://github.com/gchq/stroom/compare/v5.0-beta.9...v5.0-beta.10
+[v5.0-beta.9]: https://github.com/gchq/stroom/compare/v5.0-beta.8...v5.0-beta.9
 [v5.0-beta.8]: https://github.com/gchq/stroom/compare/v5.0-beta.7...v5.0-beta.8
 [v5.0-beta.7]: https://github.com/gchq/stroom/compare/v5.0-beta.6...v5.0-beta.7
 [v5.0-beta.6]: https://github.com/gchq/stroom/compare/v5.0-beta.5...v5.0-beta.6

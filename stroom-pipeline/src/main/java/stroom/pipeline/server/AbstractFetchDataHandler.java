@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package stroom.pipeline.server;
 
 import stroom.cache.server.XSLTPool;
 import stroom.entity.server.util.XMLUtil;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
@@ -45,6 +44,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.query.api.DocRef;
 import stroom.resource.server.BOMRemovalInputStream;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;

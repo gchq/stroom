@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,8 +23,9 @@ import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.PermissionInheritance;
+import stroom.query.api.DocRef;
 import stroom.script.shared.FindScriptCriteria;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;
@@ -53,7 +54,7 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
     }
 
     @Override
-    public Script copy(final Script entity, final DocRef folder, final String name) {
+    public Script copy(final Script entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
         // Load resources or dependencies if we don't have them. This can happen
         // as they are loaded lazily by the UI and so won't always be available
         // on the entity being saved.
@@ -71,7 +72,7 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
             }
         }
 
-        return super.copy(entity, folder, name);
+        return super.copy(entity, folder, name, permissionInheritance);
     }
 
     @Override

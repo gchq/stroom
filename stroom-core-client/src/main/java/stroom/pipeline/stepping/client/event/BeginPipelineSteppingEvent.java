@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,29 +16,21 @@
 
 package stroom.pipeline.stepping.client.event;
 
-import stroom.entity.shared.SharedDocRef;
-import stroom.query.api.DocRef;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-
+import stroom.entity.shared.SharedDocRef;
 import stroom.streamstore.shared.StreamType;
 
 public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onBegin(BeginPipelineSteppingEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final Long streamId;
     private final Long eventId;
     private final Long childStreamId;
     private final StreamType childStreamType;
     private final SharedDocRef pipelineRef;
-
     private BeginPipelineSteppingEvent(final Long streamId, final Long eventId, final Long childStreamId,
-            final StreamType childStreamType, final SharedDocRef pipelineRef) {
+                                       final StreamType childStreamType, final SharedDocRef pipelineRef) {
         this.streamId = streamId;
         this.eventId = eventId;
         this.childStreamId = childStreamId;
@@ -47,7 +39,7 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
     }
 
     public static void fire(final HasHandlers source, final Long streamId, final Long eventId, final Long childStreamId,
-            final StreamType childStreamType, final SharedDocRef pipelineRef) {
+                            final StreamType childStreamType, final SharedDocRef pipelineRef) {
         source.fireEvent(new BeginPipelineSteppingEvent(streamId, eventId, childStreamId, childStreamType, pipelineRef));
     }
 
@@ -86,5 +78,9 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
 
     public SharedDocRef getPipelineRef() {
         return pipelineRef;
+    }
+
+    public interface Handler extends EventHandler {
+        void onBegin(BeginPipelineSteppingEvent event);
     }
 }

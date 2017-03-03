@@ -20,29 +20,26 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
-
 import stroom.entity.client.EntityTabData;
+import stroom.entity.shared.PermissionInheritance;
 
 public class SaveAsEntityEvent extends GwtEvent<SaveAsEntityEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onSaveAs(final SaveAsEntityEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final PresenterWidget<?> dialog;
     private final EntityTabData tabData;
     private final String entityName;
+    private final PermissionInheritance permissionInheritance;
 
-    private SaveAsEntityEvent(final PresenterWidget<?> dialog, final EntityTabData tabData, final String entityName) {
+    private SaveAsEntityEvent(final PresenterWidget<?> dialog, final EntityTabData tabData, final String entityName, final PermissionInheritance permissionInheritance) {
         this.dialog = dialog;
         this.tabData = tabData;
         this.entityName = entityName;
+        this.permissionInheritance = permissionInheritance;
     }
 
     public static void fire(final HasHandlers handlers, final PresenterWidget<?> dialog, final EntityTabData tabData,
-            final String entityName) {
-        handlers.fireEvent(new SaveAsEntityEvent(dialog, tabData, entityName));
+                            final String entityName, final PermissionInheritance permissionInheritance) {
+        handlers.fireEvent(new SaveAsEntityEvent(dialog, tabData, entityName, permissionInheritance));
     }
 
     public static Type<Handler> getType() {
@@ -72,5 +69,13 @@ public class SaveAsEntityEvent extends GwtEvent<SaveAsEntityEvent.Handler> {
 
     public String getEntityName() {
         return entityName;
+    }
+
+    public PermissionInheritance getPermissionInheritance() {
+        return permissionInheritance;
+    }
+
+    public interface Handler extends EventHandler {
+        void onSaveAs(final SaveAsEntityEvent event);
     }
 }

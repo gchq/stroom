@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,8 +29,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class TestFilterTermsTreeBuilder extends StroomUnitTest {
     Set<String> fieldBlackList = new HashSet<>(Arrays.asList(StatisticStoreEntity.FIELD_NAME_DATE_TIME));
@@ -184,7 +183,6 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
 
         final TermNode term2Node = (TermNode) filterTermsTree.getRootNode();
 
-        assertEquals("term1field", term2Node.getTag());
-        assertEquals("", term2Node.getValue());
+        assertNull(term2Node);
     }
 }

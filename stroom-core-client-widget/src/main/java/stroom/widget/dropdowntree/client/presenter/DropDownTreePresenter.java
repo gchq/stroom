@@ -21,7 +21,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -30,14 +29,6 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public abstract class DropDownTreePresenter extends MyPresenterWidget<DropDownTreePresenter.DropDownTreeView>
         implements DropDownTreeUiHandlers, PopupUiHandlers {
-    public interface DropDownTreeView extends View, HasUiHandlers<DropDownTreeUiHandlers> {
-        void setCellTree(Widget widget);
-
-        void setUnselectedText(String unselectedText);
-
-        void setSize(int width, int height);
-    }
-
     private String caption = "Choose item";
 
     public DropDownTreePresenter(final EventBus eventBus, final DropDownTreeView view) {
@@ -56,10 +47,6 @@ public abstract class DropDownTreePresenter extends MyPresenterWidget<DropDownTr
 
     protected abstract void focus();
 
-    public void setUnselectedText(final String unselectedText) {
-        getView().setUnselectedText(unselectedText);
-    }
-
     public void setCellTree(final Widget widget) {
         getView().setCellTree(widget);
     }
@@ -76,5 +63,11 @@ public abstract class DropDownTreePresenter extends MyPresenterWidget<DropDownTr
 
     public void setCaption(final String caption) {
         this.caption = caption;
+    }
+
+    public interface DropDownTreeView extends View, HasUiHandlers<DropDownTreeUiHandlers> {
+        void setCellTree(Widget widget);
+
+        void setSize(int width, int height);
     }
 }

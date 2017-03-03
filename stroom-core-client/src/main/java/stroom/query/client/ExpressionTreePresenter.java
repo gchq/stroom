@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -43,22 +43,9 @@ import java.util.List;
 public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePresenter.ExpressionTreeView>
         implements HasRead<ExpressionOperator>, HasWrite<ExpressionOperator>, HasDataSelectionHandlers<ExpressionItem>,
         HasContextMenuHandlers {
-    public interface ExpressionTreeView extends View, HasContextMenuHandlers, HasUiHandlers<ExpressionUiHandlers> {
-        void setTree(DefaultTreeForTreeLayout<ExpressionItem> model);
-
-        void setSelectionModel(MySingleSelectionModel<ExpressionItem> selectionModel);
-
-        void setFields(List<DataSourceField> fields);
-
-        void endEditing();
-
-        void refresh();
-    }
-
     private DefaultTreeForTreeLayout<ExpressionItem> tree;
     private MySingleSelectionModel<ExpressionItem> selectionModel;
     private ExpressionUiHandlers uiHandlers;
-
     @Inject
     public ExpressionTreePresenter(final EventBus eventBus, final ExpressionTreeView view,
                                    final ClientDispatchAsync dispatcher) {
@@ -229,17 +216,29 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         getView().setUiHandlers(uiHandlers);
     }
 
+    public MySingleSelectionModel<ExpressionItem> getSelectionModel() {
+        return selectionModel;
+    }
+
     public void setSelectionModel(final MySingleSelectionModel<ExpressionItem> selectionModel) {
         this.selectionModel = selectionModel;
         getView().setSelectionModel(selectionModel);
     }
 
-    public MySingleSelectionModel<ExpressionItem> getSelectionModel() {
-        return selectionModel;
-    }
-
     @Override
     public HandlerRegistration addContextMenuHandler(final Handler handler) {
         return getView().addContextMenuHandler(handler);
+    }
+
+    public interface ExpressionTreeView extends View, HasContextMenuHandlers, HasUiHandlers<ExpressionUiHandlers> {
+        void setTree(DefaultTreeForTreeLayout<ExpressionItem> model);
+
+        void setSelectionModel(MySingleSelectionModel<ExpressionItem> selectionModel);
+
+        void setFields(List<DataSourceField> fields);
+
+        void endEditing();
+
+        void refresh();
     }
 }

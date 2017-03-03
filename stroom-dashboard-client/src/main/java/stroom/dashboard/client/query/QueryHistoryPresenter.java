@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,7 +30,6 @@ import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
-import stroom.entity.shared.StringCriteria;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -40,15 +39,19 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.DoubleSelectEvent;
 import stroom.widget.util.client.MySingleSelectionModel;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresenter.QueryHistoryView> {
     private final ClientDispatchAsync dispatcher;
     private final ExpressionTreePresenter expressionPresenter;
     private final MySingleSelectionModel<QueryEntity> selectionModel;
     private QueryPresenter queryPresenter;
     private long currentDashboardId;
+
     @Inject
     public QueryHistoryPresenter(final EventBus eventBus, final QueryHistoryView view,
-            final ExpressionTreePresenter expressionPresenter, final ClientDispatchAsync dispatcher) {
+                                 final ExpressionTreePresenter expressionPresenter, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.dispatcher = dispatcher;
         this.expressionPresenter = expressionPresenter;
@@ -92,13 +95,10 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
     }
 
     private void refresh(final boolean showAfterRefresh) {
-        final StringCriteria nameCriteria = new StringCriteria();
-        nameCriteria.setMatchNull(true);
-
         final FindQueryCriteria criteria = new FindQueryCriteria();
         criteria.obtainDashboardIdSet().add(currentDashboardId);
         criteria.setOrderBy(FindQueryCriteria.ORDER_BY_TIME, OrderByDirection.DESCENDING);
-        criteria.setNameCriteria(nameCriteria);
+        criteria.setFavourite(false);
         criteria.setPageRequest(new PageRequest(0L, 100));
 
         final EntityServiceFindAction<FindQueryCriteria, QueryEntity> action = new EntityServiceFindAction<>(criteria);
@@ -106,8 +106,22 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
             @Override
             public void onSuccess(final ResultList<QueryEntity> result) {
                 selectionModel.clear();
-                getView().getCellList().setRowData(result);
-                getView().getCellList().setRowCount(result.size(), true);
+
+                String lastExpression = null;
+                final List<QueryEntity> dedupedList = new ArrayList<>(result.getSize());
+                for (final QueryEntity query : result) {
+                    if (query != null && query.getQuery() != null && query.getQuery().getExpression() != null) {
+                        final String expression = query.getQuery().getExpression().toString();
+                        if (lastExpression == null || !lastExpression.equals(expression)) {
+                            dedupedList.add(query);
+                        }
+
+                        lastExpression = expression;
+                    }
+                }
+
+                getView().getCellList().setRowData(dedupedList);
+                getView().getCellList().setRowCount(dedupedList.size(), true);
 
                 if (showAfterRefresh) {
                     final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {

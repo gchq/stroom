@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,8 +18,6 @@ package stroom.dashboard.shared;
 
 import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionOperator;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -30,7 +28,7 @@ import java.util.Collections;
 import java.util.Map;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "incremental"})
+@XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "dateTimeLocale", "incremental"})
 public class Search implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
@@ -47,6 +45,9 @@ public class Search implements Serializable {
     private Map<String, String> paramMap;
 
     @XmlElement
+    private String dateTimeLocale;
+
+    @XmlElement
     private Boolean incremental;
 
     public Search() {
@@ -54,21 +55,22 @@ public class Search implements Serializable {
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression) {
-        this(dataSourceRef, expression, null, Collections.emptyMap(), true);
+        this(dataSourceRef, expression, null, Collections.emptyMap(), "UTC", true);
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
                   final Map<String, ComponentSettings> componentSettingsMap) {
-        this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), true);
+        this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), "UTC", true);
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
                   final Map<String, ComponentSettings> componentSettingsMap, final Map<String, String> paramMap,
-                  final Boolean incremental) {
+                  final String dateTimeLocale, final Boolean incremental) {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
         this.paramMap = paramMap;
+        this.dateTimeLocale = dateTimeLocale;
         this.incremental = incremental;
     }
 
@@ -88,36 +90,40 @@ public class Search implements Serializable {
         return paramMap;
     }
 
+    public String getDateTimeLocale() {
+        return dateTimeLocale;
+    }
+
     public Boolean getIncremental() {
         return incremental;
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) return true;
-
         if (o == null || getClass() != o.getClass()) return false;
 
-        Search search = (Search) o;
+        final Search search = (Search) o;
 
-        return new EqualsBuilder()
-                .append(incremental, search.incremental)
-                .append(dataSourceRef, search.dataSourceRef)
-                .append(expression, search.expression)
-                .append(componentSettingsMap, search.componentSettingsMap)
-                .append(paramMap, search.paramMap)
-                .isEquals();
+        if (incremental != search.incremental) return false;
+        if (dataSourceRef != null ? !dataSourceRef.equals(search.dataSourceRef) : search.dataSourceRef != null)
+            return false;
+        if (expression != null ? !expression.equals(search.expression) : search.expression != null) return false;
+        if (componentSettingsMap != null ? !componentSettingsMap.equals(search.componentSettingsMap) : search.componentSettingsMap != null)
+            return false;
+        if (paramMap != null ? !paramMap.equals(search.paramMap) : search.paramMap != null) return false;
+        return dateTimeLocale != null ? dateTimeLocale.equals(search.dateTimeLocale) : search.dateTimeLocale == null;
     }
 
     @Override
     public int hashCode() {
-        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
-        hashCodeBuilder.append(dataSourceRef);
-        hashCodeBuilder.append(expression);
-        hashCodeBuilder.append(componentSettingsMap);
-        hashCodeBuilder.append(paramMap);
-        hashCodeBuilder.append(incremental);
-        return hashCodeBuilder.toHashCode();
+        int result = dataSourceRef != null ? dataSourceRef.hashCode() : 0;
+        result = 31 * result + (expression != null ? expression.hashCode() : 0);
+        result = 31 * result + (componentSettingsMap != null ? componentSettingsMap.hashCode() : 0);
+        result = 31 * result + (paramMap != null ? paramMap.hashCode() : 0);
+        result = 31 * result + (dateTimeLocale != null ? dateTimeLocale.hashCode() : 0);
+        result = 31 * result + (incremental ? 1 : 0);
+        return result;
     }
 
     @Override
@@ -127,6 +133,7 @@ public class Search implements Serializable {
                 ", expression=" + expression +
                 ", componentSettingsMap=" + componentSettingsMap +
                 ", paramMap=" + paramMap +
+                ", dateTimeLocale='" + dateTimeLocale + '\'' +
                 ", incremental=" + incremental +
                 '}';
     }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,11 +27,12 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.entity.client.event.CopyEntityEvent;
 import stroom.entity.client.event.ShowCopyEntityDialogEvent;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.Folder;
+import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
+import stroom.query.api.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -64,6 +65,7 @@ public class CopyEntityPresenter
     @ProxyEvent
     @Override
     public void onCopy(final ShowCopyEntityDialogEvent event) {
+        getView().setPermissionInheritance(PermissionInheritance.INHERIT);
         explorerDataList = event.getExplorerDataList();
         copyNextEntity();
     }
@@ -137,7 +139,7 @@ public class CopyEntityPresenter
                         "You must provide a name for the new " + entity.getType().toLowerCase(), null);
             } else {
                 CopyEntityEvent.fire(CopyEntityPresenter.this, CopyEntityPresenter.this, entity.getDocRef(),
-                        folder, entityName);
+                        folder, entityName, getView().getPermissionInheritance());
             }
             // }
         } else {
@@ -168,6 +170,10 @@ public class CopyEntityPresenter
         void setFolderView(View view);
 
         void focus();
+
+        PermissionInheritance getPermissionInheritance();
+
+        void setPermissionInheritance(PermissionInheritance permissionInheritance);
     }
 
     @ProxyCodeSplit

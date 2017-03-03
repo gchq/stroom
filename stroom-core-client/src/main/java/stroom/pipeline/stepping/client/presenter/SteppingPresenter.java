@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,17 +35,27 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
-import stroom.query.api.DocRef;
-import stroom.pipeline.shared.*;
+import stroom.pipeline.shared.FetchPipelineDataAction;
+import stroom.pipeline.shared.PipelineModelException;
+import stroom.pipeline.shared.PipelineStepAction;
+import stroom.pipeline.shared.SharedElementData;
+import stroom.pipeline.shared.StepLocation;
+import stroom.pipeline.shared.StepType;
+import stroom.pipeline.shared.SteppingResult;
+import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
+import stroom.query.api.DocRef;
 import stroom.streamstore.client.presenter.ClassificationUiHandlers;
 import stroom.streamstore.client.presenter.DataPresenter;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
@@ -82,6 +92,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private SteppingResult currentResult;
     private ButtonPanel leftButtons;
 
+    private Stream stream;
+
     @Inject
     public SteppingPresenter(final EventBus eventBus, final SteppingView view,
                              final PipelineTreePresenter pipelineTreePresenter,
@@ -116,6 +128,30 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         saveButton = addButtonLeft(GlyphIcons.SAVE);
     }
 
+    private static String replace(final String path, final String type, final String replacement) {
+        String newPath = path;
+        final String param = "${" + type + "}";
+        int start = newPath.indexOf(param);
+        while (start != -1) {
+            final int end = start + param.length();
+            newPath = newPath.substring(0, start) + replacement + newPath.substring(end);
+            start = newPath.indexOf(param, end);
+        }
+
+        return newPath;
+    }
+
+//    private ImageButtonView addButtonLeft(final String title, final ImageResource enabledImage,
+//                                          final ImageResource disabledImage) {
+//        if (leftButtons == null) {
+//            leftButtons = new ButtonPanel();
+//            getView().addWidgetLeft(leftButtons);
+//        }
+//
+//        final ImageButtonView button = leftButtons.add(title, enabledImage, disabledImage, true);
+//        return button;
+//    }
+
     @Override
     protected void onBind() {
         registerHandler(
@@ -147,17 +183,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }));
     }
 
-//    private ImageButtonView addButtonLeft(final String title, final ImageResource enabledImage,
-//                                          final ImageResource disabledImage) {
-//        if (leftButtons == null) {
-//            leftButtons = new ButtonPanel();
-//            getView().addWidgetLeft(leftButtons);
-//        }
-//
-//        final ImageButtonView button = leftButtons.add(title, enabledImage, disabledImage, true);
-//        return button;
-//    }
-
     private GlyphButtonView addButtonLeft(final GlyphIcon preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
@@ -173,32 +198,44 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             return sourcePresenter;
 
         } else {
-            PipelineProperty property = null;
-            final List<PipelineProperty> properties = SteppingPipelineTreeBuilder.getEditableProperties(element,
-                    pipelineModel);
-            if (properties != null && properties.size() == 1) {
-                property = properties.get(0);
+            DocRef docRef = null;
+
+            final List<PipelineProperty> properties = pipelineModel.getProperties(element);
+            if (properties != null && properties.size() > 0) {
+                for (final PipelineProperty property : properties) {
+                    if (property.getValue() != null) {
+                        final PipelinePropertyType propertyType = property.getPropertyType();
+                        if (propertyType.isDataEntity() && property.getValue().getEntity() != null) {
+                            docRef = property.getValue().getEntity();
+                        } else if (property.getName().toLowerCase().contains("pattern") && stream != null) {
+                            String value = property.getValue().getString();
+                            value = replace(value, "feed", stream.getFeed().getName());
+                            value = replace(value, "pipeline", action.getPipeline().getName());
+
+                            if (element.getElementType().getType().equalsIgnoreCase("XSLTFilter")) {
+                                docRef = new DocRef(XSLT.ENTITY_TYPE, null, value);
+                            } else {
+                                docRef = new DocRef(TextConverter.ENTITY_TYPE, null, value);
+                            }
+                        }
+                    }
+                }
             }
 
             final String elementId = element.getId();
             EditorPresenter editorPresenter = editorMap.get(elementId);
 
             if (editorPresenter == null) {
-                final DirtyHandler dirtyEditorHandler = new DirtyHandler() {
-                    @Override
-                    public void onDirty(final DirtyEvent event) {
-                        DirtyEvent.fire(SteppingPresenter.this, true);
-                        saveButton.setEnabled(true);
-                    }
+                final DirtyHandler dirtyEditorHandler = event -> {
+                    DirtyEvent.fire(SteppingPresenter.this, true);
+                    saveButton.setEnabled(true);
                 };
 
                 final EditorPresenter presenter = editorProvider.get();
 
                 presenter.setElementId(element.getId());
                 presenter.setElementType(element.getElementType());
-                if (property != null) {
-                    presenter.setPropertyValue(property.getValue());
-                }
+                presenter.setEntityRef(docRef);
                 presenter.setPipelineStepAction(action);
                 editorMap.put(elementId, presenter);
                 presenter.addDirtyHandler(dirtyEditorHandler);
@@ -276,17 +313,19 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }
     }
 
-    public void read(final DocRef pipeline, final long streamId, final long eventId,
+    public void read(final DocRef pipeline, final Stream stream, final long eventId,
                      final StreamType childStreamType) {
+        this.stream = stream;
+
         // Load the stream.
-        sourcePresenter.fetchData(true, streamId, childStreamType);
+        sourcePresenter.fetchData(true, stream.getId(), childStreamType);
 
         // Set the pipeline on the stepping action.
         action.setPipeline(pipeline);
 
         // Set the stream id on the stepping action.
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.obtainStreamIdSet().add(streamId);
+        findStreamCriteria.obtainStreamIdSet().add(stream.getId());
         action.setCriteria(findStreamCriteria);
         action.setChildStreamType(childStreamType);
 
@@ -314,7 +353,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 }
 
                 if (eventId > 0) {
-                    step(StepType.REFRESH, new StepLocation(streamId, 1L, eventId));
+                    step(StepType.REFRESH, new StepLocation(stream.getId(), 1L, eventId));
                 }
             }
         });

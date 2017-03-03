@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.pool.client.gin;
+package stroom.entity.shared;
 
-import stroom.core.client.gin.PluginModule;
-import stroom.pool.client.PoolMonitoringPlugin;
-import stroom.pool.client.presenter.PoolPresenter;
-import stroom.pool.client.presenter.PoolPresenter.PoolView;
-import stroom.pool.client.view.PoolViewImpl;
+import stroom.util.shared.HasDisplayValue;
 
-public class PoolModule extends PluginModule {
+public enum PermissionInheritance implements HasDisplayValue {
+    NONE("None"), COMBINED("Combined"), INHERIT("Inherit");
+
+    private final String displayValue;
+
+    PermissionInheritance(final String displayValue) {
+        this.displayValue = displayValue;
+    }
+
     @Override
-    protected void configure() {
-        bindPlugin(PoolMonitoringPlugin.class);
-        bindPresenterWidget(PoolPresenter.class, PoolView.class, PoolViewImpl.class);
+    public String getDisplayValue() {
+        return displayValue;
     }
 }

@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.explorer.shared.ExplorerData;
+import stroom.entity.shared.PermissionInheritance;
 
 import java.util.List;
 
@@ -29,17 +30,19 @@ public class MoveEntityEvent extends GwtEvent<MoveEntityEvent.Handler> {
     private final PresenterWidget<?> presenter;
     private final ExplorerData folder;
     private final List<ExplorerData> children;
+    private final PermissionInheritance permissionInheritance;
 
     private MoveEntityEvent(final PresenterWidget<?> presenter,
-                            final ExplorerData folder, final List<ExplorerData> children) {
+                            final ExplorerData folder, final List<ExplorerData> children, final PermissionInheritance permissionInheritance) {
         this.presenter = presenter;
         this.folder = folder;
         this.children = children;
+        this.permissionInheritance = permissionInheritance;
     }
 
     public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenter,
-                            final ExplorerData folder, final List<ExplorerData> children) {
-        handlers.fireEvent(new MoveEntityEvent(presenter, folder, children));
+                            final ExplorerData folder, final List<ExplorerData> children, final PermissionInheritance permissionInheritance) {
+        handlers.fireEvent(new MoveEntityEvent(presenter, folder, children, permissionInheritance));
     }
 
     public static Type<Handler> getType() {
@@ -69,6 +72,10 @@ public class MoveEntityEvent extends GwtEvent<MoveEntityEvent.Handler> {
 
     public List<ExplorerData> getChildren() {
         return children;
+    }
+
+    public PermissionInheritance getPermissionInheritance() {
+        return permissionInheritance;
     }
 
     public interface Handler extends EventHandler {

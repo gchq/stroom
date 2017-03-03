@@ -1,7 +1,8 @@
 ext {
-    gwtBuildDir = "${project.buildDir}/gwt"
     warDir = project(':stroom-app').file("src/main/webapp")
     outputDir = "${warDir}/stroom"
+
+    gwtBuildDir = "${project.buildDir}/gwt"
     tmpDir = "${gwtBuildDir}/tmp"
     workDir = "${gwtBuildDir}/work"
     deployDir = "${gwtBuildDir}/deploy"
@@ -39,49 +40,19 @@ dependencies {
     compile 'com.google.gwt:gwt-dev:2.8.0'
 }
 
-task gwtClean {
-    println "Running gwtClean"
-    file(project.buildDir).delete()
-    file(outputDir).delete()
-    file(gwtBuildDir).mkdirs()
-    file(tmpDir).mkdirs()
-}
-
 task gwtCompile (dependsOn: classes, type: JavaExec) {
     def module = 'stroom.app.App'
 
-    main = 'com.google.gwt.dev.Compiler'
+    doFirst {
+        delete outputDir
+        delete gwtBuildDir
 
-    classpath {
-        [
-            sourceSets.main.java.srcDirs,           // Java source
-            sourceSets.main.output.resourcesDir,    // Generated resources
-            sourceSets.main.output.classesDir,      // Generated classes
-            sourceSets.main.compileClasspath,       // Deps
-        ]
+        file(gwtBuildDir).mkdirs()
+        file(tmpDir).mkdirs()
+        file(workDir).mkdirs()
+        file(deployDir).mkdirs()
+        file(extraDir).mkdirs()
     }
-
-    args =
-        [
-            '-logLevel', 'INFO',
-            '-workDir', workDir,
-            '-XfragmentCount', '5',
-            '-optimize', '9',
-            '-failOnError',
-            '-localWorkers', '5',
-            '-war', warDir,
-            '-deploy', deployDir,
-            '-extra', extraDir,
-            '-strict',
-            module                                  // Your GWT module
-        ]
-
-    minHeapSize = '1G'
-    maxHeapSize = '4G'
-}
-
-task gwtDevMode (dependsOn: classes, type: JavaExec) {
-    def module = 'stroom.app.AppSuperDevModeChrome'
 
     main = 'com.google.gwt.dev.Compiler'
 
@@ -95,21 +66,65 @@ task gwtDevMode (dependsOn: classes, type: JavaExec) {
     }
 
     args =
+            [
+                    '-logLevel', 'INFO',
+                    '-workDir', workDir,
+                    '-XfragmentCount', '5',
+                    '-optimize', '9',
+                    '-failOnError',
+                    '-localWorkers', '5',
+                    '-war', warDir,
+                    '-deploy', deployDir,
+                    '-extra', extraDir,
+                    '-strict',
+                    module                                  // Your GWT module
+            ]
+
+    jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
+    minHeapSize = '1G'
+    maxHeapSize = '4G'
+}
+
+task gwtDraftCompile (dependsOn: classes, type: JavaExec) {
+    def module = 'stroom.app.AppSuperDevModeChrome'
+
+    doFirst {
+        delete outputDir
+
+        file(gwtBuildDir).mkdirs()
+        file(tmpDir).mkdirs()
+        file(workDir).mkdirs()
+        file(deployDir).mkdirs()
+        file(extraDir).mkdirs()
+    }
+
+    main = 'com.google.gwt.dev.Compiler'
+
+    classpath {
         [
-                '-logLevel', 'INFO',
-                '-workDir', workDir,
-                '-draftCompile',                        // Speeds up compile with 25%
-                '-XfragmentCount', '0',
-                '-optimize', '0',
-                '-failOnError',
-                '-localWorkers', '5',
-                '-incremental',
-                '-war', warDir,
-                '-deploy', deployDir,
-                '-extra', extraDir,
-                '-strict',
-                module                                  // Your GWT module
+                sourceSets.main.java.srcDirs,           // Java source
+                sourceSets.main.output.resourcesDir,    // Generated resources
+                sourceSets.main.output.classesDir,      // Generated classes
+                sourceSets.main.compileClasspath,       // Deps
         ]
+    }
+
+    args =
+            [
+                    '-logLevel', 'INFO',
+                    '-workDir', workDir,
+                    '-draftCompile',                        // Speeds up compile with 25%
+                    '-XfragmentCount', '0',
+                    '-optimize', '0',
+                    '-failOnError',
+                    '-localWorkers', '5',
+                    '-incremental',
+                    '-war', warDir,
+                    '-deploy', deployDir,
+                    '-extra', extraDir,
+                    '-strict',
+                    module                                  // Your GWT module
+            ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = '1G'
@@ -118,6 +133,14 @@ task gwtDevMode (dependsOn: classes, type: JavaExec) {
 
 task gwtSuperDevMode (dependsOn: classes, type: JavaExec) {
     def module = 'stroom.app.AppSuperDevModeChrome'
+
+    doFirst {
+        file(gwtBuildDir).mkdirs()
+        file(tmpDir).mkdirs()
+        file(workDir).mkdirs()
+        file(deployDir).mkdirs()
+        file(extraDir).mkdirs()
+    }
 
     main = 'com.google.gwt.dev.DevMode'
 
@@ -148,5 +171,11 @@ task gwtSuperDevMode (dependsOn: classes, type: JavaExec) {
     maxHeapSize = '4G'
 }
 
+task gwtClean {
+    delete outputDir
+    delete gwtBuildDir
+    file(gwtBuildDir).mkdirs()
+    file(tmpDir).mkdirs()
+}
+
 build.dependsOn('gwtCompile')
-clean.dependsOn('gwtClean')

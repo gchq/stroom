@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,14 +19,14 @@ package stroom.statistics.common;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
+import stroom.datasource.api.DataSource;
 import stroom.entity.shared.BaseResultList;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.FolderService;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.importexport.server.ImportExportSerializer.ImportMode;
-import stroom.datasource.api.DataSource;
+import stroom.query.api.DocRef;
 import stroom.statistics.server.common.StatisticsDataSourceProvider;
 import stroom.statistics.shared.StatisticField;
 import stroom.statistics.shared.StatisticStore;

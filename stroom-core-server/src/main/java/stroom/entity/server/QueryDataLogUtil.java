@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,20 +16,19 @@
 
 package stroom.entity.server;
 
-import java.util.List;
-
-
-import stroom.dictionary.shared.Dictionary;
-import stroom.dictionary.shared.DictionaryService;
-import stroom.dictionary.shared.FindDictionaryCriteria;
 import event.logging.BaseAdvancedQueryItem;
 import event.logging.BaseAdvancedQueryOperator;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
+import stroom.dictionary.shared.Dictionary;
+import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.shared.FindDictionaryCriteria;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
+
+import java.util.List;
 
 public class QueryDataLogUtil {
     public static void appendExpressionItem(final List<BaseAdvancedQueryItem> items,

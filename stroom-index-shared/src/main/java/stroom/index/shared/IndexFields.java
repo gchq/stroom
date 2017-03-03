@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,20 +31,20 @@ public class IndexFields implements Serializable {
 
     private List<IndexField> indexFields;
 
-    public static IndexFields createStreamIndexFields() {
-        final List<IndexField> indexFields = new ArrayList<>();
-        // Always add standard id fields for now.
-        indexFields.add(IndexField.createIdField(IndexConstants.STREAM_ID));
-        indexFields.add(IndexField.createIdField(IndexConstants.EVENT_ID));
-        return new IndexFields(indexFields);
-    }
-
     public IndexFields() {
         this.indexFields = new ArrayList<>();
     }
 
     public IndexFields(final List<IndexField> indexFields) {
         this.indexFields = indexFields;
+    }
+
+    public static IndexFields createStreamIndexFields() {
+        final List<IndexField> indexFields = new ArrayList<>();
+        // Always add standard id fields for now.
+        indexFields.add(IndexField.createIdField(IndexConstants.STREAM_ID));
+        indexFields.add(IndexField.createIdField(IndexConstants.EVENT_ID));
+        return new IndexFields(indexFields);
     }
 
     public void addIndexField(final IndexField indexField) {
@@ -54,13 +54,13 @@ public class IndexFields implements Serializable {
         indexFields.add(indexField);
     }
 
-    public void setIndexFields(final List<IndexField> indexFields) {
-        this.indexFields = indexFields;
-    }
-
     @XmlElements({@XmlElement(name = "field", type = IndexField.class)})
     public List<IndexField> getIndexFields() {
         return indexFields;
+    }
+
+    public void setIndexFields(final List<IndexField> indexFields) {
+        this.indexFields = indexFields;
     }
 
     public void add(final IndexField indexField) {

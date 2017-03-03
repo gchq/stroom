@@ -19,15 +19,16 @@ package stroom.explorer.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.explorer.client.presenter.MultiSelectionModel;
 import stroom.explorer.shared.ExplorerData;
+import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.SelectionType;
 
 public class ExplorerTreeSelectEvent extends GwtEvent<ExplorerTreeSelectEvent.Handler> {
-    private static Type<Handler> TYPE;
+    private static Type<ExplorerTreeSelectEvent.Handler> TYPE;
     private final MultiSelectionModel<ExplorerData> selectionModel;
     private final SelectionType selectionType;
 
-    private ExplorerTreeSelectEvent(final MultiSelectionModel<ExplorerData> selectionModel, final SelectionType selectionType) {
+    public ExplorerTreeSelectEvent(final MultiSelectionModel<ExplorerData> selectionModel, final SelectionType selectionType) {
         this.selectionModel = selectionModel;
         this.selectionType = selectionType;
     }
@@ -36,7 +37,7 @@ public class ExplorerTreeSelectEvent extends GwtEvent<ExplorerTreeSelectEvent.Ha
         source.fireEvent(new ExplorerTreeSelectEvent(selectionModel, selectionType));
     }
 
-    public static Type<Handler> getType() {
+    public static Type<ExplorerTreeSelectEvent.Handler> getType() {
         if (TYPE == null) {
             TYPE = new Type<>();
         }
@@ -44,12 +45,12 @@ public class ExplorerTreeSelectEvent extends GwtEvent<ExplorerTreeSelectEvent.Ha
     }
 
     @Override
-    public Type<Handler> getAssociatedType() {
+    public Type<ExplorerTreeSelectEvent.Handler> getAssociatedType() {
         return getType();
     }
 
     @Override
-    protected void dispatch(final Handler handler) {
+    protected void dispatch(final ExplorerTreeSelectEvent.Handler handler) {
         handler.onSelect(this);
     }
 

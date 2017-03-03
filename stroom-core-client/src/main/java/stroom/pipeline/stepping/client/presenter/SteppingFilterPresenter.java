@@ -16,11 +16,6 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import java.util.HashSet;
-import java.util.List;
-
-import stroom.data.grid.client.DoubleClickEvent;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -29,7 +24,6 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
@@ -41,6 +35,9 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import java.util.HashSet;
+import java.util.List;
 
 public class SteppingFilterPresenter extends
         MyPresenter<SteppingFilterPresenter.SteppingFilterSettingsView, SteppingFilterPresenter.SteppingFilterSettingsProxy>
@@ -69,14 +66,13 @@ public class SteppingFilterPresenter extends
     private SteppingFilterSettings settings;
     private final XPathListPresenter xPathListPresenter;
     private List<XPathFilter> xPathFilters;
-    private XPathFilter selectedXPathFilter;
 
     private final XPathFilterPresenter xPathFilterPresenter;
 
     @Inject
     public SteppingFilterPresenter(final EventBus eventBus, final SteppingFilterSettingsView view,
-            final SteppingFilterSettingsProxy proxy, final XPathListPresenter xPathListPresenter,
-            final XPathFilterPresenter xPathFilterProvider) {
+                                   final SteppingFilterSettingsProxy proxy, final XPathListPresenter xPathListPresenter,
+                                   final XPathFilterPresenter xPathFilterProvider) {
         super(eventBus, view, proxy);
         this.xPathListPresenter = xPathListPresenter;
         this.xPathFilterPresenter = xPathFilterProvider;
@@ -89,19 +85,13 @@ public class SteppingFilterPresenter extends
     protected void onBind() {
         super.onBind();
 
-        registerHandler(xPathListPresenter.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                selectedXPathFilter = xPathListPresenter.getSelectionModel().getSelectedObject();
-                final boolean enabled = selectedXPathFilter != null;
-                getView().setEditEnabled(enabled);
-                getView().setRemoveEnabled(enabled);
-            }
-        }));
-        registerHandler(xPathListPresenter.addDoubleClickHandler(new DoubleClickEvent.Handler() {
-            @Override
-            public void onDoubleClick(final DoubleClickEvent event) {
-                if (selectedXPathFilter != null) {
+        registerHandler(xPathListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            final List<XPathFilter> list = xPathListPresenter.getSelectionModel().getSelectedItems();
+            getView().setEditEnabled(list.size() == 1);
+            getView().setRemoveEnabled(list.size() > 0);
+
+            if (event.getSelectionType().isDoubleSelect()) {
+                if (list.size() == 1) {
                     editXPathFilter();
                 }
             }
@@ -118,8 +108,7 @@ public class SteppingFilterPresenter extends
                     xPathFilterPresenter.write();
                     xPathFilters.add(xPathFilter);
 
-                    selectedXPathFilter = xPathFilter;
-                    xPathListPresenter.getSelectionModel().setSelected(xPathFilter, true);
+                    xPathListPresenter.getSelectionModel().setSelected(xPathFilter);
                 }
                 HidePopupEvent.fire(SteppingFilterPresenter.this, xPathFilterPresenter);
             }
@@ -134,7 +123,8 @@ public class SteppingFilterPresenter extends
 
     @Override
     public void editXPathFilter() {
-        if (selectedXPathFilter != null) {
+        final List<XPathFilter> list = xPathListPresenter.getSelectionModel().getSelectedItems();
+        if (list.size() == 1) {
             final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
@@ -150,7 +140,7 @@ public class SteppingFilterPresenter extends
                     // Do nothing.
                 }
             };
-            xPathFilterPresenter.edit(selectedXPathFilter, popupUiHandlers);
+            xPathFilterPresenter.edit(list.get(0), popupUiHandlers);
         }
     }
 
@@ -158,10 +148,11 @@ public class SteppingFilterPresenter extends
     public void removeXPathFilter() {
         // If there is a selected filter remove it from the set of filters and
         // the display.
-        if (selectedXPathFilter != null) {
-            xPathFilters.remove(selectedXPathFilter);
+        final List<XPathFilter> list = xPathListPresenter.getSelectionModel().getSelectedItems();
+        if (list.size() > 0) {
+            xPathFilters.removeAll(list);
             xPathListPresenter.refresh();
-            xPathListPresenter.getSelectionModel().setSelected(selectedXPathFilter, false);
+            xPathListPresenter.getSelectionModel().clear();
         }
     }
 
@@ -190,7 +181,7 @@ public class SteppingFilterPresenter extends
 
     @Override
     protected void revealInParent() {
-        String caption = null;
+        String caption;
         if (event.isInput()) {
             caption = "Change '" + event.getElementId() + "' Input Filter";
         } else {
@@ -216,7 +207,7 @@ public class SteppingFilterPresenter extends
         settings.setSkipToSeverity(getView().getSkipToErrors());
         settings.setSkipToOutput(getView().getSkipToOutput());
         settings.setXPathFilters(null);
-        settings.setXPathFilters(new HashSet<XPathFilter>(xPathFilters));
+        settings.setXPathFilters(new HashSet<>(xPathFilters));
 
         event.getXmlEditor().setFilterActive(settings.isActive());
     }

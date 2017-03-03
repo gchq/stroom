@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,6 +33,7 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
+import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomSpringProfiles;
 
@@ -49,7 +50,9 @@ import java.util.UUID;
 @Secured(User.MANAGE_USERS_PERMISSION)
 @Component("userService")
 public class UserServiceImpl implements UserService {
-    public static final String NAME_PATTERN = "^[a-zA-Z0-9_]{3,}$";
+    private static final String USER_NAME_PATTERN_PROPERTY = "stroom.security.userNamePattern";
+    private static final String USER_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_-]{3,}$";
+
     private static final StroomLogger LOGGER = StroomLogger.getLogger(UserServiceImpl.class);
     private static final String SQL_ADD_USER_TO_GROUP;
     private static final String SQL_REMOVE_USER_FROM_GROUP;
@@ -374,7 +377,7 @@ public class UserServiceImpl implements UserService {
     @Transient
     @Override
     public String getNamePattern() {
-        return NAME_PATTERN;//StroomProperties.getProperty(NAME_PATTERN_PROPERTY, NAME_PATTERN_VALUE);
+        return StroomProperties.getProperty(USER_NAME_PATTERN_PROPERTY, USER_NAME_PATTERN_VALUE);
     }
 
     @Override

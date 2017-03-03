@@ -1,13 +1,21 @@
 {
-  "fields" : [ {
-    "type" : "FIELD",
-    "name" : "field1",
-    "queryable" : true,
-    "conditions" : [ "EQUALS", "CONTAINS" ]
-  }, {
-    "type" : "NUMERIC_FIELD",
-    "name" : "field2",
-    "queryable" : true,
-    "conditions" : [ "EQUALS" ]
-  } ]
+  "fields": [
+    {
+      "type": "FIELD",
+      "name": "field1",
+      "queryable": true,
+      "conditions": [
+        "EQUALS",
+        "CONTAINS"
+      ]
+    },
+    {
+      "type": "NUMERIC_FIELD",
+      "name": "field2",
+      "queryable": true,
+      "conditions": [
+        "EQUALS"
+      ]
+    }
+  ]
 }

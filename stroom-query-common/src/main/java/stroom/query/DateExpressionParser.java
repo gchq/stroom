@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,8 +18,11 @@ package stroom.query;
 
 import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
@@ -32,6 +35,10 @@ public class DateExpressionParser {
     private static final Pattern DURATION_PATTERN = Pattern.compile("[+-]?[ ]*\\d+[ ]*[smhdwMy]");
 
     public ZonedDateTime parse(final String expression, final long nowEpochMilli) {
+        return parse(expression, ZoneOffset.UTC.getId(), nowEpochMilli);
+    }
+
+    public ZonedDateTime parse(final String expression, final String timeZoneId, final long nowEpochMilli) {
         final char[] chars = expression.toCharArray();
         final Part[] parts = new Part[chars.length];
 
@@ -48,7 +55,25 @@ public class DateExpressionParser {
 
         if (index != -1) {
             final String trimmed = new String(chars).trim();
-            final ZonedDateTime time = ZonedDateTime.parse(trimmed);
+            ZonedDateTime time;
+
+            try {
+                // Assume a timezone is specified on the string.
+                time = ZonedDateTime.parse(trimmed);
+            } catch (final DateTimeParseException e) {
+                ZoneId zoneId = ZoneId.systemDefault();
+
+                try {
+                    if (timeZoneId != null) {
+                        zoneId = ZoneId.of(timeZoneId);
+                    }
+                } catch (final Exception ex) {
+                }
+
+                // If no time zone was specified then try and parse as a local datetime.
+                time = LocalDateTime.parse(trimmed).atZone(zoneId);
+            }
+
             parts[index] = new Part(trimmed, time);
         }
 

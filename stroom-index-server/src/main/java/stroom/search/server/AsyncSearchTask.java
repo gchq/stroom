@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,19 +34,21 @@ public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializab
     private final Node targetNode;
     private final int resultSendFrequency;
     private final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap;
+    private final String dateTimeLocale;
     private final long now;
 
     private volatile transient ClusterSearchResultCollector resultCollector;
 
     public AsyncSearchTask(final String sessionId, final String userName, final String searchName, final Query query,
                            final Node targetNode, final int resultSendFrequency,
-                           final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap, final long now) {
+                           final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap, final String dateTimeLocale, final long now) {
         super(null, sessionId, userName);
         this.searchName = searchName;
         this.query = query;
         this.targetNode = targetNode;
         this.resultSendFrequency = resultSendFrequency;
         this.coprocessorMap = coprocessorMap;
+        this.dateTimeLocale = dateTimeLocale;
         this.now = now;
     }
 
@@ -68,6 +70,10 @@ public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializab
 
     public Map<CoprocessorKey, CoprocessorSettings> getCoprocessorMap() {
         return coprocessorMap;
+    }
+
+    public String getDateTimeLocale() {
+        return dateTimeLocale;
     }
 
     public long getNow() {

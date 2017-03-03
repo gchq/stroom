@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,21 +18,18 @@ package stroom.process.client.presenter;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.data.grid.client.DoubleClickEvent;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRefs;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
 import stroom.entity.shared.EntityServiceDeleteAction;
@@ -48,11 +45,10 @@ import stroom.process.shared.LoadEntityIdSetAction;
 import stroom.process.shared.SetId;
 import stroom.process.shared.StreamProcessorFilterRow;
 import stroom.process.shared.StreamProcessorRow;
+import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionBuilder;
-import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
-import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.security.client.ClientSecurityContext;
@@ -63,7 +59,6 @@ import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedMap;
 import stroom.util.shared.SharedObject;
 import stroom.widget.button.client.GlyphButtonView;
@@ -74,7 +69,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -188,16 +183,9 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     protected void onBind() {
         super.onBind();
 
-        registerHandler(processorListPresenter.getSelectionModel()
-                .addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-                    @Override
-                    public void onSelectionChange(final SelectionChangeEvent event) {
-                        updateData();
-                    }
-                }));
-        registerHandler(processorListPresenter.getView().addDoubleClickHandler(new DoubleClickEvent.Handler() {
-            @Override
-            public void onDoubleClick(final DoubleClickEvent event) {
+        registerHandler(processorListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            updateData();
+            if (event.getSelectionType().isDoubleSelect()) {
                 if (allowUpdate()) {
                     editProcessor();
                 }
@@ -206,7 +194,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     private void updateData() {
-        selectedProcessor = processorListPresenter.getSelectionModel().getSelectedObject();
+        selectedProcessor = processorListPresenter.getSelectionModel().getSelected();
 
         if (selectedProcessor == null) {
             enableButtons(false);
@@ -267,37 +255,37 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 }
                 entitySetMap.put(streamTypeSetId, findStreamCriteria.getStreamTypeIdSet());
 
-                    // Load entities.
-                    dispatcher.execute(new LoadEntityIdSetAction(entitySetMap),
-                            new AsyncCallbackAdaptor<SharedMap<SetId, DocRefs>>() {
-                                @Override
-                                public void onSuccess(final SharedMap<SetId, DocRefs> result) {
-                                    final DocRefs folders = result.get(folderSetId);
-                                    final DocRefs feedsInclude = result.get(feedIncludeSetId);
-                                    final DocRefs feedsExclude = result.get(feedExcludeSetId);
-                                    final DocRefs streamTypes = result.get(streamTypeSetId);
+                // Load entities.
+                dispatcher.execute(new LoadEntityIdSetAction(entitySetMap),
+                        new AsyncCallbackAdaptor<SharedMap<SetId, DocRefs>>() {
+                            @Override
+                            public void onSuccess(final SharedMap<SetId, DocRefs> result) {
+                                final DocRefs folders = result.get(folderSetId);
+                                final DocRefs feedsInclude = result.get(feedIncludeSetId);
+                                final DocRefs feedsExclude = result.get(feedExcludeSetId);
+                                final DocRefs streamTypes = result.get(streamTypeSetId);
 
-                                    final ExpressionBuilder operator = new ExpressionBuilder(Op.AND);
-                                    addEntityListTerm(operator, folders, "Folder");
-                                    addEntityListTerm(operator, feedsInclude, "Feed");
+                                final ExpressionBuilder operator = new ExpressionBuilder(Op.AND);
+                                addEntityListTerm(operator, folders, "Folder");
+                                addEntityListTerm(operator, feedsInclude, "Feed");
 
-                                    if (feedsExclude != null && feedsExclude.iterator().hasNext()) {
-                                        final ExpressionBuilder not = operator.addOperator(Op.NOT);
-                                        addEntityListTerm(not, feedsExclude, "Feed");
-                                    }
-
-                                    addEntityListTerm(operator, streamTypes, "Stream Type");
-                                    addIdTerm(operator, findStreamCriteria.getStreamIdSet(), "Stream Id");
-                                    addIdTerm(operator, findStreamCriteria.getParentStreamIdSet(), "Parent Stream Id");
-                                    addPeriodTerm(operator, findStreamCriteria.getCreatePeriod(), "Creation time");
-                                    addPeriodTerm(operator, findStreamCriteria.getEffectivePeriod(), "Effective time");
-
-                                    expressionPresenter.read(operator.build());
+                                if (feedsExclude != null && feedsExclude.iterator().hasNext()) {
+                                    final ExpressionBuilder not = operator.addOperator(Op.NOT);
+                                    addEntityListTerm(not, feedsExclude, "Feed");
                                 }
-                            });
-                }
+
+                                addEntityListTerm(operator, streamTypes, "Stream Type");
+                                addIdTerm(operator, findStreamCriteria.getStreamIdSet(), "Stream Id");
+                                addIdTerm(operator, findStreamCriteria.getParentStreamIdSet(), "Parent Stream Id");
+                                addPeriodTerm(operator, findStreamCriteria.getCreatePeriod(), "Creation time");
+                                addPeriodTerm(operator, findStreamCriteria.getEffectivePeriod(), "Effective time");
+
+                                expressionPresenter.read(operator.build());
+                            }
+                        });
             }
         }
+    }
 
     private void addEntityListTerm(final ExpressionBuilder operator, final DocRefs entities,
                                    final String label) {
@@ -369,7 +357,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    public MySingleSelectionModel<SharedObject> getSelectionModel() {
+    public MultiSelectionModel<SharedObject> getSelectionModel() {
         return processorListPresenter.getSelectionModel();
     }
 

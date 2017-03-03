@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,12 +24,12 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
-import stroom.data.grid.client.DataGridViewImpl.Heading;
-import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Sort;
 import stroom.dashboard.shared.Sort.SortDirection;
 import stroom.dashboard.shared.TableComponentSettings;
+import stroom.data.grid.client.DataGridViewImpl.Heading;
+import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;

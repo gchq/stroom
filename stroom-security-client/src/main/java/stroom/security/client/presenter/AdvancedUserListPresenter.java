@@ -18,7 +18,6 @@ package stroom.security.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.data.grid.client.DoubleClickEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.StringCriteria;
 import stroom.security.shared.FindUserCriteria;
@@ -39,9 +38,8 @@ public class AdvancedUserListPresenter extends AbstractUserListPresenter {
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(getDataGridView().addDoubleClickHandler(new DoubleClickEvent.Handler() {
-            @Override
-            public void onDoubleClick(DoubleClickEvent event) {
+        registerHandler(getSelectionModel().addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
                 if (findUserCriteria != null && findUserCriteria.getRelatedUser() == null) {
                     HidePopupEvent.fire(AdvancedUserListPresenter.this, AdvancedUserListPresenter.this, false, true);
                 }

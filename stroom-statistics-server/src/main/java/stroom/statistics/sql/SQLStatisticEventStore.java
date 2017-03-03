@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -59,27 +59,16 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class SQLStatisticEventStore extends AbstractStatistics {
     public static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticEventStore.class);
-
-    static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.stats.sql.search.maxResults";
-
     public static final String ENGINE_NAME = "sql";
-
-    private final SQLStatisticCache statisticCache;
-
-    private final DataSource cachedSqlDataSource;
-    private final StroomPropertyService propertyService;
-
+    static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.stats.sql.search.maxResults";
     private static final int DEFAULT_POOL_SIZE = 10;
     private static final long DEFAULT_SIZE_THRESHOLD = 1000000L;
-
     private static final Set<String> BLACK_LISTED_INDEX_FIELDS = new HashSet<>(
             Arrays.asList(StatisticStoreEntity.FIELD_NAME_MIN_VALUE, StatisticStoreEntity.FIELD_NAME_MAX_VALUE));
-
     /**
      * Keep half the time out our SQL insert threshold
      */
     private static final long DEFAULT_AGE_MS_THRESHOLD = TimeUnit.MINUTES.toMillis(5);
-
     // @formatter:off
     private static final String STAT_QUERY_SKELETON = "" + "select " + "K." + SQLStatisticNames.NAME + ", " + "V."
             + SQLStatisticNames.PRECISION + ", " + "V." + SQLStatisticNames.TIME_MS + ", " + "V."
@@ -89,6 +78,9 @@ public class SQLStatisticEventStore extends AbstractStatistics {
             + SQLStatisticNames.SQL_STATISTIC_KEY_FOREIGN_KEY + ") " + "WHERE K." + SQLStatisticNames.NAME + " LIKE ? "
             + "AND K." + SQLStatisticNames.NAME + " REGEXP ? " + "AND V." + SQLStatisticNames.TIME_MS + " >= ? "
             + "AND V." + SQLStatisticNames.TIME_MS + " < ?";
+    private final SQLStatisticCache statisticCache;
+    private final DataSource cachedSqlDataSource;
+    private final StroomPropertyService propertyService;
 
     // @formatter:on
     /**
@@ -113,67 +105,6 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     private int poolSize = DEFAULT_POOL_SIZE;
 
     private GenericObjectPool<SQLStatisticAggregateMap> objectPool;
-
-    private class ObjectFactory extends BasePooledObjectFactory<SQLStatisticAggregateMap> {
-        @Override
-        public SQLStatisticAggregateMap create() throws Exception {
-            return createAggregateMap();
-        }
-
-        @Override
-        public PooledObject<SQLStatisticAggregateMap> wrap(final SQLStatisticAggregateMap obj) {
-            return new DefaultPooledObject<>(obj);
-        }
-
-        @Override
-        public void destroyObject(final PooledObject<SQLStatisticAggregateMap> p) throws Exception {
-            super.destroyObject(p);
-            destroyAggregateMap(p.getObject());
-        }
-
-        /**
-         * Should we give this item back to the pool
-         */
-        @Override
-        public boolean validateObject(final PooledObject<SQLStatisticAggregateMap> p) {
-            if (p.getObject().size() >= aggregatorSizeThreshold) {
-                return false;
-            }
-            final long age = System.currentTimeMillis() - p.getCreateTime();
-            if (age > poolAgeMsThreshold) {
-                return false;
-            }
-
-            return super.validateObject(p);
-        }
-    }
-
-    @Override
-    protected Set<String> getIndexFieldBlackList() {
-        return BLACK_LISTED_INDEX_FIELDS;
-    }
-
-    private GenericObjectPoolConfig getObjectPoolConfig() {
-        final GenericObjectPoolConfig config = new GenericObjectPoolConfig();
-        // Max number of idle items .... same as our pool size
-        config.setMaxIdle(poolSize);
-        // Pool size
-        config.setMaxTotal(poolSize);
-        // Returns the minimum amount of time an object may sit idle in the pool
-        // before it is eligible for eviction by the idle object evictor
-        // Here if it is idle for 10 min's it will simply return It will also
-        // return by validateObject if it is simple more than 10min old
-        config.setMinEvictableIdleTimeMillis(poolAgeMsThreshold);
-        // Check for idle objects never .... we will do this with task sytstem
-        config.setTimeBetweenEvictionRunsMillis(0);
-        // Must cause other threads to block to wait for a object
-        config.setBlockWhenExhausted(true);
-        config.setJmxEnabled(false);
-        // Check item on just before returning to pool
-        config.setTestOnReturn(true);
-
-        return config;
-    }
 
     @Inject
     public SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
@@ -201,6 +132,33 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         this.propertyService = propertyService;
 
         initPool(getObjectPoolConfig());
+    }
+
+    @Override
+    protected Set<String> getIndexFieldBlackList() {
+        return BLACK_LISTED_INDEX_FIELDS;
+    }
+
+    private GenericObjectPoolConfig getObjectPoolConfig() {
+        final GenericObjectPoolConfig config = new GenericObjectPoolConfig();
+        // Max number of idle items .... same as our pool size
+        config.setMaxIdle(poolSize);
+        // Pool size
+        config.setMaxTotal(poolSize);
+        // Returns the minimum amount of time an object may sit idle in the pool
+        // before it is eligible for eviction by the idle object evictor
+        // Here if it is idle for 10 min's it will simply return It will also
+        // return by validateObject if it is simple more than 10min old
+        config.setMinEvictableIdleTimeMillis(poolAgeMsThreshold);
+        // Check for idle objects never .... we will do this with task sytstem
+        config.setTimeBetweenEvictionRunsMillis(0);
+        // Must cause other threads to block to wait for a object
+        config.setBlockWhenExhausted(true);
+        config.setJmxEnabled(false);
+        // Check item on just before returning to pool
+        config.setTestOnReturn(true);
+
+        return config;
     }
 
     @Override
@@ -353,15 +311,15 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         throw new UnsupportedOperationException("Code waiting to be written");
     }
 
-    // @Override
-    // public void refreshMetadata() {
-    // throw new UnsupportedOperationException("Code waiting to be written");
-    // }
-
     @Override
     public String toString() {
         return "numActive=" + objectPool.getNumActive() + ", numIdle=" + objectPool.getNumIdle();
     }
+
+    // @Override
+    // public void refreshMetadata() {
+    // throw new UnsupportedOperationException("Code waiting to be written");
+    // }
 
     public int getNumActive() {
         return objectPool.getNumActive();
@@ -497,5 +455,39 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         }
 
         return ps;
+    }
+
+    private class ObjectFactory extends BasePooledObjectFactory<SQLStatisticAggregateMap> {
+        @Override
+        public SQLStatisticAggregateMap create() throws Exception {
+            return createAggregateMap();
+        }
+
+        @Override
+        public PooledObject<SQLStatisticAggregateMap> wrap(final SQLStatisticAggregateMap obj) {
+            return new DefaultPooledObject<>(obj);
+        }
+
+        @Override
+        public void destroyObject(final PooledObject<SQLStatisticAggregateMap> p) throws Exception {
+            super.destroyObject(p);
+            destroyAggregateMap(p.getObject());
+        }
+
+        /**
+         * Should we give this item back to the pool
+         */
+        @Override
+        public boolean validateObject(final PooledObject<SQLStatisticAggregateMap> p) {
+            if (p.getObject().size() >= aggregatorSizeThreshold) {
+                return false;
+            }
+            final long age = System.currentTimeMillis() - p.getCreateTime();
+            if (age > poolAgeMsThreshold) {
+                return false;
+            }
+
+            return super.validateObject(p);
+        }
     }
 }

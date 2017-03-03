@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,12 +22,10 @@ import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -35,7 +33,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
@@ -85,7 +82,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -96,7 +92,6 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
         implements HasDirtyHandlers, ResultComponent {
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table");
     private static final int MIN_EXPANDER_COL_WIDTH = 0;
-    private final MySingleSelectionModel<Row> selectionModel;
     private final TableResultRequest tableResultRequest = new TableResultRequest(0, 100);
     private final List<Column<Row, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
@@ -135,9 +130,6 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
         this.dispatcher = dispatcher;
         this.timeZones = timeZones;
 
-        selectionModel = new MySingleSelectionModel<>();
-        getView().setSelectionModel(selectionModel);
-
         // Add the 'add field' button.
         addFieldButton = getView().addButton(GlyphIcons.ADD);
         addFieldButton.setTitle("Add Field");
@@ -173,48 +165,31 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                performRowAction(selectionModel.getSelectedObject());
+        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> performRowAction(getView().getSelectionModel().getSelected())));
+        registerHandler(getView().addRangeChangeHandler(event -> {
+            if (!ignoreRangeChange) {
+                final com.google.gwt.view.client.Range range = event.getNewRange();
+                tableResultRequest.setRange(range.getStart(), range.getLength());
+                refresh();
             }
         }));
-        registerHandler(getView().addRangeChangeHandler(new RangeChangeEvent.Handler() {
-            @Override
-            public void onRangeChange(final RangeChangeEvent event) {
-                if (!ignoreRangeChange) {
-                    final com.google.gwt.view.client.Range range = event.getNewRange();
-                    tableResultRequest.setRange(range.getStart(), range.getLength());
-                    refresh();
-                }
+        registerHandler(addFieldButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onAddField(event);
             }
         }));
-        registerHandler(addFieldButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onAddField(event);
-                }
-            }
-        }));
-        registerHandler(downloadButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (currentSearchModel != null) {
-                    if (currentSearchModel.isSearching()) {
-                        ConfirmEvent.fire(TablePresenter.this,
-                                "Search still in progress. Do you want to download the current results? Note that these may be incomplete.",
-                                new ConfirmCallback() {
-                                    @Override
-                                    public void onResult(final boolean ok) {
-                                        if (ok) {
-                                            download();
-                                        }
-                                    }
-                                });
-                    } else {
-                        download();
-                    }
+        registerHandler(downloadButton.addClickHandler(event -> {
+            if (currentSearchModel != null) {
+                if (currentSearchModel.isSearching()) {
+                    ConfirmEvent.fire(TablePresenter.this,
+                            "Search still in progress. Do you want to download the current results? Note that these may be incomplete.",
+                            ok -> {
+                                if (ok) {
+                                    download();
+                                }
+                            });
+                } else {
+                    download();
                 }
             }
         }));
@@ -373,7 +348,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
             getView().setRowData(0, new ArrayList<Row>());
             getView().setRowCount(0, true);
 
-            selectionModel.clear();
+                getView().getSelectionModel().clear();
         }
 //        }
 

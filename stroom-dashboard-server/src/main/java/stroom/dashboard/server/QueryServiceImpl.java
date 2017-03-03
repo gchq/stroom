@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,8 +30,8 @@ import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.SQLUtil;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.query.api.DocRef;
 import stroom.entity.shared.EntityServiceException;
+import stroom.query.api.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
 
@@ -81,9 +81,14 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
         entity = super.create(entity);
 
         // Create the initial user permissions for this new document.
-        securityContext.createInitialDocumentPermissions(entity.getType(), entity.getUuid(), null);
+        securityContext.addDocumentPermissions(null, null, entity.getType(), entity.getUuid(), true);
 
         return entity;
+    }
+
+    @Override
+    protected void checkUpdatePermission(final QueryEntity entity) {
+        // Ignore.
     }
 
     @Override
@@ -112,8 +117,8 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
         protected void appendBasicCriteria(final SQLBuilder sql, final String alias, final FindQueryCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
-            if (criteria.getNameCriteria() != null) {
-                SQLUtil.appendValueQuery(sql, alias + ".name", criteria.getNameCriteria());
+            if (criteria.getFavourite() != null) {
+                SQLUtil.appendValueQuery(sql, alias + ".favourite", criteria.getFavourite());
             }
 
             SQLUtil.appendSetQuery(sql, true, alias + ".dashboard", criteria.getDashboardIdSet());

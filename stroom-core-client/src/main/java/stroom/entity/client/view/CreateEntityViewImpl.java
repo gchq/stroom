@@ -29,22 +29,21 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.entity.client.presenter.CreateEntityPresenter.CreateEntityView;
+import stroom.entity.shared.PermissionInheritance;
+import stroom.item.client.ItemListBox;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class CreateEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>implements CreateEntityView {
-    public interface Binder extends UiBinder<Widget, CreateEntityViewImpl> {
-    }
-
+    private final Widget widget;
     @UiField
     SimplePanel foldersOuter;
     @UiField
     SimplePanel foldersInner;
     @UiField
     TextBox name;
-
-    private final Widget widget;
+    @UiField
+    ItemListBox<PermissionInheritance> permissionInheritance;
 
     @Inject
     public CreateEntityViewImpl(final Binder binder) {
@@ -55,6 +54,10 @@ public class CreateEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>imp
                 focus();
             }
         });
+
+        permissionInheritance.addItem(PermissionInheritance.NONE);
+        permissionInheritance.addItem(PermissionInheritance.INHERIT);
+        permissionInheritance.setSelectedItem(PermissionInheritance.INHERIT);
     }
 
     @Override
@@ -84,6 +87,16 @@ public class CreateEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>imp
         foldersOuter.setVisible(visible);
     }
 
+    @Override
+    public PermissionInheritance getPermissionInheritance() {
+        return permissionInheritance.getSelectedItem();
+    }
+
+    @Override
+    public void setPermissionInheritance(final PermissionInheritance permissionInheritance) {
+        this.permissionInheritance.setSelectedItem(permissionInheritance);
+    }
+
     @UiHandler("name")
     void onKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == '\r') {
@@ -99,5 +112,8 @@ public class CreateEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>imp
                 name.setFocus(true);
             }
         });
+    }
+
+    public interface Binder extends UiBinder<Widget, CreateEntityViewImpl> {
     }
 }

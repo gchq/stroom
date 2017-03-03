@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,19 +27,14 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.query.api.DocRef;
 import stroom.util.client.BorderUtil;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;
 
 public class ScriptListPresenter extends MyPresenterWidget<DataGridView<DocRef>> {
-    private final MySingleSelectionModel<DocRef> selectionModel;
-
     @Inject
     public ScriptListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<DocRef>(true));
-
-        selectionModel = new MySingleSelectionModel<DocRef>();
-        getView().setSelectionModel(selectionModel);
+        super(eventBus, new DataGridViewImpl<DocRef>(true, true));
 
         // Add a border to the list.
         BorderUtil.addBorder(getWidget().getElement());
@@ -67,7 +62,7 @@ public class ScriptListPresenter extends MyPresenterWidget<DataGridView<DocRef>>
         getView().setRowCount(scripts.size());
     }
 
-    public MySingleSelectionModel<DocRef> getSelectionModel() {
-        return selectionModel;
+    public MultiSelectionModel<DocRef> getSelectionModel() {
+        return getView().getSelectionModel();
     }
 }

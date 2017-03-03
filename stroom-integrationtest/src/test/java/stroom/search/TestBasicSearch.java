@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,11 +15,6 @@
  */
 
 package stroom.search;
-
-import java.io.IOException;
-import java.util.List;
-
-import javax.annotation.Resource;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -31,24 +26,27 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 import org.junit.Assert;
 import org.junit.Test;
-
+import stroom.AbstractCoreIntegrationTest;
+import stroom.CommonTestScenarioCreator;
 import stroom.index.server.FieldFactory;
 import stroom.index.server.IndexShardKeyUtil;
 import stroom.index.server.IndexShardWriter;
 import stroom.index.server.IndexShardWriterCache;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardService;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexShardService;
 import stroom.search.server.IndexShardSearcher;
 import stroom.search.server.IndexShardSearcherImpl;
 import stroom.search.server.MaxHitCollector;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
+
+import javax.annotation.Resource;
+import java.io.IOException;
+import java.util.List;
 
 public class TestBasicSearch extends AbstractCoreIntegrationTest {
     @Resource

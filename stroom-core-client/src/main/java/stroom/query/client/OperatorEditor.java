@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,15 +28,13 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.client.TermEditor.Resources;
 
 public class OperatorEditor extends Composite {
+    private static Resources resources;
     private final FlowPanel layout;
     private final ItemListBox<Op> listBox;
     private ExpressionOperator operator;
-
     private boolean reading;
     private boolean editing;
     private ExpressionUiHandlers uiHandlers;
-
-    private static Resources resources;
 
     public OperatorEditor() {
         if (resources == null) {
