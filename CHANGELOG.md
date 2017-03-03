@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 * Issue **#75** : Upgraded to Lucene 5.
 
+* Issue **135** : [BREAKING CHANGE] Removed JODA Time library and replaced with Java 7 Time API. This change breaks time zone output previously formatted with `ZZ` or `ZZZ`.
+
 ### Changed
 
 ## [v5.0-beta.11] - 2017-02-23

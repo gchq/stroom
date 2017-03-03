@@ -64,7 +64,6 @@ public class DateFormatter implements Formatter {
         if (TimeZone.Use.UTC.equals(use)) {
             zone = ZoneOffset.UTC;
         } else if (TimeZone.Use.LOCAL.equals(use)) {
-            pattern = pattern.replaceAll("'Z'", "Z");
             zone = ZoneId.systemDefault();
 
             try {
@@ -77,14 +76,12 @@ public class DateFormatter implements Formatter {
             }
 
         } else if (TimeZone.Use.ID.equals(use)) {
-            pattern = pattern.replaceAll("'Z'", "Z");
             zone = ZoneId.of(zoneId);
         } else if (TimeZone.Use.OFFSET.equals(use)) {
-            pattern = pattern.replaceAll("'Z'", "Z");
             zone = ZoneOffset.ofHoursMinutes(offsetHours, offsetMinutes);
         }
 
-        final DateTimeFormatter format = DateTimeFormatter.ofPattern(pattern).withZone(zone);
+        final DateTimeFormatter format = DateTimeFormatter.ofPattern(pattern);
         return new DateFormatter(format);
     }
 

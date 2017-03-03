@@ -146,8 +146,9 @@ public class FormatDate extends StroomExtensionFunctionCall {
                 try {
                     // Now format the date using the specified pattern and time
                     // zone.
+                    final ZonedDateTime dateTime = Instant.ofEpochMilli(ms).atZone(zoneId);
                     final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(patternOut);
-                    final String time = dateTimeFormatter.format(Instant.ofEpochMilli(ms).atZone(zoneId));
+                    final String time = dateTimeFormatter.format(dateTime);
                     result = StringValue.makeStringValue(time);
                 } catch (final Throwable e) {
                     final StringBuilder sb = new StringBuilder();

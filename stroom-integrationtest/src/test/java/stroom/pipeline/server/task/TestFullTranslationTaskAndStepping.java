@@ -17,10 +17,11 @@
 package stroom.pipeline.server.task;
 
 import java.io.File;
+import java.time.Duration;
+import java.time.Period;
 
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.logging.StroomLogger;
-import org.joda.time.Period;
 import org.junit.Test;
 
 public class TestFullTranslationTaskAndStepping extends TranslationTest {
@@ -80,6 +81,6 @@ public class TestFullTranslationTaskAndStepping extends TranslationTest {
         testSteppingTask(feedName, outDir);
         final long steppingTime = System.currentTimeMillis() - time;
 
-        LOGGER.info(feedName + " TRANSLATION STEPPING TOOK: " + new Period(steppingTime).toString());
+        LOGGER.info(feedName + " TRANSLATION STEPPING TOOK: " + Duration.ofMillis(steppingTime).toString());
     }
 }

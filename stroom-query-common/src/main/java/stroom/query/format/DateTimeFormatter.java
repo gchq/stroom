@@ -48,7 +48,6 @@ public class DateTimeFormatter implements Formatter {
                     if (TimeZone.Use.UTC.equals(timeZone.getUse())) {
                         zone = ZoneOffset.UTC;
                     } else if (TimeZone.Use.LOCAL.equals(timeZone.getUse())) {
-                        pattern = pattern.replaceAll("'Z'", "Z");
                         zone = ZoneId.systemDefault();
 
                         try {
@@ -61,10 +60,8 @@ public class DateTimeFormatter implements Formatter {
                         }
 
                     } else if (TimeZone.Use.ID.equals(timeZone.getUse())) {
-                        pattern = pattern.replaceAll("'Z'", "Z");
                         zone = ZoneId.of(timeZone.getId());
                     } else if (TimeZone.Use.OFFSET.equals(timeZone.getUse())) {
-                        pattern = pattern.replaceAll("'Z'", "Z");
                         zone = ZoneOffset.ofHoursMinutes(getInt(timeZone.getOffsetHours()),
                                 getInt(timeZone.getOffsetMinutes()));
                     }
