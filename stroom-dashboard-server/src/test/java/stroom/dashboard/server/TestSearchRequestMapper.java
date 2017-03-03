@@ -86,7 +86,7 @@ public class TestSearchRequestMapper {
         paramMap.put("param1", "val1");
         paramMap.put("param2", "val2");
 
-        final Search search = new Search(docRef, expressionOperator.build(), componentSettingsMap, paramMap, "en-gb", true);
+        final Search search = new Search(docRef, expressionOperator.build(), componentSettingsMap, paramMap, true);
 
         final Map<String, ComponentResultRequest> componentResultRequestMap = new HashMap<>();
         for (final Entry<String, ComponentSettings> entry : componentSettingsMap.entrySet()) {
@@ -96,7 +96,7 @@ public class TestSearchRequestMapper {
             componentResultRequestMap.put(entry.getKey(), tableResultRequest);
         }
 
-        SearchRequest searchRequest = new SearchRequest(search, componentResultRequestMap);
+        SearchRequest searchRequest = new SearchRequest(search, componentResultRequestMap, "en-gb");
 
         return searchRequest;
     }

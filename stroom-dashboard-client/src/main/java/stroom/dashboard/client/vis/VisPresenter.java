@@ -261,15 +261,15 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     @Override
-    public void setData(final ComponentResult result) {
+    public void setData(final String json) {
         if (visSettings != null && visSettings.getVisualisation() != null) {
-            if (result != null && result instanceof VisResult) {
-                final VisResult visResult = (VisResult) result;
+            if (json != null) {
+                final VisResult visResult = JsonUtil.decode(json);
 
                 currentSettings = getJSONSettings();
-                currentData = getJSONData(visResult);
+                currentData = (JavaScriptObject) visResult.store;//getJSONData(visResult);
                 if (currentError == null) {
-                    currentError = visResult.getError();
+                    currentError = visResult.error;
                 }
             }
 
@@ -309,17 +309,17 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         updateStatusMessage();
     }
 
-    private JavaScriptObject getJSONData(final VisResult visResult) {
-        JavaScriptObject data = null;
-
-        // Turn JSON result text into an object.
-        final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(visResult.getJSON()));
-        if (dataObject != null) {
-            data = dataObject.getJavaScriptObject();
-        }
-
-        return data;
-    }
+//    private JavaScriptObject getJSONData(final VisResult visResult) {
+//        JavaScriptObject data = null;
+//
+//        // Turn JSON result text into an object.
+//        final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(visResult.getJSON()));
+//        if (dataObject != null) {
+//            data = dataObject.getJavaScriptObject();
+//        }
+//
+//        return data;
+//    }
 
     private JavaScriptObject getJSONSettings() {
         JavaScriptObject settings = null;

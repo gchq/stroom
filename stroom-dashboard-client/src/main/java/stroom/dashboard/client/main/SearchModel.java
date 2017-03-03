@@ -131,7 +131,7 @@ public class SearchModel {
                 currentExpression = builder.build();
 
                 currentQueryKey = DashboardQueryKey.create(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
-                currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, timeZones.getTimeZone(), incremental);
+                currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, incremental);
                 activeSearch = currentSearch;
 
                 // Let the query presenter know search is active.
@@ -180,7 +180,7 @@ public class SearchModel {
             if (resultComponentMap != null) {
                 final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
                 if (dataSourceRef != null) {
-                    currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, timeZones.getTimeZone(), true);
+                    currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, true);
                     activeSearch = currentSearch;
 
                     // Tell the refreshing component that it should want data.
@@ -238,8 +238,8 @@ public class SearchModel {
             final String componentId = entry.getKey();
             final ResultComponent resultComponent = entry.getValue();
             if (result.getResults() != null && result.getResults().containsKey(componentId)) {
-                final ComponentResult res = result.getResults().get(componentId);
-                resultComponent.setData(res);
+                final String json = result.getResults().get(componentId);
+                resultComponent.setData(json);
             }
 
             if (result.isComplete()) {
@@ -290,7 +290,7 @@ public class SearchModel {
             requestMap.put(componentId, componentResultRequest);
         }
 
-        return new SearchRequest(search, requestMap);
+        return new SearchRequest(search, requestMap, timeZones.getTimeZone());
     }
 
     public boolean isSearching() {
