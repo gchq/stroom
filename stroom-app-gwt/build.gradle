@@ -1,5 +1,5 @@
 ext {
-    warDir = project(':stroom-dropwizard').file("src/main/resources/webapp")
+    warDir = project(':stroom-dropwizard').file("src/main/resources/ui")
     outputDir = "${warDir}/stroom"
 
     gwtBuildDir = "${project.buildDir}/gwt"

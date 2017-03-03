@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "Deleting stroom-app-client/src/main/webapp/stroom"
+echo "Deleting stroom-app-client/src/main/ui/stroom"
 rm -rf ./stroom-app-client/src/main/webapp/stroom
 
 echo "Deleting stroom-app-client/src/main/gwt-unitCache"
