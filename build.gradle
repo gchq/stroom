@@ -49,12 +49,12 @@ subprojects {
     }
     artifacts.archives packageTests
 
-    task packageSources(type: Jar) {
-        classifier = 'sources'
-        from sourceSets.main.allSource
-
-    }
-    artifacts.archives packageSources
+//    task packageSources(type: Jar) {
+//        classifier = 'sources'
+//        from sourceSets.main.allSource
+//
+//    }
+//    artifacts.archives packageSources
 
     repositories {
         mavenLocal()
