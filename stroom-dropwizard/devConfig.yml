@@ -8,3 +8,5 @@ server:
 
 logging:
     level: INFO
+
+uiPath: src/main/resources/ui
