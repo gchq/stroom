@@ -6,11 +6,8 @@ server:
     type: http
     port: 8080
 
-uiPath: stroom
-
 logging:
-    level: INFO
-
+  level: INFO
   level: ERROR
   loggers:
     "stroom":
@@ -18,7 +15,5 @@ logging:
       additive: true
   appenders:
     - type: console
-#    - type: file
-#      currentLogFilename: stroom.log
-#      archivedLogFilenamePattern: stroom-%d.log.gz
-#      archivedFileCount: 10
+
+uiPath: ./ui/
