@@ -8,7 +8,7 @@ def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
 
 def gwtSourceDirs = []
-parent.subprojects.each {p ->
+parent.subprojects.each { p ->
     if (p.name != 'stroom-dashboard-gwt') {
         gwtSourceDirs << p.sourceSets.main.output.classesDir
         gwtSourceDirs << p.sourceSets.main.java.srcDirs
