@@ -21,7 +21,7 @@ import javax.servlet.ServletContext;
 
 public class ServletContextUtil {
     private static final String DEFAULT_NAME = "stroom";
-    private static final String WEBAPP = "webapp";
+    private static final String WEBAPP = "ui";
 
     public static final String getWARName(ServletConfig servletConfig) {
         if (servletConfig == null) {
