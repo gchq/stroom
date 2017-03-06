@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.vis;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Position;
@@ -29,6 +30,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
+import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentChangeEvent;
@@ -262,51 +264,55 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
     @Override
     public void setData(final String json) {
-        if (visSettings != null && visSettings.getVisualisation() != null) {
-            if (json != null) {
-                final VisResult visResult = JsonUtil.decode(json);
+        try {
+            if (visSettings != null && visSettings.getVisualisation() != null) {
+                if (json != null) {
+                    final VisResult visResult = JsonUtil.decode(json);
 
-                currentSettings = getJSONSettings();
-                currentData = (JavaScriptObject) visResult.store;//getJSONData(visResult);
-                if (currentError == null) {
-                    currentError = visResult.error;
+                    currentSettings = getJSONSettings();
+                    currentData = (JavaScriptObject) visResult.store;//getJSONData(visResult);
+                    if (currentError == null) {
+                        currentError = visResult.error;
+                    }
                 }
-            }
 
-            // Put a new function in the cache if there isn't one already.
-            final VisFunction visFunction = visFunctionCache.get(visSettings.getVisualisation());
-            if (visFunction == null) {
-                // Create a new function and put it into the cache.
-                final VisFunction function = visFunctionCache.create(visSettings.getVisualisation());
+                // Put a new function in the cache if there isn't one already.
+                final VisFunction visFunction = visFunctionCache.get(visSettings.getVisualisation());
+                if (visFunction == null) {
+                    // Create a new function and put it into the cache.
+                    final VisFunction function = visFunctionCache.create(visSettings.getVisualisation());
 
-                // Add a handler to act when the function has been loaded.
-                if (currentFunction != null) {
-                    currentFunction.removeStatusHandler(this);
-                }
-                currentFunction = function;
-                function.addStatusHandler(this);
-
-                // Load the visualisation.
-                loadVisualisation(function, visSettings.getVisualisation());
-
-            } else {
-                if (currentFunction != visFunction) {
+                    // Add a handler to act when the function has been loaded.
                     if (currentFunction != null) {
                         currentFunction.removeStatusHandler(this);
                     }
+                    currentFunction = function;
+                    function.addStatusHandler(this);
+
+                    // Load the visualisation.
+                    loadVisualisation(function, visSettings.getVisualisation());
+
+                } else {
+                    if (currentFunction != visFunction) {
+                        if (currentFunction != null) {
+                            currentFunction.removeStatusHandler(this);
+                        }
+                    }
+                    // Ensure the function has this as a handler.
+                    currentFunction = visFunction;
+                    visFunction.addStatusHandler(this);
                 }
-                // Ensure the function has this as a handler.
-                currentFunction = visFunction;
-                visFunction.addStatusHandler(this);
+            } else if (currentFunction != null) {
+                currentFunction.removeStatusHandler(this);
+                currentFunction = null;
+
+                getView().showMessage("No visualisation");
             }
-        } else if (currentFunction != null) {
-            currentFunction.removeStatusHandler(this);
-            currentFunction = null;
 
-            getView().showMessage("No visualisation");
+            updateStatusMessage();
+        } catch (final Exception e) {
+            GWT.log(e.getMessage(), e);
         }
-
-        updateStatusMessage();
     }
 
 //    private JavaScriptObject getJSONData(final VisResult visResult) {

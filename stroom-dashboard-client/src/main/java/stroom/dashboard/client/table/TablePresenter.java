@@ -19,6 +19,7 @@ package stroom.dashboard.client.table;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -318,37 +319,41 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     public void setData(final String json) {
         ignoreRangeChange = true;
 
+        try {
 //        if (!paused) {
-        lastExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
-        currentExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
+            lastExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
+            currentExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
 
-        if (json != null) {
-            // Don't refresh the table unless the results have changed.
-            final TableResult tableResult = JsonUtil.decode(json);
+            if (json != null) {
+                // Don't refresh the table unless the results have changed.
+                final TableResult tableResult = JsonUtil.decode(json);
 
-            final Row[] values = tableResult.rows;
-            final OffsetRange valuesRange = tableResult.resultRange;
+                final Row[] values = tableResult.rows;
+                final OffsetRange valuesRange = tableResult.resultRange;
 
-            // Only set data in the table if we have got some results and
-            // they have changed.
-            if (valuesRange.offset == 0 || values.length > 0) {
-                updateColumns();
-                getView().setRowData(valuesRange.offset, Arrays.asList(values));
-                getView().setRowCount(tableResult.totalResults, true);
-            }
+                // Only set data in the table if we have got some results and
+                // they have changed.
+                if (valuesRange.offset == 0 || values.length > 0) {
+                    updateColumns();
+                    getView().setRowData(valuesRange.offset, Arrays.asList(values));
+                    getView().setRowCount(tableResult.totalResults, true);
+                }
 
-            // Enable download of current results.
-            downloadButton.setEnabled(true);
-        } else {
-            // Disable download of current results.
-            downloadButton.setEnabled(false);
+                // Enable download of current results.
+                downloadButton.setEnabled(true);
+            } else {
+                // Disable download of current results.
+                downloadButton.setEnabled(false);
 
-            getView().setRowData(0, new ArrayList<Row>());
-            getView().setRowCount(0, true);
+                getView().setRowData(0, new ArrayList<Row>());
+                getView().setRowCount(0, true);
 
                 getView().getSelectionModel().clear();
-        }
+            }
 //        }
+        } catch (final Exception e) {
+            GWT.log(e.getMessage());
+        }
 
         ignoreRangeChange = false;
     }

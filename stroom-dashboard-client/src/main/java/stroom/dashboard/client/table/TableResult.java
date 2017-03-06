@@ -19,7 +19,7 @@ package stroom.dashboard.client.table;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
-@JsType(isNative = true, namespace = "stroom")
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
 public class TableResult {
     Row[] rows;
     OffsetRange resultRange;
