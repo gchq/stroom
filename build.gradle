@@ -68,14 +68,14 @@ subprojects {
     }
 }
 
-task fullBuild(type: GradleBuild) {
-    tasks = ['clean', 'build', 'gwtDevMode']
-}
-
-// Shortcut tasks
-task buildUI(type: GradleBuild) {
-    tasks = ['gwtDevMode']
-}
+//task fullBuild(type: GradleBuild) {
+//    tasks = ['clean', 'build', 'gwtDevMode']
+//}
+//
+//// Shortcut tasks
+//task buildUI(type: GradleBuild) {
+//    tasks = ['gwtDevMode']
+//}
 
 task setupSampleData(type: GradleBuild) {
     tasks = [':stroom-integrationtest:setupSampleData']
