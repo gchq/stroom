@@ -16,7 +16,9 @@
 
 package stroom.dashboard.shared;
 
-public class DashboardQueryKey {
+import java.io.Serializable;
+
+public class DashboardQueryKey implements Serializable {
     private String uuid;
     private long dashboardId;
 
