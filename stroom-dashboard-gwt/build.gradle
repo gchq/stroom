@@ -1,21 +1,11 @@
-//ext {
-    def warDir = project(':stroom-dropwizard').file("src/main/resources/ui")
-    def outputDir = "${warDir}/dashboard"
+def warDir = project(':stroom-dropwizard').file('src/main/resources/ui')
+def outputDir = "${warDir}/dashboard"
 
 def gwtBuildDir = "${project.buildDir}/gwt"
 def tmpDir = "${gwtBuildDir}/tmp"
 def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
-
-    println 'warDir: ' + warDir.toString()
-    println 'outputDir: ' + outputDir.toString()
-    println 'gwtBuildDir: ' + gwtBuildDir.toString()
-    println 'tmpDir: ' + tmpDir.toString()
-    println 'workDir: ' + workDir.toString()
-    println 'deployDir: ' + deployDir.toString()
-    println 'extraDir: ' + extraDir.toString()
-//}
 
 dependencies {
     compile project(':stroom-dashboard-client')
@@ -43,7 +33,6 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
     def module = 'stroom.dashboard.DashboardApp'
 
     doFirst {
-        println 'QQQQQQQQ'
         println 'Deleting GWT compiled output: ' + outputDir.toString()
         delete outputDir
         println 'Deleting GWT build dir: ' + gwtBuildDir.toString()
@@ -92,7 +81,6 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
     def module = 'stroom.dashboard.DashboardAppSuperDevModeChrome'
 
     doFirst {
-        println 'XXXXXXX'
         println 'Deleting GWT compiled output: ' + outputDir.toString()
         delete outputDir
 
@@ -178,14 +166,15 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
     maxHeapSize = '4G'
 }
 
-task gwtClean(type: Delete) {
-    println 'ZZZZZZZZZZ'
-    println 'Deleting GWT compiled output: ' + outputDir.toString()
-    delete outputDir
-    println 'Deleting GWT build dir: ' + gwtBuildDir.toString()
-    delete gwtBuildDir
-    file(gwtBuildDir).mkdirs()
-    file(tmpDir).mkdirs()
+task gwtClean {
+    doLast {
+        println 'Deleting GWT compiled output: ' + outputDir.toString()
+        delete outputDir
+        println 'Deleting GWT build dir: ' + gwtBuildDir.toString()
+        delete gwtBuildDir
+        file(gwtBuildDir).mkdirs()
+        file(tmpDir).mkdirs()
+    }
 }
 
 gwtCompile.onlyIf { !project.hasProperty('skipGWT') }
