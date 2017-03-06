@@ -8,5 +8,11 @@ server:
 
 logging:
     level: INFO
-
+    loggers:
+        stroom.statistics: INFO
+    appenders:
+        - type: console
+          threshold: INFO
+          logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{5} - %X{code} %msg %n"
+          timeZone: UTC
 uiPath: src/main/resources/ui
