@@ -7,13 +7,12 @@ server:
     port: 8080
 
 logging:
-  level: INFO
+  level: ERROR
   loggers:
     "stroom":
       level: INFO
       additive: true
   appenders:
     - type: console
-      threshold: INFO
       logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{5} - %X{code} %msg %n"
       timeZone: UTC
