@@ -21,6 +21,8 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import com.google.gwt.user.server.rpc.SerializationPolicy;
+import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -37,7 +39,17 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.Set;
 
 @Component
 public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements HandlerAdapter, ServletContextAware {
@@ -162,6 +174,105 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
         } catch (final ServletException e) {
             LOGGER.error(e.getMessage(), e);
         }
+    }
+
+    @Override
+    protected SerializationPolicy doGetSerializationPolicy(
+            HttpServletRequest request, String moduleBaseURL, String strongName) {
+        String serializationPolicyFilePath = getSerializationPolicyFilePath(request, moduleBaseURL, strongName);
+
+//        try {
+//            List<String> paths1 = getResourceFiles("/");
+//            LOGGER.info("There are {} path1", paths1);
+//            paths1.forEach(path -> LOGGER.info("Path1 in web app: {}", paths1));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        Set<String> paths = getServletContext().getResourcePaths("./");
+
+
+        LOGGER.info("There are {} paths", paths);
+        paths.forEach(path -> LOGGER.info("Path in web app: {}", path));
+
+        try(InputStream is = getServletContext().getResourceAsStream(String.format("%s", serializationPolicyFilePath))){
+            if(is == null){
+                try(InputStream jarIs = getServletContext().getResourceAsStream(String.format("ui/%s", serializationPolicyFilePath))){
+                    return SerializationPolicyLoader.loadFromStream(is, null);
+                }
+            }
+            return SerializationPolicyLoader.loadFromStream(is, null);
+        } catch (IOException | ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // TODO this is adapted/copied from RequestServiceServlet
+    private String getSerializationPolicyFilePath(HttpServletRequest request, String moduleBaseURL, String strongName) {
+        // The request can tell you the path of the web app relative to the
+        // container root.
+        String contextPath = request.getContextPath();
+
+        String modulePath = null;
+        if (moduleBaseURL != null) {
+            try {
+                modulePath = new URL(moduleBaseURL).getPath();
+            } catch (MalformedURLException ex) {
+                // log the information, we will default
+                log("Malformed moduleBaseURL: " + moduleBaseURL, ex);
+            }
+        }
+
+        SerializationPolicy serializationPolicy = null;
+
+    /*
+     * Check that the module path must be in the same web app as the servlet
+     * itself. If you need to implement a scheme different than this, override
+     * this method.
+     */
+        if (modulePath == null || !modulePath.startsWith(contextPath)) {
+            String message = "ERROR: The module path requested, "
+                    + modulePath
+                    + ", is not in the same web application as this servlet, "
+                    + contextPath
+                    + ".  Your module may not be properly configured or your client and server code maybe out of date.";
+            log(message);
+            throw new RuntimeException(message);
+        } else {
+            // Strip off the context path from the module base URL. It should be a
+            // strict prefix.
+            String contextRelativePath = modulePath.substring(contextPath.length());
+
+            String serializationPolicyFilePath = SerializationPolicyLoader.getSerializationPolicyFileName(contextRelativePath
+                    + strongName);
+            return serializationPolicyFilePath;
+        }
+    }
+
+    private List<String> getResourceFiles(String path ) throws IOException {
+        List<String> filenames = new ArrayList<>();
+
+        try(
+                InputStream in = getResourceAsStream( path );
+                BufferedReader br = new BufferedReader( new InputStreamReader( in ) ) ) {
+            String resource;
+
+            while( (resource = br.readLine()) != null ) {
+                filenames.add( resource );
+            }
+        }
+
+        return filenames;
+    }
+
+    private InputStream getResourceAsStream( String resource ) {
+        final InputStream in
+                = getContextClassLoader().getResourceAsStream( resource );
+
+        return in == null ? getClass().getResourceAsStream( resource ) : in;
+    }
+
+    private ClassLoader getContextClassLoader() {
+        return Thread.currentThread().getContextClassLoader();
     }
 
     private class DelegatingServletConfig implements ServletConfig {
