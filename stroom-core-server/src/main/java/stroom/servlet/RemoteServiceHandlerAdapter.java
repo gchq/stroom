@@ -172,6 +172,10 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
         }
     }
 
+    /**
+     * We need to override this method to customise the location of the `.gwt.rpc` file.
+     * Reason: the path is different when the application is bundled as a fat jar.
+     */
     @Override
     protected SerializationPolicy doGetSerializationPolicy(
             HttpServletRequest request, String moduleBaseURL, String strongName) {
