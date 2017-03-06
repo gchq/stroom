@@ -79,12 +79,8 @@ public class SecurityConfiguration {
         shiroFilter.setLoginUrl("/login.html");
         shiroFilter.setSuccessUrl("/stroom.jsp");
         shiroFilter.getFilters().put("jwtFilter", new JWTAuthenticationFilter());
-//        shiroFilter.getFilterChainDefinitionMap().put("/**/secure/*", "authc, roles[USER]");
-        shiroFilter.getFilterChainDefinitionMap().put("/rest/*", "jwtFilter");
-        shiroFilter.getFilterChainDefinitionMap().put("/rest/**/*", "jwtFilter");
-        shiroFilter.getFilterChainDefinitionMap().put("/index", "jwtFilter");
-        shiroFilter.getFilterChainDefinitionMap().put("/index/*", "jwtFilter");
-        shiroFilter.getFilterChainDefinitionMap().put("/**/rest/*", "jwtFilter");
+        shiroFilter.getFilterChainDefinitionMap().put("/**/secure/**", "authc, roles[USER]");
+        shiroFilter.getFilterChainDefinitionMap().put("/rest/**", "jwtFilter");
         return (AbstractShiroFilter) shiroFilter.getObject();
     }
 

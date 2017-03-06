@@ -15,7 +15,6 @@ public class Filters {
 
     private Environment environment;
 
-    final FilterHolder loggingFilterHolder;
     final FilterHolder upgradeFilterHolder;
     final FilterHolder threadScopeContextFilterHolder;
     final FilterHolder rejectPostFilterHolder;
@@ -25,9 +24,6 @@ public class Filters {
 
     public Filters(Environment environment) throws ClassNotFoundException {
         this.environment = environment;
-
-        loggingFilterHolder = createFilter("stroom.util.logging.LoggingFilter", "loggingFilter", null);
-        addFilter(loggingFilterHolder, MATCH_ALL_PATHS);
 
         upgradeFilterHolder = createFilter("stroom.util.upgrade.UpgradeDispatcherFilter", "upgradeFilter", null);
         addFilter(upgradeFilterHolder, MATCH_ALL_PATHS);
