@@ -16,4 +16,5 @@ logging:
   appenders:
     - type: console
 
+# This is the path of the UI folder inside the jar
 uiPath: ./ui/
