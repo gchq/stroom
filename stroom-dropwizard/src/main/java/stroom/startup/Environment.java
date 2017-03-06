@@ -21,7 +21,7 @@ public class Environment {
         environment.servlets().setSessionHandler(sessions);
 
         // If we don't set the baseResource then servlets might not be able to find files.
-        environment.servlets().setBaseResource(new PathResource(Paths.get(config.getUiPath())));
+        environment.servlets().setBaseResource(new PathResource(Paths.get("./")));
 
         // We want Stroom to use the root path so we need to move Dropwizard's path.
         environment.jersey().setUrlPattern("/rest/*");
