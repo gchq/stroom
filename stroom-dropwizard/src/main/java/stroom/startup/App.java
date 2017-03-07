@@ -1,13 +1,22 @@
 package stroom.startup;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.util.ContextInitializer;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
+import org.slf4j.LoggerFactory;
 import stroom.Config;
 
 public class App extends Application<Config> {
     public static void main(String[] args) throws Exception {
         new App().run(args);
+
+        // LEAVING THIS HERE FOR NOW IN CASE IT IS NEEDED
+//        LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+//        context.reset();
+//        ContextInitializer initializer = new ContextInitializer(context);
+//        initializer.autoConfig();
     }
 
     @Override

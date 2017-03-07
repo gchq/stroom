@@ -1,0 +1,49 @@
+<!-- LEAVING THIS HERE FOR NOW JUST IN CASE IT IS NEEDED -->
+
+<configuration>
+
+    <property name="FILE_LOG_PATTERN" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <Pattern>${FILE_LOG_PATTERN}</Pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>stroom.log</file>
+        <encoder>
+            <Pattern>${FILE_LOG_PATTERN}</Pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="EVENT_LOGGER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>event.log</file>
+        <encoder>
+            <Pattern>%msg%n</Pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <maxFileSize>100MB</maxFileSize>
+            <fileNamePattern>event.%d{yyyy-MM-dd-HH-m, UTC}0.%i.log</fileNamePattern>
+        </rollingPolicy>
+    </appender>
+
+    <logger name="event-logger" level="INFO" additivity="false">
+        <appender-ref ref="EVENT_LOGGER" />
+    </logger>
+
+    <logger name="stroom" level="INFO" additivity="false">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <root level="ERROR">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
+    </root>
+
+</configuration>
