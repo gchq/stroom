@@ -3,6 +3,10 @@ package stroom.startup;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.servlet.FilterHolder;
+import org.springframework.web.filter.DelegatingFilterProxy;
+import stroom.servlet.RejectPostFilter;
+import stroom.util.thread.ThreadScopeContextFilter;
+import stroom.util.upgrade.UpgradeDispatcherFilter;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
@@ -25,35 +29,35 @@ public class Filters {
     public Filters(Environment environment) throws ClassNotFoundException {
         this.environment = environment;
 
-        upgradeFilterHolder = createFilter("stroom.util.upgrade.UpgradeDispatcherFilter", "upgradeFilter", null);
+        upgradeFilterHolder = createFilter(UpgradeDispatcherFilter.class, "upgradeFilter", null);
         addFilter(upgradeFilterHolder, MATCH_ALL_PATHS);
 
-        threadScopeContextFilterHolder = createFilter("stroom.util.thread.ThreadScopeContextFilter", "threadScopeContextFilter", null);
+        threadScopeContextFilterHolder = createFilter(ThreadScopeContextFilter.class, "threadScopeContextFilter", null);
         addFilter(threadScopeContextFilterHolder, MATCH_ALL_PATHS);
 
-        rejectPostFilterHolder = createFilter("stroom.servlet.RejectPostFilter", "rejectPostFilter",
+        rejectPostFilterHolder = createFilter(RejectPostFilter.class, "rejectPostFilter",
                 ImmutableMap.<String, String>builder().put("rejectUri", "/").build());
         addFilter(rejectPostFilterHolder, MATCH_ALL_PATHS);
 
-        clusterCallCertificateRequiredFilterHolder = createFilter("org.springframework.web.filter.DelegatingFilterProxy",
+        clusterCallCertificateRequiredFilterHolder = createFilter(DelegatingFilterProxy.class,
                 "clusterCallCertificateRequiredFilter",
                 ImmutableMap.<String, String>builder().put("contextAttribute", "org.springframework.web.servlet.FrameworkServlet.CONTEXT.spring").build());
         addFilter(clusterCallCertificateRequiredFilterHolder, "/clustercall.rpc");
 
-        exportCertificateRequiredFilterHolder = createFilter("org.springframework.web.filter.DelegatingFilterProxy",
+        exportCertificateRequiredFilterHolder = createFilter(DelegatingFilterProxy.class,
                 "exportCertificateRequiredFilter",
                 ImmutableMap.<String, String>builder().put("contextAttribute", "org.springframework.web.servlet.FrameworkServlet.CONTEXT.spring").build());
         addFilter(exportCertificateRequiredFilterHolder, "/export/*");
 
-        shiroFilterHolder = createFilter("org.springframework.web.filter.DelegatingFilterProxy", "shiroFilter",
+        shiroFilterHolder = createFilter(DelegatingFilterProxy.class, "shiroFilter",
                 ImmutableMap.<String, String>builder()
                         .put("contextAttribute", "org.springframework.web.servlet.FrameworkServlet.CONTEXT.spring")
                         .put("targetFilterLifecycle", "true").build());
         addFilter(shiroFilterHolder, MATCH_ALL_PATHS);
     }
 
-    private FilterHolder createFilter(String clazz, String name, Map<String, String> initParams) throws ClassNotFoundException {
-        FilterHolder filterHolder = new FilterHolder((Class<? extends Filter>) Class.forName(clazz));
+    private FilterHolder createFilter(Class<? extends Filter> clazz, String name, Map<String, String> initParams) throws ClassNotFoundException {
+        FilterHolder filterHolder = new FilterHolder(clazz);
         filterHolder.setName(name);
 
         // Set params

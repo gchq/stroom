@@ -212,7 +212,7 @@
     <!--</servlet>-->
     <!--<servlet-mapping>-->
         <!--<servlet-name>SpringApplication</servlet-name>-->
-        <!--<url-pattern>/rest/*</url-pattern>-->
+        <!--<url-pattern>/api/*</url-pattern>-->
     <!--</servlet-mapping>-->
 
     <!-- Deal with requests to the dispatch servlet -->
