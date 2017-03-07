@@ -64,11 +64,6 @@ public class CoreClientConfiguration {
     }
 
     @Bean
-    public LifecycleServiceImpl lifecycleService() {
-        return new LifecycleServiceImpl();
-    }
-
-    @Bean
     @Scope("request")
     public HeaderMap headerMap() {
         return new HeaderMapFactory().create();
