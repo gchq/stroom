@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,35 +16,39 @@
 
 package stroom.pipeline.stepping.client;
 
-import stroom.app.client.ContentManager;
-import stroom.app.client.presenter.Plugin;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
-import stroom.explorer.client.presenter.ExplorerDropDownTreePresenter;
-import stroom.explorer.shared.ExplorerData;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
-import stroom.pipeline.stepping.shared.GetPipelineForStreamAction;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.streamstore.shared.StreamType;
-import stroom.util.shared.SharedLong;
+
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.core.client.ContentManager;
+import stroom.core.client.presenter.Plugin;
+import stroom.dispatch.client.AsyncCallbackAdaptor;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.shared.EntityServiceFindAction;
+import stroom.entity.shared.ResultList;
+import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.client.presenter.EntityChooser;
+import stroom.feed.shared.Feed;
+import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
+import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
+import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
+import stroom.query.api.DocRef;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
+import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamAttributeMap;
+import stroom.streamstore.shared.StreamType;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
-    private final Provider<ExplorerDropDownTreePresenter> pipelineSelection;
+    private final Provider<EntityChooser> pipelineSelection;
     private final Provider<SteppingContentTabPresenter> editorProvider;
     private final ContentManager contentManager;
     private final ClientDispatchAsync dispatcher;
 
     @Inject
     public PipelineSteppingPlugin(final EventBus eventBus, final Provider<SteppingContentTabPresenter> editorProvider,
-                                  final Provider<ExplorerDropDownTreePresenter> pipelineSelection, final ContentManager contentManager,
+                                  final Provider<EntityChooser> pipelineSelection, final ContentManager contentManager,
                                   final ClientDispatchAsync dispatcher) {
         super(eventBus);
         this.pipelineSelection = pipelineSelection;
@@ -65,9 +69,9 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                 // If we don't have a pipeline id then try to guess one for the
                 // supplied stream.
                 dispatcher.execute(new GetPipelineForStreamAction(event.getStreamId(), event.getChildStreamId()),
-                        new AsyncCallbackAdaptor<DocRef>() {
+                        new AsyncCallbackAdaptor<SharedDocRef>() {
                             @Override
-                            public void onSuccess(final DocRef result) {
+                            public void onSuccess(final SharedDocRef result) {
                                 choosePipeline(result, event.getStreamId(), event.getEventId(),
                                         event.getChildStreamType());
                             }
@@ -76,33 +80,44 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         }
     }
 
-    private void choosePipeline(final DocRef initialPipelineRef, final long streamId, final long eventId,
+    private void choosePipeline(final SharedDocRef initialPipelineRef, final long streamId, final long eventId,
                                 final StreamType childStreamType) {
-        final ExplorerDropDownTreePresenter chooser = pipelineSelection.get();
+        final EntityChooser chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Step With");
         chooser.setIncludedTypes(PipelineEntity.ENTITY_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.READ);
-        chooser.addDataSelectionHandler(new DataSelectionHandler<ExplorerData>() {
-            @Override
-            public void onSelection(final DataSelectionEvent<ExplorerData> event) {
-                final DocRef pipeline = chooser.getSelectedEntityReference();
-                if (pipeline != null) {
-                    openEditor(pipeline, streamId, eventId, childStreamType);
-                }
+        chooser.addDataSelectionHandler(event -> {
+            final DocRef pipeline = chooser.getSelectedEntityReference();
+            if (pipeline != null) {
+
+
+                final FindStreamAttributeMapCriteria streamAttributeMapCriteria = new FindStreamAttributeMapCriteria();
+                streamAttributeMapCriteria.obtainFindStreamCriteria().obtainStreamIdSet().add(streamId);
+                streamAttributeMapCriteria.getFetchSet().add(Feed.ENTITY_TYPE);
+
+                dispatcher.execute(new EntityServiceFindAction<>(streamAttributeMapCriteria), new AsyncCallbackAdaptor<ResultList<StreamAttributeMap>>() {
+                    @Override
+                    public void onSuccess(final ResultList<StreamAttributeMap> result) {
+                        if (result != null && result.size() == 1) {
+                            final StreamAttributeMap row = result.get(0);
+                            openEditor(pipeline, row.getStream(), eventId, childStreamType);
+                        }
+                    }
+                });
             }
         });
 
         if (initialPipelineRef != null) {
-            chooser.setSelectedEntityReference(initialPipelineRef, false);
+            chooser.setSelectedEntityReference(initialPipelineRef);
         }
 
         chooser.show();
     }
 
-    private void openEditor(final DocRef pipeline, final long streamId, final long eventId,
+    private void openEditor(final DocRef pipeline, final Stream stream, final long eventId,
                             final StreamType childStreamType) {
         final SteppingContentTabPresenter editor = editorProvider.get();
-        editor.read(pipeline, streamId, eventId, childStreamType);
+        editor.read(pipeline, stream, eventId, childStreamType);
         contentManager.open(editor, editor, editor);
     }
 }

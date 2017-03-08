@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
 package stroom.query;
 
 import stroom.dashboard.expression.Expression;
-import stroom.query.shared.Field;
+import stroom.query.api.Field;
 
 public class CompiledField {
     private final Field field;
@@ -26,7 +26,7 @@ public class CompiledField {
     private final CompiledFilter compiledFilter;
 
     public CompiledField(final Field field, final int groupDepth, final Expression expression,
-            final CompiledFilter compiledFilter) {
+                         final CompiledFilter compiledFilter) {
         this.field = field;
         this.groupDepth = groupDepth;
         this.expression = expression;

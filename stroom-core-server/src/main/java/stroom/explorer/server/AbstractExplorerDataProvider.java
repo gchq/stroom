@@ -18,7 +18,13 @@ package stroom.explorer.server;
 
 import org.springframework.aop.framework.Advised;
 import stroom.entity.server.DocumentEntityServiceImpl;
-import stroom.entity.shared.*;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.DocumentEntity;
+import stroom.entity.shared.FindDocumentEntityCriteria;
+import stroom.entity.shared.FindNamedEntityCriteria;
+import stroom.entity.shared.FindService;
+import stroom.entity.shared.Folder;
+import stroom.entity.shared.FolderService;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;

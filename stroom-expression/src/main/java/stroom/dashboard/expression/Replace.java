@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,58 +22,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Replace extends AbstractFunction implements Serializable {
-    private static class Gen extends AbstractSingleChildGenerator {
-        private static final long serialVersionUID = 8153777070911899616L;
-
-        private final SerializablePattern pattern;
-        private final String replacement;
-
-        public Gen(final Generator childGenerator, final SerializablePattern pattern, final String replacement) {
-            super(childGenerator);
-            this.pattern = pattern;
-            this.replacement = replacement;
-        }
-
-        @Override
-        public void set(final String[] values) {
-            childGenerator.set(values);
-        }
-
-        @Override
-        public Object eval() {
-            final Object val = childGenerator.eval();
-            return pattern.matcher(TypeConverter.getString(val)).replaceAll(replacement);
-        }
-    }
-
-    private static class SerializablePattern implements Serializable {
-        private static final long serialVersionUID = 3482210112462557773L;
-
-        private final String regex;
-        private transient volatile Pattern pattern;
-
-        public SerializablePattern(final String regex) {
-            this.regex = regex;
-        }
-
-        public Matcher matcher(final CharSequence input) {
-            return getOrCreatePattern().matcher(input);
-        }
-
-        public Pattern getOrCreatePattern() {
-            if (pattern == null) {
-                pattern = Pattern.compile(regex);
-            }
-            return pattern;
-        }
-    }
-
-    private static final long serialVersionUID = -305845496003936297L;
     public static final String NAME = "replace";
-
+    private static final long serialVersionUID = -305845496003936297L;
     private String replacement;
     private SerializablePattern pattern;
-
     private Generator gen;
     private Function function = null;
     private boolean hasAggregate;
@@ -128,5 +80,51 @@ public class Replace extends AbstractFunction implements Serializable {
     @Override
     public boolean hasAggregate() {
         return hasAggregate;
+    }
+
+    private static class Gen extends AbstractSingleChildGenerator {
+        private static final long serialVersionUID = 8153777070911899616L;
+
+        private final SerializablePattern pattern;
+        private final String replacement;
+
+        public Gen(final Generator childGenerator, final SerializablePattern pattern, final String replacement) {
+            super(childGenerator);
+            this.pattern = pattern;
+            this.replacement = replacement;
+        }
+
+        @Override
+        public void set(final String[] values) {
+            childGenerator.set(values);
+        }
+
+        @Override
+        public Object eval() {
+            final Object val = childGenerator.eval();
+            return pattern.matcher(TypeConverter.getString(val)).replaceAll(replacement);
+        }
+    }
+
+    private static class SerializablePattern implements Serializable {
+        private static final long serialVersionUID = 3482210112462557773L;
+
+        private final String regex;
+        private transient volatile Pattern pattern;
+
+        public SerializablePattern(final String regex) {
+            this.regex = regex;
+        }
+
+        public Matcher matcher(final CharSequence input) {
+            return getOrCreatePattern().matcher(input);
+        }
+
+        public Pattern getOrCreatePattern() {
+            if (pattern == null) {
+                pattern = Pattern.compile(regex);
+            }
+            return pattern;
+        }
     }
 }

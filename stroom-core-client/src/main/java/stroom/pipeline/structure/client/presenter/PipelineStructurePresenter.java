@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,17 +40,24 @@ import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.event.ReloadEntityEvent;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
-import stroom.pipeline.shared.*;
+import stroom.pipeline.shared.FetchPipelineDataAction;
+import stroom.pipeline.shared.FetchPipelineXMLAction;
+import stroom.pipeline.shared.FetchPropertyTypesAction;
+import stroom.pipeline.shared.FetchPropertyTypesResult;
+import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineModelException;
+import stroom.pipeline.shared.SavePipelineXMLAction;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.view.PipelineImageUtil;
+import stroom.query.api.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.client.BorderUtil;
@@ -60,7 +67,11 @@ import stroom.util.shared.SharedString;
 import stroom.util.shared.VoidResult;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
-import stroom.widget.menu.client.presenter.*;
+import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.MenuItems;
+import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
@@ -73,7 +84,11 @@ import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 import stroom.xmleditor.client.presenter.XMLEditorPresenter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStructurePresenter.PipelineStructureView>
@@ -93,6 +108,9 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     private DocRef parentPipeline;
     private Map<Category, List<PipelineElementType>> elementTypes;
     private boolean advancedMode;
+
+    private List<Item> addMenuItems;
+    private List<Item> restoreMenuItems;
 
     @Inject
     public PipelineStructurePresenter(final EventBus eventBus, final PipelineStructureView view,
@@ -241,7 +259,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         }
         pipelinePresenter.setSelectedEntityReference(pipelineEntity.getParentPipeline());
 
-        final FetchPipelineDataAction action = new FetchPipelineDataAction(DocRef.create(pipelineEntity));
+        final FetchPipelineDataAction action = new FetchPipelineDataAction(DocRefUtil.create(pipelineEntity));
         dispatcher.execute(action, new AsyncCallbackAdaptor<SharedList<PipelineData>>() {
             @Override
             public void onSuccess(final SharedList<PipelineData> result) {
@@ -291,21 +309,15 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
     @Override
     public void onAdd(final ClickEvent event) {
-        if (advancedMode && selectedElement != null) {
-            final List<Item> menuItems = addPipelineElementTypesToMenu();
-            if (menuItems != null && menuItems.size() > 0) {
-                showMenu(event, menuItems);
-            }
+        if (addMenuItems != null && addMenuItems.size() > 0) {
+            showMenu(event, addMenuItems);
         }
     }
 
     @Override
     public void onRestore(final ClickEvent event) {
-        if (advancedMode && selectedElement != null) {
-            final List<Item> menuItems = addRestoreElementsToMenu();
-            if (menuItems != null && menuItems.size() > 0) {
-                showMenu(event, menuItems);
-            }
+        if (restoreMenuItems != null && restoreMenuItems.size() > 0) {
+            showMenu(event, restoreMenuItems);
         }
     }
 
@@ -327,95 +339,105 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     private List<Item> addPipelineActionsToMenu() {
-        final List<Item> menuItems = new ArrayList<Item>();
-        final List<Item> addPipelineElementTypes = addPipelineElementTypesToMenu();
-        final List<Item> addRestoreElements = addRestoreElementsToMenu();
+        final PipelineElement selected = pipelineTreePresenter.getSelectionModel().getSelectedObject();
 
-        if (addPipelineElementTypes != null) {
-            final Item parentItem = new SimpleParentMenuItem(0, GlyphIcons.ADD, GlyphIcons.ADD, "Add", null, true, addPipelineElementTypes);
-            menuItems.add(parentItem);
-        }
+        final List<Item> menuItems = new ArrayList<>();
 
-        if (addRestoreElements != null) {
-            final Item parentItem = new SimpleParentMenuItem(1, GlyphIcons.UNDO, GlyphIcons.UNDO, "Restore", null, true, addRestoreElements);
-            menuItems.add(parentItem);
-        }
-
-        final Item item = new IconMenuItem(2, GlyphIcons.REMOVE, GlyphIcons.REMOVE, "Remove", null, true,
-                new Command() {
-                    @Override
-                    public void execute() {
-                        onRemove(null);
-                    }
-                });
-        menuItems.add(item);
+        menuItems.add(new SimpleParentMenuItem(0, GlyphIcons.ADD, GlyphIcons.ADD, "Add", null, addMenuItems != null && addMenuItems.size() > 0, addMenuItems));
+        menuItems.add(new SimpleParentMenuItem(1, GlyphIcons.UNDO, GlyphIcons.UNDO, "Restore", null, restoreMenuItems != null && restoreMenuItems.size() > 0, restoreMenuItems));
+        menuItems.add( new IconMenuItem(2, GlyphIcons.REMOVE, GlyphIcons.REMOVE, "Remove", null, selected != null, () -> onRemove(null)));
 
         return menuItems;
     }
 
-    private List<Item> addPipelineElementTypesToMenu() {
-        final List<Item> menuItems = new ArrayList<Item>();
+    private List<Item> getAddMenuItems() {
+        final List<Item> menuItems = new ArrayList<>();
 
-        for (final Entry<Category, List<PipelineElementType>> entry : elementTypes.entrySet()) {
-            final Category category = entry.getKey();
-            if (category.getOrder() >= 0) {
-                final List<Item> children = new ArrayList<Item>();
-                int j = 0;
-                for (final PipelineElementType pipelineElementType : entry.getValue()) {
-                    final String type = pipelineElementType.getType();
-                    final Icon icon = ImageIcon.create(PipelineImageUtil.getImage(pipelineElementType));
+        final PipelineElement parent = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+        if (parent != null) {
+            final PipelineElementType parentType = parent.getElementType();
+            int childCount = 0;
+            final List<PipelineElement> currentChildren = pipelineModel.getChildMap().get(parent);
+            if (currentChildren != null) {
+                childCount = currentChildren.size();
+            }
 
-                    final Item item = new IconMenuItem(j++, icon, null, type, null, true,
-                            new AddPipelineElementCommand(pipelineElementType));
-                    children.add(item);
+            for (final Entry<Category, List<PipelineElementType>> entry : elementTypes.entrySet()) {
+                final Category category = entry.getKey();
+                if (category.getOrder() >= 0) {
+                    final List<Item> children = new ArrayList<>();
+                    int j = 0;
+                    for (final PipelineElementType pipelineElementType : entry.getValue()) {
+                        if (StructureValidationUtil.isValidChildType(parentType, pipelineElementType, childCount)) {
+                            final String type = pipelineElementType.getType();
+                            final Icon icon = ImageIcon.create(PipelineImageUtil.getImage(pipelineElementType));
+
+                            final Item item = new IconMenuItem(j++, icon, null, type, null, true,
+                                    new AddPipelineElementCommand(pipelineElementType));
+                            children.add(item);
+                        }
+                    }
+
+                    if (children.size() > 0) {
+                        children.sort(new MenuItems.ItemComparator());
+                        final Item parentItem = new SimpleParentMenuItem(category.getOrder(), null, null,
+                                category.getDisplayValue(), null, true, children);
+                        menuItems.add(parentItem);
+                    }
                 }
-
-                final Item parentItem = new SimpleParentMenuItem(category.getOrder(), null, null,
-                        category.getDisplayValue(), null, true, children);
-                menuItems.add(parentItem);
-                Collections.sort(menuItems, new MenuItems.ItemComparator());
             }
         }
 
+        menuItems.sort(new MenuItems.ItemComparator());
         return menuItems;
     }
 
-    private List<Item> addRestoreElementsToMenu() {
+    private List<Item> getRestoreMenuItems() {
         final List<PipelineElement> existingElements = getExistingElements();
 
         if (existingElements == null || existingElements.size() == 0) {
             return null;
         }
 
-        final Map<Category, List<Item>> categoryMenuItems = new HashMap<Category, List<Item>>();
-        int pos = 0;
-        for (final PipelineElement element : existingElements) {
-            final PipelineElementType pipelineElementType = element.getElementType();
-            final Category category = pipelineElementType.getCategory();
+        final List<Item> menuItems = new ArrayList<>();
 
-            List<Item> items = categoryMenuItems.get(category);
-            if (items == null) {
-                items = new ArrayList<Item>();
-                categoryMenuItems.put(category, items);
+        final PipelineElement parent = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+        if (parent != null) {
+            final PipelineElementType parentType = parent.getElementType();
+            int childCount = 0;
+            final List<PipelineElement> currentChildren = pipelineModel.getChildMap().get(parent);
+            if (currentChildren != null) {
+                childCount = currentChildren.size();
             }
 
-            final String type = pipelineElementType.getType();
-            final Icon icon = ImageIcon.create(PipelineImageUtil.getImage(pipelineElementType));
+            final Map<Category, List<Item>> categoryMenuItems = new HashMap<>();
+            int pos = 0;
+            for (final PipelineElement element : existingElements) {
+                final PipelineElementType pipelineElementType = element.getElementType();
+                if (StructureValidationUtil.isValidChildType(parentType, pipelineElementType, childCount)) {
+                    final Category category = pipelineElementType.getCategory();
 
-            final Item item = new IconMenuItem(pos++, icon, null, element.getId(), null, true,
-                    new RestorePipelineElementCommand(element));
-            items.add(item);
+                    final List<Item> items = categoryMenuItems.computeIfAbsent(category, k -> new ArrayList<>());
+                    final Icon icon = ImageIcon.create(PipelineImageUtil.getImage(pipelineElementType));
+
+                    final Item item = new IconMenuItem(pos++, icon, null, element.getId(), null, true,
+                            new RestorePipelineElementCommand(element));
+                    items.add(item);
+                }
+            }
+
+            for (final Entry<Category, List<Item>> entry : categoryMenuItems.entrySet()) {
+                final Category category = entry.getKey();
+                final List<Item> children = entry.getValue();
+
+                children.sort(new MenuItems.ItemComparator());
+                final Item parentItem = new SimpleParentMenuItem(category.getOrder(), null, null,
+                        category.getDisplayValue(), null, true, children);
+                menuItems.add(parentItem);
+            }
         }
 
-        final List<Item> menuItems = new ArrayList<Item>();
-        for (final Entry<Category, List<Item>> entry : categoryMenuItems.entrySet()) {
-            final Category category = entry.getKey();
-            final List<Item> children = entry.getValue();
-            final Item parentItem = new SimpleParentMenuItem(category.getOrder(), null, null,
-                    category.getDisplayValue(), null, true, children);
-            menuItems.add(parentItem);
-        }
-
+        menuItems.sort(new MenuItems.ItemComparator());
         return menuItems;
     }
 
@@ -536,18 +558,17 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     private void enableButtons() {
-        PipelineElementType elementType = null;
-
-        if (selectedElement != null) {
-            elementType = selectedElement.getElementType();
+        if (advancedMode) {
+            addMenuItems = getAddMenuItems();
+            restoreMenuItems = getRestoreMenuItems();
+        } else {
+            addMenuItems = null;
+            restoreMenuItems = null;
         }
 
-        getView().setAddEnabled(
-                advancedMode && elementType != null && elementType.hasRole(PipelineElementType.ROLE_HAS_TARGETS));
-        getView().setRestoreEnabled(
-                advancedMode && elementType != null && elementType.hasRole(PipelineElementType.ROLE_HAS_TARGETS));
-        getView().setRemoveEnabled(
-                advancedMode && selectedElement != null && !PipelineModel.SOURCE_ELEMENT.equals(selectedElement));
+        getView().setAddEnabled(addMenuItems != null && addMenuItems.size() > 0);
+        getView().setRestoreEnabled(restoreMenuItems != null && restoreMenuItems.size() > 0);
+        getView().setRemoveEnabled(advancedMode && selectedElement != null && !PipelineModel.SOURCE_ELEMENT.equals(selectedElement));
     }
 
     @Override

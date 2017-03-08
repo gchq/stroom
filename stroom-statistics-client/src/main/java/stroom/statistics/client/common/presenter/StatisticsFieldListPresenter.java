@@ -18,17 +18,13 @@ package stroom.statistics.client.common.presenter;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
-import stroom.data.grid.client.DoubleClickEvent;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
@@ -42,7 +38,6 @@ import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,8 +48,6 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
     private final GlyphButtonView newButton;
     private final GlyphButtonView editButton;
     private final GlyphButtonView removeButton;
-    private final MySingleSelectionModel<StatisticField> selectionModel;
-    private StatisticField selectedElement;
     private StatisticsDataSourceData statisticsDataSourceData;
 
     private StatisticsCustomMaskListPresenter customMaskListPresenter;
@@ -63,10 +56,8 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
     @Inject
     public StatisticsFieldListPresenter(final EventBus eventBus,
                                         final StatisticsFieldEditPresenter statisticsFieldEditPresenter, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<StatisticField>(true));
+        super(eventBus, new DataGridViewImpl<StatisticField>(true, true));
         this.statisticsFieldEditPresenter = statisticsFieldEditPresenter;
-
-        selectionModel = (MySingleSelectionModel<StatisticField>) getView().getSelectionModel();
 
         newButton = getView().addButton(GlyphIcons.NEW_ITEM);
         newButton.setTitle("New Field");
@@ -82,43 +73,27 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
     protected void onBind() {
         super.onBind();
 
-        registerHandler(newButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onAdd();
-                }
+        registerHandler(newButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onAdd();
             }
         }));
 
-        registerHandler(editButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onEdit();
-                }
+        registerHandler(editButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onEdit();
             }
         }));
 
-        registerHandler(removeButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onRemove();
-                }
+        registerHandler(removeButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onRemove();
             }
         }));
 
-        registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                enableButtons();
-            }
-        }));
-
-        registerHandler(getView().addDoubleClickHandler(new DoubleClickEvent.Handler() {
-            @Override
-            public void onDoubleClick(final DoubleClickEvent event) {
+        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
+            enableButtons();
+            if (event.getSelectionType().isDoubleSelect()) {
                 onEdit();
             }
         }));
@@ -126,8 +101,8 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
 
     private void enableButtons() {
         if (statisticsDataSourceData != null && statisticsDataSourceData.getStatisticFields() != null) {
-            selectedElement = selectionModel.getSelectedObject();
-            final boolean enabled = selectedElement != null;
+            StatisticField selected = getView().getSelectionModel().getSelected();
+            final boolean enabled = selected != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);
         } else {
@@ -180,7 +155,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
     }
 
     private void onEdit() {
-        final StatisticField statisticField = selectionModel.getSelectedObject();
+        final StatisticField statisticField = getView().getSelectionModel().getSelected();
         if (statisticField != null) {
             final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
 
@@ -217,12 +192,12 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
     }
 
     private void onRemove() {
-        final StatisticField statisticField = selectionModel.getSelectedObject();
-        if (statisticField != null) {
+        final List<StatisticField> list = getView().getSelectionModel().getSelectedItems();
+        if (list != null && list.size() > 0) {
             final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
 
-            statisticsDataSourceData.getStatisticFields().remove(statisticField);
-            selectionModel.clear();
+            statisticsDataSourceData.getStatisticFields().removeAll(list);
+            getView().getSelectionModel().clear();
             reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
             refresh();
             DirtyEvent.fire(StatisticsFieldListPresenter.this, true);

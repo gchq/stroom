@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 
 package stroom.dashboard;
 
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
@@ -25,15 +26,15 @@ import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.SplitLayoutConfig.Direction;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
-import stroom.entity.shared.DocRef;
+import stroom.dashboard.shared.VisComponentSettings;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.Res;
-import stroom.query.shared.VisDashboardSettings;
+import stroom.query.api.DocRef;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;
 import stroom.visualisation.shared.Visualisation;
 import stroom.visualisation.shared.VisualisationService;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -51,9 +52,9 @@ public class TestDashboardServiceImpl extends AbstractCoreIntegrationTest {
 
     @Test
     public void test() {
-        final DocRef testGroup = DocRef.create(folderService.create(null, "Test Group"));
+        final DocRef testGroup = DocRefUtil.create(folderService.create(null, "Test Group"));
 
-        final VisDashboardSettings visSettings = getVisSettings(testGroup);
+        final VisComponentSettings visSettings = getVisSettings(testGroup);
 
         Dashboard dashboard = dashboardService.create(testGroup, "Test Dashboard");
 
@@ -107,7 +108,7 @@ public class TestDashboardServiceImpl extends AbstractCoreIntegrationTest {
         dashboard = dashboardService.load(dashboard);
     }
 
-    private VisDashboardSettings getVisSettings(final DocRef testGroup) {
+    private VisComponentSettings getVisSettings(final DocRef testGroup) {
         final Res res = new Res();
         res.setData("Test");
 
@@ -116,11 +117,11 @@ public class TestDashboardServiceImpl extends AbstractCoreIntegrationTest {
         script = scriptService.save(script);
 
         Visualisation vis = visualisationService.create(testGroup, "Test");
-        vis.setScriptRef(DocRef.create(script));
+        vis.setScriptRef(DocRefUtil.create(script));
         vis = visualisationService.save(vis);
 
-        final VisDashboardSettings visSettings = new VisDashboardSettings();
-        visSettings.setVisualisation(DocRef.create(vis));
+        final VisComponentSettings visSettings = new VisComponentSettings();
+        visSettings.setVisualisation(DocRefUtil.create(vis));
 
         return visSettings;
     }

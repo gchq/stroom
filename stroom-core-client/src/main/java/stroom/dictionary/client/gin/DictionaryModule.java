@@ -16,7 +16,7 @@
 
 package stroom.dictionary.client.gin;
 
-import stroom.app.client.gin.PluginModule;
+import stroom.core.client.gin.PluginModule;
 import stroom.dictionary.client.DictionaryPlugin;
 import stroom.dictionary.client.presenter.DictionaryPresenter;
 import stroom.dictionary.client.presenter.TextAreaPresenter;

@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,19 +16,19 @@
 
 package stroom.entity.server;
 
-import stroom.entity.shared.Entity;
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRef;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
+import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityService;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.HasLoadById;
 import stroom.entity.shared.HasLoadByName;
 import stroom.entity.shared.HasLoadByUuid;
-import org.springframework.stereotype.Component;
+import stroom.query.api.DocRef;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -182,19 +182,19 @@ public class GenericEntityServiceImpl implements GenericEntityService {
         return (E) getEntityService(entity.getType()).save(entity);
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public <E extends DocumentEntity> E saveAs(final E entity, final DocRef folder, final String name) {
-        if (entity == null) {
-            return null;
-        }
-        final EntityService<E> entityService = getEntityService(entity.getType());
-        if (entityService instanceof DocumentEntityService) {
-            return ((DocumentEntityService<E>) entityService).copy(entity, folder, name);
-        }
-
-        return entity;
-    }
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public <E extends DocumentEntity> E saveAs(final E entity, final DocRef folder, final String name) {
+//        if (entity == null) {
+//            return null;
+//        }
+//        final EntityService<E> entityService = getEntityService(entity.getType());
+//        if (entityService instanceof DocumentEntityService) {
+//            return ((DocumentEntityService<E>) entityService).copy(entity, folder, name);
+//        }
+//
+//        return entity;
+//    }
 
     @Override
     public <E extends Entity> Boolean delete(final E entity) {

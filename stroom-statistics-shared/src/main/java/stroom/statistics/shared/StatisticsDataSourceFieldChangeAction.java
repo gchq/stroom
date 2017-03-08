@@ -16,7 +16,7 @@
 
 package stroom.statistics.shared;
 
-import stroom.dispatch.shared.Action;
+import stroom.entity.shared.Action;
 
 public class StatisticsDataSourceFieldChangeAction extends Action<StatisticsDataSourceData> {
     private static final long serialVersionUID = -4624571648460881457L;
@@ -38,12 +38,12 @@ public class StatisticsDataSourceFieldChangeAction extends Action<StatisticsData
         return oldStatisticsDataSourceData;
     }
 
-    public StatisticsDataSourceData getNewStatisticsDataSourceData() {
-        return newStatisticsDataSourceData;
-    }
-
     public void setOldStatisticsDataSourceData(final StatisticsDataSourceData oldStatisticsDataSourceData) {
         this.oldStatisticsDataSourceData = oldStatisticsDataSourceData;
+    }
+
+    public StatisticsDataSourceData getNewStatisticsDataSourceData() {
+        return newStatisticsDataSourceData;
     }
 
     public void setNewStatisticsDataSourceData(final StatisticsDataSourceData newStatisticsDataSourceData) {

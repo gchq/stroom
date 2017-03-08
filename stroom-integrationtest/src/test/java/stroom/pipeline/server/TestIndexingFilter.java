@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,12 @@
 
 package stroom.pipeline.server;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexableFieldType;
+import org.junit.Assert;
+import org.junit.Test;
+import org.xml.sax.SAXException;
 import stroom.AbstractProcessIntegrationTest;
 import stroom.feed.shared.Feed;
 import stroom.index.server.IndexMarshaller;
@@ -24,6 +30,10 @@ import stroom.index.server.IndexShardWriter;
 import stroom.index.server.MockIndexShardWriter;
 import stroom.index.server.MockIndexShardWriterCache;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexField.AnalyzerType;
+import stroom.index.shared.IndexFieldType;
+import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShardKey;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -36,17 +46,9 @@ import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexField.AnalyzerType;
-import stroom.query.shared.IndexFieldType;
-import stroom.query.shared.IndexFields;
-import stroom.test.StroomProcessTestFileUtil;
 import stroom.test.PipelineTestUtil;
+import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.date.DateUtil;
-import org.apache.lucene.document.Document;
-import org.junit.Assert;
-import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import javax.annotation.Resource;
 import javax.xml.parsers.ParserConfigurationException;
@@ -89,7 +91,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
         Assert.assertEquals(3, documents.size());
         final Document doc = documents.get(0);
         Assert.assertTrue(doc.getField("sid2").fieldType().stored());
-        Assert.assertTrue(doc.getField("sid2").fieldType().indexed());
+        Assert.assertTrue(doc.getField("sid2").fieldType().indexOptions().equals(IndexOptions.DOCS));
         Assert.assertTrue(doc.getField("sid2").fieldType().omitNorms());
         Assert.assertFalse(doc.getField("sid2").fieldType().storeTermVectors());
         Assert.assertFalse(doc.getField("sid2").fieldType().storeTermVectorPositions());
@@ -156,9 +158,10 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
         final List<Document> documents = doTest("TestIndexDocumentFilter/ComplexContent.xml", indexFields);
 
         Assert.assertEquals(1, documents.size());
-        Assert.assertTrue(documents.get(0).getField("f1").fieldType().stored());
-        Assert.assertTrue(documents.get(0).getField("f1").fieldType().indexed());
-        Assert.assertTrue(documents.get(0).getField("f1").fieldType().tokenized());
+        final IndexableFieldType fieldType = documents.get(0).getField("f1").fieldType();
+        Assert.assertTrue(fieldType.stored());
+        Assert.assertTrue(fieldType.indexOptions().equals(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS));
+        Assert.assertTrue(fieldType.tokenized());
 
         Assert.assertFalse(documents.get(0).getField("f2").fieldType().stored());
 

@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FieldIndexMap {
-    private final Map<String, Integer> map = new HashMap<String, Integer>();
+    private final Map<String, Integer> fieldToPos = new HashMap<>();
     private final boolean autoCreate;
     private int index;
 
@@ -37,12 +37,11 @@ public class FieldIndexMap {
     }
 
     public int create(final String fieldName, final boolean forceCreation) {
-        Integer currentIndex = map.get(fieldName);
-        if (currentIndex == null && (autoCreate || forceCreation)) {
-            currentIndex = Integer.valueOf(index);
-            index++;
-            map.put(fieldName, currentIndex);
+        if (autoCreate || forceCreation) {
+            return fieldToPos.computeIfAbsent(fieldName, k -> index++);
         }
+
+        Integer currentIndex = fieldToPos.get(fieldName);
         if (currentIndex == null) {
             return -1;
         }
@@ -50,7 +49,7 @@ public class FieldIndexMap {
     }
 
     public int get(final String fieldName) {
-        final Integer currentIndex = map.get(fieldName);
+        final Integer currentIndex = fieldToPos.get(fieldName);
         if (currentIndex == null) {
             return -1;
         }
@@ -58,6 +57,6 @@ public class FieldIndexMap {
     }
 
     public int size() {
-        return map.size();
+        return fieldToPos.size();
     }
 }

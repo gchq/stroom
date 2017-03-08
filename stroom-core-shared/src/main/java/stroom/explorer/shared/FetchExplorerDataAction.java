@@ -16,12 +16,7 @@
 
 package stroom.explorer.shared;
 
-import stroom.dispatch.shared.Action;
-import stroom.util.shared.SharedList;
-import stroom.util.shared.SharedMap;
-
-import java.util.HashSet;
-import java.util.Set;
+import stroom.entity.shared.Action;
 
 public class FetchExplorerDataAction extends Action<FetchExplorerDataResult> {
     private static final long serialVersionUID = 6474393620176001033L;

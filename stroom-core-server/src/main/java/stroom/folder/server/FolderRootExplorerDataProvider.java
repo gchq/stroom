@@ -16,14 +16,11 @@
 
 package stroom.folder.server;
 
-import java.util.Map;
-
-import stroom.explorer.server.TreeModel;
 import org.springframework.stereotype.Component;
-
 import stroom.entity.shared.FolderService;
 import stroom.explorer.server.ExplorerDataProvider;
 import stroom.explorer.server.ProvidesExplorerData;
+import stroom.explorer.server.TreeModel;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerData;
 import stroom.explorer.shared.SimpleExplorerItem;

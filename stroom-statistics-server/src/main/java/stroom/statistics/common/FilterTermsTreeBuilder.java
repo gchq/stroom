@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,17 +16,17 @@
 
 package stroom.statistics.common;
 
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.statistics.common.FilterTermsTree.OperatorNode;
+import stroom.statistics.common.FilterTermsTree.TermNode;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.statistics.common.FilterTermsTree.OperatorNode;
-import stroom.statistics.common.FilterTermsTree.TermNode;
 
 public class FilterTermsTreeBuilder {
     private FilterTermsTreeBuilder() {
@@ -43,13 +43,12 @@ public class FilterTermsTreeBuilder {
      * {@link ExpressionItem} tree are not supported so it may throw a
      * {@link RuntimeException}.
      *
-     * @param rootItem
-     *            The {@link ExpressionItem} object that is the root of the tree
+     * @param rootItem The {@link ExpressionItem} object that is the root of the tree
      * @return A {@link FilterTermsTree} object containing a tree of
-     *         {@link PrintableNode} objects
+     * {@link PrintableNode} objects
      */
     public static FilterTermsTree convertExpresionItemsTree(final ExpressionOperator rootItem,
-            final Set<String> blackListedFieldNames) {
+                                                            final Set<String> blackListedFieldNames) {
         final PrintableNode newRootNode = convertNode(rootItem, blackListedFieldNames);
 
         // we may have black listed all our terms and been left with a null root
@@ -58,23 +57,23 @@ public class FilterTermsTreeBuilder {
     }
 
     private static PrintableNode convertNode(final ExpressionItem oldNode, final Set<String> fieldBlackList) {
-        PrintableNode newNode;
+        PrintableNode newNode = null;
 
-        if (oldNode.isEnabled()) {
+        if (oldNode.enabled()) {
             if (oldNode instanceof ExpressionTerm) {
                 final ExpressionTerm termNode = (ExpressionTerm) oldNode;
-                newNode = convertTermNode(termNode, fieldBlackList);
+                if (termNode.getValue() != null && termNode.getValue().length() > 0) {
+                    newNode = convertTermNode(termNode, fieldBlackList);
+                }
             } else if (oldNode instanceof ExpressionOperator) {
                 newNode = convertOperatorNode((ExpressionOperator) oldNode, fieldBlackList);
             } else {
                 throw new RuntimeException("Node is of a type that we don't expect: " + oldNode.getClass().getName());
             }
-        } else {
-            // the node is disabled so just return null rather than including it
-            // in the new tree
-            newNode = null;
         }
 
+        // the node is disabled so just return null rather than including it
+        // in the new tree
         return newNode;
     }
 
@@ -129,7 +128,7 @@ public class FilterTermsTreeBuilder {
      * @return The converted node, null if the old node has no children
      */
     private static PrintableNode convertOperatorNode(final ExpressionOperator oldNode,
-            final Set<String> fieldBlackList) {
+                                                     final Set<String> fieldBlackList) {
         // ExpressionOperator can be created with no child nodes so if that is
         // the case just return null and handle for
         // the null in the calling method
@@ -137,9 +136,9 @@ public class FilterTermsTreeBuilder {
         if (oldNode.getChildren() == null || oldNode.getChildren().size() == 0) {
             return null;
         } else {
-            final FilterOperationMode operationMode = FilterOperationMode.valueOf(oldNode.getType().toString());
+            final FilterOperationMode operationMode = FilterOperationMode.valueOf(oldNode.getOp().toString());
 
-            final List<PrintableNode> children = new ArrayList<PrintableNode>();
+            final List<PrintableNode> children = new ArrayList<>();
 
             for (final ExpressionItem oldChild : oldNode.getChildren()) {
                 final PrintableNode newChild = convertNode(oldChild, fieldBlackList);

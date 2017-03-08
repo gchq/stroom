@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,17 +16,17 @@
 
 package stroom.pipeline.server.factory;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
 import stroom.pipeline.destination.DestinationProvider;
+import stroom.pipeline.server.SupportsCodeInjection;
 import stroom.pipeline.server.filter.SAXEventRecorder;
 import stroom.pipeline.server.filter.SAXRecordDetector;
 import stroom.pipeline.server.filter.SplitFilter;
 import stroom.pipeline.server.filter.XMLFilter;
-import stroom.pipeline.server.filter.XSLTFilter;
 import stroom.pipeline.server.parser.AbstractParser;
-import stroom.pipeline.server.parser.CombinedParser;
 import stroom.pipeline.server.reader.InputStreamElement;
 import stroom.pipeline.server.reader.InputStreamRecordDetectorElement;
 import stroom.pipeline.server.reader.ReaderRecordDetectorElement;
@@ -44,10 +44,9 @@ import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.query.api.DocRef;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
@@ -268,12 +267,9 @@ public class PipelineFactory {
                                 if (request.getCode() != null && request.getCode().size() > 0) {
                                     final String code = request.getCode().get(id);
                                     if (code != null) {
-                                        if (elementInstance instanceof CombinedParser) {
-                                            final CombinedParser parser = (CombinedParser) elementInstance;
-                                            parser.setInjectedCode(code);
-                                        } else if (elementInstance instanceof XSLTFilter) {
-                                            final XSLTFilter xsltFilter = (XSLTFilter) elementInstance;
-                                            xsltFilter.setInjectedCode(code);
+                                        if (elementInstance instanceof SupportsCodeInjection) {
+                                            final SupportsCodeInjection supportsCodeInjection = (SupportsCodeInjection) elementInstance;
+                                            supportsCodeInjection.setInjectedCode(code);
                                         }
                                     }
                                 }

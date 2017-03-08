@@ -19,16 +19,10 @@ package stroom.entity.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-
 import stroom.entity.client.EntityTabData;
 
 public class ShowSaveAsEntityDialogEvent extends GwtEvent<ShowSaveAsEntityDialogEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onSaveAs(final ShowSaveAsEntityDialogEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final EntityTabData tabData;
 
     private ShowSaveAsEntityDialogEvent(final EntityTabData tabData) {
@@ -41,7 +35,7 @@ public class ShowSaveAsEntityDialogEvent extends GwtEvent<ShowSaveAsEntityDialog
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
@@ -58,5 +52,9 @@ public class ShowSaveAsEntityDialogEvent extends GwtEvent<ShowSaveAsEntityDialog
 
     public EntityTabData getTabData() {
         return tabData;
+    }
+
+    public interface Handler extends EventHandler {
+        void onSaveAs(final ShowSaveAsEntityDialogEvent event);
     }
 }

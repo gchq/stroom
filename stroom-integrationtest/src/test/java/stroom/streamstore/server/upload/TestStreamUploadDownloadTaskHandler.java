@@ -16,9 +16,11 @@
 
 package stroom.streamstore.server.upload;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.streamstore.server.StreamAttributeValueFlush;
 import stroom.streamstore.server.StreamSource;
@@ -36,8 +38,6 @@ import stroom.task.server.TaskManager;
 import stroom.util.io.StreamUtil;
 import stroom.util.zip.StroomZipFile;
 import stroom.util.zip.StroomZipFileType;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.io.File;
@@ -78,8 +78,8 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         Assert.assertFalse(stroomZipFile.containsEntry("001", StroomZipFileType.Meta));
         stroomZipFile.close();
 
-        taskManager.exec(new StreamUploadTask(null, null, "test.zip", file, DocRef.create(feed),
-                DocRef.create(StreamType.RAW_EVENTS), null, null));
+        taskManager.exec(new StreamUploadTask(null, null, "test.zip", file, DocRefUtil.create(feed),
+                DocRefUtil.create(StreamType.RAW_EVENTS), null, null));
 
         Assert.assertEquals(4, streamStore.find(findStreamCriteria).size());
     }
@@ -94,8 +94,8 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         StreamUtil.stringToFile("TEST", file);
 
-        taskManager.exec(new StreamUploadTask(null, null, "test.dat", file, DocRef.create(feed),
-                DocRef.create(StreamType.RAW_EVENTS), null, "Tom:One\nJames:Two\n"));
+        taskManager.exec(new StreamUploadTask(null, null, "test.dat", file, DocRefUtil.create(feed),
+                DocRefUtil.create(StreamType.RAW_EVENTS), null, "Tom:One\nJames:Two\n"));
 
         Assert.assertEquals(1, streamStore.find(findStreamCriteria).size());
     }
@@ -158,8 +158,8 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         final String extraMeta = "Z:ALL\n";
 
-        taskManager.exec(new StreamUploadTask(null, null, "test.zip", file, DocRef.create(feed),
-                DocRef.create(StreamType.RAW_EVENTS), null, extraMeta));
+        taskManager.exec(new StreamUploadTask(null, null, "test.zip", file, DocRefUtil.create(feed),
+                DocRefUtil.create(StreamType.RAW_EVENTS), null, extraMeta));
 
         final List<Stream> streamList = streamStore.find(findStreamCriteria);
 

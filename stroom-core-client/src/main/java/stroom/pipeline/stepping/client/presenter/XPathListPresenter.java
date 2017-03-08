@@ -16,19 +16,12 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import java.util.ArrayList;
-
-import stroom.data.grid.client.DoubleClickEvent;
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.ListDataProvider;
-import com.google.gwt.view.client.SelectionChangeEvent.Handler;
-import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandlers;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.DataGridView;
@@ -36,23 +29,21 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.pipeline.shared.XPathFilter;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModel;
+
+import java.util.ArrayList;
 
 public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilter>>
-        implements Refreshable, HasSelectionChangedHandlers {
+        implements Refreshable {
     private final ListDataProvider<XPathFilter> dataProvider;
-    private final MySingleSelectionModel<XPathFilter> selectionModel;
 
     @Inject
     public XPathListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<XPathFilter>(true));
+        super(eventBus, new DataGridViewImpl<XPathFilter>(true, true));
         initTableColumns();
 
-        selectionModel = new MySingleSelectionModel<XPathFilter>();
-        getView().setSelectionModel(selectionModel);
-
         dataProvider = new ListDataProvider<XPathFilter>(new ArrayList<XPathFilter>());
-        dataProvider.addDataDisplay(getView());
+        dataProvider.addDataDisplay(getView().getDataDisplay());
     }
 
     /**
@@ -106,16 +97,7 @@ public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilt
         return dataProvider;
     }
 
-    @Override
-    public HandlerRegistration addSelectionChangeHandler(final Handler handler) {
-        return selectionModel.addSelectionChangeHandler(handler);
-    }
-
-    public MySingleSelectionModel<XPathFilter> getSelectionModel() {
-        return selectionModel;
-    }
-
-    public HandlerRegistration addDoubleClickHandler(final DoubleClickEvent.Handler handler) {
-        return getView().addDoubleClickHandler(handler);
+    public MultiSelectionModel<XPathFilter> getSelectionModel() {
+        return getView().getSelectionModel();
     }
 }

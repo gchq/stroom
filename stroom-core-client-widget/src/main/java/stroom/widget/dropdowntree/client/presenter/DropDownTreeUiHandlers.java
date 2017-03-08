@@ -19,7 +19,5 @@ package stroom.widget.dropdowntree.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface DropDownTreeUiHandlers extends UiHandlers {
-    void unselect();
-
     void nameFilterChanged(String text);
 }

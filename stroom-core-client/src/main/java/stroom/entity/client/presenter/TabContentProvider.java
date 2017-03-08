@@ -49,25 +49,27 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E> {
         currentPresenter = presenterCache.get(tab);
         if (currentPresenter == null) {
             final Provider<PresenterWidget<?>> provider = (Provider<PresenterWidget<?>>) tabProviders.get(tab);
-            currentPresenter = provider.get();
-            presenterCache.put(tab, currentPresenter);
+            if (provider != null) {
+                currentPresenter = provider.get();
+                presenterCache.put(tab, currentPresenter);
 
-            // Handle dirty events.
-            if (currentPresenter instanceof HasDirtyHandlers && dirtyHandler != null) {
-                final HasDirtyHandlers hasDirtyHandlers = (HasDirtyHandlers) currentPresenter;
-                hasDirtyHandlers.addDirtyHandler(new DirtyHandler() {
-                    @Override
-                    public void onDirty(final DirtyEvent event) {
-                        if (event.isDirty()) {
-                            if (dirtyTabs == null) {
-                                dirtyTabs = new HashSet<TabData>();
+                // Handle dirty events.
+                if (currentPresenter instanceof HasDirtyHandlers && dirtyHandler != null) {
+                    final HasDirtyHandlers hasDirtyHandlers = (HasDirtyHandlers) currentPresenter;
+                    hasDirtyHandlers.addDirtyHandler(new DirtyHandler() {
+                        @Override
+                        public void onDirty(final DirtyEvent event) {
+                            if (event.isDirty()) {
+                                if (dirtyTabs == null) {
+                                    dirtyTabs = new HashSet<TabData>();
+                                }
+
+                                dirtyTabs.add(tab);
                             }
-
-                            dirtyTabs.add(tab);
+                            dirtyHandler.onDirty(event);
                         }
-                        dirtyHandler.onDirty(event);
-                    }
-                });
+                    });
+                }
             }
         }
 

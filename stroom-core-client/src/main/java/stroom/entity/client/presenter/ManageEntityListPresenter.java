@@ -16,9 +16,8 @@
 
 package stroom.entity.client.presenter;
 
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.view.client.SelectionChangeEvent.Handler;
-import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandlers;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -31,18 +30,14 @@ import stroom.entity.shared.BaseEntity;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.util.client.MySingleSelectionModel;
 
 public class ManageEntityListPresenter<C extends BaseCriteria, E extends BaseEntity>
-        extends MyPresenterWidget<DataGridView<E>> implements Refreshable, HasSelectionChangedHandlers {
+        extends MyPresenterWidget<DataGridView<E>> implements Refreshable {
     protected EntityServiceFindActionDataProvider<C, E> dataProvider;
-    private final MySingleSelectionModel<E> selectionModel;
 
     @Inject
     public ManageEntityListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
         super(eventBus, new DataGridViewImpl<E>(true));
-        selectionModel = new MySingleSelectionModel<E>();
-        getView().setSelectionModel(selectionModel);
     }
 
     public ImageButtonView addButton(final String title, final ImageResource enabledImage,
@@ -67,19 +62,18 @@ public class ManageEntityListPresenter<C extends BaseCriteria, E extends BaseEnt
     }
 
     public E getSelectedItem() {
-        return selectionModel.getSelectedObject();
+        return getView().getSelectionModel().getSelected();
     }
 
-    public void setSelectedItem(final E row, final boolean selected) {
-        selectionModel.setSelected(row, selected);
+    public void setSelectedItem(final E row) {
+        getView().getSelectionModel().setSelected(row);
     }
 
     public void setCriteria(final C criteria) {
         dataProvider.setCriteria(criteria);
     }
-
-    @Override
-    public com.google.gwt.event.shared.HandlerRegistration addSelectionChangeHandler(final Handler handler) {
-        return getView().getSelectionModel().addSelectionChangeHandler(handler);
-    }
+//
+//    public HandlerRegistration addSelectionHandler(DataGridSelectEvent.Handler handler) {
+//        return getView().addSelectionHandler(handler);
+//    }
 }

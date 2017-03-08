@@ -23,8 +23,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.about.client.presenter.AboutPresenter;
-import stroom.app.client.MenuKeys;
-import stroom.app.client.presenter.Plugin;
+import stroom.core.client.MenuKeys;
+import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
@@ -32,13 +32,8 @@ import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.tab.client.presenter.ImageIcon;
 
 public class AboutPlugin extends Plugin {
-    public interface AboutResources extends ClientBundle {
-        ImageResource about();
-    }
-
     private final AboutResources resources;
     private final Provider<AboutPresenter> provider;
-
     @Inject
     public AboutPlugin(final EventBus eventBus, final AboutResources resources,
                        final Provider<AboutPresenter> provider) {
@@ -66,5 +61,9 @@ public class AboutPlugin extends Plugin {
                         provider.get().forceReveal();
                     }
                 }));
+    }
+
+    public interface AboutResources extends ClientBundle {
+        ImageResource about();
     }
 }

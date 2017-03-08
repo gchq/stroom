@@ -16,17 +16,13 @@
 
 package stroom.monitoring.client.presenter;
 
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
@@ -46,11 +42,16 @@ import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.ResultList;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
-import stroom.task.shared.*;
+import stroom.task.shared.FindTaskCriteria;
+import stroom.task.shared.FindTaskProgressAction;
+import stroom.task.shared.FindTaskProgressCriteria;
+import stroom.task.shared.TaskProgress;
+import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.VoidResult;
+import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -69,17 +70,22 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
     private final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
     private final FindTaskProgressAction action = new FindTaskProgressAction(criteria);
     private final ActionDataProvider<TaskProgress> dataProvider;
-    private final Set<TaskProgress> selectedTaskProgress = new HashSet<TaskProgress>();
-    private final Set<TaskProgress> requestedTerminateTaskProgress = new HashSet<TaskProgress>();
+    private final Set<TaskProgress> selectedTaskProgress = new HashSet<>();
+    private final Set<TaskProgress> requestedTerminateTaskProgress = new HashSet<>();
     private final TooltipPresenter tooltipPresenter;
+    private final GlyphButtonView terminateButton;
 
     @Inject
     public TaskProgressMonitoringPresenter(final EventBus eventBus,
                                            final ClientDispatchAsync dispatcher, final TooltipPresenter tooltipPresenter) {
-        super(eventBus, new DataGridViewImpl<TaskProgress>(false, 1000));
+        super(eventBus, new DataGridViewImpl<>(false, 1000));
         this.dispatcher = dispatcher;
         this.tooltipPresenter = tooltipPresenter;
         this.criteria.setOrderBy(FindTaskProgressCriteria.ORDER_BY_AGE, OrderByDirection.DESCENDING);
+
+        terminateButton = getView().addButton(GlyphIcons.DELETE);
+        terminateButton.addClickHandler(event -> endSelectedTask());
+        terminateButton.setEnabled(true);
 
         dataProvider = new ActionDataProvider<TaskProgress>(dispatcher, action) {
             @Override
@@ -88,20 +94,13 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                 onChangeData(data);
             }
         };
-        dataProvider.addDataDisplay(getView());
-        getView().addButton(GlyphIcons.DELETE)
-                .addClickHandler(new ClickHandler() {
-                    @Override
-                    public void onClick(final ClickEvent event) {
-                        endSelectedTask();
-                    }
-                });
+        dataProvider.addDataDisplay(getView().getDataDisplay());
 
         initTableColumns();
     }
 
     private void onChangeData(final ResultList<TaskProgress> data) {
-        final HashSet<TaskProgress> currentTaskSet = new HashSet<TaskProgress>();
+        final HashSet<TaskProgress> currentTaskSet = new HashSet<>();
         for (final TaskProgress value : data) {
             currentTaskSet.add(value);
         }
@@ -135,12 +134,9 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         };
         getView().addColumn(expanderColumn, "");
 
-        expanderColumn.setFieldUpdater(new FieldUpdater<TaskProgress, Expander>() {
-            @Override
-            public void update(final int index, final TaskProgress row, final Expander value) {
-                action.setRowExpanded(row, !value.isExpanded());
-                dataProvider.refresh();
-            }
+        expanderColumn.setFieldUpdater((index, row, value) -> {
+            action.setRowExpanded(row, !value.isExpanded());
+            dataProvider.refresh();
         });
 
         final InfoColumn<TaskProgress> furtherInfoColumn = new InfoColumn<TaskProgress>() {
@@ -176,18 +172,14 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         getView().addColumn(furtherInfoColumn, "<br/>", 15);
 
         // Add Handlers
-        column.setFieldUpdater(new FieldUpdater<TaskProgress, TickBoxState>() {
-            @Override
-            public void update(final int index, final TaskProgress object, final TickBoxState value) {
-                if (value.toBoolean()) {
-                    selectedTaskProgress.add(object);
-                } else {
-                    // De-selecting one and currently matching all ?
-                    selectedTaskProgress.remove(object);
-                }
-                // DataSelectionEvent.fire(TaskProgressMonitoringPresenter.this,
-                // selectedTaskProgress, false);
+        column.setFieldUpdater((index, object, value) -> {
+            if (value.toBoolean()) {
+                selectedTaskProgress.add(object);
+            } else {
+                // De-selecting one and currently matching all ?
+                selectedTaskProgress.remove(object);
             }
+//            setButtonsEnabled();
         });
 
         // Node.
@@ -250,10 +242,10 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
             }
         };
         getView().addResizableColumn(infoColumn, "Info", 400);
-        getView().addEndColumn(new EndColumn<TaskProgress>());
+        getView().addEndColumn(new EndColumn<>());
 
         // Handle use of the expander column.
-        dataProvider.setTreeRowHandler(new TreeRowHandler<TaskProgress>(action, getView(), expanderColumn));
+        dataProvider.setTreeRowHandler(new TreeRowHandler<>(action, getView(), expanderColumn));
     }
 
     private Expander buildExpander(final TaskProgress row) {
@@ -277,17 +269,14 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
     }
 
     private void endSelectedTask() {
-        final Set<TaskProgress> cloneSelectedTaskProgress = new HashSet<TaskProgress>(selectedTaskProgress);
+        final Set<TaskProgress> cloneSelectedTaskProgress = new HashSet<>(selectedTaskProgress);
         for (final TaskProgress taskProgress : cloneSelectedTaskProgress) {
             final boolean kill = requestedTerminateTaskProgress.contains(taskProgress);
             if (kill) {
                 ConfirmEvent.fireWarn(this, "Task " + taskProgress.getTaskName() + " has not finished ... will kill",
-                        new ConfirmCallback() {
-                            @Override
-                            public void onResult(final boolean result) {
-                                if (result) {
-                                    doTerminate(taskProgress, true);
-                                }
+                        result -> {
+                            if (result) {
+                                doTerminate(taskProgress, true);
                             }
                         });
 
@@ -310,6 +299,10 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         dispatcher.execute(action, new AsyncCallbackAdaptor<VoidResult>() {
         });
     }
+
+//    private void setButtonsEnabled() {
+//        terminateButton.setEnabled(selectedTaskProgress.size() > 0);
+//    }
 
     @Override
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Set<String>> handler) {

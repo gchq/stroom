@@ -16,13 +16,18 @@
 
 package stroom.statistics.common.pipeline.filter;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.statistics.common.StatisticEvent;
@@ -38,11 +43,6 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -71,34 +71,27 @@ public class StatisticsFilter extends AbstractXMLFilter {
     private static final String TAG_VALUE = "value";
     private static final String COUNT = "count";
     private static final String VALUE = "value";
-
+    private static final int EVENT_BUFFER_SIZE = 1000;
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(StatisticsFilter.class);
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
     private final StatisticsFactory statisticEventStoreFactory;
     private final StatisticStoreEntityService statisticsDataSourceService;
-
-    private static final int EVENT_BUFFER_SIZE = 1000;
-
-    private StatisticStoreEntity statisticsDataSource;
-
-    private Statistics statisticEventStore;
     private final List<StatisticEvent> statisticEventList = new ArrayList<>(EVENT_BUFFER_SIZE);
     private final StringBuilder textBuffer = new StringBuilder();
-
+    private final Map<String, String> emptyTagToValueMap = new HashMap<String, String>();
+    private StatisticStoreEntity statisticsDataSource;
+    private Statistics statisticEventStore;
     /**
      * Events attributes
      */
     private Map<String, String> currentTagToValueMap = new HashMap<String, String>();
-    private final Map<String, String> emptyTagToValueMap = new HashMap<String, String>();
     private String currentTagName;
     private String currentTagValue;
     private Long currentEventTimeMs;
     private Double currentStatisticValue;
     private Long currentStatisticCount;
-
     private Locator locator;
-
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StatisticsFilter.class);
 
     @Inject
     public StatisticsFilter(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory,

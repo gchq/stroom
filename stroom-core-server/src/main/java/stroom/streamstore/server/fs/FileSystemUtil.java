@@ -16,61 +16,62 @@
 
 package stroom.streamstore.server.fs;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.Date;
-
 import org.apache.commons.lang.StringUtils;
-
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.StroomLogger;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collection;
+import java.util.Date;
+
 /**
  * Utility class to open a File based on it's meta data.
- *
+ * <p>
  * Stream's on the file system are stored in directories.
- *
+ * <p>
  * If the stream is compressed it ends with the "bgz" (block gzip compression)
  * which is our own random access file format. If the file is not compressed if
  * it ends with "dat" Raw data file (used for indexed child streams)
- *
+ * <p>
  * Child streams have an appended "."[type] extension and then .bgz or .dat.
- *
+ * <p>
  * A typical stream with 2 children could be: .../001/100/001=001002001.bgz
  * .../001/100/001=001002001.ctx.bgz .../001/100/001=001002001.idx.dat
- *
+ * <p>
  * Those children can have further child streams: .../001/100/001=001002001.bgz
  * .../001/100/001=001002001.ctx.bgz .../001/100/001=001002001.ctx.idx.dat
  * .../001/100/001=001002001.idx.dat
- *
+ * <p>
  * Any files ended in .lock are locked output streams that have not yet closed.
  */
 public final class FileSystemUtil {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileSystemUtil.class);
-
     /**
      * We use this rather than the File.separator as we need to be standard
      * across Windows and UNIX.
      */
     public static final char SEPERATOR_CHAR = '/';
     public static final char FILE_SEPERATOR_CHAR = '=';
-
     /**
      * Extension used for locking.
      */
     public static final String LOCK_EXTENSION = ".lock";
-
     /**
      * How big our buffers are. This should always be a multiple of 8.
      */
     public static final int STREAM_BUFFER_SIZE = 1024 * 100;
-
     /**
      * The store root.
      */
     public static final String STORE_NAME = "store";
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileSystemUtil.class);
 
     private FileSystemUtil() {
         // NA
@@ -157,10 +158,10 @@ public final class FileSystemUtil {
         return allDirs;
     }
 
-    public static boolean updateLastModified(final Collection<File> files, final Date lastModified) {
+    public static boolean updateLastModified(final Collection<File> files, final long lastModified) {
         boolean allOk = true;
         for (File file : files) {
-            allOk &= file.setLastModified(lastModified.getTime());
+            allOk &= file.setLastModified(lastModified);
         }
         return allOk;
     }
@@ -212,13 +213,66 @@ public final class FileSystemUtil {
         return false;
     }
 
+    public static boolean deleteDirectory(final Path path) throws IOException {
+        if (deleteContents(path)) {
+            try {
+                Files.delete(path);
+                LOGGER.debug("Deleted file " + path);
+                return true;
+            } catch (final IOException e) {
+                LOGGER.error("Failed to delete file " + path);
+                return false;
+            }
+        } else {
+            LOGGER.error("Failed to delete file " + path);
+        }
+        return false;
+    }
+
+    public static boolean deleteContents(final Path path) {
+        try {
+            Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
+                        throws IOException {
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(final Path file, final IOException exc) throws IOException {
+                    // try to delete the file anyway, even if its attributes
+                    // could not be read, since delete-only access is
+                    // theoretically possible
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
+                    if (exc == null) {
+                        Files.delete(dir);
+                        return FileVisitResult.CONTINUE;
+                    } else {
+                        // directory iteration failed; propagate exception
+                        throw exc;
+                    }
+                }
+            });
+        } catch (final IOException e) {
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * <p>
      * Utility method to create directories one by one (rather than call Java
      * API mkdirs). We do this to ensure if we fail to make one we check that it
      * has not been created between that last time we checked.
      * </p>
-     *
+     * <p>
      * <p>
      * WE ASSUME here that mkdir is ATOMIC .... which it is.
      * </p>

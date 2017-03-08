@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,9 +22,9 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionModel;
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.widget.htree.client.CellRenderer2;
 import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.Dimension;
@@ -37,14 +37,11 @@ import java.util.List;
 
 public final class ExpressionItemRenderer implements CellRenderer2<ExpressionItem>, NodeExtentProvider<ExpressionItem> {
     private final FlowPanel panel;
-
-    private ExpressionItem editingItem;
     private final OperatorEditor operatorEditor;
     private final TermEditor termEditor;
-
-    private SelectionModel<ExpressionItem> selectionModel;
-
     private final List<ExpressionItemBox> boxes = new ArrayList<>();
+    private ExpressionItem editingItem;
+    private SelectionModel<ExpressionItem> selectionModel;
 
     public ExpressionItemRenderer(final FlowPanel panel, final OperatorEditor operatorEditor,
                                   final TermEditor termEditor) {
@@ -138,7 +135,7 @@ public final class ExpressionItemRenderer implements CellRenderer2<ExpressionIte
     public String getText(final ExpressionItem item) {
         if (item instanceof ExpressionOperator) {
             final ExpressionOperator operator = (ExpressionOperator) item;
-            return operator.getType().getDisplayValue();
+            return operator.getOp().getDisplayValue();
         } else if (item instanceof ExpressionTerm) {
             final ExpressionTerm term = (ExpressionTerm) item;
             final StringBuilder sb = new StringBuilder();

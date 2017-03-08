@@ -79,18 +79,21 @@ public class SimpleExplorerItem implements ExplorerData {
     }
 
     @Override
-    public int hashCode() {
-        return (type.hashCode() * 31) + name.hashCode();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final SimpleExplorerItem that = (SimpleExplorerItem) o;
+
+        if (type != null ? !type.equals(that.type) : that.type != null) return false;
+        return name != null ? name.equals(that.name) : that.name == null;
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (obj == null || !(obj instanceof SimpleExplorerItem)) {
-            return false;
-        }
-
-        final SimpleExplorerItem item = (SimpleExplorerItem) obj;
-        return type.equals(item.type) && name.equals(item.name);
+    public int hashCode() {
+        int result = type != null ? type.hashCode() : 0;
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        return result;
     }
 
     @Override

@@ -16,24 +16,22 @@
 
 package stroom.pipeline.server.writer;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.pipeline.server.factory.ConfigurableElement;
+import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.util.spring.StroomScope;
+
+import javax.annotation.Resource;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
-import stroom.pipeline.server.factory.PipelineProperty;
-import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.shared.data.PipelineElementType.Category;
 
 /**
  * Joins text instances into a single text instance.

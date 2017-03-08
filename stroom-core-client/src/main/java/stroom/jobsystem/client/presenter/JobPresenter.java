@@ -16,7 +16,6 @@
 
 package stroom.jobsystem.client.presenter;
 
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
@@ -51,13 +50,9 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
     protected void onBind() {
         super.onBind();
 
-        registerHandler(jobListPresenter.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                final Job row = jobListPresenter.getSelectionModel().getSelectedObject();
-
-                jobNodeListPresenter.read(row);
-            }
+        registerHandler(jobListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            final Job row = jobListPresenter.getSelectionModel().getSelected();
+            jobNodeListPresenter.read(row);
         }));
     }
 

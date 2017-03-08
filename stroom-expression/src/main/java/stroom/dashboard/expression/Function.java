@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,11 +22,9 @@ public interface Function {
     /**
      * Set the parameters that this function will use.
      *
-     * @param params
-     *            The parameters that this function will use.
-     * @throws ParseException
-     *             If any parameters are illegal/unexpected then throw an
-     *             exception.
+     * @param params The parameters that this function will use.
+     * @throws ParseException If any parameters are illegal/unexpected then throw an
+     *                        exception.
      */
     void setParams(Object[] params) throws ParseException;
 
@@ -52,7 +50,7 @@ public interface Function {
      * parameters used going to aggregate data.
      *
      * @return True if this function is an aggregating function or any child
-     *         parameters used will aggregate data.
+     * parameters used will aggregate data.
      */
     boolean hasAggregate();
 }

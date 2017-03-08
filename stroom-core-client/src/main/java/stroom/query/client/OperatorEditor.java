@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,29 +18,23 @@ package stroom.query.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
-
-import stroom.query.client.TermEditor.Resources;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
 import stroom.item.client.ItemListBox;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.client.TermEditor.Resources;
 
 public class OperatorEditor extends Composite {
+    private static Resources resources;
     private final FlowPanel layout;
-    private final ItemListBox<ExpressionOperator.Op> listBox;
+    private final ItemListBox<Op> listBox;
     private ExpressionOperator operator;
-
     private boolean reading;
     private boolean editing;
     private ExpressionUiHandlers uiHandlers;
-
-    private static Resources resources;
 
     public OperatorEditor() {
         if (resources == null) {
@@ -53,13 +47,10 @@ public class OperatorEditor extends Composite {
 
         fixStyle(listBox, 50);
 
-        listBox.addSelectionHandler(new SelectionHandler<ExpressionOperator.Op>() {
-            @Override
-            public void onSelection(final SelectionEvent<Op> event) {
-                if (!reading && operator != null) {
-                    operator.setType(event.getSelectedItem());
-                    fireDirty();
-                }
+        listBox.addSelectionHandler(event -> {
+            if (!reading && operator != null) {
+                operator.setOp(event.getSelectedItem());
+                fireDirty();
             }
         });
 
@@ -78,14 +69,9 @@ public class OperatorEditor extends Composite {
             this.operator = operator;
 
             // Select the current value.
-            listBox.setSelectedItem(operator.getType());
+            listBox.setSelectedItem(operator.getOp());
 
-            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-                @Override
-                public void execute() {
-                    layout.setVisible(true);
-                }
-            });
+            Scheduler.get().scheduleDeferred(() -> layout.setVisible(true));
 
             reading = false;
             editing = true;

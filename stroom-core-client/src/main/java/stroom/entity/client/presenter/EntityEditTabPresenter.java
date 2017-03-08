@@ -17,7 +17,6 @@
 package stroom.entity.client.presenter;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -39,7 +38,11 @@ import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.client.ImageUtil;
 import stroom.util.shared.HasType;
-import stroom.widget.button.client.*;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.GlyphButtonView;
+import stroom.widget.button.client.GlyphIcon;
+import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ImageButtonView;
 import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 import stroom.widget.tab.client.presenter.Layer;
@@ -143,31 +146,25 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
 
     public void selectTab(final TabData tab) {
         TaskStartEvent.fire(EntityEditTabPresenter.this);
-        Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-            @Override
-            public void execute() {
-                if (tab != null) {
-                    getContent(tab, new ContentCallback() {
-                        @Override
-                        public void onReady(final PresenterWidget<?> content) {
-                            if (content != null) {
-                                currentContent = content;
+        Scheduler.get().scheduleDeferred(() -> {
+            if (tab != null) {
+                getContent(tab, content -> {
+                    if (content != null) {
+                        currentContent = content;
 
-                                // Set the content.
-                                getView().getLayerContainer().show((Layer) currentContent);
+                        // Set the content.
+                        getView().getLayerContainer().show((Layer) currentContent);
 
-                                // Update the selected tab.
-                                getView().getTabBar().selectTab(tab);
-                                selectedTab = tab;
+                        // Update the selected tab.
+                        getView().getTabBar().selectTab(tab);
+                        selectedTab = tab;
 
-                                afterSelectTab(content);
-                            }
-                        }
-                    });
-                }
-
-                TaskEndEvent.fire(EntityEditTabPresenter.this);
+                        afterSelectTab(content);
+                    }
+                });
             }
+
+            TaskEndEvent.fire(EntityEditTabPresenter.this);
         });
     }
 

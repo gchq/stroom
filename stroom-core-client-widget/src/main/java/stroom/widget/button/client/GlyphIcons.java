@@ -22,15 +22,14 @@ public final class GlyphIcons {
     public static final GlyphIcon.ColourSet BLUE = GlyphIcon.ColourSet.create("#1E88E5", "#2196F3");
     public static final GlyphIcon.ColourSet YELLOW = GlyphIcon.ColourSet.create("#FF8F00", "#FFA000");
     public static final GlyphIcon.ColourSet GREY = GlyphIcon.ColourSet.create("#757575", "#9E9E9E");
-    public static final GlyphIcon.ColourSet LIGHT_GREY = GlyphIcon.ColourSet.create("#b3b3b3", "#198764");
 
     public static final GlyphIcon ADD = new GlyphIcon("fa fa-plus", BLUE, "Add", true);
     public static final GlyphIcon ALERT = new GlyphIcon("fa fa-exclamation-triangle", YELLOW, "Alert", true);
-    public static final GlyphIcon CLEAR = new GlyphIcon("fa fa-times-circle", LIGHT_GREY, "Clear", false);
+    public static final GlyphIcon CLEAR = new GlyphIcon("fa fa-times-circle", BLUE, "Clear", false);
     public static final GlyphIcon CLOSE = new GlyphIcon("fa fa-times", RED, "Close", false);
     public static final GlyphIcon COPY = new GlyphIcon("fa fa-clone", BLUE, "Copy", false);
     public static final GlyphIcon DATABASE = new GlyphIcon("fa fa-database", GREY, "Database", true);
-    public static final GlyphIcon DELETE = new GlyphIcon("fa fa-trash", GREY, "Delete", false);
+    public static final GlyphIcon DELETE = new GlyphIcon("fa fa-trash", BLUE, "Delete", false);
     public static final GlyphIcon DISABLE = new GlyphIcon("fa fa-ban", RED, "Disable", false);
     public static final GlyphIcon DOWN = new GlyphIcon("fa fa-arrow-down", BLUE, "Down", false);
     public static final GlyphIcon DOWNLOAD = new GlyphIcon("fa fa-arrow-down", GREEN, "Download", false);
@@ -58,6 +57,8 @@ public final class GlyphIcons {
     public static final GlyphIcon UPLOAD = new GlyphIcon("fa fa-arrow-up", GREEN, "Upload", true);
     public static final GlyphIcon USER = new GlyphIcon("fa fa-user", BLUE, "User", true);
     public static final GlyphIcon USER_GROUP = new GlyphIcon("fa fa-users", BLUE, "User Group", true);
+    public static final GlyphIcon USER_DISABLED = new GlyphIcon("fa fa-user", GREY, "User", true);
+    public static final GlyphIcon USER_GROUP_DISABLED = new GlyphIcon("fa fa-users", GREY, "User Group", true);
     public static final GlyphIcon VOLUMES = new GlyphIcon("fa fa-hdd-o", GREY, "Volumes", true);
 
     private GlyphIcons() {

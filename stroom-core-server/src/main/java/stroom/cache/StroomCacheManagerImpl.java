@@ -22,6 +22,8 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import stroom.cache.shared.CacheInfo;
@@ -36,6 +38,8 @@ import net.sf.ehcache.Statistics;
 
 @Component
 public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomCacheManagerImpl.class);
+
     @Resource
     private CacheManager cacheManager;
 
@@ -108,7 +112,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
     public void clear() {
         final String[] cacheNames = cacheManager.getCacheNames();
         for (final String cacheName : cacheNames) {
-            final Cache cache = cacheManager.getCache(cacheName);
+            final Ehcache cache = cacheManager.getEhcache(cacheName);
             if (cache != null) {
                 cache.removeAll();
             }
@@ -121,8 +125,14 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
     @Override
     public Long findClear(final FindCacheInfoCriteria criteria) {
         final List<CacheInfo> caches = findCaches(criteria);
-        for (final CacheInfo cache : caches) {
-            cacheManager.getCache(cache.getName()).removeAll();
+        for (final CacheInfo cacheInfo : caches) {
+            final String cacheName = cacheInfo.getName();
+            final Ehcache cache = cacheManager.getEhcache(cacheName);
+            if (cache != null) {
+                cache.removeAll();
+            } else {
+                LOGGER.error("Unable to find cache with name '" + cacheName + "'");
+            }
         }
         return null;
     }

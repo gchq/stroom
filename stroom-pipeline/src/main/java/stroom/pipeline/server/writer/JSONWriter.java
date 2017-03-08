@@ -16,31 +16,28 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Deque;
-
-import javax.inject.Inject;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.io.SerializedString;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.io.SerializedString;
-
 import stroom.io.IgnoreCloseWriter;
 import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.xml.converter.json.JSONParser;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * Writes out XML and records segment boundaries as it goes.
@@ -50,18 +47,16 @@ import stroom.xml.converter.json.JSONParser;
 @ConfigurableElement(type = "JSONWriter", category = Category.WRITER, roles = { PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_WRITER, PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.JSON)
 public class JSONWriter extends AbstractWriter {
-    private JsonGenerator jsonGenerator;
-    private boolean doneElement;
-    private int depth;
-
-    private boolean indentOutput = false;
     private final boolean addTrailingRootValueSeparator = true;
     private final String rootValueSeparator = "\n";
-
-    private String currentKey;
     private final Deque<String> elements = new ArrayDeque<>();
     private final StringBuilder buffer = new StringBuilder();
     private final JsonFactory jsonFactory = new JsonFactory();
+    private JsonGenerator jsonGenerator;
+    private boolean doneElement;
+    private int depth;
+    private boolean indentOutput = false;
+    private String currentKey;
 
     public JSONWriter() {
     }

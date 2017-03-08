@@ -16,23 +16,22 @@
 
 package stroom.pipeline.server.filter;
 
-import javax.annotation.Resource;
-
-import stroom.util.logging.StroomLogger;
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-
 import stroom.node.shared.RecordCountService;
 import stroom.node.shared.RecordCounter;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.RecordCount;
+import stroom.util.logging.StroomLogger;
+import stroom.util.spring.StroomScope;
+
+import javax.annotation.Resource;
 
 /**
  * A SAX filter used to count the number of first level elements in an XML

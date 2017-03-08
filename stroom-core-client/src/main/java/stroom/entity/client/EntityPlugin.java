@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,18 +16,21 @@
 
 package stroom.entity.client;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.Presenter;
+import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.app.client.ContentManager;
-import stroom.app.client.ContentManager.CloseCallback;
-import stroom.app.client.ContentManager.CloseHandler;
-import stroom.app.client.presenter.Plugin;
 import stroom.content.client.event.SelectContentTabEvent;
+import stroom.core.client.ContentManager;
+import stroom.core.client.ContentManager.CloseCallback;
+import stroom.core.client.ContentManager.CloseHandler;
+import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.event.ShowCreateEntityDialogEvent;
 import stroom.entity.client.presenter.EntityEditPresenter;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceCopyAction;
 import stroom.entity.shared.EntityServiceCreateAction;
 import stroom.entity.shared.EntityServiceDeleteAction;
@@ -36,20 +39,17 @@ import stroom.entity.shared.EntityServiceMoveAction;
 import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.entity.shared.HasFolder;
 import stroom.entity.shared.NamedEntity;
+import stroom.entity.shared.PermissionInheritance;
+import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.event.HighlightExplorerItemEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.shared.EntityData;
-import stroom.explorer.shared.ExplorerData;
+import stroom.query.api.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
-import stroom.util.shared.SharedList;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Presenter;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -82,8 +82,8 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
     /**
      * 1. This method will create a new entity and show it in the content pane.
      */
-    public void createEntity(final Presenter<?, ?> popup, final DocRef folder, final String entityName) {
-        create(getType(), entityName, folder, new CreateCallback() {
+    public void createEntity(final Presenter<?, ?> popup, final DocRef folder, final String entityName, final PermissionInheritance permissionInheritance) {
+        create(getType(), entityName, folder, permissionInheritance, new CreateCallback() {
             @Override
             public void onCreate(final DocRef docRef) {
                 // Hide the create entity presenter.
@@ -186,20 +186,20 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
      * 6. This method will save an entity as a copy with a different name.
      */
     @SuppressWarnings("unchecked")
-    public void copy(final PresenterWidget<?> dialog, final EntityTabData tabData, final String name) {
+    public void copy(final PresenterWidget<?> dialog, final EntityTabData tabData, final String name, final PermissionInheritance permissionInheritance) {
         if (tabData != null && tabData instanceof EntityEditPresenter<?, ?>) {
             final EntityEditPresenter<?, E> presenter = (EntityEditPresenter<?, E>) tabData;
             final E entity = presenter.getEntity();
             presenter.write(presenter.getEntity());
 
-            final DocRef oldEntityReference = DocRef.create(entity);
+            final DocRef oldEntityReference = DocRefUtil.create(entity);
 
             DocRef folder = null;
             if (entity instanceof HasFolder) {
-                folder = DocRef.create(((HasFolder) entity).getFolder());
+                folder = DocRefUtil.create(((HasFolder) entity).getFolder());
             }
 
-            copy(entity, folder, name, new SaveCallback<E>() {
+            copy(entity, folder, name, permissionInheritance, new SaveCallback<E>() {
                 @Override
                 public void onSave(final E entity) {
                     // Hide the save as presenter.
@@ -207,7 +207,7 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
 
                     // Create an entity item so we can open it in the editor and
                     // select it in the explorer tree.
-                    final DocRef docRef = DocRef.create(entity);
+                    final DocRef docRef = DocRefUtil.create(entity);
                     highlight(docRef);
 
                     // The entity we had open before is now effectively closed
@@ -281,18 +281,18 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
      * 8.1. This method will copy an entity.
      */
     public void copyEntity(final PresenterWidget<?> popup, final DocRef docRef, final DocRef folder,
-            final String name) {
+            final String name, final PermissionInheritance permissionInheritance) {
         // We need to load the entity here as it might not have been loaded yet.
         load(docRef, new LoadCallback<E>() {
             @Override
             public void onLoad(final E entity) {
-                copyEntity(popup, entity, folder, name);
+                copyEntity(popup, entity, folder, name, permissionInheritance);
             }
         });
     }
 
-    private void copyEntity(final PresenterWidget<?> popup, final E entity, final DocRef folder, final String name) {
-        copy(entity, folder, name, new SaveCallback<E>() {
+    private void copyEntity(final PresenterWidget<?> popup, final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
+        copy(entity, folder, name, permissionInheritance, new SaveCallback<E>() {
             @Override
             public void onSave(final E entity) {
                 // Hide the copy entity presenter.
@@ -300,7 +300,7 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
 
                 // Create an entity item so we can open it in the editor and
                 // select it in the explorer tree.
-                final DocRef item = DocRef.create(entity);
+                final DocRef item = DocRefUtil.create(entity);
                 highlight(item);
             }
         });
@@ -310,7 +310,7 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
      * 8.2. This method will move an entity.
      */
     @SuppressWarnings("unchecked")
-    public void moveEntity(final PresenterWidget<?> popup, final DocRef document, final DocRef folder) {
+    public void moveEntity(final PresenterWidget<?> popup, final DocRef document, final DocRef folder, final PermissionInheritance permissionInheritance) {
         // Find out if we currently have the entity open.
         final EntityTabData tabData = entityToTabDataMap.get(document);
         if (tabData != null && tabData instanceof EntityEditPresenter<?, ?>) {
@@ -326,27 +326,27 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
                             public void onResult(final boolean result) {
                                 if (result) {
                                     editPresenter.write(editPresenter.getEntity());
-                                    moveEntity(popup, editPresenter.getEntity(), folder, tabData, editPresenter);
+                                    moveEntity(popup, editPresenter.getEntity(), folder, permissionInheritance, tabData, editPresenter);
                                 }
                             }
                         });
             } else {
-                moveEntity(popup, editPresenter.getEntity(), folder, tabData, editPresenter);
+                moveEntity(popup, editPresenter.getEntity(), folder, permissionInheritance, tabData, editPresenter);
             }
         } else {
             // We need to load the entity here as it hasn't been loaded yet.
             load(document, new LoadCallback<E>() {
                 @Override
                 public void onLoad(final E entity) {
-                    moveEntity(popup, entity, folder, null, null);
+                    moveEntity(popup, entity, folder, permissionInheritance, null, null);
                 }
             });
         }
     }
 
-    private void moveEntity(final PresenterWidget<?> popup, final E entity, final DocRef folder,
+    private void moveEntity(final PresenterWidget<?> popup, final E entity, final DocRef folder, final PermissionInheritance permissionInheritance,
             final EntityTabData tabData, final EntityEditPresenter<?, E> editPresenter) {
-        move(entity, folder, new SaveCallback<E>() {
+        move(entity, folder, permissionInheritance, new SaveCallback<E>() {
             @Override
             public void onSave(final E entity) {
                 // Hide the copy entity presenter.
@@ -354,7 +354,7 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
 
                 // Create an entity item so we can open it in the editor and
                 // select it in the explorer tree.
-                final DocRef docRef = DocRef.create(entity);
+                final DocRef docRef = DocRefUtil.create(entity);
                 highlight(docRef);
 
                 if (editPresenter != null) {
@@ -414,7 +414,7 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
 
                 // Create an entity item so we can open it in the feed editor
                 // and select it in the explorer tree.
-                final DocRef docRef = DocRef.create(entity);
+                final DocRef docRef = DocRefUtil.create(entity);
                 highlight(docRef);
 
                 if (editPresenter != null) {
@@ -560,16 +560,16 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
     // }
     // }
 
-    protected void createEntity(final String type, final String displayType) {
-        final EntityData entityData = entityPluginEventManager.getSelectedEntityData();
-        ShowCreateEntityDialogEvent.fire(EntityPlugin.this, entityData, type, displayType, allowNullFolder());
-    }
+//    protected void createEntity(final String type, final String displayType) {
+//        final EntityData entityData = entityPluginEventManager.getSelectedEntityData();
+//        ShowCreateEntityDialogEvent.fire(EntityPlugin.this, entityData, type, displayType, allowNullFolder());
+//    }
 
-    public void create(final String type, final String name, final DocRef folder,
+    public void create(final String type, final String name, final DocRef folder, final PermissionInheritance permissionInheritance,
             final CreateCallback callback) {
-        dispatcher.execute(new EntityServiceCreateAction(type, name, folder), new AsyncCallbackAdaptor<DocRef>() {
+        dispatcher.execute(new EntityServiceCreateAction(type, name, folder, permissionInheritance), new AsyncCallbackAdaptor<SharedDocRef>() {
             @Override
-            public void onSuccess(final DocRef result) {
+            public void onSuccess(final SharedDocRef result) {
                 callback.onCreate(result);
             }
         });
@@ -594,8 +594,8 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
         });
     }
 
-    private void copy(final E entity, final DocRef folder, final String name, final SaveCallback<E> callback) {
-        dispatcher.execute(new EntityServiceCopyAction<E>(entity, folder, name), new AsyncCallbackAdaptor<E>() {
+    private void copy(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance, final SaveCallback<E> callback) {
+        dispatcher.execute(new EntityServiceCopyAction<E>(entity, folder, name, permissionInheritance), new AsyncCallbackAdaptor<E>() {
             @Override
             public void onSuccess(final E result) {
                 callback.onSave(result);
@@ -603,8 +603,8 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
         });
     }
 
-    private void move(final E entity, final DocRef folder, final SaveCallback<E> callback) {
-        dispatcher.execute(new EntityServiceMoveAction<E>(entity, folder), new AsyncCallbackAdaptor<E>() {
+    private void move(final E entity, final DocRef folder, final PermissionInheritance permissionInheritance, final SaveCallback<E> callback) {
+        dispatcher.execute(new EntityServiceMoveAction<E>(entity, folder, permissionInheritance), new AsyncCallbackAdaptor<E>() {
             @Override
             public void onSuccess(final E result) {
                 callback.onSave(result);

@@ -16,12 +16,6 @@
 
 package stroom.streamstore.client.view;
 
-import stroom.entity.client.EntityItemListBox;
-import stroom.entity.shared.DocRef;
-import stroom.streamstore.client.presenter.StreamTypeUiManager;
-import stroom.streamstore.client.presenter.StreamUploadPresenter.DataUploadView;
-import stroom.streamstore.shared.StreamType;
-import stroom.widget.customdatebox.client.CustomDateBox;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -32,6 +26,12 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
+import stroom.entity.client.EntityItemListBox;
+import stroom.entity.shared.DocRefUtil;
+import stroom.streamstore.client.presenter.StreamTypeUiManager;
+import stroom.streamstore.client.presenter.StreamUploadPresenter.DataUploadView;
+import stroom.streamstore.shared.StreamType;
+import stroom.widget.customdatebox.client.CustomDateBox;
 
 public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
     private final Widget widget;
@@ -52,7 +52,7 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
         streamType = new EntityItemListBox("");
 
         for (final StreamType st : streamTypeUiManager.getRawStreamTypeList()) {
-            streamType.addItem(DocRef.create(st));
+            streamType.addItem(DocRefUtil.create(st));
         }
         widget = binder.createAndBindUi(this);
 

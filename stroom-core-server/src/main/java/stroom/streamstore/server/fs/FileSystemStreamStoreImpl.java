@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,15 +16,24 @@
 
 package stroom.streamstore.server.fs;
 
+import event.logging.BaseAdvancedQueryItem;
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.BaseAdvancedQueryOperator.Or;
+import event.logging.TermCondition;
+import event.logging.util.EventLoggingUtil;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryDataLogUtil;
-import stroom.entity.server.util.*;
+import stroom.entity.server.util.EntityServiceLogUtil;
+import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
-import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.PageRequest;
@@ -37,7 +46,8 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.query.shared.Condition;
+import stroom.query.api.DocRef;
+import stroom.query.api.ExpressionTerm;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -48,11 +58,11 @@ import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamAttributeCondition;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeFieldUse;
 import stroom.streamstore.shared.StreamAttributeValue;
+import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamTypeService;
@@ -60,17 +70,9 @@ import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.zip.HeaderMap;
-import event.logging.BaseAdvancedQueryItem;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.BaseAdvancedQueryOperator.Or;
-import event.logging.TermCondition;
-import event.logging.util.EventLoggingUtil;
-import org.joda.time.DateTimeZone;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -111,12 +113,6 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         set.add(Feed.ENTITY_TYPE);
         set.add(StreamType.ENTITY_TYPE);
         SOURCE_FETCH_SET = set;
-    }
-
-    static {
-        // Set the default timezone and locale for all date time operations.
-        DateTimeZone.setDefault(DateTimeZone.UTC);
-        Locale.setDefault(Locale.ROOT);
     }
 
     private final StroomEntityManager entityManager;
@@ -340,7 +336,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
      * Open a existing stream source.
      * </p>
      *
-     * @param streamId        The stream id to open a stream source for.
+     * @param streamId  The stream id to open a stream source for.
      * @param anyStatus Used to specify if this method will return stream sources that
      *                  are logically deleted or locked. If false only unlocked stream
      *                  sources will be returned, null otherwise.
@@ -471,7 +467,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
 //    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.UPDATE)
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
+    @SuppressWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
     public StreamTarget openStreamTarget(final Stream stream, final boolean append) {
         LOGGER.debug("openStreamTarget() " + stream);
 
@@ -963,6 +959,9 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
         if (criteria.getAttributeConditionList() != null) {
             for (int i = 0; i < criteria.getAttributeConditionList().size(); i++) {
+                final StreamAttributeCondition streamAttributeCondition = criteria.getAttributeConditionList().get(i);
+                final DocRef streamAttributeKey = streamAttributeCondition.getStreamAttributeKey();
+
                 sql.append(" JOIN ");
                 sql.append(StreamAttributeValue.TABLE_NAME);
                 sql.append(" SAV");
@@ -978,7 +977,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                 sql.append(".");
                 sql.append(StreamAttributeValue.STREAM_ATTRIBUTE_KEY_ID);
                 sql.append(" = ");
-                sql.arg(criteria.getAttributeConditionList().get(i).getStreamAttributeKey().getId());
+                sql.arg(streamAttributeKey.getId());
                 sql.append(")");
             }
         }
@@ -1292,30 +1291,30 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 //            if (doneOne) {
 //                sql.append(" UNION");
 //            }
-            sql.append(" (SELECT ");
-            sql.append(feed.getId());
-            sql.append(", ");
-            sql.append("MAX(");
-            sql.append(Stream.EFFECTIVE_MS);
-            sql.append(") FROM ");
-            sql.append(Stream.TABLE_NAME);
-            sql.append(" WHERE ");
-            sql.append(Stream.EFFECTIVE_MS);
-            sql.append(" < ");
-            sql.arg(criteria.getEffectivePeriod().getFrom());
-            sql.append(" AND ");
-            sql.append(Stream.STATUS);
-            sql.append(" = ");
-            sql.arg(StreamStatus.UNLOCKED.getPrimitiveValue());
-            sql.append(" AND ");
-            sql.append(StreamType.FOREIGN_KEY);
-            sql.append(" = ");
-            sql.arg(streamType.getId());
-            sql.append(" AND ");
-            sql.append(Feed.FOREIGN_KEY);
-            sql.append(" = ");
-            sql.arg(feed.getId());
-            sql.append(")");
+        sql.append(" (SELECT ");
+        sql.append(feed.getId());
+        sql.append(", ");
+        sql.append("MAX(");
+        sql.append(Stream.EFFECTIVE_MS);
+        sql.append(") FROM ");
+        sql.append(Stream.TABLE_NAME);
+        sql.append(" WHERE ");
+        sql.append(Stream.EFFECTIVE_MS);
+        sql.append(" < ");
+        sql.arg(criteria.getEffectivePeriod().getFrom());
+        sql.append(" AND ");
+        sql.append(Stream.STATUS);
+        sql.append(" = ");
+        sql.arg(StreamStatus.UNLOCKED.getPrimitiveValue());
+        sql.append(" AND ");
+        sql.append(StreamType.FOREIGN_KEY);
+        sql.append(" = ");
+        sql.arg(streamType.getId());
+        sql.append(" AND ");
+        sql.append(Feed.FOREIGN_KEY);
+        sql.append(" = ");
+        sql.arg(feed.getId());
+        sql.append(")");
 //
 //            doneOne = true;
 //        }
@@ -1383,7 +1382,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             appendStreamCriteria(criteria, sql);
 
             // Append order by criteria.
-            SQLUtil.appendOrderBy(sql, false, criteria, "S");
+//            SQLUtil.appendOrderBy(sql, false, criteria, "S");
             SQLUtil.applyRestrictionCriteria(criteria, sql);
 
         } else {
@@ -1426,7 +1425,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             appendStreamCriteria(criteria, sql);
 
             // Append order by criteria.
-            SQLUtil.appendOrderBy(sql, false, criteria, "S");
+//            SQLUtil.appendOrderBy(sql, false, criteria, "S");
             SQLUtil.applyRestrictionCriteria(criteria, sql);
 
             sql.append(")");
@@ -1497,7 +1496,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         }
     }
 
-    private void appendCondition(final List<BaseAdvancedQueryItem> items, final String name, final Condition condition,
+    private void appendCondition(final List<BaseAdvancedQueryItem> items, final String name, final ExpressionTerm.Condition condition,
                                  final String value) {
         switch (condition) {
             case CONTAINS:

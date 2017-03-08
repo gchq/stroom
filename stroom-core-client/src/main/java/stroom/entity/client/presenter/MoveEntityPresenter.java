@@ -16,19 +16,6 @@
 
 package stroom.entity.client.presenter;
 
-import stroom.entity.client.event.MoveEntityEvent;
-import stroom.entity.client.event.ShowMoveEntityDialogEvent;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.Folder;
-import stroom.explorer.client.presenter.EntityTreePresenter;
-import stroom.explorer.shared.EntityData;
-import stroom.explorer.shared.ExplorerData;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -36,12 +23,26 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+import stroom.entity.client.event.MoveEntityEvent;
+import stroom.entity.client.event.ShowMoveEntityDialogEvent;
+import stroom.entity.shared.Folder;
+import stroom.explorer.client.presenter.EntityTreePresenter;
+import stroom.explorer.shared.ExplorerData;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.entity.shared.PermissionInheritance;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import java.util.List;
 
 public class MoveEntityPresenter
         extends MyPresenter<MoveEntityPresenter.MoveEntityView, MoveEntityPresenter.MoveEntityProxy>
         implements ShowMoveEntityDialogEvent.Handler, PopupUiHandlers {
     private final EntityTreePresenter entityTreePresenter;
-    private ExplorerData entity;
+    private List<ExplorerData> explorerDataList;
 
     @Inject
     public MoveEntityPresenter(final EventBus eventBus, final MoveEntityView view, final MoveEntityProxy proxy,
@@ -57,32 +58,16 @@ public class MoveEntityPresenter
     @ProxyEvent
     @Override
     public void onMove(final ShowMoveEntityDialogEvent event) {
-        this.entity = event.getSelected();
+        getView().setPermissionInheritance(PermissionInheritance.INHERIT);
 
-        entityTreePresenter.getSelectionModel().clear();
+        this.explorerDataList = event.getExplorerDataList();
 
-//        if (event.getCurrentParents() != null && event.getCurrentParents().size() > 0) {
-//            ExplorerData folder = null;
-//            for (final ExplorerData parent : event.getCurrentParents()) {
-//                if (folder == null && parent != null && parent instanceof EntityData
-//                        && Folder.ENTITY_TYPE.equals(parent.getType())) {
-//                    folder = parent;
-//                }
-//            }
-//
-//            if (folder != null) {
-//                entityTreePresenter.getSelectionModel().setSelected(folder, true);
-//            }
-//
-//
-//        } else {
-//            entityTreePresenter.getModel().reset();
-//            entityTreePresenter.getModel().refresh();
-//        }
+        entityTreePresenter.setSelectedItem(null);
 
-        entityTreePresenter.getSelectionModel().setSelected(event.getSelected(), true);
+        final ExplorerData firstChild = event.getExplorerDataList().get(0);
+        entityTreePresenter.setSelectedItem(firstChild);
         entityTreePresenter.getModel().reset();
-        entityTreePresenter.getModel().setEnsureVisible(event.getSelected());
+        entityTreePresenter.getModel().setEnsureVisible(firstChild);
         entityTreePresenter.getModel().refresh();
 
         forceReveal();
@@ -90,7 +75,11 @@ public class MoveEntityPresenter
 
     @Override
     protected void revealInParent() {
-        final String caption = "Move " + entity.getDisplayValue();
+        String caption = "Move Multiple Items";
+        if (explorerDataList.size() == 1) {
+            caption = "Move " + explorerDataList.get(0).getDisplayValue();
+        }
+
         final PopupSize popupSize = new PopupSize(350, 400, 350, 350, 2000, 2000, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);
     }
@@ -98,9 +87,8 @@ public class MoveEntityPresenter
     @Override
     public void onHideRequest(final boolean autoClose, final boolean ok) {
         if (ok) {
-            final DocRef folder = getFolder();
-            MoveEntityEvent.fire(MoveEntityPresenter.this, MoveEntityPresenter.this, ((EntityData) entity).getDocRef(),
-                    folder);
+            final ExplorerData folder = entityTreePresenter.getSelectedItem();
+            MoveEntityEvent.fire(MoveEntityPresenter.this, MoveEntityPresenter.this, folder, explorerDataList, getView().getPermissionInheritance());
         } else {
             HidePopupEvent.fire(MoveEntityPresenter.this, MoveEntityPresenter.this, autoClose, ok);
         }
@@ -111,17 +99,12 @@ public class MoveEntityPresenter
         // Do nothing.
     }
 
-    private DocRef getFolder() {
-        final ExplorerData selected = entityTreePresenter.getSelectionModel().getSelectedObject();
-        if (selected != null && selected instanceof EntityData) {
-            return ((EntityData) selected).getDocRef();
-        }
-
-        return null;
-    }
-
     public interface MoveEntityView extends View {
         void setFolderView(View view);
+
+        PermissionInheritance getPermissionInheritance();
+
+        void setPermissionInheritance(PermissionInheritance permissionInheritance);
     }
 
     @ProxyCodeSplit

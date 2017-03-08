@@ -72,7 +72,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         };
 
         dataProvider = new ActionDataProvider<JobNodeRow>(dispatcher, action);
-        dataProvider.addDataDisplay(getView());
+        dataProvider.addDataDisplay(getView().getDataDisplay());
 
     }
 
@@ -100,11 +100,9 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         final Column<JobNodeRow, TaskType> typeColumn = new Column<JobNodeRow, TaskType>(new TaskTypeCell()) {
             @Override
             public TaskType getValue(final JobNodeRow row) {
-                if (row instanceof JobNodeRow) {
                     if (row.getEntity().isPersistent()) {
                         return new TaskType(row.getEntity().getJobType(), row.getEntity().getSchedule());
                     }
-                }
 
                 return null;
             }

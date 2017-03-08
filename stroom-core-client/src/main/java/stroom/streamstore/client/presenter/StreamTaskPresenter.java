@@ -16,6 +16,10 @@
 
 package stroom.streamstore.client.presenter;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseEntity;
@@ -23,11 +27,6 @@ import stroom.entity.shared.SummaryDataRow;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.TaskStatus;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.StreamTaskView>
         implements HasRead<BaseEntity> {
@@ -42,8 +41,8 @@ public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.S
 
     @Inject
     public StreamTaskPresenter(final EventBus eventBus, final StreamTaskView view,
-            final StreamTaskSummaryPresenter streamTaskSummaryPresenter,
-            final StreamTaskListPresenter streamTaskListPresenter, final ClientDispatchAsync dispatcher) {
+                               final StreamTaskSummaryPresenter streamTaskSummaryPresenter,
+                               final StreamTaskListPresenter streamTaskListPresenter, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.streamTaskSummaryPresenter = streamTaskSummaryPresenter;
         this.streamTaskListPresenter = streamTaskListPresenter;
@@ -56,37 +55,34 @@ public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.S
     protected void onBind() {
         super.onBind();
 
-        registerHandler(streamTaskSummaryPresenter.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                // Clear the task list.
-                streamTaskListPresenter.clear();
+        registerHandler(streamTaskSummaryPresenter.getSelectionModel().addSelectionHandler(event -> {
+            // Clear the task list.
+            streamTaskListPresenter.clear();
 
-                final SummaryDataRow row = streamTaskSummaryPresenter.getSelectionModel().getSelectedObject();
+            final SummaryDataRow row = streamTaskSummaryPresenter.getSelectionModel().getSelected();
 
-                if (row != null) {
-                    final FindStreamTaskCriteria findStreamTaskCriteria = streamTaskListPresenter.getDataProvider()
-                            .getCriteria();
-                    final FindStreamCriteria findStreamCriteria = streamTaskListPresenter.getDataProvider()
-                            .getCriteria().obtainFindStreamCriteria();
+            if (row != null) {
+                final FindStreamTaskCriteria findStreamTaskCriteria = streamTaskListPresenter.getDataProvider()
+                        .getCriteria();
+                final FindStreamCriteria findStreamCriteria = streamTaskListPresenter.getDataProvider()
+                        .getCriteria().obtainFindStreamCriteria();
 
-                    findStreamTaskCriteria.obtainPipelineIdSet().clear();
-                    findStreamTaskCriteria.obtainPipelineIdSet()
-                            .add(row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_PIPELINE));
+                findStreamTaskCriteria.obtainPipelineIdSet().clear();
+                findStreamTaskCriteria.obtainPipelineIdSet()
+                        .add(row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_PIPELINE));
 
-                    findStreamCriteria.obtainFeeds().clear();
-                    findStreamCriteria.obtainFeeds().obtainInclude()
-                            .add(row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_FEED));
+                findStreamCriteria.obtainFeeds().clear();
+                findStreamCriteria.obtainFeeds().obtainInclude()
+                        .add(row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_FEED));
 
-                    findStreamTaskCriteria.obtainStreamTaskStatusSet().clear();
-                    findStreamTaskCriteria.obtainStreamTaskStatusSet()
-                            .add(TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
-                                    row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_STATUS).byteValue()));
+                findStreamTaskCriteria.obtainStreamTaskStatusSet().clear();
+                findStreamTaskCriteria.obtainStreamTaskStatusSet()
+                        .add(TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                                row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_STATUS).byteValue()));
 
-                    final int priority = row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_PRIORITY).intValue();
+                final int priority = row.getKey().get(FindStreamTaskCriteria.SUMMARY_POS_PRIORITY).intValue();
 
-                    streamTaskListPresenter.getDataProvider().refresh();
-                }
+                streamTaskListPresenter.getDataProvider().refresh();
             }
         }));
     }

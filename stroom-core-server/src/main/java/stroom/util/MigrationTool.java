@@ -16,6 +16,9 @@
 
 package stroom.util;
 
+import stroom.util.io.StreamUtil;
+import stroom.util.zip.HeaderMap;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -27,9 +30,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.StringTokenizer;
-
-import stroom.util.io.StreamUtil;
-import stroom.util.zip.HeaderMap;
 
 public class MigrationTool {
     static boolean ignoreError;
@@ -131,7 +131,7 @@ public class MigrationTool {
         executeUpdate(connection, sql);
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
+    @SuppressWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
     private static String executeStringQuery(final Connection connection, String sql) throws SQLException {
         String rtn = null;
         sql = stripTerm(sql);
@@ -145,7 +145,7 @@ public class MigrationTool {
         return rtn;
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
+    @SuppressWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
     private static void executeUpdate(final Connection connection, String sql) throws SQLException {
         try {
             sql = stripTerm(sql);

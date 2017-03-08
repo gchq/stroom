@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,32 +16,35 @@
 
 package stroom.query;
 
+import stroom.query.api.Field;
+import stroom.query.api.Sort;
+import stroom.query.api.Sort.SortDirection;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import stroom.query.shared.Field;
-import stroom.query.shared.Sort;
-import stroom.query.shared.Sort.SortDirection;
-
 public class CompiledSorter implements Serializable, Comparator<Item> {
     private static final long serialVersionUID = -64195891930546352L;
 
-    private final List<CompiledSort> compiledSorts = new ArrayList<CompiledSort>();
+    private final List<CompiledSort> compiledSorts = new ArrayList<>();
     private final boolean hasSort;
 
     public CompiledSorter(final List<Field> fields) {
         int pos = 0;
-        for (final Field field : fields) {
-            if (field.getSort() != null) {
-                // Remember sorting info.
-                final Sort sort = field.getSort();
-                final CompiledSort compiledSort = new CompiledSort(pos, sort);
-                add(compiledSort);
-            }
 
-            pos++;
+        if (fields != null) {
+            for (final Field field : fields) {
+                if (field.getSort() != null) {
+                    // Remember sorting info.
+                    final Sort sort = field.getSort();
+                    final CompiledSort compiledSort = new CompiledSort(pos, sort);
+                    add(compiledSort);
+                }
+
+                pos++;
+            }
         }
 
         hasSort = compiledSorts.size() > 0;
@@ -64,7 +67,7 @@ public class CompiledSorter implements Serializable, Comparator<Item> {
         }
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public int compare(final Item o1, final Item o2) {
         for (final CompiledSort compiledSort : compiledSorts) {

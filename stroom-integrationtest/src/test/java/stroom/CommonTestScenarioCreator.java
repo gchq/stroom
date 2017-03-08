@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,21 +16,24 @@
 
 package stroom;
 
-import stroom.entity.shared.DocRef;
+import org.junit.Assert;
+import org.springframework.stereotype.Component;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.feed.shared.FeedService;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeUseStatus;
 import stroom.node.shared.VolumeService;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFields;
+import stroom.query.api.DocRef;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
@@ -44,8 +47,6 @@ import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.zip.StroomHeaderArguments;
-import org.junit.Assert;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
@@ -85,7 +86,7 @@ public class CommonTestScenarioCreator {
         if (globalGroup == null) {
             globalGroup = folderService.create(null, "GlobalGroup");
         }
-        return DocRef.create(globalGroup);
+        return DocRefUtil.create(globalGroup);
     }
 
     public Feed createSimpleFeed() {

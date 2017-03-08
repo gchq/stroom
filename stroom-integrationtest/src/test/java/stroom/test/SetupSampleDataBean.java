@@ -53,14 +53,17 @@ import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -75,6 +78,8 @@ public final class SetupSampleDataBean {
 
     private static final String STATS_COUNT_FEED_NAME = "COUNT_FEED";
     private static final String STATS_VALUE_FEED_NAME = "VALUE_FEED";
+    private static final String STATS_COUNT_API_FEED_NAME = "COUNT_V3";
+    private static final String STATS_COUNT_API_DATA_FILE = "./stroom-integrationtest/src/test/resources/SetupSampleDataBean_COUNT_V3.xml";
 
     private static final int LOAD_CYCLES = 10;
 
@@ -344,18 +349,33 @@ public final class SetupSampleDataBean {
                     STATS_VALUE_FEED_NAME));
         }
 
+        try{
+            final Feed apiFeed = dataLoader.getFeed(STATS_COUNT_API_FEED_NAME);
+            String sampleData = new String(Files.readAllBytes(Paths.get(STATS_COUNT_API_DATA_FILE)));
+
+            dataLoader.loadInputStream(
+                    apiFeed,
+                    "Sample statistics count data for export to API",
+                    StreamUtil.stringToStream(sampleData),
+                    false,
+                    startTime);
+        } catch (final RuntimeException | IOException e) {
+            LOGGER.warn(String.format("Feed %s does not exist so cannot load the sample count for export to API statistics data.",
+                    STATS_COUNT_API_FEED_NAME));
+        }
+
     }
 
     private String createRandomData() {
-        final DateTimeFormatter formatter = DateTimeFormat.forPattern("dd/MM/yyyy,HH:mm:ss").withZone(DateTimeZone.UTC);
-        final DateTime refDateTime = new DateTime(2010, 1, 1, 0, 0, 0);
+        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy,HH:mm:ss");
+        final ZonedDateTime refDateTime =  ZonedDateTime.of(2010, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 
         final StringBuilder sb = new StringBuilder();
         sb.append("Date,Time,FileNo,LineNo,User,Message\n");
 
         for (int i = 0; i < 1000; i++) {
-            final DateTime dateTime = refDateTime.plus((long) (Math.random() * 10000000));
-            sb.append(formatter.print(dateTime));
+            final ZonedDateTime dateTime = refDateTime.plusSeconds((long) (Math.random() * 10000));
+            sb.append(formatter.format(dateTime));
             sb.append(",");
             sb.append(createNum(4));
             sb.append(",");

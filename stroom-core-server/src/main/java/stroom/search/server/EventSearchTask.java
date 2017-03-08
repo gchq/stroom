@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,7 +16,7 @@
 
 package stroom.search.server;
 
-import stroom.query.shared.Search;
+import stroom.query.api.Query;
 import stroom.streamstore.shared.FindStreamCriteria;
 
 public class EventSearchTask extends AbstractSearchTask<EventRefs> {
@@ -29,9 +29,9 @@ public class EventSearchTask extends AbstractSearchTask<EventRefs> {
     private final int resultSendFrequency;
 
     public EventSearchTask(final String sessionId, final String userName, final FindStreamCriteria streamFilter,
-            final Search search, final EventRef minEvent, final EventRef maxEvent, final long maxStreams,
-            final long maxEvents, final long maxEventsPerStream, final int resultSendFrequency) {
-        super(null, sessionId, userName, streamFilter, search);
+                           final Query query, final EventRef minEvent, final EventRef maxEvent, final long maxStreams,
+                           final long maxEvents, final long maxEventsPerStream, final int resultSendFrequency) {
+        super(null, sessionId, userName, streamFilter, query);
         this.minEvent = minEvent;
         this.maxEvent = maxEvent;
         this.maxStreams = maxStreams;

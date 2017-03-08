@@ -1,0 +1,4 @@
+dependencies {
+    compile project(':stroom-statistics-shared')
+    compile project(':stroom-core-client')
+}

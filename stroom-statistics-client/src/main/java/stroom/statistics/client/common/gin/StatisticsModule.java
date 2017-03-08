@@ -16,7 +16,7 @@
 
 package stroom.statistics.client.common.gin;
 
-import stroom.app.client.gin.PluginModule;
+import stroom.core.client.gin.PluginModule;
 import stroom.statistics.client.common.StatisticsPlugin;
 import stroom.statistics.client.common.presenter.StatisticsDataSourcePresenter;
 import stroom.statistics.client.common.presenter.StatisticsDataSourceSettingsPresenter;

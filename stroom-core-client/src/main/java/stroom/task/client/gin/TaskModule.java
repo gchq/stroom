@@ -16,7 +16,7 @@
 
 package stroom.task.client.gin;
 
-import stroom.app.client.gin.PluginModule;
+import stroom.core.client.gin.PluginModule;
 import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerProxy;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;

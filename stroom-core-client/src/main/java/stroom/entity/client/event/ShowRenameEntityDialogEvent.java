@@ -19,29 +19,25 @@ package stroom.entity.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import stroom.explorer.shared.ExplorerData;
 
-import stroom.explorer.shared.EntityData;
+import java.util.List;
 
 public class ShowRenameEntityDialogEvent extends GwtEvent<ShowRenameEntityDialogEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onRename(final ShowRenameEntityDialogEvent event);
-    }
-
     private static Type<Handler> TYPE;
+    private final List<ExplorerData> explorerDataList;
 
-    private final EntityData entityItem;
-
-    private ShowRenameEntityDialogEvent(final EntityData entityItem) {
-        this.entityItem = entityItem;
+    private ShowRenameEntityDialogEvent(final List<ExplorerData> explorerDataList) {
+        this.explorerDataList = explorerDataList;
     }
 
-    public static void fire(final HasHandlers handlers, final EntityData entityItem) {
-        handlers.fireEvent(new ShowRenameEntityDialogEvent(entityItem));
+    public static void fire(final HasHandlers handlers, final List<ExplorerData> explorerDataList) {
+        handlers.fireEvent(new ShowRenameEntityDialogEvent(explorerDataList));
     }
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
@@ -56,7 +52,11 @@ public class ShowRenameEntityDialogEvent extends GwtEvent<ShowRenameEntityDialog
         handler.onRename(this);
     }
 
-    public EntityData getEntityItem() {
-        return entityItem;
+    public List<ExplorerData> getExplorerDataList() {
+        return explorerDataList;
+    }
+
+    public interface Handler extends EventHandler {
+        void onRename(final ShowRenameEntityDialogEvent event);
     }
 }

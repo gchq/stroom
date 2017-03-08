@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,12 @@
 
 package stroom.importexport.server;
 
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.ext.Attributes2Impl;
 import stroom.entity.server.GenericEntityMarshaller;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.util.BaseEntityBeanWrapper;
@@ -23,7 +29,7 @@ import stroom.entity.server.util.BaseEntityUtil;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.server.util.XMLUtil;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityAction;
@@ -39,6 +45,7 @@ import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.Res;
 import stroom.pipeline.shared.ExtensionProvider;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.query.api.DocRef;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
@@ -46,12 +53,6 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.ModelStringUtil;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.ext.Attributes2Impl;
 
 import javax.inject.Inject;
 import javax.xml.bind.annotation.XmlTransient;
@@ -289,7 +290,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                     final String folderPath = path.substring(0, index);
                     final String[] folderNames = folderPath.split("/");
                     for (final String folderName : folderNames) {
-                        Folder folder = folderService.loadByName(DocRef.create(parentFolder), folderName);
+                        Folder folder = folderService.loadByName(DocRefUtil.create(parentFolder), folderName);
                         // Stub it out.
                         if (folder == null) {
                             folder = new Folder();
@@ -380,7 +381,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
             // to export.
             if (folder != null && entityIdSet.isMatch(folder.getId())) {
                 try {
-                    final List<E> list = genericEntityService.findByFolder(entityType, DocRef.create(folder), RESOURCE_FETCH_SET);
+                    final List<E> list = genericEntityService.findByFolder(entityType, DocRefUtil.create(folder), RESOURCE_FETCH_SET);
 
                     for (final E entity : list) {
                         performExport(dir, folder, entityClass, entityType, propertyList, entity, ignoreErrors,
@@ -770,7 +771,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
 
             if (importMode == ImportMode.IGNORE_CONFIRMATION
                     || (importMode == ImportMode.ACTION_CONFIRMATION && entityActionConfirmation.isAction())) {
-                genericEntityService.importEntity(entity, DocRef.create(folder));
+                genericEntityService.importEntity(entity, DocRefUtil.create(folder));
             }
 
         } catch (final SAXException | IOException | ParserConfigurationException ex) {

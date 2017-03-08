@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,35 @@
 package stroom.dashboard.expression;
 
 public abstract class AbstractAggregateFunction extends AbstractManyChildFunction implements AggregateFunction {
+    private final Calculator calculator;
+
+    public AbstractAggregateFunction(final String name, final Calculator calculator) {
+        super(name, 1, Integer.MAX_VALUE);
+        this.calculator = calculator;
+    }
+
+    @Override
+    public Generator createGenerator() {
+        // If we only have a single param then we are operating in aggregate
+        // mode.
+        if (isAggregate()) {
+            final Generator childGenerator = functions[0].createGenerator();
+            return new AggregateGen(childGenerator, calculator);
+        }
+
+        return super.createGenerator();
+    }
+
+    @Override
+    protected Generator createGenerator(final Generator[] childGenerators) {
+        return new Gen(childGenerators, calculator);
+    }
+
+    @Override
+    public boolean isAggregate() {
+        return functions.length == 1;
+    }
+
     private static class AggregateGen extends AbstractSingleChildGenerator {
         private static final long serialVersionUID = -5622353515345145314L;
 
@@ -74,34 +103,5 @@ public abstract class AbstractAggregateFunction extends AbstractManyChildFunctio
 
             return value;
         }
-    }
-
-    private final Calculator calculator;
-
-    public AbstractAggregateFunction(final String name, final Calculator calculator) {
-        super(name, 1, Integer.MAX_VALUE);
-        this.calculator = calculator;
-    }
-
-    @Override
-    public Generator createGenerator() {
-        // If we only have a single param then we are operating in aggregate
-        // mode.
-        if (isAggregate()) {
-            final Generator childGenerator = functions[0].createGenerator();
-            return new AggregateGen(childGenerator, calculator);
-        }
-
-        return super.createGenerator();
-    }
-
-    @Override
-    protected Generator createGenerator(final Generator[] childGenerators) {
-        return new Gen(childGenerators, calculator);
-    }
-
-    @Override
-    public boolean isAggregate() {
-        return functions.length == 1;
     }
 }

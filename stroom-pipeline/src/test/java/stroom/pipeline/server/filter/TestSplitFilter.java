@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,22 +16,21 @@
 
 package stroom.pipeline.server.filter;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
-import stroom.test.StroomProcessTestFileUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.server.util.ProcessorUtil;
 import stroom.test.ComparisonHelper;
-import stroom.util.test.StroomUnitTest;
+import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Unit test class for <code>XMLTransformer</code>.
@@ -132,7 +131,7 @@ public class TestSplitFilter extends StroomUnitTest {
         splitter.setSplitDepth(splitDepth);
         splitter.setSplitCount(splitCount);
 
-        final TestFilter testFilter = new TestFilter();
+        final TestFilter testFilter = new TestFilter(null, null);
 
         final TestSAXEventFilter testSAXEventFilter = new TestSAXEventFilter();
 
