@@ -21,6 +21,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public final class ExpressionBuilder {
@@ -106,7 +107,7 @@ public final class ExpressionBuilder {
 
     public ExpressionOperator build() {
         if (children.size() == 0) {
-            return new ExpressionOperator(enabled, op, null);
+            return new ExpressionOperator(enabled, op, Arrays.asList());
         }
 
         final List<ExpressionItem> list = new ArrayList<>(children.size());
