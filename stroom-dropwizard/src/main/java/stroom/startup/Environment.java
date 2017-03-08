@@ -2,13 +2,10 @@ package stroom.startup;
 
 import org.eclipse.jetty.server.session.HashSessionManager;
 import org.eclipse.jetty.server.session.SessionHandler;
-import org.eclipse.jetty.util.resource.PathResource;
 import stroom.Config;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.thread.ThreadScopeContextHolder;
-
-import java.nio.file.Paths;
 
 /**
  * Configures  the environment, including the Dropwizard Environment as well as system properties and misc.
@@ -19,9 +16,6 @@ public class Environment {
         HashSessionManager manager = new HashSessionManager();
         SessionHandler sessions = new SessionHandler(manager);
         environment.servlets().setSessionHandler(sessions);
-
-        // If we don't set the baseResource then servlets might not be able to find files.
-        environment.servlets().setBaseResource(new PathResource(Paths.get("./")));
 
         // We want Stroom to use the root path so we need to move Dropwizard's path.
         environment.jersey().setUrlPattern("/api/*");
