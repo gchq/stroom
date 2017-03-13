@@ -93,10 +93,10 @@ public class EntityReferenceReplacer {
                                 appendReference(connection, container, "VIS", id, type, name, path, sb);
                                 break;
                             case "StatisticStore":
-                                appendReference(connection, container, "STAT_DAT_SRC", id, type, name, path, sb);
+                                appendReference(connection, container, "STAT_DAT_SRC", id, "StatisticStore", name, path, sb);
                                 break;
                             case "StatisticsDataSource":
-                                appendReference(connection, container, "STAT_DAT_SRC", id, type, name, path, sb);
+                                appendReference(connection, container, "STAT_DAT_SRC", id, "StatisticStore", name, path, sb);
                                 break;
                             default:
                                 LOGGER.error("Unable to perform entity replacement for unknown type '" + type + "'");
