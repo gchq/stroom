@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#143** : Stroom now logs progress information about closing index shard writers during shutdown.
+
 ## [v5.0-beta.12] - 2017-03-13
 
 * Issue **#141** : Improved log output during entity reference migration and fixed statistic data source reference migration.
