@@ -196,20 +196,22 @@ public final class FileSystemUtil {
     }
 
     public static boolean deleteDirectory(final File path) {
-        if (deleteContents(path)) {
-            boolean deleteDir = path.delete();
-
-            if (!deleteDir) {
-                LOGGER.error("Failed to delete file " + path);
-                return false;
+        boolean success = true;
+        if (path != null && path.isDirectory()) {
+            if (deleteContents(path)) {
+                final boolean deleteDir = path.delete();
+                if (!deleteDir) {
+                    LOGGER.error("Failed to delete file " + path);
+                    success = false;
+                } else {
+                    LOGGER.debug("Deleted file " + path);
+                }
             } else {
-                LOGGER.debug("Deleted file " + path);
-                return true;
+                LOGGER.error("Failed to delete file " + path);
+                success = false;
             }
-        } else {
-            LOGGER.error("Failed to delete file " + path);
         }
-        return false;
+        return success;
     }
 
     /**
