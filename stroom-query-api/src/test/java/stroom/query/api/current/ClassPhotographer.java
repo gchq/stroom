@@ -22,6 +22,7 @@ public class ClassPhotographer {
         Map<Class, List<String>> portrait = new HashMap<>();
         takePortraitOf(clazz, portrait, basePackage);
         List<String> flattenedPortrait = flattenPortrait(portrait);
+        // If we don't sort the portrait it might have a different order every time.
         flattenedPortrait.sort(String::compareTo);
         String serialisedPortrait = flattenedPortrait.stream().collect(Collectors.joining(newLine));
         return serialisedPortrait;
