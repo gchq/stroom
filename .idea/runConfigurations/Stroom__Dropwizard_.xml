@@ -4,13 +4,13 @@
     <option name="MAIN_CLASS_NAME" value="stroom.startup.App" />
     <option name="VM_PARAMETERS" value="" />
     <option name="PROGRAM_PARAMETERS" value="server dev.yml" />
-    <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/stroom-dropwizard" />
+    <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/stroom-app" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <option name="ALTERNATIVE_JRE_PATH" value="1.8" />
     <option name="ENABLE_SWING_INSPECTOR" value="false" />
     <option name="ENV_VARIABLES" />
     <option name="PASS_PARENT_ENVS" value="true" />
-    <module name="stroom-dropwizard_main" />
+    <module name="stroom-app_main" />
     <envs />
     <method />
   </configuration>
