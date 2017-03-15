@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#140** : Replaced code editor to improve UI performance and add additional code formatting & styling options.
+
 * Issue **#146** : Object pool should no longer throw an error when abandoned objects are returned to the pool.
 
 ## [v5.0-beta.11] - 2017-02-23
