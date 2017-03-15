@@ -113,10 +113,6 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
         getView().setFilterActive(active);
     }
 
-    public void setControlsHeight(final int controlsHeight) {
-        getView().setControlsHeight(controlsHeight);
-    }
-
     public void setControlsVisible(final boolean visible) {
         getView().setControlsVisible(visible);
     }

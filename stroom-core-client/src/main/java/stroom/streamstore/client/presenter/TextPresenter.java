@@ -68,5 +68,6 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
 
     public void setControlsVisible(final boolean controlsVisible) {
         getView().setPlayVisible(controlsVisible);
+        textPresenter.setControlsVisible(controlsVisible);
     }
 }

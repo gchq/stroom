@@ -59,9 +59,5 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     void setFilterActive(boolean active);
 
-    void setControlsHeight(int controlsHeight);
-
     void setControlsVisible(boolean visible);
-
-
 }

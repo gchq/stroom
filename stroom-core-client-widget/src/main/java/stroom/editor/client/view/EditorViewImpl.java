@@ -34,7 +34,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import edu.ycp.cs.dh.acegwt.client.ace.AceAnnotationType;
@@ -97,7 +96,6 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
 
-    private int firstLineNumber = 1;
     private Indicators indicators;
 
     private AceEditorMode mode = AceEditorMode.XML;
@@ -105,15 +103,11 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private final Option stylesOption;
     private final Option lineNumbersOption;
     private final Option indicatorsOption;
-    private boolean controlsVisible;
-
-    private final Editor editor;
-    DockLayoutPanel widget;
 
     @UiField(provided = true)
     DockLayoutPanel layout;
     @UiField
-    SimplePanel xmlArea;
+    Editor editor;
     @UiField
     RightBar rightBar;
     @UiField
@@ -139,7 +133,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
             }
         };
 
-        widget = binder.createAndBindUi(this);
+        layout = binder.createAndBindUi(this);
 
         filterButtons.addDomHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
@@ -159,10 +153,6 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         filterInactive.getElement().getStyle().setTop(top, Unit.PX);
         filterActive.getElement().getStyle().setTop(top, Unit.PX);
 
-        editor = new Editor();
-        editor.setWidth("100%");
-        editor.setHeight("100%");
-
         stylesOption = new Option("Styles", true, true, (on) -> setMode(mode));
         lineNumbersOption = new Option("Line Numbers", true, true, (on) -> updateGutter());
         indicatorsOption = new Option("Indicators", false, false, (on) -> doLayout());
@@ -170,7 +160,6 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         editor.getElement().setClassName("editor");
         editor.addDomHandler(event -> handleMouseDown(event), MouseDownEvent.getType());
         rightBar.setEditor(editor);
-        xmlArea.setWidget(editor);
     }
 
     private void handleMouseDown(final MouseDownEvent event) {
@@ -184,7 +173,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
     @Override
     public Widget asWidget() {
-        return widget;
+        return layout;
     }
 
     private void updateGutter() {
@@ -193,7 +182,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
     private void doLayout() {
         rightBar.render(indicators, indicatorsOption.isOn());
-        widget.setWidgetSize(rightBar, rightBar.getWidth());
+        layout.setWidgetSize(rightBar, rightBar.getWidth());
         editor.onResize();
     }
 
@@ -209,7 +198,6 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
     @Override
     public void setFirstLineNumber(final int firstLineNumber) {
-        this.firstLineNumber = firstLineNumber;
         editor.setFirstLineNumber(firstLineNumber);
     }
 
@@ -338,37 +326,36 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     }
 
     @Override
-    public void setControlsHeight(final int controlsHeight) {
-//        xmlArea.setControlsHeight(controlsHeight);
-    }
-
-    @Override
     public void setControlsVisible(final boolean controlsVisible) {
-        this.controlsVisible = controlsVisible;
+        if (controlsVisible) {
+            editor.setScrollMargin(0, 69, 0, 0);
+        } else {
+            editor.setScrollMargin(0, 0, 0, 0);
+        }
     }
 
     @Override
     public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
-        return xmlArea.addDomHandler(handler, KeyDownEvent.getType());
+        return layout.addDomHandler(handler, KeyDownEvent.getType());
     }
 
     @Override
     public HandlerRegistration addFormatHandler(final FormatHandler handler) {
-        return xmlArea.addHandler(handler, FormatEvent.TYPE);
+        return layout.addHandler(handler, FormatEvent.TYPE);
     }
 
     @Override
     public HandlerRegistration addMouseDownHandler(final MouseDownHandler handler) {
-        return xmlArea.addHandler(handler, MouseDownEvent.getType());
+        return layout.addHandler(handler, MouseDownEvent.getType());
     }
 
     @Override
     public HandlerRegistration addContextMenuHandler(final ContextMenuEvent.Handler handler) {
-        return xmlArea.addHandler(handler, ContextMenuEvent.getType());
+        return layout.addHandler(handler, ContextMenuEvent.getType());
     }
 
     @Override
     public void fireEvent(final GwtEvent<?> event) {
-        xmlArea.fireEvent(event);
+        editor.fireEvent(event);
     }
 }

@@ -52,6 +52,9 @@ public class Editor extends Composite {
     private int gotoLine;
     private boolean gotoLineDirty;
 
+    private Rect scrollMargin;
+    private boolean scrollMarginDirty;
+
     private boolean started;
 
     private final AceEditor editor;
@@ -75,6 +78,7 @@ public class Editor extends Composite {
                 updateTheme();
                 updateShowGutter();
                 updateGotoLine();
+                updateScrollMargin();
             }
         });
 
@@ -235,11 +239,38 @@ public class Editor extends Composite {
         return 0;
     }
 
+    public void setScrollMargin(final int top, final int bottom, final int left, final int right) {
+        this.scrollMarginDirty = true;
+        scrollMargin = new Rect(top, bottom, left, right);
+        updateScrollMargin();
+    }
+
+    private void updateScrollMargin() {
+        if (editor.isAttached() && scrollMarginDirty) {
+            editor.setScrollMargin(scrollMargin.top, scrollMargin.bottom, scrollMargin.left, scrollMargin.right);
+            scrollMarginDirty = false;
+        }
+    }
+
     public void onResize() {
         Scheduler.get().scheduleDeferred(() -> {
             if (editor.isAttached()) {
                 editor.onResize();
             }
         });
+    }
+
+    private static class Rect {
+        private final int top;
+        private final int bottom;
+        private final int left;
+        private final int right;
+
+        public Rect(final int top, final int bottom, final int left, final int right) {
+            this.top = top;
+            this.bottom = bottom;
+            this.left = left;
+            this.right = right;
+        }
     }
 }
