@@ -189,7 +189,7 @@ td {
 	position: absolute;
 	right: 16px;
 	bottom: 16px;
-	z-index: 1;
+	z-index: 5;
 }
 
 .stroom-pipeline-stepping-button .face {

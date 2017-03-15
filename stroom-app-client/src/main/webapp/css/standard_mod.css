@@ -165,7 +165,7 @@ body,table td,select {
 
 .gwt-MenuBarPopup {
 	margin: 0px;
-	z-index: 2;
+	z-index: 100;
 }
 
 .gwt-MenuBar .gwt-MenuItem-selected {
@@ -197,18 +197,18 @@ body,table td,select {
 	border: 1px solid black;
 	padding: 3px;
 	background: white;
-	z-index: 2;
+	z-index: 100;
 }
 
 .gwt-PopupPanelGlass {
   background-color: #000;
   opacity: 0.4;
   filter: alpha(opacity=40);
-  z-index: 2;
+  z-index: 10;
 }
 
 .gwt-DialogBox {
-	z-index: 2;
+	z-index: 100;
 }
 
 .gwt-PushButton-up-hovering {
@@ -338,7 +338,7 @@ textarea {
 	cursor: default;
 }
 .dateBoxPopup {
-	z-index: 2;
+	z-index: 100;
 }
 .datePickerDay,.datePickerWeekdayLabel,.datePickerWeekendLabel {
 	font-size: 13px;
@@ -421,7 +421,7 @@ border: 1px solid #c5cde2;
   margin-left: 0px;
   background-color: white;
   border: 1px solid black;
-  z-index: 2;
+  z-index: 100;
 }
 .gwt-SuggestBoxPopup .item {
   padding: 2px 3px;

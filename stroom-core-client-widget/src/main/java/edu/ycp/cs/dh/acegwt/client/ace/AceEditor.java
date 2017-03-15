@@ -169,7 +169,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
         /**
          * Enable a worker for the current session.
          *
-         * @param userWorker true to enable a worker otherwise false
+         * @param useWorker true to enable a worker otherwise false
          */
         public native void setUseWorker(boolean useWorker) /*-{
                 var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
@@ -564,6 +564,12 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 		var command = description.@edu.ycp.cs.dh.acegwt.client.ace.AceCommandDescription::toJavaScript(Ledu/ycp/cs/dh/acegwt/client/ace/AceEditor;)(this);
 		editor.commands.addCommand(command);
 	}-*/;
+
+//	public native void beautify() /*-{
+//        var beautify = $wnd.ace.require("ace/ext/beautify");
+//		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+//		beautify.beautify(editor.session);
+//	}-*/;
 	
 	/**
 	 * Set whether to use wrap mode or not
@@ -607,6 +613,16 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 		} else {
 			editor.setOptions({ enableBasicAutocompletion: false });
 		}
+	}-*/;
+
+	/**
+	 * Set the first line number that will be shown in the editor.
+	 *
+	 * @param lineNumber the first line number that will be displayed
+	 */
+	public native void setFirstLineNumber(int lineNumber) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		editor.setOption("firstLineNumber", lineNumber);
 	}-*/;
 	
 	

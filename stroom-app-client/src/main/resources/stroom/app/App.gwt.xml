@@ -44,7 +44,7 @@
   <inherits name="stroom.widget.tickbox.TickBox" />
   <inherits name="stroom.widget.tooltip.Tooltip" />
   <inherits name="stroom.widget.valuespinner.ValueSpinner" />
-  <inherits name="stroom.xmleditor.XMLEditor" />
+  <inherits name="stroom.editor.Editor" />
   <inherits name="stroom.widget.xsdbrowser.XSDBrowser" />
   <inherits name="stroom.widget.htree.HTree" />
   <inherits name="stroom.widget.spinner.Spinner" />

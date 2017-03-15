@@ -25,7 +25,7 @@
 	right: 15px;
 	width: 80px;
 	height: 50px;
-	z-index: 2;
+	z-index: 100;
 }
 
 .stroom-dashboard-query-play .face {

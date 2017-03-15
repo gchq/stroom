@@ -254,7 +254,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private void ensureActionQueue() {
         if (actionQueue == null) {
-            actionQueue = new ArrayList<FetchDataAction>();
+            actionQueue = new ArrayList<>();
             delayedFetchDataTimer = new Timer() {
                 @Override
                 public void run() {
@@ -420,6 +420,21 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         pageRows.updateRowData(pageOffset, pageLength);
         pageRows.updateRowCount(pageCount, pageCountExact);
 
+        textPresenter.setText(data);
+        textPresenter.setFirstLineNumber(startLineNo);
+        textPresenter.setControlsVisible(playButtonVisible);
+
+        refreshHighlights(result);
+        refreshMarkers(result);
+    }
+
+    private void refreshHighlights(final AbstractFetchDataResult result) {
+        int streamOffset = 0;
+
+        if (result != null) {
+            streamOffset = result.getStreamRange().getOffset().intValue();
+        }
+
         // Make sure we have a highlight section to add and that the stream id
         // matches that of the current page, and that the stream number matches
         // the stream number of the current page.
@@ -428,12 +443,23 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 && EqualsUtil.isEquals(currentChildStreamType, highlightChildStreamType)) {
             // Set the content to be displayed in the source view with a
             // highlight.
-            textPresenter.setText(data, startLineNo, false, highlights, null, playButtonVisible);
+            textPresenter.setHighlights(highlights);
         } else {
             // Set the content to be displayed in the source view without a
             // highlight.
-            textPresenter.setText(data, startLineNo, false, null, null, playButtonVisible);
+            textPresenter.setHighlights(null);
         }
+    }
+
+    private void refreshMarkers(final AbstractFetchDataResult result) {
+        int pageOffset = 0;
+        int pageCount = 0;
+
+        if (result != null) {
+            pageOffset = result.getPageRange().getOffset().intValue();
+            pageCount = result.getPageRowCount().getCount().intValue();
+        }
+
         markerListPresenter.setData(markers, pageOffset, pageCount);
     }
 
@@ -479,7 +505,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
             fetchData(false, highlightStreamId, highlightChildStreamType);
         } else {
-            refresh(lastResult);
+            refreshHighlights(lastResult);
+            refreshMarkers(lastResult);
         }
     }
 

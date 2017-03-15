@@ -31,9 +31,9 @@ import java.util.Set;
 public class Indicators implements Serializable {
     private static final long serialVersionUID = 1445199511079506470L;
 
-    private Map<Severity, Integer> errorCount = new HashMap<Severity, Integer>();
-    private Set<StoredError> uniqueErrorSet = new HashSet<StoredError>();
-    private List<StoredError> errorList = new ArrayList<StoredError>();
+    private Map<Severity, Integer> errorCount = new HashMap<>();
+    private Set<StoredError> uniqueErrorSet = new HashSet<>();
+    private List<StoredError> errorList = new ArrayList<>();
     private Map<Integer, Indicator> map;
 
     public Indicators() {
@@ -123,7 +123,7 @@ public class Indicators implements Serializable {
 
     private Map<Integer, Indicator> getMap() {
         if (map == null) {
-            map = new HashMap<Integer, Indicator>();
+            map = new HashMap<>();
             for (final StoredError storedError : errorList) {
                 int lineNo = 1;
                 if (storedError.getLocation() != null) {
@@ -133,13 +133,7 @@ public class Indicators implements Serializable {
                     lineNo = 1;
                 }
 
-                Indicator indicator = map.get(lineNo);
-                if (indicator == null) {
-                    indicator = new Indicator();
-                    map.put(lineNo, indicator);
-                }
-
-                indicator.add(storedError.getSeverity(), storedError);
+                map.computeIfAbsent(lineNo, k -> new Indicator()).add(storedError.getSeverity(), storedError);
             }
         }
 

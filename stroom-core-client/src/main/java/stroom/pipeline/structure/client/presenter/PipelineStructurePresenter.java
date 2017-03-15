@@ -83,7 +83,7 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
-import stroom.xmleditor.client.presenter.XMLEditorPresenter;
+import stroom.editor.client.presenter.EditorPresenter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -100,7 +100,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     private final NewElementPresenter newElementPresenter;
     private final PropertyListPresenter propertyListPresenter;
     private final PipelineReferenceListPresenter pipelineReferenceListPresenter;
-    private final Provider<XMLEditorPresenter> xmlEditorProvider;
+    private final Provider<EditorPresenter> xmlEditorProvider;
     private final PipelineTreePresenter pipelineTreePresenter;
     private boolean dirty;
     private PipelineElement selectedElement;
@@ -119,7 +119,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                                       final ClientDispatchAsync dispatcher, final MenuListPresenter menuListPresenter,
                                       final NewElementPresenter newElementPresenter, final PropertyListPresenter propertyListPresenter,
                                       final PipelineReferenceListPresenter pipelineReferenceListPresenter,
-                                      final Provider<XMLEditorPresenter> xmlEditorProvider, final ClientSecurityContext securityContext) {
+                                      final Provider<EditorPresenter> xmlEditorProvider, final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.pipelineTreePresenter = pipelineTreePresenter;
         this.pipelinePresenter = pipelinePresenter;
@@ -497,7 +497,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         if (dirty) {
             AlertEvent.fireError(this, "You must save changes to this pipeline before you can view the source", null);
         } else {
-            final XMLEditorPresenter xmlEditor = xmlEditorProvider.get();
+            final EditorPresenter xmlEditor = xmlEditorProvider.get();
             xmlEditor.getIndicatorsOption().setAvailable(false);
             xmlEditor.getIndicatorsOption().setOn(false);
             xmlEditor.getStylesOption().setOn(true);
@@ -523,7 +523,8 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                             if (result != null) {
                                 text = result.toString();
                             }
-                            xmlEditor.setText(text, true);
+                            xmlEditor.setText(text);
+                            xmlEditor.format();
                             ShowPopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, PopupType.OK_CANCEL_DIALOG,
                                     popupSize, "Pipeline Source", popupUiHandlers);
                         }
@@ -531,7 +532,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         }
     }
 
-    private void querySave(final XMLEditorPresenter xmlEditor) {
+    private void querySave(final EditorPresenter xmlEditor) {
         ConfirmEvent.fire(PipelineStructurePresenter.this,
                 "Are you sure you want to save changes to the underlying XML?", new ConfirmCallback() {
                     @Override
@@ -545,7 +546,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                 });
     }
 
-    private void doActualSave(final XMLEditorPresenter xmlEditor) {
+    private void doActualSave(final EditorPresenter xmlEditor) {
         dispatcher.execute(new SavePipelineXMLAction(pipelineEntity.getId(), xmlEditor.getText()),
                 new AsyncCallbackAdaptor<VoidResult>() {
                     @Override

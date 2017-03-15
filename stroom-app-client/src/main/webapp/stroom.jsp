@@ -48,7 +48,7 @@
     <link rel="stylesheet" href="css/stroom-dashboard.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom.css" type="text/css" />
     <link rel="stylesheet" href="stroom/dynamic.css" type="text/css" />
-    <link rel="stylesheet" href="stroom/xmlarea.css" type="text/css" />
+    <link rel="stylesheet" href="css/editor.css" type="text/css" />
     
     <link rel="stylesheet" href="xsdbrowser/xsdbrowser.css" type="text/css" />      
    
@@ -60,6 +60,12 @@
     <!-- Material Design Spinner -->
     <link rel="stylesheet" href="css/spinner.min.css" type="text/css" />
     <link rel="stylesheet" href="css/spinner.custom.css" type="text/css" />
+
+    <script type="text/javascript" src="stroom/ace/ace.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/theme-chrome.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/mode-text.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/mode-xml.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/mode-json.js" charset="utf-8"></script>
 
     <script type="text/javascript" src='stroom/stroom.nocache.js'></script>
   </head>

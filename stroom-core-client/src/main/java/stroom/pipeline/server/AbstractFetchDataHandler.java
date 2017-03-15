@@ -229,12 +229,12 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 }
 
             } else {
-                // Try and pretty print XML.
-                try {
-                    output = XMLUtil.prettyPrintXML(rawData);
-                } catch (final Exception ex) {
-                    // Ignore.
-                }
+//                // Try and pretty print XML.
+//                try {
+//                    output = XMLUtil.prettyPrintXML(rawData);
+//                } catch (final Exception ex) {
+//                    // Ignore.
+//                }
 
                 // If we failed to pretty print XML then return raw data.
                 if (output == null) {

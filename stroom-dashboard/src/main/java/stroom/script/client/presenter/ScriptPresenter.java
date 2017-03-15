@@ -24,8 +24,9 @@ import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.dashboard.client.vis.ClearScriptCacheEvent;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
+import stroom.editor.client.event.FormatEvent;
+import stroom.editor.client.event.FormatEvent.FormatHandler;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -36,13 +37,8 @@ import stroom.script.shared.Script;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
-import stroom.xmleditor.client.event.FormatEvent;
-import stroom.xmleditor.client.event.FormatEvent.FormatHandler;
-import stroom.xmleditor.client.presenter.BaseXMLEditorPresenter;
-import stroom.xmleditor.client.presenter.ReadOnlyXMLEditorPresenter;
-import stroom.xmleditor.client.presenter.XMLEditorPresenter;
-import stroom.xmleditor.client.view.XMLEditorMenuPresenter;
 
+import javax.inject.Provider;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,11 +47,11 @@ public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Sc
     private static final TabData SCRIPT_TAB = new TabDataImpl("Script");
 
     private final ScriptSettingsPresenter settingsPresenter;
-    private final XMLEditorMenuPresenter editorMenuPresenter;
     private final ClientSecurityContext securityContext;
+    private final Provider<EditorPresenter> editorPresenterProvider;
     private final ClientDispatchAsync dispatcher;
 
-    private BaseXMLEditorPresenter codePresenter;
+    private EditorPresenter codePresenter;
     private boolean loadedResource;
     private Res resource;
     private Boolean readOnly;
@@ -64,20 +60,16 @@ public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Sc
 
     @Inject
     public ScriptPresenter(final EventBus eventBus, final LinkTabPanelView view,
-                           final ScriptSettingsPresenter settingsPresenter, final XMLEditorMenuPresenter editorMenuPresenter,
-                           final ClientSecurityContext securityContext, final ClientDispatchAsync dispatcher) {
+                           final ScriptSettingsPresenter settingsPresenter, final ClientSecurityContext securityContext, final Provider<EditorPresenter> editorPresenterProvider, final ClientDispatchAsync dispatcher) {
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
-        this.editorMenuPresenter = editorMenuPresenter;
         this.securityContext = securityContext;
+        this.editorPresenterProvider = editorPresenterProvider;
         this.dispatcher = dispatcher;
 
-        settingsPresenter.addDirtyHandler(new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                if (event.isDirty()) {
-                    setDirty(true);
-                }
+        settingsPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
             }
         });
 
@@ -93,11 +85,8 @@ public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Sc
         } else if (SCRIPT_TAB.equals(tab)) {
             if (codePresenter == null) {
                 if (readOnly != null) {
-                    if (!readOnly) {
-                        codePresenter = new XMLEditorPresenter(getEventBus(), editorMenuPresenter);
-                    } else {
-                        codePresenter = new ReadOnlyXMLEditorPresenter(getEventBus(), editorMenuPresenter);
-                    }
+                    codePresenter = editorPresenterProvider.get();
+                    codePresenter.setReadOnly(readOnly);
                     codePresenter.getStylesOption().setOn(false);
                     codePresenter.getStylesOption().setAvailable(false);
 
@@ -164,7 +153,7 @@ public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Sc
         this.readOnly = readOnly;
     }
 
-    private void loadResource(final BaseXMLEditorPresenter codePresenter, final ContentCallback callback) {
+    private void loadResource(final EditorPresenter codePresenter, final ContentCallback callback) {
         if (!loadedResource) {
             final Set<String> fetchSet = new HashSet<>();
             fetchSet.add(Script.FETCH_RESOURCE);
