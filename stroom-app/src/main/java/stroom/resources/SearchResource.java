@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom;
+package stroom.resources;
 
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;

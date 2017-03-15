@@ -2,18 +2,18 @@ package stroom.startup;
 
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.context.ApplicationContext;
-import stroom.SearchResource;
+import stroom.resources.SearchResource;
 import stroom.index.shared.IndexService;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.util.upgrade.UpgradeDispatcherServlet;
 
 import javax.servlet.ServletException;
 
-public class ApiResources {
+public class Resources {
 
-    final SearchResource searchResource;
+    private final SearchResource searchResource;
 
-    public ApiResources(io.dropwizard.setup.Environment environment, ServletHolder upgradeDispatcherServlerHolder){
+    public Resources(io.dropwizard.setup.Environment environment, ServletHolder upgradeDispatcherServlerHolder){
         searchResource = new SearchResource();
         environment.jersey().register(searchResource);
 
@@ -48,5 +48,9 @@ public class ApiResources {
                 // We don't care, we're going to keep trying.
             }
         }
+    }
+
+    public SearchResource getSearchResource(){
+        return searchResource;
     }
 }

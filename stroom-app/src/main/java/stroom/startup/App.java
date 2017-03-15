@@ -24,7 +24,7 @@ public class App extends Application<Config> {
         Filters filters = new Filters(environment);
         Listeners listeners = new Listeners(environment, springContexts.rootContext);
         springContexts.start(environment, configuration);
-        ApiResources apiResources = new ApiResources(environment, servlets.upgradeDispatcherServletHolder);
-        HealthChecks healthChecks = new HealthChecks(environment, apiResources);
+        Resources resources = new Resources(environment, servlets.upgradeDispatcherServletHolder);
+        HealthChecks healthChecks = new HealthChecks(environment, resources);
     }
 }
