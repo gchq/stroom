@@ -34,6 +34,7 @@ import java.util.List;
  * A context menu for the XML editor.
  */
 public class EditorMenuPresenter {
+    private boolean showFormatOption = true;
     private EditorPresenter xmlEditorPresenter;
     private final MenuListPresenter menuListPresenter;
 
@@ -78,7 +79,9 @@ public class EditorMenuPresenter {
                     xmlEditorPresenter.getLineNumbersOption().setOn(!xmlEditorPresenter.getLineNumbersOption().isOn()), position++));
         }
 
-        menuItems.add(createItem("Format", () -> xmlEditorPresenter.format(), position++));
+        if (showFormatOption) {
+            menuItems.add(createItem("Format", () -> xmlEditorPresenter.format(), position++));
+        }
 
         if (xmlEditorPresenter.isShowFilterSettings()) {
             String title;
@@ -96,5 +99,9 @@ public class EditorMenuPresenter {
 
     private Item createItem(final String text, final Command command, final int position) {
         return new IconMenuItem(position, text, null, true, command);
+    }
+
+    public void setShowFormatOption(final boolean showFormatOption) {
+        this.showFormatOption = showFormatOption;
     }
 }

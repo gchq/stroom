@@ -38,6 +38,8 @@ import java.util.List;
 
 public class EditorPresenter extends MyPresenterWidget<EditorView>
         implements HasKeyDownHandlers, HasFormatHandlers, HasChangeFilterHandlers, HasText, EditorUiHandlers {
+    private final EditorMenuPresenter contextMenu;
+
     private boolean showFilterSettings;
     private boolean input;
 
@@ -45,6 +47,7 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
     public EditorPresenter(final EventBus eventBus, final EditorView view,
                            final EditorMenuPresenter contextMenu) {
         super(eventBus, view);
+        this.contextMenu = contextMenu;
         view.setUiHandlers(this);
 
         registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
@@ -141,6 +144,10 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
 
     public boolean isInput() {
         return input;
+    }
+
+    public EditorMenuPresenter getContextMenu() {
+        return contextMenu;
     }
 
     @Override

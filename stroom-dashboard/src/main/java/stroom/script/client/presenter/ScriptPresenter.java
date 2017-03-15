@@ -89,6 +89,7 @@ public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Sc
                     codePresenter = editorPresenterProvider.get();
                     codePresenter.setReadOnly(readOnly);
                     codePresenter.setMode(AceEditorMode.JAVASCRIPT);
+                    codePresenter.getContextMenu().setShowFormatOption(!readOnly);
 //                    codePresenter.getStylesOption().setOn(false);
 //                    codePresenter.getStylesOption().setAvailable(false);
 
