@@ -44,20 +44,29 @@ public class V5_0_0_13__Dashboards implements JdbcMigration {
                     final String name = resultSet.getString(2);
                     final String data = resultSet.getString(3);
 
-                    if (data != null) {
+                    LOGGER.info("Starting dashboard upgrade: " + name);
+
+                    if (data == null) {
+                        LOGGER.info("Incomplete configuration found");
+
+                    } else {
                         String newData = data;
                         newData = entityReferenceReplacer.replaceEntityReferences(connection, newData);
 
                         if (!newData.equals(data)) {
-                            LOGGER.info("Upgrading dashboard: " + name);
+                            LOGGER.info("Modifying dashboard");
 
                             try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE DASH SET DAT = ? WHERE ID = ?")) {
                                 preparedStatement.setString(1, newData);
                                 preparedStatement.setLong(2, id);
                                 preparedStatement.executeUpdate();
                             }
+                        } else {
+                            LOGGER.info("No change required");
                         }
                     }
+
+                    LOGGER.info("Finished dashboard upgrade: " + name);
                 }
             }
         }

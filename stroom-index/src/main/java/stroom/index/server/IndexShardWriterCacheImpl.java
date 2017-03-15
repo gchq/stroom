@@ -21,7 +21,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 
 import javax.inject.Inject;
@@ -74,7 +77,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
     private final StripedLock writerCreationLocks = new StripedLock();
 
     @Inject
-    public IndexShardWriterCacheImpl(final CacheManager cacheManager, final StroomPropertyService stroomPropertyService,
+    IndexShardWriterCacheImpl(final CacheManager cacheManager, final StroomPropertyService stroomPropertyService,
             final IndexService indexService, final IndexShardService indexShardService, final NodeCache nodeCache) {
         super(cacheManager, "Index Shard Writer Cache", MAX_CACHE_ENTRIES);
         this.stroomPropertyService = stroomPropertyService;
@@ -100,7 +103,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
      * needed.
      */
     private IndexShardWriter getOrCreateIndexShard(final IndexShardKey key) {
-        IndexShardWriter writer = null;
+        IndexShardWriter writer;
 
         // We must lock here so we don't open up an index that is already being
         // passed back
@@ -203,10 +206,8 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
         final IndexFields indexFields = index.getIndexFieldsObject();
 
         // Create the writer.
-        final IndexShardWriterImpl writer = new IndexShardWriterImpl(indexShardService, indexFields, index, indexShard,
+        return new IndexShardWriterImpl(indexShardService, indexFields, index, indexShard,
                 ramBufferSizeMB);
-
-        return writer;
     }
 
     private int getRamBufferSize() {
@@ -310,7 +311,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
             for (final Object key : keys) {
                 try {
                     // Try and get the element quietly as we don't want this
-                    // call top extend the life of sessions
+                    // call to extend the life of sessions
                     // that should be dying.
                     final Element element = getCache().getQuiet(key);
                     flush(element);
@@ -329,12 +330,10 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
         if (element != null && element.getObjectValue() != null
                 && element.getObjectValue() instanceof IndexShardWriter) {
             final IndexShardWriter indexShardWriter = (IndexShardWriter) element.getObjectValue();
-            if (indexShardWriter != null) {
-                try {
-                    indexShardWriter.flush();
-                } catch (final Exception ex) {
-                    LOGGER.error("flush() - Error flushing writer %s", indexShardWriter);
-                }
+            try {
+                indexShardWriter.flush();
+            } catch (final Exception ex) {
+                LOGGER.error("flush() - Error flushing writer %s", indexShardWriter);
             }
         }
     }
@@ -346,35 +345,16 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
      */
     @Override
     public Long findFlush(final FindIndexShardCriteria criteria) {
-        final List<IndexShardWriter> writers = getFilteredWriters(criteria);
-        for (final IndexShardWriter writer : writers) {
-            try {
-                LOGGER.debug("flush() - Flushing index shard %s", writer.getIndexShard().getId());
-                writer.flush();
-            } catch (final Exception e) {
-                LOGGER.error(e, e);
-            }
-        }
-        return null;
+        return performAction(criteria, IndexShardAction.FLUSH);
     }
 
     /**
-     * This is called by the node command service and is a result of a user
-     * interaction. The map is synchronised so no writers will be created or
-     * destroyed while this is called.
+     * This is called when a user wants to close some index shards or during shutdown.
+     * This method returns the number of index shard writers that have been closed.
      */
     @Override
     public Long findClose(final FindIndexShardCriteria criteria) {
-        final List<IndexShardWriter> writers = getFilteredWriters(criteria);
-        for (final IndexShardWriter writer : writers) {
-            try {
-                LOGGER.debug("close() - Closing IndexShard %s", writer.getIndexShard().getId());
-                writer.close();
-            } catch (final Exception e) {
-                LOGGER.error(e, e);
-            }
-        }
-        return null;
+        return performAction(criteria, IndexShardAction.CLOSE);
     }
 
     /**
@@ -384,16 +364,55 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
      */
     @Override
     public Long findDelete(final FindIndexShardCriteria criteria) {
+        return performAction(criteria, IndexShardAction.DELETE);
+    }
+
+    private Long performAction(final FindIndexShardCriteria criteria, final IndexShardAction action) {
         final List<IndexShardWriter> writers = getFilteredWriters(criteria);
-        for (final IndexShardWriter writer : writers) {
-            try {
-                LOGGER.debug("delete() - Deleting index shard %s", writer.getIndexShard().getId());
-                writer.delete();
-            } catch (final Exception e) {
-                LOGGER.error(e, e);
-            }
+        if (writers.size() == 0) {
+            LOGGER.info("No index shard writers have been found that need " + action.getActivity());
+        } else {
+            LOGGER.info("Preparing to " + action.getName() + " " + writers.size() + " index shards");
         }
-        return null;
+
+        if (writers.size() > 0) {
+            // Create an atomic integer to count the number of index shard writers yet to complete the specified action.
+            final AtomicInteger remaining = new AtomicInteger(writers.size());
+
+            // Create a scheduled executor for us to continually log index shard writer action progress.
+            final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+            // Start logging action progress.
+            executor.scheduleAtFixedRate(() -> LOGGER.info("Waiting for " + remaining.get() + " index shards to " + action.getName()), 10, 10, TimeUnit.SECONDS);
+
+            // Perform action on all of the index shard writers in parallel.
+            writers.parallelStream().forEach(writer -> {
+                try {
+                    LOGGER.debug(action.getActivity() + " index shard " + writer.getIndexShard().getId());
+                    switch (action) {
+                        case FLUSH:
+                            writer.flush();
+                            break;
+                        case CLOSE:
+                            writer.close();
+                            break;
+                        case DELETE:
+                            writer.delete();
+                            break;
+                    }
+                } catch (final Exception e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+
+                remaining.getAndDecrement();
+            });
+
+            // Shut down the progress logging executor.
+            executor.shutdown();
+
+            LOGGER.info("Finished " + action.getActivity() + " index shards");
+        }
+
+        return (long) writers.size();
     }
 
     /**
@@ -458,6 +477,26 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                     writer.updateIndex(index);
                 }
             }
+        }
+    }
+
+    private enum IndexShardAction {
+        FLUSH("flush", "flushing"), CLOSE("close", "closing"), DELETE("delete", "deleting");
+
+        private final String name;
+        private final String activity;
+
+        IndexShardAction(final String name, final String activity) {
+            this.name = name;
+            this.activity = activity;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getActivity() {
+            return activity;
         }
     }
 }
