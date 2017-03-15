@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#146** : Object pool should no longer throw an error when abandoned objects are returned to the pool.
+
 ## [v5.0-beta.11] - 2017-02-23
 
 * Issue **#127** : Entity reference replacement should now work with references to 'StatisticsDataSource'.
@@ -157,7 +159,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
 ## [v5.0-beta.4] - 2016-10-03
-* Intial open source release
+* Initial open source release
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.11...HEAD
 [v5.0-beta.11]: https://github.com/gchq/stroom/compare/v5.0-beta.10...v5.0-beta.11
