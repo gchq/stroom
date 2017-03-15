@@ -45,7 +45,7 @@ dependencies {
 task distZip(type: Zip) {
 //    classifier = 'pants'
 
-    from(fileTree(new File(project(':stroom-dropwizard').buildDir, 'libs')).include('*.war')) {
+    from(fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')) {
         into 'stroom-app/lib'
     }
 

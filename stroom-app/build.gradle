@@ -43,7 +43,6 @@ dependencies {
     compile "ch.qos.logback:logback-classic:1.2.1"
     compile "org.slf4j:log4j-over-slf4j:1.7.22"
 
-//  compile 'com.hmsonline:dropwizard-spring:0.6.0'
     compile project(':stroom-core-server')
     compile project(':stroom-index-server')
     compile project(':stroom-statistics-server')

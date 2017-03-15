@@ -1,4 +1,4 @@
-def warDir = project(':stroom-dropwizard').file('src/main/resources/ui')
+def warDir = project(':stroom-app').file('src/main/resources/ui')
 def outputDir = "${warDir}/stroom"
 
 def gwtBuildDir = "${project.buildDir}/gwt"

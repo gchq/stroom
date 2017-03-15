@@ -64,7 +64,7 @@ include 'stroom-dashboard-server'
 
 // Package it all together.
 include 'stroom-app-distribution'
-include 'stroom-dropwizard'
+include 'stroom-app'
 
 // Integration tests.
 include 'stroom-integrationtest'
