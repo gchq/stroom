@@ -16,6 +16,7 @@
 
 package stroom.editor.client.view;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.Composite;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditor;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
@@ -74,8 +75,6 @@ public class Editor extends Composite {
                 updateTheme();
                 updateShowGutter();
                 updateGotoLine();
-
-                editor.onResize();
             }
         });
 
@@ -237,8 +236,10 @@ public class Editor extends Composite {
     }
 
     public void onResize() {
-        if (editor.isAttached()) {
-            editor.onResize();
-        }
+        Scheduler.get().scheduleDeferred(() -> {
+            if (editor.isAttached()) {
+                editor.onResize();
+            }
+        });
     }
 }
