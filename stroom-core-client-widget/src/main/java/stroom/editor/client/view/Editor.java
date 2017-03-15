@@ -185,7 +185,11 @@ public class Editor extends Composite {
     private void updateMode() {
         if (editor.isAttached() && modeDirty) {
             if (mode != null) {
-                editor.setMode(mode);
+                try {
+                    editor.setMode(mode);
+                } catch (final Exception e) {
+                    throw new RuntimeException("Unable to set mode '" + mode.getName() + "' perhaps the javascript for this mode is missing");
+                }
             }
             modeDirty = false;
         }
@@ -200,7 +204,11 @@ public class Editor extends Composite {
     private void updateTheme() {
         if (editor.isAttached() && themeDirty) {
             if (theme != null) {
-                editor.setTheme(theme);
+                try {
+                    editor.setTheme(theme);
+                } catch (final Exception e) {
+                    throw new RuntimeException("Unable to set theme '" + theme.getName() + "' perhaps the javascript for this theme is missing");
+                }
             }
             themeDirty = false;
         }
@@ -258,6 +266,12 @@ public class Editor extends Composite {
                 editor.onResize();
             }
         });
+    }
+
+    public void beautify() {
+        if (editor.isAttached()) {
+            editor.beautify();
+        }
     }
 
     private static class Rect {

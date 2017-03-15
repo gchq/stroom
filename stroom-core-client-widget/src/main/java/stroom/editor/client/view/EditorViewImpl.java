@@ -296,6 +296,8 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         if (AceEditorMode.XML.equals(mode)) {
             final String formatted = new XmlFormatter().format(getText());
             setText(formatted);
+        } else {
+            editor.beautify();
         }
     }
 
@@ -356,6 +358,6 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
     @Override
     public void fireEvent(final GwtEvent<?> event) {
-        editor.fireEvent(event);
+        layout.fireEvent(event);
     }
 }

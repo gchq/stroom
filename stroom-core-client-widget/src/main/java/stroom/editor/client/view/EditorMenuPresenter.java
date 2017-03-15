@@ -69,10 +69,10 @@ public class EditorMenuPresenter {
             menuItems.add(createItem(xmlEditorPresenter.getStylesOption().getText(), () ->
                     xmlEditorPresenter.getStylesOption().setOn(!xmlEditorPresenter.getStylesOption().isOn()), position++));
         }
-//        if (xmlEditorPresenter.getIndicatorsOption().isAvailable()) {
-//            menuItems.add(createItem(xmlEditorPresenter.getIndicatorsOption().getText(), () ->
-//                    xmlEditorPresenter.getIndicatorsOption().setOn(!xmlEditorPresenter.getIndicatorsOption().isOn()), position++));
-//        }
+        if (xmlEditorPresenter.getIndicatorsOption().isAvailable()) {
+            menuItems.add(createItem(xmlEditorPresenter.getIndicatorsOption().getText(), () ->
+                    xmlEditorPresenter.getIndicatorsOption().setOn(!xmlEditorPresenter.getIndicatorsOption().isOn()), position++));
+        }
         if (xmlEditorPresenter.getLineNumbersOption().isAvailable()) {
             menuItems.add(createItem(xmlEditorPresenter.getLineNumbersOption().getText(), () ->
                     xmlEditorPresenter.getLineNumbersOption().setOn(!xmlEditorPresenter.getLineNumbersOption().isOn()), position++));

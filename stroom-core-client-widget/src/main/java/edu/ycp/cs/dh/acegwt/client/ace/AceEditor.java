@@ -565,11 +565,11 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 		editor.commands.addCommand(command);
 	}-*/;
 
-//	public native void beautify() /*-{
-//        var beautify = $wnd.ace.require("ace/ext/beautify");
-//		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-//		beautify.beautify(editor.session);
-//	}-*/;
+	public native void beautify() /*-{
+        var beautify = $wnd.ace.require("ace/ext/beautify");
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		beautify.beautify(editor.session);
+	}-*/;
 
 	public native void setScrollMargin(int top, int bottom, int left, int right) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;

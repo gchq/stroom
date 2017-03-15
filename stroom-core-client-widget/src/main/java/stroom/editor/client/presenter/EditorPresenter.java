@@ -23,6 +23,8 @@ import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Indicators;
 import stroom.editor.client.event.ChangeFilterEvent;
@@ -119,6 +121,14 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
 
     public void setReadOnly(final boolean readOnly) {
         getView().setReadOnly(readOnly);
+    }
+
+    public void setMode(final AceEditorMode mode) {
+        getView().setMode(mode);
+    }
+
+    public void setTheme(final AceEditorTheme theme) {
+        getView().setTheme(theme);
     }
 
     public boolean isShowFilterSettings() {
