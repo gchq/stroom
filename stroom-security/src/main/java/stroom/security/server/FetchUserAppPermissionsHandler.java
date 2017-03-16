@@ -29,15 +29,15 @@ import javax.inject.Inject;
 @Secured(User.MANAGE_USERS_PERMISSION)
 public class FetchUserAppPermissionsHandler
         extends AbstractTaskHandler<FetchUserAppPermissionsAction, UserAppPermissions> {
-    private final UserAppPermissionService userAppPermissionService;
+    private final UserAppPermissionsCache userAppPermissionsCache;
 
     @Inject
-    public FetchUserAppPermissionsHandler(final UserAppPermissionService userAppPermissionService) {
-        this.userAppPermissionService = userAppPermissionService;
+    FetchUserAppPermissionsHandler(final UserAppPermissionsCache userAppPermissionsCache) {
+        this.userAppPermissionsCache = userAppPermissionsCache;
     }
 
     @Override
     public UserAppPermissions exec(final FetchUserAppPermissionsAction action) {
-        return userAppPermissionService.getPermissionsForUser(action.getUserRef());
+        return userAppPermissionsCache.get(action.getUserRef());
     }
 }

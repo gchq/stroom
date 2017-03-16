@@ -40,7 +40,6 @@ import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
-import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;

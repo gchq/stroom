@@ -167,20 +167,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         sql.append(" AS ");
         sql.append("doc");
 
-        sql.append(" LEFT OUTER JOIN ");
-        sql.append(UserGroupUser.TABLE_NAME);
-        sql.append(" AS ");
-        sql.append("userGroupUser");
-        sql.append(" ON (");
-        sql.append("userGroupUser." + UserGroupUser.GROUP_UUID + " = doc." + DocumentPermission.USER_UUID);
-        sql.append(")");
-
         sql.append(" WHERE");
         sql.append(" doc.");
         sql.append(DocumentPermission.USER_UUID);
-        sql.append(" = ?");
-        sql.append(" OR userGroupUser.");
-        sql.append(UserGroupUser.USER_UUID);
         sql.append(" = ?");
 
         sql.append(" GROUP BY");
@@ -242,7 +231,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         final DocumentPermissionKeySet permissions = new DocumentPermissionKeySet();
 
         try {
-            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_GET_PERMISSION_KEYSET_FOR_USER, userRef.getUuid(), userRef.getUuid());
+            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_GET_PERMISSION_KEYSET_FOR_USER, userRef.getUuid());
             final List list = entityManager.executeNativeQueryResultList(sqlBuilder);
             list.stream().forEach(o -> {
                 final Object[] arr = (Object[]) o;

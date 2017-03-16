@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,52 +16,56 @@
 
 package stroom.security.server;
 
+import net.sf.ehcache.CacheManager;
+import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityAction;
-import stroom.node.shared.Volume;
-import stroom.security.shared.DocumentPermissions;
-import net.sf.ehcache.CacheManager;
-import org.springframework.stereotype.Component;
+import stroom.security.shared.User;
+import stroom.security.shared.UserRef;
+import stroom.security.shared.UserService;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Component
-@EntityEventHandler(action = EntityAction.CLEAR_CACHE)
-public class DocumentPermissionsCache extends AbstractCacheBean<DocRef, DocumentPermissions> implements EntityEvent.Handler {
+@EntityEventHandler(type = User.ENTITY_TYPE, action = EntityAction.CLEAR_CACHE)
+public class UserGroupsCache extends AbstractCacheBean<UserRef, List<UserRef>> implements EntityEvent.Handler {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
-    private final DocumentPermissionService documentPermissionService;
+    private final UserService userService;
     private final Provider<EntityEventBus> eventBusProvider;
 
     @Inject
-    public DocumentPermissionsCache(final CacheManager cacheManager,
-            final DocumentPermissionService documentPermissionService, final Provider<EntityEventBus> eventBusProvider) {
-        super(cacheManager, "Document Permissions Cache", MAX_CACHE_ENTRIES);
-        this.documentPermissionService = documentPermissionService;
+    UserGroupsCache(final CacheManager cacheManager,
+                           final UserService userService, final Provider<EntityEventBus> eventBusProvider) {
+        super(cacheManager, "User Groups Cache", MAX_CACHE_ENTRIES);
+        this.userService = userService;
         this.eventBusProvider = eventBusProvider;
         setMaxIdleTime(30, TimeUnit.MINUTES);
         setMaxLiveTime(30, TimeUnit.MINUTES);
     }
 
     @Override
-    protected DocumentPermissions create(final DocRef document) {
-        return documentPermissionService.getPermissionsForDocument(document);
+    protected List<UserRef> create(final UserRef user) {
+        return userService.findGroupsForUser(user);
     }
 
     @Override
-    public void remove(final DocRef docRef) {
+    public void remove(final UserRef docRef) {
         final EntityEventBus entityEventBus = eventBusProvider.get();
         EntityEvent.fire(entityEventBus, docRef, EntityAction.CLEAR_CACHE);
     }
 
     @Override
     public void onChange(final EntityEvent event) {
-        super.remove(event.getDocRef());
+        final DocRef docRef = event.getDocRef();
+        final UserRef userRef = new UserRef(docRef.getType(), docRef.getUuid(), docRef.getName(), false, false);
+        super.remove(userRef);
     }
 }

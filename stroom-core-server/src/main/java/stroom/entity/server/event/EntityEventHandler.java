@@ -30,5 +30,5 @@ import stroom.entity.shared.EntityAction;
 public @interface EntityEventHandler {
     EntityAction[]action() default {};
 
-    String type();
+    String type() default "*";
 }

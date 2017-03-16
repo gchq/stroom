@@ -31,7 +31,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserPermission;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.logging.StroomLogger;
@@ -53,18 +52,14 @@ public class ChangeDocumentPermissionsHandler
 
     private final DocumentPermissionService documentPermissionService;
     private final DocumentPermissionsCache documentPermissionsCache;
-    private final UserService userService;
-    private final UserPermissionsCache userPermissionsCache;
     private final SecurityContext securityContext;
     private final GenericEntityService genericEntityService;
     private volatile List<String> typeList;
 
     @Inject
-    public ChangeDocumentPermissionsHandler(final DocumentPermissionService documentPermissionService, final DocumentPermissionsCache documentPermissionsCache, final UserService userService, final UserPermissionsCache userPermissionsCache, final SecurityContext securityContext, final GenericEntityService genericEntityService) {
+    ChangeDocumentPermissionsHandler(final DocumentPermissionService documentPermissionService, final DocumentPermissionsCache documentPermissionsCache, final SecurityContext securityContext, final GenericEntityService genericEntityService) {
         this.documentPermissionService = documentPermissionService;
         this.documentPermissionsCache = documentPermissionsCache;
-        this.userService = userService;
-        this.userPermissionsCache = userPermissionsCache;
         this.securityContext = securityContext;
         this.genericEntityService = genericEntityService;
     }
@@ -88,20 +83,8 @@ public class ChangeDocumentPermissionsHandler
                 cascadeChanges(docRef, changeSet, affectedDocRefs, affectedUserRefs, action.getCascade());
             }
 
-            // Find out which actual users are affected by changes to user groups.
-            final Set<UserRef> affectedUsers = new HashSet<>();
-            for (final UserRef affectedUserRef : affectedUserRefs) {
-                if (affectedUserRef.isGroup()) {
-                    final List<UserRef> users = userService.findUsersInGroup(affectedUserRef);
-                    affectedUsers.addAll(users);
-                } else {
-                    affectedUsers.add(affectedUserRef);
-                }
-            }
-
             // Force refresh of cached permissions.
-            affectedDocRefs.stream().forEach(documentPermissionsCache::remove);
-            affectedUsers.stream().forEach(userPermissionsCache::remove);
+            affectedDocRefs.forEach(documentPermissionsCache::remove);
 
             return VoidResult.INSTANCE;
         }

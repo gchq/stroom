@@ -28,21 +28,30 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = ChangeUserAction.class)
 @Secured(User.MANAGE_USERS_PERMISSION)
 public class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult> {
-    @Resource
-    private UserService userService;
-    @Resource
-    private UserAppPermissionService userAppPermissionService;
-    @Resource
-    private AuthorisationEventLog authorisationEventLog;
+    private final UserService userService;
+    private final UserAppPermissionService userAppPermissionService;
+    private final AuthorisationEventLog authorisationEventLog;
+    private final UserGroupsCache userGroupsCache;
+    private final UserAppPermissionsCache userAppPermissionsCache;
+
+    @Inject
+    ChangeUserHandler(final UserService userService, final UserAppPermissionService userAppPermissionService, final AuthorisationEventLog authorisationEventLog, final UserGroupsCache userGroupsCache, final UserAppPermissionsCache userAppPermissionsCache) {
+        this.userService = userService;
+        this.userAppPermissionService = userAppPermissionService;
+        this.authorisationEventLog = authorisationEventLog;
+        this.userGroupsCache = userGroupsCache;
+        this.userAppPermissionsCache = userAppPermissionsCache;
+    }
 
     @Override
     public VoidResult exec(final ChangeUserAction action) {
         final UserRef userRef = action.getUserRef();
-        if (action.getUserRef() != null) {
+        if (userRef != null) {
 
             // Modify linked users and user groups
             final ChangeSet<UserRef> linkedUsers = action.getChangedLinkedUsers();
@@ -58,6 +67,9 @@ public class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, Voi
                                 addUserToGroup(userRef, add);
                             }
                         }
+
+                        // Clear cached user groups for this user.
+                        userGroupsCache.remove(add);
                     }
                 }
 
@@ -72,8 +84,14 @@ public class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, Voi
                                 removeUserFromGroup(userRef, remove);
                             }
                         }
+
+                        // Clear cached user groups for this user.
+                        userGroupsCache.remove(remove);
                     }
                 }
+
+                // Clear cached user groups for this user.
+                userGroupsCache.remove(userRef);
             }
 
             // Modify user/user group feature permissions.
@@ -90,6 +108,9 @@ public class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, Voi
                         removePermission(userRef, permission);
                     }
                 }
+
+                // Clear cached application permissions for this user.
+                userAppPermissionsCache.remove(userRef);
             }
         }
 

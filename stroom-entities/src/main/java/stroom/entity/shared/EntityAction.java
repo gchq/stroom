@@ -19,7 +19,7 @@ package stroom.entity.shared;
 import stroom.util.shared.HasDisplayValue;
 
 public enum EntityAction implements HasDisplayValue {
-    ADD("Add"), EQUAL("Equal"), UPDATE("Update"), DELETE("Delete");
+    ADD("Add"), EQUAL("Equal"), UPDATE("Update"), DELETE("Delete"), CLEAR_CACHE("Clear Cache");
 
     private final String displayValue;
 

@@ -16,6 +16,9 @@
 
 package stroom.security.server;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.springframework.aop.framework.Advised;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
@@ -24,9 +27,6 @@ import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.util.logging.StroomLogger;
 import stroom.util.test.FileSystemTestUtil;
-import org.junit.Assert;
-import org.junit.Test;
-import org.springframework.aop.framework.Advised;
 
 import javax.annotation.Resource;
 import javax.persistence.PersistenceException;
@@ -41,7 +41,9 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
     @Resource
     private UserAppPermissionService userAppPermissionService;
     @Resource
-    private UserPermissionsCache userPermissionCache;
+    private UserGroupsCache userGroupsCache;
+    @Resource
+    private UserAppPermissionsCache userAppPermissionsCache;
 
     @Test
     public void test() {
@@ -146,12 +148,23 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     private void checkUserCachePermissions(final UserRef user, final String... permissions) {
-        userPermissionCache.clear();
-        final UserPermissions userPermissions = userPermissionCache.get(user);
-        final Set<String> appPermissionKeySet = userPermissions.getAppPermissionSet();
-        Assert.assertEquals(permissions.length, appPermissionKeySet.size());
+        userGroupsCache.clear();
+        userAppPermissionsCache.clear();
+
+        final Set<UserRef> allUsers = new HashSet<>();
+        allUsers.add(user);
+        allUsers.addAll(userGroupsCache.get(user));
+
+        final Set<String> combinedPermissions = new HashSet<>();
+        for (final UserRef userRef : allUsers) {
+            final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
+            final Set<String> userPermissions = userAppPermissions.getUserPermissons();
+            combinedPermissions.addAll(userPermissions);
+        }
+
+        Assert.assertEquals(permissions.length, combinedPermissions.size());
         for (final String permission : permissions) {
-            Assert.assertTrue(appPermissionKeySet.contains(permission));
+            Assert.assertTrue(combinedPermissions.contains(permission));
         }
     }
 

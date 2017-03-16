@@ -35,6 +35,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
+import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.security.spring.SecurityConfiguration;
@@ -42,8 +43,8 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import javax.persistence.PersistenceException;
 import javax.persistence.RollbackException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -53,8 +54,9 @@ import java.util.Set;
 class SecurityContextImpl implements SecurityContext {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(SecurityContextImpl.class);
 
-    private final UserPermissionsCache userPermissionCache;
     private final DocumentPermissionsCache documentPermissionsCache;
+    private final UserGroupsCache userGroupsCache;
+    private final UserAppPermissionsCache userAppPermissionsCache;
     private final UserService userService;
     private final DocumentPermissionService documentPermissionService;
     private final GenericEntityService genericEntityService;
@@ -63,9 +65,10 @@ class SecurityContextImpl implements SecurityContext {
     private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", "INTERNAL_PROCESSING_USER", false, true);
 
     @Inject
-    SecurityContextImpl(final UserPermissionsCache userPermissionCache, final DocumentPermissionsCache documentPermissionsCache, final UserService userService, final DocumentPermissionService documentPermissionService, final GenericEntityService genericEntityService) {
-        this.userPermissionCache = userPermissionCache;
+    SecurityContextImpl(final DocumentPermissionsCache documentPermissionsCache, final UserGroupsCache userGroupsCache, final UserAppPermissionsCache userAppPermissionsCache, final UserService userService, final DocumentPermissionService documentPermissionService, final GenericEntityService genericEntityService) {
         this.documentPermissionsCache = documentPermissionsCache;
+        this.userGroupsCache = userGroupsCache;
+        this.userAppPermissionsCache = userAppPermissionsCache;
         this.userService = userService;
         this.documentPermissionService = documentPermissionService;
         this.genericEntityService = genericEntityService;
@@ -173,15 +176,48 @@ class SecurityContextImpl implements SecurityContext {
             return true;
         }
 
-        final UserPermissions userPermissions = userPermissionCache.get(userRef);
-        boolean result = userPermissions.hasAppPermission(permission);
+        // See if the user has permission.
+        boolean result = hasAppPermission(userRef, permission);
 
         // If the user doesn't have the requested permission see if they are an admin.
         if (!result && !PermissionNames.ADMINISTRATOR.equals(permission)) {
-            result = userPermissions.hasAppPermission(PermissionNames.ADMINISTRATOR);
+            result = hasAppPermission(userRef, PermissionNames.ADMINISTRATOR);
         }
 
         return result;
+    }
+
+    private boolean hasAppPermission(final UserRef userRef, final String permission) {
+        // See if the user has an explicit permission.
+        boolean result = hasUserAppPermission(userRef, permission);
+
+        // See if the user belongs to a group that has permission.
+        if (!result) {
+            final List<UserRef> userGroups = userGroupsCache.get(userRef);
+            result = hasUserGroupsAppPermission(userGroups, permission);
+        }
+
+        return result;
+    }
+
+    private boolean hasUserGroupsAppPermission(final List<UserRef> userGroups, final String permission) {
+        if (userGroups != null) {
+            for (final UserRef userGroup : userGroups) {
+                final boolean result = hasUserAppPermission(userGroup, permission);
+                if (result) {
+                    return result;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasUserAppPermission(final UserRef userRef, final String permission) {
+        final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
+        if (userAppPermissions != null) {
+            return userAppPermissions.getUserPermissons().contains(permission);
+        }
+        return false;
     }
 
     @Override
@@ -199,17 +235,53 @@ class SecurityContextImpl implements SecurityContext {
             throw new AuthenticationServiceException("No user is currently logged in");
         }
 
-        final UserPermissions userPermissions = userPermissionCache.get(userRef);
-        boolean result = userPermissions.hasDocumentPermission(documentType, documentId, permission);
+        final DocRef docRef = new DocRef(documentType, documentId);
+        boolean result = hasDocumentPermission(userRef, docRef, permission);
 
         // If the user doesn't have read permission then check to see if the current task has been set to have elevated permissions.
         if (!result && DocumentPermissionNames.READ.equals(permission)) {
             if (CurrentUserState.isElevatePermissions()) {
-                result = userPermissions.hasDocumentPermission(documentType, documentId, DocumentPermissionNames.USE);
+                result = hasDocumentPermission(userRef, docRef, DocumentPermissionNames.USE);
             }
         }
 
         return result;
+    }
+
+    private boolean hasDocumentPermission(final UserRef userRef, final DocRef docRef, final String permission) {
+        // See if the user has an explicit permission.
+        boolean result = hasUserDocumentPermission(userRef, docRef, permission);
+
+        // See if the user belongs to a group that has permission.
+        if (!result) {
+            final List<UserRef> userGroups = userGroupsCache.get(userRef);
+            result = hasUserGroupsDocumentPermission(userGroups, docRef, permission);
+        }
+
+        return result;
+    }
+
+    private boolean hasUserGroupsDocumentPermission(final List<UserRef> userGroups, final DocRef docRef, final String permission) {
+        if (userGroups != null) {
+            for (final UserRef userGroup : userGroups) {
+                final boolean result = hasUserDocumentPermission(userGroup, docRef, permission);
+                if (result) {
+                    return result;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasUserDocumentPermission(final UserRef userRef, final DocRef docRef, final String permission) {
+        final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
+        if (documentPermissions != null) {
+            final Set<String> permissions = documentPermissions.getPermissionsForUser(userRef);
+            if (permissions != null) {
+                return permissions.contains(permission);
+            }
+        }
+        return false;
     }
 
     @Override
@@ -223,8 +295,6 @@ class SecurityContextImpl implements SecurityContext {
                 final DocRef docRef = new DocRef(documentType, documentUuid);
                 documentPermissionService.clearDocumentPermissions(docRef);
 
-                // Make sure the cache updates for the current user.
-                userPermissionCache.remove(userRef);
                 // Make sure cache updates for the document.
                 documentPermissionsCache.remove(docRef);
             }
@@ -256,8 +326,6 @@ class SecurityContextImpl implements SecurityContext {
                 // TODO : This should be part of the explorer service.
                 copyPermissions(sourceType, sourceUuid, documentType, documentUuid);
 
-                // Make sure the cache updates for the current user.
-                userPermissionCache.remove(userRef);
                 // Make sure cache updates for the document.
                 documentPermissionsCache.remove(docRef);
             }

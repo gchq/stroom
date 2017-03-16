@@ -28,10 +28,6 @@ public interface UserAppPermissionService {
 
     UserAppPermissions getPermissionsForUser(UserRef userRef);
 
-//    UserPermissions getPermissionsForFeature(String feature);
-
-//    Set<String> getPermissionKeySetForUser(UserRef userRef);
-
     void addPermission(UserRef userRef, String permission);
 
     void removePermission(UserRef userRef, String permission);

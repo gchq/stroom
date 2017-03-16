@@ -16,6 +16,8 @@
 
 package stroom.security.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import org.springframework.transaction.TransactionException;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
@@ -30,12 +32,11 @@ import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.util.logging.StroomLogger;
 import stroom.util.test.FileSystemTestUtil;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;
+import java.util.HashSet;
 import java.util.Set;
 
 public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationTest {
@@ -50,7 +51,9 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
     @Inject
     private DocumentPermissionService documentPermissionService;
     @Resource
-    private UserPermissionsCache userPermissionCache;
+    private UserGroupsCache userGroupsCache;
+    @Resource
+    private DocumentPermissionsCache documentPermissionsCache;
 
     @Test
     public void test() {
@@ -140,13 +143,24 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
 
     private void checkUserCachePermissions(final UserRef user, final BaseEntity entity, final String... permissions) {
         final DocRef docRef = DocRef.create(entity);
-        userPermissionCache.clear();
-        final UserPermissions userPermissions = userPermissionCache.get(user);
-        final DocumentPermissionKeySet documentPermissionKeySet = userPermissions.getDocumentPermissionKeySet();
-        Assert.assertEquals(permissions.length, documentPermissionKeySet.size());
+
+        userGroupsCache.clear();
+        documentPermissionsCache.clear();
+
+        final Set<UserRef> allUsers = new HashSet<>();
+        allUsers.add(user);
+        allUsers.addAll(userGroupsCache.get(user));
+
+        final Set<String> combinedPermissions = new HashSet<>();
+        for (final UserRef userRef : allUsers) {
+            final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
+            final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef);
+            combinedPermissions.addAll(userPermissions);
+        }
+
+        Assert.assertEquals(permissions.length, combinedPermissions.size());
         for (final String permission : permissions) {
-            Assert.assertTrue(documentPermissionKeySet.checkPermission(docRef.getType(),
-                    docRef.getUuid(), permission));
+            Assert.assertTrue(combinedPermissions.contains(permission));
         }
     }
 
