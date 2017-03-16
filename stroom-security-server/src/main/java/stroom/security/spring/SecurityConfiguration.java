@@ -80,7 +80,7 @@ public class SecurityConfiguration {
         shiroFilter.setSuccessUrl("/stroom.jsp");
         shiroFilter.getFilters().put("jwtFilter", new JWTAuthenticationFilter());
         shiroFilter.getFilterChainDefinitionMap().put("/**/secure/**", "authc, roles[USER]");
-        shiroFilter.getFilterChainDefinitionMap().put("/api/**", "jwtFilter");
+        shiroFilter.getFilterChainDefinitionMap().put("/api/index/**", "jwtFilter");
         return (AbstractShiroFilter) shiroFilter.getObject();
     }
 
