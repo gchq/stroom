@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -62,8 +63,12 @@ class ExplorerServiceImpl implements ExplorerService {
         // See if we need to open any more folders to see nodes we want to ensure are visible.
         final Set<ExplorerData> forcedOpen = getForcedOpenItems(masterTreeModel, criteria);
 
+        final Set<ExplorerData> allOpen = new HashSet<>();
+        allOpen.addAll(criteria.getOpenItems());
+        allOpen.addAll(forcedOpen);
+
         final TreeModel filteredModel = new TreeModelImpl();
-        addDescendants(FolderRootExplorerDataProvider.ROOT, masterTreeModel, filteredModel, criteria.getFilter());
+        addDescendants(FolderRootExplorerDataProvider.ROOT, masterTreeModel, filteredModel, criteria.getFilter(), allOpen, criteria.getMinDepth(), 0);
 
         // Add root node.
         result.getTreeStructure().add(null, FolderRootExplorerDataProvider.ROOT);
@@ -87,27 +92,38 @@ class ExplorerServiceImpl implements ExplorerService {
         return forcedOpen;
     }
 
-    private boolean addDescendants(final ExplorerData parent, final TreeModel treeModelIn, final TreeModel treeModelOut, final ExplorerTreeFilter filter) {
+    private boolean addDescendants(final ExplorerData parent, final TreeModel treeModelIn, final TreeModel treeModelOut, final ExplorerTreeFilter filter, final Set<ExplorerData> openItems, final Integer minDepth, final int currentDepth) {
         boolean added = false;
 
         final List<ExplorerData> children = treeModelIn.getChildMap().get(parent);
         if (children != null) {
-            for (final ExplorerData child : children) {
+            // Once we have reached the minimum depth or have a parent that isn't open, we still need to try and add a
+            // single item at this level so that we know that the parent has children.
+            boolean addAllChildren;
+
+            if (openItems.contains(parent) || currentDepth < minDepth) {
+                addAllChildren = true;
+            } else {
+                addAllChildren = false;
+            }
+
+            // We need to add add least one item to the tree to be able to determine if the parent is a leaf node.
+            final Iterator<ExplorerData> iterator = children.iterator();
+            while (iterator.hasNext() && (addAllChildren || !added)) {
+                final ExplorerData child = iterator.next();
+
                 // Recurse right down to find out if a descendant is being added and therefore if we need to include this as an ancestor.
-                final boolean hasChildren = addDescendants(child, treeModelIn, treeModelOut, filter);
+                final boolean hasChildren = addDescendants(child, treeModelIn, treeModelOut, filter, openItems, minDepth, currentDepth + 1);
                 if (hasChildren) {
                     treeModelOut.add(parent, child);
                     added = true;
-                    //                    child.setNodeState(HasNodeState.NodeState.CLOSED);
-                    //                    parent.setNodeState(HasNodeState.NodeState.CLOSED);
 
-                } else if (checkSecurity(child, filter.getRequiredPermissions())
-                        && checkType(child, filter.getIncludedTypes())
+                } else if (checkType(child, filter.getIncludedTypes())
                         && checkTags(child, filter.getTags())
-                        && checkName(child, filter.getNameFilter())) {
+                        && checkName(child, filter.getNameFilter())
+                        && checkSecurity(child, filter.getRequiredPermissions())) {
                     treeModelOut.add(parent, child);
                     added = true;
-                    //                    child.setNodeState(HasNodeState.NodeState.LEAF);
                 }
             }
         }
