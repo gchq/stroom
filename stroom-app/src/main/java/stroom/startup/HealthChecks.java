@@ -17,10 +17,11 @@
 package stroom.startup;
 
 import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheckRegistry;
 
 public class HealthChecks {
-    public HealthChecks(io.dropwizard.setup.Environment environment, Resources resources){
-        environment.healthChecks().register("SearchResourceHealthCheck", new HealthCheck() {
+    public HealthChecks(HealthCheckRegistry healthCheckRegistry, Resources resources){
+        healthCheckRegistry.register("SearchResourceHealthCheck", new HealthCheck() {
             @Override
             protected Result check() throws Exception {
                 return resources.getSearchResource().getHealth();

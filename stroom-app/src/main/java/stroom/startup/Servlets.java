@@ -16,17 +16,17 @@
 
 package stroom.startup;
 
-import io.dropwizard.setup.Environment;
+import io.dropwizard.jetty.MutableServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 public class Servlets {
 
     final ServletHolder upgradeDispatcherServletHolder;
 
-    public Servlets(Environment environment){
+    public Servlets(MutableServletContextHandler servletContextHandler){
         upgradeDispatcherServletHolder = Servlets.newUpgradeDispatcherServlet();
 
-        addServlet(environment, upgradeDispatcherServletHolder, 3, "/*.rpc", new String[]{
+        addServlet(servletContextHandler, upgradeDispatcherServletHolder, 3, "/*.rpc", new String[]{
                 "/dispatch.rpc",
                 "/dynamic.css",
                 "/script",
@@ -43,12 +43,12 @@ public class Servlets {
     }
 
     private static void addServlet(
-            Environment environment,
+            MutableServletContextHandler servletContextHandler,
             ServletHolder servletHolder,
             int loadOnStartup,
             String servletMapping,
             String[] furtherServletMappings){
-        environment.getApplicationContext().addServlet(servletHolder, servletMapping);
+        servletContextHandler.addServlet(servletHolder, servletMapping);
         if(furtherServletMappings != null && furtherServletMappings.length > 0){
             servletHolder.getRegistration().addMapping(furtherServletMappings);
         }

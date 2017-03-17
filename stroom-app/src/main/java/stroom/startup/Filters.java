@@ -17,7 +17,7 @@
 package stroom.startup;
 
 import com.google.common.collect.ImmutableMap;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.jetty.MutableServletContextHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.springframework.web.filter.DelegatingFilterProxy;
 import stroom.servlet.RejectPostFilter;
@@ -33,7 +33,7 @@ public class Filters {
 
     private static final String MATCH_ALL_PATHS = "/*";
 
-    private Environment environment;
+    private MutableServletContextHandler servletContextHandler;
 
     final FilterHolder upgradeFilterHolder;
     final FilterHolder threadScopeContextFilterHolder;
@@ -42,8 +42,8 @@ public class Filters {
     final FilterHolder exportCertificateRequiredFilterHolder;
     final FilterHolder shiroFilterHolder;
 
-    public Filters(Environment environment) throws ClassNotFoundException {
-        this.environment = environment;
+    public Filters(MutableServletContextHandler servletContextHandler) throws ClassNotFoundException {
+        this.servletContextHandler = servletContextHandler;
 
         upgradeFilterHolder = createFilter(UpgradeDispatcherFilter.class, "upgradeFilter", null);
         addFilter(upgradeFilterHolder, MATCH_ALL_PATHS);
@@ -87,7 +87,7 @@ public class Filters {
     }
 
     private void addFilter(FilterHolder filterHolder, String urlPattern) throws ClassNotFoundException {
-        environment.getApplicationContext().addFilter(
+        servletContextHandler.addFilter(
                 filterHolder,
                 urlPattern,
                 EnumSet.of(DispatcherType.REQUEST));

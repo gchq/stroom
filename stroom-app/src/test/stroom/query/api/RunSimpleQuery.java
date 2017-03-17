@@ -34,7 +34,7 @@ public class RunSimpleQuery {
         // When
         Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
         Response response = client
-                .target("http://localhost:8080/rest/index/search")
+                .target("http://localhost:8080/api/index/search")
                 .request()
                 .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
                 .post(Entity.json(serialisedSearchRequest));

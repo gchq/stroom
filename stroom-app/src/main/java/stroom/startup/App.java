@@ -36,11 +36,11 @@ public class App extends Application<Config> {
         // The order in which the following are run is important.
         Environment.configure(configuration, environment);
         SpringContexts springContexts = new SpringContexts();
-        Servlets servlets = new Servlets(environment);
-        Filters filters = new Filters(environment);
-        Listeners listeners = new Listeners(environment, springContexts.rootContext);
+        Servlets servlets = new Servlets(environment.getApplicationContext());
+        Filters filters = new Filters(environment.getApplicationContext());
+        Listeners listeners = new Listeners(environment.servlets(), springContexts.rootContext);
         springContexts.start(environment, configuration);
-        Resources resources = new Resources(environment, servlets.upgradeDispatcherServletHolder);
-        HealthChecks healthChecks = new HealthChecks(environment, resources);
+        Resources resources = new Resources(environment.jersey(), servlets.upgradeDispatcherServletHolder);
+        HealthChecks healthChecks = new HealthChecks(environment.healthChecks(), resources);
     }
 }
