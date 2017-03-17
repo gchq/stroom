@@ -29,6 +29,7 @@ import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityService;
+import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.server.exception.AuthenticationServiceException;
 import stroom.security.shared.DocumentPermissionNames;
@@ -162,6 +163,7 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
+    @Insecure
     public boolean hasAppPermission(final String permission) {
         // Get the current user.
         final UserRef userRef = getUserRef();

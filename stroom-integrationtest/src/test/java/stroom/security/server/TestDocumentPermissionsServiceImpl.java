@@ -25,7 +25,6 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
-import stroom.security.shared.DocumentPermissionKeySet;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
@@ -130,12 +129,21 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
 
     private void checkUserPermissions(final UserRef user, final BaseEntity entity, final String... permissions) {
         final DocRef docRef = DocRef.create(entity);
-        final DocumentPermissionKeySet documentPermissionKeySet = documentPermissionService
-                .getPermissionKeySetForUser(user);
-        Assert.assertEquals(permissions.length, documentPermissionKeySet.size());
+
+        final Set<UserRef> allUsers = new HashSet<>();
+        allUsers.add(user);
+        allUsers.addAll(userService.findGroupsForUser(user));
+
+        final Set<String> combinedPermissions = new HashSet<>();
+        for (final UserRef userRef : allUsers) {
+            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(docRef);
+            final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef);
+            combinedPermissions.addAll(userPermissions);
+        }
+
+        Assert.assertEquals(permissions.length, combinedPermissions.size());
         for (final String permission : permissions) {
-            Assert.assertTrue(documentPermissionKeySet.checkPermission(docRef.getType(),
-                    docRef.getUuid(), permission));
+            Assert.assertTrue(combinedPermissions.contains(permission));
         }
 
         checkUserCachePermissions(user, entity, permissions);

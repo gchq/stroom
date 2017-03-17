@@ -18,7 +18,8 @@ package stroom.security.server;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
-import stroom.security.Insecure;
+import stroom.security.Secured;
+import stroom.security.SecurityContext;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
@@ -33,14 +34,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = FetchUserRefAction.class)
-@Insecure
+@Secured(User.MANAGE_USERS_PERMISSION)
 public class FetchUserRefHandler
         extends AbstractTaskHandler<FetchUserRefAction, ResultList<UserRef>> {
     private final UserService userService;
+    private final SecurityContext securityContext;
 
     @Inject
-    public FetchUserRefHandler(final UserService userService) {
+    public FetchUserRefHandler(final UserService userService, final SecurityContext securityContext) {
         this.userService = userService;
+        this.securityContext = securityContext;
     }
 
     @Override

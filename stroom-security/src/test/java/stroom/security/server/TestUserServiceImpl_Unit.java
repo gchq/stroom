@@ -25,6 +25,6 @@ import org.junit.runner.RunWith;
 public class TestUserServiceImpl_Unit extends StroomUnitTest {
     @Test
     public void test() {
-        new UserServiceImpl(null, null, false);
+        new UserServiceImpl(null, null, false, null);
     }
 }

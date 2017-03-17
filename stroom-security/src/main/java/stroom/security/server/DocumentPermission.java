@@ -18,7 +18,6 @@ package stroom.security.server;
 
 import stroom.entity.shared.BaseEntityBig;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.security.shared.DocumentPermissionKey;
 import stroom.security.shared.User;
 
 import javax.persistence.Column;
@@ -28,8 +27,8 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "DOC_PERM", uniqueConstraints = @UniqueConstraint(columnNames = { DocumentPermission.USER_UUID,
-        DocumentPermission.DOC_TYPE, DocumentPermission.DOC_UUID, DocumentPermission.PERMISSION }) )
+@Table(name = "DOC_PERM", uniqueConstraints = @UniqueConstraint(columnNames = {DocumentPermission.USER_UUID,
+        DocumentPermission.DOC_TYPE, DocumentPermission.DOC_UUID, DocumentPermission.PERMISSION}))
 public class DocumentPermission extends BaseEntityBig {
     private static final long serialVersionUID = 3562407919517508053L;
 
@@ -92,11 +91,6 @@ public class DocumentPermission extends BaseEntityBig {
 
     public void setPermission(final String permission) {
         this.permission = permission;
-    }
-
-    @Transient
-    public DocumentPermissionKey toKey() {
-        return new DocumentPermissionKey(docType, docUuid, permission);
     }
 
     @Transient

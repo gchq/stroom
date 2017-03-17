@@ -27,8 +27,6 @@ import stroom.entity.shared.DocRef;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityService;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.security.shared.DocumentPermissionKey;
-import stroom.security.shared.DocumentPermissionKeySet;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 import stroom.security.shared.User.UserStatus;
@@ -224,32 +222,6 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         final DocumentEntityService<?> documentService = (DocumentEntityService<?>) entityService;
         final String[] permissions = documentService.getPermissions();
         return new DocumentPermissions(document, permissions, userPermissions);
-    }
-
-    @Override
-    public DocumentPermissionKeySet getPermissionKeySetForUser(final UserRef userRef) {
-        final DocumentPermissionKeySet permissions = new DocumentPermissionKeySet();
-
-        try {
-            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_GET_PERMISSION_KEYSET_FOR_USER, userRef.getUuid());
-            final List list = entityManager.executeNativeQueryResultList(sqlBuilder);
-            list.stream().forEach(o -> {
-                final Object[] arr = (Object[]) o;
-                final String docType = (String) arr[0];
-                final String docUuid = (String) arr[1];
-                final String permission = (String) arr[2];
-
-                final DocumentPermissionKey documentPermissionKey = new DocumentPermissionKey(docType, docUuid,
-                        permission);
-                permissions.addPermission(documentPermissionKey);
-            });
-
-        } catch (final RuntimeException e) {
-            LOGGER.error("getPermissionKeySetForUser()", e);
-            throw e;
-        }
-
-        return permissions;
     }
 
     @Override

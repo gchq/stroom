@@ -136,12 +136,20 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     private void checkUserPermissions(final UserRef user, final String... permissions) {
-        final UserAppPermissions userAppPermissions = userAppPermissionService
-                .getPermissionsForUser(user);
-        final Set<String> permissionSet = userAppPermissions.getUserPermissons();
-        Assert.assertEquals(permissions.length, permissionSet.size());
+        final Set<UserRef> allUsers = new HashSet<>();
+        allUsers.add(user);
+        allUsers.addAll(userService.findGroupsForUser(user));
+
+        final Set<String> combinedPermissions = new HashSet<>();
+        for (final UserRef userRef : allUsers) {
+            final UserAppPermissions userAppPermissions = userAppPermissionService.getPermissionsForUser(userRef);
+            final Set<String> userPermissions = userAppPermissions.getUserPermissons();
+            combinedPermissions.addAll(userPermissions);
+        }
+
+        Assert.assertEquals(permissions.length, combinedPermissions.size());
         for (final String permission : permissions) {
-            Assert.assertTrue(userAppPermissions.getUserPermissons().contains(permission));
+            Assert.assertTrue(combinedPermissions.contains(permission));
         }
 
         checkUserCachePermissions(user, permissions);
