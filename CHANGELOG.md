@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#143** : Stroom now logs progress information about closing index shard writers during shutdown.
 
+* Issue **#140** : Replaced code editor to improve UI performance and add additional code formatting & styling options.
+
+* Issue **#146** : Object pool should no longer throw an error when abandoned objects are returned to the pool.
+
 * Issue **#142** : Changed the way permissions are cached so that changes to permissions provide immediate access to documents.
 
 * Issue **#123** : Changed the way entity service result caching works so that the underlying entity manager is cached instead of individual services. This allows entity result caching to be performed while still applying user permissions to cached results.
@@ -167,7 +171,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
 ## [v5.0-beta.4] - 2016-10-03
-* Intial open source release
+* Initial open source release
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.12...HEAD
 [v5.0-beta.12]: https://github.com/gchq/stroom/compare/v5.0-beta.11...v5.0-beta.12

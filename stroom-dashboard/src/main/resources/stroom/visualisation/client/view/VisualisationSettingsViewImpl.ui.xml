@@ -5,10 +5,7 @@
     .settings {
     width: 100%;
     height: 100%;
-    font-family: Courier New;
-    font-size: 12px;
-    white-space: pre;
-    word-wrap: normal;
+    border: 1px solid #c5cde2;
     }
   </ui:style>
   <v:ResizeSimplePanel styleName="stroom-control-page" width="100%" height="100%">
@@ -36,13 +33,12 @@
         </g:Grid>
       </g:north>
       <g:center>
-        <g:DockLayoutPanel unit="PX" width="100%"
-          height="100%">
+        <g:DockLayoutPanel unit="PX" width="100%" height="100%">
           <g:north size="15">
             <g:Label text="Settings:" width="100%" />
           </g:north>
           <g:center>
-            <g:TextArea ui:field="settings" addStyleNames="{style.settings}" />
+            <v:ResizeSimplePanel ui:field="settings" addStyleNames="{style.settings}" />
           </g:center>
         </g:DockLayoutPanel>
       </g:center>

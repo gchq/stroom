@@ -38,8 +38,8 @@ import stroom.pipeline.processor.client.presenter.ProcessorPresenter;
 import stroom.pipeline.processor.client.presenter.ProcessorPresenter.ProcessorView;
 import stroom.pipeline.processor.client.view.ProcessorViewImpl;
 import stroom.pipeline.stepping.client.PipelineSteppingPlugin;
-import stroom.pipeline.stepping.client.presenter.EditorPresenter;
-import stroom.pipeline.stepping.client.presenter.EditorPresenter.EditorView;
+import stroom.pipeline.stepping.client.presenter.CodePresenter;
+import stroom.pipeline.stepping.client.presenter.CodePresenter.CodeView;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
 import stroom.pipeline.stepping.client.presenter.StepLocationPresenter;
@@ -51,7 +51,7 @@ import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
-import stroom.pipeline.stepping.client.view.EditorViewImpl;
+import stroom.pipeline.stepping.client.view.CodeViewImpl;
 import stroom.pipeline.stepping.client.view.StepControlViewImpl;
 import stroom.pipeline.stepping.client.view.StepLocationViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingFilterViewImpl;
@@ -72,7 +72,7 @@ import stroom.pipeline.structure.client.view.NewPipelineReferenceViewImpl;
 import stroom.pipeline.structure.client.view.NewPropertyViewImpl;
 import stroom.pipeline.structure.client.view.PipelineStructureViewImpl;
 import stroom.pipeline.structure.client.view.PipelineTreeViewImpl;
-import stroom.xmleditor.client.view.XMLEditorMenuPresenter;
+import stroom.editor.client.view.EditorMenuPresenter;
 
 public class PipelineModule extends PluginModule {
     @Override
@@ -109,11 +109,11 @@ public class PipelineModule extends PluginModule {
                 SteppingFilterViewImpl.class);
         bindPresenterWidget(XPathFilterPresenter.class, XPathFilterView.class, XPathFilterViewImpl.class);
 
-        bindPresenterWidget(EditorPresenter.class, EditorView.class, EditorViewImpl.class);
+        bindPresenterWidget(CodePresenter.class, CodeView.class, CodeViewImpl.class);
 
         // Add processor bindings.
         bindPresenterWidget(ProcessorPresenter.class, ProcessorView.class, ProcessorViewImpl.class);
 
-        bind(XMLEditorMenuPresenter.class).in(Singleton.class);
+        bind(EditorMenuPresenter.class).in(Singleton.class);
     }
 }

@@ -43,7 +43,8 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.Stream;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Highlight;
-import stroom.xmleditor.client.presenter.ReadOnlyXMLEditorPresenter;
+import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.presenter.HtmlPresenter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,7 +53,8 @@ import java.util.Set;
 
 public class TextPresenter extends AbstractComponentPresenter<TextPresenter.TextView> implements TextUiHandlers {
     public static final ComponentType TYPE = new ComponentType(2, "text", "Text");
-    private final ReadOnlyXMLEditorPresenter xmlPresenter;
+    private final Provider<EditorPresenter> rawPresenterProvider;
+    private final Provider<HtmlPresenter> htmlPresenterProvider;
     private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
     private TextSettings textSettings;
@@ -65,47 +67,59 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     private TablePresenter currentTablePresenter;
 
+    private EditorPresenter rawPresenter;
+    private HtmlPresenter htmlPresenter;
+
     @Inject
     public TextPresenter(final EventBus eventBus, final TextView view,
                          final Provider<TextSettingsPresenter> settingsPresenterProvider,
-                         final ReadOnlyXMLEditorPresenter xmlPresenter, final ClientDispatchAsync dispatcher,
+                         final Provider<EditorPresenter> rawPresenterProvider, final Provider<HtmlPresenter> htmlPresenterProvider, final ClientDispatchAsync dispatcher,
                          final ClientSecurityContext securityContext) {
         super(eventBus, view, settingsPresenterProvider);
-        this.xmlPresenter = xmlPresenter;
+        this.rawPresenterProvider = rawPresenterProvider;
+        this.htmlPresenterProvider = htmlPresenterProvider;
         this.dispatcher = dispatcher;
         this.securityContext = securityContext;
-
-        view.setContent(xmlPresenter.getView());
 
         view.setUiHandlers(this);
     }
 
     private void showData(final String data, final String classification, final Set<String> highlightStrings,
                           final boolean isHtml) {
-        if (data != null) {
-            final List<Highlight> highlights = getHighlights(data, highlightStrings);
+        final List<Highlight> highlights = getHighlights(data, highlightStrings);
 
-            // Defer showing data to be sure that the data display has been made
-            // visible first.
-            Scheduler.get().scheduleDeferred(() -> {
-                // Determine if we should show tha play button.
-                playButtonVisible = !isHtml
-                        && securityContext.hasAppPermission(PipelineEntity.STEPPING_PERMISSION);
+        // Defer showing data to be sure that the data display has been made
+        // visible first.
+        Scheduler.get().scheduleDeferred(() -> {
+            // Determine if we should show tha play button.
+            playButtonVisible = !isHtml
+                    && securityContext.hasAppPermission(PipelineEntity.STEPPING_PERMISSION);
 
-                // Show the play button if we have fetched input data.
-                getView().setPlayVisible(playButtonVisible);
+            // Show the play button if we have fetched input data.
+            getView().setPlayVisible(playButtonVisible);
 
-                getView().setClassification(classification);
-                if (isHtml) {
-                    xmlPresenter.setHTML(data, highlights, playButtonVisible);
-                } else {
-                    xmlPresenter.setText(data, 1, true, highlights, null, playButtonVisible);
+            getView().setClassification(classification);
+            if (isHtml) {
+                if (htmlPresenter == null) {
+                    htmlPresenter = htmlPresenterProvider.get();
                 }
-            });
-        } else {
-            getView().setClassification(null);
-            xmlPresenter.setText("", 1, true, null, null, true);
-        }
+
+                getView().setContent(htmlPresenter.getView());
+                htmlPresenter.setHtml(data);
+            } else {
+                if (rawPresenter == null) {
+                    rawPresenter = rawPresenterProvider.get();
+                    rawPresenter.setReadOnly(true);
+                }
+
+                getView().setContent(rawPresenter.getView());
+
+                rawPresenter.setText(data);
+                rawPresenter.setHighlights(highlights);
+                rawPresenter.setControlsVisible(playButtonVisible);
+                rawPresenter.format();
+            }
+        });
     }
 
     private List<Highlight> getHighlights(final String input, final Set<String> highlightStrings) {
@@ -202,7 +216,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     private void update(final TablePresenter tablePresenter) {
-        showData(null, null, null, false);
+        showData("", null, null, false);
         currentStreamId = null;
         currentEventId = null;
         currentHighlightStrings = null;
@@ -217,7 +231,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                 currentHighlightStrings = tablePresenter.getHighlights();
 
                 if (currentStreamId == null || currentEventId == null) {
-                    showData(null, null, null, false);
+                    showData("", null, null, false);
 
                 } else {
                     final String permissionCheck = checkPermissions();

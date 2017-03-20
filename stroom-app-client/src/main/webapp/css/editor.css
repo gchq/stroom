@@ -1,0 +1,9 @@
+.editor * {
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    font-size: 12px;
+}
+
+.editor .hl {
+    position: absolute;
+	background-color: yellow;
+}

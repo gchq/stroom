@@ -31,7 +31,7 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
 import stroom.widget.xsdbrowser.client.view.XSDModel;
-import stroom.xmleditor.client.presenter.XMLEditorPresenter;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.xmlschema.shared.XMLSchema;
 
 public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView, XMLSchema> {
@@ -40,7 +40,7 @@ public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView,
     private static final TabData TEXT = new TabDataImpl("Text");
 
     private final XSDBrowserPresenter xsdBrowserPresenter;
-    private final XMLEditorPresenter codePresenter;
+    private final EditorPresenter codePresenter;
 
     private final XSDModel data = new XSDModel();
     private final XMLSchemaSettingsPresenter settingsPresenter;
@@ -50,7 +50,7 @@ public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView,
     @Inject
     public XMLSchemaPresenter(final EventBus eventBus, final LinkTabPanelView view,
                               final XMLSchemaSettingsPresenter settingsPresenter, final XSDBrowserPresenter xsdBrowserPresenter,
-                              final XMLEditorPresenter codePresenter,
+                              final EditorPresenter codePresenter,
                               final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
@@ -107,7 +107,8 @@ public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView,
             } else if (content.equals(codePresenter)) {
                 if (!shownText) {
                     shownText = true;
-                    codePresenter.setText(getEntity().getData(), 1, true);
+                    codePresenter.setText(getEntity().getData());
+                    codePresenter.format();
                 }
             }
         }

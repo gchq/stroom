@@ -206,7 +206,7 @@
 	/* iframe will capture the event and the slider will stop moving. */
 	background-color: white;
 	opacity: 0;
-	z-index: 2;
+	z-index: 10;
 	cursor: col-resize;
 }
 
@@ -238,6 +238,6 @@
 	/* iframe will capture the event and the slider will stop moving. */
 	background-color: white;
 	opacity: 0;
-	z-index: 2;
+	z-index: 10;
 	cursor: default;
 }

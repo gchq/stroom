@@ -17,7 +17,6 @@
 package stroom.pipeline.server;
 
 import stroom.cache.server.XSLTPool;
-import stroom.entity.server.util.XMLUtil;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.shared.Feed;
@@ -240,13 +239,14 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                         }
                     }
 
+            } else {
                 } else {
-                    // Try and pretty print XML.
-                    try {
-                        output = XMLUtil.prettyPrintXML(rawData);
-                    } catch (final Exception ex) {
-                        // Ignore.
-                    }
+//                    // Try and pretty print XML.
+//                    try {
+//                        output = XMLUtil.prettyPrintXML(rawData);
+//                    } catch (final Exception ex) {
+//                        // Ignore.
+//                    }
 
                     // If we failed to pretty print XML then return raw data.
                     if (output == null) {

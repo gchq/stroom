@@ -80,11 +80,11 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final PipelineStepAction action;
     private final PipelineTreePresenter pipelineTreePresenter;
     private final DataPresenter sourcePresenter;
-    private final Provider<EditorPresenter> editorProvider;
+    private final Provider<CodePresenter> editorProvider;
     private final StepLocationPresenter stepLocationPresenter;
     private final StepControlPresenter stepControlPresenter;
     private final ClientDispatchAsync dispatcher;
-    private final Map<String, EditorPresenter> editorMap = new HashMap<String, EditorPresenter>();
+    private final Map<String, CodePresenter> editorMap = new HashMap<String, CodePresenter>();
     private final PipelineModel pipelineModel;
     private final GlyphButtonView saveButton;
     private boolean foundRecord;
@@ -100,7 +100,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     public SteppingPresenter(final EventBus eventBus, final SteppingView view,
                              final PipelineTreePresenter pipelineTreePresenter,
                              final ClientDispatchAsync dispatcher, final DataPresenter sourcePresenter,
-                             final Provider<EditorPresenter> editorProvider, final StepLocationPresenter stepLocationPresenter,
+                             final Provider<CodePresenter> editorProvider, final StepLocationPresenter stepLocationPresenter,
                              final StepControlPresenter stepControlPresenter) {
         super(eventBus, view);
         this.dispatcher = dispatcher;
@@ -212,7 +212,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             }
 
             final String elementId = element.getId();
-            EditorPresenter editorPresenter = editorMap.get(elementId);
+            CodePresenter editorPresenter = editorMap.get(elementId);
 
             if (editorPresenter == null) {
                 final DirtyHandler dirtyEditorHandler = event -> {
@@ -220,7 +220,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     saveButton.setEnabled(true);
                 };
 
-                final EditorPresenter presenter = editorProvider.get();
+                final CodePresenter presenter = editorProvider.get();
 
                 presenter.setElementId(element.getId());
                 presenter.setElementType(element.getElementType());
@@ -239,7 +239,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }
     }
 
-    private void refreshEditor(final EditorPresenter editorPresenter, final String elementId) {
+    private void refreshEditor(final CodePresenter editorPresenter, final String elementId) {
         refreshEditorCode(editorPresenter);
 
         if (editorPresenter.isRefreshRequired()) {
@@ -253,11 +253,11 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }
     }
 
-    private void refreshEditorCode(final EditorPresenter editorPresenter) {
+    private void refreshEditorCode(final CodePresenter editorPresenter) {
         editorPresenter.load();
     }
 
-    private void refreshEditorCodeIndicators(final EditorPresenter editorPresenter, final String elementId) {
+    private void refreshEditorCodeIndicators(final CodePresenter editorPresenter, final String elementId) {
         // Only update the code indicators if we have a current result.
         if (currentResult != null && currentResult.getStepData() != null) {
             final SharedElementData elementData = currentResult.getStepData().getElementData(elementId);
@@ -270,7 +270,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }
     }
 
-    private void refreshEditorIO(final EditorPresenter editorPresenter, final String elementId) {
+    private void refreshEditorIO(final CodePresenter editorPresenter, final String elementId) {
         // Only update the input/output if we found a record.
         if (lastFoundResult != null) {
             final SharedElementData elementData = lastFoundResult.getStepData().getElementData(elementId);
@@ -350,7 +350,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
     private void save() {
         // Tell all editors to save.
-        for (final Entry<String, EditorPresenter> entry : editorMap.entrySet()) {
+        for (final Entry<String, CodePresenter> entry : editorMap.entrySet()) {
             entry.getValue().save();
         }
         DirtyEvent.fire(this, false);
@@ -374,7 +374,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
             // Set dirty code on action.
             final Map<String, String> codeMap = new HashMap<String, String>();
-            for (final EditorPresenter editorPresenter : editorMap.values()) {
+            for (final CodePresenter editorPresenter : editorMap.values()) {
                 if (editorPresenter.isDirtyCode()) {
                     final String elementId = editorPresenter.getElementId();
                     final String code = editorPresenter.getCode();
@@ -409,7 +409,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             }
 
             // Tell all editors that a refresh is required.
-            for (final Entry<String, EditorPresenter> entry : editorMap.entrySet()) {
+            for (final Entry<String, CodePresenter> entry : editorMap.entrySet()) {
                 entry.getValue().setRefreshRequired(true);
             }
 
@@ -417,7 +417,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
             if (selectedElement != null) {
                 final String elementId = selectedElement.getId();
-                final EditorPresenter editorPresenter = editorMap.get(elementId);
+                final CodePresenter editorPresenter = editorMap.get(elementId);
                 if (editorPresenter != null) {
                     refreshEditor(editorPresenter, elementId);
                 }
