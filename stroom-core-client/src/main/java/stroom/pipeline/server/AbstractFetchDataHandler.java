@@ -46,6 +46,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.resource.server.BOMRemovalInputStream;
+import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.FileSystemUtil;
@@ -78,30 +79,21 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     private static final int MAX_LINE_LENGTH = 1000;
     private final Long streamsLength = 1L;
     private final boolean streamsTotalIsExact = true;
-    @Resource
-    private StreamStore streamStore;
-    @Resource
-    private FeedService feedService;
-    @Resource
-    private XSLTService xsltService;
-    @Resource
-    private XSLTPool templatesPool;
-    @Resource
-    private FeedHolder feedHolder;
-    @Resource
-    private PipelineHolder pipelineHolder;
-    @Resource
-    private StreamHolder streamHolder;
-    @Resource
-    private PipelineEntityService pipelineEntityService;
-    @Resource
-    private PipelineFactory pipelineFactory;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
-    @Resource
-    private PipelineDataCache pipelineDataCache;
-    @Resource
-    private StreamEventLog streamEventLog;
+
+    private final StreamStore streamStore;
+    private final FeedService feedService;
+    private final XSLTService xsltService;
+    private final XSLTPool templatesPool;
+    private final FeedHolder feedHolder;
+    private final PipelineHolder pipelineHolder;
+    private final StreamHolder streamHolder;
+    private final PipelineEntityService pipelineEntityService;
+    private final PipelineFactory pipelineFactory;
+    private final ErrorReceiverProxy errorReceiverProxy;
+    private final PipelineDataCache pipelineDataCache;
+    private final StreamEventLog streamEventLog;
+    private final SecurityContext securityContext;
+
     private Long streamsOffset = 0L;
     private Long streamsTotal = 0L;
     private Long pageOffset = 0L;
@@ -109,168 +101,191 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     private Long pageTotal = 0L;
     private boolean pageTotalIsExact = false;
 
+    public AbstractFetchDataHandler(final StreamStore streamStore, final FeedService feedService, final XSLTService xsltService, final XSLTPool templatesPool, final FeedHolder feedHolder, final PipelineHolder pipelineHolder, final StreamHolder streamHolder, final PipelineEntityService pipelineEntityService, final PipelineFactory pipelineFactory, final ErrorReceiverProxy errorReceiverProxy, final PipelineDataCache pipelineDataCache, final StreamEventLog streamEventLog, final SecurityContext securityContext) {
+        this.streamStore = streamStore;
+        this.feedService = feedService;
+        this.xsltService = xsltService;
+        this.templatesPool = templatesPool;
+        this.feedHolder = feedHolder;
+        this.pipelineHolder = pipelineHolder;
+        this.streamHolder = streamHolder;
+        this.pipelineEntityService = pipelineEntityService;
+        this.pipelineFactory = pipelineFactory;
+        this.errorReceiverProxy = errorReceiverProxy;
+        this.pipelineDataCache = pipelineDataCache;
+        this.streamEventLog = streamEventLog;
+        this.securityContext = securityContext;
+    }
+
     protected AbstractFetchDataResult getData(final Long streamId, final StreamType childStreamType,
-            final OffsetRange<Long> streamsRange, final OffsetRange<Long> pageRange, final boolean markerMode,
+                                              final OffsetRange<Long> streamsRange, final OffsetRange<Long> pageRange, final boolean markerMode,
                                               final DocRef pipeline, final boolean showAsHtml, final Severity... expandedSeverities) {
-        final StreamCloser streamCloser = new StreamCloser();
-        List<StreamType> availableChildStreamTypes = null;
-        Feed feed = null;
-        StreamType streamType = null;
-
-        StreamSource streamSource = null;
         try {
-            // Get the stream source.
-            streamSource = streamStore.openStreamSource(streamId, true);
+            // Allow users with 'Use' permission to read data, pipelines and XSLT.
+            securityContext.elevatePermissions();
 
-            // If we have no stream then let the client know it has been
-            // deleted.
-            if (streamSource == null) {
-                final String classification = feedService.getDisplayClassification(feed);
-                final OffsetRange<Long> resultStreamsRange = new OffsetRange<Long>(streamsOffset, streamsLength);
-                final RowCount<Long> streamsRowCount = new RowCount<Long>(streamsTotal, streamsTotalIsExact);
-                final OffsetRange<Long> resultPageRange = new OffsetRange<Long>(pageOffset, (long) 1);
-                final RowCount<Long> pageRowCount = new RowCount<Long>((long) 1, true);
+            final StreamCloser streamCloser = new StreamCloser();
+            List<StreamType> availableChildStreamTypes = null;
+            Feed feed = null;
+            StreamType streamType = null;
 
-                final FetchDataResult result = new FetchDataResult(streamType, classification, resultStreamsRange,
-                        streamsRowCount, resultPageRange, pageRowCount, availableChildStreamTypes,
-                        "Stream has been deleted", showAsHtml);
-                return result;
-            }
+            StreamSource streamSource = null;
+            try {
+                // Get the stream source.
+                streamSource = streamStore.openStreamSource(streamId, true);
 
-            streamCloser.add(streamSource);
-            streamType = streamSource.getType();
+                // If we have no stream then let the client know it has been
+                // deleted.
+                if (streamSource == null) {
+                    final String classification = feedService.getDisplayClassification(feed);
+                    final OffsetRange<Long> resultStreamsRange = new OffsetRange<Long>(streamsOffset, streamsLength);
+                    final RowCount<Long> streamsRowCount = new RowCount<Long>(streamsTotal, streamsTotalIsExact);
+                    final OffsetRange<Long> resultPageRange = new OffsetRange<Long>(pageOffset, (long) 1);
+                    final RowCount<Long> pageRowCount = new RowCount<Long>((long) 1, true);
 
-            // Find out which child stream types are available.
-            availableChildStreamTypes = getAvailableChildStreamTypes(streamSource);
-
-            // Are we getting and are we able to get the child stream?
-            if (childStreamType != null) {
-                final StreamSource childStreamSource = streamSource.getChildStream(childStreamType);
-
-                // If we got something then change the stream.
-                if (childStreamSource != null) {
-                    streamSource = childStreamSource;
-                    streamType = childStreamType;
+                    final FetchDataResult result = new FetchDataResult(streamType, classification, resultStreamsRange,
+                            streamsRowCount, resultPageRange, pageRowCount, availableChildStreamTypes,
+                            "Stream has been deleted", showAsHtml);
+                    return result;
                 }
+
                 streamCloser.add(streamSource);
-            }
+                streamType = streamSource.getType();
 
-            // Load the feed.
-            feed = feedService.load(streamSource.getStream().getFeed());
+                // Find out which child stream types are available.
+                availableChildStreamTypes = getAvailableChildStreamTypes(streamSource);
 
-            // Get the boundary and segment input streams.
-            final CompoundInputStream compoundInputStream = new CompoundInputStream(streamSource);
-            streamCloser.add(compoundInputStream);
+                // Are we getting and are we able to get the child stream?
+                if (childStreamType != null) {
+                    final StreamSource childStreamSource = streamSource.getChildStream(childStreamType);
 
-            streamsOffset = streamsRange.getOffset();
-            streamsTotal = compoundInputStream.getEntryCount();
-            if (streamsOffset >= streamsTotal) {
-                streamsOffset = streamsTotal - 1;
-            }
-
-            final RASegmentInputStream segmentInputStream = compoundInputStream.getNextInputStream(streamsOffset);
-            streamCloser.add(segmentInputStream);
-
-            // Read the input stream into a string.
-            // If the input stream has multiple segments then we are going to
-            // read it in segment mode.
-            String rawData = null;
-            if (segmentInputStream.count() > 1) {
-                rawData = getSegmentedData(feed, streamType, pageRange, segmentInputStream);
-            } else {
-                rawData = getNonSegmentedData(feed, streamType, pageRange, segmentInputStream);
-            }
-
-            writeEventLog(streamSource.getStream(), feed, streamType, null);
-
-            // If this is an error stream and the UI is requesting markers then
-            // create a list of markers.
-            if (StreamType.ERROR.equals(streamType) && markerMode) {
-                // Combine markers into a list.
-                final List<Marker> markersList = new MarkerListCreator().createFullList(rawData, expandedSeverities);
-
-                // Create a list just for the request.
-                int pageOffset = pageRange.getOffset().intValue();
-                if (pageOffset >= markersList.size()) {
-                    pageOffset = markersList.size() - 1;
-                }
-                final int max = pageOffset + pageRange.getLength().intValue();
-                final int totalResults = markersList.size();
-                final List<Marker> resultList = new ArrayList<>();
-                for (int i = pageOffset; i < max && i < totalResults; i++) {
-                    resultList.add(markersList.get(i));
+                    // If we got something then change the stream.
+                    if (childStreamSource != null) {
+                        streamSource = childStreamSource;
+                        streamType = childStreamType;
+                    }
+                    streamCloser.add(streamSource);
                 }
 
-                final String classification = feedService.getDisplayClassification(feed);
-                final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(streamsOffset, streamsLength);
-                final RowCount<Long> streamsRowCount = new RowCount<>(streamsTotal, streamsTotalIsExact);
-                final OffsetRange<Long> resultPageRange = new OffsetRange<>((long) pageOffset,
-                        (long) resultList.size());
-                final RowCount<Long> pageRowCount = new RowCount<>((long) markersList.size(), true);
+                // Load the feed.
+                feed = feedService.load(streamSource.getStream().getFeed());
 
-                final FetchMarkerResult result = new FetchMarkerResult(streamType, classification, resultStreamsRange,
-                        streamsRowCount, resultPageRange, pageRowCount, availableChildStreamTypes,
-                        new SharedList<>(resultList));
+                // Get the boundary and segment input streams.
+                final CompoundInputStream compoundInputStream = new CompoundInputStream(streamSource);
+                streamCloser.add(compoundInputStream);
 
-                return result;
-            }
+                streamsOffset = streamsRange.getOffset();
+                streamsTotal = compoundInputStream.getEntryCount();
+                if (streamsOffset >= streamsTotal) {
+                    streamsOffset = streamsTotal - 1;
+                }
 
-            String output = null;
-            // If we have a pipeline then we will try and use it.
-            if (pipeline != null) {
-                try {
-                    // If we have a pipeline then use it.
-                    output = usePipeline(streamSource, rawData, feed, pipeline);
-                } catch (final Exception e) {
-                    output = e.getMessage();
-                    if (output == null || output.length() == 0) {
-                        output = e.toString();
+                final RASegmentInputStream segmentInputStream = compoundInputStream.getNextInputStream(streamsOffset);
+                streamCloser.add(segmentInputStream);
+
+                // Read the input stream into a string.
+                // If the input stream has multiple segments then we are going to
+                // read it in segment mode.
+                String rawData = null;
+                if (segmentInputStream.count() > 1) {
+                    rawData = getSegmentedData(feed, streamType, pageRange, segmentInputStream);
+                } else {
+                    rawData = getNonSegmentedData(feed, streamType, pageRange, segmentInputStream);
+                }
+
+                writeEventLog(streamSource.getStream(), feed, streamType, null);
+
+                // If this is an error stream and the UI is requesting markers then
+                // create a list of markers.
+                if (StreamType.ERROR.equals(streamType) && markerMode) {
+                    // Combine markers into a list.
+                    final List<Marker> markersList = new MarkerListCreator().createFullList(rawData, expandedSeverities);
+
+                    // Create a list just for the request.
+                    int pageOffset = pageRange.getOffset().intValue();
+                    if (pageOffset >= markersList.size()) {
+                        pageOffset = markersList.size() - 1;
+                    }
+                    final int max = pageOffset + pageRange.getLength().intValue();
+                    final int totalResults = markersList.size();
+                    final List<Marker> resultList = new ArrayList<>();
+                    for (int i = pageOffset; i < max && i < totalResults; i++) {
+                        resultList.add(markersList.get(i));
+                    }
+
+                    final String classification = feedService.getDisplayClassification(feed);
+                    final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(streamsOffset, streamsLength);
+                    final RowCount<Long> streamsRowCount = new RowCount<>(streamsTotal, streamsTotalIsExact);
+                    final OffsetRange<Long> resultPageRange = new OffsetRange<>((long) pageOffset,
+                            (long) resultList.size());
+                    final RowCount<Long> pageRowCount = new RowCount<>((long) markersList.size(), true);
+
+                    final FetchMarkerResult result = new FetchMarkerResult(streamType, classification, resultStreamsRange,
+                            streamsRowCount, resultPageRange, pageRowCount, availableChildStreamTypes,
+                            new SharedList<>(resultList));
+
+                    return result;
+                }
+
+                String output = null;
+                // If we have a pipeline then we will try and use it.
+                if (pipeline != null) {
+                    try {
+                        // If we have a pipeline then use it.
+                        output = usePipeline(streamSource, rawData, feed, pipeline);
+                    } catch (final Exception e) {
+                        output = e.getMessage();
+                        if (output == null || output.length() == 0) {
+                            output = e.toString();
+                        }
+                    }
+
+                } else {
+                    // Try and pretty print XML.
+                    try {
+                        output = XMLUtil.prettyPrintXML(rawData);
+                    } catch (final Exception ex) {
+                        // Ignore.
+                    }
+
+                    // If we failed to pretty print XML then return raw data.
+                    if (output == null) {
+                        output = rawData;
                     }
                 }
 
-            } else {
-                // Try and pretty print XML.
-                try {
-                    output = XMLUtil.prettyPrintXML(rawData);
-                } catch (final Exception ex) {
-                    // Ignore.
+                // Make sure we can't exceed the page total.
+                if (pageOffset > pageTotal) {
+                    pageOffset = pageTotal;
                 }
 
-                // If we failed to pretty print XML then return raw data.
-                if (output == null) {
-                    output = rawData;
-                }
-            }
+                // Set the result.
+                final String classification = feedService.getDisplayClassification(feed);
+                final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(streamsOffset, streamsLength);
+                final RowCount<Long> streamsRowCount = new RowCount<>(streamsTotal, streamsTotalIsExact);
+                final OffsetRange<Long> resultPageRange = new OffsetRange<>(pageOffset, pageLength);
+                final RowCount<Long> pageRowCount = new RowCount<>(pageTotal, pageTotalIsExact);
+                final FetchDataResult result = new FetchDataResult(streamType, classification, resultStreamsRange,
+                        streamsRowCount, resultPageRange, pageRowCount, availableChildStreamTypes, output, showAsHtml);
 
-            // Make sure we can't exceed the page total.
-            if (pageOffset > pageTotal) {
-                pageOffset = pageTotal;
-            }
-
-            // Set the result.
-            final String classification = feedService.getDisplayClassification(feed);
-            final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(streamsOffset, streamsLength);
-            final RowCount<Long> streamsRowCount = new RowCount<>(streamsTotal, streamsTotalIsExact);
-            final OffsetRange<Long> resultPageRange = new OffsetRange<>(pageOffset, pageLength);
-            final RowCount<Long> pageRowCount = new RowCount<>(pageTotal, pageTotalIsExact);
-            final FetchDataResult result = new FetchDataResult(streamType, classification, resultStreamsRange,
-                    streamsRowCount, resultPageRange, pageRowCount, availableChildStreamTypes, output, showAsHtml);
-
-            return result;
-        } catch (final IOException e) {
-            writeEventLog(streamSource.getStream(), feed, streamType, e);
-            throw new RuntimeException(e);
-        } finally {
-            // Close all open streams.
-            try {
-                streamCloser.close();
+                return result;
             } catch (final IOException e) {
+                writeEventLog(streamSource.getStream(), feed, streamType, e);
                 throw new RuntimeException(e);
             } finally {
-                if (streamSource != null) {
-                    streamStore.closeStreamSource(streamSource);
+                // Close all open streams.
+                try {
+                    streamCloser.close();
+                } catch (final IOException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    if (streamSource != null) {
+                        streamStore.closeStreamSource(streamSource);
+                    }
                 }
             }
+        } finally {
+            securityContext.restorePermissions();
         }
     }
 
