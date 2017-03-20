@@ -140,11 +140,13 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         checkCreatePermission(entity, folderRef);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public E load(final E entity) throws RuntimeException {
         return load(entity, Collections.emptySet());
     }
 
+    @Transactional(readOnly = true)
     @Override
     public E load(final E entity, final Set<String> fetchSet) throws RuntimeException {
         if (entity == null) {
@@ -153,12 +155,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return loadById(entity.getId(), fetchSet);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public E loadById(final long id) throws RuntimeException {
         return loadById(id, Collections.emptySet());
     }
 
     @SuppressWarnings("unchecked")
+    @Transactional(readOnly = true)
     @Override
     public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
         E entity = null;
@@ -188,6 +192,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     // TODO : Remove this method when the explorer service is broken out as a separate micro service.
+    @Transactional(readOnly = true)
     public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
         E entity = null;
 
@@ -214,12 +219,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return entity;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public final E loadByUuid(final String uuid) throws RuntimeException {
         return loadByUuid(uuid, null);
     }
 
     @SuppressWarnings("unchecked")
+    @Transactional(readOnly = true)
     @Override
     public final E loadByUuid(final String uuid, final Set<String> fetchSet) throws RuntimeException {
         final SQLBuilder sql = new SQLBuilder();
@@ -242,6 +249,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     // TODO : Remove this method when the explorer service is broken out as a separate micro service.
+    @Transactional(readOnly = true)
     public final E loadByUuidInsecure(final String uuid, final Set<String> fetchSet) throws RuntimeException {
         final SQLBuilder sql = new SQLBuilder();
         sql.append("SELECT e FROM ");
@@ -261,12 +269,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return entity;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public final E loadByName(final DocRef folder, final String name) throws RuntimeException {
         return loadByName(folder, name, null);
     }
 
     @SuppressWarnings("unchecked")
+    @Transactional(readOnly = true)
     @Override
     public final E loadByName(final DocRef folder, final String name, final Set<String> fetchSet) throws RuntimeException {
         final SQLBuilder sql = new SQLBuilder();
@@ -420,6 +430,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return filterResults(list, DocumentPermissionNames.READ);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public BaseResultList<E> find(final C criteria) throws RuntimeException {
         // Make sure the required permission is a valid one.
@@ -473,6 +484,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     // TODO : Remove this method when the explorer service is broken out as a separate micro service.
+    @Transactional(readOnly = true)
     public BaseResultList<E> findInsecure(final C criteria) throws RuntimeException {
         final List<E> list = findServiceHelper.find(criteria);
         return BaseResultList.createCriterialBasedList(list, criteria);
@@ -519,15 +531,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     public String getNamePattern() {
         return StroomProperties.getProperty(NAME_PATTERN_PROPERTY, NAME_PATTERN_VALUE);
     }
-
-//    protected void validateName(final String name) {
-//        final String pattern = getNamePattern();
-//        if (pattern != null && pattern.length() > 0) {
-//            if (name == null || !name.matches(pattern)) {
-//                throw new EntityServiceException("Invalid name \"" + name + "\" (" + getEntityType() + "  " + pattern + ")");
-//            }
-//        }
-//    }
 
     private String getDocReference(BaseEntity entity) {
         return "(" + DocRef.create(entity).toString() + ")";
