@@ -55,6 +55,7 @@ import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomStartup;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
+import stroom.util.thread.ThreadScopeRunnable;
 
 /**
  * Pool API into open index shards.
@@ -385,26 +386,29 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
             executor.scheduleAtFixedRate(() -> LOGGER.info("Waiting for " + remaining.get() + " index shards to " + action.getName()), 10, 10, TimeUnit.SECONDS);
 
             // Perform action on all of the index shard writers in parallel.
-            writers.parallelStream().forEach(writer -> {
-                try {
-                    LOGGER.debug(action.getActivity() + " index shard " + writer.getIndexShard().getId());
-                    switch (action) {
-                        case FLUSH:
-                            writer.flush();
-                            break;
-                        case CLOSE:
-                            writer.close();
-                            break;
-                        case DELETE:
-                            writer.delete();
-                            break;
+            writers.parallelStream().forEach(writer -> new ThreadScopeRunnable() {
+                @Override
+                protected void exec() {
+                    try {
+                        LOGGER.debug(action.getActivity() + " index shard " + writer.getIndexShard().getId());
+                        switch (action) {
+                            case FLUSH:
+                                writer.flush();
+                                break;
+                            case CLOSE:
+                                writer.close();
+                                break;
+                            case DELETE:
+                                writer.delete();
+                                break;
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
                     }
-                } catch (final Exception e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
 
-                remaining.getAndDecrement();
-            });
+                    remaining.getAndDecrement();
+                }
+            }.run());
 
             // Shut down the progress logging executor.
             executor.shutdown();
