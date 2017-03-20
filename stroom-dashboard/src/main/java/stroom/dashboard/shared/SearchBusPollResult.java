@@ -26,7 +26,7 @@ import stroom.util.shared.SharedObject;
 public class SearchBusPollResult implements SharedObject {
     private static final long serialVersionUID = -2964122512841756795L;
 
-    private Map<QueryKey, SearchResult> searchResultMap = new HashMap<QueryKey, SearchResult>();
+    private Map<QueryKey, SearchResult> searchResultMap = new HashMap<>();
 
     public SearchBusPollResult() {
         // Default constructor necessary for GWT serialisation.
