@@ -240,7 +240,6 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                     }
 
             } else {
-                } else {
 //                    // Try and pretty print XML.
 //                    try {
 //                        output = XMLUtil.prettyPrintXML(rawData);
