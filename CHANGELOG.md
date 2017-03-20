@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.13] - 2017-03-20
+
 * Issue **#143** : Stroom now logs progress information about closing index shard writers during shutdown.
 
 * Issue **#140** : Replaced code editor to improve UI performance and add additional code formatting & styling options.
@@ -175,7 +177,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.13...HEAD
+[v5.0-beta.13]: https://github.com/gchq/stroom/compare/v5.0-beta.12...v5.0-beta.13
 [v5.0-beta.12]: https://github.com/gchq/stroom/compare/v5.0-beta.11...v5.0-beta.12
 [v5.0-beta.11]: https://github.com/gchq/stroom/compare/v5.0-beta.10...v5.0-beta.11
 [v5.0-beta.10]: https://github.com/gchq/stroom/compare/v5.0-beta.9...v5.0-beta.10
