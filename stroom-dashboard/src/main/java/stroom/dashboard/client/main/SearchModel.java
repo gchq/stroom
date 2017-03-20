@@ -45,7 +45,7 @@ public class SearchModel {
     private final QueryPresenter queryPresenter;
     private final IndexLoader indexLoader;
     private final TimeZones timeZones;
-    private final Map<String, ResultComponent> componentMap = new HashMap<>();
+    private Map<String, ResultComponent> componentMap = new HashMap<>();
     private Map<String, String> currentParameterMap;
     private ExpressionOperator currentExpression;
     private SearchResult currentResult;
@@ -55,7 +55,7 @@ public class SearchModel {
     private Mode mode = Mode.INACTIVE;
 
     public SearchModel(final SearchBus searchBus, final QueryPresenter queryPresenter, final IndexLoader indexLoader,
-            final TimeZones timeZones) {
+                       final TimeZones timeZones) {
         this.searchBus = searchBus;
         this.queryPresenter = queryPresenter;
         this.indexLoader = indexLoader;
@@ -99,28 +99,27 @@ public class SearchModel {
     public void search(final ExpressionOperator expression, final String params, final boolean incremental) {
         // Toggle the request mode or start a new search.
         switch (mode) {
-        case ACTIVE:
-            // Tell every component not to want data.
-            setWantsData(false);
-            setMode(Mode.PAUSED);
-            break;
-        case INACTIVE:
-            reset();
-            startNewSearch(expression, params, incremental);
-            break;
-        case PAUSED:
-            // Tell every component that it should want data.
-            setWantsData(true);
-            setMode(Mode.ACTIVE);
-            break;
+            case ACTIVE:
+                // Tell every component not to want data.
+                setWantsData(false);
+                setMode(Mode.PAUSED);
+                break;
+            case INACTIVE:
+                reset();
+                startNewSearch(expression, params, incremental);
+                break;
+            case PAUSED:
+                // Tell every component that it should want data.
+                setWantsData(true);
+                setMode(Mode.ACTIVE);
+                break;
         }
     }
 
     /**
      * Begin executing a new search using the supplied query expression.
      *
-     * @param expression
-     *            The expression to search with.
+     * @param expression The expression to search with.
      */
     private void startNewSearch(final ExpressionOperator expression, final String params, final boolean incremental) {
         final Map<String, ComponentSettings> resultComponentMap = createResultComponentMap();
@@ -323,11 +322,17 @@ public class SearchModel {
     }
 
     public void addComponent(final String componentId, final ResultComponent resultComponent) {
+        // Create and assign a new map here to prevent concurrent modification exceptions.
+        final Map<String, ResultComponent> componentMap = new HashMap<>(this.componentMap);
         componentMap.put(componentId, resultComponent);
+        this.componentMap = componentMap;
     }
 
     public void removeComponent(final String componentId) {
+        // Create and assign a new map here to prevent concurrent modification exceptions.
+        final Map<String, ResultComponent> componentMap = new HashMap<>(this.componentMap);
         componentMap.remove(componentId);
+        this.componentMap = componentMap;
     }
 
     public enum Mode {
