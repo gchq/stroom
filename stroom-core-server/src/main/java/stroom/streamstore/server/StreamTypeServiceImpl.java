@@ -35,6 +35,7 @@ import java.util.List;
 
 @Transactional
 @Component("streamTypeService")
+@Insecure
 public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, FindStreamTypeCriteria>
         implements StreamTypeService, InitializingBean {
     private final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper;
