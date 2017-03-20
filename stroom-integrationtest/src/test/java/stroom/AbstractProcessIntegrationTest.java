@@ -22,7 +22,6 @@ import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;
-import stroom.spring.CachedServiceConfiguration;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ProcessTestServerComponentScanConfiguration;
 import stroom.spring.ScopeConfiguration;
@@ -35,7 +34,7 @@ import org.springframework.test.context.ContextConfiguration;
 
 @ActiveProfiles(value = {StroomSpringProfiles.TEST, StroomSpringProfiles.IT, SecurityConfiguration.MOCK_SECURITY})
 @ContextConfiguration(classes = {ScopeConfiguration.class, PersistenceConfiguration.class,
-        ProcessTestServerComponentScanConfiguration.class, ServerConfiguration.class, CachedServiceConfiguration.class,
+        ProcessTestServerComponentScanConfiguration.class, ServerConfiguration.class,
         SecurityConfiguration.class, ScopeTestConfiguration.class, EventLoggingConfiguration.class,
         IndexConfiguration.class, SearchConfiguration.class, ScriptConfiguration.class,
         VisualisationConfiguration.class, DashboardConfiguration.class})

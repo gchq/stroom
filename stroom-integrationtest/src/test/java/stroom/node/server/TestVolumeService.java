@@ -33,7 +33,7 @@ public class TestVolumeService extends AbstractCoreIntegrationTest {
     private VolumeService volumeService;
 
     @Test
-    public void tesFind() {
+    public void testFind() {
         final FindVolumeCriteria criteria = new FindVolumeCriteria();
         final List<Volume> volumeList = volumeService.find(criteria);
 

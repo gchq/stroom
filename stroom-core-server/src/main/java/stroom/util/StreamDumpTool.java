@@ -19,7 +19,6 @@ package stroom.util;
 import stroom.entity.shared.Period;
 import stroom.feed.server.FeedServiceImpl;
 import stroom.feed.shared.Feed;
-import stroom.spring.CachedServiceConfiguration;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ServerComponentScanConfiguration;
@@ -160,7 +159,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD);
         final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ScopeConfiguration.class, PersistenceConfiguration.class, ServerComponentScanConfiguration.class,
-                ServerConfiguration.class, CachedServiceConfiguration.class);
+                ServerConfiguration.class);
         return context;
     }
 

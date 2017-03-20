@@ -41,7 +41,6 @@ import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.VolumeService;
 import stroom.pipeline.server.filter.SafeXMLFilter;
 import stroom.pipeline.spring.PipelineConfiguration;
-import stroom.spring.CachedServiceConfiguration;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ServerComponentScanConfiguration;
@@ -265,7 +264,7 @@ public class Headless extends AbstractCommandLineTool {
         System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD);
         final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ScopeConfiguration.class, PersistenceConfiguration.class, ServerComponentScanConfiguration.class,
-                ServerConfiguration.class, CachedServiceConfiguration.class, PipelineConfiguration.class);
+                ServerConfiguration.class, PipelineConfiguration.class);
         return context;
     }
 

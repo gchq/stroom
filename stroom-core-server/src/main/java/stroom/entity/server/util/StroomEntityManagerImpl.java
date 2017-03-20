@@ -16,6 +16,7 @@
 
 package stroom.entity.server.util;
 
+import org.springframework.context.annotation.Primary;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.shared.Entity;
@@ -54,6 +55,7 @@ import java.util.List;
 import java.util.Set;
 
 @Component
+@Primary
 @Transactional
 public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactoryAware {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomEntityManagerImpl.class);
