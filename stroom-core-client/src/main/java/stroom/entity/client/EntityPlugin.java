@@ -16,6 +16,7 @@
 
 package stroom.entity.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.Presenter;
@@ -64,8 +65,8 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
 
     @Inject
     public EntityPlugin(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-            final ClientSecurityContext securityContext, final ContentManager contentManager,
-            final EntityPluginEventManager entityPluginEventManager) {
+                        final ClientSecurityContext securityContext, final ContentManager contentManager,
+                        final EntityPluginEventManager entityPluginEventManager) {
         super(eventBus);
         this.contentManager = contentManager;
         this.entityPluginEventManager = entityPluginEventManager;
@@ -81,9 +82,9 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
      * 1. This method will create a new entity and show it in the content pane.
      */
     public void createEntity(final Presenter<?, ?> popup, final DocRef folder, final String entityName, final PermissionInheritance permissionInheritance) {
-        create(getType(), entityName, folder, permissionInheritance, new CreateCallback() {
+        create(getType(), entityName, folder, permissionInheritance, new AsyncCallbackAdaptor<DocRef>() {
             @Override
-            public void onCreate(final DocRef docRef) {
+            public void onSuccess(final DocRef docRef) {
                 // Hide the create entity presenter.
                 HidePopupEvent.fire(EntityPlugin.this, popup);
 
@@ -136,18 +137,34 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
                 tabDataToEntityMap.put(tabData, docRef);
 
                 // Load the entity and show the tab.
-                load(docRef, new LoadCallback<E>() {
+                load(docRef, new AsyncCallbackAdaptor<E>() {
                     @Override
-                    public void onLoad(final E entity) {
-                        // Read the newly loaded entity.
-                        entityEditPresenter.read(entity);
+                    public void onSuccess(final E entity) {
+                        try {
+                            if (entity != null) {
+                                // Read the newly loaded entity.
+                                entityEditPresenter.read(entity);
 
-                        // Open the tab.
-                        final CloseHandler closeHandler = new EntityCloseHandler(tabData);
-                        contentManager.open(closeHandler, tabData, entityEditPresenter);
+                                // Open the tab.
+                                final CloseHandler closeHandler = new EntityCloseHandler(tabData);
+                                contentManager.open(closeHandler, tabData, entityEditPresenter);
+                            }
+                        } finally {
+                            // Stop spinning.
+                            TaskEndEvent.fire(EntityPlugin.this);
+                        }
+                    }
 
+                    @Override
+                    public void onFailure(final Throwable caught) {
+                        GWT.log(caught.getMessage());
                         // Stop spinning.
                         TaskEndEvent.fire(EntityPlugin.this);
+                    }
+
+                    @Override
+                    public boolean handlesFailure() {
+                        return true;
                     }
                 });
 
@@ -170,9 +187,9 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
             if (presenter.isDirty()) {
                 final E entity = presenter.getEntity();
                 presenter.write(entity);
-                save(entity, new SaveCallback<E>() {
+                save(entity, new AsyncCallbackAdaptor<E>() {
                     @Override
-                    public void onSave(final E entity) {
+                    public void onSuccess(final E entity) {
                         presenter.read(entity);
                     }
                 });
@@ -197,9 +214,9 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
                 folder = DocRef.create(((HasFolder) entity).getFolder());
             }
 
-            copy(entity, folder, name, permissionInheritance, new SaveCallback<E>() {
+            copy(entity, folder, name, permissionInheritance, new AsyncCallbackAdaptor<E>() {
                 @Override
-                public void onSave(final E entity) {
+                public void onSuccess(final E entity) {
                     // Hide the save as presenter.
                     HidePopupEvent.fire(EntityPlugin.this, dialog);
 
@@ -279,20 +296,20 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
      * 8.1. This method will copy an entity.
      */
     public void copyEntity(final PresenterWidget<?> popup, final DocRef docRef, final DocRef folder,
-            final String name, final PermissionInheritance permissionInheritance) {
+                           final String name, final PermissionInheritance permissionInheritance) {
         // We need to load the entity here as it might not have been loaded yet.
-        load(docRef, new LoadCallback<E>() {
+        load(docRef, new AsyncCallbackAdaptor<E>() {
             @Override
-            public void onLoad(final E entity) {
+            public void onSuccess(final E entity) {
                 copyEntity(popup, entity, folder, name, permissionInheritance);
             }
         });
     }
 
     private void copyEntity(final PresenterWidget<?> popup, final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
-        copy(entity, folder, name, permissionInheritance, new SaveCallback<E>() {
+        copy(entity, folder, name, permissionInheritance, new AsyncCallbackAdaptor<E>() {
             @Override
-            public void onSave(final E entity) {
+            public void onSuccess(final E entity) {
                 // Hide the copy entity presenter.
                 HidePopupEvent.fire(EntityPlugin.this, popup);
 
@@ -333,9 +350,9 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
             }
         } else {
             // We need to load the entity here as it hasn't been loaded yet.
-            load(document, new LoadCallback<E>() {
+            load(document, new AsyncCallbackAdaptor<E>() {
                 @Override
-                public void onLoad(final E entity) {
+                public void onSuccess(final E entity) {
                     moveEntity(popup, entity, folder, permissionInheritance, null, null);
                 }
             });
@@ -343,10 +360,10 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
     }
 
     private void moveEntity(final PresenterWidget<?> popup, final E entity, final DocRef folder, final PermissionInheritance permissionInheritance,
-            final EntityTabData tabData, final EntityEditPresenter<?, E> editPresenter) {
-        move(entity, folder, permissionInheritance, new SaveCallback<E>() {
+                            final EntityTabData tabData, final EntityEditPresenter<?, E> editPresenter) {
+        move(entity, folder, permissionInheritance, new AsyncCallbackAdaptor<E>() {
             @Override
-            public void onSave(final E entity) {
+            public void onSuccess(final E entity) {
                 // Hide the copy entity presenter.
                 HidePopupEvent.fire(EntityPlugin.this, popup);
 
@@ -367,7 +384,7 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
      */
     @SuppressWarnings("unchecked")
     public void renameEntity(final PresenterWidget<?> dialog, final DocRef docRef,
-            final String entityName) {
+                             final String entityName) {
         // Find out if we currently have the entity open.
         final EntityTabData tabData = entityToTabDataMap.get(docRef);
         if (tabData != null && tabData instanceof EntityEditPresenter<?, ?>) {
@@ -378,13 +395,10 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
                         "You must save changes to " + docRef.getType() + " '"
                                 + docRef.getDisplayValue()
                                 + "' before it can be renamed. Would you like to save the current changes now?",
-                        new ConfirmCallback() {
-                            @Override
-                            public void onResult(final boolean result) {
-                                if (result) {
-                                    editPresenter.write(editPresenter.getEntity());
-                                    renameEntity(dialog, editPresenter.getEntity(), entityName, tabData, editPresenter);
-                                }
+                        result -> {
+                            if (result) {
+                                editPresenter.write(editPresenter.getEntity());
+                                renameEntity(dialog, editPresenter.getEntity(), entityName, tabData, editPresenter);
                             }
                         });
             } else {
@@ -392,9 +406,9 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
             }
         } else {
             // We need to load the entity here as it hasn't been loaded yet.
-            load(docRef, new LoadCallback<E>() {
+            load(docRef, new AsyncCallbackAdaptor<E>() {
                 @Override
-                public void onLoad(final E entity) {
+                public void onSuccess(final E entity) {
                     renameEntity(dialog, entity, entityName, null, null);
                 }
             });
@@ -402,11 +416,11 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
     }
 
     private void renameEntity(final PresenterWidget<?> popup, final E entity, final String entityName,
-            final EntityTabData tabData, final EntityEditPresenter<?, E> editPresenter) {
+                              final EntityTabData tabData, final EntityEditPresenter<?, E> editPresenter) {
         entity.setName(entityName);
-        save(entity, new SaveCallback<E>() {
+        save(entity, new AsyncCallbackAdaptor<E>() {
             @Override
-            public void onSave(final E entity) {
+            public void onSuccess(final E entity) {
                 // Hide the rename entity presenter.
                 HidePopupEvent.fire(EntityPlugin.this, popup);
 
@@ -436,24 +450,18 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
                 ConfirmEvent.fire(EntityPlugin.this,
                         "You have unsaved changed for " + docRef.getType() + " '"
                                 + docRef.getDisplayValue() + "'.  Are you sure you want to delete it?",
-                        new ConfirmCallback() {
-                            @Override
-                            public void onResult(final boolean result) {
-                                if (result) {
-                                    deleteEntity(editPresenter.getEntity(), tabData);
-                                }
+                        result -> {
+                            if (result) {
+                                deleteEntity(editPresenter.getEntity(), tabData);
                             }
                         });
             } else {
                 ConfirmEvent.fire(EntityPlugin.this,
                         "You have " + docRef.getType() + " '" + docRef.getDisplayValue()
                                 + "' currently open for editing. Are you sure you want to delete it?",
-                        new ConfirmCallback() {
-                            @Override
-                            public void onResult(final boolean result) {
-                                if (result) {
-                                    deleteEntity(editPresenter.getEntity(), tabData);
-                                }
+                        result -> {
+                            if (result) {
+                                deleteEntity(editPresenter.getEntity(), tabData);
                             }
                         });
             }
@@ -465,9 +473,9 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
                     if (result) {
                         // We need to load the entity here as it hasn't
                         // been loaded yet.
-                        load(docRef, new LoadCallback<E>() {
+                        load(docRef, new AsyncCallbackAdaptor<E>() {
                             @Override
-                            public void onLoad(final E entity) {
+                            public void onSuccess(final E entity) {
                                 deleteEntity(entity, null);
                             }
                         });
@@ -492,9 +500,9 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
             TaskStartEvent.fire(this, "Reloading entity");
 
             // Reload the entity.
-            load(docRef, new LoadCallback<E>() {
+            load(docRef, new AsyncCallbackAdaptor<E>() {
                 @Override
-                public void onLoad(final E entity) {
+                public void onSuccess(final E entity) {
                     // Read the reloaded entity.
                     presenter.read(entity);
 
@@ -506,9 +514,9 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
     }
 
     private void deleteEntity(final E entity, final EntityTabData tabData) {
-        delete(entity, new DeleteCallback<E>() {
+        delete(entity, new AsyncCallbackAdaptor<E>() {
             @Override
-            public void onDelete(final E entity) {
+            public void onSuccess(final E entity) {
                 if (tabData != null) {
                     // Cleanup reference to this tab data.
                     removeTabData(tabData);
@@ -539,84 +547,29 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
 
     protected abstract EntityEditPresenter<?, ?> createEditor();
 
-    protected boolean allowNullFolder() {
-        return false;
-    }
-
-    // @Override
-    // public void onReveal(final BeforeRevealMenubarEvent event) {
-    // if (securityContext.hasAppPermission(getType(), DocumentPermissionNames.UPDATE)) {
-    // final String displayType = getEntityDisplayType();
-    // event.getMenuItems().addMenuItem(MenuKeys.NEW_MENU,
-    // new CommandMenuItem(getMenuPositon(), displayType, null, true, new
-    // Command() {
-    // @Override
-    // public void execute() {
-    // createEntity(displayType);
-    // }
-    // }));
-    // }
-    // }
-
-//    protected void createEntity(final String type, final String displayType) {
-//        final EntityData entityData = entityPluginEventManager.getSelectedEntityData();
-//        ShowCreateEntityDialogEvent.fire(EntityPlugin.this, entityData, type, displayType, allowNullFolder());
-//    }
-
     public void create(final String type, final String name, final DocRef folder, final PermissionInheritance permissionInheritance,
-            final CreateCallback callback) {
-        dispatcher.execute(new EntityServiceCreateAction(type, name, folder, permissionInheritance), new AsyncCallbackAdaptor<DocRef>() {
-            @Override
-            public void onSuccess(final DocRef result) {
-                callback.onCreate(result);
-            }
-        });
+                       final AsyncCallbackAdaptor<DocRef> callback) {
+        dispatcher.execute(new EntityServiceCreateAction(type, name, folder, permissionInheritance), callback);
     }
 
-    public void load(final DocRef docRef, final LoadCallback<E> callback) {
-        dispatcher.execute(new EntityServiceLoadAction<E>(docRef, fetchSet()),
-                new AsyncCallbackAdaptor<E>() {
-                    @Override
-                    public void onSuccess(final E result) {
-                        callback.onLoad(result);
-                    }
-                });
+    public void load(final DocRef docRef, final AsyncCallbackAdaptor<E> callback) {
+        dispatcher.execute(new EntityServiceLoadAction<E>(docRef, fetchSet()), callback);
     }
 
-    public void save(final E entity, final SaveCallback<E> callback) {
-        dispatcher.execute(new EntityServiceSaveAction<E>(entity), new AsyncCallbackAdaptor<E>() {
-            @Override
-            public void onSuccess(final E result) {
-                callback.onSave(result);
-            }
-        });
+    public void save(final E entity, final AsyncCallbackAdaptor<E> callback) {
+        dispatcher.execute(new EntityServiceSaveAction<E>(entity), callback);
     }
 
-    private void copy(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance, final SaveCallback<E> callback) {
-        dispatcher.execute(new EntityServiceCopyAction<E>(entity, folder, name, permissionInheritance), new AsyncCallbackAdaptor<E>() {
-            @Override
-            public void onSuccess(final E result) {
-                callback.onSave(result);
-            }
-        });
+    private void copy(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance, final AsyncCallbackAdaptor<E> callback) {
+        dispatcher.execute(new EntityServiceCopyAction<E>(entity, folder, name, permissionInheritance), callback);
     }
 
-    private void move(final E entity, final DocRef folder, final PermissionInheritance permissionInheritance, final SaveCallback<E> callback) {
-        dispatcher.execute(new EntityServiceMoveAction<E>(entity, folder, permissionInheritance), new AsyncCallbackAdaptor<E>() {
-            @Override
-            public void onSuccess(final E result) {
-                callback.onSave(result);
-            }
-        });
+    private void move(final E entity, final DocRef folder, final PermissionInheritance permissionInheritance, final AsyncCallbackAdaptor<E> callback) {
+        dispatcher.execute(new EntityServiceMoveAction<E>(entity, folder, permissionInheritance), callback);
     }
 
-    private void delete(final E entity, final DeleteCallback<E> callback) {
-        dispatcher.execute(new EntityServiceDeleteAction<E>(entity), new AsyncCallbackAdaptor<E>() {
-            @Override
-            public void onSuccess(final E result) {
-                callback.onDelete(result);
-            }
-        });
+    private void delete(final E entity, final AsyncCallbackAdaptor<E> callback) {
+        dispatcher.execute(new EntityServiceDeleteAction<E>(entity), callback);
     }
 
     /**
@@ -627,22 +580,6 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
     }
 
     public abstract String getType();
-
-    public interface CreateCallback {
-        void onCreate(DocRef entity);
-    }
-
-    public interface LoadCallback<E extends NamedEntity> {
-        void onLoad(E entity);
-    }
-
-    public interface SaveCallback<E extends NamedEntity> {
-        void onSave(E entity);
-    }
-
-    public interface DeleteCallback<E extends NamedEntity> {
-        void onDelete(E entity);
-    }
 
     private class EntityCloseHandler implements CloseHandler {
         private final EntityTabData tabData;
@@ -660,12 +597,7 @@ public abstract class EntityPlugin<E extends NamedEntity> extends Plugin {
                     ConfirmEvent.fire(EntityPlugin.this,
                             presenter.getEntity().getType() + " '" + presenter.getEntity().getName()
                                     + "' has unsaved changes. Are you sure you want to close this item?",
-                            new ConfirmCallback() {
-                                @Override
-                                public void onResult(final boolean result) {
-                                    actuallyClose(tabData, callback, presenter, result);
-                                }
-                            });
+                            result -> actuallyClose(tabData, callback, presenter, result));
                 } else {
                     actuallyClose(tabData, callback, presenter, true);
                 }

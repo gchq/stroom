@@ -19,14 +19,13 @@ package stroom.folder.client;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.ClientSecurityContext;
 import stroom.app.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.entity.shared.Folder;
+import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
 
@@ -36,16 +35,11 @@ public class FolderPlugin extends EntityPlugin<Folder> {
 
     @Inject
     public FolderPlugin(final EventBus eventBus, final Provider<FolderPresenter> editorProvider,
-            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
+                        final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
+                        final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
         super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
         this.securityContext = securityContext;
-    }
-
-    @Override
-    protected boolean allowNullFolder() {
-        return true;
     }
 
     @Override
