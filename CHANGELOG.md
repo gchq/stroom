@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#142** : Changed the way permissions are cached so that changes to permissions provide immediate access to documents.
 
+* Issue **#123** : Changed the way entity service result caching works so that the underlying entity manager is cached instead of individual services. This allows entity result caching to be performed while still applying user permissions to cached results.
+
 ## [v5.0-beta.12] - 2017-03-13
 
 * Issue **#141** : Improved log output during entity reference migration and fixed statistic data source reference migration.
