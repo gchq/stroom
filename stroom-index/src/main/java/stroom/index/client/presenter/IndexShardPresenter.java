@@ -150,7 +150,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
         // Select Column
         final Column<IndexShard, TickBoxState> column = new Column<IndexShard, TickBoxState>(
-                new TickBoxCell(tickBoxAppearance, false, false)) {
+                TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue(final IndexShard indexShard) {
                 final boolean match = Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())
@@ -159,7 +159,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             }
 
         };
-        final Header<TickBoxState> header = new Header<TickBoxState>(new TickBoxCell(tickBoxAppearance, false, false)) {
+        final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue() {
                 if (Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) {

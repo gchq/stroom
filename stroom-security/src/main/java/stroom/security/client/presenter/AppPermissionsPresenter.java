@@ -102,7 +102,7 @@ public class AppPermissionsPresenter extends
 
         // Selection.
         final Column<String, TickBoxState> selectionColumn = new Column<String, TickBoxState>(
-                new TickBoxCell(appearance, true, true, updateable)) {
+                TickBoxCell.create(appearance, true, true, updateable)) {
             @Override
             public TickBoxState getValue(final String permission) {
                 final Set<String> permissions = userAppPermissions.getUserPermissons();

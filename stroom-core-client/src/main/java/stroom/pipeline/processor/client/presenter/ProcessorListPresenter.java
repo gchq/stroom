@@ -412,7 +412,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
 
         // Enabled.
         final Column<SharedObject, TickBoxState> enabledColumn = new Column<SharedObject, TickBoxState>(
-                new TickBoxCell(appearance, false, false, updatable)) {
+                TickBoxCell.create(appearance, false, false, updatable)) {
             @Override
             public TickBoxState getValue(final SharedObject row) {
                 if (row instanceof StreamProcessorFilterRow) {
@@ -472,10 +472,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     private void addEndColumn() {
         getView().addEndColumn(new EndColumn<SharedObject>());
     }
-
-//    public HandlerRegistration addSelectionHandler(DataGridSelectEvent.Handler handler) {
-//        return getView().addSelectionHandler(handler);
-//    }
 
     public MultiSelectionModel<SharedObject> getSelectionModel() {
         return getView().getSelectionModel();

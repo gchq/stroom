@@ -172,14 +172,14 @@ public class ImportConfigConfirmPresenter extends
 
         // Select Column
         final Column<EntityActionConfirmation, TickBoxState> column = new Column<EntityActionConfirmation, TickBoxState>(
-                new TickBoxCell(tickBoxAppearance, false, false)) {
+                TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue(final EntityActionConfirmation object) {
                 return TickBoxState.fromBoolean(object.isAction());
             }
 
         };
-        final Header<TickBoxState> header = new Header<TickBoxState>(new TickBoxCell(tickBoxAppearance, false, false)) {
+        final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue() {
                 return getHeaderState();

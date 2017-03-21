@@ -16,11 +16,6 @@
 
 package stroom.explorer.client.presenter;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import stroom.util.client.ImageUtil;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.SafeImageCell;
 import com.google.gwt.cell.client.TextCell;
@@ -35,7 +30,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.event.DataSelectionEvent;
@@ -46,6 +40,11 @@ import stroom.data.table.client.CellTableViewImpl;
 import stroom.data.table.client.CellTableViewImpl.BasicResources;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.util.client.ImageUtil;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<DocumentType>>
         implements HasDataSelectionHandlers<TypeFilterPresenter> {
@@ -59,7 +58,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
 
         // Checked.
         final Column<DocumentType, TickBoxState> checkedColumn = new Column<DocumentType, TickBoxState>(
-                new TickBoxCell(false, true)) {
+                TickBoxCell.create(false, true)) {
             @Override
             public TickBoxState getValue(final DocumentType object) {
                 return TickBoxState.fromBoolean(selected.contains(object.getType()));

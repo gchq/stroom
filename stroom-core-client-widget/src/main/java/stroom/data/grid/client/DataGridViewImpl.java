@@ -18,6 +18,7 @@
 
 package stroom.data.grid.client;
 
+import com.google.gwt.cell.client.Cell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -519,47 +520,10 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         return dataGrid;
     }
 
-    //    @Override
-//    public HandlerRegistration addCellPreviewHandler(
-//            final com.google.gwt.view.client.CellPreviewEvent.Handler<R> handler) {
-//        return dataGrid.addCellPreviewHandler(handler);
-//    }
-//
-//    @SuppressWarnings("unchecked")
-//    @Override
-//    public SelectionModel<R> getSelectionModel() {
-//        return (SelectionModel<R>) dataGrid.getSelectionModel();
-//    }
-//
-//    @Override
-//    public void setSelectionModel(final SelectionModel<? super R> selectionModel) {
-//        dataGrid.setSelectionModel(selectionModel);
-//    }
-//
-//    @Override
-//    public R getVisibleItem(final int indexOnPage) {
-//        return dataGrid.getVisibleItem(indexOnPage);
-//    }
-//
-//    @Override
-//    public int getVisibleItemCount() {
-//        return dataGrid.getVisibleItemCount();
-//    }
-//
-//    @Override
-//    public Iterable<R> getVisibleItems() {
-//        return dataGrid.getVisibleItems();
-//    }
-//
     @Override
     public void setRowData(final int start, final List<? extends R> values) {
         dataGrid.setRowData(start, values);
     }
-//
-//    @Override
-//    public void setVisibleRangeAndClearData(final Range range, final boolean forceRangeChangeEvent) {
-//        dataGrid.setVisibleRangeAndClearData(range, forceRangeChangeEvent);
-//    }
 
     @Override
     public ImageButtonView addButton(final String title, final ImageResource enabledImage,
@@ -571,14 +535,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     public GlyphButtonView addButton(final GlyphIcon preset) {
         return buttonPanel.add(preset);
     }
-
-//    @Override
-//    public HandlerRegistration addDoubleClickHandler(final DoubleClickEvent.Handler handler) {
-//        if (getSelectionModel() != null && getSelectionModel() instanceof MySingleSelectionModel) {
-//            return ((MySingleSelectionModel) getSelectionModel()).addDoubleClickHandler(handler);
-//        }
-//        return null;
-//    }
 
     @Override
     public HandlerRegistration addColumnSortHandler(final ColumnSortEvent.Handler handler) {
@@ -761,31 +717,27 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             final NativeEvent nativeEvent = event.getNativeEvent();
             final String type = nativeEvent.getType();
 
-            if ("mousedown".equals(type)) {
-                // We set focus here so that we can use the keyboard to navigate once we have focus.
-                dataGrid.setFocus(true);
 
-                final int x = nativeEvent.getClientX();
-                final int y = nativeEvent.getClientY();
-                final int button = nativeEvent.getButton();
-
-//                if ((button & NativeEvent.BUTTON_RIGHT) != 0) {
-//                    dataGrid.setKeyboardSelectedRow(event.getIndex());
-//                    ShowExplorerMenuEvent.fire(ExplorerTree.this, selectionModel, x, y);
-//                } else if ((button & NativeEvent.BUTTON_LEFT) != 0) {
-                final R selectedItem = event.getValue();
-                if (selectedItem != null && (button & NativeEvent.BUTTON_LEFT) != 0) {
-                    final boolean doubleClick = doubleClickTest.test(selectedItem);
-                    doSelect(selectedItem, new SelectionType(doubleClick, false, allowMultiSelect, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));
-                    super.onCellPreview(event);
+            if ("click".equals(type)) {
+                // Find out if the cell consumes this event because if it does then we won't use it to select the row.
+                boolean consumed = false;
+                final Cell<?> cell = dataGrid.getColumn(event.getColumn()).getCell();
+                if (cell != null && cell.getConsumedEvents() != null) {
+                    if (cell.getConsumedEvents().contains("click") || cell.getConsumedEvents().contains("mousedown") || cell.getConsumedEvents().contains("mouseup")) {
+                        consumed = true;
+                    }
                 }
-//                }
-//            } else if ("keydown".equals(type)) {
-//                final int keyCode = nativeEvent.getKeyCode();
-//                onKeyDown(keyCode);
-//                super.onCellPreview(event);
-            } else {
-                super.onCellPreview(event);
+
+                if (!consumed) {
+                    // We set focus here so that we can use the keyboard to navigate once we have focus.
+                    dataGrid.setFocus(true);
+
+                    final R selectedItem = event.getValue();
+                    if (selectedItem != null && (nativeEvent.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                        final boolean doubleClick = doubleClickTest.test(selectedItem);
+                        doSelect(selectedItem, new SelectionType(doubleClick, false, allowMultiSelect, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));
+                    }
+                }
             }
         }
     }
@@ -826,10 +778,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
 
         MultiSelectEvent.fire(dataGrid, selectionType);
     }
-
-//    public HandlerRegistration addSelectionHandler(final MultiSelectEvent.Handler handler) {
-//        return dataGrid.addHandler(handler, MultiSelectEvent.getType());
-//    }
 
     @Override
     public MultiSelectionModel<R> getSelectionModel() {

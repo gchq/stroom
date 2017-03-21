@@ -116,7 +116,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
 
         // Select Column
         final Column<TaskProgress, TickBoxState> column = new Column<TaskProgress, TickBoxState>(
-                new TickBoxCell(tickBoxAppearance, false, false)) {
+                TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue(final TaskProgress object) {
                 return TickBoxState.fromBoolean(selectedTaskProgress.contains(object));
@@ -299,10 +299,6 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         dispatcher.execute(action, new AsyncCallbackAdaptor<VoidResult>() {
         });
     }
-
-//    private void setButtonsEnabled() {
-//        terminateButton.setEnabled(selectedTaskProgress.size() > 0);
-//    }
 
     @Override
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Set<String>> handler) {

@@ -85,7 +85,12 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
     @Override
     protected void onBind() {
-        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> enableButtons()));
+        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
+                onEdit(getView().getSelectionModel().getSelected());
+            }
+            enableButtons();
+        }));
         registerHandler(editButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 onEdit(getView().getSelectionModel().getSelected());
@@ -214,7 +219,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
         // Master.
         final Column<NodeInfoResult, TickBoxState> masterColumn = new Column<NodeInfoResult, TickBoxState>(
-                new TickBoxCell(new TickBoxCell.NoBorderAppearance(), false, false, false)) {
+                TickBoxCell.create(new TickBoxCell.NoBorderAppearance(), false, false, false)) {
             @Override
             public TickBoxState getValue(final NodeInfoResult row) {
                 if (row == null) {
@@ -251,7 +256,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
         // Enabled
         final Column<NodeInfoResult, TickBoxState> enabledColumn = new Column<NodeInfoResult, TickBoxState>(
-                new TickBoxCell(false, false)) {
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final NodeInfoResult row) {
                 if (row == null) {

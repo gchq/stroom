@@ -57,7 +57,7 @@ public class FACell extends AbstractCell<GlyphIcon> {
     private static Template template;
 
     public FACell() {
-        super("mousedown");
+        super("click");
         if (resources == null) {
             resources = GWT.create(Resources.class);
             resources.style().ensureInjected();
@@ -71,7 +71,7 @@ public class FACell extends AbstractCell<GlyphIcon> {
     public void onBrowserEvent(final Context context, final Element parent, final GlyphIcon value, final NativeEvent event,
                                final ValueUpdater<GlyphIcon> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
-        if ("mousedown".equals(event.getType())) {
+        if ("click".equals(event.getType())) {
             EventTarget eventTarget = event.getEventTarget();
             if (!Element.is(eventTarget)) {
                 return;

@@ -16,6 +16,13 @@
 
 package stroom.security.client.presenter;
 
+import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.table.client.CellTableView;
@@ -25,13 +32,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserPermission;
 import stroom.security.shared.UserRef;
-import com.google.gwt.cell.client.FieldUpdater;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import javax.inject.Inject;
 import java.util.HashSet;
@@ -61,7 +61,7 @@ public class PermissionsListPresenter
 
         // Selection.
         final Column<String, TickBoxState> selectionColumn = new Column<String, TickBoxState>(
-                new TickBoxCell(appearance, false, false, updateable)) {
+                TickBoxCell.create(appearance, false, false, updateable)) {
             @Override
             public TickBoxState getValue(final String permission) {
                 TickBoxState tickBoxState = TickBoxState.UNTICK;
