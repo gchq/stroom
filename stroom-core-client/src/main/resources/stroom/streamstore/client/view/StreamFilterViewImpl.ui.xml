@@ -40,7 +40,7 @@
     </g:FlowPanel>
     </g:north>
     
-    <g:south size="269">
+    <g:south size="270">
     <g:FlowPanel width="100%" ui:field="southPanel" addStyleNames="{style.topMargin}">
     <g:FlowPanel width="100%">
       <g:FlowPanel ui:field="streamIdPanel" addStyleNames="{style.panel}">

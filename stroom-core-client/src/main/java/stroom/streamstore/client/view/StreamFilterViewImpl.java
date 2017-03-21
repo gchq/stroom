@@ -199,7 +199,7 @@ public class StreamFilterViewImpl extends ViewImpl implements StreamFilterView {
     public void setAdvancedVisible(final boolean visible) {
         advancedPanel.setVisible(visible);
         if (visible) {
-            layout.setWidgetSize(southPanel, 269);
+            layout.setWidgetSize(southPanel, 270);
         } else {
             layout.setWidgetSize(southPanel, 193);
         }
