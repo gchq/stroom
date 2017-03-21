@@ -496,7 +496,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             if (loadedFilter != null) {
 
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
-                securityContext.pushUser(loadedFilter.getUpdateUser());
+                securityContext.pushUser(loadedFilter.getCreateUser());
                 try {
                     LOGGER.debug("createTasksForFilter() - streamProcessorFilter %s", loadedFilter.toString());
 
