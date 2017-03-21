@@ -294,18 +294,17 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             playButtonVisible = beginSteppingHandler != null && userHasPipelineSteppingPermission;
         }
 
+        data = "";
+        markers = null;
+        startLineNo = 1;
+
         if (result != null) {
             if (result instanceof FetchMarkerResult) {
                 final FetchMarkerResult fetchMarkerResult = (FetchMarkerResult) result;
-                // showMarkerPresenter();
-                data = "";
                 markers = fetchMarkerResult.getMarkers();
-
             } else if (result instanceof FetchDataResult) {
                 final FetchDataResult fetchDataResult = (FetchDataResult) result;
-                // showTextPresenter();
                 data = fetchDataResult.getData();
-                markers = null;
             }
 
             startLineNo = result.getPageRange().getOffset().intValue() + 1;
@@ -321,9 +320,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             updateTabs(result.getStreamType(), result.getAvailableChildStreamTypes());
 
         } else {
-            data = "";
-            startLineNo = 1;
-
             getView().showSegmentPager(false);
             // Clear the classification.
             classificationUiHandlers.setClassification("");

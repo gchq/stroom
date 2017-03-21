@@ -220,12 +220,17 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                     !StreamStatus.UNLOCKED.equals(getCriteria().obtainStatusSet().getSingleItem()));
             showData();
         }));
-        registerHandler(streamListPresenter.addDataSelectionHandler(event -> setStreamListSelectableEnabled(event.getSelectedItem(),
-                findStreamAttributeMapCriteria.getFindStreamCriteria().obtainStatusSet().getSingleItem())));
-        registerHandler(streamRelationListPresenter.getSelectionModel().addSelectionHandler(event -> showData()));
-        registerHandler(
-                streamRelationListPresenter.addDataSelectionHandler(event -> setStreamRelationListSelectableEnabled(event.getSelectedItem(), findStreamAttributeMapCriteria
-                        .getFindStreamCriteria().obtainStatusSet().getSingleItem())));
+        registerHandler(streamListPresenter.addDataSelectionHandler(event -> {
+            setStreamListSelectableEnabled(event.getSelectedItem(),
+                    findStreamAttributeMapCriteria.getFindStreamCriteria().obtainStatusSet().getSingleItem());
+        }));
+        registerHandler(streamRelationListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            showData();
+        }));
+        registerHandler(streamRelationListPresenter.addDataSelectionHandler(event -> {
+            setStreamRelationListSelectableEnabled(event.getSelectedItem(), findStreamAttributeMapCriteria
+                    .getFindStreamCriteria().obtainStatusSet().getSingleItem());
+        }));
 
         registerHandler(streamListFilter.addClickHandler(event -> {
             final StreamFilterPresenter presenter = streamListFilterPresenter.get();
@@ -282,17 +287,9 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                             findStreamAttributeMapCriteria.getFindStreamCriteria().obtainStatusSet()
                                     .getSingleItem());
 
-                    // Get a new list of streams.
+                    // Clear the current selection and get a new list of streams.
+                    streamListPresenter.getSelectionModel().clear();
                     streamListPresenter.refresh();
-
-                    // If something is selected refresh the
-                    // relations
-                    if (streamListPresenter.getSelectedStream() != null) {
-                        streamRelationListPresenter.setSelectedStream(streamListPresenter.getSelectedStream(), true,
-                                !StreamStatus.UNLOCKED.equals(getCriteria().obtainStatusSet().getSingleItem()));
-                    }
-
-                    showData();
                 }
             };
 
