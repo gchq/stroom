@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#153** : Clicking tick boxes and other cell components in tables no longer requires the row to be selected first.
 
+* Issue **#148** : The stream browsing UI no longer throws an error when attempting to clear markers from the error markers pane.
+
 ## [v5.0-beta.13] - 2017-03-20
 
 * Issue **#143** : Stroom now logs progress information about closing index shard writers during shutdown.
