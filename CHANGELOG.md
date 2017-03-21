@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#148** : The stream browsing UI no longer throws an error when attempting to clear markers from the error markers pane.
 
+* Issue **#160** : Stream processing tasks are now created within the security context of the user that created the associated stream processor filter.
+
 ## [v5.0-beta.13] - 2017-03-20
 
 * Issue **#143** : Stroom now logs progress information about closing index shard writers during shutdown.
