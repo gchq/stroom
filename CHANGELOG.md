@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#160** : Stream processing tasks are now created within the security context of the user that created the associated stream processor filter.
 
+* Issue **#157** : Data is now formatted by the editor automatically on display.
+
 ## [v5.0-beta.13] - 2017-03-20
 
 * Issue **#143** : Stroom now logs progress information about closing index shard writers during shutdown.
