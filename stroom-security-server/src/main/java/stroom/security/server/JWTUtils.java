@@ -13,6 +13,8 @@ import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.keys.HmacKey;
 import org.jose4j.lang.JoseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
@@ -21,6 +23,8 @@ import java.util.Optional;
 import static org.jose4j.jws.AlgorithmIdentifiers.HMAC_SHA256;
 
 public class JWTUtils {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JWTUtils.class);
+
     protected static final String AUTHORIZATION_HEADER = "Authorization";
 
     // TODO Move these to config
@@ -40,12 +44,30 @@ public class JWTUtils {
     public static Optional<AuthenticationToken> verifyToken(ServletRequest request){
         if (getAuthHeader(request).isPresent()) {
             String bearerString = getAuthHeader(request).get();
-            // TODO This chops out 'Bearer'. We're dealing with unpredictable client data so we need a
-            // way to do this that more robustly handles an error in the string.
-            String jwtToken = bearerString.substring(7);
-            return Optional.of(verifyToken(jwtToken));
+
+            final String jwtToken;
+
+            if(bearerString.contains("Bearer")){
+                // TODO This chops out 'Bearer'. We're dealing with unpredictable client data so we need a
+                // way to do this that more robustly handles an error in the string.
+                jwtToken = bearerString.substring(7);
+            }
+            else{
+                jwtToken = bearerString;
+            }
+
+            try {
+                return Optional.of(verifyToken(jwtToken));
+            } catch (Exception e){
+                LOGGER.error("Unable to verify token:", e.getMessage(), e);
+                // If we get an exception verifying the token then we need to log the message
+                // and continue as if the token wasn't provided.
+                // TODO: decide if this should be handled by an exception and how
+                return Optional.empty();
+            }
         }
         else {
+            // If there's no token then we've nothing to do.
             return Optional.empty();
         }
     }
