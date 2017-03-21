@@ -112,6 +112,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                 if (rawPresenter == null) {
                     rawPresenter = rawPresenterProvider.get();
                     rawPresenter.setReadOnly(true);
+                    rawPresenter.getLineNumbersOption().setOn(false);
                 }
 
                 getView().setContent(rawPresenter.getView());
