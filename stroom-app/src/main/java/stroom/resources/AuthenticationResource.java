@@ -30,6 +30,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Optional;
@@ -49,7 +50,7 @@ public class AuthenticationResource {
     @GET
     @Path("/getToken")
     @Consumes(MediaType.TEXT_PLAIN)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
     @Timed
     @Insecure
     // We're going to use BasicHttpAuthentication by passing the token in with the header.
@@ -65,12 +66,11 @@ public class AuthenticationResource {
                 String token = JWTUtils.getTokenFor(credentials.get().getUsername());
 
                 return Response
-                        .ok()
-                        .entity(token)
+                        .ok(token, MediaType.TEXT_PLAIN)
                         .build();
             } catch (EntityServiceException e){
                 return Response
-                        .status(Response.Status.FORBIDDEN)
+                        .status(Response.Status.UNAUTHORIZED)
                         .entity(e.getMessage())
                         .build();
             }
