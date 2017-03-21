@@ -25,6 +25,7 @@ dependencies {
     compile 'de.svenkubiak:jBCrypt:0.4.1'
     compile 'javax.mail:mail:1.4.7'
     compile 'org.springframework:spring-context-support:4.3.4.RELEASE'
+    compile 'org.bitbucket.b_c:jose4j:0.5.5'
 
     // JWT Support
     compile 'com.auth0:java-jwt:3.1.0'

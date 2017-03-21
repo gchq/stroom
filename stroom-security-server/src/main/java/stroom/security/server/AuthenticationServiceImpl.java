@@ -91,10 +91,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             try {
                 final HttpServletRequest request = httpServletRequestHolder.get();
 
-                // Create the authentication token from the user name and
-                // password
-                final UsernamePasswordToken token = new UsernamePasswordToken(userName, password, true,
-                        request.getRemoteHost());
+                // Create the authentication token from the user name and password
+                final UsernamePasswordToken token = request == null ?
+                        new UsernamePasswordToken(userName, password,true) :
+                        new UsernamePasswordToken(userName, password,true, request.getRemoteHost());
 
                 // Attempt authentication
                 final Subject currentUser = SecurityUtils.getSubject();
@@ -385,9 +385,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             // Audit the successful login
             eventLog.logon(userId);
 
-            final HttpSession session = request.getSession(true);
-            session.setAttribute(USER_SESSION_KEY, reloadUser);
-            session.setAttribute(USER_ID_SESSION_KEY, userId);
+            if(request != null) {
+                final HttpSession session = request.getSession(true);
+                session.setAttribute(USER_SESSION_KEY, reloadUser);
+                session.setAttribute(USER_ID_SESSION_KEY, userId);
+            }
 
             return reloadUser;
         }

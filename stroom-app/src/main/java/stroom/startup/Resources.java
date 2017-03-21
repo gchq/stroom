@@ -19,10 +19,11 @@ package stroom.startup;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.context.ApplicationContext;
+import stroom.index.shared.IndexService;
 import stroom.resources.AuthenticationResource;
 import stroom.resources.SearchResource;
-import stroom.index.shared.IndexService;
 import stroom.search.server.SearchResultCreatorManager;
+import stroom.security.server.AuthenticationService;
 import stroom.util.upgrade.UpgradeDispatcherServlet;
 
 import javax.servlet.ServletException;
@@ -39,12 +40,11 @@ public class Resources {
         authenticationResource = new AuthenticationResource();
         jersey.register(authenticationResource);
 
-        new Thread(() -> register(upgradeDispatcherServlerHolder, searchResource))
-                .start();
+        new Thread(() -> register(upgradeDispatcherServlerHolder)).start();
 
     }
 
-    public void register(ServletHolder upgradeDispatcherServletHolder, SearchResource searchResource) {
+    public void register(ServletHolder upgradeDispatcherServletHolder) {
 
         boolean apisAreNotYetConfigured = true;
         while (apisAreNotYetConfigured) {
@@ -56,13 +56,11 @@ public class Resources {
                 upgradeDispatcherServletHolder.ensureInstance();
 
                 UpgradeDispatcherServlet servlet = (UpgradeDispatcherServlet) upgradeDispatcherServletHolder.getServlet();
-                ApplicationContext appContext = servlet.getWebApplicationContext();
+                ApplicationContext applicationContext = servlet.getWebApplicationContext();
 
-                if (appContext != null) {
-                    SearchResultCreatorManager searchResultCreatorManager = appContext.getBean(SearchResultCreatorManager.class);
-                    IndexService indexService = appContext.getBean(IndexService.class);
-                    searchResource.setIndexService(indexService);
-                    searchResource.setSearchResultCreatorManager(searchResultCreatorManager);
+                if (applicationContext != null) {
+                    configureSearchResource(applicationContext);
+                    configureAuthenticationResource(applicationContext);
                     apisAreNotYetConfigured = false;
                 }
             } catch (ServletException e) {
@@ -74,5 +72,17 @@ public class Resources {
 
     public SearchResource getSearchResource(){
         return searchResource;
+    }
+
+    private void configureSearchResource(ApplicationContext applicationContext){
+        SearchResultCreatorManager searchResultCreatorManager = applicationContext.getBean(SearchResultCreatorManager.class);
+        IndexService indexService = applicationContext.getBean(IndexService.class);
+        searchResource.setIndexService(indexService);
+        searchResource.setSearchResultCreatorManager(searchResultCreatorManager);
+    }
+
+    private void configureAuthenticationResource(ApplicationContext applicationContext){
+        AuthenticationService authenticationService = applicationContext.getBean(AuthenticationService.class);
+        authenticationResource.setAuthenticationService(authenticationService);
     }
 }

@@ -47,7 +47,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
         boolean loggedIn = false;
 
-        if (isLoginRequest(request, response) || JWTAuthentication.getAuthHeader(request).isPresent()) {
+        if (isLoginRequest(request, response) || JWTUtils.getAuthHeader(request).isPresent()) {
             loggedIn = executeLogin(request, response);
         }
 
@@ -62,7 +62,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
     @Override
     protected AuthenticationToken createToken(ServletRequest request, ServletResponse response) throws IOException {
-        return JWTAuthentication.createToken(request).orElseGet(() -> new UsernamePasswordToken());
+        return JWTUtils.verifyToken(request).orElseGet(() -> new UsernamePasswordToken());
     }
 
     @Override

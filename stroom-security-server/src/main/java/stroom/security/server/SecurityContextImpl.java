@@ -44,7 +44,6 @@ import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.util.spring.StroomScope;
-import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
 import javax.persistence.RollbackException;
@@ -56,8 +55,6 @@ import java.util.Set;
 @Profile(SecurityConfiguration.PROD_SECURITY)
 @Scope(value = StroomScope.PROTOTYPE, proxyMode = ScopedProxyMode.INTERFACES)
 class SecurityContextImpl implements SecurityContext {
-    public static final String ISSUER = "stroom";
-    public static final String SECRET = "some-secret";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
     private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", "INTERNAL_PROCESSING_USER", false, true);
@@ -146,7 +143,11 @@ class SecurityContextImpl implements SecurityContext {
     @Override
     public String getToken() {
         try {
-            return JWT.create().withIssuer(ISSUER).withSubject(getUserId()).sign(Algorithm.HMAC256(SECRET));
+            return JWT
+                    .create()
+                    .withIssuer(JWTUtils.ISSUER)
+                    .withSubject(getUserId())
+                    .sign(Algorithm.HMAC256(JWTUtils.SECRET));
         } catch (final JWTCreationException e) {
             LOGGER.error(e.getMessage(), e);
         } catch (final UnsupportedEncodingException e) {
