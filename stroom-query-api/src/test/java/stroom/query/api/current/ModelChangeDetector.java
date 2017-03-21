@@ -31,8 +31,5 @@ public class ModelChangeDetector {
 
         String existingPortrait = new String(Files.readAllBytes(Paths.get(SEARCH_REQUEST_PORTRAIT_FILE)));
         assertThat(existingPortrait, equalTo(newPortrait));
-        System.out.println(newPortrait);
     }
-
-
 }

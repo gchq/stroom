@@ -1,8 +1,7 @@
 package stroom.query.api.current;
 
-import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
-
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -68,8 +67,8 @@ public class ClassPhotographer {
             classesForRecursion.add(method.getReturnType());
         } else {
             // Check for generic return types
-            if (method.getGenericReturnType() instanceof ParameterizedTypeImpl) {
-                ParameterizedTypeImpl type = (ParameterizedTypeImpl) method.getGenericReturnType();
+            if (method.getGenericReturnType() instanceof ParameterizedType) {
+                ParameterizedType type = (ParameterizedType) method.getGenericReturnType();
                 Arrays.stream(type.getActualTypeArguments())
                         .filter(actualType -> actualType.getTypeName().contains(basePackage))
                         .forEach(actualType -> classesForRecursion.add((Class) actualType));
