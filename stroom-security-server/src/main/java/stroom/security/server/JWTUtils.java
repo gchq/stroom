@@ -38,9 +38,12 @@ public class JWTUtils {
     }
 
     public static Optional<AuthenticationToken> verifyToken(ServletRequest request){
-        if (JWTUtils.getAuthHeader(request).isPresent()) {
-            String jwtToken = JWTUtils.getAuthHeader(request).get();
-            return Optional.of(JWTUtils.verifyToken(jwtToken));
+        if (getAuthHeader(request).isPresent()) {
+            String bearerString = getAuthHeader(request).get();
+            // TODO This chops out 'Bearer'. We're dealing with unpredictable client data so we need a
+            // way to do this that more robustly handles an error in the string.
+            String jwtToken = bearerString.substring(7);
+            return Optional.of(verifyToken(jwtToken));
         }
         else {
             return Optional.empty();
@@ -56,8 +59,8 @@ public class JWTUtils {
             String subject = null;
             if (token != null) {
                 JWTVerifier verifier = JWT
-                        .require(Algorithm.HMAC256(JWTUtils.SECRET))
-                        .withIssuer(JWTUtils.ISSUER)
+                        .require(Algorithm.HMAC256(SECRET))
+                        .withIssuer(ISSUER)
                         .build();
                 DecodedJWT jwt = verifier.verify(token);
                 subject = jwt.getSubject();
@@ -87,6 +90,7 @@ public class JWTUtils {
         final JwtClaims claims = new JwtClaims();
         claims.setExpirationTimeMinutesInTheFuture(5);
         claims.setSubject(user);
+        claims.setIssuer(ISSUER);
         return claims;
     }
 }

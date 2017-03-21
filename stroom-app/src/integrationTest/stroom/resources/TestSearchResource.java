@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
+import org.junit.Before;
 import org.junit.Test;
 import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionBuilder;
@@ -25,24 +26,37 @@ import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * This is not currently a test. It is a way of exercising the query api, i.e. it is support for manual testing.
  */
 public class TestSearchResource {
 
+    private String jwtToken;
+
+
+    @Before
+    public void before(){
+        jwtToken = AuthorizationHelper.fetchJwtToken();
+    }
+
     @Test
     public void test() throws JsonProcessingException {
         // Given
         SearchRequest searchRequest = getSearchRequest();
-        String serialisedSearchRequest = serialiseSearchRequest(searchRequest);
 
         // When
         Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
         Response response = client
                 .target("http://localhost:8080/api/index/search")
                 .request()
+                .header("Authorization", "Bearer " + jwtToken)
                 .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
-                .post(Entity.json(serialisedSearchRequest));
+                .post(Entity.json(searchRequest));
+
+        // Then
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
         System.out.println(response.toString());
     }
 
