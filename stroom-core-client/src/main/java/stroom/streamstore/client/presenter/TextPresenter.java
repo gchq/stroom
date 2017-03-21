@@ -58,6 +58,10 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         textPresenter.setText(text);
     }
 
+    public void format() {
+        textPresenter.format();
+    }
+
     public void setFirstLineNumber(final int firstLineNumber) {
         textPresenter.setFirstLineNumber(firstLineNumber);
     }

@@ -70,6 +70,8 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     private EditorPresenter rawPresenter;
     private HtmlPresenter htmlPresenter;
 
+    private boolean isHtml;
+
     @Inject
     public TextPresenter(final EventBus eventBus, final TextView view,
                          final Provider<TextSettingsPresenter> settingsPresenterProvider,
@@ -115,6 +117,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                 getView().setContent(rawPresenter.getView());
 
                 rawPresenter.setText(data);
+                rawPresenter.format();
                 rawPresenter.setHighlights(highlights);
                 rawPresenter.setControlsVisible(playButtonVisible);
                 rawPresenter.format();
@@ -216,10 +219,11 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     private void update(final TablePresenter tablePresenter) {
-        showData("", null, null, false);
         currentStreamId = null;
         currentEventId = null;
         currentHighlightStrings = null;
+
+        boolean updating = false;
 
         if (tablePresenter != null) {
             final String streamId = tablePresenter.getSelectedStreamId();
@@ -230,13 +234,12 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                 currentEventId = getLong(eventId);
                 currentHighlightStrings = tablePresenter.getHighlights();
 
-                if (currentStreamId == null || currentEventId == null) {
-                    showData("", null, null, false);
-
-                } else {
+                if (currentStreamId != null && currentEventId != null) {
                     final String permissionCheck = checkPermissions();
                     if (permissionCheck != null) {
-                        showData(permissionCheck, null, null, false);
+                        isHtml = false;
+                        showData(permissionCheck, null, null, isHtml);
+                        updating = true;
 
                     } else {
                         FetchDataAction fetchDataAction;
@@ -252,9 +255,15 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                         fetchDataQueue.add(fetchDataAction);
                         delayedFetchDataTimer.cancel();
                         delayedFetchDataTimer.schedule(250);
+                        updating = true;
                     }
                 }
             }
+        }
+
+        // If we aren't updating the data display then clear it.
+        if (!updating) {
+            showData("", null, null, isHtml);
         }
     }
 
@@ -313,6 +322,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                                     }
                                 }
 
+                                TextPresenter.this.isHtml = isHtml;
                                 showData(data, classification, currentHighlightStrings, isHtml);
                             }
                         }
