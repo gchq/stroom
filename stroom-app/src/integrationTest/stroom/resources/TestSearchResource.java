@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * This is not currently a test. It is a way of exercising the query api, i.e. it is support for manual testing.
  */
-public class RunSimpleQuery {
+public class TestSearchResource {
 
     @Test
     public void test() throws JsonProcessingException {

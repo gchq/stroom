@@ -38,6 +38,7 @@ configurations {
         exclude group: "log4j", module: "log4j"
     }
 }
+
 dependencies {
 
     compile "ch.qos.logback:logback-classic:1.2.1"
@@ -64,7 +65,39 @@ dependencies {
 
     compile "org.apache.geronimo.specs:geronimo-servlet_3.0_spec:1.0"
 
-
+    integrationTestCompile 'io.dropwizard:dropwizard-testing:1.0.6'
+    integrationTestCompile 'io.dropwizard:dropwizard-client:1.0.6'
 }
 
+sourceSets {
+    // This lets us use different directories for our integration tests.
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/integration-test/java')
+        }
+        resources.srcDir file('src/integration-test/resources')
+    }
+}
 
+configurations {
+    // This means our integration tests get all the dependencies from our tests and we don't need to specify them twice.
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
+// This task lets us run the actual integration tests.
+task integrationTest(type: Test) {
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = sourceSets.integrationTest.runtimeClasspath
+}
+
+// These lines pull the integration test task into our build process.
+check.dependsOn integrationTest
+integrationTest.mustRunAfter test
+
+// This means the reports from our integration tests won't over-write the reports from our unit tests.
+tasks.withType(Test) {
+    reports.html.destination = file("${reporting.baseDir}/${name}")
+}
