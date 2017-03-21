@@ -16,20 +16,8 @@
 
 package stroom.pipeline.server.task;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.regex.Pattern;
-
-import javax.annotation.Resource;
-
-import stroom.util.logging.StroomLogger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
@@ -82,11 +70,21 @@ import stroom.streamtask.shared.StreamTask;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PreviewInputStream;
 import stroom.util.io.WrappedOutputStream;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 import stroom.util.zip.HeaderMap;
+
+import javax.annotation.Resource;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.regex.Pattern;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
@@ -104,8 +102,8 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         private StreamTarget processInfoStreamTarget;
 
         public ProcessInfoOutputStreamProvider(final StreamStore streamStore, final StreamCloser streamCloser,
-                final MetaData metaData, final Stream stream, final StreamProcessor streamProcessor,
-                final StreamTask streamTask) {
+                                               final MetaData metaData, final Stream stream, final StreamProcessor streamProcessor,
+                                               final StreamTask streamTask) {
             this.streamStore = streamStore;
             this.streamCloser = streamCloser;
             this.metaData = metaData;
@@ -225,7 +223,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
     @Override
     public void exec(final StreamProcessor streamProcessor, final StreamProcessorFilter streamProcessorFilter,
-            final StreamTask streamTask, final StreamSource streamSource) {
+                     final StreamTask streamTask, final StreamSource streamSource) {
         try {
             this.streamProcessor = streamProcessor;
             this.streamProcessorFilter = streamProcessorFilter;
@@ -320,7 +318,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             }
 
             // Check we are not superseded
-            checkSuperseded();
+            checkSuperseded(startTime);
 
             recordStats(feed, pipelineEntity);
 
@@ -345,7 +343,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
      * earlier stream task then mark our output as to be deleted (rather than
      * unlock it).
      */
-    private void checkSuperseded() {
+    private void checkSuperseded(final long processStartTime) {
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
         findStreamCriteria.obtainParentStreamIdSet().add(streamSource.getStream());
         findStreamCriteria.obtainStatusSet().setMatchAll(true);
@@ -354,49 +352,42 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         final List<Stream> streamList = streamStore.find(findStreamCriteria);
 
         Long latestStreamTaskId = null;
-        Long latestStreamCreationTime = null;
+        long latestStreamCreationTime = processStartTime;
 
         // Find the latest stream task .... this one is not superseded
         for (final Stream stream : streamList) {
             if (stream.getStreamTaskId() != null && !StreamStatus.DELETED.equals(stream.getStatus())) {
-                if (latestStreamCreationTime == null) {
+                if (stream.getCreateMs() > latestStreamCreationTime) {
                     latestStreamCreationTime = stream.getCreateMs();
                     latestStreamTaskId = stream.getStreamTaskId();
-                } else {
-                    if (stream.getCreateMs() > latestStreamCreationTime.longValue()) {
-                        latestStreamCreationTime = stream.getCreateMs();
-                        latestStreamTaskId = stream.getStreamTaskId();
-                    } else if (stream.getCreateMs() == latestStreamCreationTime.longValue()
-                            && stream.getStreamTaskId().longValue() > latestStreamTaskId.longValue()) {
-                        latestStreamCreationTime = stream.getCreateMs();
-                        latestStreamTaskId = stream.getStreamTaskId();
-                    }
+                } else if (stream.getCreateMs() == latestStreamCreationTime
+                        && (latestStreamTaskId == null || stream.getStreamTaskId() > latestStreamTaskId)) {
+                    latestStreamCreationTime = stream.getCreateMs();
+                    latestStreamTaskId = stream.getStreamTaskId();
                 }
             }
         }
 
-        if (latestStreamTaskId != null) {
-            // We are not the latest stream task
-            if (latestStreamTaskId != streamTask.getId()) {
-                // Delete all our output
-                streamCloser.setDelete(true);
-            }
+        // We are not the latest stream task
+        if (latestStreamTaskId != null && latestStreamTaskId != streamTask.getId()) {
+            // Delete all our output
+            streamCloser.setDelete(true);
+        }
 
-            // Loop around all the streams above looking for ones to delete
-            final FindStreamCriteria findDeleteStreamCriteria = new FindStreamCriteria();
-            for (final Stream stream : streamList) {
-                // If the stream is not associated with the latest stream task
-                // and is not already deleted then select it for deletion.
-                if (!latestStreamTaskId.equals(stream.getStreamTaskId())
-                        && !StreamStatus.DELETED.equals(stream.getStatus())) {
-                    findDeleteStreamCriteria.obtainStreamIdSet().add(stream);
-                }
+        // Loop around all the streams found above looking for ones to delete
+        final FindStreamCriteria findDeleteStreamCriteria = new FindStreamCriteria();
+        for (final Stream stream : streamList) {
+            // If the stream is not associated with the latest stream task
+            // and is not already deleted then select it for deletion.
+            if ((latestStreamTaskId == null || !latestStreamTaskId.equals(stream.getStreamTaskId()))
+                    && !StreamStatus.DELETED.equals(stream.getStatus())) {
+                findDeleteStreamCriteria.obtainStreamIdSet().add(stream);
             }
-            // If we have found any to delete then delete them now.
-            if (findDeleteStreamCriteria.obtainStreamIdSet().isConstrained()) {
-                final long deleteCount = streamStore.findDelete(findDeleteStreamCriteria);
-                LOGGER.info("checkSuperseded() - Removed %s", deleteCount);
-            }
+        }
+        // If we have found any to delete then delete them now.
+        if (findDeleteStreamCriteria.obtainStreamIdSet().isConstrained()) {
+            final long deleteCount = streamStore.findDelete(findDeleteStreamCriteria);
+            LOGGER.info("checkSuperseded() - Removed %s", deleteCount);
         }
     }
 
@@ -435,7 +426,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
      * Processes a source and writes the result to a target.
      */
     private void processNestedStreams(final Pipeline pipeline, final Stream stream, final StreamSource streamSource,
-            final Feed feed, final StreamType streamType) {
+                                      final Feed feed, final StreamType streamType) {
         try {
             boolean startedProcessing = false;
 
