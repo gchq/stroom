@@ -7,3 +7,16 @@
     position: absolute;
 	background-color: yellow;
 }
+
+.editor .ace_tooltip {
+    background-color: #ffd;
+    background-image: none;
+    border: none;
+    border-radius: 0px;
+    box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
+    font-family: Roboto, arial, tahoma, verdana;
+    font-size: 13px;
+    font-weight: 400;
+    padding: 0 2px;
+    user-select: initial;
+}
