@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#162** : The editor annotation popup now matches the style of other popups.
 
+* Issue **#163** : Imported the Roboto Mono font to ensure consistency of the editor across platforms.
+
 ## [v5.0-beta.13] - 2017-03-20
 
 * Issue **#143** : Stroom now logs progress information about closing index shard writers during shutdown.
