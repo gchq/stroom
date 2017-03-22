@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import stroom.util.config.StroomProperties;
 import stroom.util.shared.EqualsUtil;
 
 import javax.persistence.Transient;
-import javax.print.Doc;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -302,7 +301,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
         final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql));
 
-        // FIXME: Fix onOce folders have been removed from entities. For now filter by parent group id manually
+        // FIXME: Fix once folders have been removed from entities. For now filter by parent group id manually
         E entity = null;
         if (getEntityClass().equals(Folder.class)) {
             for (final E e : list) {
@@ -312,7 +311,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                         break;
                     }
                 } else {
-                    if (EqualsUtil.isEquals(folder.getUuid(), e.getFolder().getUuid())) {
+                    if (e.getFolder() != null && EqualsUtil.isEquals(folder.getUuid(), e.getFolder().getUuid())) {
                         entity = e;
                         break;
                     }
