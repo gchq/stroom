@@ -234,9 +234,11 @@ The table below includes licences for all Maven dependencies. Not included in th
 | xmlenc                                    | xmlenc                                       | 0.52             | MIT           |         |               |
 | net.sf.saxon                              | Saxon-HE                                     | 9.6.0-6          | MPL 1.0       |         |               |
 | aopalliance                               | aopalliance                                  | 1                | Public domain |         |               |
-| Font Awesome fonts                        | n/a                                          | 4.4.0            | SIL Open Font |         |               |
+| Font Awesome Fonts                        | n/a                                          | 4.4.0            | SIL Open Font |         |               |
 | Font Awesome code                         | n/a                                          | 4.4.0            | MIT           |         |               |
-| Roboto font                               | n/a                                          | n/a              | AL 2.0        |         |               |
+| Roboto Fonts                              | n/a                                          | n/a              | AL 2.0        |         |               |
+| Roboto Mono Fonts                         | n/a                                          | n/a              | AL 2.0        |         |               |
+| Droid Sans Mono Font                      | n/a                                          | n/a              | AL 2.0        |         |               |
 
 \* The mysql-client-connector is distributed under a GPL license but has exceptions that allow it to be distributed with OSS without requiring the GPL license to be applied to the OSS. See [http://www.mysql.com/about/legal/licensing/foss-exception/](http://www.mysql.com/about/legal/licensing/foss-exception/) for details.
 

@@ -1,6 +1,13 @@
 .editor * {
-    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
     font-size: 12px;
+    line-height: 14px;
+}
+
+.editor.ace_editor {
+    font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
+    font-size: 12px;
+    line-height: 14px;
 }
 
 .editor .hl {

@@ -34,7 +34,10 @@
 	<link rel="stylesheet" type="text/css" href="css/font-awesome.css">
 
     <!-- Roboto Font -->
-	<link rel="stylesheet" type="text/css" href="css/roboto.css">
+	<link rel="stylesheet" type="text/css" href="css/Roboto.css">
+
+    <!-- Roboto Monospace Font -->
+    <link rel="stylesheet" type="text/css" href="css/Roboto_Mono.css">
 
     <!-- Standard GWT CSS plus Stroom modifications -->
     <link rel="stylesheet" href="css/standard.css" type="text/css" />
