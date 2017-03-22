@@ -224,14 +224,29 @@ public abstract class AbstractStatistics implements Statistics {
             throw new RuntimeException("DateTime term is not a valid format, term: " + dateTerm.toString());
         }
 
-        final DateExpressionParser dateExpressionParser = new DateExpressionParser();
-        rangeFrom = dateExpressionParser.parse(dateArr[0], timeZoneId, nowEpochMilli).toInstant().toEpochMilli();
+        rangeFrom = parseDateTime("from", dateArr[0], timeZoneId, nowEpochMilli);
         // add one to make it exclusive
-        rangeTo = dateExpressionParser.parse(dateArr[1], timeZoneId, nowEpochMilli).toInstant().toEpochMilli() + 1;
+        rangeTo = parseDateTime("to", dateArr[1], timeZoneId, nowEpochMilli) + 1;
 
         final Range<Long> range = new Range<>(rangeFrom, rangeTo);
 
         return range;
+    }
+
+    private static long parseDateTime(final String type, final String value, final String timeZoneId, final long nowEpochMilli) {
+        final ZonedDateTime dateTime;
+        try {
+            final DateExpressionParser dateExpressionParser = new DateExpressionParser();
+            dateTime = dateExpressionParser.parse(value, timeZoneId, nowEpochMilli);
+        } catch (final Exception e) {
+            throw new RuntimeException("DateTime term has an invalid '" + type + "' value of '" + value + "'");
+        }
+
+        if (dateTime == null) {
+            throw new RuntimeException("DateTime term has an invalid '" + type + "' value of '" + value + "'");
+        }
+
+        return dateTime.toInstant().toEpochMilli();
     }
 
     private static List<List<StatisticTag>> generateStatisticTagPerms(final List<StatisticTag> eventTags,
