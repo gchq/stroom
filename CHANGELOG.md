@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.14] - 2017-03-22
+
 * Issue **#153** : Clicking tick boxes and other cell components in tables no longer requires the row to be selected first.
 
 * Issue **#148** : The stream browsing UI no longer throws an error when attempting to clear markers from the error markers pane.
@@ -197,7 +199,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.14...HEAD
+[v5.0-beta.14]: https://github.com/gchq/stroom/compare/v5.0-beta.13...v5.0-beta.14
 [v5.0-beta.13]: https://github.com/gchq/stroom/compare/v5.0-beta.12...v5.0-beta.13
 [v5.0-beta.12]: https://github.com/gchq/stroom/compare/v5.0-beta.11...v5.0-beta.12
 [v5.0-beta.11]: https://github.com/gchq/stroom/compare/v5.0-beta.10...v5.0-beta.11
