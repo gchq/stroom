@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,22 @@
 
 package stroom.dashboard.server;
 
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardService;
 import stroom.dashboard.shared.FindDashboardCriteria;
 import stroom.dashboard.shared.Query;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.PermissionInheritance;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -68,9 +69,8 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
     }
 
     @Override
-    public Dashboard create(final DocRef folder, final String name) throws RuntimeException {
-        final Dashboard dashboard = super.create(folder, name);
-
+    public Dashboard create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
+        final Dashboard dashboard = super.create(folder, name, permissionInheritance);
         // Add the template.
         if (dashboard.getData() == null) {
             dashboard.setData(getTemplate());
