@@ -130,3 +130,13 @@ project(':stroom-query-api') {
         }
     }
 }
+
+project(':stroom-query-common') {
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+}
