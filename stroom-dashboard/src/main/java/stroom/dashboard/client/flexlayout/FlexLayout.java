@@ -263,7 +263,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
             startSplitResize(x, y);
             busy = true;
 
-        } else {
+        } else if (mouseTarget != null) {
             // If the event target was not a splitter then see if it was a tab.
             final TabData tab = mouseTarget.tab;
             if (tab != null && Pos.TAB == mouseTarget.pos) {
