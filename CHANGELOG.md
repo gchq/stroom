@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#144** : Old processing output will now be deleted when content is reprocessed even if the new processing task does not produce output.
 
+* Issue **#159** : Fixed NPE thrown during import.
+
 ## [v5.0-beta.13] - 2017-03-20
 
 * Issue **#143** : Stroom now logs progress information about closing index shard writers during shutdown.
