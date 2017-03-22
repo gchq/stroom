@@ -51,7 +51,8 @@ public final class JsonUtil {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
         mapper.setSerializationInclusion(Include.NON_NULL);
-
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.setSerializationInclusion(Include.NON_NULL);
         return mapper;
     }
 }

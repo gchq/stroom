@@ -17,12 +17,16 @@ import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchResponse;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +44,31 @@ public class TestSearchResource {
     public void before(){
         jwtToken = AuthorizationHelper.fetchJwtToken();
     }
+
+    @Test
+    public void testSavedFromFile() throws IOException {
+        // Given
+        String searchRequestJson = new String(Files.readAllBytes(Paths.get("src/integrationTest/resources/searchRequest.json")));
+        ObjectMapper objectMapper = new ObjectMapper();
+        SearchRequest searchRequest = objectMapper.readValue(searchRequestJson, SearchRequest.class);
+        Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
+
+        // When
+        Response response = client
+                .target("http://localhost:8080/api/index/search")
+                .request()
+                .header("Authorization", "Bearer " + jwtToken)
+                .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
+                .post(Entity.json(searchRequest));
+        SearchResponse searchResponse = response.readEntity(SearchResponse.class);
+
+        // Then
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(searchResponse.getResults().size()).isEqualTo(5);
+
+        System.out.println(response.toString());
+    }
+
 
     @Test
     public void test() throws JsonProcessingException {

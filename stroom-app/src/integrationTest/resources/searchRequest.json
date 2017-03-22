@@ -1,0 +1,401 @@
+{
+  "key": {
+    "uuid": "3|Test Dashboard|query-MRGPM|VW3P_1490104737989"
+  },
+  "query": {
+    "dataSource": {
+      "type": "Index",
+      "uuid": "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
+      "name": "Example index"
+    },
+    "expression": {
+      "type": "operator",
+      "op": "AND",
+      "children": [
+        {
+          "type": "term",
+          "field": "EventTime",
+          "condition": "BETWEEN",
+          "value": "2010-01-01T00:00:00.000Z,2010-01-01T00:10:00.000Z",
+          "enabled": true
+        }
+      ],
+      "enabled": true
+    }
+  },
+  "resultRequests": [
+    {
+      "componentId": "vis-L1AL1",
+      "mappings": [
+        {
+          "queryId": "query-MRGPM",
+          "fields": [
+            {
+              "name": "EventTime",
+              "expression": "roundMinute(${EventTime})",
+              "format": {
+                "type": "DATE_TIME"
+              },
+              "group": 0
+            },
+            {
+              "name": "UserId",
+              "expression": "${UserId}",
+              "format": {
+                "type": "GENERAL"
+              },
+              "group": 0
+            },
+            {
+              "name": "Count",
+              "expression": "count()",
+              "format": {
+                "type": "NUMBER"
+              }
+            },
+            {
+              "name": "StreamId",
+              "expression": "${StreamId}"
+            },
+            {
+              "name": "EventId",
+              "expression": "${EventId}"
+            }
+          ],
+          "extractValues": true,
+          "extractionPipeline": {
+            "type": "Pipeline",
+            "uuid": "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+            "name": "Example extraction"
+          },
+          "maxResults": [
+            1000000
+          ]
+        },
+        {
+          "fields": [
+            {
+              "expression": "${EventTime}",
+              "sort": {
+                "direction": "ASCENDING"
+              },
+              "format": {
+                "type": "DATE_TIME"
+              },
+              "group": 0
+            },
+            {
+              "expression": "${UserId}",
+              "sort": {
+                "direction": "ASCENDING"
+              },
+              "format": {
+                "type": "GENERAL"
+              },
+              "group": 1
+            },
+            {
+              "expression": "${UserId}",
+              "sort": {
+                "direction": "ASCENDING"
+              },
+              "format": {
+                "type": "GENERAL"
+              }
+            },
+            {
+              "expression": "${Count}",
+              "format": {
+                "type": "NUMBER"
+              }
+            }
+          ],
+          "maxResults": [
+            20,
+            10,
+            null
+          ],
+          "showDetail": true
+        }
+      ],
+      "resultStyle": "FLAT",
+      "fetchData": true
+    },
+    {
+      "componentId": "vis-SPSCW",
+      "mappings": [
+        {
+          "queryId": "query-MRGPM",
+          "fields": [
+            {
+              "name": "EventTime",
+              "expression": "roundMinute(${EventTime})",
+              "format": {
+                "type": "DATE_TIME"
+              },
+              "group": 0
+            },
+            {
+              "name": "UserId",
+              "expression": "${UserId}",
+              "format": {
+                "type": "GENERAL"
+              },
+              "group": 0
+            },
+            {
+              "name": "Count",
+              "expression": "count()",
+              "format": {
+                "type": "NUMBER"
+              }
+            },
+            {
+              "name": "StreamId",
+              "expression": "${StreamId}"
+            },
+            {
+              "name": "EventId",
+              "expression": "${EventId}"
+            }
+          ],
+          "extractValues": true,
+          "extractionPipeline": {
+            "type": "Pipeline",
+            "uuid": "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+            "name": "Example extraction"
+          },
+          "maxResults": [
+            1000000
+          ]
+        },
+        {
+          "fields": [
+            {
+              "sort": {
+                "direction": "ASCENDING"
+              },
+              "format": {
+                "type": "GENERAL"
+              },
+              "group": 0
+            },
+            {
+              "expression": "${UserId}",
+              "sort": {
+                "direction": "ASCENDING"
+              },
+              "format": {
+                "type": "GENERAL"
+              },
+              "group": 1
+            },
+            {
+              "expression": "${EventTime}",
+              "sort": {
+                "direction": "ASCENDING"
+              },
+              "format": {
+                "type": "DATE_TIME"
+              }
+            },
+            {
+              "expression": "${Count}",
+              "format": {
+                "type": "NUMBER"
+              }
+            }
+          ],
+          "maxResults": [
+            20,
+            100,
+            null
+          ],
+          "showDetail": true
+        }
+      ],
+      "resultStyle": "FLAT",
+      "fetchData": true
+    },
+    {
+      "componentId": "table-78LF4",
+      "mappings": [
+        {
+          "queryId": "query-MRGPM",
+          "fields": [
+            {
+              "name": "EventTime",
+              "expression": "roundMinute(${EventTime})",
+              "format": {
+                "type": "DATE_TIME"
+              },
+              "group": 0
+            },
+            {
+              "name": "UserId",
+              "expression": "${UserId}",
+              "format": {
+                "type": "GENERAL"
+              },
+              "group": 0
+            },
+            {
+              "name": "Count",
+              "expression": "count()",
+              "format": {
+                "type": "NUMBER"
+              }
+            },
+            {
+              "name": "StreamId",
+              "expression": "${StreamId}"
+            },
+            {
+              "name": "EventId",
+              "expression": "${EventId}"
+            }
+          ],
+          "extractValues": true,
+          "extractionPipeline": {
+            "type": "Pipeline",
+            "uuid": "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+            "name": "Example extraction"
+          },
+          "maxResults": [
+            1000000
+          ]
+        }
+      ],
+      "requestedRange": {
+        "offset": 0,
+        "length": 100
+      },
+      "resultStyle": "TABLE",
+      "fetchData": true
+    },
+    {
+      "componentId": "table-BKJT6",
+      "mappings": [
+        {
+          "queryId": "query-MRGPM",
+          "fields": [
+            {
+              "name": "UserId",
+              "expression": "${UserId}",
+              "format": {
+                "type": "GENERAL"
+              },
+              "group": 0
+            },
+            {
+              "name": "Count",
+              "expression": "count()",
+              "format": {
+                "type": "NUMBER"
+              }
+            },
+            {
+              "name": "StreamId",
+              "expression": "${StreamId}"
+            },
+            {
+              "name": "EventId",
+              "expression": "${EventId}"
+            }
+          ],
+          "extractValues": true,
+          "extractionPipeline": {
+            "type": "Pipeline",
+            "uuid": "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+            "name": "Example extraction"
+          },
+          "maxResults": [
+            1000000
+          ]
+        }
+      ],
+      "requestedRange": {
+        "offset": 0,
+        "length": 100
+      },
+      "resultStyle": "TABLE",
+      "fetchData": true
+    },
+    {
+      "componentId": "vis-QYG7H",
+      "mappings": [
+        {
+          "queryId": "query-MRGPM",
+          "fields": [
+            {
+              "name": "UserId",
+              "expression": "${UserId}",
+              "format": {
+                "type": "GENERAL"
+              },
+              "group": 0
+            },
+            {
+              "name": "Count",
+              "expression": "count()",
+              "format": {
+                "type": "NUMBER"
+              }
+            },
+            {
+              "name": "StreamId",
+              "expression": "${StreamId}"
+            },
+            {
+              "name": "EventId",
+              "expression": "${EventId}"
+            }
+          ],
+          "extractValues": true,
+          "extractionPipeline": {
+            "type": "Pipeline",
+            "uuid": "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+            "name": "Example extraction"
+          },
+          "maxResults": [
+            1000000
+          ]
+        },
+        {
+          "fields": [
+            {
+              "sort": {
+                "direction": "ASCENDING"
+              },
+              "format": {
+                "type": "GENERAL"
+              },
+              "group": 0
+            },
+            {
+              "expression": "${UserId}",
+              "format": {
+                "type": "GENERAL"
+              }
+            },
+            {
+              "expression": "${Count}",
+              "format": {
+                "type": "NUMBER"
+              }
+            }
+          ],
+          "maxResults": [
+            20,
+            20
+          ],
+          "showDetail": true
+        }
+      ],
+      "resultStyle": "FLAT",
+      "fetchData": true
+    }
+  ],
+  "dateTimeLocale": "Etc/GMT",
+  "incremental": false
+}
