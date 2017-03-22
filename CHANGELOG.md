@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#159** : Fixed NPE thrown during import.
 
+* Issue **#166** : Fixed NPE thrown when searching statistics.
+
 ## [v5.0-beta.13] - 2017-03-20
 
 * Issue **#143** : Stroom now logs progress information about closing index shard writers during shutdown.
