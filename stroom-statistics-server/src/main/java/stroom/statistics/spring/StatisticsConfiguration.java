@@ -16,15 +16,13 @@
 
 package stroom.statistics.spring;
 
-import java.util.Arrays;
-
-import stroom.util.logging.StroomLogger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import stroom.statistic.server.MetaDataStatistic;
 import stroom.statistics.server.common.MetaDataStatisticImpl;
 import stroom.statistics.server.common.MetaDataStatisticTemplate;
+import stroom.util.logging.StroomLogger;
+
+import java.util.Arrays;
 
 @Configuration
 public class StatisticsConfiguration {
@@ -34,6 +32,9 @@ public class StatisticsConfiguration {
         LOGGER.info("StatisticsConfiguration loading...");
     }
 
+    /**
+     * This bean must be returned as a class and not an interface otherwise annotation scanning will not work.
+     */
     @Bean
     public MetaDataStatisticImpl metaDataStatistic() {
         final MetaDataStatisticImpl metaDataStatistic = new MetaDataStatisticImpl();

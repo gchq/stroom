@@ -200,7 +200,12 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
                 }
 
                 if (beanClass.getName().contains("$")) {
-                    LOGGER.error("init() - UNABLE TO RESOVE BEAN CLASS ?? MAYBE SPRING IS NOLONGER USING CGLIB .... %s",
+                    LOGGER.error("init() - UNABLE TO RESOLVE BEAN CLASS ?? MAYBE SPRING IS NO LONGER USING CGLIB .... %s",
+                            beanClass.getName());
+                }
+
+                if (beanClass.isInterface()) {
+                    LOGGER.error("init() - EXPECTED CLASS BUT RECEIVED INTERFACE .... %s",
                             beanClass.getName());
                 }
 
