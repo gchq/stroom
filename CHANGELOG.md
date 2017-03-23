@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#151** : Fixed meta data statistics. 'metaDataStatistics' bean was declared as an interface and not a class.
+
 ## [v5.0-beta.14] - 2017-03-22
 
 * Issue **#153** : Clicking tick boxes and other cell components in tables no longer requires the row to be selected first.
