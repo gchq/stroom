@@ -35,8 +35,8 @@ public class StatisticsConfiguration {
     }
 
     @Bean
-    public MetaDataStatistic metaDataStatistic() {
-        MetaDataStatisticImpl metaDataStatistic = new MetaDataStatisticImpl();
+    public MetaDataStatisticImpl metaDataStatistic() {
+        final MetaDataStatisticImpl metaDataStatistic = new MetaDataStatisticImpl();
         metaDataStatistic.setTemplates(Arrays.asList(
                 new MetaDataStatisticTemplate("Meta Data-Streams Received", "receivedTime", Arrays.asList("Feed")),
                 new MetaDataStatisticTemplate("Meta Data-Stream Size", "receivedTime", "StreamSize",

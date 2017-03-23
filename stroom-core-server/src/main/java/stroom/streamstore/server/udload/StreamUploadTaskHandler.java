@@ -72,7 +72,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
     private StreamTypeService streamTypeService;
     @Resource(name = "cachedFeedService")
     private FeedService feedService;
-    // @Resource
+    @Resource
     private MetaDataStatistic metaDataStatistics;
 
     @Resource(name = "prototypeThreadLocalBuffer")

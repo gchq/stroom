@@ -113,7 +113,7 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
                         LOGGER.trace("recordStatistics() - abort %s", metaData);
                     }
                 } catch (final Exception ex) {
-                    LOGGER.trace("recordStatistics() - abort %s", metaData, ex);
+                    LOGGER.error("recordStatistics() - abort %s", metaData, ex);
                 }
             }
         }

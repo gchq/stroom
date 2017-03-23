@@ -231,13 +231,7 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
                 for (final Annotation annotation : allAnnotation) {
                     final Class<?> annotationType = annotation.annotationType();
                     if (annotationType.getName().contains(STROOM_CLASSES)) {
-                        List<StroomBeanMethod> list = stroomBeanMethodMap.get(annotationType);
-                        if (list == null) {
-                            list = new ArrayList<>();
-                            stroomBeanMethodMap.put(annotationType, list);
-                        }
-
-                        list.add(new StroomBeanMethod(beanName, method));
+                        stroomBeanMethodMap.computeIfAbsent(annotationType, k -> new ArrayList<>()).add(new StroomBeanMethod(beanName, method));
                     }
                 }
             }
