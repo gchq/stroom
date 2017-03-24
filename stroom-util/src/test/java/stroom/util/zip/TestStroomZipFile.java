@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,15 @@
 
 package stroom.util.zip;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import stroom.util.io.CloseableUtil;
+import stroom.util.io.StreamUtil;
+import stroom.util.test.StroomTestUtil;
+import stroom.util.test.StroomUnitTest;
+import stroom.util.test.StroomJUnit4ClassRunner;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -23,16 +32,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import stroom.util.io.CloseableUtil;
-import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomTestUtil;
-import stroom.util.test.StroomUnitTest;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestStroomZipFile extends StroomUnitTest {

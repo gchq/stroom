@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package stroom.util.zip;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.io.FilterOutputStreamProgressMonitor;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.io.StreamUtil;
@@ -33,16 +35,14 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class StroomZipOutputStream implements Closeable {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StroomZipOutputStream.class);
-
     public static final String LOCK_EXTENSION = ".lock";
-
+    private static Logger LOGGER = LoggerFactory.getLogger(StroomZipOutputStream.class);
     private final File resultantFile;
     private final File lockFile;
     private final Monitor monitor;
     private final ZipOutputStream zipOutputStream;
-    private StroomZipNameSet stroomZipNameSet;
     private final StreamProgressMonitor streamProgressMonitor;
+    private StroomZipNameSet stroomZipNameSet;
     private boolean inEntry = false;
     private long entryCount = 0;
 
@@ -129,7 +129,7 @@ public class StroomZipOutputStream implements Closeable {
         return entryCount;
     }
 
-    public void addMissingMataMap(final HeaderMap headerMap) throws IOException {
+    public void addMissingMetaMap(final HeaderMap headerMap) throws IOException {
         if (stroomZipNameSet == null) {
             throw new RuntimeException("You can only add missing meta data if you are monitoring entries");
 
@@ -177,5 +177,4 @@ public class StroomZipOutputStream implements Closeable {
     public File getFinalFile() {
         return resultantFile;
     }
-
 }

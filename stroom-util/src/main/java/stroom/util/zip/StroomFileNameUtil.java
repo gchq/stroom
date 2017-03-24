@@ -16,13 +16,26 @@
 
 package stroom.util.zip;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+
 /**
  * Utility to build a path for a given id in such a way that we don't exceed OS
  * dir file limits.
  *
  * So file 1 is 001 and file 1000 is 001/000 etc...
  */
-public class StroomFileNameUtil {
+public final class StroomFileNameUtil {
+
+    public final static int MAX_FILENAME_LENGTH = 255;
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomFileNameUtil.class);
+
+    private StroomFileNameUtil() {
+        //static util methods only
+    }
+
     public static String getDirPathForId(long id) {
         return buildPath(id, true);
     }
@@ -52,6 +65,46 @@ public class StroomFileNameUtil {
         } else {
             return dirBuffer.toString() + fileBuffer.toString();
         }
+    }
+
+    public static String constructFilename(final String delimiter, long id, String... fileExtensions) {
+        return constructFilename(delimiter, id, null, null, fileExtensions);
+
+    }
+
+    public static String constructFilename(final String delimiter, long id, final String filenameTemplate,
+                                           final HeaderMap headerMap,
+                                           String... fileExtensions) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Using delimiter [" + delimiter + "], filenameTemplate [" + filenameTemplate + "] and fileExtensions [" + Arrays.toString(fileExtensions) + "]");
+        }
+
+        final StringBuilder filenameBuilder = new StringBuilder();
+        String idStr = getFilePathForId(id);
+        filenameBuilder.append(idStr);
+
+        int extensionsLength = 0;
+        StringBuilder extensions = new StringBuilder();
+        if (fileExtensions != null) {
+            for (String extension : fileExtensions) {
+                if (extension != null) {
+                    extensions.append(extension);
+                    extensionsLength += extension.length();
+                }
+            }
+        }
+
+        if (filenameTemplate != null && !filenameTemplate.isEmpty()) {
+            String zipFilenameDelimiter = delimiter == null ? "" : delimiter;
+            int lengthAvailableForTemplatedPart = MAX_FILENAME_LENGTH - idStr.length() - extensionsLength;
+            filenameBuilder.append(zipFilenameDelimiter);
+            String expandedTemplate = PathCreator.replace(filenameTemplate, headerMap, lengthAvailableForTemplatedPart);
+            filenameBuilder.append(expandedTemplate);
+        }
+
+        filenameBuilder.append(extensions.toString());
+        String filename = filenameBuilder.toString();
+        return filename;
     }
 
 }

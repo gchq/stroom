@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 
 package stroom.util.zip;
 
-import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomUnitTest;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import stroom.util.io.StreamUtil;
+import stroom.util.test.StroomUnitTest;
+import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -29,7 +29,7 @@ import java.util.UUID;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestStroomZipOutputStream extends StroomUnitTest {
-    public static final int TEST_SIZE = 100;
+    public final static int TEST_SIZE = 100;
 
     @Test
     public void testBigFile() throws Exception {

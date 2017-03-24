@@ -30,6 +30,8 @@
                       value="Temp folder to write stuff to. Should only be set per node in application property file"/>
             <property name="editable" value="false"/>
         </bean>
+
+        <!-- Stroom Proxy Repository and Aggregation -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.proxyDir"/>
             <property name="value" value="${stroom.temp}/proxy"/>
@@ -43,6 +45,14 @@
             <property name="name" value="stroom.proxyThreads"/>
             <property name="value" value="10"/>
             <property name="description" value="Number of threads used in aggregation"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.proxy.zipFilenameDelimiter"/>
+            <property name="value" value="%"/>
+            <property name="description" value="The char or string to delimit the id part of the zip file name from the templated part (see zipFilenameTemplate) if a template is provided."/>
             <property name="editable" value="true"/>
             <property name="requireRestart" value="false"/>
             <property name="requireUiRestart" value="false"/>
