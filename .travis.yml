@@ -7,4 +7,5 @@ sudo: required
 before_install:
     - git clone https://github.com/gchq/event-logging.git
     - cd event-logging
-    - ./gradlew clean build publishToMavenLocal
+    - mvn clean install
+    #- ./gradlew clean build publishToMavenLocal
