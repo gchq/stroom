@@ -26,6 +26,8 @@ import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @JsonPropertyOrder({"highlights", "results", "errors", "complete"})
@@ -125,4 +127,39 @@ public final class SearchResponse implements Serializable {
                 ", complete=" + complete +
                 '}';
     }
+
+    public static class Builder {
+        // Mandatory parameters
+        private final Boolean complete;
+
+        // Optional parameters
+        private final List<String> highlights = new ArrayList<>();
+        private final List<Result> results = new ArrayList<>();
+        private final List<String> errors = new ArrayList<>();
+
+        public Builder(Boolean complete){
+            this.complete = complete;
+        }
+
+        public Builder addHighlights(String... highlights) {
+            this.highlights.addAll(Arrays.asList(highlights));
+            return this;
+        }
+
+        public Builder addResults(Result... results){
+            this.results.addAll(Arrays.asList(results));
+            return this;
+        }
+
+        public Builder addErrors(String... errors){
+            this.errors.addAll(Arrays.asList(errors));
+            return this;
+        }
+
+        public SearchResponse build(){
+            return new SearchResponse(highlights, results, errors, complete);
+        }
+
+    }
+
 }
