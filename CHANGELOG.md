@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#151** : Fixed meta data statistics. 'metaDataStatistics' bean was declared as an interface and not a class.
 
+* Issue **#158** : Added a new global property 'stroom.proxy.zipFilenameDelimiter' to enable Stroom proxy repositories to be processed that have a custom file name pattern.
+
 ## [v5.0-beta.14] - 2017-03-22
 
 * Issue **#153** : Clicking tick boxes and other cell components in tables no longer requires the row to be selected first.
