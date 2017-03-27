@@ -28,17 +28,21 @@ import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DateExpressionParser {
     private static final Pattern DURATION_PATTERN = Pattern.compile("[+-]?[ ]*\\d+[ ]*[smhdwMy]");
 
-    public ZonedDateTime parse(final String expression, final long nowEpochMilli) {
+    private DateExpressionParser() {
+    }
+
+    public static Optional<ZonedDateTime> parse(final String expression, final long nowEpochMilli) {
         return parse(expression, ZoneOffset.UTC.getId(), nowEpochMilli);
     }
 
-    public ZonedDateTime parse(final String expression, final String timeZoneId, final long nowEpochMilli) {
+    public static Optional<ZonedDateTime> parse(final String expression, final String timeZoneId, final long nowEpochMilli) {
         final char[] chars = expression.toCharArray();
         final Part[] parts = new Part[chars.length];
 
@@ -156,10 +160,10 @@ public class DateExpressionParser {
             }
         }
 
-        return time;
+        return Optional.ofNullable(time);
     }
 
-    private void parseConstants(final char[] chars, final Part[] parts, final long nowEpochMilli) {
+    private static void parseConstants(final char[] chars, final Part[] parts, final long nowEpochMilli) {
         final ZonedDateTime now = ZonedDateTime.ofInstant(Instant.ofEpochMilli(nowEpochMilli), ZoneOffset.UTC);
         final String expression = new String(chars);
         for (final DatePoint datePoint : DatePoint.values()) {
@@ -209,7 +213,7 @@ public class DateExpressionParser {
         }
     }
 
-    private void parseDurations(final char[] chars, final Part[] parts) {
+    private static void parseDurations(final char[] chars, final Part[] parts) {
         final Matcher matcher = DURATION_PATTERN.matcher(new String(chars));
         while (matcher.find()) {
             final int start = matcher.start();
@@ -242,7 +246,7 @@ public class DateExpressionParser {
         }
     }
 
-    private MyDuration parseDuration(final String string) {
+    private static MyDuration parseDuration(final String string) {
         int start = 0;
         char[] chars = string.toCharArray();
 

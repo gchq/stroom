@@ -272,8 +272,6 @@ public abstract class AbstractStatistics implements Statistics {
     }
 
     private static Range<Long> extractRange(final ExpressionTerm dateTerm, final long nowEpochMilli) {
-        long rangeFrom = 0;
-        long rangeTo = Long.MAX_VALUE;
 
         final String[] dateArr = dateTerm.getValue().split(",");
 
@@ -281,10 +279,13 @@ public abstract class AbstractStatistics implements Statistics {
             throw new RuntimeException("DateTime term is not a valid format, term: " + dateTerm.toString());
         }
 
-        final DateExpressionParser dateExpressionParser = new DateExpressionParser();
-        rangeFrom = dateExpressionParser.parse(dateArr[0], nowEpochMilli).toInstant().toEpochMilli();
+        long rangeFrom = DateExpressionParser.parse(dateArr[0], nowEpochMilli)
+                .map(time -> time.toInstant().toEpochMilli())
+                .orElse(0L);
         // add one to make it exclusive
-        rangeTo = dateExpressionParser.parse(dateArr[1], nowEpochMilli).toInstant().toEpochMilli() + 1;
+        long rangeTo = DateExpressionParser.parse(dateArr[1], nowEpochMilli)
+                .map(time -> time.toInstant().toEpochMilli() + 1)
+                .orElse(Long.MAX_VALUE);
 
         final Range<Long> range = new Range<>(rangeFrom, rangeTo);
 
