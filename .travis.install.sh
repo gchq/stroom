@@ -21,7 +21,7 @@ function sortItAllOut {
     else
         # Clone the repo
         echo -e "Cloning \e[96m$1\e[0m"
-        git clone git@github.com:gchq/$1.git
+        git clone https://github.com/gchq/$1.git
         cd $1
 
         buildIt
