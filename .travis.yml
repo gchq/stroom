@@ -4,4 +4,4 @@ services:
     - mysql
 jdk: oraclejdk8
 sudo: required
-install: .travis.install.sh
+install: ./.travis.install.sh
