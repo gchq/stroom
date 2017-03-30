@@ -12,27 +12,27 @@
   <element>
     <subElement> </subElement>
 
-    <!--
+    <!-- 
     This is comment 3
-    it is another multi-line comment
+    it is another multi-line comment 
     -->
   </element>
   <element>
     <subElement> </subElement>
 
     <!-- This is comment 4
-    it is another multi-line comment
+    it is another multi-line comment 
     -->
   </Splitter>
   <element>
     <subElement> </subElement>
 
     <!-- This is comment 5
-    it is another multi-line comment
+    it is another multi-line comment 
     -->
 
     <!-- This is comment 6
-    it is another multi-line comment
+    it is another multi-line comment 
     -->
   </element>
 </test>
