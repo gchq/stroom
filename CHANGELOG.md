@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#173** : Fixed the way XML formatter deals with spaces in attribute values.
+
 ## [v5.0-beta.15] - 2017-03-27
 
 * Issue **#151** : Fixed meta data statistics. 'metaDataStatistics' bean was declared as an interface and not a class.
