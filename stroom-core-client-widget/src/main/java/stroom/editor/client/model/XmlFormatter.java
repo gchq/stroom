@@ -188,6 +188,8 @@ public class XmlFormatter {
 
             // Now format and output the character.
             if (elementType == ElementType.CONTENT) {
+//                outputStyle(applyStyle, output);
+
                 // Format and output content.
                 if (elementType != lastElementType) {
                     if (isWhitespace(c) && !preserveWhitespace) {
@@ -228,6 +230,12 @@ public class XmlFormatter {
                 // Set these variables to stop all whitespace being preserved.
                 nextElementType = null;
                 preserveWhitespace = false;
+
+//                outputStyle(applyStyle, output);
+                if (elementType != ElementType.CONTENT && elementType != ElementType.COMMENT && c == '"') {
+                    // Toggle attribute value flag.
+                    inAttValue = !inAttValue;
+                }
 
                 // Do not format attribute values.
                 if (inAttValue) {
