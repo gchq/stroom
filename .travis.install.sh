@@ -35,4 +35,4 @@ sortItAllOut hadoop-hdfs-shaded
 sortItAllOut hadoop-common-shaded
 sortItAllOut hbase-common-shaded
 
- mysql -e 'CREATE DATABASE stroom;'
+ mysql -e 'CREATE DATABASE IF NOT EXISTS stroom;'
