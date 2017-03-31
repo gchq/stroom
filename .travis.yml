@@ -7,7 +7,7 @@ sudo: required
 before_install:
   - mysql -e 'CREATE DATABASE IF NOT EXISTS stroom;'
 install: "./.travis.install.sh"
-script: ./gradlew clean build -x :stroom-integrationtest:check
+script: ./gradlew clean build --info
 addons:
   apt:
     packages:
