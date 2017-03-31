@@ -35,7 +35,9 @@ sortItAllOut hadoop-hdfs-shaded
 sortItAllOut hadoop-common-shaded
 sortItAllOut hbase-common-shaded
 
-mysql -e 'CREATE DATABASE IF NOT EXISTS stroom;'
-
+mysql -e "CREATE DATABASE IF NOT EXISTS stroom;"
+mysql -e "CREATE USER 'stroomuser'@'localhost' IDENTIFIED BY 'stroompassword1';"
+mysql -e "GRANT ALL PRIVILEGES ON * . * TO 'stroomuser'@'localhost';"
+mysql -e "FLUSH PRIVILEGES"
 mkdir ~/.stroom/
 # cp ./.travis.stroom.conf ~/.stroom/stroom.conf

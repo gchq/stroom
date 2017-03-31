@@ -8,12 +8,16 @@ before_install:
   - mysql -e 'CREATE DATABASE IF NOT EXISTS stroom;'
 install: "./.travis.install.sh"
 script: ./gradlew clean build --info
+
+# These packages are required to run MySQL 5.6 on Trusty
 addons:
   apt:
     packages:
     - mysql-server-5.6
     - mysql-client-core-5.6
     - mysql-client-5.6
+
+# This configures pushing releases to GitHub - pushing a tag will cause a release
 deploy:
   provider: releases
   api_key:
@@ -22,3 +26,9 @@ deploy:
   skip_cleanup: true
   on:
     tags
+
+# We want to cache dependencies
+cache:
+  directories:
+  - .autoconf
+  - $HOME/.m2
