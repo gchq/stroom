@@ -35,4 +35,7 @@ sortItAllOut hadoop-hdfs-shaded
 sortItAllOut hadoop-common-shaded
 sortItAllOut hbase-common-shaded
 
- mysql -e 'CREATE DATABASE IF NOT EXISTS stroom;'
+mysql -e 'CREATE DATABASE IF NOT EXISTS stroom;'
+
+mkdir ~/.stroom/
+cp ./.travis.stroom.conf ~/.stroom/stroom.conf
