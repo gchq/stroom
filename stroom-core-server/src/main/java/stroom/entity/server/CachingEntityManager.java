@@ -134,59 +134,65 @@ public class CachingEntityManager implements StroomEntityManager, InitializingBe
 
     @Override
     public List executeQueryResultList(final SQLBuilder sql) {
-        List result;
-        final List<Object> key = Arrays.asList("executeQueryResultList", sql.toString(), sql.getArgs());
+        return stroomEntityManager.executeQueryResultList(sql);
 
-        // Try and get a cached method result from the cache.
-        final Element element = cache.get(key);
-        if (element == null) {
-            // We didn't find a cached result so get one and put it in the
-            // cache.
-            result = stroomEntityManager.executeQueryResultList(sql);
-            cache.put(new Element(key, result));
-        } else {
-            result = (List) element.getObjectValue();
-        }
-
-        return result;
+//        List result;
+//        final List<Object> key = Arrays.asList("executeQueryResultList", sql.toString(), sql.getArgs());
+//
+//        // Try and get a cached method result from the cache.
+//        final Element element = cache.get(key);
+//        if (element == null) {
+//            // We didn't find a cached result so get one and put it in the
+//            // cache.
+//            result = stroomEntityManager.executeQueryResultList(sql);
+//            cache.put(new Element(key, result));
+//        } else {
+//            result = (List) element.getObjectValue();
+//        }
+//
+//        return result;
     }
 
     @Override
     public List executeQueryResultList(final SQLBuilder sql, final BaseCriteria criteria) {
-        List result;
-        final List<Object> key = Arrays.asList("executeQueryResultList", sql.toString(), sql.getArgs(), criteria);
+        return stroomEntityManager.executeQueryResultList(sql, criteria);
 
-        // Try and get a cached method result from the cache.
-        final Element element = cache.get(key);
-        if (element == null) {
-            // We didn't find a cached result so get one and put it in the
-            // cache.
-            result = stroomEntityManager.executeQueryResultList(sql, criteria);
-            cache.put(new Element(key, result));
-        } else {
-            result = (List) element.getObjectValue();
-        }
-
-        return result;
+//        List result;
+//        final List<Object> key = Arrays.asList("executeQueryResultList", sql.toString(), sql.getArgs(), criteria);
+//
+//        // Try and get a cached method result from the cache.
+//        final Element element = cache.get(key);
+//        if (element == null) {
+//            // We didn't find a cached result so get one and put it in the
+//            // cache.
+//            result = stroomEntityManager.executeQueryResultList(sql, criteria);
+//            cache.put(new Element(key, result));
+//        } else {
+//            result = (List) element.getObjectValue();
+//        }
+//
+//        return result;
     }
 
     @Override
     public long executeQueryLongResult(final SQLBuilder sql) {
-        long result;
-        final List<Object> key = Arrays.asList("executeQueryLongResult", sql.toString(), sql.getArgs());
+        return stroomEntityManager.executeQueryLongResult(sql);
 
-        // Try and get a cached method result from the cache.
-        final Element element = cache.get(key);
-        if (element == null) {
-            // We didn't find a cached result so get one and put it in the
-            // cache.
-            result = stroomEntityManager.executeQueryLongResult(sql);
-            cache.put(new Element(key, result));
-        } else {
-            result = (long) element.getObjectValue();
-        }
-
-        return result;
+//        long result;
+//        final List<Object> key = Arrays.asList("executeQueryLongResult", sql.toString(), sql.getArgs());
+//
+//        // Try and get a cached method result from the cache.
+//        final Element element = cache.get(key);
+//        if (element == null) {
+//            // We didn't find a cached result so get one and put it in the
+//            // cache.
+//            result = stroomEntityManager.executeQueryLongResult(sql);
+//            cache.put(new Element(key, result));
+//        } else {
+//            result = (long) element.getObjectValue();
+//        }
+//
+//        return result;
     }
 
     @Override

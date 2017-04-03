@@ -36,8 +36,8 @@ public class XSLTExplorerDataProvider extends AbstractExplorerDataProvider<XSLT,
     private final XSLTService xsltService;
 
     @Inject
-    XSLTExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService, final XSLTService xsltService) {
-        super(folderService);
+    XSLTExplorerDataProvider(@Named("cachedFolderService") final FolderService cachedFolderService, final XSLTService xsltService) {
+        super(cachedFolderService);
         this.xsltService = xsltService;
     }
 

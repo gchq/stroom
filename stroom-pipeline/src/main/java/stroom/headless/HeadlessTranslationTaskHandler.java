@@ -107,8 +107,6 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
     private StreamStore streamStore;
     @Resource(name = "cachedFeedService")
     private FeedService feedService;
-    @Resource(name = "cachedStreamTypeService")
-    private StreamTypeService streamTypeService;
     @Resource(name = "cachedPipelineEntityService")
     private PipelineEntityService pipelineEntityService;
     @Resource

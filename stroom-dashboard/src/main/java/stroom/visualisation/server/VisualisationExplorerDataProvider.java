@@ -37,8 +37,8 @@ public class VisualisationExplorerDataProvider
     private final VisualisationService visualisationService;
 
     @Inject
-    VisualisationExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService, final VisualisationService visualisationService) {
-        super(folderService);
+    VisualisationExplorerDataProvider(@Named("cachedFolderService") final FolderService cachedFolderService, final VisualisationService visualisationService) {
+        super(cachedFolderService);
         this.visualisationService = visualisationService;
     }
 
