@@ -42,11 +42,12 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.ImportState;
-import stroom.util.shared.Message;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ImportConfigAction;
+import stroom.util.shared.Message;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.Severity;
 import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.popup.client.event.DisablePopupEvent;
@@ -113,7 +114,7 @@ public class ImportConfigConfirmPresenter extends
 
     @Override
     protected void revealInParent() {
-        final PopupSize popupSize = new PopupSize(600, 400, 300, 300, 2000, 2000, true);
+        final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Confirm Import", this);
     }
 
@@ -125,7 +126,7 @@ public class ImportConfigConfirmPresenter extends
         if (ok) {
             boolean warnings = false;
             for (final ImportState importState : confirmList) {
-                if (importState.isAction() && importState.isWarning()) {
+                if (importState.isAction() && importState.getSeverity().greaterThan(Severity.INFO)) {
                     warnings = true;
                 }
             }
@@ -164,7 +165,8 @@ public class ImportConfigConfirmPresenter extends
         addInfoColumn();
         addActionColumn();
         addTypeColumn();
-        addPathColumn();
+        addSourcePathColumn();
+        addDestPathColumn();
         dataGridView.addEndColumn(new EndColumn<ImportState>());
     }
 
@@ -250,10 +252,16 @@ public class ImportConfigConfirmPresenter extends
             @Override
             public GlyphIcon getValue(final ImportState object) {
                 if (object.getMessageList().size() > 0 || object.getUpdatedFieldList().size() > 0) {
-                    if (object.isWarning()) {
-                        return GlyphIcons.ALERT;
-                    } else {
-                        return GlyphIcons.INFO;
+                    final Severity severity = object.getSeverity();
+                    switch (severity) {
+                        case INFO:
+                            return GlyphIcons.INFO;
+                        case WARNING:
+                            return GlyphIcons.ALERT;
+                        case ERROR:
+                            return GlyphIcons.ERROR;
+                        default:
+                            return GlyphIcons.ERROR;
                     }
                 }
                 return null;
@@ -288,7 +296,7 @@ public class ImportConfigConfirmPresenter extends
                         null);
             }
         };
-        dataGridView.addColumn(infoColumn, "<br/>", 15);
+        dataGridView.addColumn(infoColumn, "<br/>", 18);
     }
 
     private void addActionColumn() {
@@ -296,11 +304,7 @@ public class ImportConfigConfirmPresenter extends
                 new TextCell()) {
             @Override
             public String getValue(final ImportState action) {
-                if (action.isWarning()) {
-                    return action.getState().getDisplayValue();
-                } else {
-                    return action.getState().getDisplayValue();
-                }
+                return action.getState().getDisplayValue();
             }
         };
         dataGridView.addResizableColumn(column, "Action", 50);
@@ -317,7 +321,7 @@ public class ImportConfigConfirmPresenter extends
         dataGridView.addResizableColumn(column, "Type", 100);
     }
 
-    private void addPathColumn() {
+    private void addSourcePathColumn() {
         final Column<ImportState, String> column = new Column<ImportState, String>(
                 new TextCell()) {
             @Override
@@ -325,7 +329,18 @@ public class ImportConfigConfirmPresenter extends
                 return action.getSourcePath();
             }
         };
-        dataGridView.addResizableColumn(column, "Path", 600);
+        dataGridView.addResizableColumn(column, "Source Path", 300);
+    }
+
+    private void addDestPathColumn() {
+        final Column<ImportState, String> column = new Column<ImportState, String>(
+                new TextCell()) {
+            @Override
+            public String getValue(final ImportState action) {
+                return action.getDestPath();
+            }
+        };
+        dataGridView.addResizableColumn(column, "Destination Path", 300);
     }
 
     public void abortImport() {

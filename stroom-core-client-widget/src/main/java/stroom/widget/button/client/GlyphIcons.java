@@ -35,6 +35,7 @@ public final class GlyphIcons {
     public static final GlyphIcon DOWNLOAD = new GlyphIcon("fa fa-arrow-down", GREEN, "Download", false);
     public static final GlyphIcon EDIT = new GlyphIcon("fa fa-pencil", BLUE, "Edit", false);
     public static final GlyphIcon EXPLORER = new GlyphIcon("fa fa-sitemap", BLUE, "Explorer", true);
+    public static final GlyphIcon ERROR = new GlyphIcon("fa fa-times-circle", RED, "Error", true);
     public static final GlyphIcon FILTER = new GlyphIcon("fa fa-filter", BLUE, "Filter", true);
     public static final GlyphIcon HELP = new GlyphIcon("fa fa-question-circle", BLUE, "Help", true);
     public static final GlyphIcon INFO = new GlyphIcon("fa fa-info-circle", BLUE, "Info", true);

@@ -67,14 +67,6 @@ public class ImportState implements SharedObject {
         this.sourcePath = sourcePath;
     }
 
-//    public static Map<String, ImportState> asMap(List<ImportState> list) {
-//        Map<String, ImportState> map = new HashMap<>();
-//        for (ImportState e : list) {
-//            map.put(e.getPath(), e);
-//        }
-//        return map;
-//    }
-
     public DocRef getDocRef() {
         return docRef;
     }
@@ -107,14 +99,14 @@ public class ImportState implements SharedObject {
         messageList.add(new Message(severity, message));
     }
 
-    public boolean isWarning() {
+    public Severity getSeverity() {
+        Severity severity = Severity.INFO;
         for (final Message message : messageList) {
-            if (message.getSeverity().greaterThan(Severity.INFO)) {
-                return true;
+            if (message.getSeverity().greaterThan(severity)) {
+                severity = message.getSeverity();
             }
         }
-
-        return false;
+        return severity;
     }
 
     public List<String> getUpdatedFieldList() {
