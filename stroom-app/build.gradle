@@ -10,6 +10,7 @@ jar {
                 "Main-Class" : "stroom.startup.App"
         )
     }
+    archiveName 'stroom-app.jar'
 }
 
 import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
@@ -25,6 +26,7 @@ shadowJar {
     transform(ServiceFileTransformer) {
         include 'META-INF/spring.*'
     }
+    archiveName 'stroom-app-all.jar'
 }
 
 configurations {
