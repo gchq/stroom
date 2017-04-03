@@ -43,15 +43,10 @@ dependencies {
 
 
 task distZip(type: Zip) {
-//    classifier = 'pants'
-
     from(fileTree(new File(project(':stroom-app').buildDir, 'libs')).include('*.war')) {
         into 'stroom-app/lib'
     }
 
-//    from(fileTree(new File(project(':stroom-util').buildDir, 'libs')).include('*.jar').exclude('*source*', '*test*')) {
-//        into 'stroom-app/lib'
-//    }
     from (configurations.runtime) {
         into 'stroom-app/lib'
     }
