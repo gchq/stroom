@@ -63,7 +63,6 @@ include 'stroom-statistics-server'
 include 'stroom-dashboard-server'
 
 // Package it all together.
-include 'stroom-app-distribution'
 include 'stroom-app'
 
 // Integration tests.
