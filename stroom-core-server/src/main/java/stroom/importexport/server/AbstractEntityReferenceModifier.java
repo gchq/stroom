@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,17 +16,18 @@
 
 package stroom.importexport.server;
 
-import javassist.Modifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseEntity;
 import stroom.query.api.DocRef;
-import stroom.util.logging.StroomLogger;
+import javassist.Modifier;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.Collection;
 
 public abstract class AbstractEntityReferenceModifier {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractEntityReferenceModifier.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEntityReferenceModifier.class);
 
     private static final String MATCH_CLASSES = "stroom.";
 

@@ -16,6 +16,8 @@
 
 package stroom.security.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +35,6 @@ import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 import stroom.security.shared.User.UserStatus;
 import stroom.security.shared.UserRef;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;
@@ -46,7 +47,7 @@ import java.util.Set;
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 @Component
 public class DocumentPermissionServiceImpl implements DocumentPermissionService {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(DocumentPermissionServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DocumentPermissionServiceImpl.class);
 
     private static final String SQL_INSERT_PERMISSION;
     private static final String SQL_DELETE_PERMISSION;

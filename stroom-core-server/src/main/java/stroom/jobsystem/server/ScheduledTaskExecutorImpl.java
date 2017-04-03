@@ -23,7 +23,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.springframework.stereotype.Component;
 
 import stroom.jobsystem.server.JobNodeTrackerCache.Trackers;
@@ -43,7 +45,7 @@ import stroom.util.spring.StroomSimpleCronSchedule;
 @Component
 public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
     private static class JobNodeTrackedExecutable extends StroomBeanMethodExecutable {
-        private static final StroomLogger LOGGER = StroomLogger.getLogger(JobNodeTrackedExecutable.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackedExecutable.class);
 
         private final JobNodeTracker jobNodeTracker;
 
@@ -78,7 +80,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         }
     }
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ScheduledTaskExecutorImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskExecutorImpl.class);
 
     @Resource
     private StroomBeanStore stroomBeanStore;
@@ -169,7 +171,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                 }
 
                 if (enabled && scheduler != null && scheduler.execute()) {
-                    LOGGER.trace("Returning runnable for method: %s - %s - %s", stroomBeanMethod, enabled, scheduler);
+                    LOGGER.trace("Returning runnable for method: {} - {} - {}", new Object[] {stroomBeanMethod, enabled, scheduler});
                     if (jobNodeTracker != null) {
                         executable = new JobNodeTrackedExecutable(stroomBeanMethod, stroomBeanStore, "Executing", running,
                                 jobNodeTracker);
@@ -177,14 +179,14 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                         executable = new StroomBeanMethodExecutable(stroomBeanMethod, stroomBeanStore, "Executing", running);
                     }
                 } else {
-                    LOGGER.trace("Not returning runnable for method: %s - %s - %s", stroomBeanMethod, enabled, scheduler);
+                    LOGGER.trace("Not returning runnable for method: {} - {} - {}", new Object[]{stroomBeanMethod, enabled, scheduler});
                     running.set(false);
                 }
             } catch (final Throwable t) {
-                LOGGER.fatal(t.getMessage());
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), t.getMessage());
             }
         } else {
-            LOGGER.trace("Skipping as method still running: %s", stroomBeanMethod);
+            LOGGER.trace("Skipping as method still running: {}", stroomBeanMethod);
         }
 
         return executable;

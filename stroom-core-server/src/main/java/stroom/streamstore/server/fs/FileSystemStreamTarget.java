@@ -26,20 +26,21 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.io.SeekableOutputStream;
 import stroom.streamstore.server.StreamException;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
-import stroom.util.logging.StroomLogger;
 import stroom.util.zip.HeaderMap;
 
 /**
  * A file system implementation of StreamTarget.
  */
 public final class FileSystemStreamTarget implements StreamTarget {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileSystemStreamTarget.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamTarget.class);
 
     private Stream stream;
     private boolean closed = false;

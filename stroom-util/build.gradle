@@ -9,15 +9,6 @@ dependencies {
     compile 'commons-logging:commons-logging:1.2'
     compile 'org.apache.commons:commons-pool2:2.4.2'
     compile 'commons-io:commons-io:2.5'
-
-//    compile 'org.apache.logging.log4j:log4j-api:2.7'
-//    compile 'org.apache.logging.log4j:log4j-core:2.7'
-//    compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.7'
-//    compile 'org.apache.logging.log4j:log4j-web:2.7'
-
-    compile 'org.slf4j:slf4j-log4j12:1.7.21'
-    compile 'log4j:log4j:1.2.17'
-
     compile 'net.sf.ehcache:ehcache-core:2.6.11'
     compile 'javax.inject:javax.inject:1'
     compile 'org.springframework:spring-context:4.3.4.RELEASE'

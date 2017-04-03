@@ -21,6 +21,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -28,7 +30,6 @@ import org.xml.sax.helpers.AttributesImpl;
 
 import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
 import stroom.util.CharBuffer;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 import stroom.xml.NamespaceConstants;
@@ -69,7 +70,7 @@ public class DS3Parser extends AbstractParser {
         ROOT_ATTS.addAttribute(EMPTY_STRING, XML_ATTRIBUTE_VERSION, XML_ATTRIBUTE_VERSION, XML_TYPE_STRING, VERSION);
     }
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(DS3Parser.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DS3Parser.class);
     private final DataAttributes dataAttributes = new DataAttributes();
 
     private static final int RECOVERY_MODE = -99;
@@ -612,7 +613,7 @@ public class DS3Parser extends AbstractParser {
                     debugLine.append(") ");
                     debugLine.append(ModelStringUtil.formatDurationString(ex.getTotalExecutionTime()));
                 }
-                LOGGER.debug(debugLine);
+                LOGGER.debug(debugLine.toString());
             };
 
             profilingExecutor = Executors.newSingleThreadScheduledExecutor();

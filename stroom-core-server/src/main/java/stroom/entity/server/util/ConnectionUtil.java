@@ -16,13 +16,15 @@
 
 package stroom.entity.server.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 
 import java.sql.Connection;
@@ -40,7 +42,7 @@ public class ConnectionUtil {
     public static final String JDBC_DRIVER_URL = "stroom.jdbcDriverUrl";
     public static final String JDBC_DRIVER_USERNAME = "stroom.jdbcDriverUsername";
     public static final String JDBC_DRIVER_PASSWORD = "stroom.jdbcDriverPassword";
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ConnectionUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionUtil.class);
 
     public static final Connection getConnection() throws SQLException {
         final String driverClassname = StroomProperties.getProperty(JDBC_DRIVER_CLASS_NAME);
@@ -49,7 +51,7 @@ public class ConnectionUtil {
         final String driverPassword = StroomProperties.getProperty(JDBC_DRIVER_PASSWORD);
 
         if (driverClassname == null || driverUrl == null) {
-            LOGGER.fatal("Properties are not set for DB connection");
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), "Properties are not set for DB connection");
             throw new RuntimeException("Properties are not set for DB connection");
         }
 
@@ -59,8 +61,8 @@ public class ConnectionUtil {
             throw new RuntimeException(ex);
         }
 
-        LOGGER.info("Connecting to database using classname: %s, url: %s, username: %s", driverClassname, driverUrl,
-                driverUsername);
+        LOGGER.info("Connecting to database using classname: {}, url: {}, username: {}", new Object[] {driverClassname, driverUrl,
+                driverUsername});
 
         return DriverManager.getConnection(driverUrl, driverUsername, driverPassword);
     }
@@ -70,7 +72,7 @@ public class ConnectionUtil {
             try {
                 connection.close();
             } catch (final SQLException ex) {
-                LOGGER.error(ex, ex);
+                LOGGER.error("Unable to close connection!", ex);
             }
         }
     }
@@ -86,7 +88,7 @@ public class ConnectionUtil {
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static int executeUpdate(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
-        LOGGER.debug(">>> %s", sql);
+        LOGGER.debug(">>> {}", sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
             final PreparedStatement preparedStatement = connection.prepareStatement(sql);
@@ -99,7 +101,7 @@ public class ConnectionUtil {
 
             return result;
         } catch (final SQLException sqlException) {
-            LOGGER.error("executeUpdate() - %s %s", sql, args, sqlException);
+            LOGGER.error("executeUpdate() - {} {}", new Object[]{sql, args}, sqlException);
             throw sqlException;
         }
     }
@@ -107,7 +109,7 @@ public class ConnectionUtil {
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static List<Long> executeInsert(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
-        LOGGER.debug(">>> %s", sql);
+        LOGGER.debug(">>> {}", sql);
         final List<Long> keyList = new ArrayList<Long>();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -132,7 +134,7 @@ public class ConnectionUtil {
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static Long executeQueryLongResult(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
-        LOGGER.debug(">>> %s", sql);
+        LOGGER.debug(">>> {}", sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         Long result = null;
 
@@ -158,7 +160,7 @@ public class ConnectionUtil {
             final String sql, final int numberKeys, final List<Object> args,
             final List<? extends HasPrimitiveValue> stats,
             final PrimitiveValueConverter<? extends HasPrimitiveValue> converter) throws SQLException {
-        LOGGER.debug(">>> %s", sql);
+        LOGGER.debug(">>> {}", sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final ArrayList<SummaryDataRow> summaryData = new ArrayList<>();
         try {
@@ -191,7 +193,7 @@ public class ConnectionUtil {
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static ResultSet executeQueryResultSet(final Connection connection, final String sql,
             final List<Object> args) throws SQLException {
-        LOGGER.debug(">>> %s", sql);
+        LOGGER.debug(">>> {}", sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
             final PreparedStatement preparedStatement = connection.prepareStatement(sql);

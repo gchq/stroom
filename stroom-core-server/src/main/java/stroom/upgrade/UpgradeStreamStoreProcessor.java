@@ -16,6 +16,8 @@
 
 package stroom.upgrade;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
@@ -28,7 +30,6 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomScope;
 import stroom.util.zip.HeaderMap;
@@ -47,7 +48,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Scope(StroomScope.PROTOTYPE)
 @Component("upgradeStreamStoreProcessor")
 public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(UpgradeStreamStoreProcessor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UpgradeStreamStoreProcessor.class);
 
     @Resource
     private StreamStore streamStore;
@@ -185,7 +186,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
         final Stream stream = streamSource.getStream();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final String streamTime = DateUtil.createNormalDateTimeString(stream.getCreateMs());
-        LOGGER.info("exec() - Processing stream %s %s - Start", stream, streamTime);
+        LOGGER.info("exec() - Processing stream {} {} - Start", stream, streamTime);
 
         final HeaderMap headerMap = new HeaderMap();
         Connection connection = null;
@@ -208,7 +209,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
             }
 
         } catch (final SQLException sqlEx) {
-            LOGGER.error("exec() %s %s", query, args, sqlEx);
+            LOGGER.error("exec() {} {}", new Object[]{query, args}, sqlEx);
         } finally {
             ConnectionUtil.close(connection);
         }
@@ -218,11 +219,11 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
             streamTarget.getAttributeMap().putAll(headerMap);
             streamStore.closeStreamTarget(streamTarget);
         } else {
-            LOGGER.warn("exec() - No attributes added for stream %s", stream);
+            LOGGER.warn("exec() - No attributes added for stream {}", stream);
         }
 
-        LOGGER.info("exec() - Processing stream %s %s - Finished in %s added %s attributes", stream, streamTime,
-                logExecutionTime, headerMap.size());
+        LOGGER.info("exec() - Processing stream {} {} - Finished in {} added {} attributes", new Object[] {stream, streamTime,
+                logExecutionTime, headerMap.size()});
 
     }
 

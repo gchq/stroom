@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,6 +22,8 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
@@ -36,7 +38,6 @@ import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.cert.CertificateUtil;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -52,7 +53,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public static final String USER_ID_SESSION_KEY = AuthenticationServiceImpl.class.getName() + "_UID";
     private static final int DEFAULT_DAYS_TO_PASSWORD_EXPIRY = 90;
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AuthenticationServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
     private final StroomPropertyService stroomPropertyService;
     private final transient HttpServletRequestHolder httpServletRequestHolder;
@@ -90,10 +91,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             try {
                 final HttpServletRequest request = httpServletRequestHolder.get();
 
-                // Create the authentication token from the user name and
-                // password
-                final UsernamePasswordToken token = new UsernamePasswordToken(userName, password, true,
-                        request.getRemoteHost());
+                // Create the authentication token from the user name and password
+                final UsernamePasswordToken token = request == null ?
+                        new UsernamePasswordToken(userName, password,true) :
+                        new UsernamePasswordToken(userName, password,true, request.getRemoteHost());
 
                 // Attempt authentication
                 final Subject currentUser = SecurityUtils.getSubject();
@@ -130,7 +131,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     user.setTotalLoginFailures(user.getTotalLoginFailures() + 1);
 
                     if (user.getCurrentLoginFailures() > 3) {
-                        LOGGER.error("login() - Locking account %s", user.getName());
+                        LOGGER.error("login() - Locking account {}", user.getName());
                         user.updateStatus(UserStatus.LOCKED);
                     }
 
@@ -139,7 +140,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             }
         }
 
-        LOGGER.warn("login() - Bad Credentials %s", userName);
+        LOGGER.warn("login() - Bad Credentials {}", userName);
 
         try {
             throw e;
@@ -384,9 +385,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             // Audit the successful login
             eventLog.logon(userId);
 
-            final HttpSession session = request.getSession(true);
-            session.setAttribute(USER_SESSION_KEY, reloadUser);
-            session.setAttribute(USER_ID_SESSION_KEY, userId);
+            if(request != null) {
+                final HttpSession session = request.getSession(true);
+                session.setAttribute(USER_SESSION_KEY, reloadUser);
+                session.setAttribute(USER_ID_SESSION_KEY, userId);
+            }
 
             return reloadUser;
         }

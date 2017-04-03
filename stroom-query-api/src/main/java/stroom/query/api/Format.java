@@ -38,7 +38,7 @@ public final class Format implements Serializable {
     @XmlElement
     private DateTimeFormat dateTimeFormat;
 
-    public Format() {
+    private Format() {
     }
 
     public Format(final Type type) {
@@ -55,28 +55,22 @@ public final class Format implements Serializable {
         this.dateTimeFormat = dateTimeFormat;
     }
 
-    public Type getType() {
-        return type;
+    public Format(final Type type, final NumberFormat numberFormat, final DateTimeFormat dateTimeFormat) {
+        this.type = type;
+        this.numberFormat = numberFormat;
+        this.dateTimeFormat = dateTimeFormat;
     }
 
-    public void setType(final Type type) {
-        this.type = type;
+    public Type getType() {
+        return type;
     }
 
     public NumberFormat getNumberFormat() {
         return numberFormat;
     }
 
-    public void setNumberFormat(final NumberFormat numberFormat) {
-        this.numberFormat = numberFormat;
-    }
-
     public DateTimeFormat getDateTimeFormat() {
         return dateTimeFormat;
-    }
-
-    public void setDateTimeFormat(final DateTimeFormat dateTimeFormat) {
-        this.dateTimeFormat = dateTimeFormat;
     }
 
     @Override

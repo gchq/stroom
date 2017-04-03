@@ -25,24 +25,26 @@ import java.io.Serializable;
 import java.util.Map;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "searchRequest", propOrder = {"search", "componentResultRequests"})
+@XmlType(name = "searchRequest", propOrder = {"search", "componentResultRequests", "dateTimeLocale"})
 @XmlRootElement(name = "searchRequest")
 public class SearchRequest implements Serializable {
     private static final long serialVersionUID = -6668626615097471925L;
 
     @XmlElement
     private Search search;
-
     @XmlElement
     private Map<String, ComponentResultRequest> componentResultRequests;
+    @XmlElement
+    private String dateTimeLocale;
 
     public SearchRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public SearchRequest(final Search search, final Map<String, ComponentResultRequest> componentResultRequests) {
+    public SearchRequest(final Search search, final Map<String, ComponentResultRequest> componentResultRequests, final String dateTimeLocale) {
         this.search = search;
         this.componentResultRequests = componentResultRequests;
+        this.dateTimeLocale = dateTimeLocale;
     }
 
     public Search getSearch() {
@@ -53,6 +55,10 @@ public class SearchRequest implements Serializable {
         return componentResultRequests;
     }
 
+    public String getDateTimeLocale() {
+        return dateTimeLocale;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -61,21 +67,16 @@ public class SearchRequest implements Serializable {
         final SearchRequest that = (SearchRequest) o;
 
         if (search != null ? !search.equals(that.search) : that.search != null) return false;
-        return componentResultRequests != null ? componentResultRequests.equals(that.componentResultRequests) : that.componentResultRequests == null;
+        if (componentResultRequests != null ? !componentResultRequests.equals(that.componentResultRequests) : that.componentResultRequests != null)
+            return false;
+        return dateTimeLocale != null ? dateTimeLocale.equals(that.dateTimeLocale) : that.dateTimeLocale == null;
     }
 
     @Override
     public int hashCode() {
         int result = search != null ? search.hashCode() : 0;
         result = 31 * result + (componentResultRequests != null ? componentResultRequests.hashCode() : 0);
+        result = 31 * result + (dateTimeLocale != null ? dateTimeLocale.hashCode() : 0);
         return result;
-    }
-
-    @Override
-    public String toString() {
-        return "SearchRequest{" +
-                "search=" + search +
-                ", componentResultRequests=" + componentResultRequests +
-                '}';
     }
 }

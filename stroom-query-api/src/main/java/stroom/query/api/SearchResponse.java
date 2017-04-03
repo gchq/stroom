@@ -26,11 +26,13 @@ import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-@JsonPropertyOrder({"highlights", "errors", "complete", "results"})
+@JsonPropertyOrder({"highlights", "results", "errors", "complete"})
 @XmlRootElement(name = "searchResponse")
-@XmlType(name = "SearchResponse", propOrder = {"highlights", "errors", "complete", "results"})
+@XmlType(name = "SearchResponse", propOrder = {"highlights", "results", "errors", "complete"})
 @XmlAccessorType(XmlAccessType.FIELD)
 public final class SearchResponse implements Serializable {
     private static final long serialVersionUID = -2964122512841756795L;
@@ -42,6 +44,13 @@ public final class SearchResponse implements Serializable {
     @XmlElementWrapper(name = "highlights")
     @XmlElement(name = "highlight")
     private List<String> highlights;
+
+    @XmlElementWrapper(name = "results")
+    @XmlElements({
+            @XmlElement(name = "table", type = TableResult.class),
+            @XmlElement(name = "vis", type = FlatResult.class)
+    })
+    private List<Result> results;
 
     /**
      * Any errors that have been generated during searching.
@@ -57,50 +66,34 @@ public final class SearchResponse implements Serializable {
     @XmlElement
     private Boolean complete;
 
-    @XmlElementWrapper(name = "results")
-    @XmlElements({
-            @XmlElement(name = "table", type = TableResult.class),
-            @XmlElement(name = "vis", type = FlatResult.class)
-    })
-    private List<Result> results;
+    private SearchResponse() {
+    }
 
-    public SearchResponse() {
+    public SearchResponse(final List<String> highlights, final List<Result> results, final List<String> errors, final Boolean complete) {
+        this.highlights = highlights;
+        this.results = results;
+        this.errors = errors;
+        this.complete = complete;
     }
 
     public List<String> getHighlights() {
         return highlights;
     }
 
-    public void setHighlights(final List<String> highlights) {
-        this.highlights = highlights;
+    public List<Result> getResults() {
+        return results;
     }
 
     public List<String> getErrors() {
         return errors;
     }
 
-    public void setErrors(final List<String> errors) {
-        this.errors = errors;
-    }
-
     public Boolean getComplete() {
         return complete;
     }
 
-    public void setComplete(final Boolean complete) {
-        this.complete = complete;
-    }
-
     public boolean complete() {
         return complete != null && complete;
-    }
-
-    public List<Result> getResults() {
-        return results;
-    }
-
-    public void setResults(final List<Result> results) {
-        this.results = results;
     }
 
     @Override
@@ -111,17 +104,17 @@ public final class SearchResponse implements Serializable {
         final SearchResponse that = (SearchResponse) o;
 
         if (highlights != null ? !highlights.equals(that.highlights) : that.highlights != null) return false;
+        if (results != null ? !results.equals(that.results) : that.results != null) return false;
         if (errors != null ? !errors.equals(that.errors) : that.errors != null) return false;
-        if (complete != null ? !complete.equals(that.complete) : that.complete != null) return false;
-        return results != null ? results.equals(that.results) : that.results == null;
+        return complete != null ? complete.equals(that.complete) : that.complete == null;
     }
 
     @Override
     public int hashCode() {
         int result = highlights != null ? highlights.hashCode() : 0;
+        result = 31 * result + (results != null ? results.hashCode() : 0);
         result = 31 * result + (errors != null ? errors.hashCode() : 0);
         result = 31 * result + (complete != null ? complete.hashCode() : 0);
-        result = 31 * result + (results != null ? results.hashCode() : 0);
         return result;
     }
 
@@ -129,9 +122,44 @@ public final class SearchResponse implements Serializable {
     public String toString() {
         return "SearchResponse{" +
                 "highlights=" + highlights +
+                ", results=" + results +
                 ", errors=" + errors +
                 ", complete=" + complete +
-                ", results=" + results +
                 '}';
     }
+
+    public static class Builder {
+        // Mandatory parameters
+        private final Boolean complete;
+
+        // Optional parameters
+        private final List<String> highlights = new ArrayList<>();
+        private final List<Result> results = new ArrayList<>();
+        private final List<String> errors = new ArrayList<>();
+
+        public Builder(Boolean complete){
+            this.complete = complete;
+        }
+
+        public Builder addHighlights(String... highlights) {
+            this.highlights.addAll(Arrays.asList(highlights));
+            return this;
+        }
+
+        public Builder addResults(Result... results){
+            this.results.addAll(Arrays.asList(results));
+            return this;
+        }
+
+        public Builder addErrors(String... errors){
+            this.errors.addAll(Arrays.asList(errors));
+            return this;
+        }
+
+        public SearchResponse build(){
+            return new SearchResponse(highlights, results, errors, complete);
+        }
+
+    }
+
 }

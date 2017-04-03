@@ -16,8 +16,9 @@
 
 package stroom.util.test;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.task.ExternalShutdownController;
 import stroom.util.thread.ThreadScopeContextHolder;
@@ -31,7 +32,7 @@ import org.junit.runners.model.InitializationError;
 import java.io.File;
 
 public class StroomJUnit4ClassRunner extends BlockJUnit4ClassRunner {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomJUnit4ClassRunner.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomJUnit4ClassRunner.class);
 
     public StroomJUnit4ClassRunner(final Class<?> clazz) throws InitializationError {
         super(clazz);
@@ -92,22 +93,16 @@ public class StroomJUnit4ClassRunner extends BlockJUnit4ClassRunner {
             final RunNotifier notifier) {
         final StroomExpectedException stroomExpectedException = method.getAnnotation(StroomExpectedException.class);
         if (stroomExpectedException != null) {
-            StroomJunitConsoleAppender.setExpectedException(stroomExpectedException.exception());
-            LOGGER.info(">>> %s.  Expecting Exceptions %s", method.getMethod(), stroomExpectedException.exception());
+//            StroomJunitConsoleAppender.setExpectedException(stroomExpectedException.exception());
+            LOGGER.info(">>> {}.  Expecting Exceptions {}", method.getMethod(), stroomExpectedException.exception());
         } else {
-            LOGGER.info(">>> %s", method.getMethod());
+            LOGGER.info(">>> {}", method.getMethod());
         }
 
     }
 
     static void runChildAfter(final BlockJUnit4ClassRunner runner, final FrameworkMethod method,
             final RunNotifier notifier, final LogExecutionTime logExecutionTime) {
-        LOGGER.info("<<< %s took %s", method.getMethod(), logExecutionTime);
-        if (StroomJunitConsoleAppender.getUnexpectedExceptions().size() > 0) {
-            notifier.fireTestFailure(new Failure(
-                    Description.createTestDescription(runner.getTestClass().getJavaClass(), method.getName()),
-                    StroomJunitConsoleAppender.getUnexpectedExceptions().get(0)));
-        }
-        StroomJunitConsoleAppender.setExpectedException(null);
+        LOGGER.info("<<< {} took {}", method.getMethod(), logExecutionTime);
     }
 }

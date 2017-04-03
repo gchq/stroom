@@ -27,14 +27,13 @@ import java.io.Serializable;
 @JsonPropertyOrder({"uuid"})
 @XmlType(name = "QueryKey", propOrder = {"uuid"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class QueryKey implements Serializable {
+public final class QueryKey implements Serializable {
     private static final long serialVersionUID = -3222989872764402068L;
 
     @XmlElement
     private String uuid;
 
-    public QueryKey() {
-        // Default constructor necessary for GWT serialisation.
+    private QueryKey() {
     }
 
     public QueryKey(final String uuid) {
@@ -43,10 +42,6 @@ public class QueryKey implements Serializable {
 
     public String getUuid() {
         return uuid;
-    }
-
-    public void setUuid(final String uuid) {
-        this.uuid = uuid;
     }
 
     @Override

@@ -16,12 +16,13 @@
 
 package stroom.node.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.shared.FindGlobalPropertyCriteria;
 import stroom.node.shared.GlobalProperty;
 import stroom.node.shared.GlobalPropertyService;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomStartup;
 import org.springframework.stereotype.Component;
@@ -36,7 +37,7 @@ import java.util.List;
  */
 @Component
 public class GlobalPropertyUpdater {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(GlobalPropertyUpdater.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalPropertyUpdater.class);
 
     private final GlobalPropertyService globalPropertyService;
 

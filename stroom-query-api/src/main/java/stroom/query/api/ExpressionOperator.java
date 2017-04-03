@@ -25,6 +25,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Arrays;
 import java.util.List;
 
 @JsonPropertyOrder({"op", "children"})
@@ -42,7 +43,7 @@ public final class ExpressionOperator extends ExpressionItem {
     })
     private List<ExpressionItem> children;
 
-    public ExpressionOperator() {
+    private ExpressionOperator() {
     }
 
     public ExpressionOperator(final Boolean enabled, final Op op, final List<ExpressionItem> children) {
@@ -51,20 +52,18 @@ public final class ExpressionOperator extends ExpressionItem {
         this.children = children;
     }
 
+    public ExpressionOperator(final Boolean enabled, final Op op, final ExpressionItem... children) {
+        super(enabled);
+        this.op = op;
+        this.children = Arrays.asList(children);
+    }
+
     public Op getOp() {
         return op;
     }
 
-    public void setOp(final Op op) {
-        this.op = op;
-    }
-
     public List<ExpressionItem> getChildren() {
         return children;
-    }
-
-    public void setChildren(final List<ExpressionItem> children) {
-        this.children = children;
     }
 
     @Override

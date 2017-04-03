@@ -24,11 +24,11 @@ import java.sql.SQLException;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 
-import stroom.util.logging.StroomLogger;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.ConnectionUtil;
@@ -51,7 +51,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
     @Resource
     private StroomDatabaseInfo stroomDatabaseInfo;
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestSQLStatisticFlushTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticFlushTaskHandler.class);
 
     @Test(expected = StatisticsEventValidationException.class)
     public void testExec_tenGoodRowsTwoBad() throws Exception {

@@ -16,6 +16,8 @@
 
 package stroom.search.server.sender;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.query.Coprocessor;
 import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
@@ -24,7 +26,6 @@ import stroom.search.server.NodeResult;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
@@ -40,7 +41,7 @@ import java.util.Map.Entry;
 @TaskHandlerBean(task = SenderTask.class)
 @Scope(value = StroomScope.TASK)
 public class SenderTaskHandler extends AbstractTaskHandler<SenderTask, VoidResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SenderTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SenderTaskHandler.class);
 
     private final TaskManager taskManager;
     private final TaskMonitor taskMonitor;

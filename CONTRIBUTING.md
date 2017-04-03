@@ -12,7 +12,7 @@ We love pull requests and we want to make it as easy as possible to contribute c
 ## Making changes
 * Run up Stroom and if it's a bug make sure you can re-produce it. See the [documentation](https://github.com/gchq/stroom-docs) for more details on how to develop with Stroom.
 * Make your changes and test. Make sure you include new or updated tests if you need to.
-* Run a full build from the project root: `mvn clean install`.
+* Run a full build from the project root: `./gradlew clean build`.
 
 ## Sumitting changes
 * Sign the [GCHQ Contributor Licence Agreement](https://github.com/gchq/Gaffer/wiki/GCHQ-OSS-Contributor-License-Agreement-V1.0) 

@@ -16,10 +16,11 @@
 
 package stroom.visualisation.spring;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-import stroom.util.logging.StroomLogger;
 
 /**
  * Exclude other configurations that might be found accidentally during a
@@ -29,7 +30,7 @@ import stroom.util.logging.StroomLogger;
 @ComponentScan(basePackages = { "stroom.visualisation.server", "stroom.visualisation.shared" }, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class), })
 public class VisualisationConfiguration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(VisualisationConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(VisualisationConfiguration.class);
 
     public VisualisationConfiguration() {
         LOGGER.info("VisualisationConfiguration loading...");

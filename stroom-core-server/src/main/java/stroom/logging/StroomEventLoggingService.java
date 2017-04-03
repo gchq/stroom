@@ -27,11 +27,12 @@ import event.logging.User;
 import event.logging.impl.DefaultEventLoggingService;
 import event.logging.util.DeviceUtil;
 import event.logging.util.EventLoggingUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.BuildInfoUtil;
-import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -42,7 +43,7 @@ import java.util.Date;
 @Component
 public class StroomEventLoggingService extends DefaultEventLoggingService implements EventLoggingService {
     /** Logger - should not be used for event logs */
-    private static final StroomLogger LOG = StroomLogger.getLogger(StroomEventLoggingService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomEventLoggingService.class);
 
     private static final String SYSTEM = "Stroom";
     private static final String ENVIRONMENT = "";
@@ -130,7 +131,7 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
                     try {
                         inetAddress = InetAddress.getByName(ip);
                     } catch (final UnknownHostException e) {
-                        LOG.warn("Problem getting client InetAddress", e);
+                        LOGGER.warn("Problem getting client InetAddress", e);
                     }
 
                     Device client = null;
@@ -144,7 +145,7 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
                     return client;
                 }
             } catch (final Exception e) {
-                LOG.warn("Problem getting client IP address and host name", e);
+                LOGGER.warn("Problem getting client IP address and host name", e);
             }
         }
 
@@ -160,7 +161,7 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
                 return user;
             }
         } catch (final Exception e) {
-            LOG.warn("Problem getting current user", e);
+            LOGGER.warn("Problem getting current user", e);
         }
 
         return null;
@@ -173,7 +174,7 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
             try {
                 inetAddress = InetAddress.getLocalHost();
             } catch (final UnknownHostException e) {
-                LOG.warn("Problem getting device from InetAddress", e);
+                LOGGER.warn("Problem getting device from InetAddress", e);
             }
 
             if (inetAddress != null) {
@@ -187,7 +188,7 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
                         try {
                             inetAddress = InetAddress.getByName(ip);
                         } catch (final UnknownHostException e) {
-                            LOG.warn("Problem getting client InetAddress", e);
+                            LOGGER.warn("Problem getting client InetAddress", e);
                         }
 
                         if (inetAddress != null) {

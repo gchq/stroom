@@ -27,7 +27,7 @@ import java.io.Serializable;
 @JsonPropertyOrder({"key", "value"})
 @XmlType(name = "Param", propOrder = {"key", "value"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Param implements Serializable {
+public final class Param implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
     @XmlElement
@@ -35,7 +35,7 @@ public class Param implements Serializable {
     @XmlElement
     private String value;
 
-    public Param() {
+    private Param() {
     }
 
     public Param(final String key, final String value) {
@@ -47,16 +47,8 @@ public class Param implements Serializable {
         return key;
     }
 
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
     public String getValue() {
         return value;
-    }
-
-    public void setValue(final String value) {
-        this.value = value;
     }
 
     @Override

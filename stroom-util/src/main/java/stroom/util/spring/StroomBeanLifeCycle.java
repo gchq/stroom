@@ -23,12 +23,13 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class StroomBeanLifeCycle {
-    private final StroomLogger LOGGER = StroomLogger.getLogger(StroomBeanLifeCycle.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomBeanLifeCycle.class);
 
     @Resource
     private StroomBeanStore stroomBeanStore;

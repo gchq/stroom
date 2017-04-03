@@ -19,10 +19,11 @@ package stroom.streamstore.server.fs;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 /**
@@ -31,7 +32,8 @@ import stroom.util.spring.StroomScope;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 public class OutputStreamProxy extends OutputStream {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(OutputStreamProxy.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OutputStreamProxy.class);
+
     private static final int LOG_AT_BYTES = 1000000;
     private long nextLogAtBytes = LOG_AT_BYTES;
     private long wroteBytes = 0;

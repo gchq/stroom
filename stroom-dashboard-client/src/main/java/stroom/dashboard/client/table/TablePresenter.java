@@ -19,6 +19,7 @@ package stroom.dashboard.client.table;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -42,7 +43,6 @@ import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
@@ -52,10 +52,8 @@ import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Format;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.IndexConstants;
-import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
-import stroom.dashboard.shared.TableResult;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -71,7 +69,6 @@ import stroom.node.shared.ClientProperties;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.util.shared.Expander;
-import stroom.util.shared.OffsetRange;
 import stroom.util.shared.ParamUtil;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
@@ -84,6 +81,7 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -318,39 +316,44 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     }
 
     @Override
-    public void setData(final ComponentResult result) {
+    public void setData(final String json) {
         ignoreRangeChange = true;
 
+        try {
 //        if (!paused) {
-        lastExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
-        currentExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
+            lastExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
+            currentExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
 
-        if (result != null && result instanceof TableResult) {
-            // Don't refresh the table unless the results have changed.
-            final TableResult tableResult = (TableResult) result;
-            final List<Row> values = tableResult.getRows();
-            final OffsetRange<Integer> valuesRange = tableResult.getResultRange();
+            if (json != null) {
+                // Don't refresh the table unless the results have changed.
+                final TableResult tableResult = JsonUtil.decode(json);
 
-            // Only set data in the table if we have got some results and
-            // they have changed.
-            if (valuesRange.getOffset() == 0 || values.size() > 0) {
-                updateColumns();
-                getView().setRowData(valuesRange.getOffset(), values);
-                getView().setRowCount(tableResult.getTotalResults(), true);
-            }
+                final Row[] values = tableResult.rows;
+                final OffsetRange valuesRange = tableResult.resultRange;
 
-            // Enable download of current results.
-            downloadButton.setEnabled(true);
-        } else {
-            // Disable download of current results.
-            downloadButton.setEnabled(false);
+                // Only set data in the table if we have got some results and
+                // they have changed.
+                if (valuesRange.offset == 0 || values.length > 0) {
+                    updateColumns();
+                    getView().setRowData(valuesRange.offset, Arrays.asList(values));
+                    getView().setRowCount(tableResult.totalResults, true);
+                }
 
-            getView().setRowData(0, new ArrayList<Row>());
-            getView().setRowCount(0, true);
+                // Enable download of current results.
+                downloadButton.setEnabled(true);
+            } else {
+                // Disable download of current results.
+                downloadButton.setEnabled(false);
+
+                getView().setRowData(0, new ArrayList<Row>());
+                getView().setRowCount(0, true);
 
                 getView().getSelectionModel().clear();
-        }
+            }
 //        }
+        } catch (final Exception e) {
+            GWT.log(e.getMessage());
+        }
 
         ignoreRangeChange = false;
     }
@@ -364,20 +367,20 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                     return null;
                 }
 
-                if (row.getDepth() < maxDepth) {
+                if (row.depth < maxDepth) {
                     // Set the width of the expander column if it needs to be
                     // made wider.
-                    final int width = 16 + (row.getDepth() * 10);
+                    final int width = 16 + (row.depth * 10);
                     if (width > currentExpanderColumnWidth) {
                         currentExpanderColumnWidth = width;
                         lastExpanderColumnWidth = width;
                         getView().setColumnWidth(this, width, Unit.PX);
                     }
 
-                    final boolean open = tableResultRequest.isGroupOpen(row.getGroupKey());
-                    return new Expander(row.getDepth(), open, false);
-                } else if (row.getDepth() > 0) {
-                    return new Expander(row.getDepth(), false, true);
+                    final boolean open = tableResultRequest.isGroupOpen(row.groupKey);
+                    return new Expander(row.depth, open, false);
+                } else if (row.depth > 0) {
+                    return new Expander(row.depth, false, true);
                 }
 
                 return null;
@@ -386,7 +389,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
         column.setFieldUpdater(new FieldUpdater<Row, Expander>() {
             @Override
             public void update(final int index, final Row result, final Expander value) {
-                tableResultRequest.setGroupOpen(result.getGroupKey(), !value.isExpanded());
+                tableResultRequest.setGroupOpen(result.groupKey, !value.isExpanded());
                 refresh();
             }
         });
@@ -402,11 +405,11 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                     return null;
                 }
 
-                final List<String> values = row.getValues();
+                final String[] values = row.values;
                 if (values != null) {
-                    final String value = values.get(pos);
+                    final String value = values[pos];
                     if (value != null) {
-                        if (field.getGroup() != null && field.getGroup() >= row.getDepth()) {
+                        if (field.getGroup() != null && field.getGroup() >= row.depth) {
                             final SafeHtmlBuilder sb = new SafeHtmlBuilder();
                             sb.appendHtmlConstant("<b>");
                             sb.appendEscaped(value);
@@ -441,12 +444,12 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
         selectedStreamId = null;
         selectedEventId = null;
         if (result != null && streamIdIndex >= 0 && eventIdIndex >= 0) {
-            final List<String> values = result.getValues();
-            if (values.size() > streamIdIndex && values.get(streamIdIndex) != null) {
-                selectedStreamId = values.get(streamIdIndex).toString();
+            final String[] values = result.values;
+            if (values.length > streamIdIndex && values[streamIdIndex] != null) {
+                selectedStreamId = values[streamIdIndex].toString();
             }
-            if (values.size() > eventIdIndex && values.get(eventIdIndex) != null) {
-                selectedEventId = values.get(eventIdIndex).toString();
+            if (values.length > eventIdIndex && values[eventIdIndex] != null) {
+                selectedEventId = values[eventIdIndex].toString();
             }
         }
 

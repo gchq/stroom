@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,8 @@ import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.store.SimpleFSLockFactory;
 import org.apache.lucene.util.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.index.server.analyzer.AnalyzerFactory;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
@@ -39,7 +41,6 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardService;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.logging.LoggerPrintStream;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.persistence.EntityNotFoundException;
@@ -59,7 +60,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class IndexShardWriterImpl implements IndexShardWriter {
     public static final int DEFAULT_RAM_BUFFER_MB_SIZE = 1024;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexShardWriterImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardWriterImpl.class);
+
     /**
      * When we are in debug mode we track some important info from the LUCENE
      * log so that we can report some debug info
@@ -372,7 +374,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
         try {
             if (!IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
-                LOGGER.warn("deleteFromDisk() - Can only be called on delete records %s", indexShard);
+                LOGGER.warn("deleteFromDisk() - Can only be called on delete records {}", indexShard);
             } else {
                 // Make sure the shard is closed before it is deleted. If it
                 // isn't then delete will fail as there
@@ -503,7 +505,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     indexShard.setStatus(IndexShardStatus.DELETED);
                 }
             } catch (final EntityNotFoundException e) {
-                LOGGER.debug("Index shard has been deleted %s", indexShard);
+                LOGGER.debug("Index shard has been deleted {}", indexShard);
                 indexShard.setStatus(IndexShardStatus.DELETED);
             } catch (final Throwable t) {
                 LOGGER.error(t.getMessage(), t);
@@ -694,7 +696,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 indexShard = is;
             }
         } catch (final EntityNotFoundException e) {
-            LOGGER.debug("Index shard has been deleted %s", indexShard);
+            LOGGER.debug("Index shard has been deleted {}", indexShard);
             indexShard.setStatus(IndexShardStatus.DELETED);
         } catch (final Throwable t) {
             LOGGER.error(t.getMessage(), t);
@@ -708,12 +710,12 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             indexShard = service.save(indexShard);
             success = true;
         } catch (final EntityNotFoundException e) {
-            LOGGER.debug("Index shard has been deleted %s", indexShard);
+            LOGGER.debug("Index shard has been deleted {}", indexShard);
             indexShard.setStatus(IndexShardStatus.DELETED);
             success = true;
         } catch (final Throwable t) {
             LOGGER.debug(t.getMessage(), t);
-            LOGGER.debug("Reloading index shard due to save error %s", indexShard);
+            LOGGER.debug("Reloading index shard due to save error {}", indexShard);
             reload();
         }
 
@@ -841,7 +843,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             try {
                 close();
             } catch (final Exception ex) {
-                LOGGER.error("destroy() - Error closing writer %s", this);
+                LOGGER.error("destroy() - Error closing writer {}", this);
             }
         }
     }

@@ -23,8 +23,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.junit.Ignore;
 import stroom.query.api.Field;
+import stroom.query.api.FieldBuilder;
 import stroom.query.api.Format;
 import stroom.query.api.TableSettings;
+import stroom.query.api.TableSettingsBuilder;
 import stroom.util.shared.ParamUtil;
 
 import java.util.Arrays;
@@ -185,12 +187,10 @@ public class TestVisComponentResultCreator {
 //    }
 
     private TableSettings getParentTableSettings() {
-        final Field fieldX = new Field("x", "${x}", null, null, null, null);
-        final Field fieldY = new Field("y", "${y}", null, null, null, null);
-        final Field series = new Field("series", "${series}", null, null, null, null);
-        final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(Arrays.asList(fieldX, fieldY, series));
-        return tableSettings;
+        final Field fieldX = new FieldBuilder().name("x").expression("${x}").build();
+        final Field fieldY = new FieldBuilder().name("y").expression("${y}").build();
+        final Field series = new FieldBuilder().name("series").expression("${series}").build();
+        return new TableSettingsBuilder().fields(Arrays.asList(fieldX, fieldY, series)).build();
     }
 
 //    @Test
@@ -336,12 +336,7 @@ public class TestVisComponentResultCreator {
     }
 
     private Field createField(final String fieldName, final Format.Type type) {
-        final Format format = new Format(type);
-
-        final Field field = new Field(fieldName);
-        field.setExpression(ParamUtil.makeParam(fieldName));
-        field.setFormat(format);
-        return field;
+        return new FieldBuilder().name(fieldName).expression(ParamUtil.makeParam(fieldName)).format(type).build();
     }
 
     private ObjectMapper createMapper(final boolean indent) {

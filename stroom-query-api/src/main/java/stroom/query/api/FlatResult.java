@@ -37,12 +37,7 @@ public final class FlatResult extends Result {
     @XmlElement
     private String error;
 
-    public FlatResult() {
-    }
-
-    public FlatResult(final String error) {
-        this.size = 0L;
-        this.error = error;
+    private FlatResult() {
     }
 
     public FlatResult(final String componentId, final List<Field> structure, final List<List<Object>> values, final Long size, final String error) {
@@ -57,32 +52,16 @@ public final class FlatResult extends Result {
         return structure;
     }
 
-    public void setStructure(final List<Field> structure) {
-        this.structure = structure;
-    }
-
     public List<List<Object>> getValues() {
         return values;
-    }
-
-    public void setValues(final List<List<Object>> values) {
-        this.values = values;
     }
 
     public Long getSize() {
         return size;
     }
 
-    public void setSize(final Long size) {
-        this.size = size;
-    }
-
     public String getError() {
         return error;
-    }
-
-    public void setError(final String error) {
-        this.error = error;
     }
 
     @Override

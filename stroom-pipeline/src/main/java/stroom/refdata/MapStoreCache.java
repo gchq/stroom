@@ -20,7 +20,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import stroom.cache.AbstractCacheBean;
@@ -33,7 +34,7 @@ import net.sf.ehcache.CacheManager;
  */
 @Component
 public final class MapStoreCache extends AbstractCacheBean<MapStoreCacheKey, MapStore> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(MapStoreCache.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MapStoreCache.class);
 
     private static final int MAX_CACHE_ENTRIES = 1000000;
 
@@ -71,7 +72,7 @@ public final class MapStoreCache extends AbstractCacheBean<MapStoreCacheKey, Map
                 LOGGER.debug("Created reference data map store: " + mapStoreCacheKey.toString());
             }
         } catch (final Throwable e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to create cache!", e);
         }
 
         // Make sure this pool always returns some kind of map store even if an

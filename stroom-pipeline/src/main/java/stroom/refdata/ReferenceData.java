@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,16 +18,17 @@ package stroom.refdata;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.query.api.DocRef;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.query.api.DocRef;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.xml.event.EventList;
@@ -42,7 +43,7 @@ import java.util.TreeSet;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 public class ReferenceData {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ReferenceData.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceData.class);
 
     // Maps can be nested during the look up process e.g. "MAP1/MAP2"
     private static final String NEST_SEPERATOR = "/";
@@ -163,7 +164,7 @@ public class ReferenceData {
                 events = mapStore.getEvents(mapName, keyName);
             }
         } catch (final IOException e) {
-            LOGGER.debug(e, e);
+            LOGGER.debug("Unable to get nested stream event list!", e);
             errorReceiver.log(Severity.ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
         }
 

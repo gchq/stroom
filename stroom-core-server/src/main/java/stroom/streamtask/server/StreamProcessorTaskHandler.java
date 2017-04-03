@@ -16,6 +16,8 @@
 
 package stroom.streamtask.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.server.StreamSource;
@@ -30,7 +32,6 @@ import stroom.streamtask.shared.TaskStatus;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
@@ -48,7 +49,7 @@ public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProces
     @Resource
     private StroomBeanStore beanStore;
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StreamProcessorTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamProcessorTaskHandler.class);
 
     @Resource(name = "cachedStreamProcessorService")
     private StreamProcessorService streamProcessorService;
@@ -71,7 +72,7 @@ public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProces
         boolean complete = false;
         final long startTime = System.currentTimeMillis();
         StreamTask streamTask = task.getStreamTask();
-        LOGGER.trace("Executing stream task: %s", streamTask.getId());
+        LOGGER.trace("Executing stream task: {}", streamTask.getId());
 
         StreamSource streamSource = null;
         try {
@@ -99,11 +100,11 @@ public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProces
                 }
 
                 if (destStreamProcessor.getPipeline() != null) {
-                    taskMonitor.info("Stream %s %s %s %s", stream.getId(),
+                    taskMonitor.info("Stream {} {} {} {}", stream.getId(),
                             DateUtil.createNormalDateTimeString(stream.getCreateMs()),
                             destStreamProcessor.getTaskType(), destStreamProcessor.getPipeline().getName());
                 } else {
-                    taskMonitor.info("Stream %s %s %s", stream.getId(),
+                    taskMonitor.info("Stream {} {} {}", stream.getId(),
                             DateUtil.createNormalDateTimeString(stream.getCreateMs()),
                             destStreamProcessor.getTaskType());
                 }
@@ -111,7 +112,7 @@ public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProces
                 // Don't process any streams that we have already created
                 if (sourceStreamProcessor != null && sourceStreamProcessor.equals(destStreamProcessor)) {
                     complete = true;
-                    LOGGER.warn("Skipping stream that we seem to have created (avoid processing forever) %s %s", stream,
+                    LOGGER.warn("Skipping stream that we seem to have created (avoid processing forever) {} {}", stream,
                             sourceStreamProcessor);
 
                 } else {
@@ -138,7 +139,7 @@ public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProces
                             complete = true;
                         }
                     } catch (final Exception ex) {
-                        LOGGER.error("Task failed %s %s", destStreamProcessor, stream, ex);
+                        LOGGER.error("Task failed {} {}", new Object[] {destStreamProcessor, stream}, ex);
                     }
                 }
             }

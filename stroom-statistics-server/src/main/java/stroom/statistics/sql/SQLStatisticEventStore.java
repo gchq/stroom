@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,8 @@ import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.node.server.StroomPropertyService;
@@ -39,7 +41,6 @@ import stroom.statistics.server.common.AbstractStatistics;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 
@@ -58,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class SQLStatisticEventStore extends AbstractStatistics {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticEventStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticEventStore.class);
     public static final String ENGINE_NAME = "sql";
     static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.stats.sql.search.maxResults";
     private static final int DEFAULT_POOL_SIZE = 10;
@@ -209,14 +210,14 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     }
 
     public void destroyAggregateMap(final SQLStatisticAggregateMap map) {
-        LOGGER.debug("destroyAggregateMap - Flushing map size=%s", map.size());
+        LOGGER.debug("destroyAggregateMap - Flushing map size={}", map.size());
         statisticCache.add(map);
     }
 
     @Override
     public boolean putEvents(final List<StatisticEvent> statisticEvents, final StatisticStore statisticStore) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("putEvents - count=%s", statisticEvents.size());
+            LOGGER.debug("putEvents - count={}", statisticEvents.size());
         }
 
         final Long optionalEventProcessingThresholdMs = getEventProcessingThresholdMs();
@@ -315,11 +316,6 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     public String toString() {
         return "numActive=" + objectPool.getNumActive() + ", numIdle=" + objectPool.getNumIdle();
     }
-
-    // @Override
-    // public void refreshMetadata() {
-    // throw new UnsupportedOperationException("Code waiting to be written");
-    // }
 
     public int getNumActive() {
         return objectPool.getNumActive();
@@ -434,7 +430,7 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         final int maxResults = propertyService.getIntProperty(PROP_KEY_SQL_SEARCH_MAX_RESULTS, 100000);
         sqlQuery += " LIMIT " + maxResults;
 
-        LOGGER.debug("Search query: %s", sqlQuery);
+        LOGGER.debug("Search query: {}", sqlQuery);
 
         final PreparedStatement ps = connection.prepareStatement(sqlQuery);
         int position = 1;

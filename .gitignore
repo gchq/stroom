@@ -1,6 +1,4 @@
-.idea
 .DS_Store
-*.iml
 */target/
 *.swp
 node_modules
@@ -9,3 +7,10 @@ _book
 classes/
 stroom-dashboard-gwt/hs_err_pid*.log
 stroom-app-gwt/hs_err_pid*.log
+
+# IntelliJ
+# Here we ignore everything and create exceptions for what we want to share.
+/out/
+*.iml
+/.idea/*
+!/.idea/runConfigurations

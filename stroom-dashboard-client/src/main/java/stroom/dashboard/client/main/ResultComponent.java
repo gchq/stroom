@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 
@@ -33,5 +32,5 @@ public interface ResultComponent {
 
     void setWantsData(boolean wantsData);
 
-    void setData(ComponentResult result);
+    void setData(String json);
 }

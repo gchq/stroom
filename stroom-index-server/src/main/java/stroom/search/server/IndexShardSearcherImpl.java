@@ -22,18 +22,19 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.store.NoLockFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.index.server.AbstractIndexShard;
 import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.util.logging.StroomLogger;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class IndexShardSearcherImpl implements IndexShardSearcher {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractIndexShard.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearcherImpl.class);
 
     private final IndexShard indexShard;
     private final IndexWriter indexWriter;
@@ -132,7 +133,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
                 indexReader.close();
             }
         } catch (final IOException e) {
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
             throw SearchException.wrap(e);
         } finally {
             indexReader = null;
@@ -142,7 +143,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
                     directory.close();
                 }
             } catch (final IOException e) {
-                LOGGER.error(e, e);
+                LOGGER.error(e.getMessage(), e);
                 throw SearchException.wrap(e);
             } finally {
                 directory = null;

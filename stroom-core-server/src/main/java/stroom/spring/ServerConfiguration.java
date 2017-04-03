@@ -16,10 +16,11 @@
 
 package stroom.spring;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.*;
 import stroom.node.shared.Node;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 import stroom.util.thread.ThreadLocalBuffer;
@@ -30,7 +31,7 @@ import stroom.util.thread.ThreadLocalBuffer;
 @Configuration
 @EnableAspectJAutoProxy
 public class ServerConfiguration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ServerConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServerConfiguration.class);
 
     public ServerConfiguration() {
         LOGGER.info("ServerConfiguration loading...");

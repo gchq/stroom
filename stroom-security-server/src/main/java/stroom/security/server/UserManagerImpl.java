@@ -16,6 +16,8 @@
 
 package stroom.security.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.entity.shared.BaseResultList;
@@ -27,7 +29,6 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.User.UserStatus;
 import stroom.security.shared.UserService;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
@@ -37,7 +38,7 @@ public class UserManagerImpl implements UserManager {
     public static final String DAYS_TO_UNUSED_ACCOUNT_EXPIRY = "stroom.daysToUnusedAccountExpiry";
     public static final String DAYS_TO_ACCOUNT_EXPIRY = "stroom.daysToAccountExpiry";
     public static final long MS_IN_DAY = 1000 * 60 * 60 * 24;
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(UserManagerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserManagerImpl.class);
     private final UserService userService;
     private final StroomPropertyService stroomPropertyService;
 
@@ -76,7 +77,7 @@ public class UserManagerImpl implements UserManager {
                 value = Integer.parseInt(str);
             }
         } catch (final RuntimeException ex) {
-            LOGGER.error("getProperty(%s)", name, ex);
+            LOGGER.error("getProperty({})", name, ex);
         }
         return value;
     }
@@ -88,11 +89,11 @@ public class UserManagerImpl implements UserManager {
             // Only do this if the account is supposed to never expire
             if (user.isLoginExpiry()) {
                 user.updateStatus(UserStatus.DISABLED);
-                LOGGER.info("disableUnusedAccounts() - Disabling %s", user.getName());
+                LOGGER.info("disableUnusedAccounts() - Disabling {}", user.getName());
                 try {
                     userService.save(user);
                 } catch (final RuntimeException ex) {
-                    LOGGER.error("disableUnusedAccounts() - Error Disabling %s", user.getName(), ex);
+                    LOGGER.error("disableUnusedAccounts() - Error Disabling {}", user.getName(), ex);
                 }
             }
         });

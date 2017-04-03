@@ -27,7 +27,7 @@ import java.io.Serializable;
 @JsonPropertyOrder({"decimalPlaces", "useSeparator"})
 @XmlType(name = "NumberFormat", propOrder = {"decimalPlaces", "useSeparator"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class NumberFormat implements Serializable {
+public final class NumberFormat implements Serializable {
     private static final long serialVersionUID = 9145624653060319801L;
 
     @XmlElement
@@ -35,7 +35,7 @@ public class NumberFormat implements Serializable {
     @XmlElement
     private Boolean useSeparator;
 
-    public NumberFormat() {
+    private NumberFormat() {
     }
 
     public NumberFormat(Integer decimalPlaces, Boolean useSeparator) {
@@ -47,16 +47,8 @@ public class NumberFormat implements Serializable {
         return decimalPlaces;
     }
 
-    public void setDecimalPlaces(final Integer decimalPlaces) {
-        this.decimalPlaces = decimalPlaces;
-    }
-
     public Boolean getUseSeparator() {
         return useSeparator;
-    }
-
-    public void setUseSeparator(final Boolean useSeparator) {
-        this.useSeparator = useSeparator;
     }
 
     public boolean useSeparator() {

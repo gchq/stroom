@@ -20,13 +20,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.server.task.Recorder;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 @Component
@@ -83,7 +84,7 @@ public class OutputRecorder extends AbstractDestinationProvider implements Recor
         }
     }
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(OutputRecorder.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OutputRecorder.class);
 
     private String elementId;
 

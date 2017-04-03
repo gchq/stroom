@@ -25,11 +25,12 @@ import java.util.regex.Pattern;
 import javax.security.auth.x500.X500Principal;
 import javax.servlet.http.HttpServletRequest;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.zip.HeaderMap;
 
 public class CertificateUtil {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(CertificateUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CertificateUtil.class);
 
     /**
      * API into the request for the certificate details.

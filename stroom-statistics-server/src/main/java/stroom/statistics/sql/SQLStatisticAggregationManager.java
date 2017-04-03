@@ -21,8 +21,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.util.logging.StroomLogger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -40,7 +41,7 @@ import stroom.util.task.TaskMonitor;
 @Component
 @Scope(value = StroomScope.TASK)
 public class SQLStatisticAggregationManager {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticAggregationManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticAggregationManager.class);
 
     /**
      * The cluster lock to acquire to prevent other nodes from concurrently
@@ -74,14 +75,14 @@ public class SQLStatisticAggregationManager {
         if (clusterLockService.tryLock(LOCK_NAME)) {
             try {
                 aggregate(System.currentTimeMillis());
-                LOGGER.info("SQL Statistic Aggregation - finished in %s", logExecutionTime);
+                LOGGER.info("SQL Statistic Aggregation - finished in {}", logExecutionTime);
             } catch (final Throwable t) {
                 LOGGER.error(t.getMessage(), t);
             } finally {
                 clusterLockService.releaseLock(LOCK_NAME);
             }
         } else {
-            LOGGER.info("SQL Statistic Aggregation - Skipped as did not get lock in %s", logExecutionTime);
+            LOGGER.info("SQL Statistic Aggregation - Skipped as did not get lock in {}", logExecutionTime);
         }
     }
 
@@ -95,7 +96,7 @@ public class SQLStatisticAggregationManager {
         if (stroomDatabaseInfo.isMysql()) {
             guard.lock();
             try {
-                LOGGER.debug("aggregate() Called for SQL stats - Start timeNow = %s",
+                LOGGER.debug("aggregate() Called for SQL stats - Start timeNow = {}",
                         DateUtil.createNormalDateTimeString(timeNow));
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -126,7 +127,7 @@ public class SQLStatisticAggregationManager {
                 } catch (final SQLException ex) {
                     throw EntityServiceExceptionUtil.create(ex);
                 } finally {
-                    LOGGER.debug("aggregate() - Finished for SQL stats in %s timeNowOverride = %s", logExecutionTime,
+                    LOGGER.debug("aggregate() - Finished for SQL stats in {} timeNowOverride = {}", logExecutionTime,
                             DateUtil.createNormalDateTimeString(timeNow));
                 }
             } catch (final Throwable t) {

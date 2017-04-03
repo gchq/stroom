@@ -19,6 +19,8 @@ package stroom.refdata;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import stroom.cache.CacheManagerAutoCloseable;
 import stroom.entity.shared.DocRefUtil;
@@ -33,7 +35,6 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.refdata.impl.MockReferenceDataLoader;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 import stroom.xml.event.EventList;
@@ -46,7 +47,7 @@ import java.util.TreeSet;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestReferenceData extends StroomUnitTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestReferenceData.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceData.class);
 
     private final MockFeedService feedService = new MockFeedService();
     private final MockPipelineEntityService pipelineEntityService = new MockPipelineEntityService();
@@ -242,7 +243,7 @@ public class TestReferenceData extends StroomUnitTest {
         try {
             builder.characters(ch, 0, ch.length);
         } catch (final SAXException e) {
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
         }
         final EventList eventList = builder.getEventList();
         builder.reset();

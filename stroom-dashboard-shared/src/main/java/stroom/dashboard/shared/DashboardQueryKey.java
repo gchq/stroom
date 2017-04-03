@@ -16,21 +16,20 @@
 
 package stroom.dashboard.shared;
 
-import stroom.util.shared.SharedObject;
+import java.io.Serializable;
 
-public class DashboardQueryKey implements SharedObject {
-    private static final long serialVersionUID = -3222989872764402068L;
-
+public class DashboardQueryKey implements Serializable {
     private String uuid;
     private long dashboardId;
 
     public DashboardQueryKey() {
-        // Default constructor necessary for GWT serialisation.
     }
 
-    public DashboardQueryKey(final String uuid, final long dashboardId) {
-        this.uuid = uuid;
-        this.dashboardId = dashboardId;
+    public static DashboardQueryKey create(final String uuid, final long dashboardId) {
+        final DashboardQueryKey dashboardQueryKey = new DashboardQueryKey();
+        dashboardQueryKey.uuid = uuid;
+        dashboardQueryKey.dashboardId = dashboardId;
+        return dashboardQueryKey;
     }
 
     public String getUuid() {

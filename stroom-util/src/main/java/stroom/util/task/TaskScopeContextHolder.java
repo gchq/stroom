@@ -16,14 +16,16 @@
 
 package stroom.util.task;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.shared.Task;
 
 /**
  * Class to control access to the thread scope context.
  */
 public class TaskScopeContextHolder {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(TaskScopeContextHolder.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskScopeContextHolder.class);
+
 
     private static final ThreadLocal<TaskScopeContext> THREAD_LOCAL_CONTEXT = new InheritableThreadLocal<TaskScopeContext>();
 

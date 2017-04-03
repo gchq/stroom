@@ -16,12 +16,14 @@
 
 package stroom.task.cluster;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import stroom.cluster.server.ClusterCallService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.TaskId;
 import stroom.util.thread.ThreadUtil;
@@ -34,7 +36,7 @@ import javax.inject.Named;
 @Component(value = ClusterWorkerImpl.BEAN_NAME)
 @Lazy
 public class ClusterWorkerImpl implements ClusterWorker {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterWorkerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterWorkerImpl.class);
 
     private static final Long DEBUG_RESPONSE_DELAY = null;
 
@@ -79,7 +81,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
         DebugTrace.debugTraceIn(task, EXEC_ASYNC, true);
         try {
             // Trace the source of this task if trace is enabled.
-            LOGGER.trace("Executing task '%s' for node '%s'", task.getTaskName(), sourceNode.getName());
+            LOGGER.trace("Executing task '{}' for node '{}'", task.getTaskName(), sourceNode.getName());
 
             final Node targetNode = nodeCache.getDefaultNode();
 
@@ -102,7 +104,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
                 }
             });
         } catch (final Throwable e) {
-            LOGGER.fatal(e.getMessage(), e);
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
 
         } finally {
             DebugTrace.debugTraceOut(task, EXEC_ASYNC, true);
@@ -133,14 +135,18 @@ public class ClusterWorkerImpl implements ClusterWorker {
 
         DebugTrace.debugTraceIn(task, SEND_RESULT, true);
         try {
-            LOGGER.debug("%s() - %s", SEND_RESULT, task);
+            LOGGER.debug("{}() - {}", SEND_RESULT, task);
             ThreadUtil.sleep(DEBUG_RESPONSE_DELAY);
 
             while (!done && tryCount <= 10) {
                 try {
                     // Trace attempt to send result.
-                    LOGGER.trace("Sending result for task '%s' to node '%s' (attempt=%s)", task.getTaskName(),
-                            sourceNode.getName(), tryCount);
+                    LOGGER.trace("Sending result for task '{}' to node '{}' (attempt={})",
+                            new Object[]{
+                                task.getTaskName(),
+                                sourceNode.getName(),
+                                tryCount
+                    });
                     // Send result.
                     ok = clusterCallService.call(targetNode, sourceNode, ClusterDispatchAsyncImpl.BEAN_NAME,
                             ClusterDispatchAsyncImpl.RECEIVE_RESULT_METHOD,
@@ -155,13 +161,13 @@ public class ClusterWorkerImpl implements ClusterWorker {
                 }
             }
         } catch (final Throwable e) {
-            LOGGER.fatal(e.getMessage(), e);
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
 
         } finally {
             DebugTrace.debugTraceOut(task, SEND_RESULT, true);
         }
 
-        LOGGER.trace("success=%s, done=%s", ok, done);
+        LOGGER.trace("success={}, done={}", ok, done);
 
         // If the source node could not be contacted then throw an exception.
         if (!done) {

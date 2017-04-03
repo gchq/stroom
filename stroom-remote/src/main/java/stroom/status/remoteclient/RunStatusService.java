@@ -16,6 +16,8 @@
 
 package stroom.status.remoteclient;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -23,10 +25,9 @@ import stroom.status.remote.GetStatusRequest;
 import stroom.status.remote.GetStatusResponse;
 import stroom.status.remote.GetStatusResponse.StatusEntry;
 import stroom.status.remote.RemoteStatusService;
-import stroom.util.logging.StroomLogger;
 
 public class RunStatusService {
-    static StroomLogger log = StroomLogger.getLogger(RunStatusService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RunStatusService.class);
 
     public static void main(String[] args) {
         try {
@@ -38,7 +39,7 @@ public class RunStatusService {
             GetStatusResponse response = statusService.getStatus(new GetStatusRequest());
 
             for (StatusEntry statusEntry : response.getStatusEntryList()) {
-                log.info(statusEntry.toString());
+                LOGGER.info(statusEntry.toString());
             }
         } catch (Exception ex) {
             ex.printStackTrace();

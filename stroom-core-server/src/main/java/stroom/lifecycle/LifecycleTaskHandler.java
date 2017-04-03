@@ -16,23 +16,24 @@
 
 package stroom.lifecycle;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.VoidResult;
 
 @TaskHandlerBean(task = LifecycleTask.class)
 public class LifecycleTaskHandler extends AbstractTaskHandler<LifecycleTask, VoidResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(LifecycleTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleTaskHandler.class);
 
     @Override
     public VoidResult exec(final LifecycleTask task) {
         try {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
-            LOGGER.debug("exec() - >>> %s", task.getTaskName());
+            LOGGER.debug("exec() - >>> {}", task.getTaskName());
             task.getExecutable().exec(task);
-            LOGGER.debug("exec() - <<< %s took %s", task.getTaskName(), logExecutionTime);
+            LOGGER.debug("exec() - <<< {} took {}", task.getTaskName(), logExecutionTime);
         } catch (final Throwable t) {
             LOGGER.error(t.getMessage(), t);
         }

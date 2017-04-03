@@ -22,8 +22,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +41,7 @@ import stroom.util.spring.StroomFrequencySchedule;
 
 @Component
 public class ClusterLockServiceImpl implements ClusterLockService {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterLockServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceImpl.class);
 
     @Resource
     private StroomEntityManager entityManager;
@@ -58,7 +59,7 @@ public class ClusterLockServiceImpl implements ClusterLockService {
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public void lock(final String lockName) {
-        LOGGER.debug("lock(%s) - >>>", lockName);
+        LOGGER.debug("lock({}) - >>>", lockName);
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -83,12 +84,12 @@ public class ClusterLockServiceImpl implements ClusterLockService {
             throw new IllegalStateException("No cluster lock has been found or created: " + lockName);
         }
 
-        LOGGER.debug("lock(%s) - <<< %s", lockName, logExecutionTime);
+        LOGGER.debug("lock({}) - <<< {}", lockName, logExecutionTime);
     }
 
     @Override
     public boolean tryLock(final String lockName) {
-        LOGGER.debug("tryLock(%s) - >>>", lockName);
+        LOGGER.debug("tryLock({}) - >>>", lockName);
         boolean success = false;
 
         // Don't bother the master node if we already hold the lock.
@@ -108,19 +109,19 @@ public class ClusterLockServiceImpl implements ClusterLockService {
             }
         }
 
-        LOGGER.debug("tryLock(%s) - <<< %s", lockName, success);
+        LOGGER.debug("tryLock({}) - <<< {}", lockName, success);
         return success;
     }
 
     @Override
     public void releaseLock(final String lockName) {
-        LOGGER.debug("releaseLock(%s) - >>>", lockName);
+        LOGGER.debug("releaseLock({}) - >>>", lockName);
         // Remove the lock name from the lock map.
         final ClusterLockKey clusterLockKey = lockMap.remove(lockName);
 
         boolean success = false;
         if (clusterLockKey == null) {
-            LOGGER.error("releaseLock(%s) - Lock not found", lockName);
+            LOGGER.error("releaseLock({}) - Lock not found", lockName);
         } else {
             final SharedBoolean sharedBoolean = taskManager
                     .exec(new ClusterLockTask(clusterLockKey, ClusterLockStyle.Release));
@@ -129,7 +130,7 @@ public class ClusterLockServiceImpl implements ClusterLockService {
             }
         }
 
-        LOGGER.debug("releaseLock(%s) - <<< %s", lockName, success);
+        LOGGER.debug("releaseLock({}) - <<< {}", lockName, success);
     }
 
     @Override
@@ -141,10 +142,10 @@ public class ClusterLockServiceImpl implements ClusterLockService {
             final String lockName = entry.getKey();
             final ClusterLockKey clusterLockKey = entry.getValue();
 
-            LOGGER.debug("keepAlive(%s) - >>>", lockName);
+            LOGGER.debug("keepAlive({}) - >>>", lockName);
             final SharedBoolean success = taskManager
                     .exec(new ClusterLockTask(clusterLockKey, ClusterLockStyle.KeepAlive));
-            LOGGER.debug("keepAlive(%s) - <<< %s", lockName, success);
+            LOGGER.debug("keepAlive({}) - <<< {}", lockName, success);
 
             // We should only receive FALSE if the master node knows nothing
             // about the lock we are trying to keep alive. This should only ever
@@ -155,7 +156,7 @@ public class ClusterLockServiceImpl implements ClusterLockService {
             if (Boolean.FALSE.equals(success.getBoolean())) {
                 final ClusterLockKey currentKey = lockMap.get(lockName);
                 if (currentKey != null && currentKey.equals(clusterLockKey)) {
-                    LOGGER.error("keepAlive() - Lock no longer exists - %s", clusterLockKey);
+                    LOGGER.error("keepAlive() - Lock no longer exists - {}", clusterLockKey);
                 }
             }
         }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,8 @@ package stroom.pipeline.server.factory;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.pipeline.destination.DestinationProvider;
@@ -45,7 +47,6 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.DocRef;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -62,7 +63,7 @@ import java.util.Set;
 @Component
 @Scope(StroomScope.TASK)
 public class PipelineFactory {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(PipelineFactory.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PipelineFactory.class);
     private final ElementRegistryFactory pipelineElementRegistryFactory;
     private final ElementFactory elementFactory;
     private final ProcessorFactory processorFactory;
@@ -101,7 +102,7 @@ public class PipelineFactory {
         linkSets.put(null, rootLinkSet);
 
         for (final PipelineElement element : pipelineData.getElements().getAdd()) {
-            LOGGER.debug("create() - loading element %s", element);
+            LOGGER.debug("create() - loading element {}", element);
 
             final Class<Element> elementClass = pipelineElementRegistry.getElementClass(element.getType());
 

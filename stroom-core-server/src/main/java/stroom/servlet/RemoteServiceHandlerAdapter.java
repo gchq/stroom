@@ -21,12 +21,15 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import com.google.gwt.user.server.rpc.SerializationPolicy;
+import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.context.ServletContextAware;
 import org.springframework.web.servlet.HandlerAdapter;
 import org.springframework.web.servlet.ModelAndView;
-import stroom.util.logging.StroomLogger;
 import stroom.util.thread.ThreadScopeContextHolder;
 
 import javax.annotation.Resource;
@@ -36,11 +39,17 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.ParseException;
 import java.util.Enumeration;
 
 @Component
 public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements HandlerAdapter, ServletContextAware {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(RemoteServiceHandlerAdapter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RemoteServiceHandlerAdapter.class);
+    // This path is where we expect to find the `.gwt.rpc` file. It must be valid for startup for both dev and executable
+    // jar. If you change where the webapp/ui files are stored, which is currently 'ui', then this path must change too.
+    private static final String GWT_RPC_PATH = "/ui/stroom/%s.gwt.rpc";
     private static final long serialVersionUID = -7421136737990135393L;
     private static ThreadLocal<Object> handlerHolder = new ThreadLocal<Object>();
     private transient ServletContext servletContext;
@@ -81,7 +90,7 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
             }
 
         } catch (final Exception ex) {
-            LOGGER.error("handle() - %s", request.getRequestURI(), ex);
+            LOGGER.error("handle() - {}", request.getRequestURI(), ex);
             throw ex;
         } finally {
             // Make sure this thread no longer references this request as it
@@ -160,6 +169,23 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
             // codeServerPort = getCodeServerPort();
         } catch (final ServletException e) {
             LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * We need to override this method to customise the location of the `.gwt.rpc` file.
+     * Reason: the path is different when the application is bundled as a fat jar.
+     */
+    @Override
+    protected SerializationPolicy doGetSerializationPolicy(
+            HttpServletRequest request, String moduleBaseURL, String strongName) {
+
+        String serializationPolicyFilePath = String.format(GWT_RPC_PATH, strongName);
+
+        try(InputStream is = getClass().getResourceAsStream(serializationPolicyFilePath)){
+            return SerializationPolicyLoader.loadFromStream(is, null);
+        } catch (ParseException | IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

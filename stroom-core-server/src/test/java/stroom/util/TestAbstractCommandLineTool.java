@@ -16,7 +16,8 @@
 
 package stroom.util;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import org.junit.Test;
@@ -24,7 +25,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestAbstractCommandLineTool extends StroomUnitTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestAbstractCommandLineTool.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestAbstractCommandLineTool.class);
 
     public static class TestProgram extends AbstractCommandLineTool {
         int prop1;
@@ -40,7 +41,7 @@ public class TestAbstractCommandLineTool extends StroomUnitTest {
 
         @Override
         public void run() {
-            LOGGER.info("run() - %s %s", prop1, prop2);
+            LOGGER.info("run() - {} {}", prop1, prop2);
         }
     }
 

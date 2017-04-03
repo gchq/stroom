@@ -16,10 +16,11 @@
 
 package stroom.streamstore.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.streamstore.shared.StreamAttributeValue;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import org.hsqldb.types.Types;
 import org.springframework.stereotype.Component;
@@ -35,7 +36,7 @@ import java.util.List;
 @Transactional
 @Component
 public class StreamAttributeValueServiceTransactionHelper {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StreamAttributeValueServiceTransactionHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueServiceTransactionHelper.class);
 
     @Resource
     private DataSource dataSource;
@@ -86,6 +87,6 @@ public class StreamAttributeValueServiceTransactionHelper {
                 ConnectionUtil.close(connection);
             }
         }
-        LOGGER.debug("saveBatch() - inserted %s records in %s", list.size(), logExecutionTime);
+        LOGGER.debug("saveBatch() - inserted {} records in {}", list.size(), logExecutionTime);
     }
 }

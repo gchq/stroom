@@ -16,6 +16,8 @@
 
 package stroom.statistics.server.common.search;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.Data;
 import stroom.query.Payload;
@@ -24,7 +26,6 @@ import stroom.query.Store;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskTerminatedException;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 
@@ -35,7 +36,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class StatisticsSearchStore implements Store {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StatisticsSearchStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsSearchStore.class);
 
     private final TaskManager taskManager;
     private final Task<VoidResult> task;

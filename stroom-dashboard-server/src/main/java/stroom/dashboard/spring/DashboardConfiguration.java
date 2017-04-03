@@ -16,10 +16,11 @@
 
 package stroom.dashboard.spring;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-import stroom.util.logging.StroomLogger;
 
 /**
  * Exclude other configurations that might be found accidentally during a
@@ -29,7 +30,7 @@ import stroom.util.logging.StroomLogger;
 @ComponentScan(basePackages = { "stroom.dashboard.server", "stroom.dashboard.shared" }, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class), })
 public class DashboardConfiguration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(DashboardConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardConfiguration.class);
 
     public DashboardConfiguration() {
         LOGGER.info("DashboardConfiguration loading...");

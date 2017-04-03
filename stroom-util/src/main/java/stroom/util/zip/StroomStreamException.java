@@ -16,6 +16,9 @@
 
 package stroom.util.zip;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -24,12 +27,10 @@ import java.util.zip.ZipException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import stroom.util.logging.StroomLogger;
-
 public class StroomStreamException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StroomStreamException.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomStreamException.class);
 
     private final StroomStatusCode stroomStatusCode;
 

@@ -16,12 +16,13 @@
 
 package stroom.statistics.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.CommonTestControl;
 import stroom.CommonTranslationTest;
 import stroom.streamstore.server.tools.StoreCreationTool;
 import stroom.streamtask.server.StreamTaskCreator;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -29,7 +30,7 @@ import javax.annotation.Resource;
 
 @Ignore("TODO: uncomment and update tests or delete")
 public class TestPipelineStatistics {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(TestPipelineStatistics.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestPipelineStatistics.class);
 
     @Resource
     private CommonTranslationTest commonPipelineTest;

@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.zip.*;
 import org.apache.commons.lang.StringUtils;
 
@@ -32,11 +34,10 @@ import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.zip.StroomZipEntry;
 
 public class ProxyRepositoryCreator {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ProxyRepositoryCreator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryCreator.class);
 
     private static final String INPUT_EXTENSION = ".in";
     private static final String ZIP_EXTENSION = ".zip";

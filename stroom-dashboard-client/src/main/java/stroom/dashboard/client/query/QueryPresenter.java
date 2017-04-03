@@ -61,7 +61,6 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.shared.CreateProcessorAction;
 import stroom.query.api.DocRef;
-import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
@@ -204,9 +203,9 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     protected void onBind() {
         super.onBind();
 
-        registerHandler(expressionPresenter.addDataSelectionHandler(new DataSelectionHandler<ExpressionItem>() {
+        registerHandler(expressionPresenter.addDataSelectionHandler(new DataSelectionHandler<stroom.query.client.Item>() {
             @Override
-            public void onSelection(final DataSelectionEvent<ExpressionItem> event) {
+            public void onSelection(final DataSelectionEvent<stroom.query.client.Item> event) {
                 setButtonsEnabled();
             }
         }));
@@ -264,8 +263,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             @Override
             public void onClick(final ClickEvent event) {
                 if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    final ExpressionOperator root = new ExpressionOperator();
-                    expressionPresenter.write(root);
+                    final ExpressionOperator root = expressionPresenter.write();
                     favouritesPresenter.show(QueryPresenter.this, getComponents().getDashboard().getId(),
                             getSettings().getDataSource(), root);
                 }
@@ -303,7 +301,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private void setButtonsEnabled() {
-        final ExpressionItem selectedItem = getSelectedItem();
+        final stroom.query.client.Item selectedItem = getSelectedItem();
 
         if (selectedItem == null) {
             disableItemButton.setEnabled(false);
@@ -383,8 +381,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private void choosePipeline() {
         expressionPresenter.clearSelection();
         // Write expression.
-        final ExpressionOperator root = new ExpressionOperator();
-        expressionPresenter.write(root);
+        final ExpressionOperator root = expressionPresenter.write();
 
         final QueryData queryData = new QueryData();
         queryData.setDataSource(queryComponentSettings.getDataSource());
@@ -487,8 +484,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             warningsButton.setVisible(false);
 
             // Write expression.
-            final ExpressionOperator root = new ExpressionOperator();
-            expressionPresenter.write(root);
+            final ExpressionOperator root = expressionPresenter.write();
 
             searchModel.search(root, params, incremental);
         }
@@ -508,10 +504,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         loadDataSource(queryComponentSettings.getDataSource());
 
         // Read expression.
-        ExpressionOperator root = queryComponentSettings.getExpression();
-        if (root == null) {
-            root = new ExpressionOperator();
-        }
+        final ExpressionOperator root = queryComponentSettings.getExpression();
         setExpression(root);
     }
 
@@ -520,13 +513,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         super.write(componentData);
 
         // Write expression.
-        ExpressionOperator root = queryComponentSettings.getExpression();
-        if (root == null) {
-            root = new ExpressionOperator();
-            queryComponentSettings.setExpression(root);
-        }
-        expressionPresenter.write(root);
-
+        queryComponentSettings.setExpression(expressionPresenter.write());
         componentData.setSettings(queryComponentSettings);
     }
 
@@ -642,7 +629,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private List<Item> addExpressionActionsToMenu() {
-        final ExpressionItem selectedItem = getSelectedItem();
+        final stroom.query.client.Item selectedItem = getSelectedItem();
         final boolean hasSelection = selectedItem != null;
 
         final List<Item> menuItems = new ArrayList<Item>();
@@ -678,14 +665,14 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private String getEnableDisableText() {
-        final ExpressionItem selectedItem = getSelectedItem();
+        final stroom.query.client.Item selectedItem = getSelectedItem();
         if (selectedItem != null && !selectedItem.enabled()) {
             return "Enable";
         }
         return "Disable";
     }
 
-    private ExpressionItem getSelectedItem() {
+    private stroom.query.client.Item getSelectedItem() {
         if (expressionPresenter.getSelectionModel() != null) {
             return expressionPresenter.getSelectionModel().getSelectedObject();
         }

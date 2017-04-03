@@ -27,7 +27,8 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +39,7 @@ import stroom.util.spring.StroomScope;
 @Component
 @Scope(StroomScope.TASK)
 public class StreamCloser implements Closeable {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StreamCloser.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamCloser.class);
     private final List<Closeable> list = new ArrayList<Closeable>();
     private final Map<Closeable, IOException> map = new HashMap<Closeable, IOException>();
 
@@ -94,13 +95,13 @@ public class StreamCloser implements Closeable {
                         try {
                             ((OutputStream) closeable).flush();
                         } catch (final IOException e) {
-                            LOGGER.error(e, e);
+                            LOGGER.error("Unable to flush stream!", e);
 
                             if (ioException == null) {
                                 ioException = e;
                             }
                         } catch (final Throwable e) {
-                            LOGGER.error(e, e);
+                            LOGGER.error("Unable to flush stream!", e);
 
                             if (ioException == null) {
                                 ioException = new IOException(e);
@@ -111,7 +112,7 @@ public class StreamCloser implements Closeable {
                         try {
                             ((Writer) closeable).flush();
                         } catch (final Throwable e) {
-                            LOGGER.error(e, e);
+                            LOGGER.error("Unable to flush stream!", e);
 
                             if (ioException == null) {
                                 ioException = new IOException(e);
@@ -137,13 +138,13 @@ public class StreamCloser implements Closeable {
                     }
                 }
             } catch (final IOException e) {
-                LOGGER.error(e, e);
+                LOGGER.error("Unable to close stream!", e);
 
                 if (ioException == null) {
                     ioException = e;
                 }
             } catch (final Throwable e) {
-                LOGGER.error(e, e);
+                LOGGER.error("Unable to close stream!", e);
 
                 if (ioException == null) {
                     ioException = new IOException(e);

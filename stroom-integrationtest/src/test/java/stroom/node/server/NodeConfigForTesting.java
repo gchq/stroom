@@ -22,6 +22,8 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.aop.framework.Advised;
@@ -37,12 +39,11 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
 import stroom.node.shared.VolumeState;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 
 @Component
 @Profile(StroomSpringProfiles.IT)
 public class NodeConfigForTesting implements NodeConfig {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(NodeConfigForTesting.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NodeConfigForTesting.class);
 
     private final Rack rack1 = createRack("rack1");
     private final Rack rack2 = createRack("rack2");

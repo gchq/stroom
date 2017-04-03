@@ -16,6 +16,8 @@
 
 package stroom.dashboard.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardQueryKey;
@@ -33,7 +35,6 @@ import stroom.query.api.Query;
 import stroom.security.SecurityContext;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -46,7 +47,7 @@ import java.util.Map.Entry;
 @TaskHandlerBean(task = SearchBusPollAction.class)
 @Scope(value = StroomScope.TASK)
 class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction, SearchBusPollResult> {
-    private transient static final StroomLogger LOGGER = StroomLogger.getLogger(SearchBusPollActionHandler.class);
+    private transient static final Logger LOGGER = LoggerFactory.getLogger(SearchBusPollActionHandler.class);
 
     private final QueryService queryService;
     private final SearchEventLog searchEventLog;

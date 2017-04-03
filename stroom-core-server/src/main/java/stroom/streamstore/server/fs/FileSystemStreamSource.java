@@ -20,19 +20,20 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.io.StreamCloser;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
-import stroom.util.logging.StroomLogger;
 import stroom.util.zip.HeaderMap;
 
 /**
  * A file system implementation of StreamSource.
  */
 public final class FileSystemStreamSource implements StreamSource {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileSystemStreamSource.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamSource.class);
 
     private Stream stream;
     private StreamVolume volume;

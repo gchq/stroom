@@ -18,7 +18,8 @@ package stroom.streamtask.server;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 
@@ -37,7 +38,7 @@ import stroom.util.task.TaskMonitor;
 @TaskHandlerBean(task = FileSystemCleanSubTask.class)
 @Scope(value = StroomScope.TASK)
 public class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSystemCleanSubTask, VoidResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileSystemCleanSubTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemCleanSubTaskHandler.class);
 
     @Resource
     private StreamMaintenanceService streamMaintenanceService;
@@ -65,7 +66,7 @@ public class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSyste
 
     @Override
     public VoidResult exec(final FileSystemCleanSubTask task) {
-        taskMonitor.info("Cleaning: %s - %s", task.getVolume().getPath(), task.getPath());
+        taskMonitor.info("Cleaning: {} - {}", task.getVolume().getPath(), task.getPath());
 
         if (taskMonitor.isTerminated() || task.getParentTask().isTerminated()) {
             LOGGER.info("exec() - Been asked to Quit");

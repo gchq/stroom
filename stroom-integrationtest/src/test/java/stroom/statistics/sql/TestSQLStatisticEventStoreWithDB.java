@@ -18,6 +18,8 @@ package stroom.statistics.sql;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.entity.server.util.ConnectionUtil;
@@ -34,7 +36,6 @@ import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.exception.StatisticsEventValidationException;
 import stroom.statistics.shared.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.TerminateHandler;
 import stroom.util.task.TaskMonitor;
@@ -50,7 +51,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestSQLStatisticEventStoreWithDB.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticEventStoreWithDB.class);
+
     private static final String STAT_NAME = "MyStat";
     private static final String TAG1 = "Tag1";
     private static final String TAG1_VAL = "Tag1Value1";

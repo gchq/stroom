@@ -18,6 +18,8 @@ package stroom.statistics.sql;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.entity.server.util.ConnectionUtil;
@@ -29,7 +31,6 @@ import stroom.statistics.shared.StatisticType;
 import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.TerminateHandler;
 import stroom.util.task.TaskMonitor;
@@ -46,7 +47,7 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestSQLStatisticAggregationManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticAggregationManager.class);
 
     @Resource
     private CommonTestControl commonTestControl;
@@ -325,7 +326,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
             Assert.assertEquals(expectedCountTotalByPrecision * 13,
                     getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION));
 
-            LOGGER.info("Test ran in %s", time);
+            LOGGER.info("Test ran in {}", time);
         }
     }
 
@@ -488,7 +489,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
             Assert.assertEquals(expectedCountTotalByPrecision * 7,
                     getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION));
 
-            LOGGER.info("Test ran in %s", time);
+            LOGGER.info("Test ran in {}", time);
         }
     }
 

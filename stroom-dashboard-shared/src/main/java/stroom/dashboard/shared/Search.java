@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.Map;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "dateTimeLocale", "incremental"})
+@XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "incremental"})
 public class Search implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
@@ -45,9 +45,6 @@ public class Search implements Serializable {
     private Map<String, String> paramMap;
 
     @XmlElement
-    private String dateTimeLocale;
-
-    @XmlElement
     private Boolean incremental;
 
     public Search() {
@@ -55,22 +52,20 @@ public class Search implements Serializable {
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression) {
-        this(dataSourceRef, expression, null, Collections.emptyMap(), "UTC", true);
+        this(dataSourceRef, expression, null, Collections.emptyMap(), true);
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
                   final Map<String, ComponentSettings> componentSettingsMap) {
-        this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), "UTC", true);
+        this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), true);
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
-                  final Map<String, ComponentSettings> componentSettingsMap, final Map<String, String> paramMap,
-                  final String dateTimeLocale, final Boolean incremental) {
+                  final Map<String, ComponentSettings> componentSettingsMap, final Map<String, String> paramMap, final Boolean incremental) {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
         this.paramMap = paramMap;
-        this.dateTimeLocale = dateTimeLocale;
         this.incremental = incremental;
     }
 
@@ -90,10 +85,6 @@ public class Search implements Serializable {
         return paramMap;
     }
 
-    public String getDateTimeLocale() {
-        return dateTimeLocale;
-    }
-
     public Boolean getIncremental() {
         return incremental;
     }
@@ -105,14 +96,13 @@ public class Search implements Serializable {
 
         final Search search = (Search) o;
 
-        if (incremental != search.incremental) return false;
         if (dataSourceRef != null ? !dataSourceRef.equals(search.dataSourceRef) : search.dataSourceRef != null)
             return false;
         if (expression != null ? !expression.equals(search.expression) : search.expression != null) return false;
         if (componentSettingsMap != null ? !componentSettingsMap.equals(search.componentSettingsMap) : search.componentSettingsMap != null)
             return false;
         if (paramMap != null ? !paramMap.equals(search.paramMap) : search.paramMap != null) return false;
-        return dateTimeLocale != null ? dateTimeLocale.equals(search.dateTimeLocale) : search.dateTimeLocale == null;
+        return incremental != null ? incremental.equals(search.incremental) : search.incremental == null;
     }
 
     @Override
@@ -121,20 +111,7 @@ public class Search implements Serializable {
         result = 31 * result + (expression != null ? expression.hashCode() : 0);
         result = 31 * result + (componentSettingsMap != null ? componentSettingsMap.hashCode() : 0);
         result = 31 * result + (paramMap != null ? paramMap.hashCode() : 0);
-        result = 31 * result + (dateTimeLocale != null ? dateTimeLocale.hashCode() : 0);
-        result = 31 * result + (incremental ? 1 : 0);
+        result = 31 * result + (incremental != null ? incremental.hashCode() : 0);
         return result;
-    }
-
-    @Override
-    public String toString() {
-        return "Search{" +
-                "dataSourceRef=" + dataSourceRef +
-                ", expression=" + expression +
-                ", componentSettingsMap=" + componentSettingsMap +
-                ", paramMap=" + paramMap +
-                ", dateTimeLocale='" + dateTimeLocale + '\'' +
-                ", incremental=" + incremental +
-                '}';
     }
 }

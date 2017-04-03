@@ -21,14 +21,15 @@ import event.logging.Event;
 import event.logging.Group;
 import event.logging.Outcome;
 import event.logging.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 
 @Component
 public class AuthorisationEventLog {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AuthorisationEventLog.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthorisationEventLog.class);
 
     @Resource
     private StroomEventLoggingService eventLoggingService;
@@ -75,7 +76,7 @@ public class AuthorisationEventLog {
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error("Unable to create authorisation event!", e);
         }
     }
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,8 @@ import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
@@ -71,7 +73,6 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.StroomLogger;
 import stroom.util.zip.HeaderMap;
 
 import javax.inject.Inject;
@@ -105,7 +106,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     public static final String MYSQL_INDEX_STRM_EFFECT_MS_IDX = "STRM_EFFECT_MS_IDX";
     public static final String MYSQL_INDEX_STRM_PARNT_STRM_ID_IDX = "STRM_PARNT_STRM_ID_IDX";
     public static final String MYSQL_INDEX_STRM_FK_STRM_PROC_ID_CRT_MS_IDX = "STRM_FK_STRM_PROC_ID_CRT_MS_IDX";
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileSystemStreamStoreImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamStoreImpl.class);
     private static final Set<String> SOURCE_FETCH_SET;
 
     static {
@@ -352,7 +353,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
         final Stream stream = loadStreamById(streamId, SOURCE_FETCH_SET, anyStatus);
         if (stream != null) {
-            LOGGER.debug("openStreamSource() %s", stream.getId());
+            LOGGER.debug("openStreamSource() {}", stream.getId());
 
             final Set<StreamVolume> volumeSet = findStreamVolume(stream.getId());
             if (volumeSet.isEmpty()) {
@@ -591,7 +592,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         try {
             target.close();
         } catch (final IOException e) {
-            LOGGER.error(e);
+            LOGGER.error("Unable to delete stream target!", e);
         }
 
         // Make sure the stream data is deleted.
@@ -606,7 +607,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             // Close the stream source.
             streamSource.close();
         } catch (final Exception e) {
-            LOGGER.error(e);
+            LOGGER.error("Unable to close stream source!", e);
         }
     }
 
@@ -619,7 +620,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             // Close the stream target.
             streamTarget.close();
         } catch (final Exception e) {
-            LOGGER.error("closeStreamTarget() - Error on closing stream %s", streamTarget, e);
+            LOGGER.error("closeStreamTarget() - Error on closing stream {}", streamTarget, e);
             streamCloseException = e;
         }
 
@@ -656,7 +657,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
             }
         } catch (final Exception e) {
-            LOGGER.error("closeStreamTarget() - Error on writing Manifest %s", streamTarget, e);
+            LOGGER.error("closeStreamTarget() - Error on writing Manifest {}", streamTarget, e);
         }
 
         if (streamCloseException == null) {

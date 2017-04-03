@@ -16,11 +16,12 @@
 
 package stroom.headless;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.test.ComparisonHelper;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.zip.ZipUtil;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
@@ -33,7 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 
 public class TestHeadless {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestHeadless.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestHeadless.class);
 
     // TODO : Add new data to test headless.
 

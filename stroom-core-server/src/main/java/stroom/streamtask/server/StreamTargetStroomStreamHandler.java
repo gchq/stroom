@@ -16,6 +16,8 @@
 
 package stroom.streamtask.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.statistic.server.MetaDataStatistic;
@@ -26,7 +28,6 @@ import stroom.streamstore.server.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.CloseableUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.zip.*;
 import stroom.util.zip.StroomZipEntry;
 
@@ -57,7 +58,7 @@ import java.util.Set;
  * to be different we must throw an exception.
  */
 public class StreamTargetStroomStreamHandler implements StroomStreamHandler, StroomHeaderStreamHandler, Closeable {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StreamTargetStroomStreamHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamTargetStroomStreamHandler.class);
 
     private final StreamStore streamStore;
     private final FeedService feedService;

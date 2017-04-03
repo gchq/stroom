@@ -30,13 +30,14 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import stroom.entity.server.util.XMLUtil;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.util.CharBuffer;
-import stroom.util.logging.StroomLogger;
 import stroom.xml.event.simple.StartElement;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.query.QueryResult;
@@ -44,7 +45,7 @@ import net.sf.saxon.s9api.Serializer.Property;
 import net.sf.saxon.xpath.XPathEvaluator;
 
 public final class EventListUtils {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(EventListUtils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EventListUtils.class);
 
     private static final String XML = "xml";
     private static final String UTF_8 = "UTF-8";
@@ -202,7 +203,7 @@ public final class EventListUtils {
                 }
             });
         } catch (final SAXException e) {
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
         }
 
         final String text = cb.toString();

@@ -25,7 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import stroom.entity.server.event.EntityEvent;
@@ -89,7 +90,8 @@ public class XMLSchemaCache implements EntityEvent.Handler {
         }
     }
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(XMLSchemaCache.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(XMLSchemaCache.class);
+
     private static final long TEN_MINUTES = 1000 * 60 * 10;
 
     private static final FindXMLSchemaCriteria ALL = new FindXMLSchemaCriteria();
@@ -123,7 +125,7 @@ public class XMLSchemaCache implements EntityEvent.Handler {
             try {
                 clearHandler.onClear();
             } catch (final Exception e) {
-                LOGGER.error(e, e);
+                LOGGER.error("Unable to clear cache!", e);
             }
         }
     }
@@ -189,7 +191,7 @@ public class XMLSchemaCache implements EntityEvent.Handler {
                 }
 
             } catch (final Exception e) {
-                LOGGER.error(e, e);
+                LOGGER.error("Unable to get schema set!", e);
             }
         }
 

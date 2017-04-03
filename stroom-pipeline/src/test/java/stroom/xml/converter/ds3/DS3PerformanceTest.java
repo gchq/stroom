@@ -37,6 +37,8 @@ import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 
 import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
@@ -48,11 +50,10 @@ import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.xml.converter.SchemaFilterFactory;
 
 public class DS3PerformanceTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(DS3PerformanceTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DS3PerformanceTest.class);
 
     private static final int ITERATIONS = 1;
     private static final int INPUT_LINES = 10000000;

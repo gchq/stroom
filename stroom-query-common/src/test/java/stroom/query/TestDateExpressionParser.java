@@ -26,7 +26,6 @@ import java.time.ZonedDateTime;
 public class TestDateExpressionParser {
     private final Instant instant = Instant.parse("2015-02-03T01:22:33.056Z");
     private final long nowEpochMilli = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).toInstant().toEpochMilli();
-    private final DateExpressionParser dateExpressionParser = new DateExpressionParser();
 
     @Test
     public void testSimple() {
@@ -35,91 +34,127 @@ public class TestDateExpressionParser {
     }
 
     private void testSimple(final String time) {
-        Assert.assertEquals(ZonedDateTime.parse(time), dateExpressionParser.parse(time, nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse(time),
+                DateExpressionParser.parse(time, nowEpochMilli).get());
     }
 
     @Test
     public void testComplex1() {
-        Assert.assertEquals(ZonedDateTime.parse("2017-02-03T01:22:33.056Z"), dateExpressionParser.parse("2015-02-03T01:22:33.056Z + 2y", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2017-02-03T01:22:33.056Z"),
+                DateExpressionParser.parse("2015-02-03T01:22:33.056Z + 2y", nowEpochMilli).get());
     }
 
     @Test
     public void testComplex2() {
-        Assert.assertEquals(ZonedDateTime.parse("2017-02-06T02:22:35.056Z"), dateExpressionParser.parse("2015-02-03T01:22:33.056Z + 2y+3d+1h+2s", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2017-02-06T02:22:35.056Z"),
+                DateExpressionParser.parse("2015-02-03T01:22:33.056Z + 2y+3d+1h+2s", nowEpochMilli).get());
     }
 
     @Test
     public void testComplex3() {
-        Assert.assertEquals(ZonedDateTime.parse("2017-02-06T02:22:35.056Z"), dateExpressionParser.parse("2015-02-03T01:22:33.056Z + 2y3d1h2s", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2017-02-06T02:22:35.056Z"),
+                DateExpressionParser.parse("2015-02-03T01:22:33.056Z + 2y3d1h2s", nowEpochMilli).get());
     }
 
     @Test
     public void testComplex4() {
-        Assert.assertEquals(ZonedDateTime.parse("2017-01-31T00:22:31.056Z"), dateExpressionParser.parse("2015-02-03T01:22:33.056Z + 2y-3d1h2s", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2017-01-31T00:22:31.056Z"),
+                DateExpressionParser.parse("2015-02-03T01:22:33.056Z + 2y-3d1h2s", nowEpochMilli).get());
     }
 
     @Test
     public void testComplex5() {
-        Assert.assertEquals(ZonedDateTime.parse("2017-01-31T00:22:35.056Z"), dateExpressionParser.parse("2015-02-03T01:22:33.056Z + 2y-3d1h+2s", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2017-01-31T00:22:35.056Z"),
+                DateExpressionParser.parse("2015-02-03T01:22:33.056Z + 2y-3d1h+2s", nowEpochMilli).get());
     }
 
     @Test
     public void testComplex6() {
-        Assert.assertEquals(ZonedDateTime.parse("2017-01-31T00:22:31.056Z"), dateExpressionParser.parse("2015-02-03T01:22:33.056Z + 2y-3d1h-2s", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2017-01-31T00:22:31.056Z"),
+                DateExpressionParser.parse("2015-02-03T01:22:33.056Z + 2y-3d1h-2s", nowEpochMilli).get());
     }
 
     @Test
     public void testNow() {
-        Assert.assertEquals(ZonedDateTime.parse("2015-02-03T01:22:33.056Z"), dateExpressionParser.parse("now()", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2015-02-03T01:22:33.056Z"),
+                DateExpressionParser.parse("now()", nowEpochMilli).get());
     }
 
     @Test
     public void testSecond() {
-        Assert.assertEquals(ZonedDateTime.parse("2015-02-03T01:22:33.000Z"), dateExpressionParser.parse("second()", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2015-02-03T01:22:33.000Z"),
+                DateExpressionParser.parse("second()", nowEpochMilli).get());
     }
 
     @Test
     public void testMinute() {
-        Assert.assertEquals(ZonedDateTime.parse("2015-02-03T01:22:00.000Z"), dateExpressionParser.parse("minute()", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2015-02-03T01:22:00.000Z"),
+                DateExpressionParser.parse("minute()", nowEpochMilli).get());
     }
 
     @Test
     public void testHour() {
-        Assert.assertEquals(ZonedDateTime.parse("2015-02-03T01:00:00.000Z"), dateExpressionParser.parse("hour()", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2015-02-03T01:00:00.000Z"),
+                DateExpressionParser.parse("hour()", nowEpochMilli).get());
     }
 
     @Test
     public void testDay() {
-        Assert.assertEquals(ZonedDateTime.parse("2015-02-03T00:00:00.000Z"), dateExpressionParser.parse("day()", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2015-02-03T00:00:00.000Z"),
+                DateExpressionParser.parse("day()", nowEpochMilli).get());
     }
 
     @Test
     public void testWeek() {
-        Assert.assertEquals(ZonedDateTime.parse("2015-02-02T00:00:00.000Z"), dateExpressionParser.parse("week()", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2015-02-02T00:00:00.000Z"),
+                DateExpressionParser.parse("week()", nowEpochMilli).get());
     }
 
     @Test
     public void testMonth() {
-        Assert.assertEquals(ZonedDateTime.parse("2015-02-01T00:00:00.000Z"), dateExpressionParser.parse("month()", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2015-02-01T00:00:00.000Z"),
+                DateExpressionParser.parse("month()", nowEpochMilli).get());
     }
 
     @Test
     public void testYear() {
-        Assert.assertEquals(ZonedDateTime.parse("2015-01-01T00:00:00.000Z"), dateExpressionParser.parse("year()", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2015-01-01T00:00:00.000Z"),
+                DateExpressionParser.parse("year()", nowEpochMilli).get());
     }
 
     @Test
     public void testSecondPlus() {
-        Assert.assertEquals(ZonedDateTime.parse("2015-02-07T01:22:33.000Z"), dateExpressionParser.parse("second()+4d", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2015-02-07T01:22:33.000Z"),
+                DateExpressionParser.parse("second()+4d", nowEpochMilli).get());
     }
 
     @Test
     public void testHourMinus() {
-        Assert.assertEquals(ZonedDateTime.parse("2015-02-03T05:00:00.000Z"), dateExpressionParser.parse("hour()+5h-1h", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2015-02-03T05:00:00.000Z"),
+                DateExpressionParser.parse("hour()+5h-1h", nowEpochMilli).get());
     }
 
     @Test
     public void testWeekPlus() {
-        Assert.assertEquals(ZonedDateTime.parse("2015-02-09T00:00:00.000Z"), dateExpressionParser.parse("week()+1w", nowEpochMilli));
+        Assert.assertEquals(
+                ZonedDateTime.parse("2015-02-09T00:00:00.000Z"),
+                DateExpressionParser.parse("week()+1w", nowEpochMilli).get());
     }
 }

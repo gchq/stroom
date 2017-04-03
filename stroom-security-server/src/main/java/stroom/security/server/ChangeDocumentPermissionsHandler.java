@@ -16,6 +16,8 @@
 
 package stroom.security.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
@@ -35,7 +37,6 @@ import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -50,7 +51,7 @@ import java.util.Set;
 @Insecure
 public class ChangeDocumentPermissionsHandler
         extends AbstractTaskHandler<ChangeDocumentPermissionsAction, VoidResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ChangeDocumentPermissionsHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChangeDocumentPermissionsHandler.class);
 
     private final DocumentPermissionService documentPermissionService;
     private final DocumentPermissionsCache documentPermissionsCache;

@@ -16,7 +16,8 @@
 
 package stroom.util.concurrent;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.thread.ThreadUtil;
 
 import java.util.concurrent.ExecutorService;
@@ -29,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * counts.
  */
 public class SimpleExecutor {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(SimpleExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SimpleExecutor.class);
 
     private static final int THREAD_SLEEP_MS = 100;
     private static final int LOGGING_DEBUG_MS = 1000;

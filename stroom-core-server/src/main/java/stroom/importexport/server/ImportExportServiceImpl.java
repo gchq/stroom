@@ -21,7 +21,8 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import stroom.entity.server.util.EntityServiceExceptionUtil;
@@ -38,7 +39,7 @@ import stroom.util.zip.ZipUtil;
  */
 @Component
 public class ImportExportServiceImpl implements ImportExportService {
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(ImportExportServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportServiceImpl.class);
 
     @Resource
     private ImportExportSerializer importExportSerializer;

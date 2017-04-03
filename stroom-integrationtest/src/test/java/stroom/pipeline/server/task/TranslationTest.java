@@ -17,6 +17,8 @@
 package stroom.pipeline.server.task;
 
 import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
@@ -55,7 +57,6 @@ import stroom.test.ComparisonHelper;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Indicators;
 import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
@@ -83,7 +84,8 @@ import java.util.HashMap;
 import java.util.List;
 
 public abstract class TranslationTest extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TranslationTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TranslationTest.class);
+
     private static final int OLD_YEAR = 2006;
 
     @Resource

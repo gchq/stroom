@@ -16,17 +16,18 @@
 
 package stroom.util.thread;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import stroom.util.logging.StroomLogger;
 
 /**
  * Class to hold the spring thread bound variables.
  */
 public class ThreadScopeContext {
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(ThreadScopeContext.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ThreadScopeContext.class);
 
     private final Map<String, Object> beanMap;
 

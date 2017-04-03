@@ -16,11 +16,12 @@
 
 package stroom.cluster.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.EntityServiceException;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.security.Insecure;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.thread.ThreadScopeContextHolder;
@@ -35,7 +36,7 @@ import java.lang.reflect.Method;
  */
 @Component("clusterCallServiceLocal")
 class ClusterCallServiceLocal implements ClusterCallService {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterCallServiceLocal.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterCallServiceLocal.class);
 
     private final StroomBeanStore beanStore;
     private final NodeCache nodeCache;

@@ -16,6 +16,8 @@
 
 package stroom.refdata.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.context.annotation.Profile;
 import org.xml.sax.SAXException;
@@ -25,14 +27,13 @@ import stroom.refdata.MapStoreBuilder;
 import stroom.refdata.MapStoreBuilderImpl;
 import stroom.refdata.MapStoreCacheKey;
 import stroom.refdata.ReferenceDataLoader;
-import stroom.util.logging.StroomLogger;
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
 
 @Profile(StroomSpringProfiles.TEST)
 public class MockReferenceDataLoader implements ReferenceDataLoader {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(MockReferenceDataLoader.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MockReferenceDataLoader.class);
 
     @Override
     public MapStore load(final MapStoreCacheKey effectiveFeed) {
@@ -51,7 +52,7 @@ public class MockReferenceDataLoader implements ReferenceDataLoader {
                 mapStoreBuilder.setEvents("TEST_MAP", "TEST_KEY_" + (i + 1), eventList, false);
 
             } catch (final SAXException e) {
-                LOGGER.error(e, e);
+                LOGGER.error(e.getMessage(), e);
             }
         }
 

@@ -16,10 +16,11 @@
 
 package stroom.cluster.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.remote.StroomHessianProxyFactory;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomBeanStore;
@@ -41,7 +42,7 @@ import java.util.Map;
  */
 @Component("clusterCallServiceRemote")
 class ClusterCallServiceRemote implements ClusterCallService {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterCallServiceRemote.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterCallServiceRemote.class);
 
     private final NodeCache nodeCache;
     private final StroomBeanStore beanStore;

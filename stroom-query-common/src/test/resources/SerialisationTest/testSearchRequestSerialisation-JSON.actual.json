@@ -87,7 +87,8 @@
         "uuid" : "docRefUuid2",
         "name" : "docRefName2"
       },
-      "maxResults" : [ 1, 2 ]
+      "maxResults" : [ 1, 2 ],
+      "showDetail" : false
     } ],
     "requestedRange" : {
       "offset" : 1,
@@ -95,5 +96,6 @@
     },
     "resultStyle" : "TABLE"
   } ],
-  "dateTimeLocale" : "en-gb"
+  "dateTimeLocale" : "en-gb",
+  "incremental" : true
 }

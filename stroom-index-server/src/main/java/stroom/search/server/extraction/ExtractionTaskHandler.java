@@ -17,6 +17,8 @@
 package stroom.search.server.extraction;
 
 import net.sf.ehcache.CacheException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
@@ -46,7 +48,6 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
@@ -60,7 +61,7 @@ import java.util.List;
 @TaskHandlerBean(task = ExtractionTask.class)
 @Scope(value = StroomScope.TASK)
 public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, VoidResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ExtractionTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskHandler.class);
 
     private final StreamStore streamStore;
     private final FeedService feedService;

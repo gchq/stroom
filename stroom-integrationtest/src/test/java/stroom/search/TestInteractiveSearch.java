@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonIndexingTest;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
@@ -32,6 +31,7 @@ import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Field;
+import stroom.query.api.FieldBuilder;
 import stroom.query.api.Format;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
@@ -45,7 +45,6 @@ import stroom.query.api.TableSettings;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
-import stroom.search.server.SearchResource;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
@@ -64,7 +63,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
+public class TestInteractiveSearch extends AbstractSearchTest {
     @Resource
     private CommonIndexingTest commonIndexingTest;
     @Resource
@@ -73,8 +72,6 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
     private DictionaryService dictionaryService;
     @Resource
     private TaskManager taskManager;
-    @Resource
-    private SearchResource searchService;
 
     @Override
     protected boolean doSingleSetup() {
@@ -393,8 +390,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         final List<ResultRequest> resultRequests = new ArrayList<>(componentIds.size());
 
         for (final String componentId : componentIds) {
-            final TableSettings tableSettings = createTableSettings(index);
-            tableSettings.setExtractValues(extractValues);
+            final TableSettings tableSettings = createTableSettings(index, extractValues);
 
             final ResultRequest tableResultRequest = new ResultRequest(componentId, tableSettings);
             resultRequests.add(tableResultRequest);
@@ -402,21 +398,8 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final Query query = new Query(dataSourceRef, expressionIn.build());
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId());
-
-        SearchResponse searchResponse = searchService.search(searchRequest);
-
-        try {
-            while (!searchResponse.complete()) {
-                searchResponse = searchService.search(searchRequest);
-
-                if (!searchResponse.complete()) {
-                    ThreadUtil.sleep(1000);
-                }
-            }
-        } finally {
-            searchService.destroy(queryKey);
-        }
+        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
+        final SearchResponse searchResponse = search(searchRequest);
 
         final Map<String, List<Row>> rows = new HashMap<>();
         if (searchResponse != null && searchResponse.getResults() != null) {
@@ -515,21 +498,20 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         Assert.assertEquals(expectResultCount, count);
     }
 
-    private TableSettings createTableSettings(final Index index) {
-        final Field idField = new Field("Id");
-        idField.setExpression(ParamUtil.makeParam("StreamId"));
+    private TableSettings createTableSettings(final Index index, final boolean extractValues) {
+        final Field idField = new FieldBuilder()
+                .name("Id")
+                .expression(ParamUtil.makeParam("StreamId"))
+                .build();
 
-        final Field timeField = new Field("Event Time");
-        timeField.setExpression(ParamUtil.makeParam("EventTime"));
-        timeField.setFormat(new Format(Format.Type.DATE_TIME));
-
-        final TableSettings tableSettings = new TableSettings();
-        tableSettings.setFields(Arrays.asList(idField, timeField));
+        final Field timeField = new FieldBuilder()
+                .name("Event Time")
+                .expression(ParamUtil.makeParam("EventTime"))
+                .format(Format.Type.DATE_TIME)
+                .build();
 
         final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultPipeline();
-        tableSettings.setExtractionPipeline(DocRefUtil.create(resultPipeline));
-
-        return tableSettings;
+        return new TableSettings(null, Arrays.asList(idField, timeField), extractValues, DocRefUtil.create(resultPipeline), null, null);
     }
 
     private ExpressionBuilder buildExpression(final String userField, final String userTerm, final String from,

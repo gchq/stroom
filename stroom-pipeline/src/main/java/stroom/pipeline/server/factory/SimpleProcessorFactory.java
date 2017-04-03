@@ -20,17 +20,19 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.ErrorStatistics;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.task.server.TaskCallback;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 
 public class SimpleProcessorFactory implements ProcessorFactory {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SimpleProcessorFactory.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SimpleProcessorFactory.class);
 
     private static class MultiWayProcessor implements Processor {
         private final List<Processor> processors;
@@ -124,7 +126,7 @@ public class SimpleProcessorFactory implements ProcessorFactory {
                     ((ErrorStatistics) errorReceiver).checkRecord(-1);
                 }
             } else {
-                LOGGER.fatal(t, t);
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), t.getMessage(), t);
             }
         }
     }

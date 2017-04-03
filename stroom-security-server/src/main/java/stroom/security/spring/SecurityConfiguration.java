@@ -20,6 +20,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.AbstractShiroFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +33,6 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import stroom.security.server.DBRealm;
 import stroom.security.server.JWTAuthenticationFilter;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
@@ -53,12 +54,21 @@ import java.util.Properties;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = {"stroom.security.server", "stroom.security.shared"}, excludeFilters = {
-        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
+@ComponentScan(
+        basePackages = {"stroom.security.server", "stroom.security.shared"},
+        excludeFilters = {
+            @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class)
+        }
+)
 public class SecurityConfiguration {
     public static final String PROD_SECURITY = "PROD_SECURITY";
     public static final String MOCK_SECURITY = "MOCK_SECURITY";
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SecurityConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityConfiguration.class);
+
+    public SecurityConfiguration(){
+        LOGGER.info("SecurityConfiguration loading...");
+    }
+
     @Resource
     private DBRealm dbRealm;
 
@@ -69,12 +79,9 @@ public class SecurityConfiguration {
         shiroFilter.setLoginUrl("/login.html");
         shiroFilter.setSuccessUrl("/stroom.jsp");
         shiroFilter.getFilters().put("jwtFilter", new JWTAuthenticationFilter());
-//        shiroFilter.getFilterChainDefinitionMap().put("/**/secure/*", "authc, roles[USER]");
-        shiroFilter.getFilterChainDefinitionMap().put("/rest/*", "jwtFilter");
-        shiroFilter.getFilterChainDefinitionMap().put("/rest/**/*", "jwtFilter");
-        shiroFilter.getFilterChainDefinitionMap().put("/index", "jwtFilter");
-        shiroFilter.getFilterChainDefinitionMap().put("/index/*", "jwtFilter");
-        shiroFilter.getFilterChainDefinitionMap().put("/**/rest/*", "jwtFilter");
+        shiroFilter.getFilterChainDefinitionMap().put("/**/secure/**", "authc, roles[USER]");
+        shiroFilter.getFilterChainDefinitionMap().put("/api/auth/getToken", "anon");
+        shiroFilter.getFilterChainDefinitionMap().put("/api/**", "jwtFilter");
         return (AbstractShiroFilter) shiroFilter.getObject();
     }
 

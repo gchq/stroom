@@ -35,7 +35,7 @@ public final class OffsetRange implements Serializable {
     @XmlElement
     private Long length;
 
-    public OffsetRange() {
+    private OffsetRange() {
     }
 
     public OffsetRange(final Integer offset, final Integer length) {
@@ -52,16 +52,8 @@ public final class OffsetRange implements Serializable {
         return offset;
     }
 
-    public void setOffset(final Long offset) {
-        this.offset = offset;
-    }
-
     public Long getLength() {
         return length;
-    }
-
-    public void setLength(final Long length) {
-        this.length = length;
     }
 
     @Override

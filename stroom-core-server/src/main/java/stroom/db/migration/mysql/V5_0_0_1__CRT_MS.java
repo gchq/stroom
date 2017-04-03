@@ -16,14 +16,15 @@
 
 package stroom.db.migration.mysql;
 
-import stroom.util.logging.StroomLogger;
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.Statement;
 
 public class V5_0_0_1__CRT_MS implements JdbcMigration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(V5_0_0_1__CRT_MS.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_1__CRT_MS.class);
 
     private static final String[] TABLES = {"SYS_GRP", "SYS_ROLE", "SYS_PERM", "SYS_USR", "RK", "ND", "VOL", "DICT",
             "STRM_TP", "FD", "GLOB_PROP", "IDX", "IDX_SHRD", "JB", "JB_ND", "PIPE", "STRM_PROC", "STRM_ATR_KEY",

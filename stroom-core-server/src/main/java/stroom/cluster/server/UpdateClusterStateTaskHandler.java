@@ -16,6 +16,8 @@
 
 package stroom.cluster.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
@@ -24,7 +26,6 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.thread.ThreadUtil;
@@ -38,7 +39,7 @@ import java.util.Set;
 @TaskHandlerBean(task = UpdateClusterStateTask.class)
 @Scope(StroomScope.TASK)
 class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterStateTask, VoidResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(UpdateClusterStateTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UpdateClusterStateTaskHandler.class);
 
     private final NodeService nodeService;
     private final NodeCache nodeCache;
@@ -147,7 +148,7 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
                         addEnabledActiveNode(clusterState, node);
 
                     } catch (final Throwable ex) {
-                        LOGGER.warn("discover() - unable to contact %s - %s", node.getName(), ex.getMessage());
+                        LOGGER.warn("discover() - unable to contact {} - {}", node.getName(), ex.getMessage());
                         removeEnabledActiveNode(clusterState, node);
                     }
                 });

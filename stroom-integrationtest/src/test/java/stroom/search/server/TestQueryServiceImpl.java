@@ -44,6 +44,7 @@ import stroom.security.shared.UserService;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 
 public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     private static Logger LOGGER = LoggerFactory.getLogger(TestQueryServiceImpl.class);
@@ -80,7 +81,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         refQuery = queryService.create(null, "Ref query");
         refQuery.setDashboard(dashboard);
-        refQuery.setQuery(new Query(dataSourceRef, new ExpressionOperator()));
+        refQuery.setQuery(new Query(dataSourceRef, new ExpressionOperator(null, Op.AND, Arrays.asList())));
         queryService.save(refQuery);
 
         // Ensure the two query creation times are separated by one second so that ordering by time works correctly in

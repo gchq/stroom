@@ -16,6 +16,8 @@
 
 package stroom.entity.server.event;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.NodeNotFoundException;
@@ -23,7 +25,6 @@ import stroom.task.cluster.NullClusterStateException;
 import stroom.task.cluster.TargetNodeSetFactory;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
@@ -34,7 +35,7 @@ import java.util.Set;
 @TaskHandlerBean(task = DispatchEntityEventTask.class)
 @Scope(StroomScope.TASK)
 class DispatchEntityEventTaskHandler extends AbstractTaskHandler<DispatchEntityEventTask, VoidResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(DispatchEntityEventTaskHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DispatchEntityEventTaskHandler.class);
 
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final TargetNodeSetFactory targetNodeSetFactory;

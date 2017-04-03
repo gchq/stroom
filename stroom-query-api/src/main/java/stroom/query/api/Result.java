@@ -44,7 +44,7 @@ public abstract class Result implements Serializable {
     @XmlElement
     private String componentId;
 
-    public Result() {
+    Result() {
     }
 
     public Result(final String componentId) {
@@ -53,10 +53,6 @@ public abstract class Result implements Serializable {
 
     public String getComponentId() {
         return componentId;
-    }
-
-    public void setComponentId(final String componentId) {
-        this.componentId = componentId;
     }
 
     @Override

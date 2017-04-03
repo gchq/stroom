@@ -16,6 +16,8 @@
 
 package stroom.statistics.server.common.engines;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.FolderService;
 import stroom.explorer.server.AbstractExplorerDataProvider;
@@ -27,7 +29,6 @@ import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.FindStatisticsEntityCriteria;
 import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -41,7 +42,7 @@ import java.util.Set;
 @Component
 public class StatisticsDataSourceExplorerDataProvider
         extends AbstractExplorerDataProvider<StatisticStoreEntity, FindStatisticsEntityCriteria> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StatisticsDataSourceExplorerDataProvider.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsDataSourceExplorerDataProvider.class);
 
     private static final Set<String> tags = new HashSet<>();
 
@@ -56,7 +57,7 @@ public class StatisticsDataSourceExplorerDataProvider
     StatisticsDataSourceExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService, final StatisticStoreEntityService statisticsDataSourceService,
                                              final StroomPropertyService stroomPropertyService) {
         super(folderService);
-        LOGGER.debug("Initialising: %s", this.getClass().getCanonicalName());
+        LOGGER.debug("Initialising: {}", this.getClass().getCanonicalName());
         this.statisticsDataSourceService = statisticsDataSourceService;
         this.stroomPropertyService = stroomPropertyService;
     }

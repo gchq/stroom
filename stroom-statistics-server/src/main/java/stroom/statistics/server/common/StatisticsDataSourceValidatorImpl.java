@@ -16,7 +16,8 @@
 
 package stroom.statistics.server.common;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import stroom.statistics.common.StatisticStoreValidator;
@@ -25,24 +26,24 @@ import stroom.statistics.shared.StatisticType;
 
 @Component
 public class StatisticsDataSourceValidatorImpl implements StatisticStoreValidator {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StatisticsDataSourceValidatorImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsDataSourceValidatorImpl.class);
 
     @Override
     public boolean validateStatisticDataSource(final String statisticName, final String engineName,
             final StatisticType statisticType, final StatisticStoreEntity statisticsDataSource) {
         if (statisticsDataSource == null) {
             LOGGER.warn(
-                    "No StatisticDataSource could be found with name %s and engine %s, so no statistics will be recorded for it.",
+                    "No StatisticDataSource could be found with name {} and engine {}, so no statistics will be recorded for it.",
                     statisticName, engineName);
             return false;
         } else if (!statisticsDataSource.getStatisticType().equals(statisticType)) {
             LOGGER.error(
-                    "The type of the event [%s] is not valid for the StatisticDataSource with name %s, engine %s and type %s.",
+                    "The type of the event [{}] is not valid for the StatisticDataSource with name {}, engine {} and type {}.",
                     statisticType, statisticName, engineName, statisticsDataSource.getStatisticType().toString());
             return false;
         } else if (!statisticsDataSource.isEnabled()) {
             LOGGER.warn(
-                    "The StatisticDataSource with name %s, engine %s and type %s is not enabled, so no statistics will be recorded for it.",
+                    "The StatisticDataSource with name {}, engine {} and type {} is not enabled, so no statistics will be recorded for it.",
                     statisticName, engineName, statisticsDataSource.getStatisticType().toString());
             return false;
         }

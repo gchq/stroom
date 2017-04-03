@@ -16,9 +16,10 @@
 
 package stroom.pipeline.server.filter;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
@@ -28,11 +29,13 @@ import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -42,12 +45,13 @@ import javax.ws.rs.core.Response;
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS,
         PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.STREAM)
 public class HttpPostFilter extends AbstractSamplingFilter {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(HttpPostFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpPostFilter.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
 
-    private final Client client = Client.create();
-    private WebResource webResource;
+    private final Client client = ClientBuilder.newClient(new ClientConfig()
+            .register(ClientResponse.class));
+    private String receivingApiUrl;
 
     @Inject
     public HttpPostFilter(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory) {
@@ -60,11 +64,12 @@ public class HttpPostFilter extends AbstractSamplingFilter {
         super.endDocument();
         String xml = getOutput();
         try {
-            ClientResponse response = webResource
+            Response response = client
+                    .target(receivingApiUrl)
+                    .request()
                     .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
-                    .type(MediaType.APPLICATION_JSON)
-                    .post(ClientResponse.class, xml);
-            if (response.getStatusInfo() != Response.Status.ACCEPTED) {
+                    .post(Entity.xml(xml));
+            if (response.getStatus() != Response.Status.ACCEPTED.ordinal()) {
                 String errorMessage = String.format("POST was not accepted by the API: %s", response);
                 errorReceiverProxy.log(Severity.ERROR, null, null, errorMessage, null);
                 LOGGER.error(errorMessage);
@@ -80,12 +85,6 @@ public class HttpPostFilter extends AbstractSamplingFilter {
 
     @PipelineProperty(description = "The URL of the receiving API.")
     public void setReceivingApiUrl(final String receivingApiUrl) {
-        try {
-            webResource = client.resource(receivingApiUrl);
-        } catch (IllegalArgumentException | NullPointerException e) {
-            String errorMessage = String.format("Unable to create an API client with this URL: %s. Exception was: %s", receivingApiUrl, e);
-            errorReceiverProxy.log(Severity.ERROR, null, null, errorMessage, e);
-            LOGGER.error(errorMessage);
-        }
+        this.receivingApiUrl = receivingApiUrl;
     }
 }

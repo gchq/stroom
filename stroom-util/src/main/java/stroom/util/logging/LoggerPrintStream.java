@@ -25,6 +25,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.io.StreamUtil;
 
 /**
@@ -83,19 +85,19 @@ public class LoggerPrintStream extends PrintStream {
         }
     }
 
-    private StroomLogger logger;
+    private Logger logger;
     private boolean debug;
     private LoggerBuffer loggerBuffer;
 
-    public LoggerPrintStream(StroomLogger logger, boolean debug) throws UnsupportedEncodingException {
+    public LoggerPrintStream(Logger logger, boolean debug) throws UnsupportedEncodingException {
         this(logger, debug, new LoggerBuffer());
     }
 
-    public LoggerPrintStream(StroomLogger logger) throws UnsupportedEncodingException {
+    public LoggerPrintStream(Logger logger) throws UnsupportedEncodingException {
         this(logger, true, new LoggerBuffer());
     }
 
-    public static LoggerPrintStream create(StroomLogger logger, boolean debug) {
+    public static LoggerPrintStream create(Logger logger, boolean debug) {
         try {
             return new LoggerPrintStream(logger, debug);
         } catch (UnsupportedEncodingException useEx) {
@@ -103,7 +105,7 @@ public class LoggerPrintStream extends PrintStream {
         }
     }
 
-    public static LoggerPrintStream create(StroomLogger logger) {
+    public static LoggerPrintStream create(Logger logger) {
         try {
             return new LoggerPrintStream(logger);
         } catch (UnsupportedEncodingException useEx) {
@@ -111,7 +113,7 @@ public class LoggerPrintStream extends PrintStream {
         }
     }
 
-    private LoggerPrintStream(StroomLogger logger, boolean debug, LoggerBuffer os) throws UnsupportedEncodingException {
+    private LoggerPrintStream(Logger logger, boolean debug, LoggerBuffer os) throws UnsupportedEncodingException {
         super(os, false, StreamUtil.DEFAULT_CHARSET_NAME);
         this.logger = logger;
         this.debug = debug;

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,8 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.jaxp.TemplatesImpl;
 import net.sf.saxon.jaxp.TransformerImpl;
 import net.sf.saxon.s9api.XsltExecutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
@@ -52,7 +54,6 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pool.PoolItem;
 import stroom.util.CharBuffer;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
@@ -74,7 +75,8 @@ import java.util.List;
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.ROLE_HAS_CODE }, icon = ElementIcons.XSLT)
 public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjection {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(XSLTFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(XSLTFilter.class);
+
     private static final int DEFAULT_MAX_ELEMENTS = 1000000;
 
     private final XSLTPool xsltPool;
@@ -155,7 +157,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                     throw new ProcessException(sb.toString());
                 }
 
-                LOGGER.debug("Finding XSLT with resolved name '%s' from pattern '%s'", resolvedName, xsltNamePattern);
+                LOGGER.debug("Finding XSLT with resolved name '{}' from pattern '{}'", resolvedName, xsltNamePattern);
                 final FindXSLTCriteria criteria = new FindXSLTCriteria();
                 criteria.setName(new StringCriteria(resolvedName));
                 criteria.setOrderBy(FindXSLTCriteria.ORDER_BY_ID);

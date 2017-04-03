@@ -16,11 +16,13 @@
 
 package stroom.task.cluster;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import stroom.cluster.server.ClusterCallService;
 import stroom.node.shared.Node;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.*;
 import stroom.util.task.TaskScopeContextHolder;
@@ -38,7 +40,7 @@ import java.util.Set;
 @Component(ClusterDispatchAsyncImpl.BEAN_NAME)
 @Lazy
 public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterDispatchAsyncImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDispatchAsyncImpl.class);
 
     public static final String BEAN_NAME = "clusterDispatchAsync";
     public static final String RECEIVE_RESULT_METHOD = "receiveResult";
@@ -175,7 +177,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
 
         DebugTrace.debugTraceIn(task, receiveResult, success);
         try {
-            LOGGER.debug("%s() - %s %s", RECEIVE_RESULT, task, targetNode);
+            LOGGER.debug("{}() - {} {}", new Object[]{RECEIVE_RESULT, task, targetNode});
 
             // Get the source id and check it is valid.
             if (sourceTaskId == null) {
@@ -196,7 +198,8 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                 final ClusterResultCollector<R> collector = (ClusterResultCollector<R>) collectorCache.get(collectorId);
                 if (collector == null) {
                     // There is no collector to receive this result.
-                    LOGGER.error("%s() - collector gone away - %s %s", RECEIVE_RESULT, task.getTaskName(), sourceTask);
+                    LOGGER.error("{}() - collector gone away - {} {}",
+                            new Object[] {RECEIVE_RESULT, task.getTaskName(), sourceTask});
 
                 } else {
                     // Make sure the collector is happy to receive this result.
@@ -229,12 +232,22 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                                 }
                             } finally {
                                 if (LOGGER.isDebugEnabled()) {
-                                    LOGGER.debug("%s() - collector %s %s took %s", RECEIVE_RESULT,
-                                            task.getTaskName(), sourceTask, logExecutionTime);
+                                    LOGGER.debug("{}() - collector {} {} took {}",
+                                            new Object[]{
+                                            RECEIVE_RESULT,
+                                            task.getTaskName(),
+                                            sourceTask,
+                                            logExecutionTime
+                                    });
                                 }
                                 if (logExecutionTime.getDuration() > 1000) {
-                                    LOGGER.warn("%s() - collector %s %s took %s", RECEIVE_RESULT,
-                                            task.getTaskName(), sourceTask, logExecutionTime);
+                                    LOGGER.warn("{}() - collector {} {} took {}",
+                                            new Object[]{
+                                            RECEIVE_RESULT,
+                                            task.getTaskName(),
+                                            sourceTask,
+                                            logExecutionTime
+                                    });
                                 }
                             }
                         });
@@ -249,7 +262,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                 }
             }
         } catch (final Throwable e) {
-            LOGGER.fatal(e.getMessage(), e);
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
 
         } finally {
             DebugTrace.debugTraceOut(task, RECEIVE_RESULT, success);

@@ -16,6 +16,8 @@
 
 package stroom.statistics.server.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.datasource.api.DataSourceField;
 import stroom.entity.shared.Period;
@@ -42,7 +44,6 @@ import stroom.statistics.common.rollup.RollUpBitMask;
 import stroom.statistics.shared.CustomRollUpMask;
 import stroom.statistics.shared.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.util.logging.StroomLogger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,7 +55,7 @@ import java.util.Set;
 
 @Component
 public abstract class AbstractStatistics implements Statistics {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractStatistics.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractStatistics.class);
 
     private static final List<Condition> SUPPORTED_DATE_CONDITIONS = Arrays.asList(Condition.BETWEEN);
 
@@ -72,7 +73,7 @@ public abstract class AbstractStatistics implements Statistics {
     }
 
     protected static FindEventCriteria buildCriteria(final Query query, final StatisticStoreEntity dataSource) {
-        LOGGER.trace(String.format("buildCriteria called for statistic %s", dataSource.getName()));
+        LOGGER.trace("buildCriteria called for statistic {}", dataSource.getName());
 
         // Get the current time in millis since epoch.
         final long nowEpochMilli = System.currentTimeMillis();
@@ -189,7 +190,7 @@ public abstract class AbstractStatistics implements Statistics {
                 dataSource.getName(), filterTermsTree, rolledUpFieldNames);
 
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(String.format("Searching statistics store with criteria: %s", criteria.toString()));
+            LOGGER.info("Searching statistics store with criteria: {}", criteria.toString());
         }
 
         return criteria;
@@ -271,8 +272,6 @@ public abstract class AbstractStatistics implements Statistics {
     }
 
     private static Range<Long> extractRange(final ExpressionTerm dateTerm, final long nowEpochMilli) {
-        long rangeFrom = 0;
-        long rangeTo = Long.MAX_VALUE;
 
         final String[] dateArr = dateTerm.getValue().split(",");
 
@@ -280,10 +279,13 @@ public abstract class AbstractStatistics implements Statistics {
             throw new RuntimeException("DateTime term is not a valid format, term: " + dateTerm.toString());
         }
 
-        final DateExpressionParser dateExpressionParser = new DateExpressionParser();
-        rangeFrom = dateExpressionParser.parse(dateArr[0], nowEpochMilli).toInstant().toEpochMilli();
+        long rangeFrom = DateExpressionParser.parse(dateArr[0], nowEpochMilli)
+                .map(time -> time.toInstant().toEpochMilli())
+                .orElse(0L);
         // add one to make it exclusive
-        rangeTo = dateExpressionParser.parse(dateArr[1], nowEpochMilli).toInstant().toEpochMilli() + 1;
+        long rangeTo = DateExpressionParser.parse(dateArr[1], nowEpochMilli)
+                .map(time -> time.toInstant().toEpochMilli() + 1)
+                .orElse(Long.MAX_VALUE);
 
         final Range<Long> range = new Range<>(rangeFrom, rangeTo);
 
@@ -347,7 +349,7 @@ public abstract class AbstractStatistics implements Statistics {
                 .getProperty(CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME);
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("%s property value: %s", CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME,
+            LOGGER.debug("{} property value: {}", CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME,
                     enabledEngines);
         }
 

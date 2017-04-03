@@ -24,12 +24,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.SharedObject;
 
 public class DefaultClusterResultCollector<R extends SharedObject> implements ClusterResultCollector<R> {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(DefaultClusterResultCollector.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClusterResultCollector.class);
 
     private final CollectorId id;
     private final ClusterTask<R> request;
@@ -173,7 +174,7 @@ public class DefaultClusterResultCollector<R extends SharedObject> implements Cl
             lock.unlock();
         }
 
-        LOGGER.debug("waitToComplete() - Finished complete is %s", isComplete());
+        LOGGER.debug("waitToComplete() - Finished complete is {}", isComplete());
     }
 
     public Set<Node> getTargetNodes() {

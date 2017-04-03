@@ -25,8 +25,6 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.datasource.api.DataSourceField;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.DraggableTreePanel;
-import stroom.query.api.ExpressionItem;
-import stroom.query.api.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
@@ -36,36 +34,36 @@ import java.util.List;
 
 public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers> implements ExpressionTreeView {
     private final ExpressionTreePanel treePanel;
-    private final DraggableTreePanel<ExpressionItem> layoutPanel;
-    private MySingleSelectionModel<ExpressionItem> selectionModel;
+    private final DraggableTreePanel<Item> layoutPanel;
+    private MySingleSelectionModel<Item> selectionModel;
 
     @Inject
     public ExpressionTreeViewImpl(final Provider<EntityDropDownPresenter> dictionaryProvider) {
         treePanel = new ExpressionTreePanel(dictionaryProvider);
         final ExpressionTreePanel subTreePanel = new ExpressionTreePanel(dictionaryProvider);
 
-        layoutPanel = new DraggableTreePanel<ExpressionItem>(treePanel, subTreePanel) {
+        layoutPanel = new DraggableTreePanel<Item>(treePanel, subTreePanel) {
             @Override
-            protected boolean isValidTarget(final ExpressionItem parent, final ExpressionItem child) {
-                return parent instanceof ExpressionOperator;
+            protected boolean isValidTarget(final Item parent, final Item child) {
+                return parent instanceof Operator;
             }
 
             @Override
-            protected void setSelected(final ExpressionItem item) {
+            protected void setSelected(final Item item) {
                 if (selectionModel != null) {
                     selectionModel.setSelected(item, true);
                 }
             }
 
             @Override
-            protected void startDragging(final ExpressionItem parent, final ExpressionItem child) {
+            protected void startDragging(final Item parent, final Item child) {
                 if (selectionModel != null) {
                     selectionModel.clear();
                 }
             }
 
             @Override
-            protected void endDragging(final ExpressionItem parent, final ExpressionItem child) {
+            protected void endDragging(final Item parent, final Item child) {
                 if (getUiHandlers() != null) {
                     getUiHandlers().fireDirty();
                 }
@@ -75,12 +73,12 @@ public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandl
     }
 
     @Override
-    public void setTree(final DefaultTreeForTreeLayout<ExpressionItem> tree) {
+    public void setTree(final DefaultTreeForTreeLayout<Item> tree) {
         treePanel.setTree(tree);
     }
 
     @Override
-    public void setSelectionModel(final MySingleSelectionModel<ExpressionItem> selectionModel) {
+    public void setSelectionModel(final MySingleSelectionModel<Item> selectionModel) {
         this.selectionModel = selectionModel;
         treePanel.setSelectionModel(selectionModel);
     }

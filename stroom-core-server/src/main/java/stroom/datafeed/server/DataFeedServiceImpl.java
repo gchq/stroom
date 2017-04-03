@@ -16,8 +16,9 @@
 
 package stroom.datafeed.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.zip.StroomStatusCode;
 import stroom.util.zip.StroomStreamException;
@@ -40,7 +41,7 @@ public class DataFeedServiceImpl extends HttpServlet {
     public static final String BEAN_NAME = "dataFeedService";
     private static final long serialVersionUID = 1L;
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(DataFeedServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataFeedServiceImpl.class);
 
     @Resource
     private transient StroomBeanStore beanStore;

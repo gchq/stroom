@@ -18,12 +18,13 @@ package stroom.util.io;
 
 import java.io.IOException;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Monitor;
 
 public class StreamProgressMonitor {
-    private static StroomLogger LOGGER = StroomLogger.getLogger(StreamProgressMonitor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamProgressMonitor.class);
 
     private final Monitor monitor;
     private final String prefix;

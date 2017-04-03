@@ -16,6 +16,8 @@
 
 package stroom.jobsystem.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
@@ -34,7 +36,6 @@ import stroom.jobsystem.shared.JobService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.security.Secured;
-import stroom.util.logging.StroomLogger;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomBeanMethod;
@@ -63,7 +64,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     public static final String DELETE_ORPHAN_JOBS_HSQLDB = "DELETE FROM " + Job.TABLE_NAME + " WHERE " + Job.ID
             + " IN (" + "SELECT " + Job.ID + " FROM " + Job.TABLE_NAME + " JB LEFT OUTER JOIN " + JobNode.TABLE_NAME
             + " JB_ND ON (JB." + Job.ID + " = JB_ND." + Job.FOREIGN_KEY + ") WHERE JB_ND." + JobNode.ID + " IS NULL);";
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(JobNodeServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeServiceImpl.class);
     private static final String LOCK_NAME = "JobNodeService";
 
     private final StroomEntityManager entityManager;
@@ -156,7 +157,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
             validJobNames.add(jobScheduleDescriptor.jobName());
 
             if (stroomFrequencySchedule == null && stroomSimpleCronSchedule == null) {
-                LOGGER.error("Invalid annotations on %s", stroomBeanMethod);
+                LOGGER.error("Invalid annotations on {}", stroomBeanMethod);
                 continue;
             }
             // Add the job node to the DB if it isn't there already.
@@ -180,7 +181,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                     newJobNode.setSchedule(stroomFrequencySchedule.value());
                 }
 
-                LOGGER.info("Adding JobNode '%s' for node '%s'", newJobNode.getJob().getName(),
+                LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
                         newJobNode.getNode().getName());
                 save(newJobNode);
                 existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
@@ -209,7 +210,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                 newJobNode.setEnabled(false);
                 newJobNode.setJobType(JobType.DISTRIBUTED);
 
-                LOGGER.info("Adding JobNode '%s' for node '%s'", newJobNode.getJob().getName(),
+                LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
                         newJobNode.getNode().getName());
                 save(newJobNode);
                 existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
@@ -218,7 +219,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
         existingJobList.stream().filter(jobNode -> !validJobNames.contains(jobNode.getJob().getName()))
                 .forEach(jobNode -> {
-                    LOGGER.info("Removing old job node %s ", jobNode.getJob().getName());
+                    LOGGER.info("Removing old job node {} ", jobNode.getJob().getName());
                     delete(jobNode);
                 });
 
@@ -234,7 +235,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
         final Long deleteCount = entityManager.executeNativeUpdate(sql);
         if (deleteCount != null && deleteCount > 0) {
-            LOGGER.info("Removed %s orhan jobs", deleteCount);
+            LOGGER.info("Removed {} orhan jobs", deleteCount);
         }
 
     }
@@ -257,7 +258,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         if (existingJob != null && existingJob.size() > 0) {
             result = existingJob.getFirst();
         } else {
-            LOGGER.info("Adding Job     '%s'", job.getName());
+            LOGGER.info("Adding Job     '{}'", job.getName());
             result = jobService.save(job);
         }
 

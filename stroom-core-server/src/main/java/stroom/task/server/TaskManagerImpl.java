@@ -17,6 +17,9 @@
 package stroom.task.server;
 
 import event.logging.BaseAdvancedQueryItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.SupportsCriteriaLogging;
@@ -27,7 +30,6 @@ import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
@@ -56,7 +58,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @Component("taskManager")
 public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskProgressCriteria> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TaskManagerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskManagerImpl.class);
     private final AtomicInteger currentAsyncTaskCount = new AtomicInteger();
     private final Map<TaskId, TaskThread<?>> currentTasks = new ConcurrentHashMap<>(1024, 0.75F, 1024);
     private final AtomicBoolean stop = new AtomicBoolean();
@@ -155,7 +157,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
                 // Output some debug to list the tasks that are executing
                 // and queued.
-                LOGGER.info("shutdown() - Waiting for %s tasks to complete. %s", currentCount, builder);
+                LOGGER.info("shutdown() - Waiting for {} tasks to complete. {}", currentCount, builder);
 
                 // Wait 1 second.
                 ThreadUtil.sleep(1000);
@@ -279,7 +281,11 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                 @Override
                 protected void exec() {
                     try {
-                        LOGGER.debug("execAsync()->exec() - %s %s took %s", task.getClass().getSimpleName(), task.getTaskName(), logExecutionTime);
+                        LOGGER.debug("execAsync()->exec() - {} {} took {}", new Object[]{
+                                task.getClass().getSimpleName(),
+                                task.getTaskName(),
+                                logExecutionTime.toString()
+                        });
 
                         taskThread.setThread(Thread.currentThread());
 
@@ -331,7 +337,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
                 } catch (final Throwable t) {
                     try {
-                        LOGGER.fatal("exec() - Unexpected Exception", t);
+                        LOGGER.error(MarkerFactory.getMarker("FATAL"), "exec() - Unexpected Exception", t);
                         throw new RuntimeException(t.getMessage(), t);
 
                     } finally {
@@ -380,9 +386,9 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                 // Get the task handler that will deal with this task.
                 final TaskHandler<Task<R>, R> taskHandler = taskHandlerBeanRegistry.findHandler(task);
 
-                LOGGER.debug("doExec() - exec >> '%s' %s", task.getClass().getName(), task);
+                LOGGER.debug("doExec() - exec >> '{}' {}", task.getClass().getName(), task);
                 taskHandler.exec(task, callback);
-                LOGGER.debug("doExec() - exec << '%s' %s", task.getClass().getName(), task);
+                LOGGER.debug("doExec() - exec << '{}' {}", task.getClass().getName(), task);
 
             } finally {
                 securityContext.popUser();
@@ -430,7 +436,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                               final List<TaskThread<?>> itemsToKill) {
         for (final TaskThread<?> taskThread : itemsToKill) {
             final Task<?> task = taskThread.getTask();
-            LOGGER.info("doTerminated() 1 - %s", taskThread.getTask());
+            LOGGER.info("doTerminated() 1 - {}", taskThread.getTask());
             // First try and terminate the task.
             if (!task.isTerminated()) {
                 taskThread.terminate();

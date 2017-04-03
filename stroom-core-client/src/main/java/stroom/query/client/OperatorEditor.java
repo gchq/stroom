@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import stroom.item.client.ItemListBox;
-import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.client.TermEditor.Resources;
 
@@ -31,7 +30,7 @@ public class OperatorEditor extends Composite {
     private static Resources resources;
     private final FlowPanel layout;
     private final ItemListBox<Op> listBox;
-    private ExpressionOperator operator;
+    private Operator operator;
     private boolean reading;
     private boolean editing;
     private ExpressionUiHandlers uiHandlers;
@@ -62,7 +61,7 @@ public class OperatorEditor extends Composite {
         initWidget(layout);
     }
 
-    public void startEdit(final ExpressionOperator operator) {
+    public void startEdit(final Operator operator) {
         if (!editing) {
             reading = true;
 

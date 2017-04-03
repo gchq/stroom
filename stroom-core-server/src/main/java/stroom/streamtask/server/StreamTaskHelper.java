@@ -19,7 +19,8 @@ package stroom.streamtask.server;
 import javax.annotation.Resource;
 import javax.persistence.EntityNotFoundException;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,14 +33,15 @@ import stroom.streamtask.shared.TaskStatus;
 @Component
 @Transactional(propagation = Propagation.NEVER)
 public class StreamTaskHelper {
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(StreamTaskHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskHelper.class);
 
     @Resource
     private StreamTaskService streamTaskService;
 
     public StreamTask changeTaskStatus(final StreamTask streamTask, final Node node, final TaskStatus status,
             final Long startTime, final Long endTime) {
-        LOGGER.debug("changeTaskStatus() - Changing task status of %s to node=%s, status=%s", streamTask, node, status);
+        LOGGER.debug("changeTaskStatus() - Changing task status of {} to node={}, status={}",
+                new Object[]{streamTask, node, status});
         final long now = System.currentTimeMillis();
 
         StreamTask result = null;
@@ -48,31 +50,31 @@ public class StreamTaskHelper {
             modify(streamTask, node, status, now, startTime, endTime);
             result = streamTaskService.save(streamTask);
         } catch (final EntityNotFoundException e) {
-            LOGGER.warn("changeTaskStatus() - Task cannot be found %s", streamTask);
+            LOGGER.warn("changeTaskStatus() - Task cannot be found {}", streamTask);
         } catch (final Throwable t) {
             try {
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.warn("changeTaskStatus() - %s - Task has changed, attempting reload %s", t.getMessage(),
-                            streamTask, t);
+                    LOGGER.warn("changeTaskStatus() - {} - Task has changed, attempting reload {}",
+                            new Object[]{t.getMessage(), streamTask}, t);
                 } else {
-                    LOGGER.warn("changeTaskStatus() - Task has changed, attempting reload %s", streamTask);
+                    LOGGER.warn("changeTaskStatus() - Task has changed, attempting reload {}", streamTask);
                 }
 
                 final StreamTask loaded = streamTaskService.load(streamTask);
                 if (loaded == null) {
-                    LOGGER.warn("changeTaskStatus() - Failed to reload task %s", streamTask);
+                    LOGGER.warn("changeTaskStatus() - Failed to reload task {}", streamTask);
                 } else if (TaskStatus.DELETED.equals(loaded.getStatus())) {
-                    LOGGER.warn("changeTaskStatus() - Task has been deleted %s", streamTask);
+                    LOGGER.warn("changeTaskStatus() - Task has been deleted {}", streamTask);
                 } else {
-                    LOGGER.warn("changeTaskStatus() - Loaded stream task %s", loaded);
+                    LOGGER.warn("changeTaskStatus() - Loaded stream task {}", loaded);
                     modify(loaded, node, status, now, startTime, endTime);
                     result = streamTaskService.save(loaded);
                 }
             } catch (final EntityNotFoundException e) {
-                LOGGER.warn("changeTaskStatus() - Failed to reload task as it cannot be found %s", streamTask);
+                LOGGER.warn("changeTaskStatus() - Failed to reload task as it cannot be found {}", streamTask);
             } catch (final Throwable t2) {
-                LOGGER.error("changeTaskStatus() - %s - Task has changed, attempting reload %s", t2.getMessage(),
-                        streamTask, t2);
+                LOGGER.error("changeTaskStatus() - {} - Task has changed, attempting reload {}",
+                        new Object[]{t2.getMessage(), streamTask}, t2);
             }
         }
 

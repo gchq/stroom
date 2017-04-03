@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,17 +16,24 @@
 
 package stroom.dashboard.client.main;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.alert.client.event.AlertEvent;
+import stroom.dashboard.client.table.JsonUtil;
 import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestService;
 import stroom.security.client.event.LogoutEvent;
 
 import java.util.HashMap;
@@ -40,6 +47,7 @@ public class SearchBus {
     private static final int QUICK_POLL_INTERVAL = 10;
 
     private final ClientDispatchAsync dispatcher;
+    private final RestService restService;
 
     private final Map<DashboardQueryKey, SearchModel> activeSearchMap = new HashMap<>();
     private final Timer pollingTimer;
@@ -48,8 +56,10 @@ public class SearchBus {
     private boolean polling;
 
     @Inject
-    public SearchBus(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+    public SearchBus(final EventBus eventBus, final ClientDispatchAsync dispatcher, final RestService restService) {
         this.dispatcher = dispatcher;
+        this.restService = restService;
+
         pollingTimer = new Timer() {
             @Override
             public void run() {
@@ -58,12 +68,7 @@ public class SearchBus {
         };
 
         // Listen for logout events.
-        eventBus.addHandler(LogoutEvent.getType(), new LogoutEvent.LogoutHandler() {
-            @Override
-            public void onLogout(final LogoutEvent event) {
-                reset();
-            }
-        });
+        eventBus.addHandler(LogoutEvent.getType(), event -> reset());
     }
 
     private void reset() {
@@ -100,6 +105,14 @@ public class SearchBus {
         final Map<DashboardQueryKey, SearchRequest> searchActionMap = new HashMap<>();
         for (final Entry<DashboardQueryKey, SearchModel> entry : activeSearchMap.entrySet()) {
             final DashboardQueryKey queryKey = entry.getKey();
+
+
+
+//            final String json = JsonUtil.encode(queryKey);
+//            final DashboardQueryKey test = JsonUtil.decode(json);
+
+
+
             final SearchModel searchModel = entry.getValue();
             final SearchRequest searchAction = searchModel.getRequest();
             searchActionMap.put(queryKey, searchAction);
@@ -109,26 +122,30 @@ public class SearchBus {
         dispatcher.execute(action, false, new AsyncCallbackAdaptor<SearchBusPollResult>() {
             @Override
             public void onSuccess(final SearchBusPollResult result) {
-                final Map<DashboardQueryKey, SearchResponse> searchResultMap = result.getSearchResultMap();
-                for (final Entry<DashboardQueryKey, SearchResponse> entry : searchResultMap.entrySet()) {
-                    final DashboardQueryKey queryKey = entry.getKey();
-                    final SearchResponse searchResponse = entry.getValue();
-                    final SearchModel searchModel = activeSearchMap.get(queryKey);
-                    if (searchModel != null) {
-                        searchModel.update(searchResponse);
+                try {
+                    final Map<DashboardQueryKey, SearchResponse> searchResultMap = result.getSearchResultMap();
+                    for (final Entry<DashboardQueryKey, SearchResponse> entry : searchResultMap.entrySet()) {
+                        final DashboardQueryKey queryKey = entry.getKey();
+                        final SearchResponse searchResponse = entry.getValue();
+                        final SearchModel searchModel = activeSearchMap.get(queryKey);
+                        if (searchModel != null) {
+                            searchModel.update(searchResponse);
+                        }
                     }
-                }
 
-                polling = false;
+                    polling = false;
 
-                // Remember and reset delay.
-                final int delay = delayMillis;
-                delayMillis = DEFAULT_POLL_INTERVAL;
+                    // Remember and reset delay.
+                    final int delay = delayMillis;
+                    delayMillis = DEFAULT_POLL_INTERVAL;
 
-                if (forcePoll || activeSearchMap.size() > 0) {
-                    // Reset force.
-                    forcePoll = false;
-                    poll(delay);
+                    if (forcePoll || activeSearchMap.size() > 0) {
+                        // Reset force.
+                        forcePoll = false;
+                        poll(delay);
+                    }
+                } catch (final Exception e) {
+                    GWT.log(e.getMessage());
                 }
             }
         });

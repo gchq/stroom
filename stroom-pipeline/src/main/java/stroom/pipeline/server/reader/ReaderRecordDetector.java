@@ -20,7 +20,8 @@ import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +33,8 @@ import stroom.util.spring.StroomScope;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 public class ReaderRecordDetector extends FilterReader implements RecordDetector {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ReaderRecordDetector.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReaderRecordDetector.class);
+
     private static final int MAX_COUNT = 10000;
 
     private SteppingController controller;

@@ -16,6 +16,8 @@
 
 package stroom.servlet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -26,7 +28,6 @@ import stroom.security.SecurityContext;
 import stroom.task.server.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TerminateTaskProgressAction;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskIdFactory;
 import stroom.util.thread.ThreadScopeRunnable;
@@ -47,7 +48,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SessionListListener implements HttpSessionListener, SessionListService, BeanFactoryAware {
     private static final ConcurrentHashMap<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>();
     private static final ConcurrentHashMap<String, String> lastRequestUserAgent = new ConcurrentHashMap<String, String>();
-    private static transient StroomLogger logger;
+    private static transient Logger logger;
 
     private static transient volatile BeanFactory beanFactory;
 
@@ -65,12 +66,12 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
         }
     }
 
-    private StroomLogger getLogger() {
+    private Logger getLogger() {
         // Lazy load the logger.
         if (logger == null) {
             synchronized (SessionListListener.class) {
                 if (logger == null) {
-                    logger = StroomLogger.getLogger(SessionListListener.class);
+                    logger = LoggerFactory.getLogger(SessionListListener.class);
                 }
             }
         }
@@ -82,7 +83,7 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
     public void sessionCreated(final HttpSessionEvent event) {
         final HttpSession httpSession = event.getSession();
         synchronized (httpSession) {
-            getLogger().info("sessionCreated() - %s", httpSession.getId());
+            getLogger().info("sessionCreated() - {}", httpSession.getId());
             sessionMap.put(httpSession.getId(), httpSession);
         }
     }
@@ -91,7 +92,7 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
     public void sessionDestroyed(final HttpSessionEvent event) {
         final HttpSession httpSession = event.getSession();
         synchronized (httpSession) {
-            getLogger().info("sessionDestroyed() - %s", httpSession.getId());
+            getLogger().info("sessionDestroyed() - {}", httpSession.getId());
             sessionMap.remove(httpSession.getId());
             lastRequestUserAgent.remove(httpSession.getId());
         }
