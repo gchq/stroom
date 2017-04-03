@@ -16,6 +16,7 @@ addons:
 # We run a script to build dependencies and do database setup
 install: "./.travis.install.sh"
 
+script: ./gradlew clean build --info
 
 
 # This configures pushing releases to GitHub - pushing a tag will cause a release
