@@ -35,7 +35,7 @@ sortItAllOut hadoop-hdfs-shaded
 sortItAllOut hadoop-common-shaded
 sortItAllOut hbase-common-shaded
 
-# Set up the data base - we need to set up a custom user otherwise we'll have trouble connecting
+# Set up the database - we need to set up a custom user otherwise we'll have trouble connecting in Travis CI
 mysql -e "CREATE DATABASE IF NOT EXISTS stroom;"
 mysql -e "CREATE USER 'stroomuser'@'localhost' IDENTIFIED BY 'stroompassword1';"
 mysql -e "GRANT ALL PRIVILEGES ON * . * TO 'stroomuser'@'localhost';"
