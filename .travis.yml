@@ -2,7 +2,8 @@
 language: java
 dist: trusty
 services:
-- mysql
+  - mysql
+  - docker
 jdk: oraclejdk8
 sudo: required
 # These packages are required to run MySQL 5.6 on Trusty
@@ -13,16 +14,23 @@ addons:
     - mysql-client-core-5.6
     - mysql-client-5.6
 
-
 before_script:
- - "echo $JAVA_OPTS"
- - "export JAVA_OPTS=-Xmx512m"
+  - "echo $JAVA_OPTS"
+  - "export JAVA_OPTS=-Xmx512m"
 
 # We run a script to build dependencies and do database setup
 install: "./.travis.install.sh"
 
-script: ./gradlew clean build --info
+script: ./gradlew clean build shadowJar --info
 
+after_success:
+  # Pushes a successful build to latest
+  - docker build --tag=stroom:latest stroom-app/.
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - if [ "$TRAVIS_BRANCH" == "JsInterop" ]; then
+    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+    docker push gchq/stroom;
+    fi
 
 # This configures pushing releases to GitHub - pushing a tag will cause a release
 deploy:
@@ -37,5 +45,5 @@ deploy:
 # We want to cache dependencies
 cache:
   directories:
-  - .autoconf
-  - $HOME/.m2
+    - .autoconf
+    - $HOME/.m2
