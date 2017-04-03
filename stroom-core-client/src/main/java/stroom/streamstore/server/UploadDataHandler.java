@@ -29,6 +29,7 @@ import stroom.util.shared.ResourceKey;
 
 import javax.annotation.Resource;
 import java.io.File;
+import java.nio.file.Path;
 
 @TaskHandlerBean(task = UploadDataAction.class)
 @Secured(Stream.IMPORT_DATA_PERMISSION)
@@ -42,7 +43,7 @@ public class UploadDataHandler extends AbstractTaskHandler<UploadDataAction, Res
     public ResourceKey exec(final UploadDataAction action) {
         try {
             // Import file.
-            final File file = sessionResourceStore.getTempFile(action.getKey());
+            final Path file = sessionResourceStore.getTempFile(action.getKey());
 
             taskManager.exec(new StreamUploadTask(action.getSessionId(), action.getUserId(), action.getFileName(), file,
                     action.getFeed(), action.getStreamType(), action.getEffectiveMs(), action.getMetaData()));

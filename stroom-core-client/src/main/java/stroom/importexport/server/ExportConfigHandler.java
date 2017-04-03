@@ -23,11 +23,12 @@ import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.shared.Message;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
 import javax.annotation.Resource;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,11 +48,11 @@ public class ExportConfigHandler extends AbstractTaskHandler<ExportConfigAction,
     public ResourceGeneration exec(final ExportConfigAction action) {
         // Log the export.
         eventLog.export(action);
-        final List<String> messageList = new ArrayList<String>();
+        final List<Message> messageList = new ArrayList<>();
 
         final ResourceKey guiKey = sessionResourceStore.createTempFile("StroomConfig.zip");
-        final File file = sessionResourceStore.getTempFile(guiKey);
-        importExportService.exportConfig(action.getCriteria(), file, action.isIgnoreErrors(), messageList);
+        final Path file = sessionResourceStore.getTempFile(guiKey);
+        importExportService.exportConfig(action.getDocRefs(), file, messageList);
 
         return new ResourceGeneration(guiKey, messageList);
     }

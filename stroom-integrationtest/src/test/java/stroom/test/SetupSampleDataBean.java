@@ -19,12 +19,12 @@ package stroom.test;
 import stroom.CommonTestControl;
 import stroom.dashboard.shared.Dashboard;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.ImportState.ImportMode;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.importexport.server.ImportExportSerializer.ImportMode;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
@@ -61,6 +61,9 @@ import org.joda.time.format.DateTimeFormatter;
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -138,11 +141,11 @@ public final class SetupSampleDataBean {
         // Sample data/config can exist in many projects so here we define all
         // the root directories that we want to
         // process
-        final File[] rootDirs = new File[] { new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), ROOT_DIR_NAME),
-                new File("./stroom-statistics-server/src/test/resources", ROOT_DIR_NAME) };
+        final Path[] rootDirs = new Path[] {StroomCoreServerTestFileUtil.getTestResourcesDir().toPath().resolve(ROOT_DIR_NAME),
+                Paths.get("./stroom-statistics-server/src/test/resources").resolve(ROOT_DIR_NAME) };
 
         // process each root dir in turn
-        for (final File dir : rootDirs) {
+        for (final Path dir : rootDirs) {
             loadDirectory(shutdown, dir);
         }
 
@@ -241,15 +244,15 @@ public final class SetupSampleDataBean {
         }
     }
 
-    public void loadDirectory(final boolean shutdown, final File importRootDir) throws IOException {
-        LOGGER.info("Loading sample data for directory: " + importRootDir.getAbsolutePath());
+    public void loadDirectory(final boolean shutdown, final Path importRootDir) throws IOException {
+        LOGGER.info("Loading sample data for directory: " + importRootDir.toAbsolutePath());
 
-        final File configDir = new File(importRootDir, "config");
-        final File dataDir = new File(importRootDir, "input");
+        final Path configDir = importRootDir.resolve("config");
+        final Path dataDir = importRootDir.resolve("input");
 
         createStreamAttributes();
 
-        if (configDir.exists()) {
+        if (Files.exists(configDir)) {
             // Load config.
             importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
@@ -273,7 +276,7 @@ public final class SetupSampleDataBean {
             LOGGER.info(String.format("Directory %s doesn't exist so skipping", configDir));
         }
 
-        if (dataDir.exists()) {
+        if (Files.exists(dataDir)) {
             // Load data.
             final DataLoader dataLoader = new DataLoader(feedService, streamStore);
 

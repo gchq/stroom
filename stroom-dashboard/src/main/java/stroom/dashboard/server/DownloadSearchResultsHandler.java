@@ -16,6 +16,7 @@
 
 package stroom.dashboard.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.dashboard.server.download.DelimitedTarget;
 import stroom.dashboard.server.download.ExcelTarget;
 import stroom.dashboard.server.download.SearchResultWriter;
@@ -37,13 +38,12 @@ import stroom.task.server.TaskManager;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
 
 import javax.annotation.Resource;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -81,7 +81,7 @@ public class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSe
             fileName = fileName + "." + action.getFileType().getExtension();
 
             resourceKey = sessionResourceStore.createTempFile(fileName);
-            final File file = sessionResourceStore.getTempFile(resourceKey);
+            final Path file = sessionResourceStore.getTempFile(resourceKey);
 
             final ActiveQueries searchSession = activeQueriesManager.get(action.getSessionId());
             final ActiveQuery activeQuery = searchSession.getExistingQuery(action.getQueryKey());
@@ -100,11 +100,11 @@ public class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSe
             throw EntityServiceExceptionUtil.create(ex);
         }
 
-        return new ResourceGeneration(resourceKey, new ArrayList<String>());
+        return new ResourceGeneration(resourceKey, new ArrayList<>());
     }
 
-    private void download(final ActiveQuery activeQuery, final String componentId, final File file,
-            final String fileType, final boolean sample, final int percent, final String dateTimeLocale) {
+    private void download(final ActiveQuery activeQuery, final String componentId, final Path file,
+                          final String fileType, final boolean sample, final int percent, final String dateTimeLocale) {
         final FormatterFactory formatterFactory = new FormatterFactory(dateTimeLocale);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
 
@@ -116,20 +116,20 @@ public class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSe
                 throw new EntityServiceException("Search has not started yet");
             }
 
-            final OutputStream outputStream = new FileOutputStream(file);
+            final OutputStream outputStream = Files.newOutputStream(file);
             SearchResultWriter.Target target = null;
 
             // Write delimited file.
             switch (fileType) {
-            case "CSV":
-                target = new DelimitedTarget(fieldFormatter, outputStream, ",");
-                break;
-            case "TSV":
-                target = new DelimitedTarget(fieldFormatter, outputStream, "\t");
-                break;
-            case "EXCEL":
-                target = new ExcelTarget(outputStream);
-                break;
+                case "CSV":
+                    target = new DelimitedTarget(fieldFormatter, outputStream, ",");
+                    break;
+                case "TSV":
+                    target = new DelimitedTarget(fieldFormatter, outputStream, "\t");
+                    break;
+                case "EXCEL":
+                    target = new ExcelTarget(outputStream);
+                    break;
             }
 
             if (target == null) {

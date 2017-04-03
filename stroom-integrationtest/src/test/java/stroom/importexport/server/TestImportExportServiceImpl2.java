@@ -27,7 +27,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import stroom.AbstractCoreIntegrationTest;
-import stroom.entity.shared.EntityActionConfirmation;
+import stroom.entity.shared.ImportState;
 import stroom.entity.shared.FolderService;
 import stroom.feed.shared.FeedService;
 import stroom.pipeline.shared.PipelineEntityService;
@@ -59,9 +59,9 @@ public class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
         Assert.assertTrue(zipFile.isFile());
         Assert.assertTrue(importDir.isDirectory());
 
-        final List<EntityActionConfirmation> confirmList = importExportService.createImportConfirmationList(zipFile);
+        final List<ImportState> confirmList = importExportService.createImportConfirmationList(zipFile.toPath());
         Assert.assertNotNull(confirmList);
 
-        importExportService.performImportWithoutConfirmation(zipFile);
+        importExportService.performImportWithoutConfirmation(zipFile.toPath());
     }
 }

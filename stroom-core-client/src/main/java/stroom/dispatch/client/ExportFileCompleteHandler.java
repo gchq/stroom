@@ -21,15 +21,19 @@ import com.google.gwt.user.client.Window.Location;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.presenter.AlertCallback;
+import stroom.app.client.LocationManager;
 import stroom.importexport.client.presenter.ExportConfigPresenter;
+import stroom.util.shared.Message;
 import stroom.util.shared.ResourceGeneration;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 
 public class ExportFileCompleteHandler extends AsyncCallbackAdaptor<ResourceGeneration> {
+    private final LocationManager locationManager;
     private final ExportConfigPresenter parent;
 
-    public ExportFileCompleteHandler(final ExportConfigPresenter parent) {
+    public ExportFileCompleteHandler(final LocationManager locationManager, final ExportConfigPresenter parent) {
+        this.locationManager = locationManager;
         this.parent = parent;
     }
 
@@ -69,8 +73,10 @@ public class ExportFileCompleteHandler extends AsyncCallbackAdaptor<ResourceGene
         }
 
         final StringBuilder stringBuilder = new StringBuilder();
-        for (final String msg : result.getMessageList()) {
-            stringBuilder.append(msg);
+        for (final Message msg : result.getMessageList()) {
+            stringBuilder.append(msg.getSeverity().getDisplayValue());
+            stringBuilder.append(": ");
+            stringBuilder.append(msg.getMessage());
             stringBuilder.append("\n");
         }
         return stringBuilder.toString();
@@ -79,7 +85,7 @@ public class ExportFileCompleteHandler extends AsyncCallbackAdaptor<ResourceGene
     private void download(final ResourceGeneration result) {
         // Change the browser location to download the zip
         // file.
-        Location.replace(GWT.getModuleBaseURL() + "../resourcestore/" + result.getResourceKey().getName() + "?UUID="
+        locationManager.replace(GWT.getModuleBaseURL() + "../resourcestore/" + result.getResourceKey().getName() + "?UUID="
                 + result.getResourceKey().getKey());
     }
 }

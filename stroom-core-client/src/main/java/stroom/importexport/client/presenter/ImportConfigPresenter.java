@@ -30,7 +30,7 @@ import stroom.alert.client.presenter.AlertCallback;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityActionConfirmation;
+import stroom.entity.shared.ImportState;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.importexport.shared.ImportConfigConfirmationAction;
@@ -76,9 +76,9 @@ public class ImportConfigPresenter
             @Override
             protected void onSuccess(final ResourceKey resourceKey) {
                 final ImportConfigConfirmationAction action = new ImportConfigConfirmationAction(resourceKey);
-                final AsyncCallbackAdaptor<SharedList<EntityActionConfirmation>> callback = new AsyncCallbackAdaptor<SharedList<EntityActionConfirmation>>() {
+                final AsyncCallbackAdaptor<SharedList<ImportState>> callback = new AsyncCallbackAdaptor<SharedList<ImportState>>() {
                     @Override
-                    public void onSuccess(final SharedList<EntityActionConfirmation> result) {
+                    public void onSuccess(final SharedList<ImportState> result) {
                         hide();
                         ImportConfigConfirmEvent.fire(ImportConfigPresenter.this, resourceKey, result);
                     }

@@ -140,7 +140,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
 
         if (performChecksAndEvents) {
             final EntityEventBus eventBus = eventBusProvider.get();
-            EntityEvent.fire(eventBus, DocRef.create(entity), EntityAction.ADD);
+            EntityEvent.fire(eventBus, DocRef.create(entity), EntityAction.CREATE);
         }
 
         return entity;

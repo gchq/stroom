@@ -29,18 +29,27 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
+import stroom.entity.shared.ImportState;
+import stroom.entity.shared.ImportState.ImportMode;
+import stroom.entity.shared.ImportState.State;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.importexport.server.Config;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
 
 import javax.persistence.Transient;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -61,13 +70,15 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     private final SecurityContext securityContext;
     private final EntityServiceHelper<E> entityServiceHelper;
     private final FindServiceHelper<E, C> findServiceHelper;
+    private final ImportExportHelper importExportHelper;
 
     private final QueryAppender<E, C> queryAppender;
 
     private String entityType;
 
-    protected DocumentEntityServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext) {
+    protected DocumentEntityServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
         this.entityManager = entityManager;
+        this.importExportHelper = importExportHelper;
         this.securityContext = securityContext;
         this.queryAppender = createQueryAppender(entityManager);
         this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass(), queryAppender);
@@ -498,31 +509,73 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     @Override
-    public E importEntity(final E entity, final DocRef folder) {
-        // Only allow administrators to import documents with no folder.
-        if (folder == null) {
-            if (!securityContext.isAdmin()) {
-                throw new PermissionException("Only administrators can create root level entries");
+    public DocRef importDocument(final Folder folder, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+        E entity = null;
+
+        try {
+            // Get the main config data.
+            String mainConfigPath = null;
+            for (final String key : dataMap.keySet()) {
+                if (key.endsWith(getEntityType() + ".xml")) {
+                    mainConfigPath = key;
+                }
             }
-        } else {
-            if (!securityContext.hasDocumentPermission(Folder.ENTITY_TYPE, folder.getUuid(), DocumentPermissionNames.IMPORT)) {
-                throw new PermissionException("You do not have permission to import " + getDocReference(entity) + " into folder " + folder);
+
+            if (mainConfigPath == null) {
+                throw new RuntimeException("Unable to find config data");
             }
+
+            final Config config = new Config();
+            config.read(new StringReader(dataMap.get(mainConfigPath)));
+
+            final String uuid = config.getString("uuid");
+            if (uuid == null) {
+                throw new RuntimeException("Unable to get UUID for item");
+            }
+
+            entity = loadByUuid(uuid, Collections.singleton("all"));
+
+            if (entity == null) {
+                entity = getEntityClass().newInstance();
+                entity.setFolder(folder);
+
+                if (importMode == ImportMode.CREATE_CONFIRMATION) {
+                    importState.setState(State.NEW);
+                }
+            } else {
+                if (importMode == ImportMode.CREATE_CONFIRMATION) {
+                    importState.setState(State.UPDATE);
+                }
+            }
+
+            importExportHelper.performImport(entity, dataMap, mainConfigPath, importState, importMode);
+
+            // We don't want to overwrite any marshaled data so disable marshalling on creation.
+            setFolder(entity, DocRef.create(folder));
+
+            // Save directly so there is no marshalling of objects that would destroy imported data.
+            if (importMode == ImportMode.IGNORE_CONFIRMATION
+                    || (importMode == ImportMode.ACTION_CONFIRMATION && importState.isAction())) {
+                entity = getEntityManager().saveEntity(entity);
+            }
+
+        } catch (final Exception e) {
+            importState.addMessage(Severity.ERROR, e.getMessage());
         }
 
-        // We don't want to overwrite any marshaled data so disable marshalling on creation.
-        setFolder(entity, folder);
-
-        // Save directly so there is no marshalling of objects that would destroy imported data.
-        return getEntityManager().saveEntity(entity);
+        return DocRef.create(entity);
     }
 
     @Override
-    public E exportEntity(final E entity) {
-        if (!securityContext.hasDocumentPermission(entity.getType(), entity.getUuid(), DocumentPermissionNames.EXPORT)) {
-            throw new PermissionException("You do not have permission to export " + getDocReference(entity));
+    public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
+            final E entity = entityServiceHelper.loadByUuid(docRef.getUuid());
+            if (entity != null) {
+                return importExportHelper.performExport(entity, omitAuditFields, messageList);
+            }
         }
-        return entityServiceHelper.load(entity);
+
+        return Collections.emptyMap();
     }
 
     @Transient

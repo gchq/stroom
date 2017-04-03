@@ -103,7 +103,7 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
 
     @Override
     public void recordStatistics(final HeaderMap metaData) {
-        if (templates != null && templates.size() > 0) {
+        if (statisticEventStore != null && templates != null) {
             for (final MetaDataStatisticTemplate template : templates) {
                 try {
                     final StatisticEvent statisticEvent = buildStatisticEvent(template, metaData);

@@ -16,26 +16,27 @@
 
 package stroom.importexport.server;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
-import stroom.entity.shared.EntityActionConfirmation;
-import stroom.entity.shared.FindFolderCriteria;
+import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
+import stroom.entity.shared.ImportState;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.resource.server.ResourceStore;
+import stroom.util.shared.Message;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.zip.ZipUtil;
+
+import javax.annotation.Resource;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
     @Resource
@@ -59,26 +60,25 @@ public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
         for (int i = 0; i < BATCH_SIZE; i++) {
             feed = commonTestScenarioCreator.createSimpleFeed();
         }
-        final List<String> msgList = new ArrayList<>();
+        final List<Message> msgList = new ArrayList<>();
 
-        final File testFile = new File(getCurrentTestDir(),
-                "ExportTest" + FileSystemTestUtil.getUniqueTestString() + ".zip");
+        final Path testFile = getCurrentTestPath().resolve("ExportTest" + FileSystemTestUtil.getUniqueTestString() + ".zip");
 
-        final FindFolderCriteria criteria = new FindFolderCriteria();
-        criteria.getFolderIdSet().add(feed.getFolder());
+        final DocRefs docRefs = new DocRefs();
+        docRefs.add(new DocRef(Folder.ENTITY_TYPE, "0", "System"));
 
-        importExportService.exportConfig(criteria, testFile, false, msgList);
+        importExportService.exportConfig(docRefs, testFile, msgList);
 
         Assert.assertEquals(0, msgList.size());
 
-        final List<String> list = ZipUtil.pathList(testFile);
+        final List<String> list = ZipUtil.pathList(testFile.toFile());
 
         // Expected size is 1 greater than batch size because it should contain the parent folder for the feeds.
         final int expectedSize = BATCH_SIZE + 1;
 
         Assert.assertEquals(expectedSize, list.size());
 
-        final List<EntityActionConfirmation> confirmList = importExportService.createImportConfirmationList(testFile);
+        final List<ImportState> confirmList = importExportService.createImportConfirmationList(testFile);
 
         Assert.assertEquals(expectedSize, confirmList.size());
     }

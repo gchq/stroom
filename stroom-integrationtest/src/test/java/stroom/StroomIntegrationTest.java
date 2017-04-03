@@ -18,6 +18,7 @@ package stroom;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import javax.annotation.Resource;
 
@@ -168,5 +169,9 @@ public abstract class StroomIntegrationTest implements StroomTest {
     @Override
     public File getCurrentTestDir() {
         return FileUtil.getTempDir();
+    }
+
+    public Path getCurrentTestPath() {
+        return FileUtil.getTempDir().toPath();
     }
 }

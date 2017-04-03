@@ -31,6 +31,7 @@ import stroom.about.client.presenter.AboutPresenter.AboutView;
 import stroom.about.client.view.AboutViewImpl;
 import stroom.app.client.ContentManager;
 import stroom.app.client.KeyboardInterceptor;
+import stroom.app.client.LocationManager;
 import stroom.app.client.NameTokens;
 import stroom.app.client.presenter.AppPresenter;
 import stroom.app.client.view.AppViewImpl;
@@ -82,6 +83,8 @@ public class AppModule extends AbstractPresenterModule {
         bind(KeyboardInterceptor.class).asEagerSingleton();
 
         // bind(CurrentUser.class).in(Singleton.class);
+
+        bind(LocationManager.class).asEagerSingleton();
         bind(ContentManager.class).asEagerSingleton();
 
         // Constants

@@ -16,12 +16,6 @@
 
 package stroom.test;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
@@ -34,10 +28,17 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
 import stroom.util.logging.StroomLogger;
+import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomZipEntry;
 import stroom.util.zip.StroomZipFile;
 import stroom.util.zip.StroomZipFileType;
-import stroom.util.zip.HeaderMap;
+
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class DataLoader {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(DataLoader.class);
@@ -53,41 +54,44 @@ public class DataLoader {
         this.streamStore = streamStore;
     }
 
-    public void read(final File dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
+    public void read(final Path dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
         readDir(dir, mandateEffectiveDate, effectiveMs);
     }
 
-    private void readDir(final File dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
-        final File[] files = dir.listFiles();
-        for (final File file : files) {
-            if (!file.getName().startsWith(".")) {
-                if (file.isDirectory()) {
-                    readDir(file, mandateEffectiveDate, effectiveMs);
+    private void readDir(final Path dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
+        try {
+            Files.list(dir).forEach(file -> {
+                if (!file.getFileName().startsWith(".")) {
+                    if (Files.isDirectory(file)) {
+                        readDir(file, mandateEffectiveDate, effectiveMs);
 
-                } else {
-                    final String fileName = file.getName().toLowerCase();
-                    if (fileName.endsWith(INPUT_EXTENSION)) {
-                        loadInputFile(file, mandateEffectiveDate, effectiveMs);
+                    } else {
+                        final String fileName = file.getFileName().toString().toLowerCase();
+                        if (fileName.endsWith(INPUT_EXTENSION)) {
+                            loadInputFile(file, mandateEffectiveDate, effectiveMs);
 
-                    } else if (fileName.endsWith(ZIP_EXTENSION)) {
-                        loadZipFile(file, mandateEffectiveDate, effectiveMs);
+                        } else if (fileName.endsWith(ZIP_EXTENSION)) {
+                            loadZipFile(file, mandateEffectiveDate, effectiveMs);
+                        }
                     }
                 }
-            }
+            });
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
-    private void loadInputFile(final File file, final boolean mandateEffectiveDate, final Long effectiveMs) {
+    private void loadInputFile(final Path file, final boolean mandateEffectiveDate, final Long effectiveMs) {
         final Feed feed = getFeed(file);
-        try {
-            loadInputStream(feed, file.getAbsolutePath(), new FileInputStream(file), mandateEffectiveDate, effectiveMs);
+        try (final InputStream inputStream = Files.newInputStream(file)) {
+            loadInputStream(feed, file.toAbsolutePath().toString(), inputStream, mandateEffectiveDate, effectiveMs);
         } catch (final IOException e) {
-            throw new RuntimeException("Error loading file: " + file.getAbsolutePath(), e);
+            throw new RuntimeException("Error loading file: " + file.toAbsolutePath(), e);
         }
     }
 
     public void loadInputStream(final Feed feed, final String info, final InputStream inputStream,
-            final boolean mandateEffectiveDate, final Long effectiveMs) {
+                                final boolean mandateEffectiveDate, final Long effectiveMs) {
         if (feed.isReference() == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + info);
 
@@ -116,14 +120,14 @@ public class DataLoader {
         }
     }
 
-    private void loadZipFile(final File file, final boolean mandateEffectiveDate, final Long effectiveMs) {
+    private void loadZipFile(final Path file, final boolean mandateEffectiveDate, final Long effectiveMs) {
         final Feed feed = getFeed(file);
 
         if (feed.isReference() == mandateEffectiveDate) {
-            LOGGER.info("Loading data: " + file.getAbsolutePath());
+            LOGGER.info("Loading data: " + file.toAbsolutePath());
 
             try {
-                final StroomZipFile stroomZipFile = new StroomZipFile(file);
+                final StroomZipFile stroomZipFile = new StroomZipFile(file.toFile());
                 final byte[] buffer = new byte[1024];
                 final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
                         streamStore, feedService, null, feed, feed.getStreamType());
@@ -156,14 +160,14 @@ public class DataLoader {
                 stroomZipFile.close();
 
             } catch (final IOException e) {
-                throw new RuntimeException("Error loading file: " + file.getAbsolutePath(), e);
+                throw new RuntimeException("Error loading file: " + file.toAbsolutePath(), e);
             }
         }
     }
 
-    private Feed getFeed(final File file) {
+    private Feed getFeed(final Path file) {
         // Get the stem of the file name.
-        String stem = file.getName();
+        String stem = file.getFileName().toString();
         int index = stem.indexOf('.');
         if (index != -1) {
             stem = stem.substring(0, index);

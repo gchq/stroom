@@ -41,7 +41,8 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityActionConfirmation;
+import stroom.entity.shared.ImportState;
+import stroom.util.shared.Message;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ImportConfigAction;
@@ -73,11 +74,11 @@ public class ImportConfigConfirmPresenter extends
     }
 
     private final TooltipPresenter tooltipPresenter;
-    private final DataGridView<EntityActionConfirmation> dataGridView;
+    private final DataGridView<ImportState> dataGridView;
     private final ClientDispatchAsync dispatcher;
 
     private ResourceKey resourceKey;
-    private List<EntityActionConfirmation> confirmList;
+    private List<ImportState> confirmList;
 
     @Inject
     public ImportConfigConfirmPresenter(final EventBus eventBus, final ImportConfigConfirmView view,
@@ -88,7 +89,7 @@ public class ImportConfigConfirmPresenter extends
         this.tooltipPresenter = tooltipPresenter;
         this.dispatcher = dispatcher;
 
-        this.dataGridView = new DataGridViewImpl<EntityActionConfirmation>(false,
+        this.dataGridView = new DataGridViewImpl<ImportState>(false,
                 DataGridViewImpl.MASSIVE_LIST_PAGE_SIZE);
         view.setDataGridView(dataGridView);
 
@@ -123,8 +124,8 @@ public class ImportConfigConfirmPresenter extends
 
         if (ok) {
             boolean warnings = false;
-            for (final EntityActionConfirmation entityActionConfirmation : confirmList) {
-                if (entityActionConfirmation.isAction() && entityActionConfirmation.isWarning()) {
+            for (final ImportState importState : confirmList) {
+                if (importState.isAction() && importState.isWarning()) {
                     warnings = true;
                 }
             }
@@ -164,17 +165,17 @@ public class ImportConfigConfirmPresenter extends
         addActionColumn();
         addTypeColumn();
         addPathColumn();
-        dataGridView.addEndColumn(new EndColumn<EntityActionConfirmation>());
+        dataGridView.addEndColumn(new EndColumn<ImportState>());
     }
 
     private void addSelectedColumn() {
         final TickBoxCell.MarginAppearance tickBoxAppearance = GWT.create(TickBoxCell.MarginAppearance.class);
 
         // Select Column
-        final Column<EntityActionConfirmation, TickBoxState> column = new Column<EntityActionConfirmation, TickBoxState>(
+        final Column<ImportState, TickBoxState> column = new Column<ImportState, TickBoxState>(
                 TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
-            public TickBoxState getValue(final EntityActionConfirmation object) {
+            public TickBoxState getValue(final ImportState object) {
                 return TickBoxState.fromBoolean(object.isAction());
             }
 
@@ -188,9 +189,9 @@ public class ImportConfigConfirmPresenter extends
         dataGridView.addColumn(column, header, 15);
 
         // Add Handlers
-        column.setFieldUpdater(new FieldUpdater<EntityActionConfirmation, TickBoxState>() {
+        column.setFieldUpdater(new FieldUpdater<ImportState, TickBoxState>() {
             @Override
-            public void update(final int index, final EntityActionConfirmation row, final TickBoxState value) {
+            public void update(final int index, final ImportState row, final TickBoxState value) {
                 row.setAction(value.toBoolean());
             }
         });
@@ -199,12 +200,12 @@ public class ImportConfigConfirmPresenter extends
             public void update(final TickBoxState value) {
                 if (confirmList != null) {
                     if (value.equals(TickBoxState.UNTICK)) {
-                        for (final EntityActionConfirmation item : confirmList) {
+                        for (final ImportState item : confirmList) {
                             item.setAction(false);
                         }
                     }
                     if (value.equals(TickBoxState.TICK)) {
-                        for (final EntityActionConfirmation item : confirmList) {
+                        for (final ImportState item : confirmList) {
                             item.setAction(true);
                         }
                     }
@@ -223,7 +224,7 @@ public class ImportConfigConfirmPresenter extends
             boolean allAction = true;
             boolean allNotAction = true;
 
-            for (final EntityActionConfirmation item : confirmList) {
+            for (final ImportState item : confirmList) {
                 if (item.isAction()) {
                     allNotAction = false;
                 } else {
@@ -245,9 +246,9 @@ public class ImportConfigConfirmPresenter extends
 
     protected void addInfoColumn() {
         // Info column.
-        final InfoColumn<EntityActionConfirmation> infoColumn = new InfoColumn<EntityActionConfirmation>() {
+        final InfoColumn<ImportState> infoColumn = new InfoColumn<ImportState>() {
             @Override
-            public GlyphIcon getValue(final EntityActionConfirmation object) {
+            public GlyphIcon getValue(final ImportState object) {
                 if (object.getMessageList().size() > 0 || object.getUpdatedFieldList().size() > 0) {
                     if (object.isWarning()) {
                         return GlyphIcons.ALERT;
@@ -259,12 +260,14 @@ public class ImportConfigConfirmPresenter extends
             }
 
             @Override
-            protected void showInfo(final EntityActionConfirmation action, final int x, final int y) {
+            protected void showInfo(final ImportState action, final int x, final int y) {
                 final StringBuilder builder = new StringBuilder();
                 if (action.getMessageList().size() > 0) {
                     builder.append("<b>Messages:</b><br/>");
-                    for (final String msg : action.getMessageList()) {
-                        builder.append(msg);
+                    for (final Message msg : action.getMessageList()) {
+                        builder.append(msg.getSeverity().getDisplayValue());
+                        builder.append(": ");
+                        builder.append(msg.getMessage());
                         builder.append("<br/>");
                     }
                     builder.append("<br/>");
@@ -289,14 +292,14 @@ public class ImportConfigConfirmPresenter extends
     }
 
     private void addActionColumn() {
-        final Column<EntityActionConfirmation, String> column = new Column<EntityActionConfirmation, String>(
+        final Column<ImportState, String> column = new Column<ImportState, String>(
                 new TextCell()) {
             @Override
-            public String getValue(final EntityActionConfirmation action) {
+            public String getValue(final ImportState action) {
                 if (action.isWarning()) {
-                    return action.getEntityAction().getDisplayValue();
+                    return action.getState().getDisplayValue();
                 } else {
-                    return action.getEntityAction().getDisplayValue();
+                    return action.getState().getDisplayValue();
                 }
             }
         };
@@ -304,22 +307,22 @@ public class ImportConfigConfirmPresenter extends
     }
 
     private void addTypeColumn() {
-        final Column<EntityActionConfirmation, String> column = new Column<EntityActionConfirmation, String>(
+        final Column<ImportState, String> column = new Column<ImportState, String>(
                 new TextCell()) {
             @Override
-            public String getValue(final EntityActionConfirmation action) {
-                return action.getEntityType();
+            public String getValue(final ImportState action) {
+                return action.getDocRef().getType();
             }
         };
         dataGridView.addResizableColumn(column, "Type", 100);
     }
 
     private void addPathColumn() {
-        final Column<EntityActionConfirmation, String> column = new Column<EntityActionConfirmation, String>(
+        final Column<ImportState, String> column = new Column<ImportState, String>(
                 new TextCell()) {
             @Override
-            public String getValue(final EntityActionConfirmation action) {
-                return action.getPath();
+            public String getValue(final ImportState action) {
+                return action.getSourcePath();
             }
         };
         dataGridView.addResizableColumn(column, "Path", 600);
@@ -327,7 +330,7 @@ public class ImportConfigConfirmPresenter extends
 
     public void abortImport() {
         // Abort ... set the confirm list to blank
-        dispatcher.execute(new ImportConfigAction(resourceKey, new ArrayList<EntityActionConfirmation>()),
+        dispatcher.execute(new ImportConfigAction(resourceKey, new ArrayList<ImportState>()),
                 new AsyncCallbackAdaptor<ResourceKey>() {
                     @Override
                     public void onSuccess(final ResourceKey result2) {

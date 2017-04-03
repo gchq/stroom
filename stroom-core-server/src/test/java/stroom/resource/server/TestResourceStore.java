@@ -16,17 +16,16 @@
 
 package stroom.resource.server;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;
-import stroom.util.test.StroomUnitTest;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestResourceStore extends StroomUnitTest {
@@ -42,24 +41,24 @@ public class TestResourceStore extends StroomUnitTest {
         final ResourceKey key2 = resourceStore.createTempFile("TestResourceStore2.dat");
         Assert.assertTrue(key2.toString().endsWith("TestResourceStore2.dat"));
 
-        FileUtil.createNewFile(resourceStore.getTempFile(key1));
-        FileUtil.createNewFile(resourceStore.getTempFile(key2));
+        Files.createFile(resourceStore.getTempFile(key1));
+        Files.createFile(resourceStore.getTempFile(key2));
 
-        Assert.assertTrue(resourceStore.getTempFile(key1).isFile());
-        Assert.assertTrue(resourceStore.getTempFile(key2).isFile());
+        Assert.assertTrue(Files.isRegularFile(resourceStore.getTempFile(key1)));
+        Assert.assertTrue(Files.isRegularFile(resourceStore.getTempFile(key2)));
 
         // Roll to Old
         resourceStore.execute();
-        final File file1 = resourceStore.getTempFile(key1);
-        Assert.assertTrue(file1.isFile());
-        final File file2 = resourceStore.getTempFile(key2);
-        Assert.assertTrue(file2.isFile());
+        final Path file1 = resourceStore.getTempFile(key1);
+        Assert.assertTrue(Files.isRegularFile(file1));
+        final Path file2 = resourceStore.getTempFile(key2);
+        Assert.assertTrue(Files.isRegularFile(file2));
 
         // Roll to Delete
         resourceStore.execute();
         Assert.assertNull(resourceStore.getTempFile(key1));
-        Assert.assertFalse(file1.isFile());
+        Assert.assertFalse(Files.isRegularFile(file1));
         Assert.assertNull(resourceStore.getTempFile(key2));
-        Assert.assertFalse(file2.isFile());
+        Assert.assertFalse(Files.isRegularFile(file2));
     }
 }

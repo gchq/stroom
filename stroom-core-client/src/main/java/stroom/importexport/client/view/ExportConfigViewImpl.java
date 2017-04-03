@@ -23,18 +23,14 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.importexport.client.presenter.ExportConfigPresenter.ExportConfigView;
-import stroom.widget.tickbox.client.view.TickBox;
 
 public class ExportConfigViewImpl extends ViewImpl implements ExportConfigView {
     public interface Binder extends UiBinder<Widget, ExportConfigViewImpl> {
     }
 
     @UiField
-    SimplePanel folders;
-    @UiField
-    TickBox ignoreErrors;
+    SimplePanel tree;
 
     private final Widget widget;
 
@@ -49,14 +45,9 @@ public class ExportConfigViewImpl extends ViewImpl implements ExportConfigView {
     }
 
     @Override
-    public void setFolderView(final View view) {
+    public void setTreeView(final View view) {
         view.asWidget().setWidth("100%");
         view.asWidget().setHeight("100%");
-        folders.setWidget(view.asWidget());
-    }
-
-    @Override
-    public TickBox getIgnoreErrors() {
-        return ignoreErrors;
+        tree.setWidget(view.asWidget());
     }
 }

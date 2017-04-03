@@ -17,11 +17,17 @@
 package stroom.streamstore.server.fs;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang.StringUtils;
 
+import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.FileUtil;
@@ -212,6 +218,29 @@ public final class FileSystemUtil {
             }
         }
         return success;
+    }
+
+    public static boolean deleteDirectory(final Path path) {
+        final AtomicBoolean success = new AtomicBoolean(true);
+
+        try {
+            if (Files.isDirectory(path)) {
+                Files.walk(path).sorted(Comparator.reverseOrder()).forEach(p -> {
+                    try {
+                        Files.delete(p);
+                        LOGGER.debug("Deleted file " + p);
+                    } catch (final IOException e) {
+                        LOGGER.error("Failed to delete file " + p);
+                        success.set(false);
+                    }
+                });
+            }
+        } catch (final IOException e) {
+            LOGGER.error("Failed to delete file " + path);
+            success.set(false);
+        }
+
+        return success.get();
     }
 
     /**

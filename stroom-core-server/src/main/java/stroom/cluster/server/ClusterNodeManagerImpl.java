@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Component that remembers the node list and who is the current master node
  */
-@EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.ADD, EntityAction.DELETE, EntityAction.UPDATE})
+@EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE, EntityAction.UPDATE})
 @Component(ClusterNodeManager.BEAN_NAME)
 public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.Handler {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterNodeManagerImpl.class);

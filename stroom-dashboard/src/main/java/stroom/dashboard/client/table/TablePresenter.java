@@ -34,6 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.app.client.LocationManager;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
@@ -93,6 +94,8 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
         implements HasDirtyHandlers, ResultComponent {
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table");
     private static final int MIN_EXPANDER_COL_WIDTH = 0;
+
+    private final LocationManager locationManager;
     private final TableResultRequest tableResultRequest = new TableResultRequest(0, 100);
     private final List<Column<Row, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
@@ -118,7 +121,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     private int[] maxResults = TableSettings.DEFAULT_MAX_RESULTS;
 
     @Inject
-    public TablePresenter(final EventBus eventBus, final MenuListPresenter menuListPresenter,
+    public TablePresenter(final EventBus eventBus, final LocationManager locationManager, final MenuListPresenter menuListPresenter,
                           final ExpressionPresenter expressionPresenter, final FormatPresenter formatPresenter,
                           final FilterPresenter filterPresenter,
                           final Provider<FieldAddPresenter> fieldAddPresenterProvider,
@@ -126,6 +129,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                           final ClientDispatchAsync dispatcher, final ClientPropertyCache clientPropertyCache,
                           final TimeZones timeZones) {
         super(eventBus, new DataGridViewImpl<>(true), settingsPresenterProvider);
+        this.locationManager = locationManager;
         this.fieldAddPresenterProvider = fieldAddPresenterProvider;
         this.downloadPresenter = downloadPresenter;
         this.dispatcher = dispatcher;
@@ -286,7 +290,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                                     new DownloadSearchResultsAction(queryKey, search, getComponentData().getId(),
                                             downloadPresenter.getFileType(), downloadPresenter.isSample(),
                                             downloadPresenter.getPercent(), timeZones.getTimeZone()),
-                                    new ExportFileCompleteHandler(null));
+                                    new ExportFileCompleteHandler(locationManager, null));
                         }
 
                         HidePopupEvent.fire(TablePresenter.this, downloadPresenter);
@@ -323,34 +327,34 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
         ignoreRangeChange = true;
 
 //        if (!paused) {
-            lastExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
-            currentExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
+        lastExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
+        currentExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
 
-            if (result != null && result instanceof TableResult) {
-                // Don't refresh the table unless the results have changed.
-                final TableResult tableResult = (TableResult) result;
-                final List<Row> values = tableResult.getRows();
-                final OffsetRange<Integer> valuesRange = tableResult.getResultRange();
+        if (result != null && result instanceof TableResult) {
+            // Don't refresh the table unless the results have changed.
+            final TableResult tableResult = (TableResult) result;
+            final List<Row> values = tableResult.getRows();
+            final OffsetRange<Integer> valuesRange = tableResult.getResultRange();
 
-                // Only set data in the table if we have got some results and
-                // they have changed.
-                if (valuesRange.getOffset() == 0 || values.size() > 0) {
-                    updateColumns();
-                    getView().setRowData(valuesRange.getOffset(), values);
-                    getView().setRowCount(tableResult.getTotalResults(), true);
-                }
-
-                // Enable download of current results.
-                downloadButton.setEnabled(true);
-            } else {
-                // Disable download of current results.
-                downloadButton.setEnabled(false);
-
-                getView().setRowData(0, new ArrayList<Row>());
-                getView().setRowCount(0, true);
-
-                getView().getSelectionModel().clear();
+            // Only set data in the table if we have got some results and
+            // they have changed.
+            if (valuesRange.getOffset() == 0 || values.size() > 0) {
+                updateColumns();
+                getView().setRowData(valuesRange.getOffset(), values);
+                getView().setRowCount(tableResult.getTotalResults(), true);
             }
+
+            // Enable download of current results.
+            downloadButton.setEnabled(true);
+        } else {
+            // Disable download of current results.
+            downloadButton.setEnabled(false);
+
+            getView().setRowData(0, new ArrayList<Row>());
+            getView().setRowCount(0, true);
+
+            getView().getSelectionModel().clear();
+        }
 //        }
 
         ignoreRangeChange = false;

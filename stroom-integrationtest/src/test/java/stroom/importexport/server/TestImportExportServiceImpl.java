@@ -16,13 +16,15 @@
 
 package stroom.importexport.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.entity.shared.DocRef;
-import stroom.entity.shared.EntityActionConfirmation;
-import stroom.entity.shared.FindFolderCriteria;
+import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
+import stroom.entity.shared.ImportState;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.pipeline.shared.PipelineEntity;
@@ -30,8 +32,6 @@ import stroom.pipeline.shared.PipelineEntityService;
 import stroom.resource.server.ResourceStore;
 import stroom.util.shared.ResourceKey;
 import stroom.util.test.FileSystemTestUtil;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -102,16 +102,16 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         final int startFeedSize = commonTestControl.countEntity(Feed.class);
 
         final ResourceKey file = resourceStore.createTempFile("Export.zip");
-        final FindFolderCriteria criteria = new FindFolderCriteria();
-        criteria.getFolderIdSet().add(folder1);
-        criteria.getFolderIdSet().add(folder2);
+        final DocRefs docRefs = new DocRefs();
+        docRefs.add(DocRef.create(folder1));
+        docRefs.add(DocRef.create(folder2));
 
         // Export
-        importExportService.exportConfig(criteria, resourceStore.getTempFile(file), false, null);
+        importExportService.exportConfig(docRefs, resourceStore.getTempFile(file), null);
 
         final ResourceKey exportConfig = resourceStore.createTempFile("ExportPlain.zip");
 
-        importExportService.exportConfig(criteria, resourceStore.getTempFile(exportConfig), false, null);
+        importExportService.exportConfig(docRefs, resourceStore.getTempFile(exportConfig), null);
 
         // Delete it and check
         pipelineEntityService.delete(tran2);
@@ -123,10 +123,10 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         Assert.assertEquals(4, commonTestControl.countEntity(Folder.class));
 
         // Import
-        final List<EntityActionConfirmation> confirmations = importExportService
+        final List<ImportState> confirmations = importExportService
                 .createImportConfirmationList(resourceStore.getTempFile(file));
 
-        for (final EntityActionConfirmation confirmation : confirmations) {
+        for (final ImportState confirmation : confirmations) {
             confirmation.setAction(true);
         }
 
@@ -137,10 +137,10 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         Assert.assertEquals(startTranslationSize, commonTestControl.countEntity(PipelineEntity.class));
 
         final ResourceKey fileChild = resourceStore.createTempFile("ExportChild.zip");
-        final FindFolderCriteria criteriaChild = new FindFolderCriteria();
-        criteriaChild.getFolderIdSet().add(folder2child2);
+        final DocRefs criteriaChild = new DocRefs();
+        criteriaChild.add(DocRef.create(folder2child2));
 
         // Export
-        importExportService.exportConfig(criteriaChild, resourceStore.getTempFile(fileChild), false, null);
+        importExportService.exportConfig(criteriaChild, resourceStore.getTempFile(fileChild), null);
     }
 }

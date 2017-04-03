@@ -28,6 +28,7 @@ import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.SQLUtil;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityServiceException;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
 import event.logging.BaseAdvancedQueryItem;
@@ -47,8 +48,8 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
     private final SecurityContext securityContext;
 
     @Inject
-    QueryServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext) {
-        super(entityManager, securityContext);
+    QueryServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
         this.securityContext = securityContext;
     }
 

@@ -22,9 +22,9 @@ import java.io.IOException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import stroom.entity.shared.ImportState.ImportMode;
 import stroom.feed.shared.FeedService;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.importexport.server.ImportExportSerializer.ImportMode;
 import stroom.node.server.NodeCache;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.test.StroomCoreServerTestFileUtil;
@@ -72,7 +72,7 @@ public final class SampleRepositoryCreator {
 
     public void run(final boolean shutdown) throws IOException {
         // Load config.
-        importExportSerializer.read(testDir, null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(testDir.toPath(), null, ImportMode.IGNORE_CONFIRMATION);
 
         final File repoDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "SampleRepositoryCreator/repo");
         repoDir.mkdirs();

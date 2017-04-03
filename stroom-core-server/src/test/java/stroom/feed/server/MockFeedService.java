@@ -16,13 +16,18 @@
 
 package stroom.feed.server;
 
+import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
+import stroom.importexport.server.EntityPathResolver;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
 
 /**
  * <p>
@@ -36,6 +41,14 @@ import org.springframework.stereotype.Component;
 @Profile(StroomSpringProfiles.TEST)
 @Component("feedService")
 public class MockFeedService extends MockDocumentEntityService<Feed, FindFeedCriteria> implements FeedService {
+    public MockFeedService() {
+    }
+
+    @Inject
+    public MockFeedService(final GenericEntityService genericEntityService, final EntityPathResolver entityPathResolver) {
+        super(genericEntityService, entityPathResolver);
+    }
+
     @Override
     public Class<Feed> getEntityClass() {
         return Feed.class;

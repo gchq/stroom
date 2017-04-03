@@ -16,14 +16,16 @@
 
 package stroom.pipeline.server.task;
 
+import org.joda.time.DateTime;
+import org.junit.Assert;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.ImportState.ImportMode;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.importexport.server.ImportExportSerializer.ImportMode;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
@@ -50,17 +52,15 @@ import stroom.streamtask.shared.StreamProcessorService;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
-import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.test.ComparisonHelper;
+import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Indicators;
+import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
 import stroom.util.zip.StroomStreamProcessor;
-import stroom.util.zip.HeaderMap;
-import org.joda.time.DateTime;
-import org.junit.Assert;
 
 import javax.annotation.Resource;
 import java.io.BufferedInputStream;
@@ -115,7 +115,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         FileUtil.mkdirs(outputDir);
 
-        importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(configDir.toPath(), null, ImportMode.IGNORE_CONFIRMATION);
 
         // Process reference data.
         processData(inputDir, outputDir, true, compareOutput, exceptions);
@@ -128,7 +128,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     protected void processData(final File inputDir, final File outputDir, final boolean reference,
-            final boolean compareOutput, final List<Exception> exceptions) {
+                               final boolean compareOutput, final List<Exception> exceptions) {
         // Create a stream processor for each pipeline.
         final BaseResultList<PipelineEntity> pipelines = pipelineEntityService.find(new FindPipelineEntityCriteria());
         for (final PipelineEntity pipelineEntity : pipelines) {
@@ -184,7 +184,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private void test(final File inputFile, final Feed feed, final File outputDir, final String stem,
-            final boolean compareOutput, final List<Exception> exceptions) throws Exception {
+                      final boolean compareOutput, final List<Exception> exceptions) throws Exception {
         LOGGER.info("Testing: " + inputFile.getName());
 
         addStream(inputFile, feed);
@@ -397,7 +397,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private SteppingResult step(final StepType direction, final int steps, final SteppingTask request,
-            final SteppingResult existingResponse) {
+                                final SteppingResult existingResponse) {
         SteppingResult newResponse = existingResponse;
 
         for (int i = 0; i < steps; i++) {

@@ -24,6 +24,7 @@ import stroom.entity.server.util.SQLUtil;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.config.StroomProperties;
@@ -42,8 +43,8 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
     public static final String FEED_NAME_PATTERN_VALUE = "^[A-Z0-9_\\-]{3,}$";
 
     @Inject
-    FeedServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext) {
-        super(entityManager, securityContext);
+    FeedServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
     }
 
     @SuppressWarnings("unchecked")

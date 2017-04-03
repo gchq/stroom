@@ -32,6 +32,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
+import stroom.app.client.LocationManager;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
@@ -81,6 +82,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     public static final String STREAM_RELATION_LIST = "STREAM_RELATION_LIST";
     public static final String STREAM_LIST = "STREAM_LIST";
 
+    private final LocationManager locationManager;
     private final StreamListPresenter streamListPresenter;
     private final StreamRelationListPresenter streamRelationListPresenter;
     private final DataPresenter dataPresenter;
@@ -105,13 +107,14 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private ImageButtonView streamRelationListProcess;
 
     @Inject
-    public StreamPresenter(final EventBus eventBus, final StreamView view,
+    public StreamPresenter(final EventBus eventBus, final StreamView view, final LocationManager locationManager,
                            final StreamListPresenter streamListPresenter,
                            final StreamRelationListPresenter streamRelationListPresenter, final DataPresenter dataPresenter,
                            final Provider<StreamFilterPresenter> streamListFilterPresenter,
                            final Provider<StreamUploadPresenter> streamUploadPresenter, final Resources resources,
                            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
         super(eventBus, view);
+        this.locationManager = locationManager;
         this.streamListPresenter = streamListPresenter;
         this.streamRelationListPresenter = streamRelationListPresenter;
         this.streamListFilterPresenter = streamListFilterPresenter;
@@ -309,11 +312,11 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
         if (streamListDownload != null) {
             registerHandler(streamListDownload
-                    .addClickHandler(new DownloadStreamClickHandler(this, streamListPresenter, true, dispatcher)));
+                    .addClickHandler(new DownloadStreamClickHandler(this, streamListPresenter, true, dispatcher, locationManager)));
         }
         if (streamRelationListDownload != null) {
             registerHandler(streamRelationListDownload.addClickHandler(
-                    new DownloadStreamClickHandler(this, streamRelationListPresenter, false, dispatcher)));
+                    new DownloadStreamClickHandler(this, streamRelationListPresenter, false, dispatcher, locationManager)));
         }
         // Delete
         if (streamListDelete != null) {
@@ -677,15 +680,18 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     private static class DownloadStreamClickHandler extends AbstractStreamClickHandler {
+        private final LocationManager locationManager;
+
         public DownloadStreamClickHandler(final StreamPresenter streamPresenter,
                                           final AbstractStreamListPresenter streamListPresenter, final boolean useCriteria,
-                                          final ClientDispatchAsync dispatcher) {
+                                          final ClientDispatchAsync dispatcher, final LocationManager locationManager) {
             super(streamPresenter, streamListPresenter, useCriteria, dispatcher);
+            this.locationManager = locationManager;
         }
 
         @Override
         protected void performAction(final FindStreamCriteria criteria, final ClientDispatchAsync dispatcher) {
-            dispatcher.execute(new DownloadDataAction(criteria), new ExportFileCompleteHandler(null));
+            dispatcher.execute(new DownloadDataAction(criteria), new ExportFileCompleteHandler(locationManager, null));
         }
     }
 

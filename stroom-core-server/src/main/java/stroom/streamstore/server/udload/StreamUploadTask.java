@@ -20,11 +20,11 @@ import stroom.entity.shared.DocRef;
 import stroom.util.shared.VoidResult;
 import stroom.util.task.ServerTask;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public class StreamUploadTask extends ServerTask<VoidResult> {
     private String fileName;
-    private File file;
+    private Path file;
     private DocRef feed;
     private DocRef streamType;
     private Long effectiveMs;
@@ -33,9 +33,9 @@ public class StreamUploadTask extends ServerTask<VoidResult> {
     public StreamUploadTask() {
     }
 
-    public StreamUploadTask(final String sessionId, final String userName, final String fileName, final File file,
+    public StreamUploadTask(final String sessionId, final String userName, final String fileName, final Path file,
                             final DocRef feed, final DocRef streamType, final Long effectiveMs,
-            final String metaData) {
+                            final String metaData) {
         super(null, sessionId, userName);
         this.fileName = fileName;
         this.file = file;
@@ -45,7 +45,7 @@ public class StreamUploadTask extends ServerTask<VoidResult> {
         this.effectiveMs = effectiveMs;
     }
 
-    public File getFile() {
+    public Path getFile() {
         return file;
     }
 

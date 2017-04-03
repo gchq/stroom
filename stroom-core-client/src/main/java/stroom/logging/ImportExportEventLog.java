@@ -23,8 +23,9 @@ import javax.annotation.Resource;
 import event.logging.*;
 import org.springframework.stereotype.Component;
 
+import stroom.entity.shared.DocRefs;
 import stroom.security.Insecure;
-import stroom.entity.shared.EntityActionConfirmation;
+import stroom.entity.shared.ImportState;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
@@ -51,7 +52,7 @@ public class ImportExportEventLog {
 
             final Criteria criteria = new Criteria();
             criteria.setType("Configuration");
-            appendCriteria(criteria, exportDataAction.getCriteria());
+            appendCriteria(criteria, exportDataAction.getDocRefs());
 
             final MultiObject multiObject = new MultiObject();
             multiObject.getObjects().add(criteria);
@@ -69,18 +70,18 @@ public class ImportExportEventLog {
 
     public void _import(final ImportConfigAction importDataAction) {
         try {
-            final List<EntityActionConfirmation> confirmList = importDataAction.getConfirmList();
+            final List<ImportState> confirmList = importDataAction.getConfirmList();
             if (confirmList != null && confirmList.size() > 0) {
-                for (final EntityActionConfirmation confirmation : confirmList) {
+                for (final ImportState confirmation : confirmList) {
                     try {
                         final Event event = eventLoggingService.createAction("ImportConfig", "Importing Configuration");
 
                         final event.logging.Object object = new event.logging.Object();
-                        object.setType(confirmation.getEntityType());
-                        object.setId(confirmation.getPath());
-                        object.setName(confirmation.getPath());
+                        object.setType(confirmation.getDocRef().getType());
+                        object.setId(confirmation.getDocRef().getUuid());
+                        object.setName(confirmation.getSourcePath());
                         object.getData().add(EventLoggingUtil.createData("ImportAction",
-                                confirmation.getEntityAction().getDisplayValue()));
+                                confirmation.getState().getDisplayValue()));
 
                         final MultiObject multiObject = new MultiObject();
                         multiObject.getObjects().add(object);
@@ -101,8 +102,31 @@ public class ImportExportEventLog {
         }
     }
 
-    private void appendCriteria(final Criteria parent, final FindFolderCriteria criteria) {
-        if (criteria != null && criteria.getFolderIdSet() != null && criteria.getFolderIdSet().size() > 0) {
+//    private void appendCriteria(final Criteria parent, final FindFolderCriteria criteria) {
+//        if (criteria != null && criteria.getFolderIdSet() != null && criteria.getFolderIdSet().size() > 0) {
+//            final Query query = new Query();
+//            parent.setQuery(query);
+//
+//            final Advanced advanced = new Advanced();
+//            query.setAdvanced(advanced);
+//
+//            final Or or = new Or();
+//            advanced.getAdvancedQueryItems().add(or);
+//
+//            for (final Long folderId : criteria.getFolderIdSet()) {
+//                final Folder folder = folderService.loadById(folderId);
+//                final event.logging.Term term = new event.logging.Term();
+//                term.setName("Folder");
+//                term.setCondition(TermCondition.EQUALS);
+//                term.setValue(folder.getName());
+//
+//                or.getAdvancedQueryItems().add(term);
+//            }
+//        }
+//    }
+
+    private void appendCriteria(final Criteria parent, final DocRefs docRefs) {
+        if (docRefs != null) {
             final Query query = new Query();
             parent.setQuery(query);
 
@@ -112,15 +136,14 @@ public class ImportExportEventLog {
             final Or or = new Or();
             advanced.getAdvancedQueryItems().add(or);
 
-            for (final Long folderId : criteria.getFolderIdSet()) {
-                final Folder folder = folderService.loadById(folderId);
+            docRefs.forEach(docRef -> {
                 final event.logging.Term term = new event.logging.Term();
-                term.setName("Folder");
+                term.setName(docRef.getType());
                 term.setCondition(TermCondition.EQUALS);
-                term.setValue(folder.getName());
+                term.setValue(docRef.getUuid());
 
                 or.getAdvancedQueryItems().add(term);
-            }
+            });
         }
     }
 }

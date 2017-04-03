@@ -16,7 +16,7 @@
 
 package stroom.importexport.server;
 
-import stroom.entity.shared.EntityActionConfirmation;
+import stroom.entity.shared.ImportState;
 import stroom.importexport.shared.ImportConfigAction;
 import stroom.logging.ImportExportEventLog;
 import stroom.security.Secured;
@@ -26,7 +26,7 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.ResourceKey;
 
 import javax.annotation.Resource;
-import java.io.File;
+import java.nio.file.Path;
 
 @TaskHandlerBean(task = ImportConfigAction.class)
 public class ImportConfigHandler extends AbstractTaskHandler<ImportConfigAction, ResourceKey> {
@@ -41,14 +41,14 @@ public class ImportConfigHandler extends AbstractTaskHandler<ImportConfigAction,
     @Secured("Import Configuration")
     public ResourceKey exec(final ImportConfigAction action) {
         // Import file.
-        final File file = sessionResourceStore.getTempFile(action.getKey());
+        final Path file = sessionResourceStore.getTempFile(action.getKey());
 
         // Log the import.
         eventLog._import(action);
 
         boolean foundOneAction = false;
-        for (final EntityActionConfirmation entityActionConfirmation : action.getConfirmList()) {
-            if (entityActionConfirmation.isAction()) {
+        for (final ImportState importState : action.getConfirmList()) {
+            if (importState.isAction()) {
                 foundOneAction = true;
                 break;
             }

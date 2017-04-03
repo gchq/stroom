@@ -14,24 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.entity.shared;
+package stroom.app.client;
 
-import stroom.util.shared.HasDisplayValue;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.Location;
 
-public enum EntityAction implements HasDisplayValue {
-    CREATE("Create"), UPDATE("Update"), DELETE("Delete"), CLEAR_CACHE("Clear Cache");
+import javax.inject.Inject;
 
-    private final String displayValue;
+public class LocationManager {
+    private boolean ignoreClose;
 
-    EntityAction(final String displayValue) {
-        this.displayValue = displayValue;
+    @Inject
+    public LocationManager() {
+        Window.addWindowClosingHandler(event -> {
+            if (!ignoreClose) {
+                event.setMessage("Are you sure you want to leave Stroom?");
+            } else {
+                ignoreClose = false;
+            }
+        });
     }
 
-    /**
-     * @return string used in drop downs.
-     */
-    @Override
-    public String getDisplayValue() {
-        return displayValue;
+    public void replace(final String newURL) {
+        ignoreClose = true;
+        Location.replace(newURL);
     }
 }

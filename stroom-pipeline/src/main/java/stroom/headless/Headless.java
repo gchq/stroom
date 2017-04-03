@@ -16,23 +16,8 @@
 
 package stroom.headless;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
-
-import stroom.util.zip.StroomZipFile;
-import stroom.util.zip.StroomZipFileType;
-import stroom.util.zip.StroomZipNameSet;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-
 import stroom.entity.server.util.XMLUtil;
 import stroom.importexport.server.ImportExportService;
 import stroom.node.server.NodeCache;
@@ -58,7 +43,20 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.ThreadScopeRunnable;
+import stroom.util.zip.StroomZipFile;
+import stroom.util.zip.StroomZipFileType;
+import stroom.util.zip.StroomZipNameSet;
 import stroom.util.zip.StroomZipRepository;
+
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 
 /**
  * Command line tool to process some files from a proxy stroom.
@@ -245,7 +243,7 @@ public class Headless extends AbstractCommandLineTool {
         LOGGER.info("Reading configuration from: " + configFile.getAbsolutePath());
 
         final ImportExportService importExportService = getAppContext().getBean(ImportExportService.class);
-        importExportService.performImportWithoutConfirmation(configFile);
+        importExportService.performImportWithoutConfirmation(configFile.toPath());
 
         final NodeCache nodeCache = getAppContext().getBean(NodeCache.class);
         final VolumeService volumeService = getAppContext().getBean(VolumeService.class);

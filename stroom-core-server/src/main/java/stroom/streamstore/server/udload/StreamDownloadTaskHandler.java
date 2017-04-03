@@ -16,6 +16,7 @@
 
 package stroom.streamstore.server.udload;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
@@ -28,8 +29,8 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogItemProgress;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Monitor;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.MonitorImpl;
@@ -39,12 +40,12 @@ import stroom.util.zip.StroomFileNameUtil;
 import stroom.util.zip.StroomZipEntry;
 import stroom.util.zip.StroomZipFileType;
 import stroom.util.zip.StroomZipOutputStream;
-import org.springframework.context.annotation.Scope;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @TaskHandlerBean(task = StreamDownloadTask.class)
 @Scope(value = StroomScope.TASK)
@@ -71,7 +72,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
     }
 
     private StreamDownloadResult downloadData(final StreamDownloadTask task, final FindStreamCriteria criteria,
-            File data, final StreamDownloadSettings settings) throws RuntimeException {
+                                              Path data, final StreamDownloadSettings settings) throws RuntimeException {
         final BaseResultList<Stream> list = streamStore.find(criteria);
 
         final StreamDownloadResult result = new StreamDownloadResult();
@@ -85,12 +86,12 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
 
         StroomZipOutputStream stroomZipOutputStream = null;
         try {
-            stroomZipOutputStream = new StroomZipOutputStream(data, zipProgressMonitor, false);
+            stroomZipOutputStream = new StroomZipOutputStream(data.toFile(), zipProgressMonitor, false);
 
             long id = 0;
             long fileCount = 0;
 
-            final String fileBasePath = data.getAbsolutePath().substring(0, data.getAbsolutePath().lastIndexOf(".zip"));
+            final String fileBasePath = data.toAbsolutePath().toString().substring(0, data.toAbsolutePath().toString().lastIndexOf(".zip"));
 
             final LogItemProgress logItemProgress = new LogItemProgress(0, list.size());
             streamProgressMonitor.info("Stream %s", logItemProgress);
@@ -124,8 +125,8 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
                     } else {
                         stroomZipOutputStream.close();
                         fileCount++;
-                        data = new File(fileBasePath + "_" + fileCount + ".zip");
-                        stroomZipOutputStream = new StroomZipOutputStream(data, zipProgressMonitor, false);
+                        data = Paths.get(fileBasePath + "_" + fileCount + ".zip");
+                        stroomZipOutputStream = new StroomZipOutputStream(data.toFile(), zipProgressMonitor, false);
                     }
                 }
 
@@ -245,7 +246,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
         return false;
     }
 
-    private void closeDelete(final File data, final StroomZipOutputStream stroomZipOutputStream) {
+    private void closeDelete(final Path data, final StroomZipOutputStream stroomZipOutputStream) {
         if (stroomZipOutputStream != null) {
             try {
                 stroomZipOutputStream.closeDelete();

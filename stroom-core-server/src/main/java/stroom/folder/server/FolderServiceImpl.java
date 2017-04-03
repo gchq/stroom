@@ -28,7 +28,7 @@ import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderIdSet;
 import stroom.entity.shared.FolderService;
-import stroom.entity.shared.HasFolder;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.logging.StroomLogger;
@@ -52,8 +52,8 @@ public class FolderServiceImpl extends DocumentEntityServiceImpl<Folder, FindFol
     private volatile String[] permissions;
 
     @Inject
-    FolderServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext, final GenericEntityService genericEntityService) {
-        super(entityManager, securityContext);
+    FolderServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final GenericEntityService genericEntityService) {
+        super(entityManager, importExportHelper, securityContext);
         this.genericEntityService = genericEntityService;
     }
 

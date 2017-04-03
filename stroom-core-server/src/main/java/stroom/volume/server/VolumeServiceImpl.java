@@ -62,7 +62,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Transactional
 @Component("volumeService")
 @Secured(Volume.MANAGE_VOLUMES_PERMISSION)
-@EntityEventHandler(type = Volume.ENTITY_TYPE, action = {EntityAction.ADD, EntityAction.DELETE})
+@EntityEventHandler(type = Volume.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
 public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolumeCriteria>
         implements VolumeService, EntityEvent.Handler, Clearable {
     /**

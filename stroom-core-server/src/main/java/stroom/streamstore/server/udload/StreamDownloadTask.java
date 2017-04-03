@@ -17,20 +17,21 @@
 package stroom.streamstore.server.udload;
 
 import java.io.File;
+import java.nio.file.Path;
 
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.util.task.ServerTask;
 
 public class StreamDownloadTask extends ServerTask<StreamDownloadResult> {
     private FindStreamCriteria criteria;
-    private File file;
+    private Path file;
     private StreamDownloadSettings settings;
 
     public StreamDownloadTask() {
     }
 
     public StreamDownloadTask(final String sessionId, final String userName, final FindStreamCriteria criteria,
-            final File file, final StreamDownloadSettings settings) {
+            final Path file, final StreamDownloadSettings settings) {
         super(null, sessionId, userName);
         this.criteria = criteria;
         this.file = file;
@@ -41,7 +42,7 @@ public class StreamDownloadTask extends ServerTask<StreamDownloadResult> {
         return criteria;
     }
 
-    public File getFile() {
+    public Path getFile() {
         return file;
     }
 

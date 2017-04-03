@@ -61,12 +61,12 @@ public interface GenericEntityService {
     <E extends Entity> Boolean delete(E entity);
 
     Collection<DocumentEntityService<?>> findAll();
-
-    <E extends DocumentEntity> E importEntity(E entity, DocRef folder);
-
-    <E extends DocumentEntity> E exportEntity(E entity);
+//
+//    <E extends DocumentEntity> E importEntity(E entity, DocRef folder);
+//
+//    <E extends DocumentEntity> E exportEntity(E entity);
 
     <E extends Entity> EntityService<E> getEntityService(String entityType);
-
-    <E extends Entity, C extends BaseCriteria> FindService<E, C> getFindService(String entityType);
+//
+//    <E extends Entity, C extends BaseCriteria> FindService<E, C> getFindService(String entityType);
 }

@@ -17,11 +17,11 @@
 package stroom.importexport.shared;
 
 import stroom.dispatch.shared.Action;
-import stroom.entity.shared.EntityActionConfirmation;
+import stroom.entity.shared.ImportState;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.SharedList;
 
-public class ImportConfigConfirmationAction extends Action<SharedList<EntityActionConfirmation>> {
+public class ImportConfigConfirmationAction extends Action<SharedList<ImportState>> {
     private static final long serialVersionUID = 1799514675431383541L;
     private ResourceKey key;
 

@@ -31,7 +31,7 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
 import javax.annotation.Resource;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 @TaskHandlerBean(task = DownloadDataAction.class)
@@ -50,7 +50,7 @@ public class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction,
         try {
             // Import file.
             resourceKey = sessionResourceStore.createTempFile("StroomData.zip");
-            final File file = sessionResourceStore.getTempFile(resourceKey);
+            final Path file = sessionResourceStore.getTempFile(resourceKey);
 
             final StreamDownloadSettings settings = new StreamDownloadSettings();
             taskManager.exec(new StreamDownloadTask(action.getSessionId(), action.getUserId(), action.getCriteria(),
@@ -62,6 +62,6 @@ public class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction,
             streamEventLog.exportStream(action.getCriteria(), ex);
             throw EntityServiceExceptionUtil.create(ex);
         }
-        return new ResourceGeneration(resourceKey, new ArrayList<String>());
+        return new ResourceGeneration(resourceKey, new ArrayList<>());
     }
 }

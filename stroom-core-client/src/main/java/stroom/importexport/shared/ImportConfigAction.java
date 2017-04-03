@@ -19,19 +19,19 @@ package stroom.importexport.shared;
 import java.util.List;
 
 import stroom.dispatch.shared.Action;
-import stroom.entity.shared.EntityActionConfirmation;
+import stroom.entity.shared.ImportState;
 import stroom.util.shared.ResourceKey;
 
 public class ImportConfigAction extends Action<ResourceKey> {
     private static final long serialVersionUID = 1799514675431383541L;
     private ResourceKey key;
-    private List<EntityActionConfirmation> confirmList;
+    private List<ImportState> confirmList;
 
     public ImportConfigAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ImportConfigAction(final ResourceKey resourceKey, final List<EntityActionConfirmation> confirmList) {
+    public ImportConfigAction(final ResourceKey resourceKey, final List<ImportState> confirmList) {
         this.key = resourceKey;
         this.confirmList = confirmList;
     }
@@ -44,11 +44,11 @@ public class ImportConfigAction extends Action<ResourceKey> {
         this.key = key;
     }
 
-    public void setConfirmList(final List<EntityActionConfirmation> confirmList) {
+    public void setConfirmList(final List<ImportState> confirmList) {
         this.confirmList = confirmList;
     }
 
-    public List<EntityActionConfirmation> getConfirmList() {
+    public List<ImportState> getConfirmList() {
         return confirmList;
     }
 

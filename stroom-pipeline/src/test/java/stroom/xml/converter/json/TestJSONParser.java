@@ -33,6 +33,7 @@ import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import stroom.importexport.server.ImportExportHelper;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.test.StroomUnitTest;
@@ -65,6 +66,8 @@ import stroom.xmlschema.server.MockXMLSchemaService;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 import stroom.xmlschema.shared.XMLSchemaService;
+
+import javax.inject.Inject;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestJSONParser extends StroomUnitTest {

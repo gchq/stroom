@@ -29,6 +29,7 @@ import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
@@ -53,8 +54,8 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
     private String xmlTemplate;
 
     @Inject
-    DashboardServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext, final ResourceLoader resourceLoader) {
-        super(entityManager, securityContext);
+    DashboardServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final ResourceLoader resourceLoader) {
+        super(entityManager, importExportHelper, securityContext);
         this.resourceLoader = resourceLoader;
     }
 

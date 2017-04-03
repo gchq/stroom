@@ -16,13 +16,16 @@
 
 package stroom.statistics.common;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRef;
-import stroom.entity.shared.FindFolderCriteria;
+import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
+import stroom.entity.shared.ImportState.ImportMode;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.importexport.server.ImportExportSerializer.ImportMode;
 import stroom.query.shared.DataSource;
 import stroom.statistics.server.common.StatisticsDataSourceProvider;
 import stroom.statistics.shared.StatisticField;
@@ -32,8 +35,6 @@ import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.test.FileSystemTestUtil;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.io.File;
@@ -48,11 +49,10 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
     @Resource
     private StatisticsDataSourceProvider statisticsDataSourceProvider;
 
-    private FindFolderCriteria buildFindFolderCriteria() {
-        final FindFolderCriteria criteria = new FindFolderCriteria();
-        criteria.getFolderIdSet().setDeep(true);
-        criteria.getFolderIdSet().setMatchNull(Boolean.TRUE);
-        return criteria;
+    private DocRefs buildFindFolderCriteria() {
+        final DocRefs docRefs = new DocRefs();
+        docRefs.add(new DocRef(Folder.ENTITY_TYPE,"0", "System"));
+        return docRefs;
     }
 
     /**
@@ -80,7 +80,7 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
         FileSystemUtil.deleteDirectory(testDataDir);
         FileSystemUtil.mkdirs(null, testDataDir);
 
-        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, false, null);
+        importExportSerializer.write(testDataDir.toPath(), buildFindFolderCriteria(), true, null);
 
         Assert.assertEquals(2, testDataDir.listFiles().length);
 
@@ -89,7 +89,7 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
 
         Assert.assertEquals(0, statisticsDataSourceService.find(FindStatisticsEntityCriteria.instance()).size());
 
-        importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(testDataDir.toPath(), null, ImportMode.IGNORE_CONFIRMATION);
 
         final BaseResultList<StatisticStoreEntity> dataSources = statisticsDataSourceService
                 .find(FindStatisticsEntityCriteria.instance());

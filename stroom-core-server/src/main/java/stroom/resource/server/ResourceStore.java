@@ -17,6 +17,7 @@
 package stroom.resource.server;
 
 import java.io.File;
+import java.nio.file.Path;
 
 import stroom.util.shared.ResourceKey;
 
@@ -33,7 +34,7 @@ public interface ResourceStore {
     /**
      * Get a temporary file
      */
-    File getTempFile(ResourceKey key);
+    Path getTempFile(ResourceKey key);
 
     /**
      * Delete a temporary file.

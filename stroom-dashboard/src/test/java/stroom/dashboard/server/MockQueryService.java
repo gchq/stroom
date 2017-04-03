@@ -19,14 +19,23 @@ package stroom.dashboard.server;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.Query;
 import stroom.dashboard.shared.QueryService;
+import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
+import stroom.importexport.server.EntityPathResolver;
 import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
+
 @Profile(StroomSpringProfiles.TEST)
 @Component("queryService")
 public class MockQueryService extends MockDocumentEntityService<Query, FindQueryCriteria> implements QueryService {
+    @Inject
+    public MockQueryService(final GenericEntityService genericEntityService, final EntityPathResolver entityPathResolver) {
+        super(genericEntityService, entityPathResolver);
+    }
+
     @Override
     public Class<Query> getEntityClass() {
         return Query.class;

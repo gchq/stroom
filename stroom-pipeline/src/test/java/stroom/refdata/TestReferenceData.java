@@ -17,10 +17,12 @@
 package stroom.refdata;
 
 import stroom.cache.CacheManagerAutoCloseable;
+import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.Range;
 import stroom.feed.server.MockFeedService;
 import stroom.feed.shared.Feed;
+import stroom.importexport.server.EntityPathResolver;
 import stroom.pipeline.server.MockPipelineEntityService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
@@ -40,6 +42,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xml.sax.SAXException;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;

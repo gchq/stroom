@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CachingEntityManager;
 import stroom.entity.server.GenericEntityService;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
@@ -28,7 +29,7 @@ import javax.inject.Inject;
 @Component("cachedFolderService")
 public class CachedFolderService extends FolderServiceImpl {
     @Inject
-    public CachedFolderService(final CachingEntityManager entityManager, final SecurityContext securityContext, final GenericEntityService genericEntityService) {
-        super(entityManager, securityContext, genericEntityService);
+    public CachedFolderService(final CachingEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final GenericEntityService genericEntityService) {
+        super(entityManager, importExportHelper, securityContext, genericEntityService);
     }
 }

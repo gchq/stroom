@@ -18,7 +18,6 @@ package stroom.importexport.server;
 
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
-import stroom.node.shared.GlobalPropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomStartup;
@@ -45,14 +44,12 @@ public class ContentPackImport {
 
     private ImportExportService importExportService;
     private StroomPropertyService stroomPropertyService;
-    private GlobalPropertyService globalPropertyService;
 
     @SuppressWarnings("unused")
     @Inject
-    ContentPackImport(ImportExportService importExportService, StroomPropertyService stroomPropertyService, GlobalPropertyService globalPropertyService) {
+    ContentPackImport(ImportExportService importExportService, StroomPropertyService stroomPropertyService) {
         this.importExportService = importExportService;
         this.stroomPropertyService = stroomPropertyService;
-        this.globalPropertyService = globalPropertyService;
     }
 
     //Startup with very low priority to ensure it starts after everything else
@@ -129,7 +126,7 @@ public class ContentPackImport {
             //It is possible to import a content pack (or packs) with missing dependencies
             //so the onus is on the person putting the file in the import directory to
             //ensure the packs they import are complete
-            importExportService.performImportWithoutConfirmation(contentPack.toFile());
+            importExportService.performImportWithoutConfirmation(contentPack);
 
             LOGGER.info("Completed import of content pack %s", contentPack.toAbsolutePath());
 

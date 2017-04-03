@@ -31,8 +31,6 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
 /**
  * Helper class for resources.
  */
@@ -205,10 +203,8 @@ public final class StreamUtil {
     /**
      * Take a stream to a file.
      *
-     * @param inputStream
-     *            to read and close
-     * @param outputFileName
-     *            to (over)write and close
+     * @param inputStream    to read and close
+     * @param outputFileName to (over)write and close
      */
     public static void streamToFile(final InputStream inputStream, final String outputFileName) {
         streamToFile(inputStream, new File(outputFileName));
@@ -232,10 +228,8 @@ public final class StreamUtil {
     /**
      * Copy file to file.
      *
-     * @param fromFile
-     *            the File to copy (readable, non-null file)
-     * @param toFile
-     *            the File to copy to (non-null, parent dir exists)
+     * @param fromFile the File to copy (readable, non-null file)
+     * @param toFile   the File to copy to (non-null, parent dir exists)
      * @throws IOException
      */
     public static void copyFile(final File fromFile, final File toFile) throws IOException {
@@ -266,7 +260,7 @@ public final class StreamUtil {
      * Take a stream to another stream.
      */
     public static long streamToStream(final InputStream inputStream, final OutputStream outputStream,
-            final boolean close) {
+                                      final boolean close) {
         long bytesWritten = 0;
         try {
             final byte[] buffer = new byte[BUFFER_SIZE];
@@ -298,8 +292,7 @@ public final class StreamUtil {
     /**
      * Convert a string to a stream.
      *
-     * @param string
-     *            to convert
+     * @param string to convert
      * @return the stream or null
      */
     public static InputStream stringToStream(final String string, final Charset charset) {
@@ -312,12 +305,9 @@ public final class StreamUtil {
     /**
      * Try a read a full buffer from a stream.
      *
-     * @param stream
-     *            to read from
-     * @param buffer
-     *            to read into
-     * @throws IOException
-     *             if error
+     * @param stream to read from
+     * @param buffer to read into
+     * @throws IOException if error
      */
     public static int eagerRead(final InputStream stream, final byte[] buffer) throws IOException {
         int read = 0;
@@ -353,12 +343,9 @@ public final class StreamUtil {
      * Read an exact number of bytes into a buffer. Throws an exception if the
      * number of bytes are not available.
      *
-     * @param stream
-     *            to read from
-     * @param buffer
-     *            to read into
-     * @throws IOException
-     *             if error
+     * @param stream to read from
+     * @param buffer to read into
+     * @throws IOException if error
      */
     public static void fillBuffer(final InputStream stream, final byte[] buffer) throws IOException {
         fillBuffer(stream, buffer, 0, buffer.length);
@@ -368,16 +355,11 @@ public final class StreamUtil {
      * Read an exact number of bytes into a buffer. Throws an exception if the
      * number of bytes are not available.
      *
-     * @param stream
-     *            to read from
-     * @param buffer
-     *            to read into
-     * @param offset
-     *            to use
-     * @param len
-     *            length
-     * @throws IOException
-     *             if error
+     * @param stream to read from
+     * @param buffer to read into
+     * @param offset to use
+     * @param len    length
+     * @throws IOException if error
      */
     public static void fillBuffer(final InputStream stream, final byte[] buffer, final int offset, final int len)
             throws IOException {
@@ -405,7 +387,7 @@ public final class StreamUtil {
         };
     }
 
-    @SuppressWarnings(value = "DM_DEFAULT_ENCODING", justification = "PrintWriter does not take a charset")
+    @SuppressWarnings(value = "DM_DEFAULT_ENCODING")
     public static String exceptionCallStack(final Throwable throwable) {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final PrintWriter printWriter = new PrintWriter(byteArrayOutputStream);

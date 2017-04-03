@@ -16,8 +16,11 @@
 
 package stroom.pipeline.server;
 
+import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.entity.shared.DocRef;
+import stroom.importexport.server.EntityPathResolver;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
@@ -25,6 +28,7 @@ import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +45,14 @@ import java.util.List;
 @Profile(StroomSpringProfiles.TEST)
 public class MockPipelineEntityService extends MockDocumentEntityService<PipelineEntity, FindPipelineEntityCriteria>
         implements PipelineEntityService {
+    public MockPipelineEntityService() {
+    }
+
+    @Inject
+    public MockPipelineEntityService(final GenericEntityService genericEntityService, final EntityPathResolver entityPathResolver) {
+        super(genericEntityService, entityPathResolver);
+    }
+
     /**
      * Loads and returns a stack of pipelines representing the inheritance
      * chain. The first pipeline in the chain is at the start of the list and
