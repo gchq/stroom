@@ -25,7 +25,7 @@ script: ./gradlew clean build shadowJar --info
 
 after_success:
   # Pushes a successful build to latest
-  - docker build --tag=stroom:latest stroom-app/.
+  - docker build --tag=gchq/stroom:latest stroom-app/.
   - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
   - if [ "$TRAVIS_BRANCH" == "JsInterop" ]; then
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
