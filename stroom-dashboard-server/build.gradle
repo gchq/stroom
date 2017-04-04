@@ -18,7 +18,7 @@ dependencies {
     compile project(':stroom-dashboard-shared')
     compile project(':stroom-core-server')
 
-    compile project(':stroom-expression')
+    compile 'stroom:stroom-expression:6.0-beta.1-SNAPSHOT'
 
     compile 'org.apache.poi:poi-ooxml:3.15'
 
