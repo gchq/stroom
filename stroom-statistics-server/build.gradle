@@ -17,7 +17,7 @@
 dependencies {
     compile project(':stroom-statistics-shared')
     compile project(':stroom-pipeline')
-    compile project(':stroom-query-common')
+    compile 'stroom:stroom-query-common:6.0-beta.1-SNAPSHOT'
     compile('org.apache.hbase:hbase-common-shaded:1.2.1:all') { /* LATEST 1.2.4 */
         exclude(module: 'jetty')
         exclude(module: 'jetty-util')

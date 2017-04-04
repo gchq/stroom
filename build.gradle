@@ -110,33 +110,3 @@ project(':stroom-entity-shared') {
         }
     }
 }
-
-project(':stroom-expression') {
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from components.java
-            }
-        }
-    }
-}
-
-project(':stroom-query-api') {
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from components.java
-            }
-        }
-    }
-}
-
-project(':stroom-query-common') {
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from components.java
-            }
-        }
-    }
-}
