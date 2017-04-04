@@ -410,7 +410,8 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             super.onBrowserEvent(context, parent, value, event, valueUpdater);
             final String type = event.getType();
 
-            if (clickable && "click".equals(type) && (event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            final Element target = event.getEventTarget().cast();
+            if ("IMG".equalsIgnoreCase(target.getTagName()) && clickable && "click".equals(type) && (event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 TickBoxState state = value;
                 SafeHtml image = appearance.getTick();
 

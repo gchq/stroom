@@ -721,10 +721,21 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             if ("click".equals(type)) {
                 // Find out if the cell consumes this event because if it does then we won't use it to select the row.
                 boolean consumed = false;
-                final Cell<?> cell = dataGrid.getColumn(event.getColumn()).getCell();
-                if (cell != null && cell.getConsumedEvents() != null) {
-                    if (cell.getConsumedEvents().contains("click") || cell.getConsumedEvents().contains("mousedown") || cell.getConsumedEvents().contains("mouseup")) {
-                        consumed = true;
+
+                String parentTag = null;
+                Element target = event.getNativeEvent().getEventTarget().cast();
+                if (target != null && target.getParentElement() != null) {
+                    parentTag = target.getParentElement().getTagName();
+                }
+
+                // Since all of the controls we care about will not have interactive elements that are direct children
+                // of the td we can assume that the cell will not consume the event if the parent of the target is the td.
+                if (!"td".equalsIgnoreCase(parentTag)) {
+                    final Cell<?> cell = dataGrid.getColumn(event.getColumn()).getCell();
+                    if (cell != null && cell.getConsumedEvents() != null) {
+                        if (cell.getConsumedEvents().contains("click") || cell.getConsumedEvents().contains("mousedown") || cell.getConsumedEvents().contains("mouseup")) {
+                            consumed = true;
+                        }
                     }
                 }
 
