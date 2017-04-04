@@ -55,6 +55,8 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     Option getIndicatorsOption();
 
+    Option getLineWrapOption();
+
     void showFilterButton(boolean show);
 
     void setFilterActive(boolean active);

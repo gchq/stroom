@@ -45,6 +45,7 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         textPresenter.getIndicatorsOption().setOn(false);
         textPresenter.getLineNumbersOption().setAvailable(true);
         textPresenter.getLineNumbersOption().setOn(true);
+        textPresenter.getLineWrapOption().setAvailable(true);
         textPresenter.setReadOnly(true);
 
         view.setTextView(textPresenter.getView());

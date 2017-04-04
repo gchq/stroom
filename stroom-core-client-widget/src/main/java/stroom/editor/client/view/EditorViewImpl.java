@@ -103,6 +103,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private final Option stylesOption;
     private final Option lineNumbersOption;
     private final Option indicatorsOption;
+    private final Option lineWrapOption;
 
     @UiField(provided = true)
     DockLayoutPanel layout;
@@ -156,6 +157,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         stylesOption = new Option("Styles", true, true, (on) -> setMode(mode));
         lineNumbersOption = new Option("Line Numbers", true, true, (on) -> updateGutter());
         indicatorsOption = new Option("Indicators", false, false, (on) -> doLayout());
+        lineWrapOption = new Option("Wrap Lines", false, false, (on) -> editor.setUseWrapMode(on));
 
         editor.getElement().setClassName("editor");
         editor.addDomHandler(event -> handleMouseDown(event), MouseDownEvent.getType());
@@ -314,6 +316,11 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     @Override
     public Option getIndicatorsOption() {
         return indicatorsOption;
+    }
+
+    @Override
+    public Option getLineWrapOption() {
+        return lineWrapOption;
     }
 
     @Override

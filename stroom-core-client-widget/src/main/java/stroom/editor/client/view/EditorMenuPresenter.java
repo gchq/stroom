@@ -78,6 +78,10 @@ public class EditorMenuPresenter {
             menuItems.add(createItem(xmlEditorPresenter.getLineNumbersOption().getText(), () ->
                     xmlEditorPresenter.getLineNumbersOption().setOn(!xmlEditorPresenter.getLineNumbersOption().isOn()), position++));
         }
+        if (xmlEditorPresenter.getLineWrapOption().isAvailable()) {
+            menuItems.add(createItem(xmlEditorPresenter.getLineWrapOption().getText(), () ->
+                    xmlEditorPresenter.getLineWrapOption().setOn(!xmlEditorPresenter.getLineWrapOption().isOn()), position++));
+        }
 
         if (showFormatOption) {
             menuItems.add(createItem("Format", () -> xmlEditorPresenter.format(), position++));

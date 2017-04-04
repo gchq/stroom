@@ -52,9 +52,9 @@ public class Option {
 
     public String getText() {
         if (on) {
-            return "Hide " + text;
+            return text + " (ON)";
         }
-        return "Show " + text;
+        return text + " (OFF)";
     }
 
     public boolean isOk() {

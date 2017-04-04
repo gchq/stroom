@@ -339,49 +339,21 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         try (BOMRemovalInputStream bomRemovalIS = new BOMRemovalInputStream(segmentInputStream, encoding);
                 final Reader reader = new InputStreamReader(bomRemovalIS, encoding)) {
             final char[] buffer = new char[FileSystemUtil.STREAM_BUFFER_SIZE];
-            int lineLength = 0;
 
+            final long maxLength = MAX_LINE_LENGTH * pageRange.getLength();
             while (lineNo < maxLineNo && (len = reader.read(buffer)) != -1) {
-                for (int i = 0; i < len; i++) {
+                for (int i = 0; i < len && sb.length() < maxLength && lineNo < maxLineNo; i++) {
                     final char c = buffer[i];
-                    lineLength++;
+                    if (lineNo >= minLineNo) {
+                        sb.append(c);
 
-                    if (lineNo >= minLineNo && lineNo < maxLineNo) {
-                        // Used to swap high order chars for #
-
-                        // if (c >= 0x7E) {
-                        // sb.append('#');
-                        // } else
-                        if (c >= 0x20) {
-                            sb.append(c);
-                        } else if (c == '\n') {
-                            pageLength++;
-                            sb.append(c);
-                        } else if (c == '\t') {
-                            sb.append(' ');
-                            sb.append(' ');
-                            sb.append(' ');
-                            lineLength += 2;
-                        }
-
-                        // Add a new line if we are over the maximum line length
-                        // and not just about to output a new line.
-                        if (lineLength >= MAX_LINE_LENGTH && c != '\n') {
-                            pageLength++;
+                        if (c == '\n') {
                             lineNo++;
-                            lineLength = 0;
-                            sb.append('\n');
+                            pageLength++;
                         }
-
-                    } else if (lineNo >= maxLineNo) {
-                        // Exit the loop when we get to the maximum line number.
-                        i = len;
-                    }
-
-                    // Increment the line number for all natural line breaks.
-                    if (c == '\n') {
+                    } else if (c == '\n') {
+                        // Increment the line number for all natural line breaks.
                         lineNo++;
-                        lineLength = 0;
                     }
                 }
             }

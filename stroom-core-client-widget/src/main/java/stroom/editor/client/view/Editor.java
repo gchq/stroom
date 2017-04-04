@@ -55,6 +55,9 @@ public class Editor extends Composite {
     private Rect scrollMargin;
     private boolean scrollMarginDirty;
 
+    private boolean useWrapMode;
+    private boolean useWrapModeDirty;
+
     private boolean started;
 
     private final AceEditor editor;
@@ -79,6 +82,7 @@ public class Editor extends Composite {
                 updateShowGutter();
                 updateGotoLine();
                 updateScrollMargin();
+                updateUseWrapMode();
             }
         });
 
@@ -257,6 +261,19 @@ public class Editor extends Composite {
         if (editor.isAttached() && scrollMarginDirty) {
             editor.setScrollMargin(scrollMargin.top, scrollMargin.bottom, scrollMargin.left, scrollMargin.right);
             scrollMarginDirty = false;
+        }
+    }
+
+    public void setUseWrapMode(final boolean useWrapMode) {
+        useWrapModeDirty = true;
+        this.useWrapMode = useWrapMode;
+        updateUseWrapMode();
+    }
+
+    private void updateUseWrapMode() {
+        if (editor.isAttached() && useWrapModeDirty) {
+            editor.setUseWrapMode(useWrapMode);
+            useWrapModeDirty = false;
         }
     }
 

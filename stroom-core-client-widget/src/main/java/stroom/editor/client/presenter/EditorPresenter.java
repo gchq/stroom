@@ -92,6 +92,10 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
         return getView().getIndicatorsOption();
     }
 
+    public Option getLineWrapOption() {
+        return getView().getLineWrapOption();
+    }
+
     public void setFirstLineNumber(final int firstLineNumber) {
         getView().setFirstLineNumber(firstLineNumber);
     }
