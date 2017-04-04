@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#186** : Data is no longer artificially wrapped with the insertion of new lines server side. Instead the client now receives the data and an option to soft wrap lines has been added to the UI.
 
+* Issue **#167** : Fixed formatting of JavaScript and JSON.
+
 ## [v5.0-beta.16] - 2017-03-31
 
 * Issue **#173** : Fixed the way XML formatter deals with spaces in attribute values.
