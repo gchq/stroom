@@ -1,5 +1,7 @@
 # ![Stroom](logo.png)
 
+[![Build Status](https://travis-ci.org/gchq/stroom.svg?branch=master)](https://travis-ci.org/gchq/stroom)
+
 Welcome to the repository for the main Stroom application. The application spans several repositories but we've bundled all the documentation into the [`stroom-docs` repository](https://github.com/gchq/stroom-docs). That's where to look if you want any of these:
 
 - [The main README.md](https://github.com/gchq/stroom-docs/blob/master/README.md)
