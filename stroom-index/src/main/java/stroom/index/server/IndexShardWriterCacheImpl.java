@@ -16,6 +16,35 @@
 
 package stroom.index.server;
 
+import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Element;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import stroom.cache.AbstractCacheBean;
+import stroom.entity.server.event.EntityEvent;
+import stroom.entity.server.event.EntityEventHandler;
+import stroom.entity.shared.EntityAction;
+import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.Index;
+import stroom.index.shared.IndexService;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexShardService;
+import stroom.jobsystem.server.JobTrackedSchedule;
+import stroom.node.server.NodeCache;
+import stroom.node.server.StroomPropertyService;
+import stroom.node.shared.Node;
+import stroom.query.shared.IndexFields;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogExecutionTime;
+import stroom.util.spring.StroomFrequencySchedule;
+import stroom.util.spring.StroomShutdown;
+import stroom.util.spring.StroomSpringProfiles;
+import stroom.util.spring.StroomStartup;
+import stroom.util.thread.ThreadScopeRunnable;
+
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -25,37 +54,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-
-import javax.inject.Inject;
-
-import stroom.node.server.StroomPropertyService;
-import stroom.util.logging.StroomLogger;
-import stroom.util.spring.StroomSpringProfiles;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-
-import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
-import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardService;
-import stroom.query.shared.IndexFields;
-import stroom.cache.AbstractCacheBean;
-import stroom.entity.server.event.EntityEvent;
-import stroom.entity.server.event.EntityEventHandler;
-import stroom.entity.shared.EntityAction;
-import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.node.server.NodeCache;
-import stroom.node.shared.Node;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomShutdown;
-import stroom.util.spring.StroomStartup;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Element;
-import stroom.util.thread.ThreadScopeRunnable;
 
 /**
  * Pool API into open index shards.
@@ -65,7 +63,7 @@ import stroom.util.thread.ThreadScopeRunnable;
 @EntityEventHandler(type = Index.ENTITY_TYPE)
 public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, IndexShardWriter>
         implements IndexShardWriterCache, EntityEvent.Handler {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexShardWriterCacheImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterCacheImpl.class);
     private static final int MAX_CACHE_ENTRIES = 1000000;
 
     private final IndexService indexService;
@@ -75,11 +73,10 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
     private final StroomPropertyService stroomPropertyService;
 
     private final ConcurrentHashMap<IndexShard, IndexShardWriter> ownedWriters = new ConcurrentHashMap<>();
-    private final StripedLock writerCreationLocks = new StripedLock();
 
     @Inject
     IndexShardWriterCacheImpl(final CacheManager cacheManager, final StroomPropertyService stroomPropertyService,
-            final IndexService indexService, final IndexShardService indexShardService, final NodeCache nodeCache) {
+                              final IndexService indexService, final IndexShardService indexShardService, final NodeCache nodeCache) {
         super(cacheManager, "Index Shard Writer Cache", MAX_CACHE_ENTRIES);
         this.stroomPropertyService = stroomPropertyService;
         this.indexService = indexService;
@@ -96,30 +93,11 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
      */
     @Override
     public IndexShardWriter create(final IndexShardKey key) {
-        return getOrCreateIndexShard(key);
-    }
-
-    /**
-     * Gets an existing closed index shard or creates a new index shard if
-     * needed.
-     */
-    private IndexShardWriter getOrCreateIndexShard(final IndexShardKey key) {
-        IndexShardWriter writer;
-
-        // We must lock here so we don't open up an index that is already being
-        // passed back
-        final Lock lock = writerCreationLocks.getLockForKey(key);
-        lock.lock();
-        try {
-            // Try and get an existing writer.
-            writer = getExistingWriter(key);
-            if (writer == null) {
-                // Create a new one
-                writer = createNewWriter(key);
-            }
-
-        } finally {
-            lock.unlock();
+        // Try and get an existing writer.
+        IndexShardWriter writer = getExistingWriter(key);
+        if (writer == null) {
+            // Create a new one
+            writer = createNewWriter(key);
         }
 
         return writer;
@@ -143,13 +121,11 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                     // Open the writer.
                     final boolean success = writer.open(false);
                     if (success) {
-                        LOGGER.debug("getOrCreateIndexShard() - Opened index shard %s for index %s and partition %s",
-                                indexShard.getId(), key.getIndex().getName(), key.getPartition());
-
+                        LOGGER.debug(() -> "getOrCreateIndexShard() - Opened index shard " + indexShard.getId() + " for index " + key.getIndex().getName() + " and partition " + key.getPartition());
                         return writer;
                     }
                 } catch (final Exception e) {
-                    LOGGER.error(e, e);
+                    LOGGER.error(e::getMessage, e);
                 }
             }
         }
@@ -174,14 +150,13 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
             try {
                 indexShardService.delete(indexShard);
             } catch (final Exception e) {
-                LOGGER.error(e, e);
+                LOGGER.error(e::getMessage, e);
             }
             throw new IndexException("Unable to create new index shard for index " + key.getIndex().getName()
                     + " and partition " + key.getPartition());
         }
 
-        LOGGER.debug("getOrCreateIndexShard() - Created new index shard %s for index %s and partition %s",
-                indexShard.getId(), key.getIndex().getName(), key.getPartition());
+        LOGGER.debug(() -> "getOrCreateIndexShard() - Created new index shard " + indexShard.getId() + " for index " + key.getIndex().getName() + " and partition " + key.getPartition());
 
         // Remember this writer for future use.
         ownedWriters.put(indexShard, writer);
@@ -220,7 +195,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                     ramBufferSizeMB = Integer.parseInt(property);
                 }
             } catch (final Exception ex) {
-                LOGGER.error("connectWrapper() - Integer.parseInt stroom.index.ramBufferSizeMB", ex);
+                LOGGER.error(() -> "connectWrapper() - Integer.parseInt stroom.index.ramBufferSizeMB", ex);
             }
         }
         return ramBufferSizeMB;
@@ -228,17 +203,21 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
 
     @StroomStartup
     public void startup() {
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
         loadAllAtStartup();
         deleteLogicallyDeleted();
+        LOGGER.debug(() -> "Started in " + logExecutionTime);
     }
 
     @Override
     @StroomShutdown
     public void shutdown() {
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         findClose(criteria);
         super.clear();
         ownedWriters.clear();
+        LOGGER.debug(() -> "Shutdown in " + logExecutionTime);
     }
 
     /**
@@ -247,6 +226,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
      * cached so that they can be used by the index filter.
      */
     private void loadAllAtStartup() {
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
         // Get all index shards that are owned by this node.
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
@@ -262,41 +242,38 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                 ownedWriters.put(indexShard, writer);
 
                 // Check that the writer is ok.
-                LOGGER.debug("loadAllAtStartup() - Checking index shard %s", indexShard.getId());
+                LOGGER.debug(() -> "loadAllAtStartup() - Checking index shard " + indexShard.getId());
                 writer.check();
 
             } catch (final Exception e) {
-                LOGGER.error(e, e);
+                LOGGER.error(e::getMessage, e);
             }
         }
+        LOGGER.debug(() -> "loadAllAtStartup() - Completed in " + logExecutionTime);
     }
 
     /**
      * Delete anything that has been marked to delete
      */
     private void deleteLogicallyDeleted() {
-        final long startTime = System.currentTimeMillis();
-        LOGGER.debug("deleteLogicallyDeleted() - Started");
-
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final Iterator<Entry<IndexShard, IndexShardWriter>> iter = ownedWriters.entrySet().iterator();
         while (iter.hasNext()) {
             final Entry<IndexShard, IndexShardWriter> entry = iter.next();
             final IndexShardWriter writer = entry.getValue();
             try {
                 if (writer != null && writer.isDeleted()) {
-                    LOGGER.debug("deleteLogicallyDeleted() - Deleting index shard %s", writer.getIndexShard().getId());
+                    LOGGER.debug(() -> "deleteLogicallyDeleted() - Deleting index shard " + writer.getIndexShard().getId());
 
                     if (writer.deleteFromDisk()) {
                         iter.remove();
                     }
                 }
             } catch (final Exception e) {
-                LOGGER.error(e, e);
+                LOGGER.error(e::getMessage, e);
             }
         }
-
-        LOGGER.debug("deleteLogicallyDeleted() - Completed in %s",
-                ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
+        LOGGER.debug(() -> "deleteLogicallyDeleted() - Completed in " + logExecutionTime);
     }
 
     /**
@@ -305,8 +282,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
      */
     @Override
     public void flushAll() {
-        final long startTime = System.currentTimeMillis();
-        LOGGER.debug("flushAll() - Started");
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
             final List<?> keys = getCache().getKeys();
             for (final Object key : keys) {
@@ -317,14 +293,13 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                     final Element element = getCache().getQuiet(key);
                     flush(element);
                 } catch (final Throwable t) {
-                    LOGGER.error(t.getMessage(), t);
+                    LOGGER.error(t::getMessage, t);
                 }
             }
         } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
+            LOGGER.error(t::getMessage, t);
         }
-        LOGGER.debug("flushAll() - Completed in %s",
-                ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
+        LOGGER.debug(() -> "flushAll() - Completed in " + logExecutionTime);
     }
 
     private void flush(final Element element) {
@@ -334,7 +309,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
             try {
                 indexShardWriter.flush();
             } catch (final Exception ex) {
-                LOGGER.error("flush() - Error flushing writer %s", indexShardWriter);
+                LOGGER.error(() -> "flush() - Error flushing writer " + indexShardWriter);
             }
         }
     }
@@ -371,9 +346,9 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
     private Long performAction(final FindIndexShardCriteria criteria, final IndexShardAction action) {
         final List<IndexShardWriter> writers = getFilteredWriters(criteria);
         if (writers.size() == 0) {
-            LOGGER.info("No index shard writers have been found that need " + action.getActivity());
+            LOGGER.info(() -> "No index shard writers have been found that need " + action.getActivity());
         } else {
-            LOGGER.info("Preparing to " + action.getName() + " " + writers.size() + " index shards");
+            LOGGER.info(() -> "Preparing to " + action.getName() + " " + writers.size() + " index shards");
         }
 
         if (writers.size() > 0) {
@@ -383,14 +358,14 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
             // Create a scheduled executor for us to continually log index shard writer action progress.
             final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
             // Start logging action progress.
-            executor.scheduleAtFixedRate(() -> LOGGER.info("Waiting for " + remaining.get() + " index shards to " + action.getName()), 10, 10, TimeUnit.SECONDS);
+            executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + remaining.get() + " index shards to " + action.getName()), 10, 10, TimeUnit.SECONDS);
 
             // Perform action on all of the index shard writers in parallel.
             writers.parallelStream().forEach(writer -> new ThreadScopeRunnable() {
                 @Override
                 protected void exec() {
                     try {
-                        LOGGER.debug(action.getActivity() + " index shard " + writer.getIndexShard().getId());
+                        LOGGER.debug(() -> action.getActivity() + " index shard " + writer.getIndexShard().getId());
                         switch (action) {
                             case FLUSH:
                                 writer.flush();
@@ -403,7 +378,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                                 break;
                         }
                     } catch (final Exception e) {
-                        LOGGER.error(e.getMessage(), e);
+                        LOGGER.error(e::getMessage, e);
                     }
 
                     remaining.getAndDecrement();
@@ -413,7 +388,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
             // Shut down the progress logging executor.
             executor.shutdown();
 
-            LOGGER.info("Finished " + action.getActivity() + " index shards");
+            LOGGER.info(() -> "Finished " + action.getActivity() + " index shards");
         }
 
         return (long) writers.size();
