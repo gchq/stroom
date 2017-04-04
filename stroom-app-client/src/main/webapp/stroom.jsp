@@ -65,7 +65,7 @@
     <link rel="stylesheet" href="css/spinner.custom.css" type="text/css" />
 
     <script type="text/javascript" src="stroom/ace/ace.js" charset="utf-8"></script>
-    <script type="text/javascript" src="stroom/ace/ext-beautify.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/beautify/beautify.js" charset="utf-8"></script>
     <script type="text/javascript" src="stroom/ace/theme-chrome.js" charset="utf-8"></script>
     <script type="text/javascript" src="stroom/ace/mode-text.js" charset="utf-8"></script>
     <script type="text/javascript" src="stroom/ace/mode-xml.js" charset="utf-8"></script>

@@ -565,10 +565,39 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 		editor.commands.addCommand(command);
 	}-*/;
 
+//	public native void beautify() /*-{
+//        var beautify = $wnd.ace.require("ace/ext/beautify");
+//		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+//		beautify.beautify(editor.session);
+//	}-*/;
+
 	public native void beautify() /*-{
-        var beautify = $wnd.ace.require("ace/ext/beautify");
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		beautify.beautify(editor.session);
+
+		var source = editor.getSession().getValue();
+		var output;
+		var opts = {};
+
+		opts.brace_style = "collapse";
+		opts.break_chained_methods = false;
+		opts.comma_first = false;
+		opts.e4x = false;
+		opts.end_with_newline = false;
+		opts.indent_char = " ";
+		opts.indent_inner_html = false;
+		opts.indent_scripts = "keep";
+		opts.indent_size = "2";
+		opts.jslint_happy = false;
+		opts.keep_array_indentation = false;
+		opts.max_preserve_newlines = "2";
+		opts.preserve_newlines = true;
+		opts.space_before_conditional = false;
+		opts.unescape_strings = false;
+		opts.wrap_line_length = "0";
+
+		output = $wnd.js_beautify(source, opts);
+
+		editor.getSession().setValue(output);
 	}-*/;
 
 	public native void setScrollMargin(int top, int bottom, int left, int right) /*-{
