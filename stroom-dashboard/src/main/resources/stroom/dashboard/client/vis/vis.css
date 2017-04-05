@@ -38,6 +38,7 @@
 	position: absolute;
 	right: 2px;
 	top: 2px;
+	z-index: 5;
 }
 
 .messageOuter {
@@ -45,6 +46,7 @@
 	left: 50%;
 	top: 50%;
 	height: 30px;
+	z-index: 5;
 }
 
 .messageInner {
