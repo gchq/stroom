@@ -44,7 +44,7 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.event.CloseEvent;
 
 public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.VolumeEditView> {
-    private final PopupSize popupSize = new PopupSize(400, 193, 400, 193, 1000, 193, true);
+    private final PopupSize popupSize = new PopupSize(400, 197, 400, 197, 1000, 197, true);
 
     public interface VolumeEditView extends View {
         ItemListBox<Node> getNode();

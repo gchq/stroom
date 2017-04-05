@@ -188,7 +188,7 @@ public class ImportConfigConfirmPresenter extends
                 return getHeaderState();
             }
         };
-        dataGridView.addColumn(column, header, 15);
+        dataGridView.addColumn(column, header, 16);
 
         // Add Handlers
         column.setFieldUpdater(new FieldUpdater<ImportState, TickBoxState>() {

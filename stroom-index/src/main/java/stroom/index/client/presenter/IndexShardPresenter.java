@@ -170,7 +170,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 return TickBoxState.UNTICK;
             }
         };
-        getView().addColumn(column, header, 15);
+        getView().addColumn(column, header, 16);
 
         // Add Handlers
         header.setUpdater(value -> {
@@ -241,7 +241,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 ShowPopupEvent.fire(IndexShardPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition, null);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", 15);
+        getView().addColumn(infoColumn, "<br/>", 16);
     }
 
     private void addNodeColumn() {

@@ -196,7 +196,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                         null);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", 15);
+        getView().addColumn(infoColumn, "<br/>", 16);
     }
 
     private void addExpanderColumn() {

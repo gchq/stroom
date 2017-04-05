@@ -65,12 +65,13 @@
 }
 
 .dataGridCell {
-	padding: 4px;
 	padding-left: 2px;
 	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 1px;
 	vertical-align: middle;
 	overflow: hidden;
-	height: 24px;
+	height: 16px;
 	white-space: nowrap;
 	
 	-moz-user-focus: initial;
@@ -83,7 +84,7 @@
 	user-input: initial;
 	user-select: initial;
 
-	border-bottom: #dddddd solid 1px;
+	// border-bottom: #dddddd solid 1px;
 }
 
 .dataGridResizableCell {

@@ -217,7 +217,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                     return TickBoxState.UNTICK;
                 }
             };
-            getView().addColumn(column, header, 15);
+            getView().addColumn(column, header, 16);
 
             header.setUpdater(new ValueUpdater<TickBoxState>() {
                 @Override
@@ -241,7 +241,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             });
 
         } else {
-            getView().addColumn(column, "", 15);
+            getView().addColumn(column, "", 16);
         }
 
         // Add Handlers
