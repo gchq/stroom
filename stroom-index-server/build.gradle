@@ -15,8 +15,8 @@
  */
 
 dependencies {
-    compile getPath('queryCommon')
-    compile getPath('expression')
+    compile fileDependency('queryCommon')
+    compile fileDependency('expression')
     compile project(':stroom-pipeline')
     compile project(':stroom-core-server')
     compile project(':stroom-index-shared')

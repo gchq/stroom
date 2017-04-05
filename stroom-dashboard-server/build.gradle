@@ -18,7 +18,7 @@ dependencies {
     compile project(':stroom-dashboard-shared')
     compile project(':stroom-core-server')
 
-    compile getPath('expression')
+    compile fileDependency('expression')
 
     compile 'org.apache.poi:poi-ooxml:3.15'
     compile 'org.glassfish.jersey.core:jersey-client:2.25.1'
