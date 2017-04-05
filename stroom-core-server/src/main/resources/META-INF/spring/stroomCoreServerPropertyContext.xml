@@ -516,31 +516,43 @@
             <property name="requireRestart" value="true"/>
         </bean>
 
-        <!-- CACHE DATA SOURCE -->
+        <!-- SQL STATISTICS DATA SOURCE -->
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.cache.jdbcDriverClassName"/>
-            <property name="description" value="Optional Cache Values"/>
-            <property name="editable" value="true"/>
-            <property name="requireRestart" value="true"/>
+            <property name="name" value="stroom.statistics.sql.jdbcDriverClassName"/>
+            <property name="value" value="org.hsqldb.jdbcDriver"/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.cache.jdbcDriverUrl"/>
-            <property name="description" value="Optional Cache Values"/>
-            <property name="editable" value="true"/>
-            <property name="requireRestart" value="true"/>
+            <property name="name" value="stroom.statistics.sql.jdbcDriverUrl"/>
+            <property name="value"
+                      value="jdbc:hsqldb:file:${stroom.temp}/STROOMDB/HSQLDB.DAT;shutdown=true"/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.cache.jdbcDriverUsername"/>
-            <property name="description" value="Optional Cache Values"/>
-            <property name="editable" value="true"/>
-            <property name="requireRestart" value="true"/>
+            <property name="name" value="stroom.statistics.sql.jdbcDriverUsername"/>
+            <property name="value" value="sa"/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.cache.jdbcDriverPassword"/>
-            <property name="description" value="Optional Cache Values"/>
-            <property name="editable" value="true"/>
-            <property name="requireRestart" value="true"/>
+            <property name="name" value="stroom.statistics.sql.jdbcDriverPassword"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
             <property name="password" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.statistics.sql.jdbcMaxPoolSize"/>
+            <property name="value" value="10"/>
+            <property name="description" value="Node Pool Size"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
         </bean>
 
         <!-- Entity Names -->

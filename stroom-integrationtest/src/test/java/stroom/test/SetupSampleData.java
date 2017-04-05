@@ -29,6 +29,7 @@ import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ScopeTestConfiguration;
 import stroom.spring.ServerConfiguration;
+import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.TaskScopeContextHolder;
@@ -57,7 +58,7 @@ public final class SetupSampleData {
                         SecurityConfiguration.class, ScopeTestConfiguration.class,
                         PipelineConfiguration.class, EventLoggingConfiguration.class, IndexConfiguration.class,
                         SearchConfiguration.class, ScriptConfiguration.class, VisualisationConfiguration.class,
-                        DashboardConfiguration.class);
+                        DashboardConfiguration.class, StatisticsConfiguration.class);
                 appContext.refresh();
                 final CommonTestControl commonTestControl = appContext.getBean(CommonTestControl.class);
 

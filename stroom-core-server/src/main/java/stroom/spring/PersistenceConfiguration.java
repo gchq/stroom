@@ -111,7 +111,7 @@ public class PersistenceConfiguration {
                 }
             }
         } catch (final Exception e) {
-            LOGGER.debug(e.getMessage(), e);
+            LOGGER.debug(e.getMessage());
             // Ignore.
         }
 

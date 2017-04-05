@@ -68,6 +68,29 @@
         <name>@@JAVA_OPTS@@</name>
         <value>-Xms1g -Xmx8g</value>
     </parameter>
+
+    <!-- SQL STATISTICS DB CONNECTION -->
+    <parameter>
+        <description>SQL Statistics JDBC class name</description>
+        <name>@@STROOM_STATISTICS_SQL_JDBC_CLASSNAME@@</name>
+        <value>com.mysql.jdbc.Driver</value>
+    </parameter>
+    <parameter>
+        <description>SQL Statistics JDBC URL (jdbc:mysql://[HOST]/[DBNAME])</description>
+        <name>@@STROOM_STATISTICS_SQL_JDBC_URL@@</name>
+        <value>jdbc:mysql://localhost/statistics?useUnicode=yes&amp;characterEncoding=UTF-8</value>
+    </parameter>
+    <parameter>
+        <description>SQL Statistics Database username</description>
+        <name>@@STROOM_STATISTICS_SQL_DB_USERNAME@@</name>
+        <value> </value>
+    </parameter>
+    <parameter>
+        <description>SQL Statistics Database password</description>
+        <name>@@STROOM_STATISTICS_SQL_DB_PASSWORD@@</name>
+        <value> </value>
+    </parameter>
+
     <parameter>
         <description>Comma delimited list of enabled statistics engines. Current valid values are 'sql'. 'sql' is the standard engine.</description>
         <name>@@STATS_ENGINES@@</name>

@@ -16,21 +16,22 @@
 
 package stroom.statistics.sql;
 
-import stroom.entity.server.util.StroomDatabaseInfo;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.node.server.StroomPropertyService;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.scheduler.SimpleCronScheduler;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.task.TaskMonitor;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -41,14 +42,16 @@ import java.util.List;
 @Component
 @Transactional
 public class SQLStatisticAggregationTransactionHelper {
-    @Resource
-    private DataSource cachedSqlDataSource;
+    private final DataSource statisticsDataSource;
+    private final StroomDatabaseInfo stroomDatabaseInfo;
+    private final StroomPropertyService stroomPropertyService;
 
-    @Resource
-    private StroomDatabaseInfo stroomDatabaseInfo;
-
-    @Resource
-    private StroomPropertyService stroomPropertyService;
+    @Inject
+    public SQLStatisticAggregationTransactionHelper(@Named("statisticsDataSource") final DataSource statisticsDataSource, final StroomDatabaseInfo stroomDatabaseInfo, final StroomPropertyService stroomPropertyService) {
+        this.statisticsDataSource = statisticsDataSource;
+        this.stroomDatabaseInfo = stroomDatabaseInfo;
+        this.stroomPropertyService = stroomPropertyService;
+    }
 
     public static final long round(final long timeMs, final int precision) {
         final long scale = (long) Math.pow(10, precision);
@@ -66,7 +69,7 @@ public class SQLStatisticAggregationTransactionHelper {
         private final SimpleCronScheduler simpleCronScheduler;
 
         public AggregateConfig(final StatisticType valueType, final long ageMs, final byte precision,
-                final byte lastPrecision, final String simpleCronExpression) {
+                               final byte lastPrecision, final String simpleCronExpression) {
             this.valueType = valueType;
             this.ageMs = ageMs;
             this.precision = precision;
@@ -322,11 +325,11 @@ public class SQLStatisticAggregationTransactionHelper {
     // @formatter:on
 
     protected Connection getConnection() throws SQLException {
-        return cachedSqlDataSource.getConnection();
+        return statisticsDataSource.getConnection();
     }
 
     protected int doAggregateSQL_Update(final Connection connection, final TaskMonitor taskMonitor, final String prefix,
-            final String sql, final List<Object> args) throws SQLException {
+                                        final String sql, final List<Object> args) throws SQLException {
         final LogExecutionTime time = new LogExecutionTime();
         final String trace = SQLUtil.buildSQLTrace(sql, args);
 
@@ -339,7 +342,7 @@ public class SQLStatisticAggregationTransactionHelper {
     }
 
     protected long doLongSelect(final Connection connection, final TaskMonitor taskMonitor, final String prefix,
-            final String sql, final List<Object> args) throws SQLException {
+                                final String sql, final List<Object> args) throws SQLException {
         final LogExecutionTime time = new LogExecutionTime();
         final String trace = SQLUtil.buildSQLTrace(sql, args);
 
@@ -355,7 +358,7 @@ public class SQLStatisticAggregationTransactionHelper {
     public static final byte DAY_PRECISION = (byte) Math.floor(Math.log10(MS_DAY));
     public static final byte HOUR_PRECISION = (byte) Math.floor(Math.log10(MS_HOUR));
 
-    private final AggregateConfig[] aggregateConfig = new AggregateConfig[] {
+    private final AggregateConfig[] aggregateConfig = new AggregateConfig[]{
             // Stuff Older than a month move to month precision
 
             // Anything that has just been moved into the stat table do now
@@ -467,7 +470,7 @@ public class SQLStatisticAggregationTransactionHelper {
     }
 
     public long aggregateConfigStage1(final TaskMonitor taskMonitor, final String prefix, final long batchSize,
-            final long timeNowMs) throws SQLException {
+                                      final long timeNowMs) throws SQLException {
         if (!isMySqlDialect()) {
             throw new UnsupportedOperationException("Need MySQL to do statistics aggregation");
         }
@@ -625,8 +628,8 @@ public class SQLStatisticAggregationTransactionHelper {
         try (Connection connection = getConnection()) {
             final String sql = TRUNCATE_TABLE_SQL + tableName;
             final Statement statement = connection.createStatement();// (TRUNCATE_TABLE_SQL
-                                                                        // +
-                                                                        // tableName);
+            // +
+            // tableName);
             statement.execute(sql);
             statement.close();
 
