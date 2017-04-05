@@ -18,9 +18,9 @@ dependencies {
     compile project(':stroom-statistics-shared')
     compile project(':stroom-pipeline')
 
-    compile getPath('queryCommon')
-    compile getPath('hadoopCommonShaded')
-    compile getPath('hbaseCommonShaded')
+    compile fileDependency('queryCommon')
+    compile fileDependency('hadoopCommonShaded')
+    compile fileDependency('hbaseCommonShaded')
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

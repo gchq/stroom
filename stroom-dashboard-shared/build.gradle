@@ -15,6 +15,6 @@
  */
 
 dependencies {
-    compile getPath('queryApi')
+    compile fileDependency('queryApi')
     compile project(':stroom-entity-shared')
 }
