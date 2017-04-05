@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#172** : Improved dashboard L&F.
 
+* Issue **#169** : Improved L&F of tables to make better use of screen real estate.
+
 ## [v5.0-beta.16] - 2017-03-31
 
 * Issue **#173** : Fixed the way XML formatter deals with spaces in attribute values.
