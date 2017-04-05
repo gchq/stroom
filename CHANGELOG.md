@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#178** : Added new properties and corresponding configuration to connect and create a separate SQL statistics DB.
 
+* Issue **#172** : Improved dashboard L&F.
+
 ## [v5.0-beta.16] - 2017-03-31
 
 * Issue **#173** : Fixed the way XML formatter deals with spaces in attribute values.
