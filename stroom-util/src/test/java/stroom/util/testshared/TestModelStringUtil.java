@@ -41,6 +41,8 @@ public class TestModelStringUtil {
     @Test
     public void testDurationString() {
         Assert.assertEquals("", ModelStringUtil.formatDurationString(null));
+        Assert.assertEquals("-10.0 ms", ModelStringUtil.formatDurationString(-10L));
+        Assert.assertEquals("0.0 ms", ModelStringUtil.formatDurationString(0L));
         Assert.assertEquals("1.0 ms", ModelStringUtil.formatDurationString(1L));
         Assert.assertEquals("999 ms", ModelStringUtil.formatDurationString(999L));
         Assert.assertEquals("1.0 s", ModelStringUtil.formatDurationString(1000L));
