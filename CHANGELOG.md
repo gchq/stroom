@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#175** : Fixed visibility of items by inferred permissions.
 
+* Issue **#178** : Added new properties and corresponding configuration to connect and create a separate SQL statistics DB.
+
 ## [v5.0-beta.16] - 2017-03-31
 
 * Issue **#173** : Fixed the way XML formatter deals with spaces in attribute values.
