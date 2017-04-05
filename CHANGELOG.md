@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.17] - 2017-04-05
+
 * Issue **#170** : Changed import/export to delegate import/export responsibility to individual services. Import/export now only works with items that have valid UUIDs specified.
 
 * Issue **#164** : Reduced caching to ensure tree items appear as soon as they are added.
@@ -233,7 +235,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.16...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.17...HEAD
+[v5.0-beta.17]: https://github.com/gchq/stroom/compare/v5.0-beta.16...v5.0-beta.17
 [v5.0-beta.16]: https://github.com/gchq/stroom/compare/v5.0-beta.15...v5.0-beta.16
 [v5.0-beta.15]: https://github.com/gchq/stroom/compare/v5.0-beta.14...v5.0-beta.15
 [v5.0-beta.14]: https://github.com/gchq/stroom/compare/v5.0-beta.13...v5.0-beta.14
