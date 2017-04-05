@@ -280,7 +280,15 @@ class SecurityContextImpl implements SecurityContext {
         if (documentPermissions != null) {
             final Set<String> permissions = documentPermissions.getPermissionsForUser(userRef);
             if (permissions != null) {
-                return permissions.contains(permission);
+                String perm = permission;
+                while (perm != null) {
+                    if (permissions.contains(perm)) {
+                        return true;
+                    }
+
+                    // If the user doesn't explicitly have this permission then see if they have a higher permission that infers this one.
+                    perm = DocumentPermissionNames.getHigherPermission(perm);
+                }
             }
         }
         return false;
