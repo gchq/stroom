@@ -51,7 +51,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
     @Resource
     private CommonTestControl commonTestControl;
     @Resource
-    private DataSource cachedSqlDataSource;
+    private DataSource statisticsDataSource;
     @Resource
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
     @Resource
@@ -674,7 +674,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
     }
 
     private Connection getConnection() throws SQLException {
-        return cachedSqlDataSource.getConnection();
+        return statisticsDataSource.getConnection();
     }
 
     private int getRowCount(final String tableName) throws SQLException {

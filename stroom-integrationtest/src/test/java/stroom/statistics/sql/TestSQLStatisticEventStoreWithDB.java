@@ -62,7 +62,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     @Resource
     private CommonTestControl commonTestControl;
     @Resource
-    private DataSource cachedSqlDataSource;
+    private DataSource statisticsDataSource;
     @Resource
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
     @Resource
@@ -288,7 +288,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     }
 
     private Connection getConnection() throws SQLException {
-        return cachedSqlDataSource.getConnection();
+        return statisticsDataSource.getConnection();
     }
 
     private static class MockTaskMonitor implements TaskMonitor {

@@ -41,7 +41,7 @@ import stroom.util.task.TaskMonitor;
 
 public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
     @Resource
-    private DataSource cachedSqlDataSource;
+    private DataSource statisticsDataSource;
     @Resource
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
 
@@ -231,7 +231,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
     }
 
     private Connection getConnection() throws SQLException {
-        return cachedSqlDataSource.getConnection();
+        return statisticsDataSource.getConnection();
     }
 
     private static class MockTaskMonitor implements TaskMonitor {
