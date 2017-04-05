@@ -53,15 +53,7 @@
 	position: absolute;
 	margin: 0px;
 	padding: 0px;
-	// border-width: 1px;
-	// border-color: black;
-	// border-style: solid;
-	// background-color: red;
 	opacity: 0;
-	// transition: opacity 0.2s;
-	// -webkit-transition: opacity 0.2s;
-	// -moz-transition: opacity 0.2s;
-	// -o-transition: opacity 0.2s;
 }
 
 .splitterVisible {
