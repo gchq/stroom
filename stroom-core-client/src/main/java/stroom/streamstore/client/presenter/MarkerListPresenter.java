@@ -165,7 +165,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
 
                     // Make summery items bold.
                     final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                    builder.appendHtmlConstant("<div style=\"font-weight:bold;\">");
+                    builder.appendHtmlConstant("<div style=\"font-weight:500;\">");
                     builder.appendEscaped(sb.toString());
                     builder.appendHtmlConstant("</div>");
 
