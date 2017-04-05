@@ -16,6 +16,8 @@
 
 package stroom;
 
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.index.spring.IndexConfiguration;
 import stroom.logging.spring.EventLoggingConfiguration;
@@ -27,16 +29,15 @@ import stroom.spring.ProcessTestServerComponentScanConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ScopeTestConfiguration;
 import stroom.spring.ServerConfiguration;
+import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.spring.VisualisationConfiguration;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
 
 @ActiveProfiles(value = {StroomSpringProfiles.TEST, StroomSpringProfiles.IT, SecurityConfiguration.MOCK_SECURITY})
 @ContextConfiguration(classes = {ScopeConfiguration.class, PersistenceConfiguration.class,
         ProcessTestServerComponentScanConfiguration.class, ServerConfiguration.class,
         SecurityConfiguration.class, ScopeTestConfiguration.class, EventLoggingConfiguration.class,
         IndexConfiguration.class, SearchConfiguration.class, ScriptConfiguration.class,
-        VisualisationConfiguration.class, DashboardConfiguration.class})
+        VisualisationConfiguration.class, DashboardConfiguration.class, StatisticsConfiguration.class})
 public abstract class AbstractProcessIntegrationTest extends StroomIntegrationTest {
 }
