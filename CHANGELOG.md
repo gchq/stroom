@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#169** : Improved L&F of tables to make better use of screen real estate.
 
+* Issue **#191** : Mebibytes (multiples of 1024) etc are now used as standard throughout the application for both memory and disk sizes and have single letter suffixes (B, K, M, G, T).
+
 ## [v5.0-beta.16] - 2017-03-31
 
 * Issue **#173** : Fixed the way XML formatter deals with spaces in attribute values.
