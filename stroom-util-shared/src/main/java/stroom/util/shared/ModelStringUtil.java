@@ -21,7 +21,7 @@ import java.util.Comparator;
 public final class ModelStringUtil {
     private static final int BYTE_DIV = 1024;
 
-    public static final String SUFFIX_BYTES = " bytes";
+    public static final String SUFFIX_BYTES = " B";
     public static final String SUFFIX_KB = " kB";
     public static final String SUFFIX_MB = " MB";
     public static final String SUFFIX_GB = " GB";
