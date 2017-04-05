@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#167** : Fixed formatting of JavaScript and JSON.
 
+* Issue **#175** : Fixed visibility of items by inferred permissions.
+
 ## [v5.0-beta.16] - 2017-03-31
 
 * Issue **#173** : Fixed the way XML formatter deals with spaces in attribute values.
