@@ -414,7 +414,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             public String getValue(final StreamAttributeMap row) {
                 return ModelStringUtil.format(row.getStream().getFeed());
             }
-        }, "Feed", ColumnSizeConstants.BIG_COL);
+        }, "Feed", 380);
         // }
     }
 
@@ -425,7 +425,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             public String getValue(final StreamAttributeMap row) {
                 return ModelStringUtil.format(row.getStream().getStreamType());
             }
-        }, "Type", ColumnSizeConstants.MEDIUM_COL);
+        }, "Type", 80);
         // }
     }
 
@@ -444,7 +444,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 return "";
 
             }
-        }, "Pipeline", ColumnSizeConstants.BIG_COL);
+        }, "Pipeline", 380);
         // }
     }
 

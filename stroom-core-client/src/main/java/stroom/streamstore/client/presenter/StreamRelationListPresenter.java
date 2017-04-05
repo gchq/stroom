@@ -165,15 +165,15 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         addFeedColumn();
         addPipelineColumn();
 
-        addAttributeColumn(StreamAttributeConstants.REC_READ, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_WRITE, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_INFO, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_WARN, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_ERROR, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_FATAL, ColumnSizeConstants.MEDIUM_COL);
+        addAttributeColumn(StreamAttributeConstants.REC_READ, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn(StreamAttributeConstants.REC_WRITE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn(StreamAttributeConstants.REC_INFO, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn(StreamAttributeConstants.REC_WARN, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn(StreamAttributeConstants.REC_ERROR, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn(StreamAttributeConstants.REC_FATAL, ColumnSizeConstants.SMALL_COL);
 
-        addAttributeColumn(StreamAttributeConstants.STREAM_SIZE, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.FILE_SIZE, ColumnSizeConstants.MEDIUM_COL);
+        addAttributeColumn(StreamAttributeConstants.STREAM_SIZE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn(StreamAttributeConstants.FILE_SIZE, ColumnSizeConstants.SMALL_COL);
 
         getView().addEndColumn(new EndColumn<StreamAttributeMap>());
     }
