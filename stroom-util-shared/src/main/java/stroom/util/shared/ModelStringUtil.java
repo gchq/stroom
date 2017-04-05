@@ -112,7 +112,7 @@ public final class ModelStringUtil {
 
     private static final String formatNumberString(final double number, final Divider[] dividers) {
         double nextNumber = number;
-        Divider lastDivider = null;
+        Divider lastDivider = dividers[0];
 
         for (final Divider divider : dividers) {
             if (nextNumber < divider.div) {
