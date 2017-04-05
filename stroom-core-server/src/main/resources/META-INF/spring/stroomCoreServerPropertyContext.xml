@@ -775,7 +775,7 @@
 
         <!-- Common statistics store properties -->
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.stats.common.statisticEngines"/>
+            <property name="name" value="stroom.statistics.common.statisticEngines"/>
             <property name="value" value="sql"/>
             <property name="description"
                       value="Comma delimited list of enabled engines that implement Statistic Event Store (currently 'sql')"/>
@@ -785,7 +785,7 @@
 
         <!-- Legacy statistics store properties -->
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.stats.legacy.statisticAggregationBatchSize"/>
+            <property name="name" value="stroom.statistics.legacy.statisticAggregationBatchSize"/>
             <property name="value" value="1000000"/>
             <property name="description"
                       value="Number of STAT_VAL_SRC records to merge into STAT_VAL in one batch"/>
@@ -794,21 +794,21 @@
 
         <!-- SQL statistics store properties -->
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.stats.sql.statisticAggregationBatchSize"/>
+            <property name="name" value="stroom.statistics.sql.statisticAggregationBatchSize"/>
             <property name="value" value="1000000"/>
             <property name="description"
                       value="Number of SQL_STAT_VAL_SRC records to merge into SQL_STAT_VAL in one batch"/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.stats.sql.search.maxResults"/>
+            <property name="name" value="stroom.statistics.sql.search.maxResults"/>
             <property name="value" value="100000"/>
             <property name="description"
                       value="The maximum number of records that can be returned from the statistics DB in a single query prior to aggregation"/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.stats.sql.maxProcessingAge"/>
+            <property name="name" value="stroom.statistics.sql.maxProcessingAge"/>
             <property name="value" value=""/>
             <property name="description"
                       value="The maximum age of statistics to process, i.e. any statistics with an statistic event time older than the current time minus maxProcessingAge will be silently dropped.  Leave blank to process all data."/>

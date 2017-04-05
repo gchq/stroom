@@ -46,7 +46,7 @@ public interface SQLStatisticConstants {
      */
     String NULL_VALUE_STRING = "<<<<NULL>>>>";
 
-    String PROP_KEY_STATS_MAX_PROCESSING_AGE = "stroom.stats.sql.maxProcessingAge";
+    String PROP_KEY_STATS_MAX_PROCESSING_AGE = "stroom.statistics.sql.maxProcessingAge";
 
     int STAT_VAL_SRC_NAME_COLUMN_LENGTH = 766;
 }

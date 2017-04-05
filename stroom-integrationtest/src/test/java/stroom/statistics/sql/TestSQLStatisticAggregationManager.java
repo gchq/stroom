@@ -99,7 +99,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
         if (!stroomDatabaseInfo.isMysql()) {
             LOGGER.warn("Database is not MySQL, skipping test");
         } else {
-            // System.setProperty("stroom.stats.sql.statisticAggregationBatchSize",
+            // System.setProperty("stroom.statistics.sql.statisticAggregationBatchSize",
             // Integer.toString(10));
             sqlStatisticAggregationManager.setBatchSize(Integer.toString(55));
 

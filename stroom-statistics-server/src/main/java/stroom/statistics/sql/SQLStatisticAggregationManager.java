@@ -145,7 +145,7 @@ public class SQLStatisticAggregationManager {
         this.helper = helper;
     }
 
-    @Value("#{propertyConfigurer.getProperty('stroom.stats.sql.statisticAggregationBatchSize')}")
+    @Value("#{propertyConfigurer.getProperty('stroom.statistics.sql.statisticAggregationBatchSize')}")
     public void setBatchSize(final String fileSystemCleanBatchSize) {
         this.batchSize = ModelStringUtil.parseNumberStringAsInt(fileSystemCleanBatchSize);
         if (batchSize == null || batchSize == 0) {

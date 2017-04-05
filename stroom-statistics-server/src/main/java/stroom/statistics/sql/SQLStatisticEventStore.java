@@ -61,7 +61,7 @@ import java.util.concurrent.TimeUnit;
 public class SQLStatisticEventStore extends AbstractStatistics {
     public static final StroomLogger LOGGER = StroomLogger.getLogger(SQLStatisticEventStore.class);
 
-    static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.stats.sql.search.maxResults";
+    static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.statistics.sql.search.maxResults";
 
     public static final String ENGINE_NAME = "sql";
 
