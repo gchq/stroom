@@ -1,3 +1,9 @@
+plugins {
+    id "de.undercouch.download" version "3.2.0"
+}
+
+def stroomVersion = '6.0-beta.1-SNAPSHOT'
+
 task wrapper(type: Wrapper) {
     gradleVersion = '3.3'
 }
@@ -7,7 +13,7 @@ allprojects {
     apply plugin: 'maven-publish'
 
     group = 'stroom'
-    version = '6.0-beta.1-SNAPSHOT'
+    version = stroomVersion
 }
 
 subprojects {
@@ -110,3 +116,87 @@ project(':stroom-entity-shared') {
         }
     }
 }
+
+def getUrl(repo, jar, version){
+    def github = "https://github.com/gchq"
+    def releases = "releases/download"
+    return "${github}/${repo}/${releases}/${version}/${jar}-${version}.jar"
+}
+
+def getSourcesUrl(repo, jar, version){
+    def github = "https://github.com/gchq"
+    def releases = "releases/download"
+    return "${github}/${repo}/${releases}/${version}/${jar}-${version}-sources.jar"
+}
+
+def getLib(jar, version){
+    def libs = "libs"
+    return "${libs}/${jar}-${version}.jar"
+}
+
+ext.fileDependencies = [
+    queryApi : [
+        repo:'stroom-query',
+        jar: 'stroom-query-api',
+        version: stroomVersion
+    ],
+    queryApiSources : [
+        repo:'stroom-query',
+        jar: 'stroom-query-api',
+        version: stroomVersion,
+        getSources: true
+    ],
+    queryCommon: [
+        repo:'stroom-query',
+        jar: 'stroom-query-common',
+        version: stroomVersion
+    ],
+    expression: [
+        repo:'stroom-expression',
+        jar: 'stroom-expression',
+        version: stroomVersion
+    ],
+    eventLogging: [
+        repo:'event-logging',
+        jar: 'event-logging',
+        version: 'v3.1.0'
+    ],
+    hadoopHdfsShaded: [
+        repo:'hadoop-hdfs-shaded',
+        jar: 'hadoop-hdfs-shaded',
+        version: 'v2.6.4-all'
+    ],
+    hadoopCommonShaded: [
+       repo:'hadoop-common-shaded',
+        jar: 'hadoop-common-shaded',
+        version: 'v2.6.4-all'
+    ],
+    hbaseCommonShaded: [
+        repo:'hbase-common-shaded',
+        jar: 'hbase-common-shaded',
+        version: 'v1.2.1-all'
+    ]
+]
+
+def getPath(jar){
+    def path = "../" + getLib(fileDependencies."$jar".jar, fileDependencies."$jar".version)
+    print path
+    return files(getLib(fileDependencies."$jar".jar, fileDependencies."$jar".version))
+}
+
+// Manually import JARs that are not available in a Maven repository
+import de.undercouch.gradle.tasks.download.Download
+task setupFileDependencies {
+    for (dependency in fileDependencies) {
+        def url = dependency.value.getSources ?
+                getSourcesUrl(dependency.value.repo, dependency.value.jar, dependency.value.version)
+                : getUrl(dependency.value.repo, dependency.value.jar, dependency.value.version)
+        task "download_${dependency.key}"(type: Download) {
+            src url
+            dest getLib(dependency.value.jar, dependency.value.version)
+            onlyIfNewer true
+        }
+        assemble.dependsOn "download_${dependency.key}"
+    }
+}
+assemble.dependsOn setupFileDependencies
