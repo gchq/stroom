@@ -109,15 +109,15 @@ public class VolumeState extends BaseEntitySmall {
         final StringBuilder sb = new StringBuilder();
         if (bytesUsed != null) {
             sb.append(", Used: ");
-            sb.append(ModelStringUtil.formatByteSizeString(bytesUsed));
+            sb.append(ModelStringUtil.formatIECByteSizeString(bytesUsed));
         }
         if (bytesFree != null) {
             sb.append(", Free: ");
-            sb.append(ModelStringUtil.formatByteSizeString(bytesFree));
+            sb.append(ModelStringUtil.formatIECByteSizeString(bytesFree));
         }
         if (bytesTotal != null) {
             sb.append(", Total: ");
-            sb.append(ModelStringUtil.formatByteSizeString(bytesTotal));
+            sb.append(ModelStringUtil.formatIECByteSizeString(bytesTotal));
         }
         if (percentUsed != null) {
             sb.append(", Use%: ");

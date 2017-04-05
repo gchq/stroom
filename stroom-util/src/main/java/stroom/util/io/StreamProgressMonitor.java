@@ -16,11 +16,11 @@
 
 package stroom.util.io;
 
-import java.io.IOException;
-
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Monitor;
+
+import java.io.IOException;
 
 public class StreamProgressMonitor {
     private static StroomLogger LOGGER = StroomLogger.getLogger(StreamProgressMonitor.class);
@@ -51,7 +51,7 @@ public class StreamProgressMonitor {
 
         if (lastProgressTime + INTERVAL_MS < timeNow) {
             lastProgressTime = timeNow;
-            String msg = prefix + " - " + ModelStringUtil.formatByteSizeString(totalBytes);
+            String msg = prefix + " - " + ModelStringUtil.formatIECByteSizeString(totalBytes);
             if (monitor != null) {
                 monitor.info(msg);
 

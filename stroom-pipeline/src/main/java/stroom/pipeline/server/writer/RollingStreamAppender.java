@@ -169,11 +169,11 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         }
     }
 
-    @PipelineProperty(description = "Choose the maximum size that a stream can be before it is rolled.", defaultValue = "100Mb")
+    @PipelineProperty(description = "Choose the maximum size that a stream can be before it is rolled.", defaultValue = "100M")
     public void setMaxSize(final String maxSize) {
         if (maxSize != null && maxSize.trim().length() > 0) {
             try {
-                final Long value = ModelStringUtil.parseByteSizeString(maxSize);
+                final Long value = ModelStringUtil.parseIECByteSizeString(maxSize);
                 if (value == null) {
                     throw new PipelineFactoryException("Incorrect value for max size: " + maxSize);
                 }

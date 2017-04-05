@@ -19,13 +19,46 @@ package stroom.util.shared;
 import java.util.Comparator;
 
 public final class ModelStringUtil {
-    private static final int BYTE_DIV = 1024;
+    private static final int METRIC_DIV = 1000;
+    private static final int IEC_BYTE_DIV = 1024;
 
-    public static final String SUFFIX_BYTES = " B";
-    public static final String SUFFIX_KB = " kB";
-    public static final String SUFFIX_MB = " MB";
-    public static final String SUFFIX_GB = " GB";
-    public static final String SUFFIX_TB = " TB";
+    private static Divider[] SIZE_DIVIDER = new Divider[] {
+            new Divider(1, ""),
+            new Divider(METRIC_DIV, "K"),
+            new Divider(METRIC_DIV, "M"),
+            new Divider(METRIC_DIV, "G"),
+            new Divider(METRIC_DIV, "T")
+    };
+
+    private static Divider[] METRIC_BYTE_SIZE_DIVIDER = new Divider[] {
+            new Divider(1, "B", "b", "bytes", ""),
+            new Divider(METRIC_DIV, "K", "KB"),
+            new Divider(METRIC_DIV, "M", "MB"),
+            new Divider(METRIC_DIV, "G", "GB"),
+            new Divider(METRIC_DIV, "T", "TB")
+    };
+
+    private static Divider[] IEC_BYTE_SIZE_DIVIDER = new Divider[]{
+            new Divider(1, "B", "b", "bytes", ""),
+            new Divider(IEC_BYTE_DIV, "K", "KB", "KiB"),
+            new Divider(IEC_BYTE_DIV, "M", "MB", "MiB"),
+            new Divider(IEC_BYTE_DIV, "G", "GB", "GiB"),
+            new Divider(IEC_BYTE_DIV, "T", "TB", "TiB")
+    };
+
+    /**
+     * Format always append ms but parse consider ms and '' as the same thing
+     */
+    private static Divider[] TIME_SIZE_DIVIDER = new Divider[]{
+            new Divider(1, "ms", ""),
+            new Divider(1000, "s"),
+            new Divider(60, "m"),
+            new Divider(60, "h"),
+            new Divider(24, "d")
+    };
+
+//    private static Divider[] TIME_SIZE_DIVIDER_PARSE = new Divider(1, "", new Divider(1, " ms",
+//            new Divider(1000, " s", new Divider(60, " m", new Divider(60, " h", new Divider(24, " d", null))))));
 
     private ModelStringUtil() {
         // Utility class.
@@ -35,10 +68,8 @@ public final class ModelStringUtil {
      * Pad a string out (yes I know apache commons can do this but it's used by
      * GWT).
      *
-     * @param amount
-     *            pad size
-     * @param in
-     *            string
+     * @param amount pad size
+     * @param in     string
      * @return padded value.
      */
     public static String zeroPad(final int amount, final String in) {
@@ -52,80 +83,76 @@ public final class ModelStringUtil {
     }
 
     /**
-     * Return nice string like "25b", "45Mb", etc.
+     * Return nice string like "25 B", "4 kB", "45 MB", etc.
      */
-    public static String formatByteSizeString(final Long streamSize) {
+    public static String formatMetricByteSizeString(final Long streamSize) {
         if (streamSize == null) {
             return "";
         }
-        return formatNumberString(streamSize, BYTE_SIZE_DIVIDER);
+        return formatNumberString(streamSize, METRIC_BYTE_SIZE_DIVIDER);
+    }
+
+    /**
+     * Return nice string like "25 B", "4KiB", "45 MiB", etc.
+     */
+    public static String formatIECByteSizeString(final Long streamSize) {
+        if (streamSize == null) {
+            return "";
+        }
+        return formatNumberString(streamSize, IEC_BYTE_SIZE_DIVIDER);
     }
 
     public static String formatDurationString(final Long ms) {
         if (ms == null) {
             return "";
         }
-        return formatNumberString(ms, TIME_SIZE_DIVIDER_FORMAT);
+        return formatNumberString(ms, TIME_SIZE_DIVIDER);
 
     }
 
-    private static class Divider {
-        final int div;
-        final String unit;
-        final Divider next;
+    private static final String formatNumberString(final double number, final Divider[] dividers) {
+        double nextNumber = number;
+        Divider lastDivider = null;
 
-        public Divider(final int div, final String unit, final Divider next) {
-            this.div = div;
-            this.unit = unit;
-            this.next = next;
+        for (final Divider divider : dividers) {
+            if (nextNumber < divider.div) {
+                break;
+            }
+            nextNumber = nextNumber / divider.div;
+            lastDivider = divider;
         }
-    }
 
-    private static Divider SIZE_DIVIDER = new Divider(1, "",
-            new Divider(1000, "K", new Divider(1000, "M", new Divider(1000, "G", new Divider(1000, "T", null)))));
-
-    private static Divider BYTE_SIZE_DIVIDER = new Divider(1, "",
-            new Divider(1, "b", new Divider(1, SUFFIX_BYTES, new Divider(BYTE_DIV, SUFFIX_KB,
-                    new Divider(BYTE_DIV, SUFFIX_MB, new Divider(BYTE_DIV, SUFFIX_GB, null))))));
-
-    /**
-     * Format always append ms but parse consider ms and '' as the same thing
-     */
-    private static Divider TIME_SIZE_DIVIDER_FORMAT = new Divider(1, " ms",
-            new Divider(1000, " s", new Divider(60, " m", new Divider(60, " h", new Divider(24, " d", null)))));
-
-    private static Divider TIME_SIZE_DIVIDER_PARSE = new Divider(1, "", new Divider(1, " ms",
-            new Divider(1000, " s", new Divider(60, " m", new Divider(60, " h", new Divider(24, " d", null))))));
-
-    public static final String formatNumberString(final double number, final Divider divider) {
-        final double nextNumber = number / divider.div;
-        if ((divider.next == null) || (nextNumber < divider.next.div)) {
-            // Show the first dec place if the number is smaller than 10
+        // Show the first dec place if the number is smaller than 10
+        if (lastDivider != null) {
             if (nextNumber < 10) {
                 String str = String.valueOf(nextNumber);
                 final int decPt = str.indexOf(".");
                 if (decPt > 0 && decPt + 2 < str.length()) {
                     str = str.substring(0, decPt + 2);
                 }
-                return str + divider.unit;
+                return str + " " + lastDivider.unit[0];
             } else {
-                return (long) nextNumber + divider.unit;
+                return (long) nextNumber + " " + lastDivider.unit[0];
             }
-        } else {
-            return formatNumberString(nextNumber, divider.next);
         }
+
+        return String.valueOf(nextNumber);
     }
 
     public static final Long parseNumberString(final String str) throws NumberFormatException {
         return parseNumberString(str, SIZE_DIVIDER);
     }
 
-    public static final Long parseByteSizeString(final String str) throws NumberFormatException {
-        return parseNumberString(str, BYTE_SIZE_DIVIDER);
+    public static final Long parseMetricByteSizeString(final String str) throws NumberFormatException {
+        return parseNumberString(str, METRIC_BYTE_SIZE_DIVIDER);
+    }
+
+    public static final Long parseIECByteSizeString(final String str) throws NumberFormatException {
+        return parseNumberString(str, IEC_BYTE_SIZE_DIVIDER);
     }
 
     public static final Long parseDurationString(final String str) throws NumberFormatException {
-        return parseNumberString(str, TIME_SIZE_DIVIDER_PARSE);
+        return parseNumberString(str, TIME_SIZE_DIVIDER);
     }
 
     public static final Integer parseNumberStringAsInt(final String str) throws NumberFormatException {
@@ -152,7 +179,7 @@ public final class ModelStringUtil {
         }
     }
 
-    public static final Long parseNumberString(String str, Divider divider) throws NumberFormatException {
+    private static final Long parseNumberString(String str, final Divider[] dividers) throws NumberFormatException {
         if (str == null) {
             return null;
         }
@@ -191,14 +218,15 @@ public final class ModelStringUtil {
 
         final String suffix = suffixPart.toString().trim();
 
-        long multipler = 1;
+        long multiplier = 1;
 
-        while (divider != null) {
-            multipler *= divider.div;
-            if (divider.unit.trim().equalsIgnoreCase(suffix)) {
-                return (long) (multipler * d);
+        for (final Divider divider : dividers) {
+            multiplier *= divider.div;
+            for (final String unit : divider.unit) {
+                if (unit.equalsIgnoreCase(suffix)) {
+                    return (long) (multiplier * d);
+                }
             }
-            divider = divider.next;
         }
 
         throw new NumberFormatException("Unable to parse " + str + " as suffix not recognised");
@@ -276,20 +304,25 @@ public final class ModelStringUtil {
     }
 
     public static Comparator<String> pathComparator() {
-        return new Comparator<String>() {
-            @Override
-            public int compare(final String o1, final String o2) {
-                final int min = Math.min(o1.length(), o2.length());
-                for (int i = 0; i < min; i++) {
-                    final int r = ((Character) o1.charAt(i)).compareTo(o2.charAt(i));
-                    if (r != 0) {
-                        return r;
-                    }
+        return (o1, o2) -> {
+            final int min = Math.min(o1.length(), o2.length());
+            for (int i = 0; i < min; i++) {
+                final int r = ((Character) o1.charAt(i)).compareTo(o2.charAt(i));
+                if (r != 0) {
+                    return r;
                 }
-                return ((Integer) o1.length()).compareTo(o2.length());
             }
+            return ((Integer) o1.length()).compareTo(o2.length());
         };
-
     }
 
+    private static class Divider {
+        final int div;
+        final String[] unit;
+
+        public Divider(final int div, final String... unit) {
+            this.div = div;
+            this.unit = unit;
+        }
+    }
 }

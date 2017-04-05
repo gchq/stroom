@@ -733,9 +733,9 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
             ps.println("Document Count = " + ModelStringUtil.formatCsv(documentCount.intValue()));
             if (dir != null) {
-                ps.println("Index File(s) Size = " + ModelStringUtil.formatByteSizeString(indexShard.getFileSize()));
+                ps.println("Index File(s) Size = " + ModelStringUtil.formatIECByteSizeString(indexShard.getFileSize()));
             }
-            ps.println("RAM Buffer Size = " + ModelStringUtil.formatCsv(ramBufferSizeMB) + " MB");
+            ps.println("RAM Buffer Size = " + ModelStringUtil.formatCsv(ramBufferSizeMB) + " M");
 
             for (final Entry<String, String> term : LOG_WATCH_TERMS.entrySet()) {
                 ps.println(term.getKey() + " = " + loggerPrintStream.getWatchTermCount(term.getValue()));

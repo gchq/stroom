@@ -145,24 +145,24 @@ public class NodeStatusServiceUtil {
         final long nonHeapMax = nonHeapUsage.getMax();
 
         if (heapUsed > 0) {
-            statisticEventList.add(buildStatisticEvent("JvmHeapUsedMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(heapUsed)));
+            statisticEventList.add(buildStatisticEvent("JvmHeapUsedMb", timeNow, nodeTag, ByteSizeUnit.MEBIBYTE.unitValue(heapUsed)));
         }
         if (heapComitted > 0) {
             statisticEventList
-                    .add(buildStatisticEvent("JvmHeapComittedMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(heapComitted)));
+                    .add(buildStatisticEvent("JvmHeapComittedMb", timeNow, nodeTag, ByteSizeUnit.MEBIBYTE.unitValue(heapComitted)));
         }
         if (heapMax > 0) {
-            statisticEventList.add(buildStatisticEvent("JvmHeapMaxMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(heapMax)));
+            statisticEventList.add(buildStatisticEvent("JvmHeapMaxMb", timeNow, nodeTag, ByteSizeUnit.MEBIBYTE.unitValue(heapMax)));
         }
         if (nonHeapUsed > 0) {
-            statisticEventList.add(buildStatisticEvent("JvmNonHeapUsedMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(nonHeapUsed)));
+            statisticEventList.add(buildStatisticEvent("JvmNonHeapUsedMb", timeNow, nodeTag, ByteSizeUnit.MEBIBYTE.unitValue(nonHeapUsed)));
         }
         if (nonHeapComitted > 0) {
             statisticEventList
-                    .add(buildStatisticEvent("JvmNonHeapComittedMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(nonHeapComitted)));
+                    .add(buildStatisticEvent("JvmNonHeapComittedMb", timeNow, nodeTag, ByteSizeUnit.MEBIBYTE.unitValue(nonHeapComitted)));
         }
         if (nonHeapMax > 0) {
-            statisticEventList.add(buildStatisticEvent("JvmNonHeapMaxMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(nonHeapMax)));
+            statisticEventList.add(buildStatisticEvent("JvmNonHeapMaxMb", timeNow, nodeTag, ByteSizeUnit.MEBIBYTE.unitValue(nonHeapMax)));
         }
 
         // Get the current CPU stats.

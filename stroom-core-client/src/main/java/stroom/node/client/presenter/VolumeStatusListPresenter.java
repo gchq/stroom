@@ -172,7 +172,7 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
     private String getSizeString(final Long size) {
         String string = "?";
         if (size != null) {
-            string = ModelStringUtil.formatByteSizeString(size);
+            string = ModelStringUtil.formatIECByteSizeString(size);
         }
         return string;
     }

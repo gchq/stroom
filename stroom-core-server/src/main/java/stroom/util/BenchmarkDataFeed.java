@@ -273,11 +273,11 @@ public class BenchmarkDataFeed {
     }
 
     private String formatBytes(final int bytes) {
-        return bytes + " (" + ModelStringUtil.formatByteSizeString((long) bytes) + ")";
+        return bytes + " (" + ModelStringUtil.formatIECByteSizeString((long) bytes) + ")";
     }
 
     private String formatBytes(final long bytes) {
-        return bytes + " (" + ModelStringUtil.formatByteSizeString(bytes) + ")";
+        return bytes + " (" + ModelStringUtil.formatIECByteSizeString(bytes) + ")";
     }
 
     public void statusConfig() {

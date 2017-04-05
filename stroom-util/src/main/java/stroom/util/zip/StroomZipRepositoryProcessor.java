@@ -324,7 +324,7 @@ public abstract class StroomZipRepositoryProcessor {
             }
 
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("sendEntry() - " + targetEntry + " " + ModelStringUtil.formatByteSizeString(totalRead));
+                LOGGER.trace("sendEntry() - " + targetEntry + " " + ModelStringUtil.formatIECByteSizeString(totalRead));
             }
             if (totalRead == 0) {
                 LOGGER.warn("sendEntry() - " + targetEntry + " IS BLANK");

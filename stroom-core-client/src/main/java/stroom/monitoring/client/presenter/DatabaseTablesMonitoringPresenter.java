@@ -55,13 +55,13 @@ public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataG
         getView().addResizableColumn(new Column<SystemTableStatus, String>(new TextCell()) {
             @Override
             public String getValue(final SystemTableStatus row) {
-                return ModelStringUtil.formatByteSizeString(row.getDataSize());
+                return ModelStringUtil.formatIECByteSizeString(row.getDataSize());
             }
         }, "Data Size", 100);
         getView().addResizableColumn(new Column<SystemTableStatus, String>(new TextCell()) {
             @Override
             public String getValue(final SystemTableStatus row) {
-                return ModelStringUtil.formatByteSizeString(row.getIndexSize());
+                return ModelStringUtil.formatIECByteSizeString(row.getIndexSize());
             }
         }, "Index Size", 100);
         getView().addEndColumn(new EndColumn<SystemTableStatus>());

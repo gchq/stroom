@@ -143,7 +143,7 @@ public class ProxyAggregationExecutor {
                     DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
                     ModelStringUtil.formatCsv(stroomZipRepositoryProcessor.getMaxAggregation()),
                     ModelStringUtil.formatCsv(stroomZipRepositoryProcessor.getMaxFileScan()),
-                    ModelStringUtil.formatByteSizeString(stroomZipRepositoryProcessor.getMaxStreamSize()));
+                    ModelStringUtil.formatIECByteSizeString(stroomZipRepositoryProcessor.getMaxStreamSize()));
 
             final StroomZipRepository stroomZipRepository = new StroomZipRepository(this.proxyDir);
             complete = stroomZipRepositoryProcessor.process(stroomZipRepository);

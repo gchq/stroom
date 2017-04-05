@@ -132,7 +132,7 @@ public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.V
         getView().getIndexStatus().setSelectedItem(volume.getIndexStatus());
 
         if (volume.getBytesLimit() != null) {
-            getView().getBytesLimit().setText(ModelStringUtil.formatByteSizeString(volume.getBytesLimit()));
+            getView().getBytesLimit().setText(ModelStringUtil.formatIECByteSizeString(volume.getBytesLimit()));
         } else {
             getView().getBytesLimit().setText("");
         }
@@ -149,7 +149,7 @@ public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.V
             Long bytesLimit = null;
             final String limit = getView().getBytesLimit().getText().trim();
             if (limit.length() > 0) {
-                bytesLimit = ModelStringUtil.parseByteSizeString(limit);
+                bytesLimit = ModelStringUtil.parseIECByteSizeString(limit);
             }
             volume.setBytesLimit(bytesLimit);
 
