@@ -29,7 +29,7 @@
 	cursor: pointer;
 	white-space: nowrap;
 	text-decoration: underline;
-	font-weight: bold;
+	font-weight: 500;
 	opacity: 0;
 }
 
@@ -45,5 +45,5 @@
 }
 
 .linkTab.selected .label {
-	font-weight: bold;
+	font-weight: 500;
 }

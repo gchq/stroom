@@ -247,7 +247,7 @@ a, a:visited, a:hover {
   padding: 0px 10px;
   vertical-align: bottom;
   color: #666666;
-  font-weight: bold;
+  font-weight: 500;
 }
 .gwt-MenuBar-horizontal .gwt-MenuItemSeparator {
   width: 1px;
@@ -534,7 +534,7 @@ a, a:visited, a:hover {
 .gwt-StackPanel .gwt-StackPanelItem {
   cursor: pointer;
   cursor: hand;
-  font-weight: bold;
+  font-weight: 500;
   font-size: 1.3em;
   padding: 3px;
   border: 1px solid #bbbbbb;
@@ -597,7 +597,7 @@ a, a:visited, a:hover {
   border-right: 1px solid #bbbbbb;
 }
 .gwt-DecoratedStackPanel .stackItemMiddleCenter {
-  font-weight: bold;
+  font-weight: 500;
   font-size: 1.3em;
   background: #d3def6 url(images/hborder.png) repeat-x 0px -989px;
 }
@@ -686,7 +686,7 @@ a, a:visited, a:hover {
   cursor: pointer;
   cursor: hand;
   color: black;
-  font-weight: bold;
+  font-weight: 500;
   text-align: center;
   background: #d0e4f6;
 }
@@ -755,7 +755,7 @@ a, a:visited, a:hover {
   cursor: pointer;
   cursor: hand;
   color: black;
-  font-weight: bold;
+  font-weight: 500;
   text-align: center;
   background: #d0e4f6;
 }
@@ -943,7 +943,7 @@ td.datePickerYear {
   vertical-align: middle;
   white-space: nowrap;
   font-size: 70%;
-  font-weight: bold;
+  font-weight: 500;
   color: blue;
 }
 .datePickerPreviousButton,
@@ -964,7 +964,7 @@ td.datePickerYear {
 .gwt-StackLayoutPanel .gwt-StackLayoutPanelHeader {
   cursor: pointer;
   cursor: hand;
-  font-weight: bold;
+  font-weight: 500;
   font-size: 1.3em;
   padding: 3px;
   border: 1px solid #bbbbbb;
@@ -998,7 +998,7 @@ td.datePickerYear {
   cursor: pointer;
   cursor: hand;
   color: black;
-  font-weight: bold;
+  font-weight: 500;
   text-align: center;
   background: #d0e4f6;
 }

@@ -58,7 +58,7 @@
 .titleText {
 	width: 100%;
 	padding: 3px 5px;
-	font-weight: bold;
+	font-weight: 400;
 	color: white;
 	cursor: default;
 	word-wrap: none;

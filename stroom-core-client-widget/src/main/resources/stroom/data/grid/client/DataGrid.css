@@ -41,7 +41,7 @@
 	text-align: left;
 	overflow: hidden;
 	white-space: nowrap;
-	font-weight: bold;
+	font-weight: 500;
 	cursor: default;
 }
 
@@ -53,7 +53,7 @@
 	text-align: left;
 	overflow: hidden;
 	white-space: nowrap;
-	font-weight: bold;
+	font-weight: 500;
     height : auto;
 	cursor: default;
 

@@ -32,7 +32,7 @@
 .slideTab .label {
 	padding: 4px 20px 0px 10px;
 	cursor: default;
-	font-weight: bold;
+	font-weight: 500;
 	opacity: .5;
 	transition: opacity .5s;
 	-webkit-transition: opacity .5s;

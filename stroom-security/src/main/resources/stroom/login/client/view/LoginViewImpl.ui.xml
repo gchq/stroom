@@ -27,7 +27,7 @@
     }
 
     .userName {
-    font-weight: bold;
+    font-weight: 500;
     padding-bottom: 5px;
     }
 
@@ -74,7 +74,7 @@
               <g:Grid styleName="stroom-control-grid">
                 <g:row>
                   <g:cell>
-                    <div style="font-weight:bold;padding-bottom:5px;">Login</div>
+                    <div style="font-weight:500;padding-bottom:5px;">Login</div>
                   </g:cell>
                 </g:row>
                 <g:row>

@@ -92,7 +92,7 @@ body,table td,select {
 	cursor: default;
 	border-bottom: 1px solid #bbbbbb;
 	border-top: 5px solid #d0e4f6;
-	font-weight: bold;
+	font-weight: 500;
 }
 
 .gwt-DialogBox .dialogContent {
@@ -350,7 +350,7 @@ td.datePickerMonth {
 	text-align: center;
 	vertical-align: center;
 	white-space: nowrap;
-	font-weight: bold;
+	font-weight: 500;
 	color: blue;
 }
 td.datePickerMonth,
@@ -359,7 +359,7 @@ td.datePickerYear {
   vertical-align: middle;
   white-space: nowrap;
   font-size: 13px;
-  font-weight: bold;
+  font-weight: 500;
   color: blue;
 }
 .datePickerPreviousButton,
