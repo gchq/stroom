@@ -251,7 +251,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                         // Find the nearest parent folder and see if we are allowed to import/create items in the parent folder.
                         int pathIndex = 0;
                         DocRef nearestFolder = SYSTEM_FOLDER;
-                        if (relativePath.getNameCount() == 0) {
+                        if (relativePath.getNameCount() == 1) {
                             folderRef = nearestFolder;
                         } else {
                             Folder parentFolder = null;
