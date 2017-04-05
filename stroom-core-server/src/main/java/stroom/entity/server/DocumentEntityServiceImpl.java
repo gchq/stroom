@@ -188,7 +188,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         sql.append(" WHERE e.id = ");
         sql.arg(id);
 
-        final List<E> resultList = getEntityManager().executeQueryResultList(sql);
+        final List<E> resultList = getEntityManager().executeQueryResultList(sql, null, true);
         if (resultList != null && resultList.size() > 0) {
             entity = resultList.get(0);
         }
@@ -217,7 +217,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         sql.append(" WHERE e.id = ");
         sql.arg(id);
 
-        final List<E> resultList = getEntityManager().executeQueryResultList(sql);
+        final List<E> resultList = getEntityManager().executeQueryResultList(sql, null, true);
         if (resultList != null && resultList.size() > 0) {
             entity = resultList.get(0);
         }
@@ -247,7 +247,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         sql.append(" WHERE e.uuid = ");
         sql.arg(uuid);
 
-        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql));
+        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql, null, true));
         final E entity = list.getFirst();
 
         if (entity != null) {
@@ -269,7 +269,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         sql.append(" WHERE e.uuid = ");
         sql.arg(uuid);
 
-        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql));
+        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql, null, true));
         final E entity = list.getFirst();
 
         if (entity != null) {
@@ -310,7 +310,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             }
         }
 
-        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql));
+        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql, null, true));
 
         // FIXME: Fix once folders have been removed from entities. For now filter by parent group id manually
         E entity = null;

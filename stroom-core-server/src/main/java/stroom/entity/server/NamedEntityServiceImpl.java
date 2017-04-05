@@ -69,6 +69,8 @@ public abstract class NamedEntityServiceImpl<E extends NamedEntity, C extends Fi
     @SuppressWarnings("unchecked")
     @Override
     public E loadByName(final String name, final Set<String> fetchSet) {
+        E entity = null;
+
         final SQLBuilder sql = new SQLBuilder();
         sql.append("SELECT e");
         sql.append(" FROM ");
@@ -81,12 +83,12 @@ public abstract class NamedEntityServiceImpl<E extends NamedEntity, C extends Fi
         sql.arg(name);
 
         // This should just bring back 1
-        final List<E> results = getEntityManager().executeQueryResultList(sql);
-
-        if (results == null || results.size() == 0) {
-            return null;
+        final List<E> resultList = getEntityManager().executeQueryResultList(sql, null, true);
+        if (resultList != null && resultList.size() > 0) {
+            entity = resultList.get(0);
         }
-        return results.get(0);
+
+        return entity;
     }
 
     @Transient

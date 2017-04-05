@@ -59,7 +59,7 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
         sql.arg(name);
 
         // This should just bring back 1
-        final List<Feed> results = getEntityManager().executeQueryResultList(sql);
+        final List<Feed> results = getEntityManager().executeQueryResultList(sql, null, true);
 
         Feed feed = null;
         if (results != null && results.size() > 0) {

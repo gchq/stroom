@@ -52,6 +52,9 @@ public interface StroomEntityManager extends Flushable {
     @SuppressWarnings("rawtypes")
     List executeQueryResultList(SQLBuilder sql, BaseCriteria criteria);
 
+    @SuppressWarnings("rawtypes")
+    List executeQueryResultList(SQLBuilder sql, BaseCriteria criteria, boolean allowCaching);
+
     long executeQueryLongResult(SQLBuilder sql);
 
     String runSubSelectQuery(SQLBuilder sql, boolean handleNull);

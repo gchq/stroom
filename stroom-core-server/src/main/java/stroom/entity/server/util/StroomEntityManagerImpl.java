@@ -301,12 +301,18 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
     @SuppressWarnings("rawtypes")
     @Override
     public List executeQueryResultList(final SQLBuilder sql) {
-        return executeQueryResultList(sql, null);
+        return executeQueryResultList(sql, null, false);
     }
 
     @SuppressWarnings("rawtypes")
     @Override
     public List executeQueryResultList(final SQLBuilder sql, final BaseCriteria criteria) {
+        return executeQueryResultList(sql, criteria, false);
+    }
+
+    @SuppressWarnings("rawtypes")
+    @Override
+    public List executeQueryResultList(final SQLBuilder sql, final BaseCriteria criteria, final boolean allowCaching) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         List rtn;
 
