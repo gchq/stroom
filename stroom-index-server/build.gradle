@@ -15,7 +15,8 @@
  */
 
 dependencies {
-    compile 'stroom:stroom-query-common:6.0-beta.1-SNAPSHOT'
+    compile getPath('queryCommon')
+    compile getPath('expression')
     compile project(':stroom-pipeline')
     compile project(':stroom-core-server')
     compile project(':stroom-index-shared')

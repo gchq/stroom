@@ -17,20 +17,11 @@
 dependencies {
     compile project(':stroom-statistics-shared')
     compile project(':stroom-pipeline')
-    compile 'stroom:stroom-query-common:6.0-beta.1-SNAPSHOT'
-    compile('org.apache.hbase:hbase-common-shaded:1.2.1:all') { /* LATEST 1.2.4 */
-        exclude(module: 'jetty')
-        exclude(module: 'jetty-util')
-        exclude(module: 'servlet-api')
-//        exclude(module: 'servlet-api-2.5')
-        exclude(module: 'jsp-2.1')
-        exclude(module: 'jsp-api-2.1')
-        exclude(module: 'jsp-api')
-        exclude(module: 'jasper-runtime')
-        exclude(module: 'jasper-compiler')
-        exclude(module: 'hsqldb')
-        exclude(module: 'xercesImpl')
-    }
+
+    compile getPath('queryCommon')
+    compile getPath('hadoopCommonShaded')
+    compile getPath('hbaseCommonShaded')
+
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')

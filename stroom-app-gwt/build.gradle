@@ -50,19 +50,19 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
     }
 
     args =
-            [
-                    '-logLevel', 'INFO',
-                    '-workDir', workDir,
-                    '-XfragmentCount', '5',
-                    '-optimize', '9',
-                    '-failOnError',
-                    '-localWorkers', '5',
-                    '-war', warDir,
-                    '-deploy', deployDir,
-                    '-extra', extraDir,
-                    '-strict',
-                    module                               // Your GWT module
-            ]
+        [
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-XfragmentCount', '5',
+            '-optimize', '9',
+            '-failOnError',
+            '-localWorkers', '5',
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            '-strict',
+            module                               // Your GWT module
+        ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = '1G'
@@ -91,21 +91,21 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
     }
 
     args =
-            [
-                    '-logLevel', 'INFO',
-                    '-workDir', workDir,
-                    '-draftCompile',                        // Speeds up compile with 25%
-                    '-XfragmentCount', '0',
-                    '-optimize', '0',
-                    '-failOnError',
-                    '-localWorkers', '5',
-                    '-incremental',
-                    '-war', warDir,
-                    '-deploy', deployDir,
-                    '-extra', extraDir,
-                    '-strict',
-                    module                                  // Your GWT module
-            ]
+        [
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-draftCompile',                        // Speeds up compile with 25%
+            '-XfragmentCount', '0',
+            '-optimize', '0',
+            '-failOnError',
+            '-localWorkers', '5',
+            '-incremental',
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            '-strict',
+            module                                  // Your GWT module
+        ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = '1G'
@@ -136,17 +136,17 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
     }
 
     args =
-            [
-                    '-logLevel', 'INFO',
-                    '-workDir', workDir,
-                    '-failOnError',
-                    '-war', warDir,
-                    '-deploy', deployDir,
-                    '-extra', extraDir,
-                    '-strict',
-                    '-noserver',
-                    module                                  // Your GWT module
-            ]
+        [
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-failOnError',
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            '-strict',
+            '-noserver',
+            module                                  // Your GWT module
+        ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = '1G'
