@@ -26,8 +26,6 @@ subprojects {
         all {
             exclude group: "org.slf4j", module: "slf4j-log4j12"
             exclude group: "log4j", module: "log4j"
-//            exclude group: 'asm', module: 'asm'
-//            exclude group: 'org.ow2.asm', module: 'asm'
             exclude module: 'xercesImpl'
         }
     }
@@ -55,13 +53,6 @@ subprojects {
     }
     artifacts.archives packageTests
 
-//    task packageSources(type: Jar) {
-//        classifier = 'sources'
-//        from sourceSets.main.allSource
-//
-//    }
-//    artifacts.archives packageSources
-
     repositories {
         mavenLocal()
 
@@ -73,15 +64,6 @@ subprojects {
         testCompile 'org.mockito:mockito-core:2.0.2-beta'
     }
 }
-
-//task fullBuild(type: GradleBuild) {
-//    tasks = ['clean', 'build', 'gwtDevMode']
-//}
-//
-//// Shortcut tasks
-//task buildUI(type: GradleBuild) {
-//    tasks = ['gwtDevMode']
-//}
 
 task setupSampleData(type: GradleBuild) {
     tasks = [':stroom-integrationtest:setupSampleData']
@@ -116,8 +98,6 @@ project(':stroom-entity-shared') {
         }
     }
 }
-
-
 
 ext.fileDependencies = [
     queryApi : [
@@ -187,6 +167,7 @@ def getSourcesLib(jar, version){
 
 def fileDependency(jar){
     def path = files(getLib(fileDependencies."$jar".jar, fileDependencies."$jar".version))
+    print "${jar} - ${path.getAsPath()}\n"
     return files(getLib(fileDependencies."$jar".jar, fileDependencies."$jar".version))
 }
 
@@ -200,7 +181,6 @@ task setupFileDependencies {
         def lib = dependency.value.isSourceJar ?
                 getSourcesLib(dependency.value.jar, dependency.value.version)
                 : getLib(dependency.value.jar, dependency.value.version)
-        print lib
         task "download_${dependency.key}"(type: Download) {
             src url
             dest lib
