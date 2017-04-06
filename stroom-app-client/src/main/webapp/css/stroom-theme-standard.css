@@ -30,7 +30,7 @@ body {
 }
 
 .stroom-content-container {
-	background-color: #eee;
+    background-color: rgba(0,0,0,0.07);
 }
 
 .stroom-main-content-container {

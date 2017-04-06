@@ -4,7 +4,7 @@
 
 <ui:with field="res" type="stroom.dashboard.client.main.DashboardLayoutViewImpl.Resources" />
 
-  <v:ResizeSimplePanel styleName="{res.style.outerPanel} stroom-content-container">
+  <v:ResizeSimplePanel styleName="{res.style.outerPanel}">
     <view:FlexLayout ui:field="layout" styleName="{res.style.layout}" />
   </v:ResizeSimplePanel>
 </ui:UiBinder>
