@@ -28,8 +28,7 @@
 	padding: 0px 5px 0px 5px;
 	cursor: pointer;
 	white-space: nowrap;
-	text-decoration: underline;
-	font-weight: 500;
+	font-weight: 600;
 	opacity: 0;
 }
 
@@ -40,10 +39,9 @@
 	width: 100%;
 	cursor: pointer;
 	white-space: nowrap;
-	text-decoration: underline;
 	text-align: center;
 }
 
 .linkTab.selected .label {
-	font-weight: 500;
+	font-weight: 600;
 }
