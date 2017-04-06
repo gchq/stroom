@@ -82,7 +82,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
                         null);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", 16);
+        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
 
         getView().addResizableColumn(new OrderByColumn<SummaryDataRow, String>(new TextCell(),
                 FindStreamTaskCriteria.ORDER_BY_PIPELINE_NAME) {

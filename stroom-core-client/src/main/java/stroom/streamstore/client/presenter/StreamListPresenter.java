@@ -40,18 +40,18 @@ public class StreamListPresenter extends AbstractStreamListPresenter {
         addInfoColumn();
 
         addCreatedColumn();
-//        addEffectiveColumn();
         addStreamTypeColumn();
         addFeedColumn();
+        addPipelineColumn();
 
-        addAttributeColumn(StreamAttributeConstants.STREAM_SIZE, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn(StreamAttributeConstants.FILE_SIZE, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_READ, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_WRITE, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_INFO, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_WARN, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_ERROR, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_FATAL, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Raw", StreamAttributeConstants.STREAM_SIZE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Disk", StreamAttributeConstants.FILE_SIZE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Read", StreamAttributeConstants.REC_READ, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Write", StreamAttributeConstants.REC_WRITE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Fatal", StreamAttributeConstants.REC_FATAL, 40);
+        addAttributeColumn("Error", StreamAttributeConstants.REC_ERROR, 40);
+        addAttributeColumn("Warn", StreamAttributeConstants.REC_WARN, 40);
+        addAttributeColumn("Info", StreamAttributeConstants.REC_INFO, 40);
 
         getView().addEndColumn(new EndColumn<StreamAttributeMap>());
     }

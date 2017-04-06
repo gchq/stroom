@@ -35,6 +35,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.streamstore.client.presenter.ActionDataProvider;
+import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -130,7 +131,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                         popupPosition, null);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", 17);
+        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
     }
 
     private String getInfoHtml(final CacheNodeRow row) {

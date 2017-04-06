@@ -217,7 +217,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                     return TickBoxState.UNTICK;
                 }
             };
-            getView().addColumn(column, header, 16);
+            getView().addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
 
             header.setUpdater(new ValueUpdater<TickBoxState>() {
                 @Override
@@ -241,7 +241,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             });
 
         } else {
-            getView().addColumn(column, "", 16);
+            getView().addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);
         }
 
         // Add Handlers
@@ -329,7 +329,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 }
             }
         };
-        getView().addColumn(infoColumn, "<br/>", 17);
+        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
     }
 
     public void buildTipText(final StreamAttributeMap row, final StringBuilder html) {
@@ -414,7 +414,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             public String getValue(final StreamAttributeMap row) {
                 return ModelStringUtil.format(row.getStream().getFeed());
             }
-        }, "Feed", 380);
+        }, "Feed", ColumnSizeConstants.BIG_COL);
         // }
     }
 
@@ -444,7 +444,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 return "";
 
             }
-        }, "Pipeline", 380);
+        }, "Pipeline", ColumnSizeConstants.BIG_COL);
         // }
     }
 
@@ -471,11 +471,11 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         return resultList;
     }
 
-    protected void addAttributeColumn(final String name, final int size) {
+    protected void addAttributeColumn(final String name, final String attribute, final int size) {
         final Column<StreamAttributeMap, String> column = new Column<StreamAttributeMap, String>(new TextCell()) {
             @Override
             public String getValue(final StreamAttributeMap row) {
-                return row.formatAttribute(name);
+                return row.formatAttribute(attribute);
             }
         };
         getView().addResizableColumn(column, name, size);

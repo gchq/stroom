@@ -123,7 +123,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
             }
         };
 
-        getView().addColumn(column, "", 16);
+        getView().addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);
 
         // Expander column.
         final Column<TaskProgress, Expander> expanderColumn = new Column<TaskProgress, Expander>(new ExpanderCell()) {
@@ -169,7 +169,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                         popupPosition, null);
             }
         };
-        getView().addColumn(furtherInfoColumn, "<br/>", 16);
+        getView().addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
 
         // Add Handlers
         column.setFieldUpdater((index, object, value) -> {

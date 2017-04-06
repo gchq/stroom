@@ -49,6 +49,7 @@ import stroom.index.shared.IndexShard;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.streamstore.client.presenter.ActionDataProvider;
+import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 import stroom.widget.button.client.GlyphButtonView;
@@ -170,7 +171,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 return TickBoxState.UNTICK;
             }
         };
-        getView().addColumn(column, header, 16);
+        getView().addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
 
         // Add Handlers
         header.setUpdater(value -> {
@@ -241,7 +242,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 ShowPopupEvent.fire(IndexShardPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition, null);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", 16);
+        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
     }
 
     private void addNodeColumn() {

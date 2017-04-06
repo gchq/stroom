@@ -45,6 +45,7 @@ import stroom.entity.shared.ImportState;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ImportConfigAction;
+import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.Severity;
@@ -188,7 +189,7 @@ public class ImportConfigConfirmPresenter extends
                 return getHeaderState();
             }
         };
-        dataGridView.addColumn(column, header, 16);
+        dataGridView.addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
 
         // Add Handlers
         column.setFieldUpdater(new FieldUpdater<ImportState, TickBoxState>() {

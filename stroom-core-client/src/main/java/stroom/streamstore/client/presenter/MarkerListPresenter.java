@@ -101,7 +101,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
                 dataPresenter.update(true);
             }
         });
-        getView().addColumn(expanderColumn, "<br/>", 16);
+        getView().addColumn(expanderColumn, "<br/>", ColumnSizeConstants.CHECKBOX_COL);
     }
 
     private void addSeverityColumn() {
@@ -121,7 +121,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
 
                 return resources.warning();
             }
-        }, "", 18);
+        }, "", ColumnSizeConstants.GLYPH_COL);
     }
 
     private void addElementId() {
