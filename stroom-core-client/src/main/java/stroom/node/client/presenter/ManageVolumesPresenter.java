@@ -149,7 +149,7 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
 
     @Override
     protected void revealInParent() {
-        final PopupSize popupSize = new PopupSize(800, 400, true);
+        final PopupSize popupSize = new PopupSize(1000, 600, true);
         ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, null, popupSize, "Manage Volumes", null, null);
     }
 

@@ -65,7 +65,7 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
      * Add the columns to the table.
      */
     private void initTableColumns() {
-        // Name.
+        // Node.
         final Column<Volume, String> nameColumn = new Column<Volume, String>(new TextCell()) {
             @Override
             public String getValue(final Volume volume) {
@@ -74,14 +74,14 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
         };
         getView().addResizableColumn(nameColumn, "Node", 150);
 
-        // Volume.
+        // Path.
         final Column<Volume, String> volumeColumn = new Column<Volume, String>(new TextCell()) {
             @Override
             public String getValue(final Volume volume) {
                 return volume.getPath();
             }
         };
-        getView().addResizableColumn(volumeColumn, "Path", 250);
+        getView().addResizableColumn(volumeColumn, "Path", 300);
 
         // Volume Type.
         final Column<Volume, String> volumeTypeColumn = new Column<Volume, String>(new TextCell()) {
@@ -90,7 +90,7 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
                 return volume.getVolumeType().getDisplayValue();
             }
         };
-        getView().addResizableColumn(volumeTypeColumn, "Volume Type", ColumnSizeConstants.MEDIUM_COL);
+        getView().addResizableColumn(volumeTypeColumn, "Volume Type", 80);
 
         // Stream Status.
         final Column<Volume, String> streamStatusColumn = new Column<Volume, String>(new TextCell()) {
@@ -99,7 +99,7 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
                 return volume.getStreamStatus().getDisplayValue();
             }
         };
-        getView().addResizableColumn(streamStatusColumn, "Stream Status", ColumnSizeConstants.MEDIUM_COL);
+        getView().addResizableColumn(streamStatusColumn, "Stream Status", 90);
 
         // Index Status.
         final Column<Volume, String> indexStatusColumn = new Column<Volume, String>(new TextCell()) {
@@ -108,7 +108,55 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
                 return volume.getIndexStatus().getDisplayValue();
             }
         };
-        getView().addResizableColumn(indexStatusColumn, "Index Status", ColumnSizeConstants.MEDIUM_COL);
+        getView().addResizableColumn(indexStatusColumn, "Index Status", 90);
+
+        // Total.
+        final Column<Volume, String> totalColumn = new Column<Volume, String>(new TextCell()) {
+            @Override
+            public String getValue(final Volume volume) {
+                return getSizeString(volume.getVolumeState().getBytesTotal());
+            }
+        };
+        getView().addResizableColumn(totalColumn, "Total", ColumnSizeConstants.SMALL_COL);
+
+        // Limit.
+        final Column<Volume, String> limitColumn = new Column<Volume, String>(new TextCell()) {
+            @Override
+            public String getValue(final Volume volume) {
+                if (volume.getBytesLimit() == null) {
+                    return "";
+                }
+                return getSizeString(volume.getBytesLimit());
+            }
+        };
+        getView().addResizableColumn(limitColumn, "Limit", ColumnSizeConstants.SMALL_COL);
+
+        // Used.
+        final Column<Volume, String> usedColumn = new Column<Volume, String>(new TextCell()) {
+            @Override
+            public String getValue(final Volume volume) {
+                return getSizeString(volume.getVolumeState().getBytesUsed());
+            }
+        };
+        getView().addResizableColumn(usedColumn, "Used", ColumnSizeConstants.SMALL_COL);
+
+        // Free.
+        final Column<Volume, String> freeColumn = new Column<Volume, String>(new TextCell()) {
+            @Override
+            public String getValue(final Volume volume) {
+                return getSizeString(volume.getVolumeState().getBytesFree());
+            }
+        };
+        getView().addResizableColumn(freeColumn, "Free", ColumnSizeConstants.SMALL_COL);
+
+        // Use%.
+        final Column<Volume, String> usePercentColumn = new Column<Volume, String>(new TextCell()) {
+            @Override
+            public String getValue(final Volume volume) {
+                return getPercentString(volume.getVolumeState().getPercentUsed());
+            }
+        };
+        getView().addResizableColumn(usePercentColumn, "Use%", ColumnSizeConstants.SMALL_COL);
 
         // Usage Date.
         final Column<Volume, String> usageDateColumn = new Column<Volume, String>(new TextCell()) {
@@ -119,53 +167,6 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
         };
         getView().addResizableColumn(usageDateColumn, "Usage Date", ColumnSizeConstants.DATE_COL);
 
-        // Bytes limit.
-        final Column<Volume, String> limitColumn = new Column<Volume, String>(new TextCell()) {
-            @Override
-            public String getValue(final Volume volume) {
-                if (volume.getBytesLimit() == null) {
-                    return "";
-                }
-                return getSizeString(volume.getBytesLimit());
-            }
-        };
-        getView().addResizableColumn(limitColumn, "Limit", 100);
-
-        // Bytes used.
-        final Column<Volume, String> usedColumn = new Column<Volume, String>(new TextCell()) {
-            @Override
-            public String getValue(final Volume volume) {
-                return getSizeString(volume.getVolumeState().getBytesUsed());
-            }
-        };
-        getView().addResizableColumn(usedColumn, "Used", 100);
-
-        // Bytes free.
-        final Column<Volume, String> freeColumn = new Column<Volume, String>(new TextCell()) {
-            @Override
-            public String getValue(final Volume volume) {
-                return getSizeString(volume.getVolumeState().getBytesFree());
-            }
-        };
-        getView().addResizableColumn(freeColumn, "Free", 100);
-
-        // Bytes total.
-        final Column<Volume, String> totalColumn = new Column<Volume, String>(new TextCell()) {
-            @Override
-            public String getValue(final Volume volume) {
-                return getSizeString(volume.getVolumeState().getBytesTotal());
-            }
-        };
-        getView().addResizableColumn(totalColumn, "Total", 100);
-
-        // Use%.
-        final Column<Volume, String> usePercentColumn = new Column<Volume, String>(new TextCell()) {
-            @Override
-            public String getValue(final Volume volume) {
-                return getPercentString(volume.getVolumeState().getPercentUsed());
-            }
-        };
-        getView().addResizableColumn(usePercentColumn, "Use%", 100);
         getView().addEndColumn(new EndColumn<Volume>());
     }
 

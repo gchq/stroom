@@ -52,7 +52,7 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
      * Add the columns to the table.
      */
     private void initTableColumns() {
-        // Name.
+        // Node.
         final Column<Volume, String> nameColumn = new Column<Volume, String>(new TextCell()) {
             @Override
             public String getValue(final Volume row) {
@@ -64,7 +64,7 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
         };
         getView().addResizableColumn(nameColumn, "Node", 150);
 
-        // Volume.
+        // Path.
         final Column<Volume, String> volumeColumn = new Column<Volume, String>(new TextCell()) {
             @Override
             public String getValue(final Volume row) {
@@ -74,7 +74,7 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
                 return row.getPath();
             }
         };
-        getView().addResizableColumn(volumeColumn, "Path", 250);
+        getView().addResizableColumn(volumeColumn, "Path", 300);
 
         // Volume Type.
         final Column<Volume, String> volumeTypeColumn = new Column<Volume, String>(new TextCell()) {
@@ -86,7 +86,7 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
                 return row.getVolumeType().getDisplayValue();
             }
         };
-        getView().addResizableColumn(volumeTypeColumn, "Volume Type", 100);
+        getView().addResizableColumn(volumeTypeColumn, "Volume Type", 80);
 
         // Stream Status.
         final Column<Volume, String> streamStatusColumn = new Column<Volume, String>(new TextCell()) {
@@ -98,7 +98,7 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
                 return row.getStreamStatus().getDisplayValue();
             }
         };
-        getView().addResizableColumn(streamStatusColumn, "Stream Status", 100);
+        getView().addResizableColumn(streamStatusColumn, "Stream Status", 90);
 
         // Index Status.
         final Column<Volume, String> indexStatusColumn = new Column<Volume, String>(new TextCell()) {
@@ -110,7 +110,7 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
                 return row.getIndexStatus().getDisplayValue();
             }
         };
-        getView().addResizableColumn(indexStatusColumn, "Index Status", 100);
+        getView().addResizableColumn(indexStatusColumn, "Index Status", 90);
 
         getView().addEndColumn(new EndColumn<Volume>());
     }
