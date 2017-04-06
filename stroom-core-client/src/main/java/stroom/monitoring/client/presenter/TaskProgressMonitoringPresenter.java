@@ -228,7 +228,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                 return ModelStringUtil.formatDurationString(value.getAgeMs());
             }
         };
-        getView().addResizableColumn(ageColumn, "Age", 50);
+        getView().addResizableColumn(ageColumn, "Age", ColumnSizeConstants.SMALL_COL);
 
         // Info.
         final Column<TaskProgress, String> infoColumn = new Column<TaskProgress, String>(new TextCell()) {
@@ -241,7 +241,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                 return value.getTaskInfo();
             }
         };
-        getView().addResizableColumn(infoColumn, "Info", 400);
+        getView().addResizableColumn(infoColumn, "Info", 1000);
         getView().addEndColumn(new EndColumn<>());
 
         // Handle use of the expander column.
