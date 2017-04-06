@@ -26,7 +26,7 @@ import stroom.util.shared.ThreadPool;
 public abstract class ServerTask<R> implements Task<R>, HasMonitor {
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(2);
 
-    public static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
+    public static final String INTERNAL_PROCESSING_USER = "INTERNAL";
 
     private final TaskId id;
     private final String sessionId;

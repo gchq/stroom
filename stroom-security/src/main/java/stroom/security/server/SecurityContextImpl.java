@@ -63,7 +63,7 @@ class SecurityContextImpl implements SecurityContext {
     private final GenericEntityService genericEntityService;
 
 
-    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", "INTERNAL_PROCESSING_USER", false, true);
+    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", "INTERNAL", false, true);
 
     @Inject
     SecurityContextImpl(final DocumentPermissionsCache documentPermissionsCache, final UserGroupsCache userGroupsCache, final UserAppPermissionsCache userAppPermissionsCache, final UserService userService, final DocumentPermissionService documentPermissionService, final GenericEntityService genericEntityService) {
@@ -78,7 +78,7 @@ class SecurityContextImpl implements SecurityContext {
     @Override
     public void pushUser(final String name) {
         UserRef userRef = INTERNAL_PROCESSING_USER;
-        if (name != null && !"INTERNAL_PROCESSING_USER".equals(name)) {
+        if (name != null && !"INTERNAL".equals(name)) {
             userRef = userService.getUserByName(name);
         }
 
