@@ -194,7 +194,7 @@ public class TermEditor extends Composite {
                     sb.append(((TextBox) widget).getText());
                     sb.append(",");
                 } else if (widget instanceof MyDateBox) {
-                    sb.append(((MyDateBox) widget).getText());
+                    sb.append(((MyDateBox) widget).getValue());
                     sb.append(",");
                 } else if (widget.equals(dictionaryWidget)) {
                     if (dictionaryPresenter != null) {

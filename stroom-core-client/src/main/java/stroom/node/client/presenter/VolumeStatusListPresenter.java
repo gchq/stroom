@@ -17,7 +17,6 @@
 package stroom.node.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -162,7 +161,7 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
         final Column<Volume, String> usageDateColumn = new Column<Volume, String>(new TextCell()) {
             @Override
             public String getValue(final Volume volume) {
-                return ClientDateUtil.createDateTimeString(volume.getVolumeState().getStatusMs());
+                return ClientDateUtil.toISOString(volume.getVolumeState().getStatusMs());
             }
         };
         getView().addResizableColumn(usageDateColumn, "Usage Date", ColumnSizeConstants.DATE_COL);

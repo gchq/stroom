@@ -354,15 +354,15 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             final StringBuilder sb = new StringBuilder();
             if (period.getFrom() != null && period.getTo() != null) {
                 term.setCondition(Condition.BETWEEN);
-                sb.append(ClientDateUtil.createDateTimeString(period.getFrom()));
+                sb.append(ClientDateUtil.toISOString(period.getFrom()));
                 sb.append(" and ");
-                sb.append(ClientDateUtil.createDateTimeString(period.getTo()));
+                sb.append(ClientDateUtil.toISOString(period.getTo()));
             } else if (period.getFrom() != null) {
                 term.setCondition(Condition.GREATER_THAN);
-                sb.append(ClientDateUtil.createDateTimeString(period.getFrom()));
+                sb.append(ClientDateUtil.toISOString(period.getFrom()));
             } else if (period.getTo() != null) {
                 term.setCondition(Condition.LESS_THAN);
-                sb.append(ClientDateUtil.createDateTimeString(period.getTo()));
+                sb.append(ClientDateUtil.toISOString(period.getTo()));
             }
 
             term.setValue(sb.toString());

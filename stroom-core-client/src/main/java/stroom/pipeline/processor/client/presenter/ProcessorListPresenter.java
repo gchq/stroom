@@ -270,7 +270,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                 String lastStream = null;
                 if (row instanceof StreamProcessorFilterRow) {
                     final StreamProcessorFilterRow streamProcessorFilterRow = (StreamProcessorFilterRow) row;
-                    lastStream = ClientDateUtil.createDateTimeString(
+                    lastStream = ClientDateUtil.toISOString(
                             streamProcessorFilterRow.getEntity().getStreamProcessorFilterTracker().getStreamCreateMs());
                 }
                 return lastStream;

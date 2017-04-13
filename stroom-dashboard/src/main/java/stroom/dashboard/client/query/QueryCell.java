@@ -21,7 +21,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates.Template;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
@@ -74,7 +73,7 @@ public class QueryCell extends AbstractCell<Query> {
                         value.getName()));
 
             } else {
-                final String time = ClientDateUtil.createDateTimeString(value.getCreateTime());
+                final String time = ClientDateUtil.toISOString(value.getCreateTime());
                 final StringBuilder expression = new StringBuilder();
                 value.getQueryData().getExpression().append(expression, "", true);
 

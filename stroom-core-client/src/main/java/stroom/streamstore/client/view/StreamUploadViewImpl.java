@@ -16,12 +16,6 @@
 
 package stroom.streamstore.client.view;
 
-import stroom.entity.client.EntityItemListBox;
-import stroom.entity.shared.DocRef;
-import stroom.streamstore.client.presenter.StreamTypeUiManager;
-import stroom.streamstore.client.presenter.StreamUploadPresenter.DataUploadView;
-import stroom.streamstore.shared.StreamType;
-import stroom.widget.customdatebox.client.CustomDateBox;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -32,6 +26,12 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
+import stroom.entity.client.EntityItemListBox;
+import stroom.entity.shared.DocRef;
+import stroom.streamstore.client.presenter.StreamTypeUiManager;
+import stroom.streamstore.client.presenter.StreamUploadPresenter.DataUploadView;
+import stroom.streamstore.shared.StreamType;
+import stroom.widget.customdatebox.client.MyDateBox;
 
 public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
     private final Widget widget;
@@ -42,11 +42,12 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
     @UiField
     FileUpload fileUpload;
     @UiField
-    CustomDateBox effective;
+    MyDateBox effective;
     @UiField
     FormPanel form;
     @UiField
     TextArea metaData;
+
     @Inject
     public StreamUploadViewImpl(final Binder binder, final StreamTypeUiManager streamTypeUiManager) {
         streamType = new EntityItemListBox("");
@@ -76,7 +77,7 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
 
     @Override
     public Long getEffectiveDate() {
-        return effective.getLongValue();
+        return effective.getMilliseconds();
     }
 
     @Override

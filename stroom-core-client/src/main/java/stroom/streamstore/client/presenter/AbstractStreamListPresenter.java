@@ -392,7 +392,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
             @Override
             public String getValue(final StreamAttributeMap row) {
-                return ClientDateUtil.createDateTimeString(row.getStream().getCreateMs());
+                return ClientDateUtil.toISOString(row.getStream().getCreateMs());
             }
         }, "Created", ColumnSizeConstants.DATE_COL);
     }
@@ -402,7 +402,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
             @Override
             public String getValue(final StreamAttributeMap row) {
-                return ClientDateUtil.createDateTimeString(row.getStream().getEffectiveMs());
+                return ClientDateUtil.toISOString(row.getStream().getEffectiveMs());
             }
         }, "Effective", ColumnSizeConstants.DATE_COL);
     }

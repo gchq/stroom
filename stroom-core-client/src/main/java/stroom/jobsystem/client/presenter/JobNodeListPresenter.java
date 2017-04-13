@@ -218,7 +218,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
                 if (row instanceof JobNodeRow) {
                     final JobNodeRow jobNodeRow = (row);
                     if (jobNodeRow.getJobNodeInfo() != null) {
-                        return ClientDateUtil.createDateTimeString(jobNodeRow.getJobNodeInfo().getLastExecutedTime());
+                        return ClientDateUtil.toISOString(jobNodeRow.getJobNodeInfo().getLastExecutedTime());
                     } else {
                         return "?";
                     }

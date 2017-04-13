@@ -59,6 +59,6 @@ public class GetScheduledTimesAction extends Action<ScheduledTimes> {
     @Override
     public String getTaskName() {
         return "Get Scheduled Times jobType=" + jobType + ", schedule=" + schedule + ", lastExecutedTime="
-                + ClientDateUtil.createDateTimeString(lastExecutedTime);
+                + ClientDateUtil.toISOString(lastExecutedTime);
     }
 }

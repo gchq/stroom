@@ -146,7 +146,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                 TooltipUtil.addHeading(html, "Task");
                 TooltipUtil.addRowData(html, "Name", row.getTaskName());
                 TooltipUtil.addRowData(html, "User", row.getUserName());
-                TooltipUtil.addRowData(html, "Submit Time", ClientDateUtil.createDateTimeString(row.getSubmitTimeMs()));
+                TooltipUtil.addRowData(html, "Submit Time", ClientDateUtil.toISOString(row.getSubmitTimeMs()));
                 TooltipUtil.addRowData(html, "Age", ModelStringUtil.formatDurationString(row.getAgeMs()));
                 TooltipUtil.addBreak(html);
                 TooltipUtil.addRowData(html, "Id", row.getId());
@@ -216,7 +216,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         final Column<TaskProgress, String> submitTimeColumn = new Column<TaskProgress, String>(new TextCell()) {
             @Override
             public String getValue(final TaskProgress value) {
-                return ClientDateUtil.createDateTimeString(value.getSubmitTimeMs());
+                return ClientDateUtil.toISOString(value.getSubmitTimeMs());
             }
         };
         getView().addResizableColumn(submitTimeColumn, "Submit Time", ColumnSizeConstants.DATE_COL);

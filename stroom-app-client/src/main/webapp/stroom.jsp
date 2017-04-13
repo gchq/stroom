@@ -64,6 +64,8 @@
     <link rel="stylesheet" href="css/spinner.min.css" type="text/css" />
     <link rel="stylesheet" href="css/spinner.custom.css" type="text/css" />
 
+    <script type="text/javascript" src="stroom/moment-with-locales.min.js" charset="utf-8"></script>
+
     <script type="text/javascript" src="stroom/ace/ace.js" charset="utf-8"></script>
     <script type="text/javascript" src="stroom/ace/beautify/beautify.js" charset="utf-8"></script>
     <script type="text/javascript" src="stroom/ace/theme-chrome.js" charset="utf-8"></script>

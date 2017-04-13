@@ -219,18 +219,18 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 TooltipUtil.addRowData(html, "Partition", indexShard.getPartition());
                 if (indexShard.getPartitionFromTime() != null) {
                     TooltipUtil.addRowData(html, "Partition From",
-                            ClientDateUtil.createDateTimeString(indexShard.getPartitionFromTime()));
+                            ClientDateUtil.toISOString(indexShard.getPartitionFromTime()));
                 }
                 if (indexShard.getPartitionToTime() != null) {
                     TooltipUtil.addRowData(html, "Partition To",
-                            ClientDateUtil.createDateTimeString(indexShard.getPartitionToTime()));
+                            ClientDateUtil.toISOString(indexShard.getPartitionToTime()));
                 }
                 TooltipUtil.addRowData(html, "Path", indexShard.getVolume().getPath());
                 TooltipUtil.addRowData(html, "Status", indexShard.getStatus().getDisplayValue());
                 TooltipUtil.addRowData(html, "Document Count", intToString(indexShard.getDocumentCount()));
                 TooltipUtil.addRowData(html, "File Size", indexShard.getFileSizeString());
                 TooltipUtil.addRowData(html, "Bytes Per Document", intToString(indexShard.getBytesPerDocument()));
-                TooltipUtil.addRowData(html, "Commit", ClientDateUtil.createDateTimeString(indexShard.getCommitMs()));
+                TooltipUtil.addRowData(html, "Commit", ClientDateUtil.toISOString(indexShard.getCommitMs()));
                 TooltipUtil.addRowData(html, "Commit Duration",
                         ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs()));
                 TooltipUtil.addRowData(html, "Commit Document Count", intToString(indexShard.getCommitDocumentCount()));
@@ -312,7 +312,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
             @Override
             public String getValue(final IndexShard indexShard) {
-                return ClientDateUtil.createDateTimeString(indexShard.getCommitMs());
+                return ClientDateUtil.toISOString(indexShard.getCommitMs());
             }
         }, "Commit", 150);
     }

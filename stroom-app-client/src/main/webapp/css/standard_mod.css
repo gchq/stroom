@@ -334,10 +334,11 @@ textarea {
 
 .gwt-DatePicker {
 	position: absolute;
-	border: 1px solid #A2BBDD;
+    box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
 	cursor: default;
 }
 .dateBoxPopup {
+    padding: 1px;
 	z-index: 100;
 }
 .datePickerDay,.datePickerWeekdayLabel,.datePickerWeekendLabel {
@@ -351,7 +352,6 @@ td.datePickerMonth {
 	vertical-align: center;
 	white-space: nowrap;
 	font-weight: 500;
-	color: blue;
 }
 td.datePickerMonth,
 td.datePickerYear {
@@ -360,7 +360,6 @@ td.datePickerYear {
   white-space: nowrap;
   font-size: 13px;
   font-weight: 500;
-  color: blue;
 }
 .datePickerPreviousButton,
 .datePickerNextButton,
@@ -368,7 +367,6 @@ td.datePickerYear {
 .datePickerNextYearButton {
   font-size: 13px;
   line-height: 1em;
-  color: blue;
   cursor: hand;
   cursor: pointer;
   padding: 0px 4px;

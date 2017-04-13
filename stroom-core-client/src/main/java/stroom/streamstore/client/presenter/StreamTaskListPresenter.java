@@ -117,7 +117,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                 new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_CREATE_TIME) {
                     @Override
                     public String getValue(final StreamTask row) {
-                        return ClientDateUtil.createDateTimeString(row.getCreateMs());
+                        return ClientDateUtil.toISOString(row.getCreateMs());
                     }
                 }, "Create", ColumnSizeConstants.DATE_COL);
 
@@ -170,14 +170,14 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                 new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_START_TIME) {
                     @Override
                     public String getValue(final StreamTask row) {
-                        return ClientDateUtil.createDateTimeString(row.getStartTimeMs());
+                        return ClientDateUtil.toISOString(row.getStartTimeMs());
                     }
                 }, "Start Time", ColumnSizeConstants.DATE_COL);
         getView().addResizableColumn(
                 new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_END_TIME_DATE) {
                     @Override
                     public String getValue(final StreamTask row) {
-                        return ClientDateUtil.createDateTimeString(row.getEndTimeMs());
+                        return ClientDateUtil.toISOString(row.getEndTimeMs());
                     }
                 }, "End Time", ColumnSizeConstants.DATE_COL);
 
@@ -189,7 +189,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
 
     private String toDateString(final Long ms) {
         if (ms != null) {
-            return ClientDateUtil.createDateTimeString(ms) + " (" + ms + ")";
+            return ClientDateUtil.toISOString(ms) + " (" + ms + ")";
         } else {
             return "";
         }
