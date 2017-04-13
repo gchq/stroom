@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#172** : Further improvement to dashboard L&F.
+
+* Issue **#194** : Fixed missing Roboto fonts.
+
+* Issue **#195** : Improved font weights and removed underlines from link tabs.
+
+* Issue **#196** : Reordered fields on stream, relative stream, volume and server task tables.
+
 * Issue **#182** :  Changed the way dates and times are parsed and formatted and improved the datebox control L&F.
 
 ## [v5.0-beta.17] - 2017-04-05
