@@ -16,14 +16,9 @@
 
 package stroom.dashboard.client.flexlayout;
 
-import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
@@ -34,21 +29,12 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
-import stroom.widget.button.client.GlyphButton;
-import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.tab.client.presenter.LayerContainer;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
 
 public class TabLayout extends Composite implements RequiresResize, ProvidesResize {
-    public static final GlyphIcon.ColourSet SETTINGS_COLOUR_SET = GlyphIcon.ColourSet.create("#ddd", "#9E9E9E");
-    public static final GlyphIcon SETTINGS = new GlyphIcon("fa fa-cog", SETTINGS_COLOUR_SET, "Settings", true);
-    public static final GlyphIcon.ColourSet CLOSE_COLOUR_SET = GlyphIcon.ColourSet.create("#ddd", "#D32F2F");
-    public static final GlyphIcon CLOSE = new GlyphIcon("fa fa-times", CLOSE_COLOUR_SET, "Settings", true);
-
-    private static Resources resources;
-
     private final TabLayoutConfig tabLayoutData;
     private final FlexLayoutChangeHandler changeHandler;
     private final FlowPanel panel;
@@ -56,8 +42,8 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     private final FlowPanel contentInner;
     private final FlowPanel barOuter;
     private final FlowPanel buttons;
-    private final GlyphButton settings;
-    private final GlyphButton close;
+    private final Button settings;
+    private final Button close;
     private final LinkTabBar tabBar;
     private final LayerContainer layerContainer;
     private final HandlerRegistrations handlerRegistrations = new HandlerRegistrations();
@@ -69,43 +55,45 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         this.tabLayoutData = tabLayoutData;
         this.changeHandler = changeHandler;
 
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         panel = new FlowPanel();
-        panel.setStyleName(resources.style().tabLayout());
+        panel.addStyleName("tabLayout");
         initWidget(panel);
 
         contentOuter = new FlowPanel();
-        contentOuter.setStyleName(resources.style().contentOuter());
+        contentOuter.setStyleName("contentOuter");
         panel.add(contentOuter);
 
         contentInner = new FlowPanel();
-        contentInner.setStyleName(resources.style().contentInner() + " " + StroomStyleNames.STROOM_CONTENT);
+        contentInner.setStyleName("contentInner" + " " + StroomStyleNames.STROOM_CONTENT);
         contentOuter.add(contentInner);
 
         barOuter = new FlowPanel();
-        barOuter.setStyleName(resources.style().barOuter());
+        barOuter.setStyleName("barOuter");
         contentInner.add(barOuter);
 
         tabBar = new LinkTabBar();
-        tabBar.addStyleName(resources.style().barInner());
+        tabBar.addStyleName("barInner");
         barOuter.add(tabBar);
 
         buttons = new FlowPanel();
-        buttons.setStyleName(resources.style().buttons());
+        buttons.setStyleName("buttons");
         contentInner.add(buttons);
 
-        settings = GlyphButton.create(SETTINGS);
+        settings = new Button();
+        settings.setStyleName("fa-button");
+        settings.setHTML("<i class=\"face fa fa-cog settingsButton\"></i>");
+        settings.setTitle("Settings");
         buttons.add(settings);
-        close = GlyphButton.create(CLOSE);
+
+        close = new Button();
+        close.setStyleName("fa-button");
+        close.setHTML("<i class=\"face fa fa-times closeButton\"></i>");
+        close.setTitle("Close");
         buttons.add(close);
 
         final LayerContainerImpl layerContainerImpl = new LayerContainerImpl();
         layerContainerImpl.setFade(true);
-        layerContainerImpl.setStyleName(resources.style().content());
+        layerContainerImpl.setStyleName("content");
         contentInner.add(layerContainerImpl);
 
         layerContainer = layerContainerImpl;
@@ -211,26 +199,5 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         if (this.tabsVisible != tabsVisible) {
             this.tabsVisible = tabsVisible;
         }
-    }
-
-    public interface Style extends CssResource {
-        String tabLayout();
-
-        String contentOuter();
-
-        String contentInner();
-
-        String barOuter();
-
-        String barInner();
-
-        String buttons();
-
-        String content();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("TabLayout.css")
-        Style style();
     }
 }
