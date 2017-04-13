@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#182** :  Changed the way dates and times are parsed and formatted and improved the datebox control L&F.
+
 ## [v5.0-beta.17] - 2017-04-05
 
 * Issue **#170** : Changed import/export to delegate import/export responsibility to individual services. Import/export now only works with items that have valid UUIDs specified.
