@@ -140,7 +140,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                         }
                     }
                 }, "Node", 100);
-        getView().addColumn(new Column<StreamTask, String>(new TextCell()) {
+        getView().addColumn(new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_PRIORITY) {
             @Override
             public String getValue(final StreamTask row) {
                 if (row.getStreamProcessorFilter() != null) {
