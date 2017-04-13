@@ -901,7 +901,7 @@ a, a:visited, a:hover {
 }
 .datePickerWeekdayLabel,
 .datePickerWeekendLabel {
-  background: #2196F3;
+  background: #1E88E5;
   padding: 0px 4px 2px;
   cursor: default;
   color: white;
@@ -936,19 +936,19 @@ a, a:visited, a:hover {
   font-style: italic;
 }
 .datePickerDayIsHighlighted {
-  background: rgba(0,0,255,0.1);
+  background: #BBDEFB;
   border-radius: 4px;
 }
 .datePickerDayIsValueAndHighlighted {
 }
 .datePickerDayIsValue.datePickerDayIsHighlighted {
-    background: #03a9f4;
+    background: #42A5F5;
     color: white;
     font-weight: 500;
     border-radius: 4px;
 }
 .datePickerMonthSelector {
-  background: #2196F3;
+  background: #1E88E5;
   width: 100%;
   color: white;
 }
