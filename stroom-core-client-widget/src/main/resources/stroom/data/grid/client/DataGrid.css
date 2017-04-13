@@ -60,6 +60,10 @@
 	border-bottom: #dddddd solid 1px;
 }
 
+.dataGridHeader * {
+	font-weight: 500;
+}
+
 @sprite .dataGridHeaderSelected {
 	gwt-image: 'headerHighlight';
 }
