@@ -325,7 +325,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public void setWantsData(final boolean wantsData) {
-        dataGrid.setRefreshing(wantsData);
+        getView().setRefreshing(wantsData);
         tableResultRequest.setWantsData(wantsData);
     }
 
@@ -742,5 +742,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     public interface TableView extends View {
         void setTableView(View view);
+
+        void setRefreshing(boolean refreshing);
     }
 }

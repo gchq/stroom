@@ -37,7 +37,7 @@
 .smallSpinner {
 	position: absolute;
 	right: 2px;
-	top: 2px;
+	bottom: 0px;
 	z-index: 5;
 }
 
