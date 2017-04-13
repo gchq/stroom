@@ -35,7 +35,7 @@ public final class DocumentPermissionsViewImpl extends ViewImpl implements Docum
     @UiField
     DockLayoutPanel layout;
     @UiField
-    ResizeSimplePanel slideTab;
+    ResizeSimplePanel tabs;
     @UiField
     Grid cascadeGrid;
     @UiField
@@ -53,8 +53,8 @@ public final class DocumentPermissionsViewImpl extends ViewImpl implements Docum
     }
 
     @Override
-    public void setSlideTabView(View view) {
-        slideTab.setWidget(view.asWidget());
+    public void setTabsView(View view) {
+        tabs.setWidget(view.asWidget());
     }
 
     @Override

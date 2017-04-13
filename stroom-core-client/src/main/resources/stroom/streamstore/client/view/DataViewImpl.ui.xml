@@ -54,7 +54,7 @@
 				</g:east>
 				<g:center>
 					<v:ResizeFlowPanel styleName="{style.tabBarOuter}">
-						<tab:SlideTabBar ui:field="tabBar" addStyleNames="{style.tabBarInner}" />
+						<tab:LinkTabBar ui:field="tabBar" addStyleNames="{style.tabBarInner}" />
 					</v:ResizeFlowPanel>
 				</g:center>
 			</g:DockLayoutPanel>

@@ -18,8 +18,11 @@ package stroom.widget.tab.client.view;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.DOM;
 
 public class LinkTab extends AbstractTab {
@@ -31,9 +34,23 @@ public class LinkTab extends AbstractTab {
         String background();
 
         String label();
+
+        String hotspot();
+
+        String hotspotVisible();
+
+        String close();
+
+        String closeActive();
     }
 
     public interface Resources extends ClientBundle {
+        @Source("close.png")
+        ImageResource close();
+
+        @Source("closeActive.png")
+        ImageResource closeActive();
+
         @Source("LinkTab.css")
         Style style();
     }
@@ -43,8 +60,17 @@ public class LinkTab extends AbstractTab {
     private final Element element;
     private final Element background;
     private final Element label;
+    private final Element close;
+    private final Element hotspot;
+    private final boolean allowClose;
 
     public LinkTab(final String text) {
+        this(text, false);
+    }
+
+    public LinkTab(final String text, final boolean allowClose) {
+        this.allowClose = allowClose;
+
         if (resources == null) {
             resources = GWT.create(Resources.class);
             resources.style().ensureInjected();
@@ -63,15 +89,58 @@ public class LinkTab extends AbstractTab {
         label.setInnerText(text);
         element.appendChild(label);
 
+        close = DOM.createDiv();
+        close.setClassName(resources.style().close());
+        element.appendChild(close);
+
+        hotspot = DOM.createDiv();
+        hotspot.setClassName(resources.style().hotspot());
+        element.appendChild(hotspot);
+
         setElement(element);
+
+//        if (allowClose) {
+//            close.getStyle().setDisplay(Display.NONE);
+            background.getStyle().setPaddingRight(15, Unit.PX);
+//            label.getStyle().setPaddingRight(15, Unit.PX);
+//        }
+    }
+
+    public Element getHotspot() {
+        return hotspot;
     }
 
     @Override
     public void setSelected(final boolean selected) {
         if (selected) {
             element.addClassName(resources.style().selected());
+            if (allowClose) {
+                close.getStyle().setDisplay(Display.INLINE_BLOCK);
+            }
         } else {
             element.removeClassName(resources.style().selected());
+            if (allowClose) {
+                close.getStyle().setDisplay(Display.NONE);
+            }
+        }
+    }
+
+    public void setHighlight(final boolean highlight) {
+        if (highlight) {
+            hotspot.addClassName(resources.style().hotspotVisible());
+        } else {
+            hotspot.removeClassName(resources.style().hotspotVisible());
+        }
+    }
+
+    @Override
+    public void setCloseActive(final boolean active) {
+        if (allowClose) {
+            if (active) {
+                close.addClassName(resources.style().closeActive());
+            } else {
+                close.removeClassName(resources.style().closeActive());
+            }
         }
     }
 
@@ -83,5 +152,10 @@ public class LinkTab extends AbstractTab {
 
     public String getText() {
         return label.getInnerText();
+    }
+
+    @Override
+    public Element getCloseElement() {
+        return close;
     }
 }

@@ -22,14 +22,14 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.Layer;
-import stroom.widget.tab.client.presenter.SlideTabLayoutView;
+import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class SlideTabPresenter extends MyPresenterWidget<SlideTabLayoutView> {
+public class LinkTabsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
     private final Map<TabData, Layer> tabViewMap = new HashMap<>();
 
     private TabData firstTab;
@@ -37,7 +37,7 @@ public class SlideTabPresenter extends MyPresenterWidget<SlideTabLayoutView> {
     private boolean firstShowing = true;
 
     @Inject
-    public SlideTabPresenter(final EventBus eventBus, final SlideTabLayoutView view) {
+    public LinkTabsPresenter(final EventBus eventBus, final LinkTabsLayoutView view) {
         super(eventBus, view);
     }
 

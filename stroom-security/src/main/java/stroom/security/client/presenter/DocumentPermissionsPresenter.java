@@ -43,21 +43,22 @@ import javax.inject.Provider;
 
 public class DocumentPermissionsPresenter
         extends MyPresenterWidget<DocumentPermissionsPresenter.DocumentPermissionsView> {
-    private  final SlideTabPresenter slideTabPresenter;
+    private final LinkTabsPresenter tabPresenter;
     private final ClientDispatchAsync dispatcher;
     private final Provider<DocumentPermissionsTabPresenter> documentPermissionsListPresenterProvider;
     private final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider;
     private final ChangeSet<UserPermission> changeSet = new ChangeSet<UserPermission>();
+
     @Inject
-    public DocumentPermissionsPresenter(final EventBus eventBus, final DocumentPermissionsView view, final SlideTabPresenter slideTabPresenter,
+    public DocumentPermissionsPresenter(final EventBus eventBus, final DocumentPermissionsView view, final LinkTabsPresenter tabPresenter,
                                         final ClientDispatchAsync dispatcher, final Provider<DocumentPermissionsTabPresenter> documentPermissionsListPresenterProvider, final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider) {
         super(eventBus, view);
-        this.slideTabPresenter = slideTabPresenter;
+        this.tabPresenter = tabPresenter;
         this.dispatcher = dispatcher;
         this.documentPermissionsListPresenterProvider = documentPermissionsListPresenterProvider;
         this.folderPermissionsListPresenterProvider = folderPermissionsListPresenterProvider;
 
-        view.setSlideTabView(slideTabPresenter.getView());
+        view.setTabsView(tabPresenter.getView());
     }
 
     public void show(final ExplorerData explorerData) {
@@ -68,10 +69,10 @@ public class DocumentPermissionsPresenter
             final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(entityData);
             final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(entityData);
 
-            final TabData groups = slideTabPresenter.addTab("Groups", groupsPresenter);
-            final TabData users = slideTabPresenter.addTab("Users", usersPresenter);
+            final TabData groups = tabPresenter.addTab("Groups", groupsPresenter);
+            final TabData users = tabPresenter.addTab("Users", usersPresenter);
 
-            slideTabPresenter.changeSelectedTab(groups);
+            tabPresenter.changeSelectedTab(groups);
 
             final FetchAllDocumentPermissionsAction fetchAllDocumentPermissionsAction = new FetchAllDocumentPermissionsAction(entityData.getDocRef());
             dispatcher.execute(fetchAllDocumentPermissionsAction, new AsyncCallbackAdaptor<DocumentPermissions>() {
@@ -127,7 +128,7 @@ public class DocumentPermissionsPresenter
     }
 
     public interface DocumentPermissionsView extends View {
-        void setSlideTabView(View view);
+        void setTabsView(View view);
 
         ItemListBox<ChangeDocumentPermissionsAction.Cascade> getCascade();
 

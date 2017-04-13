@@ -23,7 +23,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.widget.tab.client.presenter.Layer;
-import stroom.widget.tab.client.presenter.SlideTabLayoutView;
+import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class SettingsPresenter extends MyPresenterWidget<SlideTabLayoutView> {
+public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
     private final Map<TabData, Layer> tabViewMap = new HashMap<>();
     private final Map<TabData, ComponentDataModifier> modifiers = new HashMap<>();
 
@@ -40,7 +40,7 @@ public class SettingsPresenter extends MyPresenterWidget<SlideTabLayoutView> {
     private boolean firstShowing = true;
 
     @Inject
-    public SettingsPresenter(final EventBus eventBus, final SlideTabLayoutView view) {
+    public SettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view) {
         super(eventBus, view);
     }
 

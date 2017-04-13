@@ -35,6 +35,7 @@ import stroom.widget.layout.client.view.ResizeSimplePanel;
 public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
         implements QueryView, RequiresResize, ProvidesResize {
     private final Widget widget;
+
     @UiField
     ResizeSimplePanel expressionTree;
     @UiField
@@ -43,6 +44,7 @@ public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
     StartButton start;
     @UiField
     FabButton stop;
+
     @Inject
     public QueryViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);

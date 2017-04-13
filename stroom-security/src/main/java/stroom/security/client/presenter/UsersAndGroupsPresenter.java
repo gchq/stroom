@@ -16,16 +16,16 @@
 
 package stroom.security.client.presenter;
 
-import stroom.widget.tab.client.presenter.SlideTabLayoutView;
+import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class UsersAndGroupsPresenter extends SlideTabPresenter {
+public class UsersAndGroupsPresenter extends LinkTabsPresenter {
     @Inject
-    public UsersAndGroupsPresenter(final EventBus eventBus, final SlideTabLayoutView view,
+    public UsersAndGroupsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
                                    final Provider<UsersAndGroupsTabPresenter> usersAndGroupsTabPresenterProvider) {
         super(eventBus, view);
 

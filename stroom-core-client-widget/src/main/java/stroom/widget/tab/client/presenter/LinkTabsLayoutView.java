@@ -14,26 +14,12 @@
  * limitations under the License.
  */
 
-.settings {
-	gwt-image: 'settings';
-	position: absolute;
-	right: 0px;
-	top: 0px;
-	padding: 3px;
-	padding-left: 9px;
-	padding-right: 9px;
-	opacity: 0.3;
-	cursor: pointer;
-	transition: opacity .5s;
-	-webkit-transition: opacity .5s;
-	-moz-transition: opacity .5s;
-	-o-transition: opacity .5s;
-}
+package stroom.widget.tab.client.presenter;
 
-.settings:hover {
-	opacity: .5;
-}
+import com.gwtplatform.mvp.client.View;
 
-@sprite .image {
-	gwt-image: 'settings';
+public interface LinkTabsLayoutView extends View {
+    TabBar getTabBar();
+
+    LayerContainer getLayerContainer();
 }

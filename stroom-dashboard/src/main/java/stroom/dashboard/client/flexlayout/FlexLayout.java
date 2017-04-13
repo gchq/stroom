@@ -46,8 +46,8 @@ import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.data.grid.client.Glass;
 import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.view.SlideTab;
-import stroom.widget.tab.client.view.SlideTabBar;
+import stroom.widget.tab.client.view.LinkTab;
+import stroom.widget.tab.client.view.LinkTabBar;
 
 public class FlexLayout extends Composite implements RequiresResize, ProvidesResize {
     private enum Pos {
@@ -159,10 +159,10 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         private final TabLayout tabLayout;
         private final TabData tab;
         private final int tabIndex;
-        private final SlideTab tabWidget;
+        private final LinkTab tabWidget;
 
         public MouseTarget(final LayoutConfig layoutData, final PositionAndSize positionAndSize, final Pos pos,
-                final TabLayout tabLayout, final TabData tab, final int tabIndex, final SlideTab tabWidget) {
+                final TabLayout tabLayout, final TabData tab, final int tabIndex, final LinkTab tabWidget) {
             this.layoutData = layoutData;
             this.positionAndSize = positionAndSize;
             this.pos = pos;
@@ -563,7 +563,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
 
     private MouseTarget getCloseableTarget(final MouseTarget mouseTarget, final int x, final int y) {
         if (mouseTarget != null && mouseTarget.tabWidget != null) {
-            final SlideTab tab = mouseTarget.tabWidget;
+            final LinkTab tab = mouseTarget.tabWidget;
             final Element close = tab.getCloseElement();
             if (x >= close.getAbsoluteLeft() && x <= close.getAbsoluteRight() && y >= close.getAbsoluteTop()
                     && y <= close.getAbsoluteBottom()) {
@@ -830,12 +830,12 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
             // Test if the mouse is over a tab.
             final TabLayout tabLayout = layoutToWidgetMap.get(layoutData);
             if (tabLayout != null && tabLayout.getTabBar().getTabs() != null) {
-                final SlideTabBar tabBar = tabLayout.getTabBar();
+                final LinkTabBar tabBar = tabLayout.getTabBar();
                 if (x >= tabBar.getAbsoluteLeft() && x <= tabBar.getAbsoluteLeft() + tabBar.getOffsetWidth()
                         && y >= tabBar.getAbsoluteTop() && y <= tabBar.getAbsoluteTop() + tabBar.getOffsetHeight()) {
                     for (int i = tabBar.getTabs().size() - 1; i >= 0; i--) {
                         final TabData tabData = tabBar.getTabs().get(i);
-                        final SlideTab slideTab = (SlideTab) tabBar.getTab(tabData);
+                        final LinkTab slideTab = (LinkTab) tabBar.getTab(tabData);
                         final Element tabElement = slideTab.getElement();
                         if (x >= tabElement.getAbsoluteLeft()) {
                             if (x <= tabElement.getAbsoluteRight()) {

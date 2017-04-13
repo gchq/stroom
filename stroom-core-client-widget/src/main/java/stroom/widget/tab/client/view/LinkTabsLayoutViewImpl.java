@@ -23,11 +23,11 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 import stroom.widget.tab.client.presenter.LayerContainer;
-import stroom.widget.tab.client.presenter.SlideTabLayoutView;
+import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabBar;
 
-public class SlideTabLayoutViewImpl extends ViewImpl implements SlideTabLayoutView {
-    public interface Binder extends UiBinder<Widget, SlideTabLayoutViewImpl> {
+public class LinkTabsLayoutViewImpl extends ViewImpl implements LinkTabsLayoutView {
+    public interface Binder extends UiBinder<Widget, LinkTabsLayoutViewImpl> {
     }
 
     private final Widget widget;
@@ -38,7 +38,7 @@ public class SlideTabLayoutViewImpl extends ViewImpl implements SlideTabLayoutVi
     LayerContainer layerContainer;
 
     @Inject
-    public SlideTabLayoutViewImpl(final Binder binder) {
+    public LinkTabsLayoutViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         layerContainer.setFade(true);
     }

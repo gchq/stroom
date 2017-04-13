@@ -14,33 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.widget.tab.client.view;
+package stroom.dashboard.client.table;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
+import stroom.dashboard.client.table.TablePresenter.TableView;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-import stroom.widget.tab.client.presenter.LayerContainer;
-import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
-import stroom.widget.tab.client.presenter.TabBar;
-
-public class LinkTabViewImpl extends ViewImpl implements LinkTabsLayoutView {
-    public interface Binder extends UiBinder<Widget, LinkTabViewImpl> {
-    }
-
+public class TableViewImpl extends ViewImpl
+        implements TableView {
     private final Widget widget;
 
     @UiField
-    TabBar tabBar;
-    @UiField
-    LayerContainer layerContainer;
+    ResizeSimplePanel layout;
 
     @Inject
-    public LinkTabViewImpl(final Binder binder) {
+    public TableViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        layerContainer.setFade(true);
     }
 
     @Override
@@ -49,12 +43,10 @@ public class LinkTabViewImpl extends ViewImpl implements LinkTabsLayoutView {
     }
 
     @Override
-    public TabBar getTabBar() {
-        return tabBar;
+    public void setTableView(final View view) {
+        layout.setWidget(view.asWidget());
     }
 
-    @Override
-    public LayerContainer getLayerContainer() {
-        return layerContainer;
+    public interface Binder extends UiBinder<Widget, TableViewImpl> {
     }
 }

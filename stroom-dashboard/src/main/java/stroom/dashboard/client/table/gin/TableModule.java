@@ -17,7 +17,6 @@
 package stroom.dashboard.client.table.gin;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-
 import stroom.dashboard.client.table.BasicTableSettingsPresenter;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
 import stroom.dashboard.client.table.BasicTableSettingsViewImpl;
@@ -34,6 +33,9 @@ import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.FormatPresenter.FormatView;
 import stroom.dashboard.client.table.FormatViewImpl;
 import stroom.dashboard.client.table.TablePlugin;
+import stroom.dashboard.client.table.TablePresenter;
+import stroom.dashboard.client.table.TablePresenter.TableView;
+import stroom.dashboard.client.table.TableViewImpl;
 import stroom.dashboard.client.table.TimeZones;
 
 public class TableModule extends AbstractPresenterModule {
@@ -42,6 +44,7 @@ public class TableModule extends AbstractPresenterModule {
         bind(TimeZones.class).asEagerSingleton();
 
         bind(TablePlugin.class).asEagerSingleton();
+        bindPresenterWidget(TablePresenter.class, TableView.class, TableViewImpl.class);
         bindPresenterWidget(BasicTableSettingsPresenter.class, BasicTableSettingsView.class,
                 BasicTableSettingsViewImpl.class);
         bindPresenterWidget(ExpressionPresenter.class, ExpressionView.class, ExpressionViewImpl.class);
