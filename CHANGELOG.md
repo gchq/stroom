@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#154** : Active tasks are now sortable by processor filter priority.
 
+* Issue **#204** : Pipeline processor statistics now include 'Node' as a tag.
+
 ## [v5.0-beta.17] - 2017-04-05
 
 * Issue **#170** : Changed import/export to delegate import/export responsibility to individual services. Import/export now only works with items that have valid UUIDs specified.
