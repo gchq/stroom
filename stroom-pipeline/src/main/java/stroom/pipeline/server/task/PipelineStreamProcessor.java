@@ -89,84 +89,7 @@ import java.util.regex.Pattern;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
-    private static class ProcessInfoOutputStreamProvider extends AbstractElement
-            implements DestinationProvider, Destination {
-        private final StreamStore streamStore;
-        private final StreamCloser streamCloser;
-        private final MetaData metaData;
-        private final Stream stream;
-        private final StreamProcessor streamProcessor;
-        private final StreamTask streamTask;
-
-        private OutputStream processInfoOutputStream;
-        private StreamTarget processInfoStreamTarget;
-
-        public ProcessInfoOutputStreamProvider(final StreamStore streamStore, final StreamCloser streamCloser,
-                                               final MetaData metaData, final Stream stream, final StreamProcessor streamProcessor,
-                                               final StreamTask streamTask) {
-            this.streamStore = streamStore;
-            this.streamCloser = streamCloser;
-            this.metaData = metaData;
-            this.stream = stream;
-            this.streamProcessor = streamProcessor;
-            this.streamTask = streamTask;
-        }
-
-        @Override
-        public Destination borrowDestination() throws IOException {
-            return this;
-        }
-
-        @Override
-        public void returnDestination(final Destination destination) throws IOException {
-        }
-
-        @Override
-        public OutputStream getOutputStream() throws IOException {
-            return getOutputStream(null, null);
-        }
-
-        @Override
-        public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
-            if (processInfoOutputStream == null) {
-                // Create a processing info stream to write all processing
-                // information to.
-                final Stream errorStream = Stream.createProcessedStream(stream, stream.getFeed(), StreamType.ERROR,
-                        streamProcessor, streamTask);
-
-                processInfoStreamTarget = streamStore.openStreamTarget(errorStream);
-                streamCloser.add(processInfoStreamTarget);
-
-                processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.getOutputStream()) {
-                    @Override
-                    public void close() throws IOException {
-                        super.flush();
-                        super.close();
-
-                        // Only do something if an output stream was used.
-                        if (processInfoStreamTarget != null) {
-                            // Write meta data.
-                            final HeaderMap headerMap = metaData.getHeaderMap();
-                            processInfoStreamTarget.getAttributeMap().putAll(headerMap);
-                            // We let the streamCloser close the stream target
-                            // with the stream store as it may want to delete it
-                        }
-                    }
-                };
-                streamCloser.add(processInfoOutputStream);
-            }
-
-            return processInfoOutputStream;
-        }
-
-        @Override
-        public List<Processor> createProcessors() {
-            return Collections.emptyList();
-        }
-    }
-
     private static final StroomLogger LOGGER = StroomLogger.getLogger(PipelineStreamProcessor.class);
-
     private static final String PROCESSING = "Processing:";
     private static final String FINISHED = "Finished:";
     private static final int PREVIEW_SIZE = 100;
@@ -211,7 +134,6 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private NodeCache nodeCache;
     @Resource
     private PipelineDataCache pipelineDataCache;
-
     @Resource
     private StatisticsFactory statisticEventStoreFactory;
 
@@ -395,9 +317,11 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         try {
             statisticEventStoreFactory.instance()
                     .putEvent(new StatisticEvent(System.currentTimeMillis(), "PipelineStreamProcessor",
-                            Arrays.asList(new StatisticTag("Feed", feed.getName()),
-                                    new StatisticTag("Pipeline", pipelineEntity.getName())),
-                            1L));
+                            Arrays.asList(
+                                    new StatisticTag("Feed", feed.getName()),
+                                    new StatisticTag("Pipeline", pipelineEntity.getName()),
+                                    new StatisticTag("Node", nodeCache.getDefaultNode().getName())
+                            ), 1L));
         } catch (final Exception ex) {
             LOGGER.error("recordStats", ex);
         }
@@ -605,5 +529,81 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     @Override
     public String toString() {
         return String.valueOf(streamSource.getStream());
+    }
+
+    private static class ProcessInfoOutputStreamProvider extends AbstractElement
+            implements DestinationProvider, Destination {
+        private final StreamStore streamStore;
+        private final StreamCloser streamCloser;
+        private final MetaData metaData;
+        private final Stream stream;
+        private final StreamProcessor streamProcessor;
+        private final StreamTask streamTask;
+
+        private OutputStream processInfoOutputStream;
+        private StreamTarget processInfoStreamTarget;
+
+        public ProcessInfoOutputStreamProvider(final StreamStore streamStore, final StreamCloser streamCloser,
+                                               final MetaData metaData, final Stream stream, final StreamProcessor streamProcessor,
+                                               final StreamTask streamTask) {
+            this.streamStore = streamStore;
+            this.streamCloser = streamCloser;
+            this.metaData = metaData;
+            this.stream = stream;
+            this.streamProcessor = streamProcessor;
+            this.streamTask = streamTask;
+        }
+
+        @Override
+        public Destination borrowDestination() throws IOException {
+            return this;
+        }
+
+        @Override
+        public void returnDestination(final Destination destination) throws IOException {
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            return getOutputStream(null, null);
+        }
+
+        @Override
+        public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
+            if (processInfoOutputStream == null) {
+                // Create a processing info stream to write all processing
+                // information to.
+                final Stream errorStream = Stream.createProcessedStream(stream, stream.getFeed(), StreamType.ERROR,
+                        streamProcessor, streamTask);
+
+                processInfoStreamTarget = streamStore.openStreamTarget(errorStream);
+                streamCloser.add(processInfoStreamTarget);
+
+                processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.getOutputStream()) {
+                    @Override
+                    public void close() throws IOException {
+                        super.flush();
+                        super.close();
+
+                        // Only do something if an output stream was used.
+                        if (processInfoStreamTarget != null) {
+                            // Write meta data.
+                            final HeaderMap headerMap = metaData.getHeaderMap();
+                            processInfoStreamTarget.getAttributeMap().putAll(headerMap);
+                            // We let the streamCloser close the stream target
+                            // with the stream store as it may want to delete it
+                        }
+                    }
+                };
+                streamCloser.add(processInfoOutputStream);
+            }
+
+            return processInfoOutputStream;
+        }
+
+        @Override
+        public List<Processor> createProcessors() {
+            return Collections.emptyList();
+        }
     }
 }
