@@ -72,20 +72,3 @@
 .linkTab .hotspotVisible {
 	opacity: .3 !important;
 }
-
-/* Close button */
-@sprite .linkTab .close {
-	gwt-image: 'close';
-	position: absolute;
-	right: 2px;
-	top: 2px;
-	cursor: pointer;
-}
-
-@sprite .linkTab .closeActive {
-	gwt-image: 'closeActive';
-	position: absolute;
-	right: 2px;
-	top: 2px;
-	cursor: pointer;
-}

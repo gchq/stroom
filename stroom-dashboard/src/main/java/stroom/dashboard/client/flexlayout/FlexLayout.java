@@ -112,7 +112,6 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
 
     private boolean clear = true;
 
-    private MouseTarget currentClosableTarget;
     private FlexLayoutChangeHandler changeHandler;
 
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
@@ -186,7 +185,6 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                 // Busy means the mouse is down on a splitter or tab.
                 if (selectedSplitter != null) {
                     moveSplit(event);
-                    setTabCloseActive(null);
 
                 } else if (selection != null) {
                     if (!draggingTab) {
@@ -203,7 +201,6 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                     if (draggingTab) {
                         final MouseTarget mouseTarget = getMouseTarget(x, y, true);
                         highlightMouseTarget(mouseTarget);
-                        setTabCloseActive(null);
                     }
                 }
 
@@ -228,11 +225,6 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                 }
             }
             selectedSplitter = splitter;
-
-            // If the mouse is over a close icon then highlight it.
-            final MouseTarget mouseTarget = getMouseTarget(x, y, false);
-            final MouseTarget closeableTarget = getCloseableTarget(mouseTarget, x, y);
-            setTabCloseActive(closeableTarget);
         }
     }
 
@@ -482,31 +474,19 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                 selection.tabWidget.setHighlight(false);
 
             } else {
-                // We need to know what the mouse is over.
-                final MouseTarget closeableTarget = getCloseableTarget(mouseTarget, x, y);
-                if (closeableTarget != null) {
-                    if (currentClosableTarget != null && closeableTarget.tab != null
-                            && currentClosableTarget.tab != null && closeableTarget.tab == currentClosableTarget.tab) {
-                        if (closeableTarget.tab instanceof Component) {
-                            changeHandler.requestTabClose(((Component) closeableTarget.tab).getTabConfig());
-                        }
-                    }
+                // If the event target was not a splitter then see if it was
+                // a tab./
+                final TabData tab = mouseTarget.tab;
+                if (selection.tab.equals(tab)) {
+                    final TabLayout tabLayout = mouseTarget.tabLayout;
+                    final int index = tabLayout.getTabBar().getTabs().indexOf(tab);
+                    if (tabLayout.getTabLayoutData().getSelected() == null
+                            || !tabLayout.getTabLayoutData().getSelected().equals(index)) {
+                        tabLayout.selectTab(index);
+                        tabLayout.getTabLayoutData().setSelected(index);
 
-                } else {
-                    // If the event target was not a splitter then see if it was
-                    // a tab./
-                    final TabData tab = mouseTarget.tab;
-                    if (selection.tab.equals(tab)) {
-                        final TabLayout tabLayout = mouseTarget.tabLayout;
-                        final int index = tabLayout.getTabBar().getTabs().indexOf(tab);
-                        if (tabLayout.getTabLayoutData().getSelected() == null
-                                || !tabLayout.getTabLayoutData().getSelected().equals(index)) {
-                            tabLayout.selectTab(index);
-                            tabLayout.getTabLayoutData().setSelected(index);
-
-                            // Let the handler know the layout is dirty.
-                            changeHandler.onDirty();
-                        }
+                        // Let the handler know the layout is dirty.
+                        changeHandler.onDirty();
                     }
                 }
             }
@@ -561,32 +541,32 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         }
     }
 
-    private MouseTarget getCloseableTarget(final MouseTarget mouseTarget, final int x, final int y) {
-        if (mouseTarget != null && mouseTarget.tabWidget != null) {
-            final LinkTab tab = mouseTarget.tabWidget;
-            final Element close = tab.getCloseElement();
-            if (x >= close.getAbsoluteLeft() && x <= close.getAbsoluteRight() && y >= close.getAbsoluteTop()
-                    && y <= close.getAbsoluteBottom()) {
-                return mouseTarget;
-            }
-        }
-        return null;
-    }
-
-    private void setTabCloseActive(final MouseTarget closableTarget) {
-        if (closableTarget != currentClosableTarget) {
-            // Make sure no tab has close active.
-            if (currentClosableTarget != null) {
-                currentClosableTarget.tabWidget.setCloseActive(false);
-                currentClosableTarget = null;
-            }
-
-            if (closableTarget != null) {
-                currentClosableTarget = closableTarget;
-                closableTarget.tabWidget.setCloseActive(true);
-            }
-        }
-    }
+//    private MouseTarget getCloseableTarget(final MouseTarget mouseTarget, final int x, final int y) {
+//        if (mouseTarget != null && mouseTarget.tabWidget != null) {
+//            final LinkTab tab = mouseTarget.tabWidget;
+//            final Element close = tab.getCloseElement();
+//            if (x >= close.getAbsoluteLeft() && x <= close.getAbsoluteRight() && y >= close.getAbsoluteTop()
+//                    && y <= close.getAbsoluteBottom()) {
+//                return mouseTarget;
+//            }
+//        }
+//        return null;
+//    }
+//
+//    private void setTabCloseActive(final MouseTarget closableTarget) {
+//        if (closableTarget != currentClosableTarget) {
+//            // Make sure no tab has close active.
+//            if (currentClosableTarget != null) {
+//                currentClosableTarget.tabWidget.setCloseActive(false);
+//                currentClosableTarget = null;
+//            }
+//
+//            if (closableTarget != null) {
+//                currentClosableTarget = closableTarget;
+//                closableTarget.tabWidget.setCloseActive(true);
+//            }
+//        }
+//    }
 
     private void startSplitResize(final int x, final int y) {
         final SplitInfo splitInfo = selectedSplitter.getSplitInfo();
@@ -1120,7 +1100,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                 final TabLayoutConfig tabLayoutData = (TabLayoutConfig) key;
                 TabLayout tabLayout = layoutToWidgetMap.get(tabLayoutData);
                 if (tabLayout == null) {
-                    tabLayout = new TabLayout(tabLayoutData);
+                    tabLayout = new TabLayout(tabLayoutData, changeHandler);
                     if (tabLayoutData.count() > 0) {
                         for (int i = 0; i < tabLayoutData.count(); i++) {
                             final TabConfig tabData = tabLayoutData.get(i);
@@ -1205,7 +1185,6 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         clear();
         refresh();
 
-        setTabCloseActive(null);
         changeHandler.onDirty();
     }
 

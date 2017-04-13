@@ -42,21 +42,22 @@ import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
 
 public class TabLayout extends Composite implements RequiresResize, ProvidesResize {
-    public static final GlyphIcon.ColourSet CLOSE_COLOUR_SET = GlyphIcon.ColourSet.create("#ddd", "#D32F2F");
     public static final GlyphIcon.ColourSet SETTINGS_COLOUR_SET = GlyphIcon.ColourSet.create("#ddd", "#9E9E9E");
-    public static final GlyphIcon CLOSE = new GlyphIcon("fa fa-times", CLOSE_COLOUR_SET, "Settings", true);
     public static final GlyphIcon SETTINGS = new GlyphIcon("fa fa-cog", SETTINGS_COLOUR_SET, "Settings", true);
+    public static final GlyphIcon.ColourSet CLOSE_COLOUR_SET = GlyphIcon.ColourSet.create("#ddd", "#D32F2F");
+    public static final GlyphIcon CLOSE = new GlyphIcon("fa fa-times", CLOSE_COLOUR_SET, "Settings", true);
 
     private static Resources resources;
 
     private final TabLayoutConfig tabLayoutData;
+    private final FlexLayoutChangeHandler changeHandler;
     private final FlowPanel panel;
     private final FlowPanel contentOuter;
     private final FlowPanel contentInner;
     private final FlowPanel barOuter;
     private final FlowPanel buttons;
-    private final GlyphButton close;
     private final GlyphButton settings;
+    private final GlyphButton close;
     private final LinkTabBar tabBar;
     private final LayerContainer layerContainer;
     private final HandlerRegistrations handlerRegistrations = new HandlerRegistrations();
@@ -64,8 +65,9 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
     private boolean tabsVisible = true;
 
-    public TabLayout(final TabLayoutConfig tabLayoutData) {
+    public TabLayout(final TabLayoutConfig tabLayoutData, final FlexLayoutChangeHandler changeHandler) {
         this.tabLayoutData = tabLayoutData;
+        this.changeHandler = changeHandler;
 
         if (resources == null) {
             resources = GWT.create(Resources.class);
@@ -96,10 +98,10 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         buttons.setStyleName(resources.style().buttons());
         contentInner.add(buttons);
 
-        close = GlyphButton.create(CLOSE);
-        buttons.add(close);
         settings = GlyphButton.create(SETTINGS);
         buttons.add(settings);
+        close = GlyphButton.create(CLOSE);
+        buttons.add(close);
 
         final LayerContainerImpl layerContainerImpl = new LayerContainerImpl();
         layerContainerImpl.setFade(true);
@@ -112,22 +114,24 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     }
 
     public void bind() {
-        handlerRegistrations.add(tabBar.addSelectionHandler(new SelectionHandler<TabData>() {
-            @Override
-            public void onSelection(final SelectionEvent<TabData> event) {
-                selectTab(event.getSelectedItem());
-            }
-        }));
+        handlerRegistrations.add(tabBar.addSelectionHandler(event -> selectTab(event.getSelectedItem())));
 
-        handlerRegistrations.add(settings.addDomHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    final TabData selectedTab = tabBar.getSelectedTab();
-                    if (selectedTab != null && selectedTab instanceof Component) {
-                        final Component component = (Component) selectedTab;
-                        component.showSettings();
-                    }
+        handlerRegistrations.add(settings.addDomHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                final TabData selectedTab = tabBar.getSelectedTab();
+                if (selectedTab != null && selectedTab instanceof Component) {
+                    final Component component = (Component) selectedTab;
+                    component.showSettings();
+                }
+            }
+        }, ClickEvent.getType()));
+
+        handlerRegistrations.add(close.addDomHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                final TabData selectedTab = tabBar.getSelectedTab();
+                if (selectedTab != null && selectedTab instanceof Component) {
+                    final Component component = (Component) selectedTab;
+                    changeHandler.requestTabClose(component.getTabConfig());
                 }
             }
         }, ClickEvent.getType()));
