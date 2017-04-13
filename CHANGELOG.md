@@ -17,7 +17,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#196** : Reordered fields on stream, relative stream, volume and server task tables.
 
-* Issue **#182** :  Changed the way dates and times are parsed and formatted and improved the datebox control L&F.
+* Issue **#182** : Changed the way dates and times are parsed and formatted and improved the datebox control L&F.
+
+* Issue **#198** : Renamed 'INTERNAL_PROCESSING_USER' to 'INTERNAL'.
 
 * Issue **#154** : Active tasks are now sortable by processor filter priority.
 
