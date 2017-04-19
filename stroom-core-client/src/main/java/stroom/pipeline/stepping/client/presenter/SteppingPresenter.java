@@ -240,21 +240,20 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     }
 
     private void refreshEditor(final ElementPresenter editorPresenter, final String elementId) {
-        refreshEditorCode(editorPresenter);
+        editorPresenter.load(new AsyncCallbackAdaptor<Boolean>() {
+            @Override
+            public void onSuccess(final Boolean result) {
+                if (editorPresenter.isRefreshRequired()) {
+                    editorPresenter.setRefreshRequired(false);
 
-        if (editorPresenter.isRefreshRequired()) {
-            editorPresenter.setRefreshRequired(false);
+                    // Update code pane.
+                    refreshEditorCodeIndicators(editorPresenter, elementId);
 
-            // Update code pane.
-            refreshEditorCodeIndicators(editorPresenter, elementId);
-
-            // Update IO data.
-            refreshEditorIO(editorPresenter, elementId);
-        }
-    }
-
-    private void refreshEditorCode(final ElementPresenter editorPresenter) {
-        editorPresenter.load();
+                    // Update IO data.
+                    refreshEditorIO(editorPresenter, elementId);
+                }
+            }
+        });
     }
 
     private void refreshEditorCodeIndicators(final ElementPresenter editorPresenter, final String elementId) {
@@ -512,10 +511,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         void setTreeView(View view);
 
         LayerContainer getLayerContainer();
-    }
-
-    public interface HasVisible {
-        void setVisible(boolean visible);
     }
 
     private static String replace(final String path, final String type, final String replacement) {

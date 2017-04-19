@@ -18,6 +18,7 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -29,6 +30,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.app.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
@@ -50,7 +52,6 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.util.shared.Indicators;
-import stroom.editor.client.presenter.EditorPresenter;
 
 public class ElementPresenter extends MyPresenterWidget<ElementView> implements HasDirtyHandlers {
     public interface ElementView extends View {
@@ -88,9 +89,10 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         this.dispatcher = dispatcher;
     }
 
-    public void load() {
+    public void load(final AsyncCallbackAdaptor<Boolean> callback) {
         if (!loaded) {
             loaded = true;
+            boolean async = false;
 
             if (elementType != null && elementType.hasRole(PipelineElementType.ROLE_HAS_CODE) && entityRef != null) {
                 getView().setCodeView(getCodePresenter().getView());
@@ -102,6 +104,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                             criteria.setName(new StringCriteria(entityRef.getName()));
                             criteria.setOrderBy(FindXSLTCriteria.ORDER_BY_ID);
                             final EntityServiceFindAction<FindTextConverterCriteria, TextConverter> findAction = new EntityServiceFindAction<>(criteria);
+                            async = true;
                             dispatcher.execute(findAction, new AsyncCallbackAdaptor<ResultList<TextConverter>>() {
                                 @Override
                                 public void onSuccess(final ResultList<TextConverter> result) {
@@ -110,6 +113,14 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                                         dirtyCode = false;
                                         read();
                                     }
+
+                                    callback.onSuccess(true);
+                                }
+
+                                @Override
+                                public void onFailure(final Throwable caught) {
+                                    super.onFailure(caught);
+                                    callback.onSuccess(false);
                                 }
                             });
                         } else if (XSLT.ENTITY_TYPE.equals(entityRef.getType())) {
@@ -117,6 +128,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                             criteria.setName(new StringCriteria(entityRef.getName()));
                             criteria.setOrderBy(FindXSLTCriteria.ORDER_BY_ID);
                             final EntityServiceFindAction<FindXSLTCriteria, XSLT> findAction = new EntityServiceFindAction<>(criteria);
+                            async = true;
                             dispatcher.execute(findAction, new AsyncCallbackAdaptor<ResultList<XSLT>>() {
                                 @Override
                                 public void onSuccess(final ResultList<XSLT> result) {
@@ -125,16 +137,33 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                                         dirtyCode = false;
                                         read();
                                     }
+
+                                    callback.onSuccess(true);
+                                }
+
+                                @Override
+                                public void onFailure(final Throwable caught) {
+                                    super.onFailure(caught);
+                                    callback.onSuccess(false);
                                 }
                             });
                         }
                     } else {
+                        async = true;
                         dispatcher.execute(new EntityServiceLoadAction<>(entityRef, null), new AsyncCallbackAdaptor<Entity>() {
                             @Override
                             public void onSuccess(final Entity result) {
                                 entity = result;
                                 dirtyCode = false;
                                 read();
+
+                                callback.onSuccess(true);
+                            }
+
+                            @Override
+                            public void onFailure(final Throwable caught) {
+                                super.onFailure(caught);
+                                callback.onSuccess(false);
                             }
                         });
                     }
@@ -151,6 +180,12 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
             // We always want to see the output of the element.
             getView().setOutputView(getOutputPresenter().getView());
+
+            if (!async) {
+                Scheduler.get().scheduleDeferred(() -> callback.onSuccess(true));
+            }
+        } else {
+            callback.onSuccess(true);
         }
     }
 

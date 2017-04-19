@@ -255,9 +255,9 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
 
     private static final int SPLITTER_SIZE = 4;
 
-    private ScheduledCommand delayedLayoutCommand;
-    private ScheduledCommand resizeCommand;
-    private ScheduledCommand adjustSplitSizesCommand;
+//    private ScheduledCommand delayedLayoutCommand;
+//    private ScheduledCommand resizeCommand;
+//    private ScheduledCommand adjustSplitSizesCommand;
     private double[] hSplits;
     private double[] vSplits;
     private int hSplitterIndex = 0;
@@ -272,16 +272,16 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     }
 
     private void doDelayedLayout() {
-        if (delayedLayoutCommand == null) {
-            delayedLayoutCommand = new ScheduledCommand() {
-                @Override
-                public void execute() {
-                    delayedLayoutCommand = null;
+//        if (delayedLayoutCommand == null) {
+//            delayedLayoutCommand = new ScheduledCommand() {
+//                @Override
+//                public void execute() {
+//                    delayedLayoutCommand = null;
                     onResize();
-                }
-            };
-            Scheduler.get().scheduleDeferred(delayedLayoutCommand);
-        }
+//                }
+//            };
+//            Scheduler.get().scheduleDeferred(delayedLayoutCommand);
+//        }
     }
 
     public void setHSplits(final String str) {
@@ -320,30 +320,30 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
             if ((hSplits != null || vSplits != null)) {
                 // Resize the split panel once loaded so we can update the sizes
                 // of widgets based on a supplied split pos.
-                if (resizeCommand == null) {
-                    resizeCommand = new ScheduledCommand() {
-                        @Override
-                        public void execute() {
-                            resizeCommand = null;
+//                if (resizeCommand == null) {
+//                    resizeCommand = new ScheduledCommand() {
+//                        @Override
+//                        public void execute() {
+//                            resizeCommand = null;
                             adjustSplitSizes();
-                        }
-                    };
-                    Scheduler.get().scheduleDeferred(resizeCommand);
-                }
+//                        }
+//                    };
+//                    Scheduler.get().scheduleDeferred(resizeCommand);
+//                }
             } else {
                 // Defer actually updating the layout, so that if we receive
                 // many mouse events before layout/paint occurs, we'll only
                 // update once.
-                if (resizeCommand == null) {
-                    resizeCommand = new ScheduledCommand() {
-                        @Override
-                        public void execute() {
-                            resizeCommand = null;
+//                if (resizeCommand == null) {
+//                    resizeCommand = new ScheduledCommand() {
+//                        @Override
+//                        public void execute() {
+//                            resizeCommand = null;
                             MySplitLayoutPanel.super.onResize();
-                        }
-                    };
-                    Scheduler.get().scheduleDeferred(resizeCommand);
-                }
+//                        }
+//                    };
+//                    Scheduler.get().scheduleDeferred(resizeCommand);
+//                }
             }
         } else {
             super.onResize();
@@ -414,17 +414,19 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
 
             // Defer actually updating the layout, so that if we receive many
             // mouse events before layout/paint occurs, we'll only update once.
-            if (doLayout && adjustSplitSizesCommand == null) {
-                adjustSplitSizesCommand = new ScheduledCommand() {
-                    @Override
-                    public void execute() {
-                        adjustSplitSizesCommand = null;
+            if (doLayout) {
+//                &&
+//            } adjustSplitSizesCommand == null) {
+//                adjustSplitSizesCommand = new ScheduledCommand() {
+//                    @Override
+//                    public void execute() {
+//                        adjustSplitSizesCommand = null;
                         isResizing = true;
                         forceLayout();
                         isResizing = false;
-                    }
-                };
-                Scheduler.get().scheduleDeferred(adjustSplitSizesCommand);
+//                    }
+//                };
+//                Scheduler.get().scheduleDeferred(adjustSplitSizesCommand);
             }
         }
     }
