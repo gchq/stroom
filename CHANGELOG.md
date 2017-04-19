@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#211** : Turned off print margins in all editors.
 
+* Issue **#200** : The stepping presenter now resizes the top pane to fit the tree structure even if it is several elements high.
+
 ## [v5.0-beta.18] - 2017-04-13
 
 * Issue **#172** : Further improvement to dashboard L&F.
