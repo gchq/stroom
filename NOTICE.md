@@ -212,7 +212,7 @@ The table below includes licences for all Maven dependencies. Not included in th
 | junit                                     | junit                                        | 4.12             | EPL 1.0       |         |               |
 | com.mchange                               | mchange-commons-java                         | 0.2.9            | EPL 1.0       |         |               |
 | com.thoughtworks.paranamer                | paranamer                                    | 2.3              | EPL 1.0       |         |               |
-| mysql                                     | mysql-connector-java                         | 5.1.40           | GPL\*           |         |               |
+| mysql                                     | mysql-connector-java                         | 5.1.40           | GPL\*         |         |               |
 | net.sourceforge.findbugs                  | annotations                                  | 1.3.2            | LGPL          |         |               |
 | org.beanshell                             | bsh-core                                     | 2.0b4            | LGPL          |         |               |
 | com.github.stephenc.findbugs              | findbugs-annotations                         | 1.3.9-1          | LGPL          |         |               |
