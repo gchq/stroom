@@ -319,32 +319,29 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         // Load the pipeline.
         final FetchPipelineDataAction fetchPipelineDataAction = new FetchPipelineDataAction(pipeline);
-        dispatcher.execute(fetchPipelineDataAction, new AsyncCallbackAdaptor<SharedList<PipelineData>>() {
-            @Override
-            public void onSuccess(final SharedList<PipelineData> result) {
-                final PipelineData pipelineData = result.get(result.size() - 1);
-                final List<PipelineData> baseStack = new ArrayList<PipelineData>(result.size() - 1);
+        dispatcher.exec(fetchPipelineDataAction).onSuccess(result -> {
+            final PipelineData pipelineData = result.get(result.size() - 1);
+            final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
 
-                // If there is a stack of pipeline data then we need
-                // to make sure changes are reflected appropriately.
-                for (int i = 0; i < result.size() - 1; i++) {
-                    baseStack.add(result.get(i));
-                }
+            // If there is a stack of pipeline data then we need
+            // to make sure changes are reflected appropriately.
+            for (int i = 0; i < result.size() - 1; i++) {
+                baseStack.add(result.get(i));
+            }
 
-                try {
-                    pipelineModel.setPipelineData(pipelineData);
-                    pipelineModel.setBaseStack(baseStack);
-                    pipelineModel.build();
-                    pipelineTreePresenter.getSelectionModel().setSelected(PipelineModel.SOURCE_ELEMENT, true);
+            try {
+                pipelineModel.setPipelineData(pipelineData);
+                pipelineModel.setBaseStack(baseStack);
+                pipelineModel.build();
+                pipelineTreePresenter.getSelectionModel().setSelected(PipelineModel.SOURCE_ELEMENT, true);
 
-                    Scheduler.get().scheduleDeferred(() -> getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 3));
-                } catch (final PipelineModelException e) {
-                    AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
-                }
+                Scheduler.get().scheduleDeferred(() -> getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 3));
+            } catch (final PipelineModelException e) {
+                AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
+            }
 
-                if (eventId > 0) {
-                    step(StepType.REFRESH, new StepLocation(stream.getId(), 1L, eventId));
-                }
+            if (eventId > 0) {
+                step(StepType.REFRESH, new StepLocation(stream.getId(), 1L, eventId));
             }
         });
     }

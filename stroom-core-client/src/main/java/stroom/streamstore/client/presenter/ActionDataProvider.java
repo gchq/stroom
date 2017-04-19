@@ -119,8 +119,7 @@ public class ActionDataProvider<R extends SharedObject> extends AsyncDataProvide
         }
 
         fetchCount++;
-        dispatcher.execute(action, new AsyncCallbackAdaptor<ResultList<R>>() {
-            public void onSuccess(final ResultList<R> resultList) {
+        dispatcher.exec(action).onSuccess(resultList -> {
                 if (requestedRange.equals(range) && !refetch) {
                     if (resultList != null) {
                         changeData(resultList);
@@ -130,15 +129,10 @@ public class ActionDataProvider<R extends SharedObject> extends AsyncDataProvide
                     refetch = false;
                     doFetch(requestedRange);
                 }
-            }
-
-            @Override
-            public void onFailure(final Throwable caught) {
-                super.onFailure(caught);
+            }).onFailure(caught -> {
                 fetching = false;
                 refetch = false;
-            }
-        });
+            });
     }
 
     protected void changeData(final ResultList<R> data) {

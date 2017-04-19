@@ -16,23 +16,20 @@
 
 package stroom.dashboard.client.main;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
-
 import stroom.dashboard.shared.SearchBusPollAction;
-import stroom.dashboard.shared.SearchBusPollResult;
+import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.query.shared.QueryKey;
 import stroom.query.shared.SearchRequest;
 import stroom.query.shared.SearchResult;
 import stroom.security.client.event.LogoutEvent;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
-import stroom.dispatch.client.ClientDispatchAsync;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 @Singleton
 public class SearchBus {
@@ -107,30 +104,27 @@ public class SearchBus {
         }
 
         final SearchBusPollAction action = new SearchBusPollAction(searchActionMap);
-        dispatcher.execute(action, false, new AsyncCallbackAdaptor<SearchBusPollResult>() {
-            @Override
-            public void onSuccess(final SearchBusPollResult result) {
-                final Map<QueryKey, SearchResult> searchResultMap = result.getSearchResultMap();
-                for (final Entry<QueryKey, SearchResult> entry : searchResultMap.entrySet()) {
-                    final QueryKey queryKey = entry.getKey();
-                    final SearchResult searchResult = entry.getValue();
-                    final SearchModel searchModel = activeSearchMap.get(queryKey);
-                    if (searchModel != null) {
-                        searchModel.update(searchResult);
-                    }
+        dispatcher.exec(action, false).onSuccess(result -> {
+            final Map<QueryKey, SearchResult> searchResultMap = result.getSearchResultMap();
+            for (final Entry<QueryKey, SearchResult> entry : searchResultMap.entrySet()) {
+                final QueryKey queryKey = entry.getKey();
+                final SearchResult searchResult = entry.getValue();
+                final SearchModel searchModel = activeSearchMap.get(queryKey);
+                if (searchModel != null) {
+                    searchModel.update(searchResult);
                 }
+            }
 
-                polling = false;
+            polling = false;
 
-                // Remember and reset delay.
-                final int delay = delayMillis;
-                delayMillis = DEFAULT_POLL_INTERVAL;
+            // Remember and reset delay.
+            final int delay = delayMillis;
+            delayMillis = DEFAULT_POLL_INTERVAL;
 
-                if (forcePoll || activeSearchMap.size() > 0) {
-                    // Reset force.
-                    forcePoll = false;
-                    poll(delay);
-                }
+            if (forcePoll || activeSearchMap.size() > 0) {
+                // Reset force.
+                forcePoll = false;
+                poll(delay);
             }
         });
     }

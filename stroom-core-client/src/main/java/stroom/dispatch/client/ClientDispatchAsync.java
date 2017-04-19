@@ -26,5 +26,11 @@ public interface ClientDispatchAsync {
 
     <R extends SharedObject> void execute(Action<R> task, boolean showWorking, AsyncCallbackAdaptor<R> callback);
 
+    <R extends SharedObject> AsyncFuture<R> exec(Action<R> task);
+
+    <R extends SharedObject> AsyncFuture<R> exec(Action<R> task, String message);
+
+    <R extends SharedObject> AsyncFuture<R> exec(Action<R> task, boolean showWorking);
+
     String getImportFileURL();
 }

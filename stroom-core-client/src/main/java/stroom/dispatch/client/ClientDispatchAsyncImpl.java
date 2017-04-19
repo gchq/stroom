@@ -18,7 +18,6 @@ package stroom.dispatch.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Timer;
@@ -28,7 +27,6 @@ import com.google.gwt.user.client.rpc.StatusCodeException;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.presenter.AlertCallback;
 import stroom.dispatch.shared.Action;
 import stroom.security.client.ClientSecurityContext;
 import stroom.task.client.TaskEndEvent;
@@ -65,29 +63,13 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
                         refreshing = true;
                         final RefreshAction action = new RefreshAction();
                         action.setApplicationInstanceId(applicationInstanceId);
-                        execute(action, new AsyncCallbackAdaptor<SharedString>() {
-                            @Override
-                            public void onSuccess(final SharedString result) {
-                                if (result != null) {
-                                    AlertEvent.fireWarn(ClientDispatchAsyncImpl.this, result.toString(),
-                                            new AlertCallback() {
-                                                @Override
-                                                public void onClose() {
-                                                    refreshing = false;
-
-                                                }
-                                            });
-
-                                } else {
-                                    refreshing = false;
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(final Throwable caught) {
+                        exec(action).onSuccess(result -> {
+                            if (result != null) {
+                                AlertEvent.fireWarn(ClientDispatchAsyncImpl.this, result.toString(), () -> refreshing = false);
+                            } else {
                                 refreshing = false;
                             }
-                        });
+                        }).onFailure(throwable -> refreshing = false);
                     }
                 }
             }
@@ -126,98 +108,120 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
             incrementTaskCount(message);
         }
 
-        Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-            @Override
-            public void execute() {
-                dispatch(task, message, showWorking, callback);
+        final AsyncFuture<R> future = dispatch(task, message, showWorking);
+        future.onSuccess(callback::onSuccess);
+
+        if (callback != null) {
+            // If the callback exclusively handles failure then let it
+            // do so.
+            if (callback.handlesFailure()) {
+                future.onFailure(callback::onFailure);
+            } else {
+                // Otherwise show the failure message and defer any
+                // other failure handling to the callback.
+
+                // Set the default behaviour of the future to show an error.
+                future.onFailure(throwable -> AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, () -> callback.onFailure(throwable)));
             }
-        });
+        } else {
+            // Set the default behaviour of the future to show an error.
+            future.onFailure(throwable -> AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, null));
+        }
     }
 
-    private <R extends SharedObject> void dispatch(final Action<R> action, final String message,
-                                                   final boolean showWorking, final AsyncCallbackAdaptor<R> callback) {
+    @Override
+    public <R extends SharedObject> AsyncFuture<R> exec(final Action<R> task) {
+        return exec(task, null, true);
+    }
+
+    @Override
+    public <R extends SharedObject> AsyncFuture<R> exec(final Action<R> task, final String message) {
+        return exec(task, message, true);
+    }
+
+    @Override
+    public <R extends SharedObject> AsyncFuture<R> exec(final Action<R> task, final boolean showWorking) {
+        return exec(task, null, showWorking);
+    }
+
+    private <R extends SharedObject> AsyncFuture<R> exec(final Action<R> task, final String message, final boolean showWorking) {
+        if (showWorking) {
+            // Add the task to the map.
+            incrementTaskCount(message);
+        }
+
+        return dispatch(task, message, showWorking);
+    }
+
+    private <R extends SharedObject> AsyncFuture<R> dispatch(final Action<R> action, final String message,
+                                                             final boolean showWorking) {
         action.setApplicationInstanceId(applicationInstanceId);
-        dispatchService.exec(action, new AsyncCallback<R>() {
-            @Override
-            public void onSuccess(final R result) {
-                if (showWorking) {
-                    // Remove the task from the task count.
-                    decrementTaskCount();
-                }
 
-                // Let the callback handle success.
-                handleSuccess(result);
-            }
+        final AsyncFuture<R> future = new AsyncFuture<>();
+        // Set the default behaviour of the future to show an error.
+        future.onFailure(throwable -> AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, null));
 
-            @Override
-            public void onFailure(final Throwable throwable) {
-                if (showWorking) {
-                    // Remove the task from the task count.
-                    decrementTaskCount();
-                }
-
-                if (message != null && message.length() >= LOGIN_HTML.length() && message.indexOf(LOGIN_HTML) != -1) {
-                    if (!("Logout".equalsIgnoreCase(action.getTaskName()))) {
-                        // Logout.
-                        AlertEvent.fireError(ClientDispatchAsyncImpl.this,
-                                "Your user session appears to have terminated", message, null);
+        Scheduler.get().scheduleDeferred(() -> {
+            dispatchService.exec(action, new AsyncCallback<R>() {
+                @Override
+                public void onSuccess(final R result) {
+                    if (showWorking) {
+                        // Remove the task from the task count.
+                        decrementTaskCount();
                     }
-                } else if (throwable instanceof StatusCodeException) {
-                    final StatusCodeException scEx = (StatusCodeException) throwable;
-                    if (scEx.getStatusCode() >= 100) {
+
+                    // Let the callback handle success.
+                    handleSuccess(result);
+                }
+
+                @Override
+                public void onFailure(final Throwable throwable) {
+                    if (showWorking) {
+                        // Remove the task from the task count.
+                        decrementTaskCount();
+                    }
+
+                    if (message != null && message.length() >= LOGIN_HTML.length() && message.contains(LOGIN_HTML)) {
                         if (!("Logout".equalsIgnoreCase(action.getTaskName()))) {
                             // Logout.
-                            AlertEvent.fireError(ClientDispatchAsyncImpl.this, "An error has occured",
-                                    scEx.getStatusCode() + " - " + scEx.getMessage(), null);
+                            AlertEvent.fireError(ClientDispatchAsyncImpl.this,
+                                    "Your user session appears to have terminated", message, null);
+                        }
+                    } else if (throwable instanceof StatusCodeException) {
+                        final StatusCodeException scEx = (StatusCodeException) throwable;
+                        if (scEx.getStatusCode() >= 100) {
+                            if (!("Logout".equalsIgnoreCase(action.getTaskName()))) {
+                                // Logout.
+                                AlertEvent.fireError(ClientDispatchAsyncImpl.this, "An error has occurred",
+                                        scEx.getStatusCode() + " - " + scEx.getMessage(), null);
+                            }
                         }
                     }
-                } else {
-                    // If the callback exclusively handles failure then let it
-                    // do so.
-                    if (callback != null && callback.handlesFailure()) {
-                        callback.onFailure(throwable);
-                    } else {
-                        // Otherwise show the failure message and defer any
-                        // other failure handling to the callback.
-                        showFailure(throwable);
-                    }
-                }
-            }
 
-            private void showFailure(final Throwable throwable) {
-                // Show the failure message if the callback does not
-                // deal with the failure.
-                if (callback == null || !callback.handlesFailure()) {
-                    AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, () -> {
-                            // Let the callback handle any other aspect
-                            // of the failure.
-                            handleFailure(throwable);
-                    });
+                    handleFailure(throwable);
                 }
-            }
 
-            private void handleSuccess(final R result) {
-                if (callback != null) {
+                private void handleSuccess(final R result) {
                     try {
-                        callback.onSuccess(result);
+                        future.setResult(result);
 
                     } catch (final Throwable throwable) {
                         AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, null);
                     }
                 }
-            }
 
-            private void handleFailure(final Throwable throwable) {
-                if (callback != null) {
+                private void handleFailure(final Throwable throwable) {
                     try {
-                        callback.onFailure(throwable);
+                        future.setThrowable(throwable);
 
                     } catch (final Throwable throwable2) {
                         AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable2, null);
                     }
                 }
-            }
+            });
         });
+
+        return future;
     }
 
     private void incrementTaskCount(final String message) {
