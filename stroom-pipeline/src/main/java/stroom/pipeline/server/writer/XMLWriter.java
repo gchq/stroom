@@ -52,7 +52,7 @@ import stroom.util.CharBuffer;
 @Component
 @Scope("prototype")
 @ConfigurableElement(type = "XMLWriter", category = Category.WRITER, roles = { PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_WRITER,
+        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_WRITER, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.XML)
 public class XMLWriter extends AbstractWriter implements XMLFilter {
     private final LocationFactory locationFactory;

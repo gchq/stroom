@@ -48,7 +48,7 @@ import stroom.xml.converter.json.JSONParser;
 @Component
 @Scope("prototype")
 @ConfigurableElement(type = "JSONWriter", category = Category.WRITER, roles = { PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_WRITER, PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.JSON)
+        PipelineElementType.ROLE_WRITER, PipelineElementType.ROLE_MUTATOR, PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.JSON)
 public class JSONWriter extends AbstractWriter {
     private JsonGenerator jsonGenerator;
     private boolean doneElement;

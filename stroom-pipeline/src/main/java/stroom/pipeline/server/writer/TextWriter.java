@@ -38,7 +38,7 @@ import java.io.IOException;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "TextWriter", category = Category.WRITER, roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_WRITER,
+        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_WRITER, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.TEXT)
 public class TextWriter extends AbstractWriter {
     private byte[] header;
