@@ -68,6 +68,7 @@ public class Editor extends Composite {
             if (event.isAttached()) {
                 if (!started) {
                     editor.startEditor();
+                    editor.setShowPrintMargin(false);
                     editor.setUseSoftTabs(true);
                     editor.setTabSize(2);
                     started = true;
