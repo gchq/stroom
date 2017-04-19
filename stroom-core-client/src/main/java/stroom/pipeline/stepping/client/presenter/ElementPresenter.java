@@ -48,12 +48,12 @@ import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
-import stroom.pipeline.stepping.client.presenter.CodePresenter.CodeView;
+import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.util.shared.Indicators;
 import stroom.editor.client.presenter.EditorPresenter;
 
-public class CodePresenter extends MyPresenterWidget<CodeView> implements HasDirtyHandlers {
-    public interface CodeView extends View {
+public class ElementPresenter extends MyPresenterWidget<ElementView> implements HasDirtyHandlers {
+    public interface ElementView extends View {
         void setCodeView(View view);
 
         void setInputView(View view);
@@ -81,8 +81,8 @@ public class CodePresenter extends MyPresenterWidget<CodeView> implements HasDir
     private EditorPresenter outputPresenter;
 
     @Inject
-    public CodePresenter(final EventBus eventBus, final CodeView view,
-                         final Provider<EditorPresenter> editorProvider, final ClientDispatchAsync dispatcher) {
+    public ElementPresenter(final EventBus eventBus, final ElementView view,
+                            final Provider<EditorPresenter> editorProvider, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.editorProvider = editorProvider;
         this.dispatcher = dispatcher;
@@ -296,12 +296,12 @@ public class CodePresenter extends MyPresenterWidget<CodeView> implements HasDir
                 @Override
                 public void onDirty(final KeyDownEvent event) {
                     dirtyCode = true;
-                    DirtyEvent.fire(CodePresenter.this, true);
+                    DirtyEvent.fire(ElementPresenter.this, true);
                 }
             }));
             registerHandler(codePresenter.addFormatHandler(event -> {
                 dirtyCode = true;
-                DirtyEvent.fire(CodePresenter.this, true);
+                DirtyEvent.fire(ElementPresenter.this, true);
             }));
         }
         return codePresenter;
@@ -325,11 +325,18 @@ public class CodePresenter extends MyPresenterWidget<CodeView> implements HasDir
             outputPresenter.setReadOnly(true);
             setOptions(outputPresenter);
 
+            // Turn on line numbers for the output presenter if this is a validation step as the output needs to show
+            // validation errors in the gutter.
+            if (elementType != null && elementType.hasRole(PipelineElementType.ROLE_VALIDATOR)) {
+                outputPresenter.getLineNumbersOption().setOn(true);
+            }
+
             outputPresenter.setShowFilterSettings(true);
             outputPresenter.setInput(false);
+
             registerHandler(outputPresenter.addChangeFilterHandler(event -> {
                 final SteppingFilterSettings settings = pipelineStepAction.getStepFilter(elementId);
-                ShowSteppingFilterSettingsEvent.fire(CodePresenter.this, outputPresenter, false, elementId,
+                ShowSteppingFilterSettingsEvent.fire(ElementPresenter.this, outputPresenter, false, elementId,
                         settings);
             }));
         }

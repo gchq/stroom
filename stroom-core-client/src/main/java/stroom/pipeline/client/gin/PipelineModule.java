@@ -38,8 +38,8 @@ import stroom.pipeline.processor.client.presenter.ProcessorPresenter;
 import stroom.pipeline.processor.client.presenter.ProcessorPresenter.ProcessorView;
 import stroom.pipeline.processor.client.view.ProcessorViewImpl;
 import stroom.pipeline.stepping.client.PipelineSteppingPlugin;
-import stroom.pipeline.stepping.client.presenter.CodePresenter;
-import stroom.pipeline.stepping.client.presenter.CodePresenter.CodeView;
+import stroom.pipeline.stepping.client.presenter.ElementPresenter;
+import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
 import stroom.pipeline.stepping.client.presenter.StepLocationPresenter;
@@ -51,7 +51,7 @@ import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
-import stroom.pipeline.stepping.client.view.CodeViewImpl;
+import stroom.pipeline.stepping.client.view.ElementViewImpl;
 import stroom.pipeline.stepping.client.view.StepControlViewImpl;
 import stroom.pipeline.stepping.client.view.StepLocationViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingFilterViewImpl;
@@ -109,7 +109,7 @@ public class PipelineModule extends PluginModule {
                 SteppingFilterViewImpl.class);
         bindPresenterWidget(XPathFilterPresenter.class, XPathFilterView.class, XPathFilterViewImpl.class);
 
-        bindPresenterWidget(CodePresenter.class, CodeView.class, CodeViewImpl.class);
+        bindPresenterWidget(ElementPresenter.class, ElementView.class, ElementViewImpl.class);
 
         // Add processor bindings.
         bindPresenterWidget(ProcessorPresenter.class, ProcessorView.class, ProcessorViewImpl.class);

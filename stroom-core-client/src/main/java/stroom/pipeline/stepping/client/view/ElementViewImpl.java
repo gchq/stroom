@@ -21,9 +21,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-import stroom.pipeline.stepping.client.presenter.CodePresenter.CodeView;
+import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 
-public class CodeViewImpl extends ViewImpl implements CodeView {
+public class ElementViewImpl extends ViewImpl implements ElementView {
     private Widget widget;
 
     private View code;
