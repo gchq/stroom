@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#208** : Schema filter validation errors are now shown on the output pane during stepping.
 
+* Issue **#211** : Turned off print margins in all editors.
+
 ## [v5.0-beta.18] - 2017-04-13
 
 * Issue **#172** : Further improvement to dashboard L&F.
