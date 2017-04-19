@@ -56,7 +56,7 @@ public class BaseEntityDeProxyProcessor {
     private final HashMap<BaseEntity, BaseEntity> objectsDone = new HashMap<>();
 
     private final boolean incoming;
-    private static final String PASSWORD_MASK = "*****";
+    private static final String PASSWORD_MASK = "********************";
 
     public BaseEntityDeProxyProcessor(final boolean incoming) {
         this.incoming = incoming;
