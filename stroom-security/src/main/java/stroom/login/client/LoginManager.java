@@ -16,6 +16,11 @@
 
 package stroom.login.client;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.ConfirmCallback;
@@ -33,13 +38,7 @@ import stroom.security.shared.EmailPasswordResetForUserNameAction;
 import stroom.security.shared.LoginAction;
 import stroom.security.shared.LogoutAction;
 import stroom.security.shared.User;
-import stroom.security.shared.UserAndPermissions;
 import stroom.util.shared.SharedBoolean;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 
 public class LoginManager implements HasHandlers {
     private final EventBus eventBus;
@@ -80,93 +79,73 @@ public class LoginManager implements HasHandlers {
 
     public void autoLogin() {
         // When we start the application we will try and auto login using a client certificates.
-        dispatcher.execute(new AutoLoginAction(), "Logging on. Please wait...",
-                new AsyncCallbackAdaptor<UserAndPermissions>() {
-                    @Override
-                    public void onSuccess(final UserAndPermissions userAndPermissions) {
-                        if (userAndPermissions != null) {
-                            currentUser.setUserAndPermissions(userAndPermissions);
-                        } else if (!GWT.isProdMode()) {
-                            // If we are in development mode and failed to login
-                            // with a client certificates then try the default user name and
-                            // password.
-                            LoginEvent.fire(LoginManager.this, "admin", "admin");
-                        } else {
-                            LoginFailedEvent.fire(LoginManager.this, null);
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(final Throwable caught) {
-                        LoginFailedEvent.fire(LoginManager.this, caught.getMessage());
-                    }
-
-                    @Override
-                    public boolean handlesFailure() {
-                        return true;
-                    }
-                });
+        dispatcher.exec(new AutoLoginAction(), "Logging on. Please wait...").onSuccess(userAndPermissions -> {
+            if (userAndPermissions != null) {
+                currentUser.setUserAndPermissions(userAndPermissions);
+            } else if (!GWT.isProdMode()) {
+                // If we are in development mode and failed to login
+                // with a client certificates then try the default user name and
+                // password.
+                LoginEvent.fire(LoginManager.this, "admin", "admin");
+            } else {
+                LoginFailedEvent.fire(LoginManager.this, null);
+            }
+        }).onFailure(caught -> LoginFailedEvent.fire(LoginManager.this, caught.getMessage()));
     }
 
     private void login(final String userName, final String password) {
-        dispatcher.execute(new LoginAction(userName, password), "Logging on. Please wait...",
-                new AsyncCallbackAdaptor<UserAndPermissions>() {
-                    @Override
-                    public void onSuccess(final UserAndPermissions userAndPermissions) {
-                        if (userAndPermissions == null || userAndPermissions.getUser() == null) {
-                            LoginFailedEvent.fire(LoginManager.this, "Incorrect user name or password!");
+        dispatcher.exec(new LoginAction(userName, password), "Logging on. Please wait...").onSuccess(userAndPermissions -> {
+            if (userAndPermissions == null || userAndPermissions.getUser() == null) {
+                LoginFailedEvent.fire(LoginManager.this, "Incorrect user name or password!");
 
-                        } else {
-                            final User user = userAndPermissions.getUser();
+            } else {
+                final User user = userAndPermissions.getUser();
 
-                            // Some accounts never expire (e.g. in dev mode)
-                            if (user.getPasswordExpiryMs() != null) {
-                                final int daysToExpiry = getDaysToExpiry(user.getPasswordExpiryMs());
+                // Some accounts never expire (e.g. in dev mode)
+                if (user.getPasswordExpiryMs() != null) {
+                    final int daysToExpiry = getDaysToExpiry(user.getPasswordExpiryMs());
 
-                                if (daysToExpiry < 1) {
-                                    ConfirmEvent.fire(LoginManager.this,
-                                            "Your password has expired.  You must change it now",
-                                            new ConfirmCallback() {
-                                                @Override
-                                                public void onResult(final boolean result) {
-                                                    if (result) {
-                                                        ChangePasswordEvent.fire(LoginManager.this, user, true);
-                                                    }
-                                                }
-                                            });
-
-                                } else if (daysToExpiry < 10) {
-                                    final StringBuilder message = new StringBuilder();
-                                    message.append("The password for this account will expire in ");
-                                    message.append(daysToExpiry);
-                                    if (daysToExpiry == 1) {
-                                        message.append(" day");
-                                    } else {
-                                        message.append(" days");
-                                    }
-                                    message.append(". Would you like to change the password now?");
-                                    ConfirmEvent.fire(LoginManager.this, message.toString(), new ConfirmCallback() {
-                                        @Override
-                                        public void onResult(final boolean result) {
-                                            if (result) {
-                                                ChangePasswordEvent.fire(LoginManager.this, user, true);
-                                            } else {
-                                                currentUser.setUserAndPermissions(userAndPermissions);
-                                            }
+                    if (daysToExpiry < 1) {
+                        ConfirmEvent.fire(LoginManager.this,
+                                "Your password has expired.  You must change it now",
+                                new ConfirmCallback() {
+                                    @Override
+                                    public void onResult(final boolean result) {
+                                        if (result) {
+                                            ChangePasswordEvent.fire(LoginManager.this, user, true);
                                         }
-                                    });
+                                    }
+                                });
 
+                    } else if (daysToExpiry < 10) {
+                        final StringBuilder message = new StringBuilder();
+                        message.append("The password for this account will expire in ");
+                        message.append(daysToExpiry);
+                        if (daysToExpiry == 1) {
+                            message.append(" day");
+                        } else {
+                            message.append(" days");
+                        }
+                        message.append(". Would you like to change the password now?");
+                        ConfirmEvent.fire(LoginManager.this, message.toString(), new ConfirmCallback() {
+                            @Override
+                            public void onResult(final boolean result) {
+                                if (result) {
+                                    ChangePasswordEvent.fire(LoginManager.this, user, true);
                                 } else {
                                     currentUser.setUserAndPermissions(userAndPermissions);
                                 }
-                            } else {
-                                currentUser.setUserAndPermissions(userAndPermissions);
                             }
-                        }
-                    }
+                        });
 
-                    @Override
-                    public void onFailure(final Throwable caught) {
+                    } else {
+                        currentUser.setUserAndPermissions(userAndPermissions);
+                    }
+                } else {
+                    currentUser.setUserAndPermissions(userAndPermissions);
+                }
+            }
+        }).onFailure(caught -> {
 //                            // TODO: Sort out what happens when a password
 //                            // expires.
 //                            // message
@@ -179,9 +158,8 @@ public class LoginManager implements HasHandlers {
 //                            // if (change) {
 //                            // changePassword(user);
 //                            // }
-                        LoginFailedEvent.fire(LoginManager.this, caught.getMessage());
-                    }
-                });
+            LoginFailedEvent.fire(LoginManager.this, caught.getMessage());
+        });
     }
 
     private void logout() {

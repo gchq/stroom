@@ -22,9 +22,9 @@ import stroom.util.shared.SharedObject;
 public interface ClientDispatchAsync {
     <R extends SharedObject> void execute(Action<R> task, AsyncCallbackAdaptor<R> callback);
 
-    <R extends SharedObject> void execute(Action<R> task, String message, AsyncCallbackAdaptor<R> callback);
+//    <R extends SharedObject> void execute(Action<R> task, String message, AsyncCallbackAdaptor<R> callback);
 
-    <R extends SharedObject> void execute(Action<R> task, boolean showWorking, AsyncCallbackAdaptor<R> callback);
+//    <R extends SharedObject> void execute(Action<R> task, boolean showWorking, AsyncCallbackAdaptor<R> callback);
 
     <R extends SharedObject> AsyncFuture<R> exec(Action<R> task);
 

@@ -89,17 +89,17 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
         execute(task, null, true, callback);
     }
 
-    @Override
-    public <R extends SharedObject> void execute(final Action<R> task, final String message,
-                                                 final AsyncCallbackAdaptor<R> callback) {
-        execute(task, message, true, callback);
-    }
-
-    @Override
-    public <R extends SharedObject> void execute(final Action<R> task, final boolean showWorking,
-                                                 final AsyncCallbackAdaptor<R> callback) {
-        execute(task, null, showWorking, callback);
-    }
+//    @Override
+//    public <R extends SharedObject> void execute(final Action<R> task, final String message,
+//                                                 final AsyncCallbackAdaptor<R> callback) {
+//        execute(task, message, true, callback);
+//    }
+//
+//    @Override
+//    public <R extends SharedObject> void execute(final Action<R> task, final boolean showWorking,
+//                                                 final AsyncCallbackAdaptor<R> callback) {
+//        execute(task, null, showWorking, callback);
+//    }
 
     private <R extends SharedObject> void execute(final Action<R> task, final String message, final boolean showWorking,
                                                   final AsyncCallbackAdaptor<R> callback) {
