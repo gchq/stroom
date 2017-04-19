@@ -18,18 +18,14 @@ package stroom.xmlschema.client.presenter;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.security.client.ClientSecurityContext;
 import stroom.app.client.event.DirtyKeyDownHander;
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.entity.client.presenter.EntitySettingsPresenter;
+import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.xmlschema.shared.XMLSchema;
 
@@ -54,7 +50,7 @@ public class XMLSchemaSettingsPresenter
 
     @Inject
     public XMLSchemaSettingsPresenter(final EventBus eventBus, final XMLSchemaSettingsView view,
-            final ClientSecurityContext securityContext) {
+                                      final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
 
         // Add listeners for dirty events.
@@ -69,12 +65,7 @@ public class XMLSchemaSettingsPresenter
         registerHandler(view.getNamespaceURI().addKeyDownHandler(keyDownHander));
         registerHandler(view.getSystemId().addKeyDownHandler(keyDownHander));
         registerHandler(view.getSchemaGroup().addKeyDownHandler(keyDownHander));
-        registerHandler(view.getDeprecated().addValueChangeHandler(new ValueChangeHandler<TickBoxState>() {
-            @Override
-            public void onValueChange(final ValueChangeEvent<TickBoxState> event) {
-                setDirty(true);
-            }
-        }));
+        registerHandler(view.getDeprecated().addValueChangeHandler(event -> setDirty(true)));
     }
 
     @Override

@@ -21,8 +21,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.app.client.event.DirtyKeyDownHander;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -31,7 +30,6 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
 import stroom.widget.xsdbrowser.client.view.XSDModel;
-import stroom.editor.client.presenter.EditorPresenter;
 import stroom.xmlschema.shared.XMLSchema;
 
 public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView, XMLSchema> {
@@ -64,12 +62,9 @@ public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView,
 
         xsdBrowserPresenter.setModel(data);
 
-        settingsPresenter.addDirtyHandler(new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                if (event.isDirty()) {
-                    setDirty(true);
-                }
+        settingsPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
             }
         });
 

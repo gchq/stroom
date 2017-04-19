@@ -21,13 +21,10 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.EntityServiceSaveAction;
-import stroom.entity.shared.ResultList;
 import stroom.item.client.ItemListBox;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
@@ -93,7 +90,7 @@ public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.V
 
     @Inject
     public VolumeEditPresenter(final EventBus eventBus, final VolumeEditView view,
-            final ClientDispatchAsync clientDispatchAsync) {
+                               final ClientDispatchAsync clientDispatchAsync) {
         super(eventBus, view);
         this.clientDispatchAsync = clientDispatchAsync;
     }
@@ -115,14 +112,10 @@ public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.V
     }
 
     private void read() {
-        clientDispatchAsync.execute(new EntityServiceFindAction<FindNodeCriteria, Node>(new FindNodeCriteria()),
-                new AsyncCallbackAdaptor<ResultList<Node>>() {
-                    @Override
-                    public void onSuccess(final ResultList<Node> result) {
-                        getView().getNode().addItems(result.getValues());
-                        getView().getNode().setSelectedItem(volume.getNode());
-                    }
-                });
+        clientDispatchAsync.exec(new EntityServiceFindAction<FindNodeCriteria, Node>(new FindNodeCriteria())).onSuccess(result -> {
+            getView().getNode().addItems(result.getValues());
+            getView().getNode().setSelectedItem(volume.getNode());
+        });
         getView().getPath().setText(volume.getPath());
         getView().getVolumeType().addItems(VolumeType.values());
         getView().getVolumeType().setSelectedItem(volume.getVolumeType());
@@ -153,18 +146,14 @@ public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.V
             }
             volume.setBytesLimit(bytesLimit);
 
-            clientDispatchAsync.execute(new EntityServiceSaveAction<Volume>(volume),
-                    new AsyncCallbackAdaptor<Volume>() {
-                        @Override
-                        public void onSuccess(final Volume result) {
-                            volume = result;
-                            HidePopupEvent.fire(VolumeEditPresenter.this, VolumeEditPresenter.this, false, true);
-                            // Only fire this event here as the parent only
-                            // needs to
-                            // refresh if there has been a change.
-                            CloseEvent.fire(VolumeEditPresenter.this);
-                        }
-                    });
+            clientDispatchAsync.exec(new EntityServiceSaveAction<>(volume)).onSuccess(result -> {
+                volume = result;
+                HidePopupEvent.fire(VolumeEditPresenter.this, VolumeEditPresenter.this, false, true);
+                // Only fire this event here as the parent only
+                // needs to
+                // refresh if there has been a change.
+                CloseEvent.fire(VolumeEditPresenter.this);
+            });
 
         } catch (final Exception e) {
             AlertEvent.fireError(this, e.getMessage(), null);

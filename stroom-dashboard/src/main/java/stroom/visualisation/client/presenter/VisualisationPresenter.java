@@ -19,8 +19,6 @@ package stroom.visualisation.client.presenter;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -43,12 +41,9 @@ public class VisualisationPresenter extends EntityEditTabPresenter<LinkTabPanelV
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
 
-        settingsPresenter.addDirtyHandler(new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                if (event.isDirty()) {
-                    setDirty(true);
-                }
+        settingsPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
             }
         });
 
