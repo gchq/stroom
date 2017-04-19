@@ -177,4 +177,8 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     public DefaultTreeForTreeLayout<PipelineElement> getTree() {
         return tree;
     }
+
+    public int getTreeHeight() {
+        return canvas.getOffsetHeight();
+    }
 }

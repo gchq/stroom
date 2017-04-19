@@ -56,7 +56,7 @@
       </g:SimplePanel>
     </g:north>
     <g:center>
-      <g:MySplitLayoutPanel>
+      <g:MySplitLayoutPanel ui:field="bottomLayout">
         <g:north size="31">
           <g:ScrollPanel ui:field="treeContainer"
             addStyleNames="{style.treeContainer}" />

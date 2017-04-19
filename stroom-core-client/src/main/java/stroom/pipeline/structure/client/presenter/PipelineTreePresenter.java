@@ -49,6 +49,8 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
         void setAllowDragging(boolean allowDragging);
 
         void setAllowNullSelection(boolean allowNullSelection);
+
+        int getTreeHeight();
     }
 
     private final MySingleSelectionModel<PipelineElement> selectionModel;
@@ -154,5 +156,9 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
     @Override
     public HandlerRegistration addContextMenuHandler(final Handler handler) {
         return getView().addContextMenuHandler(handler);
+    }
+
+    public int getTreeHeight() {
+        return getView().getTreeHeight();
     }
 }

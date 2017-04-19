@@ -119,4 +119,9 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     public void fireEvent(final GwtEvent<?> event) {
         layoutPanel.fireEvent(event);
     }
+
+    @Override
+    public int getTreeHeight() {
+        return treePanel.getTreeHeight();
+    }
 }
