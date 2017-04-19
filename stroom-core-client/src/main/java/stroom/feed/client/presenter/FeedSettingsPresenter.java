@@ -16,24 +16,16 @@
 
 package stroom.feed.client.presenter;
 
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.security.client.ClientSecurityContext;
 import stroom.app.client.event.DirtyKeyDownHander;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.EntitySettingsPresenter;
 import stroom.entity.client.presenter.HasRead;
@@ -44,10 +36,10 @@ import stroom.feed.shared.FetchSupportedEncodingsAction;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
+import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.StreamTypeUiManager;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedString;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -75,29 +67,26 @@ public class FeedSettingsPresenter extends EntitySettingsPresenter<FeedSettingsP
 
     @Inject
     public FeedSettingsPresenter(final EventBus eventBus, final FeedSettingsView view,
-            final ClientSecurityContext securityContext, final StreamTypeUiManager streamTypeUiManager,
-            final ClientDispatchAsync dispatcher) {
+                                 final ClientSecurityContext securityContext, final StreamTypeUiManager streamTypeUiManager,
+                                 final ClientDispatchAsync dispatcher) {
         super(eventBus, view, securityContext);
 
-        dispatcher.execute(new FetchSupportedEncodingsAction(), new AsyncCallbackAdaptor<SharedList<SharedString>>() {
-            @Override
-            public void onSuccess(final SharedList<SharedString> result) {
-                view.getDataEncoding().clear();
-                view.getContextEncoding().clear();
+        dispatcher.exec(new FetchSupportedEncodingsAction()).onSuccess(result -> {
+            view.getDataEncoding().clear();
+            view.getContextEncoding().clear();
 
-                if (result != null && result.size() > 0) {
-                    for (final SharedString sharedString : result) {
-                        final String encoding = sharedString.toString();
-                        view.getDataEncoding().addItem(encoding);
-                        view.getContextEncoding().addItem(encoding);
-                    }
+            if (result != null && result.size() > 0) {
+                for (final SharedString sharedString : result) {
+                    final String encoding = sharedString.toString();
+                    view.getDataEncoding().addItem(encoding);
+                    view.getContextEncoding().addItem(encoding);
                 }
+            }
 
-                final Feed feed = getEntity();
-                if (feed != null) {
-                    view.getDataEncoding().setSelected(ensureEncoding(feed.getEncoding()));
-                    view.getContextEncoding().setSelected(ensureEncoding(feed.getContextEncoding()));
-                }
+            final Feed feed = getEntity();
+            if (feed != null) {
+                view.getDataEncoding().setSelected(ensureEncoding(feed.getEncoding()));
+                view.getContextEncoding().setSelected(ensureEncoding(feed.getContextEncoding()));
             }
         });
 
@@ -112,58 +101,32 @@ public class FeedSettingsPresenter extends EntitySettingsPresenter<FeedSettingsP
                 setDirty(true);
             }
         };
-        final ValueChangeHandler<TickBoxState> checkHandler = new ValueChangeHandler<TickBoxState>() {
-            @Override
-            public void onValueChange(final ValueChangeEvent<TickBoxState> event) {
-                setDirty(true);
-            }
-        };
+        final ValueChangeHandler<TickBoxState> checkHandler = event -> setDirty(true);
 
         registerHandler(view.getReference().addValueChangeHandler(checkHandler));
         registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
         registerHandler(view.getClassification().addKeyDownHandler(keyDownHander));
-        registerHandler(view.getDataEncoding().addChangeHandler(new ChangeHandler() {
-            @Override
-            public void onChange(final ChangeEvent event) {
-                final String dataEncoding = ensureEncoding(view.getDataEncoding().getSelected());
-                getView().getDataEncoding().setSelected(dataEncoding);
+        registerHandler(view.getDataEncoding().addChangeHandler(event -> {
+            final String dataEncoding = ensureEncoding(view.getDataEncoding().getSelected());
+            getView().getDataEncoding().setSelected(dataEncoding);
 
-                if (!EqualsUtil.isEquals(dataEncoding, getEntity().getEncoding())) {
-                    getEntity().setEncoding(dataEncoding);
-                    setDirty(true);
-                }
+            if (!EqualsUtil.isEquals(dataEncoding, getEntity().getEncoding())) {
+                getEntity().setEncoding(dataEncoding);
+                setDirty(true);
             }
         }));
-        registerHandler(view.getContextEncoding().addChangeHandler(new ChangeHandler() {
-            @Override
-            public void onChange(final ChangeEvent event) {
-                final String contextEncoding = ensureEncoding(view.getContextEncoding().getSelected());
-                getView().getContextEncoding().setSelected(contextEncoding);
+        registerHandler(view.getContextEncoding().addChangeHandler(event -> {
+            final String contextEncoding = ensureEncoding(view.getContextEncoding().getSelected());
+            getView().getContextEncoding().setSelected(contextEncoding);
 
-                if (!EqualsUtil.isEquals(contextEncoding, getEntity().getContextEncoding())) {
-                    setDirty(true);
-                    getEntity().setContextEncoding(contextEncoding);
-                }
-            }
-        }));
-        registerHandler(view.getRetentionAge().addSelectionHandler(new SelectionHandler<SupportedRetentionAge>() {
-            @Override
-            public void onSelection(final SelectionEvent<SupportedRetentionAge> event) {
+            if (!EqualsUtil.isEquals(contextEncoding, getEntity().getContextEncoding())) {
                 setDirty(true);
+                getEntity().setContextEncoding(contextEncoding);
             }
         }));
-        registerHandler(view.getFeedStatus().addSelectionHandler(new SelectionHandler<FeedStatus>() {
-            @Override
-            public void onSelection(final SelectionEvent<FeedStatus> event) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(view.getStreamType().addSelectionHandler(new SelectionHandler<StreamType>() {
-            @Override
-            public void onSelection(final SelectionEvent<StreamType> event) {
-                setDirty(true);
-            }
-        }));
+        registerHandler(view.getRetentionAge().addSelectionHandler(event -> setDirty(true)));
+        registerHandler(view.getFeedStatus().addSelectionHandler(event -> setDirty(true)));
+        registerHandler(view.getStreamType().addSelectionHandler(event -> setDirty(true)));
     }
 
     @Override

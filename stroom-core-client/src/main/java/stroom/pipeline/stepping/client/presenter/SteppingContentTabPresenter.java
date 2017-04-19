@@ -63,12 +63,7 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
 
     @Override
     protected void onBind() {
-        registerHandler(steppingPresenter.addDirtyHandler(new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                setDirty(event.isDirty());
-            }
-        }));
+        registerHandler(steppingPresenter.addDirtyHandler(event -> setDirty(event.isDirty())));
     }
 
     @Override

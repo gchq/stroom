@@ -22,7 +22,6 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.app.client.ContentManager;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
@@ -73,13 +72,7 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
                 // fields added/removed/changed
-                load(DocRef.create(entity), new AsyncCallbackAdaptor<StatisticStoreEntity>() {
-                    @Override
-                    public void onSuccess(final StatisticStoreEntity entityFromDb) {
-                        doConfirmSave(presenter, entity, entityFromDb);
-                    }
-                });
-
+                load(DocRef.create(entity)).onSuccess(entityFromDb -> doConfirmSave(presenter, entity, entityFromDb));
             }
         }
     }
@@ -125,11 +118,6 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
 
     private void doSave(final EntityEditPresenter<?, StatisticStoreEntity> presenter,
                         final StatisticStoreEntity entity) {
-        save(entity, new AsyncCallbackAdaptor<StatisticStoreEntity>() {
-            @Override
-            public void onSuccess(final StatisticStoreEntity entity) {
-                presenter.read(entity);
-            }
-        });
+        save(entity).onSuccess(ent -> presenter.read(ent));
     }
 }

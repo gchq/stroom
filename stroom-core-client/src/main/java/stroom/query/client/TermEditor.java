@@ -20,18 +20,19 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.*;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.entity.shared.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.explorer.shared.ExplorerData;
 import stroom.item.client.ItemListBox;
 import stroom.query.shared.Condition;
 import stroom.query.shared.ExpressionTerm;
@@ -258,57 +259,57 @@ public class TermEditor extends Composite {
 
         } else {
             switch (condition) {
-            case EQUALS:
-                if (IndexFieldType.DATE_FIELD.equals(indexFieldType)) {
-                    enterDateMode();
-                } else {
+                case EQUALS:
+                    if (IndexFieldType.DATE_FIELD.equals(indexFieldType)) {
+                        enterDateMode();
+                    } else {
+                        enterTextMode();
+                    }
+                    break;
+                case CONTAINS:
                     enterTextMode();
-                }
-                break;
-            case CONTAINS:
-                enterTextMode();
-                break;
-            case IN:
-                enterTextMode();
-                break;
-            case BETWEEN:
-                if (IndexFieldType.DATE_FIELD.equals(indexFieldType)) {
-                    enterDateRangeMode();
-                } else {
-                    enterTextRangeMode();
-                }
-                break;
-            case LESS_THAN:
-                if (IndexFieldType.DATE_FIELD.equals(indexFieldType)) {
-                    enterDateMode();
-                } else {
+                    break;
+                case IN:
                     enterTextMode();
-                }
-                break;
-            case LESS_THAN_OR_EQUAL_TO:
-                if (IndexFieldType.DATE_FIELD.equals(indexFieldType)) {
-                    enterDateMode();
-                } else {
-                    enterTextMode();
-                }
-                break;
-            case GREATER_THAN:
-                if (IndexFieldType.DATE_FIELD.equals(indexFieldType)) {
-                    enterDateMode();
-                } else {
-                    enterTextMode();
-                }
-                break;
-            case GREATER_THAN_OR_EQUAL_TO:
-                if (IndexFieldType.DATE_FIELD.equals(indexFieldType)) {
-                    enterDateMode();
-                } else {
-                    enterTextMode();
-                }
-                break;
-            case IN_DICTIONARY:
-                enterDictionaryMode();
-                break;
+                    break;
+                case BETWEEN:
+                    if (IndexFieldType.DATE_FIELD.equals(indexFieldType)) {
+                        enterDateRangeMode();
+                    } else {
+                        enterTextRangeMode();
+                    }
+                    break;
+                case LESS_THAN:
+                    if (IndexFieldType.DATE_FIELD.equals(indexFieldType)) {
+                        enterDateMode();
+                    } else {
+                        enterTextMode();
+                    }
+                    break;
+                case LESS_THAN_OR_EQUAL_TO:
+                    if (IndexFieldType.DATE_FIELD.equals(indexFieldType)) {
+                        enterDateMode();
+                    } else {
+                        enterTextMode();
+                    }
+                    break;
+                case GREATER_THAN:
+                    if (IndexFieldType.DATE_FIELD.equals(indexFieldType)) {
+                        enterDateMode();
+                    } else {
+                        enterTextMode();
+                    }
+                    break;
+                case GREATER_THAN_OR_EQUAL_TO:
+                    if (IndexFieldType.DATE_FIELD.equals(indexFieldType)) {
+                        enterDateMode();
+                    } else {
+                        enterTextMode();
+                    }
+                    break;
+                case IN_DICTIONARY:
+                    enterDictionaryMode();
+                    break;
             }
         }
     }
@@ -421,29 +422,14 @@ public class TermEditor extends Composite {
     }
 
     private void bind() {
-        final KeyDownHandler keyDownHandler = new KeyDownHandler() {
-            @Override
-            public void onKeyDown(final KeyDownEvent event) {
-                if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-                    if (uiHandlers != null) {
-                        uiHandlers.search();
-                    }
+        final KeyDownHandler keyDownHandler = event -> {
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+                if (uiHandlers != null) {
+                    uiHandlers.search();
                 }
             }
         };
-        final KeyPressHandler keyPressHandler = new KeyPressHandler() {
-            @Override
-            public void onKeyPress(final KeyPressEvent event) {
-                fireDirty();
-            }
-        };
-//        final ValueChangeHandler<Date> dateChangeHandler = new ValueChangeHandler<Date>() {
-//            @Override
-//            public void onValueChange(final ValueChangeEvent<Date> event) {
-//                fireDirty();
-//            }
-//        };
-//        final ValueChangeHandler<String> changeHandler -> {fireDirty()};
+        final KeyPressHandler keyPressHandler = event -> fireDirty();
 
         registerHandler(value.addKeyDownHandler(keyDownHandler));
         registerHandler(value.addKeyPressHandler(keyPressHandler));
@@ -469,36 +455,27 @@ public class TermEditor extends Composite {
 //        registerHandler(dateTo.addValueChangeHandler(dateChangeHandler));
 
         if (dictionaryPresenter != null) {
-            registerHandler(dictionaryPresenter.addDataSelectionHandler(new DataSelectionHandler<ExplorerData>() {
-                @Override
-                public void onSelection(final DataSelectionEvent<ExplorerData> event) {
-                    final DocRef selection = dictionaryPresenter.getSelectedEntityReference();
-                    if (!EqualsUtil.isEquals(term.getDictionary(), selection)) {
-                        write(term);
-                        fireDirty();
-                    }
+            registerHandler(dictionaryPresenter.addDataSelectionHandler(event -> {
+                final DocRef selection = dictionaryPresenter.getSelectedEntityReference();
+                if (!EqualsUtil.isEquals(term.getDictionary(), selection)) {
+                    write(term);
+                    fireDirty();
                 }
             }));
         }
 
-        registerHandler(fieldListBox.addSelectionHandler(new SelectionHandler<IndexField>() {
-            @Override
-            public void onSelection(final SelectionEvent<IndexField> event) {
-                if (!reading) {
-                    write(term);
-                    changeField(event.getSelectedItem());
-                    fireDirty();
-                }
+        registerHandler(fieldListBox.addSelectionHandler(event -> {
+            if (!reading) {
+                write(term);
+                changeField(event.getSelectedItem());
+                fireDirty();
             }
         }));
-        registerHandler(conditionListBox.addSelectionHandler(new SelectionHandler<Condition>() {
-            @Override
-            public void onSelection(final SelectionEvent<Condition> event) {
-                if (!reading) {
-                    write(term);
-                    changeCondition(event.getSelectedItem());
-                    fireDirty();
-                }
+        registerHandler(conditionListBox.addSelectionHandler(event -> {
+            if (!reading) {
+                write(term);
+                changeCondition(event.getSelectedItem());
+                fireDirty();
             }
         }));
     }

@@ -28,17 +28,15 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Place;
 import com.gwtplatform.mvp.client.proxy.ProxyPlace;
 import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
-
+import stroom.alert.client.event.AlertEvent;
+import stroom.app.client.KeyboardInterceptor;
+import stroom.app.client.NameTokens;
+import stroom.node.client.ClientPropertyCache;
+import stroom.node.shared.ClientProperties;
 import stroom.security.client.event.EmailResetPasswordEvent;
 import stroom.security.client.event.LoginEvent;
 import stroom.security.client.event.LoginFailedEvent;
 import stroom.security.client.event.LogoutEvent;
-import stroom.alert.client.event.AlertEvent;
-import stroom.app.client.KeyboardInterceptor;
-import stroom.app.client.NameTokens;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
-import stroom.node.client.ClientPropertyCache;
-import stroom.node.shared.ClientProperties;
 
 public class LoginPresenter extends MyPresenter<LoginPresenter.LoginView, LoginPresenter.LoginProxy>
         implements LoginUiHandlers, LoginFailedEvent.LoginFailedHandler, LogoutEvent.LogoutHandler {
@@ -71,28 +69,22 @@ public class LoginPresenter extends MyPresenter<LoginPresenter.LoginView, LoginP
 
     @Inject
     public LoginPresenter(final EventBus eventBus, final LoginView view, final LoginProxy proxy,
-            final ClientPropertyCache clientPropertyCache, final KeyboardInterceptor keyboardInterceptor) {
+                          final ClientPropertyCache clientPropertyCache, final KeyboardInterceptor keyboardInterceptor) {
         super(eventBus, view, proxy);
         view.setUiHandlers(this);
 
         // Handle key presses.
         keyboardInterceptor.register(view.asWidget());
 
-        clientPropertyCache.get(new AsyncCallbackAdaptor<ClientProperties>() {
-            @Override
-            public void onSuccess(final ClientProperties result) {
-                view.setHTML(result.get(ClientProperties.LOGIN_HTML));
-                view.setBuildVersion("Build Version: " + result.get(ClientProperties.BUILD_VERSION));
-                view.setBuildDate("Build Date: " + result.get(ClientProperties.BUILD_DATE));
-                view.setUpDate("Up Date: " + result.get(ClientProperties.UP_DATE));
-                view.setNodeName("Node Name: " + result.get(ClientProperties.NODE_NAME));
-            }
-
-            @Override
-            public void onFailure(final Throwable caught) {
-                AlertEvent.fireError(LoginPresenter.this, caught.getMessage(), null);
-            }
-        });
+        clientPropertyCache.get()
+                .onSuccess(result -> {
+                    view.setHTML(result.get(ClientProperties.LOGIN_HTML));
+                    view.setBuildVersion("Build Version: " + result.get(ClientProperties.BUILD_VERSION));
+                    view.setBuildDate("Build Date: " + result.get(ClientProperties.BUILD_DATE));
+                    view.setUpDate("Up Date: " + result.get(ClientProperties.UP_DATE));
+                    view.setNodeName("Node Name: " + result.get(ClientProperties.NODE_NAME));
+                })
+                .onFailure(caught -> AlertEvent.fireError(LoginPresenter.this, caught.getMessage(), null));
     }
 
     @ProxyEvent

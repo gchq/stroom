@@ -17,25 +17,25 @@
 package stroom.dashboard.client.query;
 
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.CellList;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.Query;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
-import stroom.entity.shared.*;
+import stroom.entity.shared.DocRef;
+import stroom.entity.shared.EntityIdSet;
+import stroom.entity.shared.EntityServiceDeleteAction;
+import stroom.entity.shared.EntityServiceFindAction;
+import stroom.entity.shared.EntityServiceSaveAction;
+import stroom.entity.shared.PageRequest;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.QueryData;
@@ -49,7 +49,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.util.client.DoubleSelectEvent;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesPresenter.QueryFavouritesView> {
@@ -93,32 +92,68 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
     @Override
     protected void onBind() {
-        registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                final Query query = selectionModel.getSelectedObject();
+        registerHandler(selectionModel.addSelectionChangeHandler(event -> {
+            final Query query = selectionModel.getSelectedObject();
 
-                if (query == null || query.getQueryData() == null) {
-                    expressionPresenter.read(null);
-                    editButton.setEnabled(false);
-                    deleteButton.setEnabled(false);
-                } else {
-                    expressionPresenter.read(query.getQueryData().getExpression());
-                    editButton.setEnabled(true);
-                    deleteButton.setEnabled(true);
-                }
+            if (query == null || query.getQueryData() == null) {
+                expressionPresenter.read(null);
+                editButton.setEnabled(false);
+                deleteButton.setEnabled(false);
+            } else {
+                expressionPresenter.read(query.getQueryData().getExpression());
+                editButton.setEnabled(true);
+                deleteButton.setEnabled(true);
             }
         }));
-        registerHandler(selectionModel.addDoubleSelectHandler(new DoubleSelectEvent.Handler() {
-            @Override
-            public void onSelect(final DoubleSelectEvent event) {
-                close(true);
+        registerHandler(selectionModel.addDoubleSelectHandler(event -> close(true)));
+        registerHandler(createButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        if (ok) {
+                            String entityName = namePresenter.getName();
+                            if (entityName != null) {
+                                entityName = entityName.trim();
+                            }
+
+                            if (entityName == null || entityName.length() == 0) {
+                                AlertEvent.fireWarn(QueryFavouritesPresenter.this, "You must provide a name", null);
+
+                            } else {
+                                final QueryData queryData = new QueryData();
+                                queryData.setDataSource(currentDataSource);
+                                queryData.setExpression(currentExpression);
+                                final Query query = new Query();
+                                query.setQueryData(queryData);
+                                query.setDashboard(Dashboard.createStub(currentDashboardId));
+                                query.setName(entityName);
+                                query.setFavourite(true);
+
+                                save(query, autoClose, ok);
+                            }
+                        } else {
+                            HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
+                        }
+                    }
+
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                    }
+                };
+
+                namePresenter.setName("");
+                namePresenter.setUihandlers(popupUiHandlers);
+                final PopupSize popupSize = new PopupSize(350, 78, 300, 78, 1024, 78, true);
+                ShowPopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, PopupType.OK_CANCEL_DIALOG,
+                        popupSize, "Create New Favourite", popupUiHandlers);
+                namePresenter.getView().focus();
             }
         }));
-        registerHandler(createButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+        registerHandler(editButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                final Query query = selectionModel.getSelectedObject();
+                if (query != null) {
                     final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                         @Override
                         public void onHideRequest(final boolean autoClose, final boolean ok) {
@@ -129,18 +164,12 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                 }
 
                                 if (entityName == null || entityName.length() == 0) {
-                                    AlertEvent.fireWarn(QueryFavouritesPresenter.this, "You must provide a name", null);
+                                    AlertEvent.fireWarn(QueryFavouritesPresenter.this, "You must provide a name",
+                                            null);
 
                                 } else {
-                                    final QueryData queryData = new QueryData();
-                                    queryData.setDataSource(currentDataSource);
-                                    queryData.setExpression(currentExpression);
-                                    final Query query = new Query();
-                                    query.setQueryData(queryData);
-                                    query.setDashboard(Dashboard.createStub(currentDashboardId));
                                     query.setName(entityName);
                                     query.setFavourite(true);
-
                                     save(query, autoClose, ok);
                                 }
                             } else {
@@ -153,74 +182,24 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                         }
                     };
 
-                    namePresenter.setName("");
+                    namePresenter.setName(query.getName());
                     namePresenter.setUihandlers(popupUiHandlers);
-                    final PopupSize popupSize = new PopupSize(350, 78, 300, 78, 1024, 78, true);
                     ShowPopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, PopupType.OK_CANCEL_DIALOG,
-                            popupSize, "Create New Favourite", popupUiHandlers);
-                    namePresenter.getView().focus();
+                            "Rename Favourite", popupUiHandlers);
+                    // getView().focus();
                 }
             }
         }));
-        registerHandler(editButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    final Query query = selectionModel.getSelectedObject();
-                    if (query != null) {
-                        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                            @Override
-                            public void onHideRequest(final boolean autoClose, final boolean ok) {
+        registerHandler(deleteButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                final Query query = selectionModel.getSelectedObject();
+                if (query != null) {
+                    ConfirmEvent.fire(QueryFavouritesPresenter.this,
+                            "Are you sure you want to delete this favourite?", ok -> {
                                 if (ok) {
-                                    String entityName = namePresenter.getName();
-                                    if (entityName != null) {
-                                        entityName = entityName.trim();
-                                    }
-
-                                    if (entityName == null || entityName.length() == 0) {
-                                        AlertEvent.fireWarn(QueryFavouritesPresenter.this, "You must provide a name",
-                                                null);
-
-                                    } else {
-                                        query.setName(entityName);
-                                        query.setFavourite(true);
-                                        save(query, autoClose, ok);
-                                    }
-                                } else {
-                                    HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
+                                    delete(query);
                                 }
-                            }
-
-                            @Override
-                            public void onHide(final boolean autoClose, final boolean ok) {
-                            }
-                        };
-
-                        namePresenter.setName(query.getName());
-                        namePresenter.setUihandlers(popupUiHandlers);
-                        ShowPopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, PopupType.OK_CANCEL_DIALOG,
-                                "Rename Favourite", popupUiHandlers);
-                        // getView().focus();
-                    }
-                }
-            }
-        }));
-        registerHandler(deleteButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    final Query query = selectionModel.getSelectedObject();
-                    if (query != null) {
-                        ConfirmEvent.fire(QueryFavouritesPresenter.this,
-                                "Are you sure you want to delete this favourite?", new ConfirmCallback() {
-                                    @Override
-                                    public void onResult(final boolean ok) {
-                                        if (ok) {
-                                            delete(query);
-                                        }
-                                    }
-                                });
-                    }
+                            });
                 }
             }
         }));
@@ -248,29 +227,26 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         criteria.setPageRequest(new PageRequest(0L, 100));
 
         final EntityServiceFindAction<FindQueryCriteria, Query> action = new EntityServiceFindAction<>(criteria);
-        dispatcher.execute(action, new AsyncCallbackAdaptor<ResultList<Query>>() {
-            @Override
-            public void onSuccess(final ResultList<Query> result) {
-                selectionModel.clear();
-                getView().getCellList().setRowData(result);
-                getView().getCellList().setRowCount(result.size(), true);
+        dispatcher.exec(action).onSuccess(result -> {
+            selectionModel.clear();
+            getView().getCellList().setRowData(result);
+            getView().getCellList().setRowCount(result.size(), true);
 
-                if (showAfterRefresh) {
-                    final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                        @Override
-                        public void onHideRequest(final boolean autoClose, final boolean ok) {
-                            close(ok);
-                        }
+            if (showAfterRefresh) {
+                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        close(ok);
+                    }
 
-                        @Override
-                        public void onHide(final boolean autoClose, final boolean ok) {
-                        }
-                    };
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                    }
+                };
 
-                    final PopupSize popupSize = new PopupSize(500, 400, true);
-                    ShowPopupEvent.fire(queryPresenter, QueryFavouritesPresenter.this, PopupType.OK_CANCEL_DIALOG,
-                            popupSize, "Query Favourites", popupUiHandlers);
-                }
+                final PopupSize popupSize = new PopupSize(500, 400, true);
+                ShowPopupEvent.fire(queryPresenter, QueryFavouritesPresenter.this, PopupType.OK_CANCEL_DIALOG,
+                        popupSize, "Query Favourites", popupUiHandlers);
             }
         });
     }
@@ -287,22 +263,14 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
     }
 
     private void save(final Query query, final boolean autoClose, final boolean ok) {
-        dispatcher.execute(new EntityServiceSaveAction<Query>(query), new AsyncCallbackAdaptor<Query>() {
-            @Override
-            public void onSuccess(final Query result) {
-                refresh(false);
-                HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
-            }
+        dispatcher.exec(new EntityServiceSaveAction<Query>(query)).onSuccess(result -> {
+            refresh(false);
+            HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
         });
     }
 
     private void delete(final Query query) {
-        dispatcher.execute(new EntityServiceDeleteAction<Query>(query), new AsyncCallbackAdaptor<Query>() {
-            @Override
-            public void onSuccess(final Query result) {
-                refresh(false);
-            }
-        });
+        dispatcher.exec(new EntityServiceDeleteAction<Query>(query)).onSuccess(result -> refresh(false));
     }
 
     public interface QueryFavouritesView extends View {

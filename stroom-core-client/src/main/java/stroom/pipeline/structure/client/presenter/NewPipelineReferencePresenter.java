@@ -22,13 +22,11 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityReferenceFindAction;
-import stroom.entity.shared.ResultList;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.feed.shared.Feed;
 import stroom.item.client.StringListBox;
@@ -50,8 +48,8 @@ public class NewPipelineReferencePresenter
 
     @Inject
     public NewPipelineReferencePresenter(final EventBus eventBus, final NewPipelineReferenceView view,
-            final EntityDropDownPresenter pipelinePresenter, final EntityDropDownPresenter feedPresenter,
-            final ClientDispatchAsync dispatcher) {
+                                         final EntityDropDownPresenter pipelinePresenter, final EntityDropDownPresenter feedPresenter,
+                                         final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.pipelinePresenter = pipelinePresenter;
         this.feedPresenter = feedPresenter;
@@ -126,23 +124,19 @@ public class NewPipelineReferencePresenter
         findStreamTypeCriteria.obtainPurpose().add(Purpose.RAW);
         findStreamTypeCriteria.obtainPurpose().add(Purpose.PROCESSED);
         findStreamTypeCriteria.obtainPurpose().add(Purpose.CONTEXT);
-        dispatcher.execute(new EntityReferenceFindAction<>(findStreamTypeCriteria),
-                new AsyncCallbackAdaptor<ResultList<DocRef>>() {
-                    @Override
-                    public void onSuccess(final ResultList<DocRef> result) {
-                        if (result != null && result.size() > 0) {
-                            for (final DocRef docRef : result) {
-                                streamTypesWidget.addItem(docRef.getName());
-                            }
-                        }
+        dispatcher.exec(new EntityReferenceFindAction<>(findStreamTypeCriteria)).onSuccess(result -> {
+            if (result != null && result.size() > 0) {
+                for (final DocRef docRef : result) {
+                    streamTypesWidget.addItem(docRef.getName());
+                }
+            }
 
-                        if (selectedStreamType != null) {
-                            streamTypesWidget.setSelected(selectedStreamType);
-                        }
+            if (selectedStreamType != null) {
+                streamTypesWidget.setSelected(selectedStreamType);
+            }
 
-                        initialised = true;
-                    }
-                });
+            initialised = true;
+        });
     }
 
     public boolean isDirty() {

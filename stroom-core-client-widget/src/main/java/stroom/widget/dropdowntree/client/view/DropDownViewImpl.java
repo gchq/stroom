@@ -53,12 +53,9 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>impl
     @Inject
     public DropDownViewImpl(final Binder binder, final Resources resources) {
         widget = binder.createAndBindUi(this);
-        widget.addDomHandler(new MouseDownHandler() {
-            @Override
-            public void onMouseDown(final MouseDownEvent event) {
-                showPopup(event);
-                event.stopPropagation();
-            }
+        widget.addDomHandler(event -> {
+            showPopup(event);
+            event.stopPropagation();
         }, MouseDownEvent.getType());
     }
 

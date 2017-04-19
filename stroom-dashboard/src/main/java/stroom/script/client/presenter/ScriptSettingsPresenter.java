@@ -66,12 +66,7 @@ public class ScriptSettingsPresenter
 
     @Override
     protected void onBind() {
-        final DirtyHandler dirtyHandler = new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                setDirty(true);
-            }
-        };
+        final DirtyHandler dirtyHandler = event -> setDirty(true);
         registerHandler(scriptDependencyListPresenter.addDirtyHandler(dirtyHandler));
     }
 

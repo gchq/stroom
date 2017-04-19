@@ -16,7 +16,21 @@
 
 package stroom.streamstore.client.presenter;
 
-import stroom.dispatch.client.AsyncCallbackAdaptor;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.SimpleEventBus;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.view.client.HasRows;
+import com.google.gwt.view.client.Range;
+import com.google.gwt.view.client.RangeChangeEvent;
+import com.google.gwt.view.client.RangeChangeEvent.Handler;
+import com.google.gwt.view.client.RowCountChangeEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataAction;
@@ -38,21 +52,6 @@ import stroom.widget.tab.client.presenter.LayerContainer;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.view.client.HasRows;
-import com.google.gwt.view.client.Range;
-import com.google.gwt.view.client.RangeChangeEvent;
-import com.google.gwt.view.client.RangeChangeEvent.Handler;
-import com.google.gwt.view.client.RowCountChangeEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -95,8 +94,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     @Inject
     public DataPresenter(final EventBus eventBus, final DataView view, final TextPresenter textPresenter,
-            final MarkerListPresenter markerListPresenter, final ClientSecurityContext securityContext,
-            final ClientDispatchAsync dispatcher) {
+                         final MarkerListPresenter markerListPresenter, final ClientSecurityContext securityContext,
+                         final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.textPresenter = textPresenter;
         this.markerListPresenter = markerListPresenter;
@@ -262,23 +261,16 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                         final FetchDataAction action = actionQueue.get(actionQueue.size() - 1);
                         actionQueue.clear();
 
-                        dispatcher.execute(action, new AsyncCallbackAdaptor<AbstractFetchDataResult>() {
-                            @Override
-                            public void onSuccess(final AbstractFetchDataResult result) {
-                                // If we are queueing more actions then don't
-                                // update the text.
-                                if (actionQueue.size() == 0) {
-                                    setPageResponse(result, action.isFireEvents());
-                                    getView().setRefreshing(false);
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(final Throwable caught) {
-                                super.onFailure(caught);
-                                getView().setRefreshing(false);
-                            }
-                        });
+                        dispatcher.exec(action)
+                                .onSuccess(result -> {
+                                    // If we are queueing more actions then don't
+                                    // update the text.
+                                    if (actionQueue.size() == 0) {
+                                        setPageResponse(result, action.isFireEvents());
+                                        getView().setRefreshing(false);
+                                    }
+                                })
+                                .onFailure(caught -> getView().setRefreshing(false));
                     }
                 }
             };
@@ -461,7 +453,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     public void showStepSource(final Integer taskOffset, final StepLocation stepLocation,
-            final StreamType childStreamType, final List<Highlight> highlights) {
+                               final StreamType childStreamType, final List<Highlight> highlights) {
         this.highlights = highlights;
         this.highlightStreamId = stepLocation.getStreamId();
         this.highlightStreamNo = stepLocation.getStreamNo() - 1;

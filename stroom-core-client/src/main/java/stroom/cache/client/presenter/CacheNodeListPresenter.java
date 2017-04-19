@@ -103,12 +103,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                 return "Clear";
             }
         };
-        clearColumn.setFieldUpdater(new FieldUpdater<CacheNodeRow, String>() {
-            @Override
-            public void update(final int index, final CacheNodeRow row, final String value) {
-                dispatcher.execute(new CacheClearAction(row.getCacheInfo().getName(), row.getNode()), null);
-            }
-        });
+        clearColumn.setFieldUpdater((index, row, value) -> dispatcher.exec(new CacheClearAction(row.getCacheInfo().getName(), row.getNode())));
         getView().addColumn(clearColumn, "</br>", 50);
 
         getView().addEndColumn(new EndColumn<CacheNodeRow>());

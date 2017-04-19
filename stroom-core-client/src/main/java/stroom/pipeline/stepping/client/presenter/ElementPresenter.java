@@ -28,8 +28,9 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.app.client.event.DirtyKeyDownHander;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.widget.util.client.Future;
+import stroom.widget.util.client.FutureImpl;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
@@ -40,7 +41,6 @@ import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.entity.shared.HasData;
-import stroom.entity.shared.ResultList;
 import stroom.entity.shared.StringCriteria;
 import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.FindXSLTCriteria;
@@ -89,7 +89,9 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         this.dispatcher = dispatcher;
     }
 
-    public void load(final AsyncCallbackAdaptor<Boolean> callback) {
+    public Future<Boolean> load() {
+        final FutureImpl<Boolean> future = new FutureImpl<>();
+
         if (!loaded) {
             loaded = true;
             boolean async = false;
@@ -105,67 +107,46 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                             criteria.setOrderBy(FindXSLTCriteria.ORDER_BY_ID);
                             final EntityServiceFindAction<FindTextConverterCriteria, TextConverter> findAction = new EntityServiceFindAction<>(criteria);
                             async = true;
-                            dispatcher.execute(findAction, new AsyncCallbackAdaptor<ResultList<TextConverter>>() {
-                                @Override
-                                public void onSuccess(final ResultList<TextConverter> result) {
-                                    if (result != null && result.size() > 0) {
-                                        entity = result.get(0);
-                                        dirtyCode = false;
-                                        read();
-                                    }
+                            dispatcher.exec(findAction)
+                                    .onSuccess(result -> {
+                                        if (result != null && result.size() > 0) {
+                                            entity = result.get(0);
+                                            dirtyCode = false;
+                                            read();
+                                        }
 
-                                    callback.onSuccess(true);
-                                }
-
-                                @Override
-                                public void onFailure(final Throwable caught) {
-                                    super.onFailure(caught);
-                                    callback.onSuccess(false);
-                                }
-                            });
+                                        future.setResult(true);
+                                    })
+                                    .onFailure(caught -> future.setResult(false));
                         } else if (XSLT.ENTITY_TYPE.equals(entityRef.getType())) {
                             final FindXSLTCriteria criteria = new FindXSLTCriteria();
                             criteria.setName(new StringCriteria(entityRef.getName()));
                             criteria.setOrderBy(FindXSLTCriteria.ORDER_BY_ID);
                             final EntityServiceFindAction<FindXSLTCriteria, XSLT> findAction = new EntityServiceFindAction<>(criteria);
                             async = true;
-                            dispatcher.execute(findAction, new AsyncCallbackAdaptor<ResultList<XSLT>>() {
-                                @Override
-                                public void onSuccess(final ResultList<XSLT> result) {
-                                    if (result != null && result.size() > 0) {
-                                        entity = result.get(0);
-                                        dirtyCode = false;
-                                        read();
-                                    }
+                            dispatcher.exec(findAction)
+                                    .onSuccess(result -> {
+                                        if (result != null && result.size() > 0) {
+                                            entity = result.get(0);
+                                            dirtyCode = false;
+                                            read();
+                                        }
 
-                                    callback.onSuccess(true);
-                                }
-
-                                @Override
-                                public void onFailure(final Throwable caught) {
-                                    super.onFailure(caught);
-                                    callback.onSuccess(false);
-                                }
-                            });
+                                        future.setResult(true);
+                                    })
+                                    .onFailure(caught -> future.setResult(false));
                         }
                     } else {
                         async = true;
-                        dispatcher.execute(new EntityServiceLoadAction<>(entityRef, null), new AsyncCallbackAdaptor<Entity>() {
-                            @Override
-                            public void onSuccess(final Entity result) {
-                                entity = result;
-                                dirtyCode = false;
-                                read();
+                        dispatcher.exec(new EntityServiceLoadAction<>(entityRef, null))
+                                .onSuccess(result -> {
+                                    entity = result;
+                                    dirtyCode = false;
+                                    read();
 
-                                callback.onSuccess(true);
-                            }
-
-                            @Override
-                            public void onFailure(final Throwable caught) {
-                                super.onFailure(caught);
-                                callback.onSuccess(false);
-                            }
-                        });
+                                    future.setResult(true);
+                                })
+                                .onFailure(caught -> future.setResult(false));
                     }
                 } catch (final Exception e) {
                     AlertEvent.fireErrorFromException(this, e, null);
@@ -182,22 +163,21 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             getView().setOutputView(getOutputPresenter().getView());
 
             if (!async) {
-                Scheduler.get().scheduleDeferred(() -> callback.onSuccess(true));
+                Scheduler.get().scheduleDeferred(() -> future.setResult(true));
             }
         } else {
-            callback.onSuccess(true);
+            future.setResult(true);
         }
+
+        return future;
     }
 
     public void save() {
         if (loaded && entity != null && dirtyCode) {
             write();
-            dispatcher.execute(new EntityServiceSaveAction<>(entity), new AsyncCallbackAdaptor<Entity>() {
-                @Override
-                public void onSuccess(final Entity result) {
-                    entity = result;
-                    dirtyCode = false;
-                }
+            dispatcher.exec(new EntityServiceSaveAction<>(entity)).onSuccess(result -> {
+                entity = result;
+                dirtyCode = false;
             });
         }
     }

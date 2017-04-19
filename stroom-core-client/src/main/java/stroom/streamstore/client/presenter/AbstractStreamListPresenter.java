@@ -34,7 +34,6 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
 import stroom.entity.shared.EntityIdSet;
@@ -78,7 +77,6 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     // private final EntityIdSet<Stream> masterEntityIdSet = new
     // EntityIdSet<Stream>();
     private final EntityIdSet<Stream> entityIdSet = new EntityIdSet<Stream>();
-    //    private final InterceptingSelectionChangeHandler interceptingSelectionChangeHandler = new InterceptingSelectionChangeHandler();
     private final ClientDispatchAsync dispatcher;
     protected EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamAttributeMap> dataProvider;
     private ResultList<StreamAttributeMap> resultList = null;
@@ -309,23 +307,19 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                     streamAttributeMapCriteria.obtainFindStreamCriteria().obtainStreamIdSet().add(row.getStream());
                     populateFetchSet(streamAttributeMapCriteria.getFetchSet(), true);
 
-                    dispatcher.execute(
+                    dispatcher.exec(
                             new EntityServiceFindAction<FindStreamAttributeMapCriteria, StreamAttributeMap>(
-                                    streamAttributeMapCriteria),
-                            new AsyncCallbackAdaptor<ResultList<StreamAttributeMap>>() {
-                                @Override
-                                public void onSuccess(final ResultList<StreamAttributeMap> result) {
-                                    final StreamAttributeMap row = result.get(0);
-                                    final StringBuilder html = new StringBuilder();
+                                    streamAttributeMapCriteria)).onSuccess(result -> {
+                        final StreamAttributeMap streamAttributeMap = result.get(0);
+                        final StringBuilder html = new StringBuilder();
 
-                                    buildTipText(row, html);
+                        buildTipText(streamAttributeMap, html);
 
-                                    tooltipPresenter.setHTML(html.toString());
-                                    final PopupPosition popupPosition = new PopupPosition(x, y);
-                                    ShowPopupEvent.fire(AbstractStreamListPresenter.this, tooltipPresenter, PopupType.POPUP,
-                                            popupPosition, null);
-                                }
-                            });
+                        tooltipPresenter.setHTML(html.toString());
+                        final PopupPosition popupPosition = new PopupPosition(x, y);
+                        ShowPopupEvent.fire(AbstractStreamListPresenter.this, tooltipPresenter, PopupType.POPUP,
+                                popupPosition, null);
+                    });
                 }
             }
         };

@@ -63,12 +63,7 @@ public class TickList<T extends TickBox> extends Composite implements HasSelecti
             item.getElement().getStyle().setDisplay(Display.BLOCK);
             items.add(item);
             list.add(item);
-            item.addValueChangeHandler(new ValueChangeHandler<TickBoxState>() {
-                @Override
-                public void onValueChange(final ValueChangeEvent<TickBoxState> event) {
-                    fireUpdate();
-                }
-            });
+            item.addValueChangeHandler(event -> fireUpdate());
         }
     }
 

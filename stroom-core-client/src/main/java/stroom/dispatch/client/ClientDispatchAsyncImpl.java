@@ -34,7 +34,8 @@ import stroom.task.client.TaskStartEvent;
 import stroom.task.shared.RefreshAction;
 import stroom.util.client.RandomId;
 import stroom.util.shared.SharedObject;
-import stroom.util.shared.SharedString;
+import stroom.widget.util.client.Future;
+import stroom.widget.util.client.FutureImpl;
 
 import javax.inject.Provider;
 
@@ -85,66 +86,21 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
     }
 
     @Override
-    public <R extends SharedObject> void execute(final Action<R> task, final AsyncCallbackAdaptor<R> callback) {
-        execute(task, null, true, callback);
-    }
-
-//    @Override
-//    public <R extends SharedObject> void execute(final Action<R> task, final String message,
-//                                                 final AsyncCallbackAdaptor<R> callback) {
-//        execute(task, message, true, callback);
-//    }
-//
-//    @Override
-//    public <R extends SharedObject> void execute(final Action<R> task, final boolean showWorking,
-//                                                 final AsyncCallbackAdaptor<R> callback) {
-//        execute(task, null, showWorking, callback);
-//    }
-
-    private <R extends SharedObject> void execute(final Action<R> task, final String message, final boolean showWorking,
-                                                  final AsyncCallbackAdaptor<R> callback) {
-        if (showWorking) {
-            // Add the task to the map.
-            incrementTaskCount(message);
-        }
-
-        final AsyncFuture<R> future = dispatch(task, message, showWorking);
-        future.onSuccess(callback::onSuccess);
-
-        if (callback != null) {
-            // If the callback exclusively handles failure then let it
-            // do so.
-            if (callback.handlesFailure()) {
-                future.onFailure(callback::onFailure);
-            } else {
-                // Otherwise show the failure message and defer any
-                // other failure handling to the callback.
-
-                // Set the default behaviour of the future to show an error.
-                future.onFailure(throwable -> AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, () -> callback.onFailure(throwable)));
-            }
-        } else {
-            // Set the default behaviour of the future to show an error.
-            future.onFailure(throwable -> AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, null));
-        }
-    }
-
-    @Override
-    public <R extends SharedObject> AsyncFuture<R> exec(final Action<R> task) {
+    public <R extends SharedObject> Future<R> exec(final Action<R> task) {
         return exec(task, null, true);
     }
 
     @Override
-    public <R extends SharedObject> AsyncFuture<R> exec(final Action<R> task, final String message) {
+    public <R extends SharedObject> Future<R> exec(final Action<R> task, final String message) {
         return exec(task, message, true);
     }
 
     @Override
-    public <R extends SharedObject> AsyncFuture<R> exec(final Action<R> task, final boolean showWorking) {
+    public <R extends SharedObject> Future<R> exec(final Action<R> task, final boolean showWorking) {
         return exec(task, null, showWorking);
     }
 
-    private <R extends SharedObject> AsyncFuture<R> exec(final Action<R> task, final String message, final boolean showWorking) {
+    private <R extends SharedObject> Future<R> exec(final Action<R> task, final String message, final boolean showWorking) {
         if (showWorking) {
             // Add the task to the map.
             incrementTaskCount(message);
@@ -153,11 +109,11 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
         return dispatch(task, message, showWorking);
     }
 
-    private <R extends SharedObject> AsyncFuture<R> dispatch(final Action<R> action, final String message,
-                                                             final boolean showWorking) {
+    private <R extends SharedObject> Future<R> dispatch(final Action<R> action, final String message,
+                                                        final boolean showWorking) {
         action.setApplicationInstanceId(applicationInstanceId);
 
-        final AsyncFuture<R> future = new AsyncFuture<>();
+        final FutureImpl<R> future = new FutureImpl<>();
         // Set the default behaviour of the future to show an error.
         future.onFailure(throwable -> AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, null));
 

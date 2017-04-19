@@ -35,9 +35,8 @@ import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.app.client.LocationManager;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.dispatch.client.ExportFileCompleteHandler;
+import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseEntity;
@@ -61,8 +60,6 @@ import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.util.shared.SharedList;
-import stroom.util.shared.SharedLong;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.button.client.ImageButtonView;
@@ -303,12 +300,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
         // Some button's may not exist due to permissions
         if (streamListUpload != null) {
-            registerHandler(streamListUpload.addClickHandler(new ClickHandler() {
-                @Override
-                public void onClick(final ClickEvent event) {
-                    streamUploadPresenter.get().show(StreamPresenter.this, DocRef.create(feedCriteria));
-                }
-            }));
+            registerHandler(streamListUpload.addClickHandler(event -> streamUploadPresenter.get().show(StreamPresenter.this, DocRef.create(feedCriteria))));
         }
         if (streamListDownload != null) {
             registerHandler(streamListDownload
@@ -691,7 +683,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
         @Override
         protected void performAction(final FindStreamCriteria criteria, final ClientDispatchAsync dispatcher) {
-            dispatcher.execute(new DownloadDataAction(criteria), new ExportFileCompleteHandler(locationManager, null));
+            dispatcher.exec(new DownloadDataAction(criteria)).onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result));
         }
     }
 
@@ -756,19 +748,14 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
 
         void doDelete(final FindStreamCriteria criteria, final ClientDispatchAsync dispatcher) {
-            dispatcher.execute(new EntityServiceFindDeleteAction<FindStreamCriteria, Stream>(criteria),
-                    new AsyncCallbackAdaptor<SharedLong>() {
-                        @Override
-                        public void onSuccess(final SharedLong result) {
-                            getStreamListPresenter().getSelectedEntityIdSet().clear();
-                            getStreamListPresenter().getSelectedEntityIdSet().setMatchAll(false);
+            dispatcher.exec(new EntityServiceFindDeleteAction<FindStreamCriteria, Stream>(criteria)).onSuccess(result -> {
+                getStreamListPresenter().getSelectedEntityIdSet().clear();
+                getStreamListPresenter().getSelectedEntityIdSet().setMatchAll(false);
 
-                            AlertEvent.fireInfo(DeleteStreamClickHandler.this,
-                                    getDeleteText(criteria, true) + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), () -> refreshList());
-                        }
-                    });
+                AlertEvent.fireInfo(DeleteStreamClickHandler.this,
+                        getDeleteText(criteria, true) + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), () -> refreshList());
+            });
         }
-
     }
 
     private static class ProcessStreamClickHandler extends AbstractStreamClickHandler {
@@ -781,39 +768,32 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         @Override
         protected void performAction(final FindStreamCriteria criteria, final ClientDispatchAsync dispatcher) {
             if (criteria != null) {
-                ConfirmEvent.fire(this, "Are you sure you want to reprocess the selected items", new ConfirmCallback() {
-                    @Override
-                    public void onResult(final boolean confirm) {
-                        if (confirm) {
-                            dispatcher.execute(new ReprocessDataAction(criteria),
-                                    new AsyncCallbackAdaptor<SharedList<ReprocessDataInfo>>() {
-                                        @Override
-                                        public void onSuccess(final SharedList<ReprocessDataInfo> result) {
-                                            if (result != null && result.size() > 0) {
-                                                for (final ReprocessDataInfo info : result) {
-                                                    switch (info.getSeverity()) {
-                                                        case INFO:
-                                                            AlertEvent.fireInfo(ProcessStreamClickHandler.this, info.getMessage(),
-                                                                    info.getDetails(), null);
-                                                            break;
-                                                        case WARNING:
-                                                            AlertEvent.fireWarn(ProcessStreamClickHandler.this, info.getMessage(),
-                                                                    info.getDetails(), null);
-                                                            break;
-                                                        case ERROR:
-                                                            AlertEvent.fireError(ProcessStreamClickHandler.this, info.getMessage(),
-                                                                    info.getDetails(), null);
-                                                            break;
-                                                        case FATAL_ERROR:
-                                                            AlertEvent.fireError(ProcessStreamClickHandler.this, info.getMessage(),
-                                                                    info.getDetails(), null);
-                                                            break;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    });
-                        }
+                ConfirmEvent.fire(this, "Are you sure you want to reprocess the selected items", confirm -> {
+                    if (confirm) {
+                        dispatcher.exec(new ReprocessDataAction(criteria)).onSuccess(result -> {
+                            if (result != null && result.size() > 0) {
+                                for (final ReprocessDataInfo info : result) {
+                                    switch (info.getSeverity()) {
+                                        case INFO:
+                                            AlertEvent.fireInfo(ProcessStreamClickHandler.this, info.getMessage(),
+                                                    info.getDetails(), null);
+                                            break;
+                                        case WARNING:
+                                            AlertEvent.fireWarn(ProcessStreamClickHandler.this, info.getMessage(),
+                                                    info.getDetails(), null);
+                                            break;
+                                        case ERROR:
+                                            AlertEvent.fireError(ProcessStreamClickHandler.this, info.getMessage(),
+                                                    info.getDetails(), null);
+                                            break;
+                                        case FATAL_ERROR:
+                                            AlertEvent.fireError(ProcessStreamClickHandler.this, info.getMessage(),
+                                                    info.getDetails(), null);
+                                            break;
+                                    }
+                                }
+                            }
+                        });
                     }
                 });
             }

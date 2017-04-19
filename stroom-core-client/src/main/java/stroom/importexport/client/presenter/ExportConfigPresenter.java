@@ -26,7 +26,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.app.client.LocationManager;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.dispatch.client.ExportFileCompleteHandler;
+import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.Folder;
@@ -113,8 +113,9 @@ public class ExportConfigPresenter
                 }
             }
 
-            clientDispatchAsync.execute(new ExportConfigAction(docRefs),
-                    new ExportFileCompleteHandler(locationManager, this));
+            clientDispatchAsync.exec(new ExportConfigAction(docRefs))
+                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
+                    .onFailure(throwable -> ExportFileCompleteUtil.onFailure(this));
         }
     }
 

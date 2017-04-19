@@ -17,28 +17,22 @@
 package stroom.dashboard.client.query;
 
 import com.google.gwt.user.cellview.client.CellList;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.Query;
-import stroom.query.client.ExpressionTreePresenter;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.ResultList;
-import stroom.entity.shared.StringCriteria;
+import stroom.query.client.ExpressionTreePresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.util.client.DoubleSelectEvent;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.ArrayList;
@@ -60,7 +54,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
 
     @Inject
     public QueryHistoryPresenter(final EventBus eventBus, final QueryHistoryView view,
-            final ExpressionTreePresenter expressionPresenter, final ClientDispatchAsync dispatcher) {
+                                 final ExpressionTreePresenter expressionPresenter, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.dispatcher = dispatcher;
         this.expressionPresenter = expressionPresenter;
@@ -76,24 +70,16 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
 
     @Override
     protected void onBind() {
-        registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                final Query query = selectionModel.getSelectedObject();
+        registerHandler(selectionModel.addSelectionChangeHandler(event -> {
+            final Query query = selectionModel.getSelectedObject();
 
-                if (query == null || query.getQueryData() == null) {
-                    expressionPresenter.read(null);
-                } else {
-                    expressionPresenter.read(query.getQueryData().getExpression());
-                }
+            if (query == null || query.getQueryData() == null) {
+                expressionPresenter.read(null);
+            } else {
+                expressionPresenter.read(query.getQueryData().getExpression());
             }
         }));
-        registerHandler(selectionModel.addDoubleSelectHandler(new DoubleSelectEvent.Handler() {
-            @Override
-            public void onSelect(final DoubleSelectEvent event) {
-                close(true);
-            }
-        }));
+        registerHandler(selectionModel.addDoubleSelectHandler(event -> close(true)));
     }
 
     public void show(final QueryPresenter queryPresenter, final long dashboardId) {
@@ -111,43 +97,40 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         criteria.setPageRequest(new PageRequest(0L, 100));
 
         final EntityServiceFindAction<FindQueryCriteria, Query> action = new EntityServiceFindAction<>(criteria);
-        dispatcher.execute(action, new AsyncCallbackAdaptor<ResultList<Query>>() {
-            @Override
-            public void onSuccess(final ResultList<Query> result) {
-                selectionModel.clear();
+        dispatcher.exec(action).onSuccess(result -> {
+            selectionModel.clear();
 
-                String lastExpression = null;
-                final List<Query> dedupedList = new ArrayList<>(result.getSize());
-                for (final Query query : result) {
-                    if (query != null && query.getQueryData() != null && query.getQueryData().getExpression() != null) {
-                        final String expression = query.getQueryData().getExpression().toString();
-                        if (lastExpression == null || !lastExpression.equals(expression)) {
-                            dedupedList.add(query);
-                        }
-
-                        lastExpression = expression;
+            String lastExpression = null;
+            final List<Query> dedupedList = new ArrayList<>(result.getSize());
+            for (final Query query : result) {
+                if (query != null && query.getQueryData() != null && query.getQueryData().getExpression() != null) {
+                    final String expression = query.getQueryData().getExpression().toString();
+                    if (lastExpression == null || !lastExpression.equals(expression)) {
+                        dedupedList.add(query);
                     }
+
+                    lastExpression = expression;
                 }
+            }
 
-                getView().getCellList().setRowData(dedupedList);
-                getView().getCellList().setRowCount(dedupedList.size(), true);
+            getView().getCellList().setRowData(dedupedList);
+            getView().getCellList().setRowCount(dedupedList.size(), true);
 
-                if (showAfterRefresh) {
-                    final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                        @Override
-                        public void onHideRequest(final boolean autoClose, final boolean ok) {
-                            close(ok);
-                        }
+            if (showAfterRefresh) {
+                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        close(ok);
+                    }
 
-                        @Override
-                        public void onHide(final boolean autoClose, final boolean ok) {
-                        }
-                    };
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                    }
+                };
 
-                    final PopupSize popupSize = new PopupSize(500, 400, true);
-                    ShowPopupEvent.fire(queryPresenter, QueryHistoryPresenter.this, PopupType.OK_CANCEL_DIALOG,
-                            popupSize, "Query History", popupUiHandlers);
-                }
+                final PopupSize popupSize = new PopupSize(500, 400, true);
+                ShowPopupEvent.fire(queryPresenter, QueryHistoryPresenter.this, PopupType.OK_CANCEL_DIALOG,
+                        popupSize, "Query History", popupUiHandlers);
             }
         });
     }

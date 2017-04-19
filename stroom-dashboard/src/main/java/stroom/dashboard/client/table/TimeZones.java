@@ -16,17 +16,14 @@
 
 package stroom.dashboard.client.table;
 
-import java.util.Date;
-import java.util.List;
-
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import stroom.dashboard.shared.FetchTimeZonesAction;
-import stroom.dashboard.shared.TimeZoneData;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
+
+import java.util.Date;
+import java.util.List;
 
 @Singleton
 public class TimeZones {
@@ -41,12 +38,7 @@ public class TimeZones {
         } catch (final Exception e) {
         }
 
-        dispatcher.execute(new FetchTimeZonesAction(), new AsyncCallbackAdaptor<TimeZoneData>() {
-            @Override
-            public void onSuccess(final TimeZoneData result) {
-                ids = result.getIds();
-            }
-        });
+        dispatcher.exec(new FetchTimeZonesAction()).onSuccess(result -> ids = result.getIds());
     }
 
     public String getTimeZone() {
@@ -62,7 +54,7 @@ public class TimeZones {
      * using the ECMAScript Internationalisation API Specification
      *
      * @return The browsers time zone, e.g. 'Europe/London' or
-     *         'Australia/Sydney'.
+     * 'Australia/Sydney'.
      */
     private native String getIntlTimeZone()
     /*-{

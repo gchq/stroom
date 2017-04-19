@@ -17,7 +17,10 @@
 package stroom.pipeline.structure.client.presenter;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.ListBox;
@@ -30,11 +33,9 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityReferenceFindAction;
-import stroom.entity.shared.ResultList;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.ExplorerData;
 import stroom.item.client.ItemListBox;
@@ -189,13 +190,10 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             listBox.addItem("true");
             listBox.addItem("false");
 
-            listBox.addChangeHandler(new ChangeHandler() {
-                @Override
-                public void onChange(final ChangeEvent event) {
-                    final Boolean selected = getBoolean(listBox.getSelectedIndex());
-                    if (!EqualsUtil.isEquals(selected, currentBoolean)) {
-                        setDirty(true);
-                    }
+            listBox.addChangeHandler(event -> {
+                final Boolean selected = getBoolean(listBox.getSelectedIndex());
+                if (!EqualsUtil.isEquals(selected, currentBoolean)) {
+                    setDirty(true);
                 }
             });
 
@@ -313,24 +311,17 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             // Load stream types.
             final FindStreamTypeCriteria findStreamTypeCriteria = new FindStreamTypeCriteria();
             findStreamTypeCriteria.obtainPurpose().add(Purpose.PROCESSED);
-            dispatcher.execute(new EntityReferenceFindAction<>(findStreamTypeCriteria),
-                    new AsyncCallbackAdaptor<ResultList<DocRef>>() {
-                        @Override
-                        public void onSuccess(final ResultList<DocRef> result) {
-                            for (final DocRef streamType : result) {
-                                streamTypesWidget.addItem(streamType.getName());
-                            }
-                            streamTypesWidget.setSelected(currentStreamType);
-                        }
-                    });
+            dispatcher.exec(new EntityReferenceFindAction<>(findStreamTypeCriteria)).onSuccess(result -> {
+                for (final DocRef streamType : result) {
+                    streamTypesWidget.addItem(streamType.getName());
+                }
+                streamTypesWidget.setSelected(currentStreamType);
+            });
 
-            streamTypesWidget.addChangeHandler(new ChangeHandler() {
-                @Override
-                public void onChange(final ChangeEvent event) {
-                    final String streamType = streamTypesWidget.getSelected();
-                    if (!EqualsUtil.isEquals(currentStreamType, streamType)) {
-                        setDirty(true);
-                    }
+            streamTypesWidget.addChangeHandler(event -> {
+                final String streamType = streamTypesWidget.getSelected();
+                if (!EqualsUtil.isEquals(currentStreamType, streamType)) {
+                    setDirty(true);
                 }
             });
 

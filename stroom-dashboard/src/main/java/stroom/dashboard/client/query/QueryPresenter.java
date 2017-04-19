@@ -42,14 +42,12 @@ import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.QueryKeyImpl;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.shared.DocRef;
 import stroom.explorer.client.presenter.EntityChooser;
-import stroom.explorer.shared.ExplorerData;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.client.event.ChangeDataEvent;
@@ -71,7 +69,6 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.button.client.GlyphButtonView;
@@ -184,108 +181,70 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         indexLoader = new IndexLoader(getEventBus(), dispatcher);
         searchModel = new SearchModel(searchBus, this, indexLoader, timeZones);
 
-        clientPropertyCache.get(new AsyncCallbackAdaptor<ClientProperties>() {
-            @Override
-            public void onSuccess(final ClientProperties result) {
-                defaultProcessorTimeLimit = result.getLong(ClientProperties.PROCESS_TIME_LIMIT, DEFAULT_TIME_LIMIT);
-                defaultProcessorRecordLimit = result.getLong(ClientProperties.PROCESS_RECORD_LIMIT,
-                        DEFAULT_RECORD_LIMIT);
-            }
-
-            @Override
-            public void onFailure(final Throwable caught) {
-                AlertEvent.fireError(QueryPresenter.this, caught.getMessage(), null);
-            }
-        });
+        clientPropertyCache.get()
+                .onSuccess(result -> {
+                    defaultProcessorTimeLimit = result.getLong(ClientProperties.PROCESS_TIME_LIMIT, DEFAULT_TIME_LIMIT);
+                    defaultProcessorRecordLimit = result.getLong(ClientProperties.PROCESS_RECORD_LIMIT,
+                            DEFAULT_RECORD_LIMIT);
+                })
+                .onFailure(caught -> AlertEvent.fireError(QueryPresenter.this, caught.getMessage(), null));
     }
 
     @Override
     protected void onBind() {
         super.onBind();
 
-        registerHandler(expressionPresenter.addDataSelectionHandler(new DataSelectionHandler<ExpressionItem>() {
-            @Override
-            public void onSelection(final DataSelectionEvent<ExpressionItem> event) {
-                setButtonsEnabled();
+        registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
+        registerHandler(expressionPresenter.addContextMenuHandler(event -> {
+            final List<Item> menuItems = addExpressionActionsToMenu();
+            if (menuItems != null && menuItems.size() > 0) {
+                final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
+                showMenu(popupPosition, menuItems);
             }
         }));
-        registerHandler(expressionPresenter.addContextMenuHandler(new ContextMenuEvent.Handler() {
-            @Override
-            public void onContextMenu(final ContextMenuEvent event) {
-                final List<Item> menuItems = addExpressionActionsToMenu();
-                if (menuItems != null && menuItems.size() > 0) {
-                    final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                    showMenu(popupPosition, menuItems);
-                }
+        registerHandler(addOperatorButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                addOperator();
             }
         }));
-        registerHandler(addOperatorButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    addOperator();
-                }
+        registerHandler(addTermButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                addTerm();
             }
         }));
-        registerHandler(addTermButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    addTerm();
-                }
+        registerHandler(disableItemButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                disable();
             }
         }));
-        registerHandler(disableItemButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    disable();
-                }
+        registerHandler(deleteItemButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                delete();
             }
         }));
-        registerHandler(deleteItemButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    delete();
-                }
+        registerHandler(historyButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                historyPresenter.show(QueryPresenter.this, getComponents().getDashboard().getId());
             }
         }));
-        registerHandler(historyButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    historyPresenter.show(QueryPresenter.this, getComponents().getDashboard().getId());
-                }
-            }
-        }));
-        registerHandler(favouriteButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    final ExpressionOperator root = new ExpressionOperator();
-                    expressionPresenter.write(root);
-                    favouritesPresenter.show(QueryPresenter.this, getComponents().getDashboard().getId(),
-                            getSettings().getDataSource(), root);
-                }
+        registerHandler(favouriteButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                final ExpressionOperator root = new ExpressionOperator();
+                expressionPresenter.write(root);
+                favouritesPresenter.show(QueryPresenter.this, getComponents().getDashboard().getId(),
+                        getSettings().getDataSource(), root);
             }
         }));
         if (processButton != null) {
-            registerHandler(processButton.addClickHandler(new ClickHandler() {
-                @Override
-                public void onClick(final ClickEvent event) {
-                    if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                        choosePipeline();
-                    }
+            registerHandler(processButton.addClickHandler(event -> {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    choosePipeline();
                 }
             }));
         }
-        registerHandler(warningsButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    showWarnings();
-                }
+        registerHandler(warningsButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                showWarnings();
             }
         }));
         registerHandler(indexLoader.addChangeDataHandler(new ChangeDataHandler<IndexLoader>() {
@@ -435,13 +394,9 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         // Now create the processor filter using the find stream criteria.
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
         findStreamCriteria.setQueryData(queryData);
-        dispatcher.execute(new CreateProcessorAction(pipeline, findStreamCriteria, true, 1),
-                new AsyncCallbackAdaptor<StreamProcessorFilter>() {
-                    @Override
-                    public void onSuccess(final StreamProcessorFilter streamProcessorFilter) {
-                        CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter);
-                    }
-                });
+        dispatcher.exec(new CreateProcessorAction(pipeline, findStreamCriteria, true, 1)).onSuccess(streamProcessorFilter -> {
+            CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter);
+        });
     }
 
     private void showWarnings() {

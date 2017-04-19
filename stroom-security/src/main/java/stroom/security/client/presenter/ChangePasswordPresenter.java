@@ -24,17 +24,13 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-
+import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.security.client.CurrentUser;
 import stroom.security.client.event.ChangePasswordEvent;
 import stroom.security.client.event.ChangePasswordEvent.ChangePasswordHandler;
 import stroom.security.shared.ChangePasswordAction;
 import stroom.security.shared.User;
-import stroom.security.shared.UserAndPermissions;
-import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.presenter.AlertCallback;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -74,7 +70,7 @@ public class ChangePasswordPresenter
 
     @Inject
     public ChangePasswordPresenter(final EventBus eventBus, final ChangePasswordView view,
-            final ChangePasswordProxy proxy, final CurrentUser currentUser, final ClientDispatchAsync dispatcher) {
+                                   final ChangePasswordProxy proxy, final CurrentUser currentUser, final ClientDispatchAsync dispatcher) {
         super(eventBus, view, proxy);
         this.currentUser = currentUser;
         this.dispatcher = dispatcher;
@@ -132,20 +128,13 @@ public class ChangePasswordPresenter
                         null);
 
             } else {
-                dispatcher.execute(new ChangePasswordAction(user, oldPassword, newPassword),
-                        new AsyncCallbackAdaptor<UserAndPermissions>() {
-                            @Override
-                            public void onSuccess(final UserAndPermissions result) {
-                                AlertEvent.fireInfo(ChangePasswordPresenter.this, "The password has been changed.",
-                                        new AlertCallback() {
-                                    @Override
-                                    public void onClose() {
-                                        currentUser.setUserAndPermissions(result, loginOnChange);
-                                        HidePopupEvent.fire(ChangePasswordPresenter.this, ChangePasswordPresenter.this);
-                                    }
-                                });
-                            }
-                        });
+                dispatcher.exec(new ChangePasswordAction(user, oldPassword, newPassword)).onSuccess(result -> {
+                    AlertEvent.fireInfo(ChangePasswordPresenter.this, "The password has been changed.",
+                            () -> {
+                                currentUser.setUserAndPermissions(result, loginOnChange);
+                                HidePopupEvent.fire(ChangePasswordPresenter.this, ChangePasswordPresenter.this);
+                            });
+                });
             }
         }
     }

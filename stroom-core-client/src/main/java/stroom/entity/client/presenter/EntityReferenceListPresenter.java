@@ -16,21 +16,19 @@
 
 package stroom.entity.client.presenter;
 
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
-import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.EntityServiceFindReferenceAction;
-import stroom.entity.shared.ResultList;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import stroom.data.grid.client.DataGridView;
+import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.EndColumn;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.DocRef;
+import stroom.entity.shared.EntityServiceFindReferenceAction;
+import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 public class EntityReferenceListPresenter extends MyPresenterWidget<DataGridView<DocRef>>
         implements HasRead<BaseEntity> {
@@ -38,7 +36,7 @@ public class EntityReferenceListPresenter extends MyPresenterWidget<DataGridView
 
     @Inject
     public EntityReferenceListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-            final TooltipPresenter tooltipPresenter) {
+                                        final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<DocRef>(false));
 
         this.dispatcher = dispatcher;
@@ -61,13 +59,10 @@ public class EntityReferenceListPresenter extends MyPresenterWidget<DataGridView
     @SuppressWarnings("unchecked")
     @Override
     public void read(final BaseEntity entity) {
-        final EntityServiceFindReferenceAction action = new EntityServiceFindReferenceAction(entity);
-        dispatcher.execute(action, new AsyncCallbackAdaptor<ResultList<DocRef>>() {
-            @Override
-            public void onSuccess(final ResultList<DocRef> result) {
-                getView().setRowData(0, result);
-                getView().setRowCount(result.size(), true);
-            }
+        final EntityServiceFindReferenceAction<BaseEntity> action = new EntityServiceFindReferenceAction(entity);
+        dispatcher.exec(action).onSuccess(result -> {
+            getView().setRowData(0, result);
+            getView().setRowCount(result.size(), true);
         });
     }
 }

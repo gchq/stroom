@@ -35,7 +35,6 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.EntityServiceFindAction;
@@ -51,7 +50,6 @@ import stroom.node.shared.Volume;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.VoidResult;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.button.client.ImageButtonView;
@@ -484,37 +482,25 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
     private void doFlush() {
         final FlushIndexShardAction action = new FlushIndexShardAction(criteria);
-        dispatcher.execute(action, new AsyncCallbackAdaptor<VoidResult>() {
-            @Override
-            public void onSuccess(final VoidResult result) {
+        dispatcher.exec(action).onSuccess(result ->
                 AlertEvent.fireInfo(IndexShardPresenter.this,
                         "Selected index shards will be flushed. Please be patient as this may take some time.",
-                        () -> refresh());
-            }
-        });
+                        this::refresh));
     }
 
     private void doClose() {
         final CloseIndexShardAction action = new CloseIndexShardAction(criteria);
-        dispatcher.execute(action, new AsyncCallbackAdaptor<VoidResult>() {
-            @Override
-            public void onSuccess(final VoidResult result) {
+        dispatcher.exec(action).onSuccess(result ->
                 AlertEvent.fireInfo(IndexShardPresenter.this,
                         "Selected index shards will be closed. Please be patient as this may take some time.",
-                        () -> refresh());
-            }
-        });
+                        this::refresh));
     }
 
     private void doDelete() {
         final DeleteIndexShardAction action = new DeleteIndexShardAction(criteria);
-        dispatcher.execute(action, new AsyncCallbackAdaptor<VoidResult>() {
-            @Override
-            public void onSuccess(final VoidResult result) {
+        dispatcher.exec(action).onSuccess(result ->
                 AlertEvent.fireInfo(IndexShardPresenter.this,
                         "Selected index shards will be deleted. Please be patient as this may take some time.",
-                        () -> refresh());
-            }
-        });
+                        this::refresh));
     }
 }

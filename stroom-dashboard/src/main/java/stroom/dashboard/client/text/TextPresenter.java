@@ -30,9 +30,9 @@ import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TextSettings;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.pipeline.shared.AbstractFetchDataResult;
+import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
@@ -43,8 +43,6 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.Stream;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Highlight;
-import stroom.editor.client.presenter.EditorPresenter;
-import stroom.editor.client.presenter.HtmlPresenter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -301,31 +299,28 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     final FetchDataAction action = fetchDataQueue.get(fetchDataQueue.size() - 1);
                     fetchDataQueue.clear();
 
-                    dispatcher.execute(action, new AsyncCallbackAdaptor<AbstractFetchDataResult>() {
-                        @Override
-                        public void onSuccess(final AbstractFetchDataResult result) {
-                            // If we are queueing more actions then don't update
-                            // the text.
-                            if (fetchDataQueue.size() == 0) {
-                                String data = "The data has been deleted or reprocessed since this index was built";
-                                String classification = null;
-                                boolean isHtml = false;
-                                if (result != null) {
-                                    if (result instanceof FetchDataResult) {
-                                        final FetchDataResult fetchDataResult = (FetchDataResult) result;
-                                        data = fetchDataResult.getData();
-                                        classification = result.getClassification();
-                                        isHtml = fetchDataResult.isHtml();
-                                    } else {
-                                        data = "";
-                                        classification = null;
-                                        isHtml = false;
-                                    }
+                    dispatcher.exec(action).onSuccess(result -> {
+                        // If we are queueing more actions then don't update
+                        // the text.
+                        if (fetchDataQueue.size() == 0) {
+                            String data = "The data has been deleted or reprocessed since this index was built";
+                            String classification = null;
+                            boolean isHtml = false;
+                            if (result != null) {
+                                if (result instanceof FetchDataResult) {
+                                    final FetchDataResult fetchDataResult = (FetchDataResult) result;
+                                    data = fetchDataResult.getData();
+                                    classification = result.getClassification();
+                                    isHtml = fetchDataResult.isHtml();
+                                } else {
+                                    data = "";
+                                    classification = null;
+                                    isHtml = false;
                                 }
-
-                                TextPresenter.this.isHtml = isHtml;
-                                showData(data, classification, currentHighlightStrings, isHtml);
                             }
+
+                            TextPresenter.this.isHtml = isHtml;
+                            showData(data, classification, currentHighlightStrings, isHtml);
                         }
                     });
                 }

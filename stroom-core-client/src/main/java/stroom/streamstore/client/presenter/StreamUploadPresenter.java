@@ -16,10 +16,15 @@
 
 package stroom.streamstore.client.presenter;
 
+import com.google.gwt.user.client.ui.FileUpload;
+import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityItemListBox;
 import stroom.entity.shared.DocRef;
@@ -34,12 +39,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import com.google.gwt.user.client.ui.FileUpload;
-import com.google.gwt.user.client.ui.FormPanel;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresenter.DataUploadView> {
     private DocRef feed;
@@ -71,21 +70,14 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
                 final Long effectiveMs = getView().getEffectiveDate();
                 final UploadDataAction action = new UploadDataAction(resourceKey, feed,
                         getView().getStreamType().getSelectedItem(), effectiveMs, getView().getMetaData(), fileName);
-                final AsyncCallbackAdaptor<ResourceKey> callback = new AsyncCallbackAdaptor<ResourceKey>() {
-                    @Override
-                    public void onSuccess(final ResourceKey result) {
-                        hide();
-                        AlertEvent.fireInfo(StreamUploadPresenter.this.streamPresenter, "Uploaded file", null);
-                        streamPresenter.refresh();
-                    }
 
-                    @Override
-                    public void onFailure(final Throwable caught) {
-                        error(caught.getMessage());
-                    }
-                };
-
-                dispatcher.execute(action, callback);
+                dispatcher.exec(action)
+                        .onSuccess(result -> {
+                            hide();
+                            AlertEvent.fireInfo(StreamUploadPresenter.this.streamPresenter, "Uploaded file", null);
+                            streamPresenter.refresh();
+                        })
+                        .onFailure(caught -> error(caught.getMessage()));
             }
 
             @Override

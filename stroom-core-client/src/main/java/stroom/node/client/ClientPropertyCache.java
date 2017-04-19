@@ -16,13 +16,14 @@
 
 package stroom.node.client;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.widget.util.client.Future;
+import stroom.widget.util.client.FutureImpl;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.FetchClientPropertiesAction;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class ClientPropertyCache {
@@ -34,23 +35,19 @@ public class ClientPropertyCache {
         this.dispatcher = dispatcher;
     }
 
-    public void get(final AsyncCallbackAdaptor<ClientProperties> callback) {
+    public Future<ClientProperties> get() {
+        final FutureImpl<ClientProperties> future = new FutureImpl<>();
         final ClientProperties props = clientProperties;
         if (props == null) {
-            dispatcher.execute(new FetchClientPropertiesAction(), new AsyncCallbackAdaptor<ClientProperties>() {
-                @Override
-                public void onSuccess(final ClientProperties result) {
-                    clientProperties = result;
-                    callback.onSuccess(result);
-                }
-
-                @Override
-                public void onFailure(final Throwable caught) {
-                    callback.onFailure(caught);
-                }
-            });
+            dispatcher.exec(new FetchClientPropertiesAction())
+                    .onSuccess(result -> {
+                        clientProperties = result;
+                        future.setResult(result);
+                    })
+                    .onFailure(future::setThrowable);
         } else {
-            callback.onSuccess(props);
+            future.setResult(props);
         }
+        return future;
     }
 }

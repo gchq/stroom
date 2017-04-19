@@ -23,10 +23,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import stroom.app.client.event.DirtyKeyDownHander;
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.dashboard.client.vis.ClearScriptCacheEvent;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.editor.client.event.FormatEvent;
-import stroom.editor.client.event.FormatEvent.FormatHandler;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
@@ -157,20 +154,17 @@ public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Sc
             fetchSet.add(Script.FETCH_RESOURCE);
             final EntityServiceLoadAction<Script> action = new EntityServiceLoadAction<Script>(DocRef.create(getEntity()),
                     fetchSet);
-            dispatcher.execute(action, new AsyncCallbackAdaptor<Script>() {
-                @Override
-                public void onSuccess(final Script script) {
-                    resource = script.getResource();
-                    if (resource != null) {
-                        codePresenter.setText(resource.getData());
-                    }
-
-                    if (callback != null) {
-                        callback.onReady(codePresenter);
-                    }
-
-                    loadedResource = true;
+            dispatcher.exec(action).onSuccess(script -> {
+                resource = script.getResource();
+                if (resource != null) {
+                    codePresenter.setText(resource.getData());
                 }
+
+                if (callback != null) {
+                    callback.onReady(codePresenter);
+                }
+
+                loadedResource = true;
             });
         }
     }

@@ -21,9 +21,9 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.alert.client.event.AlertEvent;
 import stroom.app.client.MenuKeys;
 import stroom.app.client.presenter.Plugin;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
@@ -43,30 +43,28 @@ public class HelpPlugin extends Plugin {
     public void onReveal(final BeforeRevealMenubarEvent event) {
         super.onReveal(event);
 
+        clientPropertyCache.get()
+                .onSuccess(result -> {
+                    IconMenuItem helpMenuItem;
+                    String helpUrl = result.get(ClientProperties.HELP_URL);
+                    if (helpUrl != null && !helpUrl.equals("")) {
+                        helpMenuItem = new IconMenuItem(1, GlyphIcons.HELP, GlyphIcons.HELP, "Help", null, true, new Command() {
+                            @Override
+                            public void execute() {
+                                Window.open(GWT.getHostPageBaseURL() + result.get(ClientProperties.HELP_URL), "_blank", "");
+                            }
+                        });
+                    } else {
+                        helpMenuItem = new IconMenuItem(1, GlyphIcons.HELP, GlyphIcons.HELP, "Help is not configured!", null, true, new Command() {
+                            @Override
+                            public void execute() {
+                                // We're not going to try and do anything here.
+                            }
+                        });
+                    }
 
-        clientPropertyCache.get(new AsyncCallbackAdaptor<ClientProperties>() {
-            @Override
-            public void onSuccess(final ClientProperties result) {
-                IconMenuItem helpMenuItem;
-                String helpUrl = result.get(ClientProperties.HELP_URL);
-                if (helpUrl != null && !helpUrl.equals("")) {
-                    helpMenuItem = new IconMenuItem(1, GlyphIcons.HELP, GlyphIcons.HELP, "Help", null, true, new Command() {
-                        @Override
-                        public void execute() {
-                            Window.open(GWT.getHostPageBaseURL() + result.get(ClientProperties.HELP_URL), "_blank", "");
-                        }
-                    });
-                } else {
-                    helpMenuItem = new IconMenuItem(1, GlyphIcons.HELP, GlyphIcons.HELP, "Help is not configured!", null, true, new Command() {
-                        @Override
-                        public void execute() {
-                            // We're not going to try and do anything here.
-                        }
-                    });
-                }
-
-                event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, helpMenuItem);
-            }
-        });
+                    event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, helpMenuItem);
+                })
+                .onFailure(caught -> AlertEvent.fireError(HelpPlugin.this, caught.getMessage(), null));
     }
 }

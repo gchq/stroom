@@ -16,7 +16,11 @@
 
 package stroom.security.client;
 
-import stroom.dispatch.client.AsyncCallbackAdaptor;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.security.client.event.RequestLogoutEvent;
@@ -24,12 +28,6 @@ import stroom.security.shared.CheckDocumentPermissionAction;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
-import stroom.util.shared.SharedBoolean;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -108,12 +106,7 @@ public class CurrentUser extends ClientSecurityContext implements HasHandlers {
     @Override
     public void hasDocumentPermission(final String documentType, final String documentId, final String permission, final AsyncCallback<Boolean> callback) {
         final ClientDispatchAsync dispatcher = dispatcherProvider.get();
-        dispatcher.execute(new CheckDocumentPermissionAction(documentType, documentId, permission), new AsyncCallbackAdaptor<SharedBoolean>() {
-            @Override
-            public void onSuccess(final SharedBoolean result) {
-                callback.onSuccess(result.getBoolean());
-            }
-        });
+        dispatcher.exec(new CheckDocumentPermissionAction(documentType, documentId, permission)).onSuccess(result -> callback.onSuccess(result.getBoolean()));
     }
 
     @Override

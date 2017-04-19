@@ -19,7 +19,6 @@
 package stroom.entity.client;
 
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.app.client.KeyboardInterceptor;
@@ -27,7 +26,6 @@ import stroom.app.client.KeyboardInterceptor.KeyTest;
 import stroom.app.client.MenuKeys;
 import stroom.app.client.presenter.Plugin;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.CopyEntityEvent;
 import stroom.entity.client.event.CreateEntityEvent;
@@ -76,6 +74,8 @@ import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.ImageIcon;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.Future;
+import stroom.widget.util.client.FutureImpl;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
@@ -237,19 +237,13 @@ public class EntityPluginEventManager extends Plugin {
         // 10. Handle entity delete events.
         registerHandler(getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
             if (getSelectedItems().size() > 0) {
-                fetchPermissions(getSelectedItems(), new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
-                    @Override
-                    public void onSuccess(final SharedMap<ExplorerData, ExplorerPermissions> documentPermissionMap) {
-                        documentTypeCache.fetch(new AsyncCallbackAdaptor<DocumentTypes>() {
-                            @Override
-                            public void onSuccess(final DocumentTypes documentTypes) {
-                                final List<ExplorerData> deletableItems = getExplorerDataListWithPermission(documentPermissionMap, DocumentPermissionNames.DELETE);
-                                if (deletableItems.size() > 0) {
-                                    deleteItems(deletableItems);
-                                }
-                            }
-                        });
-                    }
+                fetchPermissions(getSelectedItems()).onSuccess(documentPermissionMap -> {
+                    documentTypeCache.fetch().onSuccess(documentTypes -> {
+                        final List<ExplorerData> deletableItems = getExplorerDataListWithPermission(documentPermissionMap, DocumentPermissionNames.DELETE);
+                        if (deletableItems.size() > 0) {
+                            deleteItems(deletableItems);
+                        }
+                    });
                 });
             }
         }));
@@ -267,15 +261,12 @@ public class EntityPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(ShowNewMenuEvent.getType(), event -> {
             if (getSelectedItems().size() == 1) {
                 final ExplorerData primarySelection = getPrimarySelection();
-                getNewMenuItems(primarySelection, new AsyncCallbackAdaptor<List<Item>>() {
-                    @Override
-                    public void onSuccess(final List<Item> children) {
-                        menuListPresenter.setData(children);
+                getNewMenuItems(primarySelection).onSuccess(children -> {
+                    menuListPresenter.setData(children);
 
-                        final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                        ShowPopupEvent.fire(EntityPluginEventManager.this, menuListPresenter, PopupType.POPUP,
-                                popupPosition, null, event.getElement());
-                    }
+                    final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
+                    ShowPopupEvent.fire(EntityPluginEventManager.this, menuListPresenter, PopupType.POPUP,
+                            popupPosition, null, event.getElement());
                 });
             }
         }));
@@ -285,26 +276,20 @@ public class EntityPluginEventManager extends Plugin {
             final ExplorerData primarySelection = getPrimarySelection();
 
             if (selectedItems.size() > 0) {
-                fetchPermissions(selectedItems, new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
-                    @Override
-                    public void onSuccess(final SharedMap<ExplorerData, ExplorerPermissions> documentPermissionMap) {
-                        documentTypeCache.fetch(new AsyncCallbackAdaptor<DocumentTypes>() {
-                            @Override
-                            public void onSuccess(final DocumentTypes documentTypes) {
-                                final List<Item> menuItems = new ArrayList<>();
+                fetchPermissions(selectedItems).onSuccess(documentPermissionMap ->
+                        documentTypeCache.fetch().onSuccess(documentTypes -> {
+                            final List<Item> menuItems = new ArrayList<>();
 
-                                // Only allow the new menu to appear if we have a single selection.
-                                addNewMenuItem(menuItems, singleSelection, documentPermissionMap, primarySelection, documentTypes);
-                                addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
+                            // Only allow the new menu to appear if we have a single selection.
+                            addNewMenuItem(menuItems, singleSelection, documentPermissionMap, primarySelection, documentTypes);
+                            addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
-                                menuListPresenter.setData(menuItems);
-                                final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                                ShowPopupEvent.fire(EntityPluginEventManager.this, menuListPresenter, PopupType.POPUP,
-                                        popupPosition, null);
-                            }
-                        });
-                    }
-                });
+                            menuListPresenter.setData(menuItems);
+                            final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
+                            ShowPopupEvent.fire(EntityPluginEventManager.this, menuListPresenter, PopupType.POPUP,
+                                    popupPosition, null);
+                        })
+                );
             }
         }));
     }
@@ -328,57 +313,46 @@ public class EntityPluginEventManager extends Plugin {
         // Add menu bar item menu.
         event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU, new SimpleParentMenuItem(1, "Item", null) {
             @Override
-            public void getChildren(final AsyncCallback<List<Item>> callback) {
+            public Future<List<Item>> getChildren() {
+                final FutureImpl<List<Item>> future = new FutureImpl<>();
                 final List<ExplorerData> selectedItems = getSelectedItems();
                 final boolean singleSelection = selectedItems.size() == 1;
                 final ExplorerData primarySelection = getPrimarySelection();
 
-                fetchPermissions(selectedItems, new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
-                    @Override
-                    public void onSuccess(final SharedMap<ExplorerData, ExplorerPermissions> documentPermissionMap) {
-                        documentTypeCache.fetch(new AsyncCallbackAdaptor<DocumentTypes>() {
-                            @Override
-                            public void onSuccess(final DocumentTypes documentTypes) {
-                                final List<Item> menuItems = new ArrayList<>();
+                fetchPermissions(selectedItems).onSuccess(documentPermissionMap -> {
+                    documentTypeCache.fetch().onSuccess(documentTypes -> {
+                        final List<Item> menuItems = new ArrayList<>();
 
-                                // Only allow the new menu to appear if we have a single selection.
-                                addNewMenuItem(menuItems, singleSelection, documentPermissionMap, primarySelection, documentTypes);
-                                menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
-                                menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
-                                menuItems.add(new Separator(5));
-                                menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
-                                menuItems.add(createSaveAsMenuItem(7, isEntityTabData(selectedTab)));
-                                menuItems.add(createSaveAllMenuItem(8, isTabItemSelected(selectedTab)));
-                                menuItems.add(new Separator(9));
-                                addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
+                        // Only allow the new menu to appear if we have a single selection.
+                        addNewMenuItem(menuItems, singleSelection, documentPermissionMap, primarySelection, documentTypes);
+                        menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
+                        menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
+                        menuItems.add(new Separator(5));
+                        menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
+                        menuItems.add(createSaveAsMenuItem(7, isEntityTabData(selectedTab)));
+                        menuItems.add(createSaveAllMenuItem(8, isTabItemSelected(selectedTab)));
+                        menuItems.add(new Separator(9));
+                        addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
-                                callback.onSuccess(menuItems);
-                            }
-                        });
-                    }
+                        future.setResult(menuItems);
+                    });
                 });
+                return future;
             }
         });
     }
 
-    private void getNewMenuItems(final ExplorerData explorerData, final AsyncCallback<List<Item>> callback) {
-        fetchPermissions(Collections.singletonList(explorerData), new AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>>() {
-            @Override
-            public void onSuccess(final SharedMap<ExplorerData, ExplorerPermissions> documentPermissions) {
-                documentTypeCache.fetch(new AsyncCallbackAdaptor<DocumentTypes>() {
-                    @Override
-                    public void onSuccess(final DocumentTypes documentTypes) {
-                        callback.onSuccess(createNewMenuItems(explorerData, documentPermissions.get(explorerData), documentTypes));
-                    }
-                });
-            }
-        });
+    private Future<List<Item>> getNewMenuItems(final ExplorerData explorerData) {
+        final FutureImpl<List<Item>> future = new FutureImpl<>();
+        fetchPermissions(Collections.singletonList(explorerData))
+                .onSuccess(documentPermissions -> documentTypeCache.fetch()
+                        .onSuccess(documentTypes -> future.setResult(createNewMenuItems(explorerData, documentPermissions.get(explorerData), documentTypes))));
+        return future;
     }
 
-    private void fetchPermissions(final List<ExplorerData> explorerDataList,
-                                  final AsyncCallbackAdaptor<SharedMap<ExplorerData, ExplorerPermissions>> callback) {
+    private Future<SharedMap<ExplorerData, ExplorerPermissions>> fetchPermissions(final List<ExplorerData> explorerDataList) {
         final FetchExplorerPermissionsAction action = new FetchExplorerPermissionsAction(explorerDataList);
-        dispatcher.execute(action, callback);
+        return dispatcher.exec(action);
     }
 
 //    private DocRef getDocRef(final ExplorerData explorerData) {
@@ -403,8 +377,10 @@ public class EntityPluginEventManager extends Plugin {
                 final Item newItem = new SimpleParentMenuItem(1, GlyphIcons.NEW_ITEM, GlyphIcons.NEW_ITEM, "New",
                         null, children != null && children.size() > 0, null) {
                     @Override
-                    public void getChildren(final AsyncCallback<List<Item>> callback) {
-                        callback.onSuccess(children);
+                    public Future<List<Item>> getChildren() {
+                        final FutureImpl<List<Item>> future = new FutureImpl<>();
+                        future.setResult(children);
+                        return future;
                     }
                 };
                 menuItems.add(newItem);

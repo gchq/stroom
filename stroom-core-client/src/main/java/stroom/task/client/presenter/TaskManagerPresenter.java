@@ -16,11 +16,6 @@
 
 package stroom.task.client.presenter;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -30,10 +25,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseResultList;
 import stroom.task.client.event.OpenTaskManagerEvent;
@@ -43,12 +35,16 @@ import stroom.task.shared.FindUserTaskProgressAction;
 import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.shared.TaskId;
-import stroom.util.shared.VoidResult;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class TaskManagerPresenter
         extends Presenter<TaskManagerPresenter.TaskManagerView, TaskManagerPresenter.TaskManagerProxy>
@@ -66,16 +62,16 @@ public class TaskManagerPresenter
     private final Provider<TaskPresenter> taskPresenterProvider;
     private final ClientDispatchAsync dispatcher;
 
-    private final Map<TaskProgress, TaskPresenter> taskPresenterMap = new HashMap<TaskProgress, TaskPresenter>();
-    private final Map<TaskId, TaskProgress> idMap = new HashMap<TaskId, TaskProgress>();
-    private final Set<TaskId> requestTaskKillSet = new HashSet<TaskId>();
+    private final Map<TaskProgress, TaskPresenter> taskPresenterMap = new HashMap<>();
+    private final Map<TaskId, TaskProgress> idMap = new HashMap<>();
+    private final Set<TaskId> requestTaskKillSet = new HashSet<>();
     private boolean visible;
     private final Timer refreshTimer;
     private boolean refreshing;
 
     @Inject
     public TaskManagerPresenter(final EventBus eventBus, final TaskManagerView view, final TaskManagerProxy proxy,
-            final Provider<TaskPresenter> taskPresenterProvider, final ClientDispatchAsync dispatcher) {
+                                final Provider<TaskPresenter> taskPresenterProvider, final ClientDispatchAsync dispatcher) {
         super(eventBus, view, proxy);
         this.taskPresenterProvider = taskPresenterProvider;
         this.dispatcher = dispatcher;
@@ -116,32 +112,26 @@ public class TaskManagerPresenter
             refreshing = true;
 
             final FindUserTaskProgressAction action = new FindUserTaskProgressAction();
-            dispatcher.execute(action, new AsyncCallbackAdaptor<BaseResultList<TaskProgress>>() {
-                @Override
-                public void onSuccess(final BaseResultList<TaskProgress> result) {
-                    final HashSet<TaskId> idSet = new HashSet<TaskId>();
-                    for (final TaskProgress value : result) {
-                        idSet.add(value.getId());
-                    }
-                    requestTaskKillSet.retainAll(idSet);
+            dispatcher.exec(action)
+                    .onSuccess(result -> {
+                        final HashSet<TaskId> idSet = new HashSet<>();
+                        for (final TaskProgress value : result) {
+                            idSet.add(value.getId());
+                        }
+                        requestTaskKillSet.retainAll(idSet);
 
-                    // Refresh the display.
-                    refresh(result);
+                        // Refresh the display.
+                        refresh(result);
 
-                    refreshing = false;
-                }
-
-                @Override
-                public void onFailure(final Throwable caught) {
-                    refreshing = false;
-                }
-            });
+                        refreshing = false;
+                    })
+                    .onFailure(caught -> refreshing = false);
         }
     }
 
     private void refresh(final BaseResultList<TaskProgress> result) {
         if (visible) {
-            final Set<TaskPresenter> tasksToRemove = new HashSet<TaskPresenter>(taskPresenterMap.values());
+            final Set<TaskPresenter> tasksToRemove = new HashSet<>(taskPresenterMap.values());
 
             idMap.clear();
             if (result != null) {
@@ -187,19 +177,15 @@ public class TaskManagerPresenter
         if (requestTaskKillSet.contains(terminateId)) {
             message = "Are you sure you want to kill this task?";
         }
-        ConfirmEvent.fire(TaskManagerPresenter.this, message, new ConfirmCallback() {
-            @Override
-            public void onResult(final boolean result) {
-                final boolean kill = requestTaskKillSet.contains(terminateId);
-                final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
-                findTaskCriteria.addId(terminateId);
-                final TerminateTaskProgressAction action = new TerminateTaskProgressAction("Terminate: " + taskName,
-                        findTaskCriteria, kill);
+        ConfirmEvent.fire(TaskManagerPresenter.this, message, result -> {
+            final boolean kill = requestTaskKillSet.contains(terminateId);
+            final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
+            findTaskCriteria.addId(terminateId);
+            final TerminateTaskProgressAction action = new TerminateTaskProgressAction("Terminate: " + taskName,
+                    findTaskCriteria, kill);
 
-                requestTaskKillSet.add(terminateId);
-                dispatcher.execute(action, new AsyncCallbackAdaptor<VoidResult>() {
-                });
-            }
+            requestTaskKillSet.add(terminateId);
+            dispatcher.exec(action);
         });
     }
 

@@ -56,18 +56,15 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E> {
                 // Handle dirty events.
                 if (currentPresenter instanceof HasDirtyHandlers && dirtyHandler != null) {
                     final HasDirtyHandlers hasDirtyHandlers = (HasDirtyHandlers) currentPresenter;
-                    hasDirtyHandlers.addDirtyHandler(new DirtyHandler() {
-                        @Override
-                        public void onDirty(final DirtyEvent event) {
-                            if (event.isDirty()) {
-                                if (dirtyTabs == null) {
-                                    dirtyTabs = new HashSet<TabData>();
-                                }
-
-                                dirtyTabs.add(tab);
+                    hasDirtyHandlers.addDirtyHandler(event -> {
+                        if (event.isDirty()) {
+                            if (dirtyTabs == null) {
+                                dirtyTabs = new HashSet<TabData>();
                             }
-                            dirtyHandler.onDirty(event);
+
+                            dirtyTabs.add(tab);
                         }
+                        dirtyHandler.onDirty(event);
                     });
                 }
             }

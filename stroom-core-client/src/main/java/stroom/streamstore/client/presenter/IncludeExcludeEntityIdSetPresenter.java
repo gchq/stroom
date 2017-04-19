@@ -16,10 +16,18 @@
 
 package stroom.streamstore.client.presenter;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.CellTable.Resources;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.data.table.client.CellTableView;
 import stroom.data.table.client.CellTableViewImpl;
 import stroom.data.table.client.CellTableViewImpl.DisabledResources;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
@@ -35,15 +43,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.CellTable.Resources;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -124,29 +123,26 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
             }
 
             final LoadEntityIdSetAction action = new LoadEntityIdSetAction(loadMap);
-            dispatcher.execute(action, new AsyncCallbackAdaptor<SharedMap<SetId, SharedList<DocRef>>>() {
-                @Override
-                public void onSuccess(final SharedMap<SetId, SharedList<DocRef>> result) {
-                    final SharedList<DocRef> included = result.get(includeSetId);
-                    final SharedList<DocRef> excluded = result.get(excludeSetId);
+            dispatcher.exec(action).onSuccess(result -> {
+                final SharedList<DocRef> included = result.get(includeSetId);
+                final SharedList<DocRef> excluded = result.get(excludeSetId);
 
-                    data = new ArrayList<String>();
-                    if (included != null && included.size() > 0) {
-                        Collections.sort(included, new EntityReferenceComparator());
-                        for (final DocRef entity : included) {
-                            data.add("+ " + entity.getName());
-                        }
+                data = new ArrayList<String>();
+                if (included != null && included.size() > 0) {
+                    Collections.sort(included, new EntityReferenceComparator());
+                    for (final DocRef entity : included) {
+                        data.add("+ " + entity.getName());
                     }
-
-                    if (excluded != null && excluded.size() > 0) {
-                        Collections.sort(excluded, new EntityReferenceComparator());
-                        for (final DocRef entity : excluded) {
-                            data.add("- " + entity.getName());
-                        }
-                    }
-
-                    refresh();
                 }
+
+                if (excluded != null && excluded.size() > 0) {
+                    Collections.sort(excluded, new EntityReferenceComparator());
+                    for (final DocRef entity : excluded) {
+                        data.add("- " + entity.getName());
+                    }
+                }
+
+                refresh();
             });
         } else {
             this.data = new ArrayList<String>();

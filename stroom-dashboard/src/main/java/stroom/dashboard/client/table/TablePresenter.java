@@ -53,9 +53,8 @@ import stroom.dashboard.shared.TableResult;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.dispatch.client.ExportFileCompleteHandler;
+import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
@@ -153,25 +152,19 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 filterPresenter);
         dataGrid.setHeadingListener(fieldsManager);
 
-        clientPropertyCache.get(new AsyncCallbackAdaptor<ClientProperties>() {
-            @Override
-            public void onSuccess(final ClientProperties result) {
-                final String value = result.get(ClientProperties.MAX_RESULTS);
-                if (value != null) {
-                    final String[] parts = value.split(",");
-                    final int[] arr = new int[parts.length];
-                    for (int i = 0; i < arr.length; i++) {
-                        arr[i] = Integer.valueOf(parts[i].trim());
+        clientPropertyCache.get()
+                .onSuccess(result -> {
+                    final String value = result.get(ClientProperties.MAX_RESULTS);
+                    if (value != null) {
+                        final String[] parts = value.split(",");
+                        final int[] arr = new int[parts.length];
+                        for (int i = 0; i < arr.length; i++) {
+                            arr[i] = Integer.valueOf(parts[i].trim());
+                        }
+                        maxResults = arr;
                     }
-                    maxResults = arr;
-                }
-            }
-
-            @Override
-            public void onFailure(final Throwable caught) {
-                AlertEvent.fireError(TablePresenter.this, caught.getMessage(), null);
-            }
-        });
+                })
+                .onFailure(caught -> AlertEvent.fireError(TablePresenter.this, caught.getMessage(), null));
     }
 
     @Override
@@ -293,11 +286,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
-                            dispatcher.execute(
+                            dispatcher.exec(
                                     new DownloadSearchResultsAction(queryKey, search, getComponentData().getId(),
                                             downloadPresenter.getFileType(), downloadPresenter.isSample(),
-                                            downloadPresenter.getPercent(), timeZones.getTimeZone()),
-                                    new ExportFileCompleteHandler(locationManager, null));
+                                            downloadPresenter.getPercent(), timeZones.getTimeZone()))
+                                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result));
                         }
 
                         HidePopupEvent.fire(TablePresenter.this, downloadPresenter);

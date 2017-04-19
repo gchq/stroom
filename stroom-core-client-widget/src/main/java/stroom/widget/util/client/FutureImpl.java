@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.dispatch.client;
+package stroom.widget.util.client;
 
 import java.util.function.Consumer;
 
-public class AsyncFuture<T> {
+public class FutureImpl<T> implements Future<T> {
     private T result;
     private Throwable throwable;
     private Consumer<T> resultConsumer;
     private Consumer<Throwable> throwableConsumer;
 
-    public AsyncFuture<T> onSuccess(final Consumer<T> resultConsumer) {
+    public FutureImpl<T> onSuccess(final Consumer<T> resultConsumer) {
         this.resultConsumer = resultConsumer;
         if (result != null && resultConsumer != null) {
             resultConsumer.accept(result);
@@ -32,7 +32,7 @@ public class AsyncFuture<T> {
         return this;
     }
 
-    public AsyncFuture<T> onFailure(final Consumer<Throwable> throwableConsumer) {
+    public FutureImpl<T> onFailure(final Consumer<Throwable> throwableConsumer) {
         this.throwableConsumer = throwableConsumer;
         if (throwable != null && throwableConsumer != null) {
             throwableConsumer.accept(throwable);
@@ -40,7 +40,7 @@ public class AsyncFuture<T> {
         return this;
     }
 
-    AsyncFuture<T> setResult(final T result) {
+    public FutureImpl<T> setResult(final T result) {
         this.result = result;
         if (resultConsumer != null) {
             resultConsumer.accept(result);
@@ -48,7 +48,7 @@ public class AsyncFuture<T> {
         return this;
     }
 
-    AsyncFuture<T> setThrowable(final Throwable throwable) {
+    public FutureImpl<T> setThrowable(final Throwable throwable) {
         this.throwable = throwable;
         if (throwableConsumer != null) {
             throwableConsumer.accept(throwable);

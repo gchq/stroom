@@ -14,21 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.dispatch.client;
+package stroom.widget.util.client;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
+import java.util.function.Consumer;
 
-public abstract class AsyncCallbackAdaptor<T> implements AsyncCallback<T> {
-    @Override
-    public void onSuccess(T result) {
-    }
+public interface Future<T> {
+    Future<T> onSuccess(Consumer<T> resultConsumer);
 
-    @Override
-    public void onFailure(Throwable caught) {
-        // Failure is handled by default with the DispatchAsync implementations.
-    }
-
-    public boolean handlesFailure() {
-        return false;
-    }
+    Future<T> onFailure(Consumer<Throwable> throwableConsumer);
 }

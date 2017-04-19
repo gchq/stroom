@@ -33,7 +33,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.widget.menu.client.presenter.MenuItemPresenter.MenuItemView;
 
 public class MenubarItem extends ViewImpl implements MenuItemView {
@@ -54,18 +53,8 @@ public class MenubarItem extends ViewImpl implements MenuItemView {
         widget = binder.createAndBindUi(this);
         widget.sinkEvents(Event.MOUSEEVENTS);
         setEnabled(enabled);
-        widget.addDomHandler(new MouseOverHandler() {
-            @Override
-            public void onMouseOver(MouseOverEvent event) {
-                background.getElement().getStyle().setOpacity(0.3);
-            }
-        }, MouseOverEvent.getType());
-        widget.addDomHandler(new MouseOutHandler() {
-            @Override
-            public void onMouseOut(MouseOutEvent event) {
-                background.getElement().getStyle().setOpacity(0);
-            }
-        }, MouseOutEvent.getType());
+        widget.addDomHandler(event -> background.getElement().getStyle().setOpacity(0.3), MouseOverEvent.getType());
+        widget.addDomHandler(event -> background.getElement().getStyle().setOpacity(0), MouseOutEvent.getType());
     }
 
     @Override

@@ -19,11 +19,7 @@
 package stroom.pipeline.stepping.client.presenter;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -32,7 +28,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
@@ -51,7 +46,6 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
-import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
 import stroom.streamstore.client.presenter.ClassificationUiHandlers;
@@ -62,7 +56,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.Indicators;
-import stroom.util.shared.SharedList;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;
@@ -133,32 +126,14 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     @Override
     protected void onBind() {
         registerHandler(
-                pipelineTreePresenter.getSelectionModel().addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-                    @Override
-                    public void onSelectionChange(final SelectionChangeEvent event) {
-                        final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel()
-                                .getSelectedObject();
-                        onSelect(selectedElement);
-                    }
+                pipelineTreePresenter.getSelectionModel().addSelectionChangeHandler(event -> {
+                    final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel()
+                            .getSelectedObject();
+                    onSelect(selectedElement);
                 }));
-        registerHandler(stepLocationPresenter.addStepControlHandler(new StepControlHandler() {
-            @Override
-            public void onSelection(final StepControlEvent event) {
-                step(event.getStepType(), event.getStepLocation());
-            }
-        }));
-        registerHandler(stepControlPresenter.addStepControlHandler(new StepControlHandler() {
-            @Override
-            public void onSelection(final StepControlEvent event) {
-                step(event.getStepType(), event.getStepLocation());
-            }
-        }));
-        registerHandler(saveButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                save();
-            }
-        }));
+        registerHandler(stepLocationPresenter.addStepControlHandler(event -> step(event.getStepType(), event.getStepLocation())));
+        registerHandler(stepControlPresenter.addStepControlHandler(event -> step(event.getStepType(), event.getStepLocation())));
+        registerHandler(saveButton.addClickHandler(event -> save()));
     }
 
 //    private ImageButtonView addButtonLeft(final String title, final ImageResource enabledImage,
@@ -178,8 +153,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             getView().addWidgetLeft(leftButtons);
         }
 
-        final GlyphButtonView button = leftButtons.add(preset);
-        return button;
+        return leftButtons.add(preset);
     }
 
     private PresenterWidget<?> getContent(final PipelineElement element) {
@@ -240,18 +214,15 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     }
 
     private void refreshEditor(final ElementPresenter editorPresenter, final String elementId) {
-        editorPresenter.load(new AsyncCallbackAdaptor<Boolean>() {
-            @Override
-            public void onSuccess(final Boolean result) {
-                if (editorPresenter.isRefreshRequired()) {
-                    editorPresenter.setRefreshRequired(false);
+        editorPresenter.load().onSuccess(result -> {
+            if (editorPresenter.isRefreshRequired()) {
+                editorPresenter.setRefreshRequired(false);
 
-                    // Update code pane.
-                    refreshEditorCodeIndicators(editorPresenter, elementId);
+                // Update code pane.
+                refreshEditorCodeIndicators(editorPresenter, elementId);
 
-                    // Update IO data.
-                    refreshEditorIO(editorPresenter, elementId);
-                }
+                // Update IO data.
+                refreshEditorIO(editorPresenter, elementId);
             }
         });
     }
@@ -371,7 +342,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             }
 
             // Set dirty code on action.
-            final Map<String, String> codeMap = new HashMap<String, String>();
+            final Map<String, String> codeMap = new HashMap<>();
             for (final ElementPresenter editorPresenter : editorMap.values()) {
                 if (editorPresenter.isDirtyCode()) {
                     final String elementId = editorPresenter.getElementId();
@@ -383,17 +354,9 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
             action.setStepType(stepType);
 
-            dispatcher.execute(action, new AsyncCallbackAdaptor<SteppingResult>() {
-                @Override
-                public void onSuccess(final SteppingResult result) {
-                    readResult(result);
-                }
-
-                @Override
-                public void onFailure(final Throwable caught) {
-                    busyTranslating = false;
-                }
-            });
+            dispatcher.exec(action)
+                    .onSuccess(this::readResult)
+                    .onFailure(caught -> busyTranslating = false);
         }
     }
 
@@ -474,17 +437,14 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private void onSelect(final PipelineElement element) {
         if (element != null) {
             TaskStartEvent.fire(SteppingPresenter.this);
-            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-                @Override
-                public void execute() {
-                    final PresenterWidget<?> content = getContent(element);
-                    if (content != null) {
-                        // Set the content.
-                        getView().getLayerContainer().show((Layer) content);
-                    }
-
-                    TaskEndEvent.fire(SteppingPresenter.this);
+            Scheduler.get().scheduleDeferred(() -> {
+                final PresenterWidget<?> content = getContent(element);
+                if (content != null) {
+                    // Set the content.
+                    getView().getLayerContainer().show((Layer) content);
                 }
+
+                TaskEndEvent.fire(SteppingPresenter.this);
             });
         }
     }

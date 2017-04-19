@@ -16,13 +16,22 @@
 
 package stroom.streamstore.client.presenter;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.CellTable.Resources;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.table.client.CellTableView;
 import stroom.data.table.client.CellTableViewImpl;
 import stroom.data.table.client.CellTableViewImpl.DefaultResources;
 import stroom.data.table.client.CellTableViewImpl.DisabledResources;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
@@ -37,16 +46,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedMap;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.CellTable.Resources;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import java.util.ArrayList;
@@ -148,29 +147,26 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
         if (entityIdSet != null && entityIdSet.getSet() != null) {
             // Load the entities.
             final SetId key = new SetId(type, type);
-            final SharedMap<SetId, EntityIdSet<?>> loadMap = new SharedMap<SetId, EntityIdSet<?>>();
+            final SharedMap<SetId, EntityIdSet<?>> loadMap = new SharedMap<>();
             loadMap.put(key, entityIdSet);
             final LoadEntityIdSetAction action = new LoadEntityIdSetAction(loadMap);
-            dispatcher.execute(action, new AsyncCallbackAdaptor<SharedMap<SetId, SharedList<DocRef>>>() {
-                @Override
-                public void onSuccess(final SharedMap<SetId, SharedList<DocRef>> result) {
-                    final SharedList<DocRef> list = result.get(key);
-                    if (list != null) {
-                        Collections.sort(list, new EntityReferenceComparator());
-                        data = list;
-                    } else {
-                        data = new ArrayList<DocRef>();
-                    }
-                    refresh();
+            dispatcher.exec(action).onSuccess(result -> {
+                final SharedList<DocRef> list = result.get(key);
+                if (list != null) {
+                    Collections.sort(list, new EntityReferenceComparator());
+                    data = list;
+                } else {
+                    data = new ArrayList<>();
                 }
+                refresh();
             });
         } else {
-            this.data = new ArrayList<DocRef>();
+            this.data = new ArrayList<>();
             refresh();
         }
 
         if (!groupedEntity) {
-            final List<DocRef> data = new ArrayList<DocRef>();
+            final List<DocRef> data = new ArrayList<>();
             for (final StreamType streamType : streamTypeUiManager.getRootStreamTypeList()) {
                 data.add(DocRef.create(streamType));
             }

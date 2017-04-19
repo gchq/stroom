@@ -50,12 +50,7 @@ public class FolderPresenter extends EntityEditTabPresenter<LinkTabPanelView, Fo
                            final Provider<StreamTaskPresenter> streamTaskPresenterProvider) {
         super(eventBus, view, securityContext);
 
-        tabContentProvider.setDirtyHandler(new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                setDirty(event.isDirty());
-            }
-        });
+        tabContentProvider.setDirtyHandler(event -> setDirty(event.isDirty()));
 
         if (securityContext.hasAppPermission(Stream.VIEW_DATA_PERMISSION)) {
             addTab(DATA);

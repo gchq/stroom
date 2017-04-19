@@ -35,7 +35,6 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
@@ -50,7 +49,6 @@ import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TaskId;
-import stroom.util.shared.VoidResult;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.customdatebox.client.ClientDateUtil;
@@ -296,8 +294,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                 "Terminate: " + taskProgress.getTaskName(), findTaskCriteria, kill);
 
         requestedTerminateTaskProgress.add(taskProgress);
-        dispatcher.execute(action, new AsyncCallbackAdaptor<VoidResult>() {
-        });
+        dispatcher.exec(action);
     }
 
     @Override

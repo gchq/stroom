@@ -26,8 +26,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.ValidateExpressionAction;
-import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.query.shared.Field;
 import stroom.util.shared.EqualsUtil;
@@ -52,6 +50,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     private List<Item> menuItems;
     private TablePresenter tablePresenter;
     private Field field;
+
     @Inject
     public ExpressionPresenter(final EventBus eventBus, final ExpressionView view,
                                final MenuListPresenter menuListPresenter, final ClientDispatchAsync dispatcher) {
@@ -91,20 +90,16 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                     HidePopupEvent.fire(tablePresenter, this);
                 } else {
                     // Check the validity of the expression.
-                    dispatcher.execute(new ValidateExpressionAction(expression),
-                            new AsyncCallbackAdaptor<ValidateExpressionResult>() {
-                                @Override
-                                public void onSuccess(final ValidateExpressionResult result) {
-                                    if (result.isOk()) {
-                                        field.setExpression(result.getString());
-                                        tablePresenter.setDirty(true);
-                                        tablePresenter.clearAndRefresh();
-                                        HidePopupEvent.fire(tablePresenter, ExpressionPresenter.this);
-                                    } else {
-                                        AlertEvent.fireError(tablePresenter, result.getString(), null);
-                                    }
-                                }
-                            });
+                    dispatcher.exec(new ValidateExpressionAction(expression)).onSuccess(result -> {
+                        if (result.isOk()) {
+                            field.setExpression(result.getString());
+                            tablePresenter.setDirty(true);
+                            tablePresenter.clearAndRefresh();
+                            HidePopupEvent.fire(tablePresenter, ExpressionPresenter.this);
+                        } else {
+                            AlertEvent.fireError(tablePresenter, result.getString(), null);
+                        }
+                    });
                 }
             }
         } else {

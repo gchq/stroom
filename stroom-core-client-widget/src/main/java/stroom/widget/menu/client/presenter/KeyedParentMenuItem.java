@@ -16,8 +16,9 @@
 
 package stroom.widget.menu.client.presenter;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import stroom.widget.tab.client.presenter.Icon;
+import stroom.widget.util.client.Future;
+import stroom.widget.util.client.FutureImpl;
 
 import java.util.List;
 
@@ -39,7 +40,9 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
     }
 
     @Override
-    public void getChildren(final AsyncCallback<List<Item>> callback) {
-        callback.onSuccess(menuItems.getMenuItems(childMenu));
+    public Future<List<Item>> getChildren() {
+        final FutureImpl<List<Item>> future = new FutureImpl<>();
+        future.setResult(menuItems.getMenuItems(childMenu));
+        return future;
     }
 }

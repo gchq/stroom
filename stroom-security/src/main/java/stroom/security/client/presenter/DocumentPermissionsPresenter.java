@@ -19,7 +19,6 @@ package stroom.security.client.presenter;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.Folder;
 import stroom.explorer.shared.EntityData;
@@ -27,10 +26,8 @@ import stroom.explorer.shared.ExplorerData;
 import stroom.item.client.ItemListBox;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeSet;
-import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsAction;
 import stroom.security.shared.UserPermission;
-import stroom.util.shared.VoidResult;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -75,42 +72,34 @@ public class DocumentPermissionsPresenter
             tabPresenter.changeSelectedTab(groups);
 
             final FetchAllDocumentPermissionsAction fetchAllDocumentPermissionsAction = new FetchAllDocumentPermissionsAction(entityData.getDocRef());
-            dispatcher.execute(fetchAllDocumentPermissionsAction, new AsyncCallbackAdaptor<DocumentPermissions>() {
-                @Override
-                public void onSuccess(final DocumentPermissions documentPermissions) {
-                    usersPresenter.setDocumentPermissions(documentPermissions, false, changeSet);
-                    groupsPresenter.setDocumentPermissions(documentPermissions, true, changeSet);
+            dispatcher.exec(fetchAllDocumentPermissionsAction).onSuccess(documentPermissions -> {
+                usersPresenter.setDocumentPermissions(documentPermissions, false, changeSet);
+                groupsPresenter.setDocumentPermissions(documentPermissions, true, changeSet);
 
-                    final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                        @Override
-                        public void onHideRequest(final boolean autoClose, final boolean ok) {
-                            if (ok) {
-                                dispatcher.execute(new ChangeDocumentPermissionsAction(documentPermissions.getDocument(), changeSet, getView().getCascade().getSelectedItem()), new AsyncCallbackAdaptor<VoidResult>() {
-                                    @Override
-                                    public void onSuccess(final VoidResult result) {
-                                        super.onSuccess(result);
-                                        hide(autoClose, ok);
-                                    }
-                                });
-                            } else {
-                                hide(autoClose, ok);
-                            }
+                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        if (ok) {
+                            dispatcher.exec(new ChangeDocumentPermissionsAction(documentPermissions.getDocument(), changeSet, getView().getCascade().getSelectedItem()))
+                                    .onSuccess(res -> hide(autoClose, ok));
+                        } else {
+                            hide(autoClose, ok);
                         }
-
-                        @Override
-                        public void onHide(boolean autoClose, boolean ok) {
-                        }
-                    };
-
-                    PopupSize popupSize;
-                    if (Folder.ENTITY_TYPE.equals(entityData.getType())) {
-                        popupSize = new PopupSize(384, 664, 384, 664, true);
-                    } else {
-                        popupSize = new PopupSize(384, 500, 384, 500, true);
                     }
 
-                    ShowPopupEvent.fire(DocumentPermissionsPresenter.this, DocumentPermissionsPresenter.this, PopupView.PopupType.OK_CANCEL_DIALOG, popupSize, "Set " + entityData.getType() + " Permissions", popupUiHandlers);
+                    @Override
+                    public void onHide(boolean autoClose, boolean ok) {
+                    }
+                };
+
+                PopupSize popupSize;
+                if (Folder.ENTITY_TYPE.equals(entityData.getType())) {
+                    popupSize = new PopupSize(384, 664, 384, 664, true);
+                } else {
+                    popupSize = new PopupSize(384, 500, 384, 500, true);
                 }
+
+                ShowPopupEvent.fire(DocumentPermissionsPresenter.this, DocumentPermissionsPresenter.this, PopupView.PopupType.OK_CANCEL_DIALOG, popupSize, "Set " + entityData.getType() + " Permissions", popupUiHandlers);
             });
         }
     }

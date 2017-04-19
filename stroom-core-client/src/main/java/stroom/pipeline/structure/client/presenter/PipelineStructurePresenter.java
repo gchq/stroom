@@ -20,7 +20,6 @@ package stroom.pipeline.structure.client.presenter;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -30,12 +29,8 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.AlertCallback;
-import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
@@ -45,11 +40,9 @@ import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.shared.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.EntityData;
-import stroom.explorer.shared.ExplorerData;
 import stroom.pipeline.shared.FetchPipelineDataAction;
 import stroom.pipeline.shared.FetchPipelineXMLAction;
 import stroom.pipeline.shared.FetchPropertyTypesAction;
-import stroom.pipeline.shared.FetchPropertyTypesResult;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.SavePipelineXMLAction;
@@ -63,11 +56,7 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.client.BorderUtil;
 import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.SharedList;
-import stroom.util.shared.SharedString;
-import stroom.util.shared.VoidResult;
 import stroom.widget.button.client.GlyphIcons;
-import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
@@ -83,7 +72,6 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
-import stroom.editor.client.presenter.EditorPresenter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -140,30 +128,27 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         // Get a map of all available elements and properties.
-        dispatcher.execute(new FetchPropertyTypesAction(), new AsyncCallbackAdaptor<FetchPropertyTypesResult>() {
-            @Override
-            public void onSuccess(final FetchPropertyTypesResult result) {
-                final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes = result
-                        .getPropertyTypes();
+        dispatcher.exec(new FetchPropertyTypesAction()).onSuccess(result -> {
+            final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes = result
+                    .getPropertyTypes();
 
-                propertyListPresenter.setPropertyTypes(propertyTypes);
-                pipelineReferenceListPresenter.setPropertyTypes(propertyTypes);
+            propertyListPresenter.setPropertyTypes(propertyTypes);
+            pipelineReferenceListPresenter.setPropertyTypes(propertyTypes);
 
-                elementTypes = new HashMap<>();
+            elementTypes = new HashMap<>();
 
-                for (final PipelineElementType elementType : propertyTypes.keySet()) {
-                    List<PipelineElementType> list = elementTypes.get(elementType.getCategory());
-                    if (list == null) {
-                        list = new ArrayList<>();
-                        elementTypes.put(elementType.getCategory(), list);
-                    }
-
-                    list.add(elementType);
+            for (final PipelineElementType elementType : propertyTypes.keySet()) {
+                List<PipelineElementType> list = elementTypes.get(elementType.getCategory());
+                if (list == null) {
+                    list = new ArrayList<>();
+                    elementTypes.put(elementType.getCategory(), list);
                 }
 
-                for (final List<PipelineElementType> types : elementTypes.values()) {
-                    Collections.sort(types);
-                }
+                list.add(elementType);
+            }
+
+            for (final List<PipelineElementType> types : elementTypes.values()) {
+                Collections.sort(types);
             }
         });
 
@@ -175,69 +160,47 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     protected void onBind() {
         super.onBind();
 
-        final DirtyHandler dirtyHandler = new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                setDirty(true);
-            }
-        };
+        final DirtyHandler dirtyHandler = event -> setDirty(true);
 
         registerHandler(propertyListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelineReferenceListPresenter.addDirtyHandler(dirtyHandler));
-        registerHandler(pipelinePresenter.addDataSelectionHandler(new DataSelectionHandler<ExplorerData>() {
-            @Override
-            public void onSelection(final DataSelectionEvent<ExplorerData> event) {
-                if (event.getSelectedItem() != null) {
-                    final EntityData entityData = (EntityData) event.getSelectedItem();
-                    if (EqualsUtil.isEquals(entityData.getDocRef().getUuid(), pipelineEntity.getUuid())) {
-                        AlertEvent.fireWarn(PipelineStructurePresenter.this, "A pipeline cannot inherit from itself",
-                                new AlertCallback() {
-                                    @Override
-                                    public void onClose() {
-                                        // Reset selection.
-                                        pipelinePresenter.setSelectedEntityReference(getParentPipeline());
-                                    }
-                                });
-                    } else {
-                        changeParentPipeline(entityData.getDocRef());
-                    }
+        registerHandler(pipelinePresenter.addDataSelectionHandler(event -> {
+            if (event.getSelectedItem() != null) {
+                final EntityData entityData = (EntityData) event.getSelectedItem();
+                if (EqualsUtil.isEquals(entityData.getDocRef().getUuid(), pipelineEntity.getUuid())) {
+                    AlertEvent.fireWarn(PipelineStructurePresenter.this, "A pipeline cannot inherit from itself",
+                            () -> {
+                                // Reset selection.
+                                pipelinePresenter.setSelectedEntityReference(getParentPipeline());
+                            });
                 } else {
-                    changeParentPipeline(null);
+                    changeParentPipeline(entityData.getDocRef());
                 }
+            } else {
+                changeParentPipeline(null);
             }
         }));
         registerHandler(
-                pipelineTreePresenter.getSelectionModel().addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-                    @Override
-                    public void onSelectionChange(final SelectionChangeEvent event) {
-                        selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+                pipelineTreePresenter.getSelectionModel().addSelectionChangeHandler(event -> {
+                    selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
 
-                        propertyListPresenter.setPipeline(pipelineEntity);
-                        propertyListPresenter.setPipelineModel(pipelineModel);
-                        propertyListPresenter.setCurrentElement(selectedElement);
+                    propertyListPresenter.setPipeline(pipelineEntity);
+                    propertyListPresenter.setPipelineModel(pipelineModel);
+                    propertyListPresenter.setCurrentElement(selectedElement);
 
-                        pipelineReferenceListPresenter.setPipeline(pipelineEntity);
-                        pipelineReferenceListPresenter.setPipelineModel(pipelineModel);
-                        pipelineReferenceListPresenter.setCurrentElement(selectedElement);
+                    pipelineReferenceListPresenter.setPipeline(pipelineEntity);
+                    pipelineReferenceListPresenter.setPipelineModel(pipelineModel);
+                    pipelineReferenceListPresenter.setCurrentElement(selectedElement);
 
-                        enableButtons();
-                    }
+                    enableButtons();
                 }));
-        registerHandler(pipelineTreePresenter.addDirtyHandler(new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                setDirty(event.isDirty());
-            }
-        }));
-        registerHandler(pipelineTreePresenter.addContextMenuHandler(new ContextMenuEvent.Handler() {
-            @Override
-            public void onContextMenu(final ContextMenuEvent event) {
-                if (advancedMode && selectedElement != null) {
-                    final List<Item> menuItems = addPipelineActionsToMenu();
-                    if (menuItems != null && menuItems.size() > 0) {
-                        final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                        showMenu(popupPosition, menuItems);
-                    }
+        registerHandler(pipelineTreePresenter.addDirtyHandler(event -> setDirty(event.isDirty())));
+        registerHandler(pipelineTreePresenter.addContextMenuHandler(event -> {
+            if (advancedMode && selectedElement != null) {
+                final List<Item> menuItems = addPipelineActionsToMenu();
+                if (menuItems != null && menuItems.size() > 0) {
+                    final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
+                    showMenu(popupPosition, menuItems);
                 }
             }
         }));
@@ -261,31 +224,28 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         pipelinePresenter.setSelectedEntityReference(pipelineEntity.getParentPipeline());
 
         final FetchPipelineDataAction action = new FetchPipelineDataAction(DocRef.create(pipelineEntity));
-        dispatcher.execute(action, new AsyncCallbackAdaptor<SharedList<PipelineData>>() {
-            @Override
-            public void onSuccess(final SharedList<PipelineData> result) {
-                final PipelineData pipelineData = result.get(result.size() - 1);
-                final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
+        dispatcher.exec(action).onSuccess(result -> {
+            final PipelineData pipelineData = result.get(result.size() - 1);
+            final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
 
-                // If there is a stack of pipeline data then we need
-                // to make sure changes are reflected appropriately.
-                for (int i = 0; i < result.size() - 1; i++) {
-                    baseStack.add(result.get(i));
-                }
+            // If there is a stack of pipeline data then we need
+            // to make sure changes are reflected appropriately.
+            for (int i = 0; i < result.size() - 1; i++) {
+                baseStack.add(result.get(i));
+            }
 
-                try {
-                    pipelineModel.setPipelineData(pipelineData);
-                    pipelineModel.setBaseStack(baseStack);
-                    pipelineModel.build();
+            try {
+                pipelineModel.setPipelineData(pipelineData);
+                pipelineModel.setBaseStack(baseStack);
+                pipelineModel.build();
 
-                    pipelineTreePresenter.getSelectionModel().setSelected(previousSelection, true);
+                pipelineTreePresenter.getSelectionModel().setSelected(previousSelection, true);
 
-                    // We have just loaded the pipeline so set dirty to
-                    // false.
-                    setDirty(false);
-                } catch (final PipelineModelException e) {
-                    AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
-                }
+                // We have just loaded the pipeline so set dirty to
+                // false.
+                setDirty(false);
+            } catch (final PipelineModelException e) {
+                AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
             }
         });
     }
@@ -346,7 +306,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
         menuItems.add(new SimpleParentMenuItem(0, GlyphIcons.ADD, GlyphIcons.ADD, "Add", null, addMenuItems != null && addMenuItems.size() > 0, addMenuItems));
         menuItems.add(new SimpleParentMenuItem(1, GlyphIcons.UNDO, GlyphIcons.UNDO, "Restore", null, restoreMenuItems != null && restoreMenuItems.size() > 0, restoreMenuItems));
-        menuItems.add( new IconMenuItem(2, GlyphIcons.REMOVE, GlyphIcons.REMOVE, "Remove", null, selected != null, () -> onRemove(null)));
+        menuItems.add(new IconMenuItem(2, GlyphIcons.REMOVE, GlyphIcons.REMOVE, "Remove", null, selected != null, () -> onRemove(null)));
 
         return menuItems;
     }
@@ -515,48 +475,37 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                 }
             };
 
-            dispatcher.execute(new FetchPipelineXMLAction(pipelineEntity.getId()),
-                    new AsyncCallbackAdaptor<SharedString>() {
-                        @Override
-                        public void onSuccess(final SharedString result) {
-                            String text = "";
-                            if (result != null) {
-                                text = result.toString();
-                            }
-                            xmlEditor.setText(text);
-                            xmlEditor.format();
-                            ShowPopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, PopupType.OK_CANCEL_DIALOG,
-                                    popupSize, "Pipeline Source", popupUiHandlers);
-                        }
-                    });
+            dispatcher.exec(new FetchPipelineXMLAction(pipelineEntity.getId())).onSuccess(result -> {
+                String text = "";
+                if (result != null) {
+                    text = result.toString();
+                }
+                xmlEditor.setText(text);
+                xmlEditor.format();
+                ShowPopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, PopupType.OK_CANCEL_DIALOG,
+                        popupSize, "Pipeline Source", popupUiHandlers);
+            });
         }
     }
 
     private void querySave(final EditorPresenter xmlEditor) {
         ConfirmEvent.fire(PipelineStructurePresenter.this,
-                "Are you sure you want to save changes to the underlying XML?", new ConfirmCallback() {
-                    @Override
-                    public void onResult(final boolean ok) {
-                        if (ok) {
-                            doActualSave(xmlEditor);
-                        } else {
-                            HidePopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, false, false);
-                        }
+                "Are you sure you want to save changes to the underlying XML?", ok -> {
+                    if (ok) {
+                        doActualSave(xmlEditor);
+                    } else {
+                        HidePopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, false, false);
                     }
                 });
     }
 
     private void doActualSave(final EditorPresenter xmlEditor) {
-        dispatcher.execute(new SavePipelineXMLAction(pipelineEntity.getId(), xmlEditor.getText()),
-                new AsyncCallbackAdaptor<VoidResult>() {
-                    @Override
-                    public void onSuccess(final VoidResult result) {
-                        // Hide the popup.
-                        HidePopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, false, true);
-                        // Reload the entity.
-                        ReloadEntityEvent.fire(PipelineStructurePresenter.this, pipelineEntity);
-                    }
-                });
+        dispatcher.exec(new SavePipelineXMLAction(pipelineEntity.getId(), xmlEditor.getText())).onSuccess(result -> {
+            // Hide the popup.
+            HidePopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, false, true);
+            // Reload the entity.
+            ReloadEntityEvent.fire(PipelineStructurePresenter.this, pipelineEntity);
+        });
     }
 
     private void enableButtons() {
@@ -608,16 +557,13 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
         } else {
             final FetchPipelineDataAction action = new FetchPipelineDataAction(parentPipeline);
-            dispatcher.execute(action, new AsyncCallbackAdaptor<SharedList<PipelineData>>() {
-                @Override
-                public void onSuccess(final SharedList<PipelineData> result) {
-                    pipelineModel.setBaseStack(result);
+            dispatcher.exec(action).onSuccess(result -> {
+                pipelineModel.setBaseStack(result);
 
-                    try {
-                        pipelineModel.build();
-                    } catch (final PipelineModelException e) {
-                        AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
-                    }
+                try {
+                    pipelineModel.build();
+                } catch (final PipelineModelException e) {
+                    AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
                 }
             });
         }

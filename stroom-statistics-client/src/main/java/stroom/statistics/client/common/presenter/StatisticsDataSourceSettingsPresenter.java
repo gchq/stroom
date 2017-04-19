@@ -16,9 +16,6 @@
 
 package stroom.statistics.client.common.presenter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.TextArea;
@@ -28,9 +25,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.app.client.event.DirtyKeyDownHander;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
@@ -42,8 +37,10 @@ import stroom.statistics.shared.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.engines.FetchStatisticsEnginesAction;
-import stroom.statistics.shared.common.engines.FetchStatisticsEnginesResults;
 import stroom.widget.tickbox.client.view.TickBox;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class StatisticsDataSourceSettingsPresenter
         extends MyPresenterWidget<StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView>
@@ -78,21 +75,17 @@ public class StatisticsDataSourceSettingsPresenter
 
     @Inject
     public StatisticsDataSourceSettingsPresenter(final EventBus eventBus, final StatisticsDataSourceSettingsView view,
-            final ClientDispatchAsync dispatcher) {
+                                                 final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
 
-        dispatcher.execute(new FetchStatisticsEnginesAction(),
-                new AsyncCallbackAdaptor<FetchStatisticsEnginesResults>() {
-                    @Override
-                    public void onSuccess(final FetchStatisticsEnginesResults result) {
-                        final List<String> engines = new ArrayList<String>();
-                        engines.addAll(result.getEngines());
-                        view.setEngineNames(engines);
-                        if (selectedEngine != null) {
-                            view.setEngineName(selectedEngine);
-                        }
-                    }
-                });
+        dispatcher.exec(new FetchStatisticsEnginesAction()).onSuccess(result -> {
+            final List<String> engines = new ArrayList<>();
+            engines.addAll(result.getEngines());
+            view.setEngineNames(engines);
+            if (selectedEngine != null) {
+                view.setEngineName(selectedEngine);
+            }
+        });
 
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
             @Override

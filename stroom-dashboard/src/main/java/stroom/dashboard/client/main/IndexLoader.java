@@ -16,18 +16,16 @@
 
 package stroom.dashboard.client.main;
 
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.dashboard.shared.FetchIndexFieldsAction;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRef;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
-import stroom.query.shared.IndexFields;
 import stroom.query.shared.IndexFieldsMap;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,23 +57,20 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
     public void loadDataSource(final DocRef dataSourceRef) {
         if (dataSourceRef != null) {
-            dispatcher.execute(new FetchIndexFieldsAction(dataSourceRef), new AsyncCallbackAdaptor<IndexFields>() {
-                @Override
-                public void onSuccess(final IndexFields result) {
-                    loadedDataSourceRef = dataSourceRef;
+            dispatcher.exec(new FetchIndexFieldsAction(dataSourceRef)).onSuccess(result -> {
+                loadedDataSourceRef = dataSourceRef;
 
-                    if (result != null) {
-                        indexFieldNames = new ArrayList<String>(result.getFieldNames());
-                        indexFieldsMap = new IndexFieldsMap(result);
-                        Collections.sort(indexFieldNames);
-                    } else {
-                        indexFieldNames = new ArrayList<>();
-                        indexFieldsMap = new IndexFieldsMap();
-                    }
-
-                    loadCount++;
-                    ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
+                if (result != null) {
+                    indexFieldNames = new ArrayList<String>(result.getFieldNames());
+                    indexFieldsMap = new IndexFieldsMap(result);
+                    Collections.sort(indexFieldNames);
+                } else {
+                    indexFieldNames = new ArrayList<>();
+                    indexFieldsMap = new IndexFieldsMap();
                 }
+
+                loadCount++;
+                ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
             });
         } else {
             loadedDataSourceRef = null;

@@ -23,8 +23,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.security.client.CurrentUser;
 import stroom.security.client.event.ChangePasswordEvent;
@@ -38,7 +36,6 @@ import stroom.security.shared.EmailPasswordResetForUserNameAction;
 import stroom.security.shared.LoginAction;
 import stroom.security.shared.LogoutAction;
 import stroom.security.shared.User;
-import stroom.util.shared.SharedBoolean;
 
 public class LoginManager implements HasHandlers {
     private final EventBus eventBus;
@@ -52,28 +49,13 @@ public class LoginManager implements HasHandlers {
         this.dispatcher = dispatcher;
 
         // Listen for login events.
-        eventBus.addHandler(LoginEvent.getType(), new LoginEvent.LoginHandler() {
-            @Override
-            public void onLogin(final LoginEvent event) {
-                login(event.getUserName(), event.getPassword());
-            }
-        });
+        eventBus.addHandler(LoginEvent.getType(), event -> login(event.getUserName(), event.getPassword()));
 
         // Listen for logout events.
-        eventBus.addHandler(LogoutEvent.getType(), new LogoutEvent.LogoutHandler() {
-            @Override
-            public void onLogout(final LogoutEvent event) {
-                logout();
-            }
-        });
+        eventBus.addHandler(LogoutEvent.getType(), event -> logout());
 
         // Listen for email reset password events.
-        eventBus.addHandler(EmailResetPasswordEvent.getType(), new EmailResetPasswordEvent.EmailResetPasswordHandler() {
-            @Override
-            public void onResetPassword(final EmailResetPasswordEvent event) {
-                emailResetPassword(event.getUserName());
-            }
-        });
+        eventBus.addHandler(EmailResetPasswordEvent.getType(), event -> emailResetPassword(event.getUserName()));
 
     }
 
@@ -108,12 +90,9 @@ public class LoginManager implements HasHandlers {
                     if (daysToExpiry < 1) {
                         ConfirmEvent.fire(LoginManager.this,
                                 "Your password has expired.  You must change it now",
-                                new ConfirmCallback() {
-                                    @Override
-                                    public void onResult(final boolean result) {
-                                        if (result) {
-                                            ChangePasswordEvent.fire(LoginManager.this, user, true);
-                                        }
+                                result -> {
+                                    if (result) {
+                                        ChangePasswordEvent.fire(LoginManager.this, user, true);
                                     }
                                 });
 
@@ -127,14 +106,11 @@ public class LoginManager implements HasHandlers {
                             message.append(" days");
                         }
                         message.append(". Would you like to change the password now?");
-                        ConfirmEvent.fire(LoginManager.this, message.toString(), new ConfirmCallback() {
-                            @Override
-                            public void onResult(final boolean result) {
-                                if (result) {
-                                    ChangePasswordEvent.fire(LoginManager.this, user, true);
-                                } else {
-                                    currentUser.setUserAndPermissions(userAndPermissions);
-                                }
+                        ConfirmEvent.fire(LoginManager.this, message.toString(), result -> {
+                            if (result) {
+                                ChangePasswordEvent.fire(LoginManager.this, user, true);
+                            } else {
+                                currentUser.setUserAndPermissions(userAndPermissions);
                             }
                         });
 
@@ -166,35 +142,24 @@ public class LoginManager implements HasHandlers {
         // Clear everything we know about the current user.
         currentUser.clear();
         // When we start the application we will try and auto login using a client certificate.
-        dispatcher.execute(new LogoutAction(), null);
+        dispatcher.exec(new LogoutAction(), null);
     }
 
     private void emailResetPassword(final String userName) {
         if (userName.length() == 0) {
             AlertEvent.fireWarn(this, "No user name entered!", null);
         } else {
-            dispatcher.execute(new CanEmailPasswordResetAction(), new AsyncCallbackAdaptor<SharedBoolean>() {
-                @Override
-                public void onSuccess(final SharedBoolean ok) {
-                    if (Boolean.TRUE.equals(ok.getBoolean())) {
-                        ConfirmEvent.fire(LoginManager.this,
-                                "Are you sure you want to reset the password for " + userName + "?",
-                                new ConfirmCallback() {
-                                    @Override
-                                    public void onResult(final boolean result) {
-                                        if (result) {
-                                            dispatcher.execute(new EmailPasswordResetForUserNameAction(userName),
-                                                    new AsyncCallbackAdaptor<SharedBoolean>() {
-                                                        @Override
-                                                        public void onSuccess(final SharedBoolean Ok) {
-                                                        }
-                                                    });
-                                        }
-                                    }
-                                });
-                    } else {
-                        AlertEvent.fireError(LoginManager.this, "System is not configured to send emails", null);
-                    }
+            dispatcher.exec(new CanEmailPasswordResetAction()).onSuccess(ok -> {
+                if (Boolean.TRUE.equals(ok.getBoolean())) {
+                    ConfirmEvent.fire(LoginManager.this,
+                            "Are you sure you want to reset the password for " + userName + "?",
+                            result -> {
+                                if (result) {
+                                    dispatcher.exec(new EmailPasswordResetForUserNameAction(userName));
+                                }
+                            });
+                } else {
+                    AlertEvent.fireError(LoginManager.this, "System is not configured to send emails", null);
                 }
             });
         }

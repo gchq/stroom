@@ -16,17 +16,16 @@
 
 package stroom.node.client.presenter;
 
-import stroom.dispatch.client.AsyncCallbackAdaptor;
+import com.google.gwt.user.client.ui.HasText;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.ManageEntityEditPresenter;
 import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.node.shared.GlobalProperty;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.popup.client.presenter.PopupSize;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public final class ManageGlobalPropertyEditPresenter
         extends ManageEntityEditPresenter<ManageGlobalPropertyEditPresenter.GlobalPropertyEditView, GlobalProperty> {
@@ -67,16 +66,12 @@ public final class ManageGlobalPropertyEditPresenter
         getEntity().setValue(getView().getValue().getText());
 
         // Save the device.
-        dispatcher.execute(new EntityServiceSaveAction<GlobalProperty>(getEntity()),
-                new AsyncCallbackAdaptor<GlobalProperty>() {
-                    @Override
-                    public void onSuccess(final GlobalProperty result) {
-                        setEntity(result);
-                        if (hideOnSave) {
-                            hide();
-                        }
-                    }
-                });
+        dispatcher.exec(new EntityServiceSaveAction<>(getEntity())).onSuccess(result -> {
+            setEntity(result);
+            if (hideOnSave) {
+                hide();
+            }
+        });
 
     }
 

@@ -31,7 +31,6 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.AlertCallback;
 import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
@@ -39,7 +38,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.ImportState;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
@@ -346,52 +344,31 @@ public class ImportConfigConfirmPresenter extends
 
     public void abortImport() {
         // Abort ... set the confirm list to blank
-        dispatcher.execute(new ImportConfigAction(resourceKey, new ArrayList<ImportState>()),
-                new AsyncCallbackAdaptor<ResourceKey>() {
-                    @Override
-                    public void onSuccess(final ResourceKey result2) {
-                        AlertEvent.fireWarn(ImportConfigConfirmPresenter.this, "Import Aborted", new AlertCallback() {
-                            @Override
-                            public void onClose() {
-                                HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                                        ImportConfigConfirmPresenter.this, false, false);
-                            }
-                        });
-                    }
-                });
+        dispatcher.exec(new ImportConfigAction(resourceKey, new ArrayList<>()))
+                .onSuccess(result2 -> AlertEvent.fireWarn(ImportConfigConfirmPresenter.this, "Import Aborted", () -> HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
+                        ImportConfigConfirmPresenter.this, false, false)));
     }
 
     public void importData() {
-        dispatcher.execute(new ImportConfigAction(resourceKey, confirmList),
+        dispatcher.exec(new ImportConfigAction(resourceKey, confirmList))
+                .onSuccess(result2 -> AlertEvent.fireInfo(ImportConfigConfirmPresenter.this, "Import Complete", () -> {
+                    HidePopupEvent.fire(ImportConfigConfirmPresenter.this, ImportConfigConfirmPresenter.this, false,
+                            true);
+                    RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);
 
-                new AsyncCallbackAdaptor<ResourceKey>() {
-                    @Override
-                    public void onSuccess(final ResourceKey result2) {
-                        AlertEvent.fireInfo(ImportConfigConfirmPresenter.this, "Import Complete", new AlertCallback() {
-                            @Override
-                            public void onClose() {
-                                HidePopupEvent.fire(ImportConfigConfirmPresenter.this, ImportConfigConfirmPresenter.this, false,
-                                        true);
-                                RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);
+                    // We might have loaded a new visualisation or updated
+                    // an existing one.
+                    clearCaches();
+                }))
+                .onFailure(caught -> {
+                    HidePopupEvent.fire(ImportConfigConfirmPresenter.this, ImportConfigConfirmPresenter.this, false, true);
+                    // Even if the import was error we should refresh the tree in
+                    // case it got part done.
+                    RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);
 
-                                // We might have loaded a new visualisation or updated
-                                // an existing one.
-                                clearCaches();
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onFailure(final Throwable caught) {
-                        HidePopupEvent.fire(ImportConfigConfirmPresenter.this, ImportConfigConfirmPresenter.this, false, true);
-                        // Even if the import was error we should refresh the tree in
-                        // case it got part done.
-                        RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);
-
-                        // We might have loaded a new visualisation or updated an
-                        // existing one.
-                        clearCaches();
-                    }
+                    // We might have loaded a new visualisation or updated an
+                    // existing one.
+                    clearCaches();
                 });
     }
 

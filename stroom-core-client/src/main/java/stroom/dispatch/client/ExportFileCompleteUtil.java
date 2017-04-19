@@ -17,10 +17,7 @@
 package stroom.dispatch.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Window.Location;
-
 import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.presenter.AlertCallback;
 import stroom.app.client.LocationManager;
 import stroom.importexport.client.presenter.ExportConfigPresenter;
 import stroom.util.shared.Message;
@@ -28,46 +25,36 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 
-public class ExportFileCompleteHandler extends AsyncCallbackAdaptor<ResourceGeneration> {
-    private final LocationManager locationManager;
-    private final ExportConfigPresenter parent;
-
-    public ExportFileCompleteHandler(final LocationManager locationManager, final ExportConfigPresenter parent) {
-        this.locationManager = locationManager;
-        this.parent = parent;
+public final class ExportFileCompleteUtil {
+    private ExportFileCompleteUtil() {
+        // Utility.
     }
 
-    @Override
-    public void onSuccess(final ResourceGeneration result) {
+    public static void onSuccess(final LocationManager locationManager, final ExportConfigPresenter parent, final ResourceGeneration result) {
         if (parent != null) {
             HidePopupEvent.fire(parent, parent, false, false);
         }
 
         final String message = getMessage(result);
         if (message != null) {
-            AlertEvent.fireWarn(parent, message, new AlertCallback() {
-                @Override
-                public void onClose() {
-                    // Change the browser location to download the zip file.
-                    download(result);
-                }
+            AlertEvent.fireWarn(parent, message, () -> {
+                // Change the browser location to download the zip file.
+                download(locationManager, result);
             });
 
         } else {
             // Change the browser location to download the zip file.
-            download(result);
+            download(locationManager, result);
         }
     }
 
-    @Override
-    public void onFailure(final Throwable caught) {
-        super.onFailure(caught);
+    public static void onFailure(final ExportConfigPresenter parent) {
         if (parent != null) {
             EnablePopupEvent.fire(parent, parent);
         }
     }
 
-    private String getMessage(final ResourceGeneration result) {
+    private static String getMessage(final ResourceGeneration result) {
         if (result.getMessageList() == null || result.getMessageList().size() == 0) {
             return null;
         }
@@ -82,7 +69,7 @@ public class ExportFileCompleteHandler extends AsyncCallbackAdaptor<ResourceGene
         return stringBuilder.toString();
     }
 
-    private void download(final ResourceGeneration result) {
+    private static void download(final LocationManager locationManager, final ResourceGeneration result) {
         // Change the browser location to download the zip
         // file.
         locationManager.replace(GWT.getModuleBaseURL() + "../resourcestore/" + result.getResourceKey().getName() + "?UUID="
