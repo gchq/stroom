@@ -337,7 +337,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     pipelineModel.build();
                     pipelineTreePresenter.getSelectionModel().setSelected(PipelineModel.SOURCE_ELEMENT, true);
 
-                    Scheduler.get().scheduleDeferred(() -> getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 2));
+                    Scheduler.get().scheduleDeferred(() -> getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 3));
                 } catch (final PipelineModelException e) {
                     AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
                 }
