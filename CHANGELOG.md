@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#155** : Changed password values to be obfuscated in the UI as 20 asterisks regardless of length.
 
+* Issue **#188** : All of the writers in a pipeline now display IO in the UI when stepping.
+
 ## [v5.0-beta.18] - 2017-04-13
 
 * Issue **#172** : Further improvement to dashboard L&F.
