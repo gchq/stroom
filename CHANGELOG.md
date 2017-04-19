@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#188** : All of the writers in a pipeline now display IO in the UI when stepping.
 
+* Issue **#208** : Schema filter validation errors are now shown on the output pane during stepping.
+
 ## [v5.0-beta.18] - 2017-04-13
 
 * Issue **#172** : Further improvement to dashboard L&F.
