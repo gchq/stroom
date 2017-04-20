@@ -59,7 +59,7 @@
                 <include>**/*.sh</include>
             </includes>
             <excludes>
-                <!-- Exclude scripts used when we are working directly from svn -->
+                <!-- Exclude development scripts -->
                 <exclude>bin/dev*.sh</exclude>
             </excludes>
             <useDefaultExcludes>true</useDefaultExcludes>
