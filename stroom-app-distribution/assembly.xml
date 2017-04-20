@@ -1,52 +1,70 @@
-<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
-  <!--
-  ~ Copyright 2016 Crown Copyright
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~     http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
-  <id>bin</id>
-  <formats>
-    <format>zip</format>
-  </formats>
-  <includeBaseDirectory>false</includeBaseDirectory>
-  <dependencySets>
-    <dependencySet>
-      <outputDirectory>/stroom-app/lib</outputDirectory>
-      <includes>
-        <include>stroom:stroom-app</include>
-        <include>stroom:stroom-util</include>
-        <include>mysql:mysql-connector-java</include>
-      </includes>
-      <useStrictFiltering>true</useStrictFiltering>
-      <useProjectArtifact>false</useProjectArtifact>
-    </dependencySet>
-  </dependencySets>
-  <fileSets>
-    <fileSet>
-      <directory>${project.basedir}</directory>
-      <outputDirectory>/stroom-app</outputDirectory>
-      <includes>
-        <include>apache*/**</include>
-        <include>template*/**</include>
-        <include>bin/*</include>
-        <include>Dockerfile</include>
-      </includes>
-      <excludes>
-        <!-- Exclude scripts used when we are working directly from svn -->
-        <exclude>bin/dev*.sh</exclude>
-      </excludes>
-      <useDefaultExcludes>true</useDefaultExcludes>
-    </fileSet>
-  </fileSets>
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+    <!--
+    ~ Copyright 2016 Crown Copyright
+    ~
+    ~ Licensed under the Apache License, Version 2.0 (the "License");
+    ~ you may not use this file except in compliance with the License.
+    ~ You may obtain a copy of the License at
+    ~
+    ~     http://www.apache.org/licenses/LICENSE-2.0
+    ~
+    ~ Unless required by applicable law or agreed to in writing, software
+    ~ distributed under the License is distributed on an "AS IS" BASIS,
+    ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    ~ See the License for the specific language governing permissions and
+    ~ limitations under the License.
+    -->
+    <id>bin</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>/stroom-app/lib</outputDirectory>
+            <includes>
+                <include>stroom:stroom-app</include>
+                <include>stroom:stroom-util</include>
+                <include>mysql:mysql-connector-java</include>
+            </includes>
+            <useStrictFiltering>true</useStrictFiltering>
+            <useProjectArtifact>false</useProjectArtifact>
+            <fileMode>0640</fileMode>
+            <directoryMode>0750</directoryMode>
+        </dependencySet>
+    </dependencySets>
+    <fileSets>
+        <fileSet>
+            <directory>${project.basedir}</directory>
+            <outputDirectory>/stroom-app</outputDirectory>
+            <includes>
+                <include>apache*/**</include>
+                <include>template*/**</include>
+                <include>bin/*</include>
+                <include>Dockerfile</include>
+            </includes>
+            <excludes>
+                <!-- Exclude all shell scripts -->
+                <exclude>**/*.sh</exclude>
+            </excludes>
+            <useDefaultExcludes>true</useDefaultExcludes>
+            <fileMode>0640</fileMode>
+            <directoryMode>0750</directoryMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}</directory>
+            <outputDirectory>/stroom-app</outputDirectory>
+            <includes>
+                <include>**/*.sh</include>
+            </includes>
+            <excludes>
+                <!-- Exclude scripts used when we are working directly from svn -->
+                <exclude>bin/dev*.sh</exclude>
+            </excludes>
+            <useDefaultExcludes>true</useDefaultExcludes>
+            <fileMode>0750</fileMode>
+            <directoryMode>0750</directoryMode>
+        </fileSet>
+    </fileSets>
 </assembly>
