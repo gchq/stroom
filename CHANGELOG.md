@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.19] - 2017-04-21
+
 * Issue **#155** : Changed password values to be obfuscated in the UI as 20 asterisks regardless of length.
 
 * Issue **#188** : All of the writers in a pipeline now display IO in the UI when stepping.
@@ -281,7 +283,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.18...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.19...HEAD
+[v5.0-beta.19]: https://github.com/gchq/stroom/compare/v5.0-beta.18...v5.0-beta.19
 [v5.0-beta.18]: https://github.com/gchq/stroom/compare/v5.0-beta.17...v5.0-beta.18
 [v5.0-beta.17]: https://github.com/gchq/stroom/compare/v5.0-beta.16...v5.0-beta.17
 [v5.0-beta.16]: https://github.com/gchq/stroom/compare/v5.0-beta.15...v5.0-beta.16
