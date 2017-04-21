@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#241** : XMLFilter now ignores the XSLT name pattern if an empty string is supplied.
 
+* Issue **#236** : 'Manage Cache Permission' has been changed to 'Manage Cache'.
+
 ## [v5.0-beta.18] - 2017-04-13
 
 * Issue **#172** : Further improvement to dashboard L&F.
