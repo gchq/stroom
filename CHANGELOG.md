@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#236** : 'Manage Cache Permission' has been changed to 'Manage Cache'.
 
+* Issue **#219** : Made further changes to use lambda expressions where possible to simplify code.
+
 ## [v5.0-beta.18] - 2017-04-13
 
 * Issue **#172** : Further improvement to dashboard L&F.
