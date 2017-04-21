@@ -22,7 +22,7 @@ public final class ModelStringUtil {
     private static final int METRIC_DIV = 1000;
     private static final int IEC_BYTE_DIV = 1024;
 
-    private static Divider[] SIZE_DIVIDER = new Divider[] {
+    private static Divider[] SIZE_DIVIDER = new Divider[]{
             new Divider(1, ""),
             new Divider(METRIC_DIV, "K"),
             new Divider(METRIC_DIV, "M"),
@@ -30,7 +30,7 @@ public final class ModelStringUtil {
             new Divider(METRIC_DIV, "T")
     };
 
-    private static Divider[] METRIC_BYTE_SIZE_DIVIDER = new Divider[] {
+    private static Divider[] METRIC_BYTE_SIZE_DIVIDER = new Divider[]{
             new Divider(1, "B", "b", "bytes", ""),
             new Divider(METRIC_DIV, "K", "KB"),
             new Divider(METRIC_DIV, "M", "MB"),
@@ -93,7 +93,7 @@ public final class ModelStringUtil {
     }
 
     /**
-     * Return nice string like "25 B", "4KiB", "45 MiB", etc.
+     * Return nice string like "25 B", "4 K", "45 M", etc.
      */
     public static String formatIECByteSizeString(final Long streamSize) {
         if (streamSize == null) {
@@ -110,7 +110,7 @@ public final class ModelStringUtil {
 
     }
 
-    private static final String formatNumberString(final double number, final Divider[] dividers) {
+    private static String formatNumberString(final double number, final Divider[] dividers) {
         double nextNumber = number;
         Divider lastDivider = dividers[0];
 
@@ -139,39 +139,39 @@ public final class ModelStringUtil {
         return String.valueOf(nextNumber);
     }
 
-    public static final Long parseNumberString(final String str) throws NumberFormatException {
+    public static Long parseNumberString(final String str) throws NumberFormatException {
         return parseNumberString(str, SIZE_DIVIDER);
     }
 
-    public static final Long parseMetricByteSizeString(final String str) throws NumberFormatException {
+    public static Long parseMetricByteSizeString(final String str) throws NumberFormatException {
         return parseNumberString(str, METRIC_BYTE_SIZE_DIVIDER);
     }
 
-    public static final Long parseIECByteSizeString(final String str) throws NumberFormatException {
+    public static Long parseIECByteSizeString(final String str) throws NumberFormatException {
         return parseNumberString(str, IEC_BYTE_SIZE_DIVIDER);
     }
 
-    public static final Long parseDurationString(final String str) throws NumberFormatException {
+    public static Long parseDurationString(final String str) throws NumberFormatException {
         return parseNumberString(str, TIME_SIZE_DIVIDER);
     }
 
-    public static final Integer parseNumberStringAsInt(final String str) throws NumberFormatException {
+    public static Integer parseNumberStringAsInt(final String str) throws NumberFormatException {
         final Long num = parseNumberString(str, SIZE_DIVIDER);
         if (num == null) {
             return null;
         }
-        if (num.longValue() > Integer.MAX_VALUE) {
+        if (num > Integer.MAX_VALUE) {
             throw new NumberFormatException(str + " is too big for an int.  (Max value " + formatCsv(Integer.MAX_VALUE)
                     + " and you number was " + formatCsv(num) + ")");
         }
-        if (num.longValue() < Integer.MIN_VALUE) {
+        if (num < Integer.MIN_VALUE) {
             throw new NumberFormatException(str + " is too small for an int.  (Min value "
                     + formatCsv(Integer.MIN_VALUE) + " and you number was " + formatCsv(num) + ")");
         }
         return num.intValue();
     }
 
-    public static final String format(final HasDisplayValue hasDisplayValue) {
+    public static String format(final HasDisplayValue hasDisplayValue) {
         if (hasDisplayValue == null) {
             return "";
         } else {
@@ -179,7 +179,7 @@ public final class ModelStringUtil {
         }
     }
 
-    private static final Long parseNumberString(String str, final Divider[] dividers) throws NumberFormatException {
+    private static Long parseNumberString(String str, final Divider[] dividers) throws NumberFormatException {
         if (str == null) {
             return null;
         }
@@ -320,7 +320,7 @@ public final class ModelStringUtil {
         final int div;
         final String[] unit;
 
-        public Divider(final int div, final String... unit) {
+        Divider(final int div, final String... unit) {
             this.div = div;
             this.unit = unit;
         }

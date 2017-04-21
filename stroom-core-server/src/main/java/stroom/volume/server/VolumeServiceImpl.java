@@ -32,9 +32,13 @@ import stroom.entity.shared.EntityAction;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
-import stroom.node.shared.*;
+import stroom.node.shared.FindVolumeCriteria;
+import stroom.node.shared.Node;
+import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
+import stroom.node.shared.VolumeService;
+import stroom.node.shared.VolumeState;
 import stroom.security.Secured;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
@@ -53,7 +57,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -65,6 +77,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @EntityEventHandler(type = Volume.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
 public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolumeCriteria>
         implements VolumeService, EntityEvent.Handler, Clearable {
+    private static final double MEBIBYTE = 1024 * 1024;
+
     /**
      * How many permanent copies should we keep?
      */
@@ -72,20 +86,20 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     /**
      * Should we try to write to local volumes if possible?
      */
-    public static final String PROP_PREFER_LOCAL_VOLUMES = "stroom.streamstore.preferLocalVolumes";
+    private static final String PROP_PREFER_LOCAL_VOLUMES = "stroom.streamstore.preferLocalVolumes";
     /**
      * How should we select volumes to use?
      */
-    public static final String PROP_VOLUME_SELECTOR = "stroom.streamstore.volumeSelector";
+    private static final String PROP_VOLUME_SELECTOR = "stroom.streamstore.volumeSelector";
 
     /**
      * Whether a default volume should be created on application start, but only if other volumes don't already exist
      */
-    public static final String PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP = "stroom.volumes.createDefaultOnStart";
+    static final String PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP = "stroom.volumes.createDefaultOnStart";
 
-    public static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
-    public static final Path DEFAULT_INDEX_VOLUME_SUBDIR = Paths.get("defaultIndexVolume");
-    public static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
+    static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
+    static final Path DEFAULT_INDEX_VOLUME_SUBDIR = Paths.get("defaultIndexVolume");
+    static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
 
     private static final StroomLogger LOGGER = StroomLogger.getLogger(VolumeServiceImpl.class);
 
@@ -117,9 +131,9 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private volatile Statistics statistics;
 
     @Inject
-    public VolumeServiceImpl(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
-                             final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
-                             final Provider<StatisticsFactory> factoryProvider) {
+    VolumeServiceImpl(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
+                      final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
+                      final Provider<StatisticsFactory> factoryProvider) {
         super(stroomEntityManager);
         this.stroomEntityManager = stroomEntityManager;
         this.nodeCache = nodeCache;
@@ -348,27 +362,26 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             final VolumeState volumeState = volume.getVolumeState();
 
             if (statistics != null) {
-                final List<StatisticTag> tags = new ArrayList<>();
-                tags.add(new StatisticTag("Id", String.valueOf(volume.getId())));
-                tags.add(new StatisticTag("Node", volume.getNode().getName()));
-                tags.add(new StatisticTag("Path", volume.getPath()));
-
-                if (volume.getBytesLimit() != null) {
-                    statistics.putEvent(new StatisticEvent(System.currentTimeMillis(), "Volume Limit", tags,
-                            (double) volume.getBytesLimit()));
-                }
-                statistics.putEvent(new StatisticEvent(System.currentTimeMillis(), "Volume Used", tags,
-                        (double) volumeState.getBytesUsed()));
-                statistics.putEvent(new StatisticEvent(System.currentTimeMillis(), "Volume Free", tags,
-                        (double) volumeState.getBytesFree()));
-                statistics.putEvent(new StatisticEvent(System.currentTimeMillis(), "Volume Total", tags,
-                        (double) volumeState.getBytesTotal()));
-                statistics.putEvent(new StatisticEvent(System.currentTimeMillis(), "Volume Use%", tags,
-                        (double) volumeState.getPercentUsed()));
+                final long now = System.currentTimeMillis();
+                addStatisticEvent(now, volume, "Limit (MiB)", volume.getBytesLimit());
+                addStatisticEvent(now, volume, "Used (MiB)", volumeState.getBytesUsed());
+                addStatisticEvent(now, volume, "Free (MiB)", volumeState.getBytesFree());
+                addStatisticEvent(now, volume, "Total (MiB)", volumeState.getBytesTotal());
             }
         } catch (final Throwable t) {
             LOGGER.warn(t.getMessage());
             LOGGER.debug(t.getMessage(), t);
+        }
+    }
+
+    private void addStatisticEvent(final long timeMs, final Volume volume, final String type, final Long bytes) {
+        if (bytes != null) {
+            final List<StatisticTag> tags = new ArrayList<>();
+            tags.add(new StatisticTag("Id", String.valueOf(volume.getId())));
+            tags.add(new StatisticTag("Node", volume.getNode().getName()));
+            tags.add(new StatisticTag("Path", volume.getPath()));
+            tags.add(new StatisticTag("Type", type));
+            statistics.putEvent(new StatisticEvent(timeMs, "Volumes", tags, bytes / MEBIBYTE));
         }
     }
 
@@ -486,7 +499,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     private static class VolumeQueryAppender extends QueryAppender<Volume, FindVolumeCriteria> {
-        public VolumeQueryAppender(final StroomEntityManager entityManager) {
+        VolumeQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }
 
@@ -562,7 +575,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         }
     }
 
-    private OptionalLong getDefaultVolumeLimit(final Path path){
+    private OptionalLong getDefaultVolumeLimit(final Path path) {
         try {
             long totalBytes = Files.getFileStore(path).getTotalSpace();
             //set an arbitrary limit of 90% of the filesystem total size to ensure we don't fill up the
@@ -571,7 +584,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             //to all volumes and any other data on the filesystem. I.e. once the amount of the filesystem in use
             //is greater than the limit writes to those volumes will be prevented. See Volume.isFull() and
             //this.updateVolumeState()
-            return OptionalLong.of((long)(totalBytes * 0.9));
+            return OptionalLong.of((long) (totalBytes * 0.9));
         } catch (IOException e) {
             LOGGER.warn("Unable to determine the total space on the filesystem for path: ", path.toAbsolutePath().toString());
             return OptionalLong.empty();

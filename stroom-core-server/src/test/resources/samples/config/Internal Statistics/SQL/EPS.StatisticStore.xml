@@ -1,0 +1,11 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<statisticStore>
+   <description>EPS</description>
+   <enabled>true</enabled>
+   <engineName>SQL</engineName>
+   <name>EPS</name>
+   <precision>60000</precision>
+   <rollUpType>CUSTOM</rollUpType>
+   <statisticType>VALUE</statisticType>
+   <uuid>a9936548-2572-448b-9d5b-8543052c4d92</uuid>
+</statisticStore>
