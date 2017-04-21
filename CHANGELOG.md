@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#221** : Fixed issue where `*.zip.bad` files were beiung picked up for proxy aggregation.
 
+* Issue **#242** : Improved the way properties are injected into some areas of the code to fix an issue where 'stroom.maxStreamSize' and other properties were not being set.
+
 ## [v5.0-beta.18] - 2017-04-13
 
 * Issue **#172** : Further improvement to dashboard L&F.
