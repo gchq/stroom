@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.dictionary.shared.DictionaryService;
-import stroom.feed.shared.FeedService;
 import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
@@ -32,17 +31,19 @@ import stroom.query.CoprocessorMap;
 import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
 import stroom.query.SearchResultHandler;
-import stroom.query.shared.*;
+import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.IndexFieldsMap;
+import stroom.query.shared.QueryKey;
+import stroom.query.shared.Search;
+import stroom.query.shared.SearchRequest;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
+import stroom.util.config.PropertyUtil;
 import stroom.util.logging.StroomLogger;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Set;
 
@@ -52,33 +53,33 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
     public static final String ENTITY_TYPE = Index.ENTITY_TYPE;
     private static final StroomLogger LOGGER = StroomLogger.getLogger(LuceneSearchDataSourceProvider.class);
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
-
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
     private final IndexService indexService;
     private final DictionaryService dictionaryService;
     private final NodeCache nodeCache;
     private final TaskManager taskManager;
-    private final FeedService feedService;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
-
-    private int maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
+    private final int maxBooleanClauseCount;
 
     @Inject
-    public LuceneSearchDataSourceProvider(final IndexService indexService, final DictionaryService dictionaryService,
-            final NodeCache nodeCache, final TaskManager taskManager, final FeedService feedService,
-            final ClusterResultCollectorCache clusterResultCollectorCache) {
+    public LuceneSearchDataSourceProvider(final IndexService indexService,
+                                          final DictionaryService dictionaryService,
+                                          final NodeCache nodeCache,
+                                          final TaskManager taskManager,
+                                          final ClusterResultCollectorCache clusterResultCollectorCache,
+                                          @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount) {
         this.indexService = indexService;
         this.dictionaryService = dictionaryService;
         this.nodeCache = nodeCache;
         this.taskManager = taskManager;
-        this.feedService = feedService;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
+        this.maxBooleanClauseCount = PropertyUtil.toInt(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
     }
 
     @Override
     public SearchResultCollector createCollector(final String sessionId, final String userName, final QueryKey queryKey,
-            final SearchRequest searchRequest) {
+                                                 final SearchRequest searchRequest) {
         // Get the current time in millis since epoch.
         final long nowEpochMilli = System.currentTimeMillis();
 
@@ -142,14 +143,5 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
     @Override
     public String getEntityType() {
         return ENTITY_TYPE;
-    }
-
-    @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}")
-    public void setMaxBooleanClauseCount(final String maxBooleanClauseCount) {
-        try {
-            this.maxBooleanClauseCount = ModelStringUtil.parseNumberStringAsInt(maxBooleanClauseCount);
-        } catch (final NumberFormatException e) {
-            LOGGER.error(e, e);
-        }
     }
 }

@@ -55,6 +55,7 @@ import stroom.task.server.TaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskTerminatedException;
+import stroom.util.config.PropertyUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Location;
 import stroom.util.shared.ModelStringUtil;
@@ -83,10 +84,11 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
      * default. When the queue is full the index shard data tasks will pause
      * until the docs are drained from the queue.
      */
-    public static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000000;
+    private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000000;
+    private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
+
     private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterSearchTaskHandler.class);
     private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
-    private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
     private final TaskManager taskManager;
     private final IndexService indexService;
     private final DictionaryService dictionaryService;
@@ -99,24 +101,31 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
     private final ExtractionTaskProperties extractionTaskProperties;
     private final StreamStore streamStore;
     private final SecurityContext securityContext;
+    private final int maxBooleanClauseCount;
+    private final int maxStoredDataQueueSize;
     private final LinkedBlockingDeque<String> errors = new LinkedBlockingDeque<>();
     private final AtomicBoolean searchComplete = new AtomicBoolean();
     private final AtomicBoolean sendingComplete = new AtomicBoolean();
-    private int maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
-    private int maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
     private ClusterSearchTask task;
     private Index index;
 
     private TransferList<String[]> storedData;
 
     @Inject
-    public ClusterSearchTaskHandler(final TaskManager taskManager, final IndexService indexService,
-                                    final DictionaryService dictionaryService, final TaskMonitor taskMonitor,
+    ClusterSearchTaskHandler(final TaskManager taskManager,
+                                    final IndexService indexService,
+                                    final DictionaryService dictionaryService,
+                                    final TaskMonitor taskMonitor,
                                     final CoprocessorFactory coprocessorFactory,
                                     final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor,
                                     final IndexShardSearchTaskProperties indexShardSearchTaskProperties,
-                                    final IndexShardSearcherCache indexShardSearcherCache, final ExtractionTaskExecutor extractionTaskExecutor,
-                                    final ExtractionTaskProperties extractionTaskProperties, final StreamStore streamStore, final SecurityContext securityContext) {
+                                    final IndexShardSearcherCache indexShardSearcherCache,
+                                    final ExtractionTaskExecutor extractionTaskExecutor,
+                                    final ExtractionTaskProperties extractionTaskProperties,
+                                    final StreamStore streamStore,
+                                    final SecurityContext securityContext,
+                                    @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
+                                    @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}") final String maxStoredDataQueueSize) {
         this.taskManager = taskManager;
         this.indexService = indexService;
         this.dictionaryService = dictionaryService;
@@ -129,6 +138,8 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
         this.extractionTaskProperties = extractionTaskProperties;
         this.streamStore = streamStore;
         this.securityContext = securityContext;
+        this.maxBooleanClauseCount = PropertyUtil.toInt(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
+        this.maxStoredDataQueueSize = PropertyUtil.toInt(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
     }
 
     @Override
@@ -452,29 +463,5 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
 
     public ClusterSearchTask getTask() {
         return task;
-    }
-
-    @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}")
-    public void setMaxBooleanClauseCount(final String maxBooleanClauseCount) {
-        try {
-            this.maxBooleanClauseCount = ModelStringUtil.parseNumberStringAsInt(maxBooleanClauseCount);
-        } catch (final NumberFormatException e) {
-            LOGGER.error("Unable to parse property 'stroom.search.maxBooleanClauseCount' value '" + maxBooleanClauseCount
-                    + "', using default of '" + DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT + "' instead", e);
-        }
-    }
-
-    @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}")
-    public void setMaxStoredDataQueueSize(final String maxStoredDataQueueSize) {
-        if (StringUtils.hasText(maxStoredDataQueueSize)) {
-            try {
-                this.maxStoredDataQueueSize = ModelStringUtil.parseNumberStringAsInt(maxStoredDataQueueSize);
-            } catch (final NumberFormatException e) {
-                LOGGER.error(
-                        "Unable to parse property 'stroom.search.maxStoredDataQueueSize' value '" + maxStoredDataQueueSize
-                                + "', using default of '" + DEFAULT_MAX_STORED_DATA_QUEUE_SIZE + "' instead",
-                        e);
-            }
-        }
     }
 }

@@ -46,7 +46,8 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
     private String rackName;
 
     @Inject
-    NodeServiceImpl(final StroomEntityManager entityManager, final NodeServiceTransactionHelper nodeServiceUtil,
+    NodeServiceImpl(final StroomEntityManager entityManager,
+                    final NodeServiceTransactionHelper nodeServiceUtil,
                     @Value("#{propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
                     @Value("#{propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {
         super(entityManager);

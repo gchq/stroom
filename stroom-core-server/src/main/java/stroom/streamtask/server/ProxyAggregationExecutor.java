@@ -16,6 +16,9 @@
 
 package stroom.streamtask.server;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.jobsystem.server.JobTrackedSchedule;
@@ -24,27 +27,23 @@ import stroom.streamstore.server.StreamStore;
 import stroom.task.server.AsyncTaskHelper;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
+import stroom.util.config.PropertyUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamProgressMonitor;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
-import stroom.util.shared.TerminateHandler;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadLocalBuffer;
+import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
 import stroom.util.zip.StroomZipRepository;
 import stroom.util.zip.StroomZipRepositoryProcessor;
-import stroom.util.zip.HeaderMap;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
@@ -67,40 +66,44 @@ public class ProxyAggregationExecutor {
     private final MetaDataStatistic metaDataStatistic;
     private final TaskMonitor taskMonitor;
     private final TaskManager taskManager;
-
+    private final ThreadLocalBuffer proxyAggregationThreadLocalBuffer;
+    private final int threadCount;
     private final StroomZipRepositoryProcessor stroomZipRepositoryProcessor;
+
     private AsyncTaskHelper<VoidResult> taskPool;
     private Task<?> task;
 
-    @Value("#{propertyConfigurer.getProperty('stroom.proxyThreads')}")
-    private int threadCount = 10;
-
-    @Resource(name = "prototypeThreadLocalBuffer")
-    private ThreadLocalBuffer proxyAggregationThreadLocalBuffer;
-
-    @Value("#{propertyConfigurer.getProperty('stroom.proxyDir')}")
     private String proxyDir;
-
     private boolean aggregate = true;
     private boolean stop = false;
 
     @Inject
     public ProxyAggregationExecutor(final StreamStore streamStore,
-                                    @Named("cachedFeedService") final FeedService feedService, final MetaDataStatistic metaDataStatistic,
-                                    final TaskMonitor taskMonitor, final TaskManager taskManager) {
+                                    @Named("cachedFeedService") final FeedService feedService,
+                                    final MetaDataStatistic metaDataStatistic,
+                                    final TaskMonitor taskMonitor,
+                                    final TaskManager taskManager,
+                                    @Named("prototypeThreadLocalBuffer") final ThreadLocalBuffer proxyAggregationThreadLocalBuffer,
+                                    @Value("#{propertyConfigurer.getProperty('stroom.proxyDir')}") final String proxyDir,
+                                    @Value("#{propertyConfigurer.getProperty('stroom.proxyThreads')}") final String threadCount,
+                                    @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxAggregation,
+                                    @Value("#{propertyConfigurer.getProperty('stroom.maxStreamSize')}") final String maxStreamSize,
+                                    @Value("#{propertyConfigurer.getProperty('stroom.maxAggregationScan')}") final String maxFileScan) {
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.metaDataStatistic = metaDataStatistic;
         this.taskMonitor = taskMonitor;
         this.taskManager = taskManager;
+        this.proxyAggregationThreadLocalBuffer = proxyAggregationThreadLocalBuffer;
+        this.proxyDir = proxyDir;
+        this.threadCount = PropertyUtil.toInt(threadCount, 10);
 
         LOGGER.debug("ProxyAggregationExecutor() - new instance");
 
         this.stroomZipRepositoryProcessor = getStroomZipRepositoryProcessor();
-    }
-
-    public void setProxyDir(final String proxyDir) {
-        this.proxyDir = proxyDir;
+        stroomZipRepositoryProcessor.setMaxAggregation(PropertyUtil.toInt(maxAggregation, StroomZipRepositoryProcessor.DEFAULT_MAX_AGGREGATION));
+        stroomZipRepositoryProcessor.setMaxStreamSizeString(maxStreamSize);
+        stroomZipRepositoryProcessor.setMaxFileScan(PropertyUtil.toInt(maxFileScan, StroomZipRepositoryProcessor.DEFAULT_MAX_FILE_SCAN));
     }
 
     @StroomSimpleCronSchedule(cron = "0,10,20,30,40,50 * *")
@@ -121,18 +124,13 @@ public class ProxyAggregationExecutor {
         }
         this.aggregate = aggregate;
         if (maxAggregation != null) {
-            setMaxAggregation(maxAggregation);
+            stroomZipRepositoryProcessor.setMaxAggregation(maxAggregation);
         }
         if (maxStreamSize != null) {
-            setMaxStreamSize(maxStreamSize);
+            stroomZipRepositoryProcessor.setMaxStreamSize(maxStreamSize);
         }
 
-        taskMonitor.addTerminateHandler(new TerminateHandler() {
-            @Override
-            public void onTerminate() {
-                stop();
-            }
-        });
+        taskMonitor.addTerminateHandler(() -> stop());
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.info("exec() - started");
@@ -305,29 +303,6 @@ public class ProxyAggregationExecutor {
 
     public void setAggregate(final boolean aggregate) {
         this.aggregate = aggregate;
-    }
-
-    public void setMaxAggregation(
-            @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final int maxAggregation) {
-        stroomZipRepositoryProcessor.setMaxAggregation(maxAggregation);
-    }
-
-    public void setMaxStreamSizeString(
-            @Value("#{propertyConfigurer.getProperty('stroom.maxStreamSize')}") final String maxFileSizeString) {
-        stroomZipRepositoryProcessor.setMaxStreamSizeString(maxFileSizeString);
-    }
-
-    public void setMaxStreamSize(final Long maxStreamSizeString) {
-        stroomZipRepositoryProcessor.setMaxStreamSize(maxStreamSizeString);
-    }
-
-    public void setMaxAggregationScan(
-            @Value("#{propertyConfigurer.getProperty('stroom.maxAggregationScan')}") final int maxAggregationScan) {
-        stroomZipRepositoryProcessor.setMaxFileScan(maxAggregationScan);
-    }
-
-    public void setThreadCount(final int threadCount) {
-        this.threadCount = threadCount;
     }
 
     /**

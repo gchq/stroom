@@ -16,6 +16,9 @@
 
 package stroom.benchmark.server;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.entity.cluster.ClearServiceClusterTask;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
@@ -53,19 +56,16 @@ import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AsyncTaskHelper;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadUtil;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -76,56 +76,71 @@ import java.util.concurrent.locks.ReentrantLock;
 @Component
 @Scope(StroomScope.TASK)
 public class BenchmarkClusterExecutor extends AbstractBenchmark {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(BenchmarkClusterExecutor.class);
-
-    private static final String ROOT_TEST_NAME = "Benchmark-Cluster Test";
-    private static final String EPS = "EPS";
-    private static final String ERROR = "Error";
-
-    @Resource
-    private FeedService feedService;
-    @Resource
-    private PipelineEntityService pipelineEntityService;
-    @Resource
-    private StreamProcessorFilterService streamProcessorFilterService;
-    @Resource
-    private StreamProcessorService streamProcessorService;
-    @Resource
-    private ClusterDispatchAsyncHelper dispatchHelper;
-    @Resource
-    private StreamAttributeMapService streamAttributeMapService;
-
-    @Resource
-    private StreamStore streamStore;
-    @Resource
-    private JobManager jobManager;
-    @Resource
-    private NodeService nodeService;
-    @Resource
-    private TaskMonitor taskMonitor;
-    @Resource
-    private TaskManager taskManager;
-
-    private final Set<Node> nodeSet = new HashSet<>();
-
-    @Resource
-    private Statistics statistics;
-
-    private static final String BENCHMARK_REFERENCE = "BENCHMARK-REFERENCE";
-    private static final String BENCHMARK_EVENTS = "BENCHMARK-EVENTS";
-
     // 20 min timeout
     public static final int TIME_OUT = 1000 * 60 * 20;
 
-    private int streamCount = 1000;
-    private int recordCount = 10000;
-    private int concurrentWriters = 10;
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(BenchmarkClusterExecutor.class);
+    private static final String ROOT_TEST_NAME = "Benchmark-Cluster Test";
+    private static final String EPS = "EPS";
+    private static final String ERROR = "Error";
+    private static final String BENCHMARK_REFERENCE = "BENCHMARK-REFERENCE";
+    private static final String BENCHMARK_EVENTS = "BENCHMARK-EVENTS";
+
+    private final FeedService feedService;
+    private final PipelineEntityService pipelineEntityService;
+    private final StreamProcessorFilterService streamProcessorFilterService;
+    private final StreamProcessorService streamProcessorService;
+    private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final StreamAttributeMapService streamAttributeMapService;
+    private final StreamStore streamStore;
+    private final JobManager jobManager;
+    private final NodeService nodeService;
+    private final TaskMonitor taskMonitor;
+    private final TaskManager taskManager;
+    private final Set<Node> nodeSet = new HashSet<>();
+    private final Statistics statistics;
+    private final int streamCount;
+    private final int recordCount;
+    private final int concurrentWriters;
 
     private final ReentrantLock rangeLock = new ReentrantLock();
     private volatile Long minStreamId = null;
     private volatile Long maxStreamId = null;
 
     private Task<?> task;
+
+    @Inject
+    BenchmarkClusterExecutor(final FeedService feedService,
+                             final PipelineEntityService pipelineEntityService,
+                             final StreamProcessorFilterService streamProcessorFilterService,
+                             final StreamProcessorService streamProcessorService,
+                             final ClusterDispatchAsyncHelper dispatchHelper,
+                             final StreamAttributeMapService streamAttributeMapService,
+                             final StreamStore streamStore,
+                             final JobManager jobManager,
+                             final NodeService nodeService,
+                             final TaskMonitor taskMonitor,
+                             final TaskManager taskManager,
+                             final Statistics statistics,
+                             @Value("#{propertyConfigurer.getProperty('stroom.benchmark.streamCount')}") final int streamCount,
+                             @Value("#{propertyConfigurer.getProperty('stroom.benchmark.recordCount')}") final int recordCount,
+                             @Value("#{propertyConfigurer.getProperty('stroom.benchmark.concurrentWriters')}") final int concurrentWriters) {
+        this.feedService = feedService;
+        this.pipelineEntityService = pipelineEntityService;
+        this.streamProcessorFilterService = streamProcessorFilterService;
+        this.streamProcessorService = streamProcessorService;
+        this.dispatchHelper = dispatchHelper;
+        this.streamAttributeMapService = streamAttributeMapService;
+        this.streamStore = streamStore;
+        this.jobManager = jobManager;
+        this.nodeService = nodeService;
+        this.taskMonitor = taskMonitor;
+        this.taskManager = taskManager;
+        this.statistics = statistics;
+        this.streamCount = streamCount;
+        this.recordCount = recordCount;
+        this.concurrentWriters = concurrentWriters;
+    }
 
     @StroomSimpleCronSchedule(cron = "* * *")
     @JobTrackedSchedule(jobName = "XX Benchmark System XX", description = "Job to generate data in the system in order to benchmark it's performance (do not run in live!!)", enabled = false)
@@ -309,7 +324,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     }
 
     private void processData(final Feed feed, final StreamType rawStreamType, final StreamType processedStreamType,
-            final StreamProcessor streamProcessor, final Period createPeriod) {
+                             final StreamProcessor streamProcessor, final Period createPeriod) {
         if (!isTerminated()) {
             final Period processPeriod = new Period(System.currentTimeMillis(), null);
 
@@ -472,12 +487,12 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
             statisticEventList.add(new StatisticEvent(nowMs,
                     ROOT_TEST_NAME, Arrays.asList(new StatisticTag("Node", node.getName()),
-                            new StatisticTag("Feed", feed.getName()), new StatisticTag("Type", EPS)),
+                    new StatisticTag("Feed", feed.getName()), new StatisticTag("Type", EPS)),
                     (double) toEPS(nodeWritten, nodePeriod)));
 
             statisticEventList.add(new StatisticEvent(nowMs,
                     ROOT_TEST_NAME, Arrays.asList(new StatisticTag("Node", node.getName()),
-                            new StatisticTag("Feed", feed.getName()), new StatisticTag("Type", ERROR)),
+                    new StatisticTag("Feed", feed.getName()), new StatisticTag("Type", ERROR)),
                     (double) toEPS(nodeError, nodePeriod)));
 
         }
@@ -874,19 +889,4 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // return fileReadBPS;
     // }
     // }
-
-    @Value("#{propertyConfigurer.getProperty('stroom.benchmark.streamCount')}")
-    public void setStreamCount(final int streamCount) {
-        this.streamCount = streamCount;
-    }
-
-    @Value("#{propertyConfigurer.getProperty('stroom.benchmark.recordCount')}")
-    public void setRecordCount(final int recordCount) {
-        this.recordCount = recordCount;
-    }
-
-    @Value("#{propertyConfigurer.getProperty('stroom.benchmark.concurrentWriters')}")
-    public void setConcurrentWriters(final int concurrentWriters) {
-        this.concurrentWriters = concurrentWriters;
-    }
 }

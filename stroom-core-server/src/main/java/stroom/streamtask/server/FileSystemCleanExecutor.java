@@ -16,6 +16,9 @@
 
 package stroom.streamtask.server;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.FindVolumeCriteria;
@@ -24,10 +27,11 @@ import stroom.node.shared.VolumeService;
 import stroom.task.server.AsyncTaskHelper;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
+import stroom.util.config.PropertyUtil;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
@@ -35,11 +39,8 @@ import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadUtil;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
@@ -54,40 +55,48 @@ import java.util.Map;
 @Component
 @Scope(value = StroomScope.TASK)
 public class FileSystemCleanExecutor {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileSystemCleanExecutor.class);
-
-    @Resource
-    private VolumeService volumeService;
-    @Resource
-    private TaskMonitor taskMonitor;
-    @Resource
-    private TaskManager taskManager;
-    @Resource
-    private NodeCache nodeCache;
-
-    private Integer batchSize = null;
-    private Long oldAge = null;
-    private boolean deleteOut = false;
-    private AsyncTaskHelper<VoidResult> asyncTaskHelper;
-
     public static final String DELETE_OUT = "delete.out";
 
-    public FileSystemCleanExecutor() {
-    }
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileSystemCleanExecutor.class);
 
-    @Value("#{propertyConfigurer.getProperty('stroom.fileSystemCleanBatchSize')}")
-    public void setFileSystemCleanBatchSize(final String fileSystemCleanBatchSize) {
-        this.batchSize = ModelStringUtil.parseNumberStringAsInt(fileSystemCleanBatchSize);
-    }
+    private final VolumeService volumeService;
+    private final TaskMonitor taskMonitor;
+    private final TaskManager taskManager;
+    private final NodeCache nodeCache;
+    private final int batchSize;
+    private final long oldAge;
+    private final boolean deleteOut;
 
-    @Value("#{propertyConfigurer.getProperty('stroom.fileSystemCleanOldAge')}")
-    public void setFileSystemCleanOldAge(final String oldFileAge) {
-        this.oldAge = ModelStringUtil.parseDurationString(oldFileAge);
-    }
+    private AsyncTaskHelper<VoidResult> asyncTaskHelper;
 
-    @Value("#{propertyConfigurer.getProperty('stroom.fileSystemCleanDeleteOut')}")
-    public void setFileSystemCleanMatchFile(final String matchFile) {
-        this.deleteOut = Boolean.TRUE.toString().equalsIgnoreCase(matchFile);
+    @Inject
+    public FileSystemCleanExecutor(final VolumeService volumeService,
+                                   final TaskMonitor taskMonitor,
+                                   final TaskManager taskManager,
+                                   final NodeCache nodeCache,
+                                   @Value("#{propertyConfigurer.getProperty('stroom.fileSystemCleanBatchSize')}") final String fileSystemCleanBatchSize,
+                                   @Value("#{propertyConfigurer.getProperty('stroom.fileSystemCleanOldAge')}") final String oldFileAge,
+                                   @Value("#{propertyConfigurer.getProperty('stroom.fileSystemCleanDeleteOut')}") final String matchFile) {
+        this.volumeService = volumeService;
+        this.taskMonitor = taskMonitor;
+        this.taskManager = taskManager;
+        this.nodeCache = nodeCache;
+        this.batchSize = PropertyUtil.toInt(fileSystemCleanBatchSize, 20);
+
+        Long age;
+        try {
+            age = ModelStringUtil.parseDurationString(oldFileAge);
+            if (age == null) {
+                age = ModelStringUtil.parseDurationString("1d");
+            }
+        } catch (final NumberFormatException e) {
+            LOGGER.error("Unable to parse property 'stroom.fileSystemCleanOldAge' value '" + oldFileAge
+                    + "', using default of '1d' instead", e);
+            age = ModelStringUtil.parseDurationString("1d");
+        }
+        this.oldAge = age;
+
+        this.deleteOut = PropertyUtil.toBoolean(matchFile, false);
     }
 
     public Long getOldAge() {
@@ -115,15 +124,8 @@ public class FileSystemCleanExecutor {
     }
 
     public void clean(final Task<?> task, final long nodeId) {
-        final Map<Volume, FileSystemCleanProgress> taskProgressMap = new HashMap<Volume, FileSystemCleanProgress>();
-        final Map<Volume, PrintWriter> printWriterMap = new HashMap<Volume, PrintWriter>();
-
-        if (batchSize == null) {
-            batchSize = 20;
-        }
-        if (oldAge == null) {
-            oldAge = ModelStringUtil.parseDurationString("1d");
-        }
+        final Map<Volume, FileSystemCleanProgress> taskProgressMap = new HashMap<>();
+        final Map<Volume, PrintWriter> printWriterMap = new HashMap<>();
 
         // Load the node.
         asyncTaskHelper = new AsyncTaskHelper<>(null, taskMonitor, taskManager, batchSize);

@@ -20,9 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CachingEntityManager;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.feed.server.FeedServiceImpl;
-import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
 
@@ -30,9 +27,10 @@ import javax.inject.Inject;
 @Component("cachedNodeService")
 public class CachedNodeService extends NodeServiceImpl {
     @Inject
-    CachedNodeService(final CachingEntityManager entityManager, final NodeServiceTransactionHelper nodeServiceUtil,
-                    @Value("#{propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
-                    @Value("#{propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {
+    CachedNodeService(final CachingEntityManager entityManager,
+                      final NodeServiceTransactionHelper nodeServiceUtil,
+                      @Value("#{propertyConfigurer.getProperty('stroom.node')}") final String nodeName,
+                      @Value("#{propertyConfigurer.getProperty('stroom.rack')}") final String rackName) {
         super(entityManager, nodeServiceUtil, nodeName, rackName);
     }
 }

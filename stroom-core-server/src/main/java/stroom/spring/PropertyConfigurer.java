@@ -16,15 +16,12 @@
 
 package stroom.spring;
 
-import javax.annotation.Resource;
-
+import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
 import stroom.util.logging.StroomLogger;
-import org.springframework.stereotype.Component;
-
-import stroom.node.server.GlobalProperties;
-import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.PropertyProvider;
+
+import javax.inject.Inject;
 
 /**
  * Our own PropertyPlaceholderConfigurer that provides properties to Spring
@@ -36,17 +33,15 @@ import stroom.util.spring.PropertyProvider;
 public class PropertyConfigurer implements PropertyProvider {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(PropertyConfigurer.class);
 
-    @Resource
-    private StroomBeanStore beanStore;
+    private final StroomPropertyService stroomPropertyService;
 
-    public PropertyConfigurer() {
-        LOGGER.debug("Initialising: %s", this.getClass().getCanonicalName());
-        GlobalProperties.getInstance();
+    @Inject
+    public PropertyConfigurer(final StroomPropertyService stroomPropertyService) {
+        this.stroomPropertyService = stroomPropertyService;
     }
 
     @Override
     public String getProperty(final String name) {
-        final StroomPropertyService propertyService = beanStore.getBean(StroomPropertyService.class);
-        return propertyService.getProperty(name);
+        return stroomPropertyService.getProperty(name);
     }
 }

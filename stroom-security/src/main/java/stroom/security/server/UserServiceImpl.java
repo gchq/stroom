@@ -103,8 +103,10 @@ public class UserServiceImpl implements UserService {
     private String entityType;
 
     @Inject
-    UserServiceImpl(final StroomEntityManager entityManager, final PasswordEncoder passwordEncoder,
-                    @Value("#{propertyConfigurer.getProperty('stroom.developmentMode')}") final boolean neverExpire, final DocumentPermissionService documentPermissionService) {
+    UserServiceImpl(final StroomEntityManager entityManager,
+                    final PasswordEncoder passwordEncoder,
+                    @Value("#{propertyConfigurer.getProperty('stroom.developmentMode')}") final boolean neverExpire,
+                    final DocumentPermissionService documentPermissionService) {
         this.entityManager = entityManager;
         this.passwordEncoder = passwordEncoder;
         this.neverExpire = neverExpire;

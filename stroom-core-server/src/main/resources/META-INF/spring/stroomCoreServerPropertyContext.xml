@@ -278,11 +278,19 @@
             <property name="editable" value="false"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.startOnLoad"/>
+            <property name="name" value="stroom.lifecycle.enabled"/>
             <property name="value" value="true"/>
             <property name="description"
                       value="Set this to false for development and testing purposes otherwise the Stroom will try and process files automatically outside of test cases."/>
-            <property name="editable" value="false"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.lifecycle.executionInterval"/>
+            <property name="value" value="10s"/>
+            <property name="description" value="How frequently should the lifecycle service attempt execution."/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.maintenanceMessage"/>

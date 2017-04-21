@@ -101,13 +101,13 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
         } else {
             // System.setProperty("stroom.statistics.sql.statisticAggregationBatchSize",
             // Integer.toString(10));
-            sqlStatisticAggregationManager.setBatchSize(Integer.toString(55));
+            sqlStatisticAggregationManager.setBatchSize(55);
 
             final StatisticType statisticType = StatisticType.COUNT;
             // final long startDateMs =
             // DateUtil.parseNormalDateTimeString("2015-01-01T00:00:00.000Z");
             //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
-            final long startDateMs = LocalDateTime.of(2016,12,13,11,59,3).toInstant(ZoneOffset.UTC).toEpochMilli();
+            final long startDateMs = LocalDateTime.of(2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC).toEpochMilli();
             final int statNameCount = 4;
             final int timesCount = 10;
             final int numberOfDifferentPrecisions = 4;
@@ -338,7 +338,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
             // final long startDateMs =
             // DateUtil.parseNormalDateTimeString("2015-01-01T00:00:00.000Z");
             //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
-            final long startDateMs = LocalDateTime.of(2016,12,13,11,59,3).toInstant(ZoneOffset.UTC).toEpochMilli();
+            final long startDateMs = LocalDateTime.of(2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC).toEpochMilli();
             final int statNameCount = 4;
             final int timesCount = 100;
             final int numberOfDifferentPrecisions = 3;
@@ -499,7 +499,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
         } else {
             final StatisticType statisticType = StatisticType.VALUE;
             //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
-            final long startDateMs = LocalDateTime.of(2016,12,13,11,59,3).toInstant(ZoneOffset.UTC).toEpochMilli();
+            final long startDateMs = LocalDateTime.of(2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC).toEpochMilli();
             //the number of different satst names to use in the test
             final int statNameCount = 4;
             //the number of different data points per stat name
@@ -585,7 +585,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
     }
 
     private void loadData(final long startDateMs, final int statNameCount, final int timesCount,
-            final StatisticType statisticType) throws SQLException {
+                          final StatisticType statisticType) throws SQLException {
         int iteration = 0;
 
         LOGGER.info("Filling STAT_VAL_SRC");
@@ -623,7 +623,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
     }
 
     private void fillStatValSrc(final long startDateMs, final int statNameCount, final int timesCount,
-            final StatisticType statisticType) throws SQLException {
+                                final StatisticType statisticType) throws SQLException {
         final SQLStatisticAggregateMap sqlStatisticAggregateMap = new SQLStatisticAggregateMap();
         final long value = STAT_VALUE;
         final long precision = 0L;
