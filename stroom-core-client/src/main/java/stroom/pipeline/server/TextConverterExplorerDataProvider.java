@@ -16,19 +16,17 @@
 
 package stroom.pipeline.server;
 
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.FolderService;
 import stroom.explorer.server.AbstractExplorerDataProvider;
 import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
-import stroom.explorer.shared.ExplorerData;
 import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverterService;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.Map;
 
 @ProvidesExplorerData
 @Component

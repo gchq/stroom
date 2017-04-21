@@ -16,17 +16,16 @@
 
 package stroom.dashboard.client.vis;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
-
 import stroom.util.client.JSONUtil;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class PostMessage {
     public interface FrameListener {

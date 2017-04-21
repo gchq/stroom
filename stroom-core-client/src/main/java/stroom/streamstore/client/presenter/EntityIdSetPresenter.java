@@ -20,14 +20,11 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.table.client.CellTableView;
 import stroom.data.table.client.CellTableViewImpl;
 import stroom.data.table.client.CellTableViewImpl.DefaultResources;
@@ -39,7 +36,6 @@ import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
 import stroom.entity.shared.Folder;
 import stroom.explorer.client.presenter.EntityChooser;
-import stroom.explorer.shared.ExplorerData;
 import stroom.pipeline.processor.shared.LoadEntityIdSetAction;
 import stroom.pipeline.processor.shared.SetId;
 import stroom.security.shared.DocumentPermissionNames;
@@ -92,12 +88,7 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
             selectionModel = new MySingleSelectionModel<DocRef>();
             list = new CellTableViewImpl<DocRef>(true, (Resources) GWT.create(DefaultResources.class));
 
-            registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-                @Override
-                public void onSelectionChange(final SelectionChangeEvent event) {
-                    enableButtons();
-                }
-            }));
+            registerHandler(selectionModel.addSelectionChangeHandler(event -> enableButtons()));
         } else {
             selectionModel = null;
             list = new CellTableViewImpl<DocRef>(false, (Resources) GWT.create(DisabledResources.class));
@@ -118,24 +109,18 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(treePresenter.addDataSelectionHandler(new DataSelectionHandler<ExplorerData>() {
-            @Override
-            public void onSelection(final DataSelectionEvent<ExplorerData> event) {
-                final DocRef docRef = treePresenter.getSelectedEntityReference();
-                if (docRef != null) {
-                    data.add(docRef);
-                    refresh();
-                }
+        registerHandler(treePresenter.addDataSelectionHandler(event -> {
+            final DocRef docRef = treePresenter.getSelectedEntityReference();
+            if (docRef != null) {
+                data.add(docRef);
+                refresh();
             }
         }));
-        registerHandler(choicePresenter.addDataSelectionHandler(new DataSelectionHandler<DocRef>() {
-            @Override
-            public void onSelection(final DataSelectionEvent<DocRef> event) {
-                final DocRef docRef = event.getSelectedItem();
-                if (docRef != null) {
-                    data.add(docRef);
-                    refresh();
-                }
+        registerHandler(choicePresenter.addDataSelectionHandler(event -> {
+            final DocRef docRef = event.getSelectedItem();
+            if (docRef != null) {
+                data.add(docRef);
+                refresh();
             }
         }));
     }

@@ -18,28 +18,9 @@
 
 package stroom.data.table.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Cursor;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
-import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.CellTable.Resources;
-import com.google.gwt.user.cellview.client.CellTable.Style;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.Range;
-import com.google.gwt.view.client.RangeChangeEvent.Handler;
-import com.google.gwt.view.client.SelectionModel;
-import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.data.grid.client.DataGridViewImpl;
-import stroom.widget.util.client.MySingleSelectionModel;
-
-import java.util.List;
 
 public class ScrollableCellTableViewImpl<R> extends CellTableViewImpl<R> implements ScrollableCellTableView<R> {
     public ScrollableCellTableViewImpl(final boolean supportsSelection, final Resources resources) {

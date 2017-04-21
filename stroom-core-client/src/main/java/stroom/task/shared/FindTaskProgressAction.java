@@ -16,10 +16,10 @@
 
 package stroom.task.shared;
 
-import java.util.Set;
-
 import stroom.dispatch.shared.TreeAction;
 import stroom.entity.shared.FindAction;
+
+import java.util.Set;
 
 public class FindTaskProgressAction extends FindAction<FindTaskProgressCriteria, TaskProgress>
         implements TreeAction<TaskProgress> {

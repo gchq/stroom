@@ -28,10 +28,18 @@ import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
-import stroom.util.shared.*;
+import stroom.util.shared.CompareUtil;
+import stroom.util.shared.Expander;
+import stroom.util.shared.SharedObject;
+import stroom.util.shared.Task;
+import stroom.util.shared.TaskId;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedObject>
@@ -152,12 +160,7 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
     }
 
     private void sortTaskProgressList(final List<TaskProgress> rtnList) {
-        Collections.sort(rtnList, new Comparator<TaskProgress>() {
-            @Override
-            public int compare(final TaskProgress lhs, final TaskProgress rhs) {
-                return CompareUtil.compareLong(lhs.getSubmitTimeMs(), rhs.getSubmitTimeMs());
-            }
-        });
+        Collections.sort(rtnList, (lhs, rhs) -> CompareUtil.compareLong(lhs.getSubmitTimeMs(), rhs.getSubmitTimeMs()));
     }
 
     private void buildTreeNode(final List<TaskProgress> rtnList, final FindTaskProgressCriteria criteria,

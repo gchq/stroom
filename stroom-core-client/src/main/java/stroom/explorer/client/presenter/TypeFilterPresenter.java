@@ -16,7 +16,6 @@
 
 package stroom.explorer.client.presenter;
 
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.SafeImageCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -64,17 +63,14 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
                 return TickBoxState.fromBoolean(selected.contains(object.getType()));
             }
         };
-        checkedColumn.setFieldUpdater(new FieldUpdater<DocumentType, TickBoxState>() {
-            @Override
-            public void update(final int index, final DocumentType object, final TickBoxState value) {
-                if (selected.contains(object.getType())) {
-                    selected.remove(object.getType());
-                } else {
-                    selected.add(object.getType());
-                }
-
-                DataSelectionEvent.fire(TypeFilterPresenter.this, TypeFilterPresenter.this, false);
+        checkedColumn.setFieldUpdater((index, object, value) -> {
+            if (selected.contains(object.getType())) {
+                selected.remove(object.getType());
+            } else {
+                selected.add(object.getType());
             }
+
+            DataSelectionEvent.fire(TypeFilterPresenter.this, TypeFilterPresenter.this, false);
         });
         getView().addColumn(checkedColumn);
 

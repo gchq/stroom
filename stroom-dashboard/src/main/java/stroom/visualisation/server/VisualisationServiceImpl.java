@@ -16,6 +16,8 @@
 
 package stroom.visualisation.server;
 
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
@@ -26,8 +28,6 @@ import stroom.security.SecurityContext;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
 import stroom.visualisation.shared.VisualisationService;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 

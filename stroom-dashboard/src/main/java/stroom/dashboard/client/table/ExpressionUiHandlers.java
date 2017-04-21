@@ -17,7 +17,6 @@
 package stroom.dashboard.client.table;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public interface ExpressionUiHandlers extends PopupUiHandlers {

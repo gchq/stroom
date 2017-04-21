@@ -16,6 +16,10 @@
 
 package stroom.servlet;
 
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.security.SecurityContext;
@@ -27,10 +31,6 @@ import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskIdFactory;
 import stroom.util.thread.ThreadScopeRunnable;
 import stroom.util.zip.StroomHeaderArguments;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;

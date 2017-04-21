@@ -16,6 +16,9 @@
 
 package stroom.script.client;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 import stroom.app.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
@@ -24,9 +27,6 @@ import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.script.client.presenter.ScriptPresenter;
 import stroom.script.shared.Script;
 import stroom.security.client.ClientSecurityContext;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.HashSet;
 import java.util.Set;

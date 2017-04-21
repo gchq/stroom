@@ -19,11 +19,10 @@ package stroom.welcome.client;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.event.CurrentUserChangedEvent;
-import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.app.client.ContentManager;
 import stroom.content.client.ContentPlugin;
+import stroom.security.client.event.CurrentUserChangedEvent;
+import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.welcome.client.presenter.WelcomePresenter;
 
 public class WelcomePlugin extends ContentPlugin<WelcomePresenter>implements CurrentUserChangedHandler {

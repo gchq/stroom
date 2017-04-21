@@ -16,8 +16,6 @@
 
 package stroom.query.client;
 
-import java.util.List;
-
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -25,21 +23,22 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.IndexField;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.query.shared.ExpressionItem;
+import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.ExpressionTerm;
+import stroom.query.shared.IndexField;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.util.client.MySingleSelectionModel;
+
+import java.util.List;
 
 public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePresenter.ExpressionTreeView>
         implements HasRead<ExpressionOperator>, HasWrite<ExpressionOperator>, HasDataSelectionHandlers<ExpressionItem>,
@@ -73,12 +72,9 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         super.onBind();
 
         if (selectionModel != null) {
-            registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-                @Override
-                public void onSelectionChange(final SelectionChangeEvent event) {
-                    DataSelectionEvent.fire(ExpressionTreePresenter.this, selectionModel.getSelectedObject(), false);
-                    getView().refresh();
-                }
+            registerHandler(selectionModel.addSelectionChangeHandler(event -> {
+                DataSelectionEvent.fire(ExpressionTreePresenter.this, selectionModel.getSelectedObject(), false);
+                getView().refresh();
             }));
         }
     }

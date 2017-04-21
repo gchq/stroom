@@ -16,13 +16,12 @@
 
 package stroom.dashboard.server;
 
-import javax.inject.Inject;
-
+import net.sf.ehcache.CacheManager;
 import org.springframework.stereotype.Component;
-
 import stroom.cache.AbstractCacheBean;
 import stroom.util.spring.StroomFrequencySchedule;
-import net.sf.ehcache.CacheManager;
+
+import javax.inject.Inject;
 
 @Component
 public class ActiveQueriesManager extends AbstractCacheBean<String, ActiveQueries> {

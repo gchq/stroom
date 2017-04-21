@@ -31,7 +31,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.app.client.LocationManager;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
@@ -220,17 +219,11 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                     !StreamStatus.UNLOCKED.equals(getCriteria().obtainStatusSet().getSingleItem()));
             showData();
         }));
-        registerHandler(streamListPresenter.addDataSelectionHandler(event -> {
-            setStreamListSelectableEnabled(event.getSelectedItem(),
-                    findStreamAttributeMapCriteria.getFindStreamCriteria().obtainStatusSet().getSingleItem());
-        }));
-        registerHandler(streamRelationListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            showData();
-        }));
-        registerHandler(streamRelationListPresenter.addDataSelectionHandler(event -> {
-            setStreamRelationListSelectableEnabled(event.getSelectedItem(), findStreamAttributeMapCriteria
-                    .getFindStreamCriteria().obtainStatusSet().getSingleItem());
-        }));
+        registerHandler(streamListPresenter.addDataSelectionHandler(event -> setStreamListSelectableEnabled(event.getSelectedItem(),
+                findStreamAttributeMapCriteria.getFindStreamCriteria().obtainStatusSet().getSingleItem())));
+        registerHandler(streamRelationListPresenter.getSelectionModel().addSelectionHandler(event -> showData()));
+        registerHandler(streamRelationListPresenter.addDataSelectionHandler(event -> setStreamRelationListSelectableEnabled(event.getSelectedItem(), findStreamAttributeMapCriteria
+                .getFindStreamCriteria().obtainStatusSet().getSingleItem())));
 
         registerHandler(streamListFilter.addClickHandler(event -> {
             final StreamFilterPresenter presenter = streamListFilterPresenter.get();
@@ -248,17 +241,13 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                                 ConfirmEvent.fire(StreamPresenter.this,
                                         "You are setting advanced filters!  It is recommendend you constrain your filter (e.g. by 'Created') to avoid an expensive query.  "
                                                 + "Are you sure you want to apply this advanced filter?",
-                                        new ConfirmCallback() {
-                                            @Override
-                                            public void onResult(final boolean confirm) {
-                                                if (confirm) {
-                                                    applyCriteriaAndShow(presenter);
-                                                    HidePopupEvent.fire(StreamPresenter.this, presenter);
-                                                } else {
-                                                    // Don't hide
-                                                }
+                                        confirm -> {
+                                            if (confirm) {
+                                                applyCriteriaAndShow(presenter);
+                                                HidePopupEvent.fire(StreamPresenter.this, presenter);
+                                            } else {
+                                                // Don't hide
                                             }
-
                                         });
 
                             } else {
@@ -720,29 +709,22 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             } else {
                 ConfirmEvent.fire(this,
                         "Are you sure you want to " + getDeleteText(deleteCriteria, false).toLowerCase() + " the selected items?",
-                        new ConfirmCallback() {
-                            @Override
-                            public void onResult(final boolean confirm) {
-                                if (confirm) {
-                                    if (!deleteCriteria.getStreamIdSet().isConstrained()) {
-                                        ConfirmEvent.fireWarn(DeleteStreamClickHandler.this,
-                                                "You have selected all items.  Are you sure you want to "
-                                                        + getDeleteText(deleteCriteria, false).toLowerCase() + " all the selected items?",
-                                                new ConfirmCallback() {
-                                                    @Override
-                                                    public void onResult(final boolean confirm) {
-                                                        if (confirm) {
-                                                            doDelete(deleteCriteria, dispatcher);
-                                                        }
-                                                    }
-                                                });
+                        confirm -> {
+                            if (confirm) {
+                                if (!deleteCriteria.getStreamIdSet().isConstrained()) {
+                                    ConfirmEvent.fireWarn(DeleteStreamClickHandler.this,
+                                            "You have selected all items.  Are you sure you want to "
+                                                    + getDeleteText(deleteCriteria, false).toLowerCase() + " all the selected items?",
+                                            confirm1 -> {
+                                                if (confirm1) {
+                                                    doDelete(deleteCriteria, dispatcher);
+                                                }
+                                            });
 
-                                    } else {
-                                        doDelete(deleteCriteria, dispatcher);
-                                    }
+                                } else {
+                                    doDelete(deleteCriteria, dispatcher);
                                 }
                             }
-
                         });
             }
         }

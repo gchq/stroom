@@ -19,7 +19,6 @@ package stroom.dashboard.client.flexlayout;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Widget;
-
 import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.SplitLayoutConfig.Direction;
 import stroom.util.shared.EqualsBuilder;

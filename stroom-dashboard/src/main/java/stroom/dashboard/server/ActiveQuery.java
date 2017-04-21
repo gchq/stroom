@@ -16,11 +16,11 @@
 
 package stroom.dashboard.server;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import stroom.query.SearchResultCollector;
 import stroom.util.shared.SharedObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ActiveQuery {
     private final Map<String, ComponentResultCreator> componentResultCreatorMap = new HashMap<String, ComponentResultCreator>();

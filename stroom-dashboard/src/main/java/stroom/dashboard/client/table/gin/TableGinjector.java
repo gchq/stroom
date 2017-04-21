@@ -17,7 +17,6 @@
 package stroom.dashboard.client.table.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-
 import stroom.dashboard.client.table.TablePlugin;
 import stroom.dashboard.client.table.TablePresenter;
 

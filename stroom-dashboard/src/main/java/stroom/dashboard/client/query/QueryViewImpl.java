@@ -29,7 +29,11 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.dashboard.client.main.SearchModel.Mode;
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
-import stroom.widget.button.client.*;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.FabButton;
+import stroom.widget.button.client.GlyphButtonView;
+import stroom.widget.button.client.GlyphIcon;
+import stroom.widget.button.client.ImageButtonView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>

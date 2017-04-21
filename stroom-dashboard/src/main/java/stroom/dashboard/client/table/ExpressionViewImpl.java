@@ -28,7 +28,6 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.dashboard.client.table.ExpressionPresenter.ExpressionView;
 import stroom.widget.button.client.ImageButton;
 

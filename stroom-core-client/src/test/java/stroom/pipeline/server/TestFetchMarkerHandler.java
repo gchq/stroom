@@ -16,18 +16,17 @@
 
 package stroom.pipeline.server;
 
-import java.io.File;
-import java.util.List;
-
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.test.StroomCoreClientTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Marker;
 import stroom.util.shared.Severity;
 import stroom.util.shared.Summary;
+import stroom.util.test.StroomUnitTest;
+
+import java.io.File;
+import java.util.List;
 
 public class TestFetchMarkerHandler extends StroomUnitTest {
     @Test

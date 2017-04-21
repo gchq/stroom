@@ -16,13 +16,12 @@
 
 package stroom.entity.server;
 
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.entity.shared.BaseEntity;
 import stroom.feed.server.FeedServiceImpl;
 import stroom.feed.shared.Feed;
+import stroom.util.test.StroomUnitTest;
 
 public class TestEntityServiceHandlerBeanRegistry extends StroomUnitTest {
     @Test

@@ -16,14 +16,10 @@
 
 package stroom.cell.dropdowntree.client;
 
-import static com.google.gwt.dom.client.BrowserEvents.CLICK;
-import static com.google.gwt.dom.client.BrowserEvents.KEYDOWN;
-
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.resources.client.ClientBundle;
@@ -34,8 +30,10 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-
 import stroom.util.shared.HasDisplayValue;
+
+import static com.google.gwt.dom.client.BrowserEvents.CLICK;
+import static com.google.gwt.dom.client.BrowserEvents.KEYDOWN;
 
 public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
     @ImportedWithPrefix("dropDownTreeCell")
@@ -184,12 +182,7 @@ public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
         final E viewData = getViewData(lastKey);
         final E date = (viewData == null) ? lastValue : viewData;
 
-        Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-            @Override
-            public void execute() {
-                showPopup(date);
-            }
-        });
+        Scheduler.get().scheduleDeferred(() -> showPopup(date));
     }
 
     protected abstract String getUnselectedText();

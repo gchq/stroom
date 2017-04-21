@@ -801,12 +801,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 	 */
 	public void initializeCommandLine(AceCommandLine cmdLine) {
 		this.commandLine = cmdLine;
-		this.commandLine.setCommandLineListener(new AceCommandLineListener() {
-			@Override
-			public void onCommandEntered(String command) {
-				execCommand(command);
-			}
-		});
+		this.commandLine.setCommandLineListener(command -> execCommand(command));
 	}
 	
 	private static AceCompletionCallback wrapCompletionCallback(JavaScriptObject jsCallback) {

@@ -16,11 +16,11 @@
 
 package stroom.dashboard.shared;
 
-import java.util.Map;
-
+import stroom.dispatch.shared.Action;
 import stroom.query.shared.QueryKey;
 import stroom.query.shared.SearchRequest;
-import stroom.dispatch.shared.Action;
+
+import java.util.Map;
 
 public class SearchBusPollAction extends Action<SearchBusPollResult> {
     private static final long serialVersionUID = -6668626615097471925L;

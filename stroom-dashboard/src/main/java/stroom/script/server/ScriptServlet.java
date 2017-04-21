@@ -17,7 +17,6 @@
 package stroom.script.server;
 
 import org.springframework.aop.framework.Advised;
-import org.springframework.aop.support.AopUtils;
 import org.springframework.stereotype.Component;
 import stroom.datafeed.server.DataFeedService;
 import stroom.entity.server.DocumentEntityServiceImpl;

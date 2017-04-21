@@ -16,14 +16,14 @@
 
 package stroom.servlet;
 
-import stroom.node.server.StroomPropertyService;
-import stroom.util.cert.CertificateUtil;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.spring.StroomStartup;
 import com.googlecode.ehcache.annotations.Cacheable;
 import com.googlecode.ehcache.annotations.KeyGenerator;
 import org.apache.log4j.Logger;
 import org.springframework.util.StringUtils;
+import stroom.node.server.StroomPropertyService;
+import stroom.util.cert.CertificateUtil;
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.spring.StroomStartup;
 
 import javax.annotation.Resource;
 import java.util.regex.Matcher;

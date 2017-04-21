@@ -16,16 +16,14 @@
 
 package stroom.entity.server;
 
-import java.io.IOException;
+import com.google.web.bindery.requestfactory.server.RequestFactoryServlet;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.stereotype.Component;
-
-import com.google.web.bindery.requestfactory.server.RequestFactoryServlet;
+import java.io.IOException;
 
 @Component(SpringRequestFactoryServlet.BEAN_NAME)
 public class SpringRequestFactoryServlet extends RequestFactoryServlet {

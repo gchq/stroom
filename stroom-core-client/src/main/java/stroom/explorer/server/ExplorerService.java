@@ -17,14 +17,8 @@
 package stroom.explorer.server;
 
 import stroom.explorer.shared.DocumentTypes;
-import stroom.explorer.shared.ExplorerData;
 import stroom.explorer.shared.FetchExplorerDataResult;
 import stroom.explorer.shared.FindExplorerDataCriteria;
-import stroom.util.shared.SharedList;
-import stroom.util.shared.SharedMap;
-
-import java.util.List;
-import java.util.Set;
 
 public interface ExplorerService {
     FetchExplorerDataResult getData(FindExplorerDataCriteria criteria);

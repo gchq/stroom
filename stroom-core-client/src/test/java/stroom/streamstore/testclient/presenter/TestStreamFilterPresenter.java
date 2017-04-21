@@ -16,19 +16,18 @@
 
 package stroom.streamstore.testclient.presenter;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.entity.shared.EntityIdSet;
 import stroom.streamstore.client.presenter.StreamFilterPresenter;
 import stroom.streamstore.shared.Stream;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestStreamFilterPresenter extends StroomUnitTest {

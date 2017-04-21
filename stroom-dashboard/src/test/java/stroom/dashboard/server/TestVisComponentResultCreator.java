@@ -16,20 +16,13 @@
 
 package stroom.dashboard.server;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import stroom.test.StroomProcessTestFileUtil;
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.dashboard.server.vis.CompiledStructure;
 import stroom.dashboard.server.vis.CompiledStructure.FieldRef;
 import stroom.dashboard.server.vis.StructureBuilder;
@@ -44,8 +37,13 @@ import stroom.query.ItemsArrayList;
 import stroom.query.shared.Field;
 import stroom.query.shared.Format;
 import stroom.query.shared.Format.Type;
+import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomUnitTest;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestVisComponentResultCreator extends StroomUnitTest {
     private static final File TEST_DIR = new File(StroomProcessTestFileUtil.getTestResourcesDir(),

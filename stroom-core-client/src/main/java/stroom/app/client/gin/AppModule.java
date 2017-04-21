@@ -24,7 +24,6 @@ import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 import com.gwtplatform.mvp.client.proxy.ParameterTokenFormatter;
 import com.gwtplatform.mvp.client.proxy.PlaceManager;
 import com.gwtplatform.mvp.client.proxy.TokenFormatter;
-
 import stroom.about.client.presenter.AboutPresenter;
 import stroom.about.client.presenter.AboutPresenter.AboutProxy;
 import stroom.about.client.presenter.AboutPresenter.AboutView;

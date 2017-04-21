@@ -1,9 +1,9 @@
 package edu.ycp.cs.dh.acegwt.client.ace;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import com.google.gwt.core.client.JavaScriptObject;
 
 /**
  * Represents GWT wrapper around an Ace Selection object
@@ -19,13 +19,10 @@ public class AceSelection {
 	 */
 	public AceSelection(JavaScriptObject selection) {
 		this.selection = selection;
-		this.rootListener = new AceSelectionListener() {
-			@Override
-			public void onChangeSelection(AceSelection ignore) {
-				for (AceSelectionListener lst : subListeners)
-					lst.onChangeSelection(AceSelection.this);
-			}
-		};
+		this.rootListener = ignore -> {
+            for (AceSelectionListener lst : subListeners)
+                lst.onChangeSelection(AceSelection.this);
+        };
 		registerRootListener(selection, rootListener);
 	}
 	

@@ -17,11 +17,8 @@
 package stroom.dashboard.client.query;
 
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -40,8 +37,6 @@ import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.QueryKeyImpl;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
@@ -50,8 +45,6 @@ import stroom.entity.shared.DocRef;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
-import stroom.pipeline.client.event.ChangeDataEvent;
-import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.processor.shared.CreateProcessorAction;
 import stroom.pipeline.shared.PipelineEntity;
@@ -75,7 +68,6 @@ import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -247,12 +239,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 showWarnings();
             }
         }));
-        registerHandler(indexLoader.addChangeDataHandler(new ChangeDataHandler<IndexLoader>() {
-            @Override
-            public void onChange(final ChangeDataEvent<IndexLoader> event) {
-                loadedDataSource(indexLoader.getLoadedDataSourceRef(), indexLoader.getIndexFieldsMap());
-            }
-        }));
+        registerHandler(indexLoader.addChangeDataHandler(event -> loadedDataSource(indexLoader.getLoadedDataSourceRef(), indexLoader.getIndexFieldsMap())));
     }
 
     public void setErrors(final String errors) {
@@ -394,9 +381,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         // Now create the processor filter using the find stream criteria.
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
         findStreamCriteria.setQueryData(queryData);
-        dispatcher.exec(new CreateProcessorAction(pipeline, findStreamCriteria, true, 1)).onSuccess(streamProcessorFilter -> {
-            CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter);
-        });
+        dispatcher.exec(new CreateProcessorAction(pipeline, findStreamCriteria, true, 1)).onSuccess(streamProcessorFilter -> CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter));
     }
 
     private void showWarnings() {
@@ -601,33 +586,13 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final boolean hasSelection = selectedItem != null;
 
         final List<Item> menuItems = new ArrayList<Item>();
-        menuItems.add(new IconMenuItem(1, GlyphIcons.ADD, GlyphIcons.ADD, "Add Term", null, true, new Command() {
-            @Override
-            public void execute() {
-                addTerm();
-            }
-        }));
+        menuItems.add(new IconMenuItem(1, GlyphIcons.ADD, GlyphIcons.ADD, "Add Term", null, true, () -> addTerm()));
         menuItems.add(new IconMenuItem(2, ImageIcon.create(resources.addOperator()), ImageIcon.create(resources.addOperator()), "Add Operator", null,
-                true, new Command() {
-            @Override
-            public void execute() {
-                addOperator();
-            }
-        }));
+                true, () -> addOperator()));
         menuItems.add(new IconMenuItem(3, GlyphIcons.DISABLE, GlyphIcons.DISABLE, getEnableDisableText(),
-                null, hasSelection, new Command() {
-            @Override
-            public void execute() {
-                disable();
-            }
-        }));
+                null, hasSelection, () -> disable()));
         menuItems.add(new IconMenuItem(4, GlyphIcons.DELETE, GlyphIcons.DELETE, "Delete", null,
-                hasSelection, new Command() {
-            @Override
-            public void execute() {
-                delete();
-            }
-        }));
+                hasSelection, () -> delete()));
 
         return menuItems;
     }

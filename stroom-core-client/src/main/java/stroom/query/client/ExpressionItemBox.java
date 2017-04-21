@@ -22,9 +22,8 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-
-import stroom.query.shared.ExpressionItem;
 import stroom.pipeline.structure.client.view.Box;
+import stroom.query.shared.ExpressionItem;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 

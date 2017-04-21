@@ -16,6 +16,7 @@
 
 package stroom.pipeline.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.cache.server.XSLTPool;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.shared.FeedService;
@@ -36,7 +37,6 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 

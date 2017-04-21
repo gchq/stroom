@@ -16,6 +16,8 @@
 
 package stroom.cache.server;
 
+import net.sf.ehcache.CacheManager;
+import org.springframework.context.annotation.Scope;
 import stroom.cache.shared.CacheRow;
 import stroom.cache.shared.FetchCacheRowAction;
 import stroom.entity.shared.BaseResultList;
@@ -24,14 +26,11 @@ import stroom.security.Secured;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
-import net.sf.ehcache.CacheManager;
-import org.springframework.context.annotation.Scope;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 @TaskHandlerBean(task = FetchCacheRowAction.class)
@@ -52,12 +51,7 @@ public class FetchCacheRowHandler extends AbstractTaskHandler<FetchCacheRowActio
         }
 
         // Sort the cache names.
-        Collections.sort(values, new Comparator<CacheRow>() {
-            @Override
-            public int compare(final CacheRow o1, final CacheRow o2) {
-                return o1.getCacheName().compareTo(o2.getCacheName());
-            }
-        });
+        Collections.sort(values, (o1, o2) -> o1.getCacheName().compareTo(o2.getCacheName()));
 
         return BaseResultList.createUnboundedList(values);
     }

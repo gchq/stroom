@@ -16,12 +16,12 @@
 
 package stroom.dashboard.shared;
 
-import java.util.List;
-
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedObject;
+
+import java.util.List;
 
 public class TableResult implements SharedObject {
     private static final long serialVersionUID = -2964122512841756795L;

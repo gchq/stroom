@@ -16,10 +16,6 @@
 
 package stroom.dashboard.server.download;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Date;
-
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
@@ -27,12 +23,15 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-
 import stroom.query.shared.DateTimeFormatSettings;
 import stroom.query.shared.Field;
 import stroom.query.shared.Format.Type;
 import stroom.query.shared.FormatSettings;
 import stroom.query.shared.NumberFormatSettings;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Date;
 
 public class ExcelTarget implements SearchResultWriter.Target {
     // Excel cannot store more than 32767 characters in a cell so we must truncate some values.

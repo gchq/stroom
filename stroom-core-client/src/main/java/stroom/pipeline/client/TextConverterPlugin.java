@@ -19,8 +19,6 @@ package stroom.pipeline.client;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.ClientSecurityContext;
 import stroom.app.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
@@ -28,6 +26,7 @@ import stroom.entity.client.EntityPluginEventManager;
 import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.shared.TextConverter;
+import stroom.security.client.ClientSecurityContext;
 
 public class TextConverterPlugin extends EntityPlugin<TextConverter> {
     private final Provider<TextConverterPresenter> editorProvider;

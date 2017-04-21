@@ -16,17 +16,16 @@
 
 package stroom.widget.editor.testclient.model;
 
+import org.junit.Test;
+import stroom.editor.client.model.XMLStyler;
+import stroom.test.ComparisonHelper;
+import stroom.test.StroomCoreClientTestFileUtil;
+import stroom.util.io.StreamUtil;
+import stroom.util.test.StroomUnitTest;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-
-import org.junit.Test;
-
-import stroom.test.StroomCoreClientTestFileUtil;
-import stroom.test.ComparisonHelper;
-import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomUnitTest;
-import stroom.editor.client.model.XMLStyler;
 
 public class TestXMLStyler extends StroomUnitTest {
     private static final String PRE_START_ELEMENT = "<pre class=\"xmlArea-ContentPre\">";

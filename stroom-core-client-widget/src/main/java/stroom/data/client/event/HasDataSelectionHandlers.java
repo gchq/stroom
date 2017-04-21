@@ -19,7 +19,6 @@ package stroom.data.client.event;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 
 public interface HasDataSelectionHandlers<I> extends HasHandlers {

@@ -20,8 +20,8 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
-import stroom.explorer.shared.ExplorerData;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.shared.ExplorerData;
 
 import java.util.List;
 

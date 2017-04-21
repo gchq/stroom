@@ -16,11 +16,11 @@
 
 package stroom.entity.client.event;
 
-import stroom.entity.shared.DocRef;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
+import stroom.entity.shared.DocRef;
 
 public class RenameEntityEvent extends GwtEvent<RenameEntityEvent.Handler> {
     private static Type<Handler> TYPE;

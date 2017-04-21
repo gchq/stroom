@@ -17,7 +17,6 @@
 package stroom.pipeline.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XSLTPlugin;

@@ -16,13 +16,13 @@
 
 package stroom.app.client.gin;
 
-import java.util.List;
-
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.proxy.PlaceManager;
 import com.gwtplatform.mvp.client.proxy.PlaceRequest;
 import com.gwtplatform.mvp.client.proxy.SetPlaceTitleHandler;
+
+import java.util.List;
 
 public class InactivePlaceManager implements PlaceManager {
     @Override

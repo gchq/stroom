@@ -17,7 +17,6 @@
 package stroom.dashboard.client.query.gin;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter;
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySettingsView;
 import stroom.dashboard.client.query.BasicQuerySettingsViewImpl;

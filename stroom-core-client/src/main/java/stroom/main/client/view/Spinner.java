@@ -25,7 +25,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
-
 import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
 import stroom.widget.spinner.client.SpinnerWhite;
 

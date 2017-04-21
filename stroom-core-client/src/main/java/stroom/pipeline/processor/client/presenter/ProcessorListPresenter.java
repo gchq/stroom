@@ -211,12 +211,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                 return expander;
             }
         };
-        expanderColumn.setFieldUpdater(new FieldUpdater<SharedObject, Expander>() {
-            @Override
-            public void update(final int index, final SharedObject row, final Expander value) {
-                action.setRowExpanded(row, !value.isExpanded());
-                refresh();
-            }
+        expanderColumn.setFieldUpdater((index, row, value) -> {
+            action.setRowExpanded(row, !value.isExpanded());
+            refresh();
         });
         getView().addColumn(expanderColumn, "<br/>", 0);
     }

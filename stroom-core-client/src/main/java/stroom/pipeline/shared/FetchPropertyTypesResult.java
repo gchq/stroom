@@ -16,11 +16,11 @@
 
 package stroom.pipeline.shared;
 
-import java.util.Map;
-
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.util.shared.SharedObject;
+
+import java.util.Map;
 
 public class FetchPropertyTypesResult implements SharedObject {
     private static final long serialVersionUID = -456643944015316403L;

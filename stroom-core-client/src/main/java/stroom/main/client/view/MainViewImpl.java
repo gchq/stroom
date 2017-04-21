@@ -26,7 +26,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.main.client.presenter.MainPresenter;
 import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
 

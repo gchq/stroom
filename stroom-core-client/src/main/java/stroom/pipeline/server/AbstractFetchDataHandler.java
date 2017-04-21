@@ -61,7 +61,6 @@ import stroom.util.shared.RowCount;
 import stroom.util.shared.Severity;
 import stroom.util.shared.SharedList;
 
-import javax.annotation.Resource;
 import javax.xml.transform.TransformerException;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;

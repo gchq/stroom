@@ -17,7 +17,6 @@
 package stroom.dispatch.client;
 
 import com.google.gwt.user.client.rpc.RemoteService;
-
 import stroom.dispatch.shared.Action;
 import stroom.util.shared.SharedObject;
 

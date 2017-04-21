@@ -22,9 +22,7 @@ import com.google.gwt.canvas.dom.client.CssColor;
 import com.google.gwt.canvas.dom.client.TextMetrics;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.user.client.ui.Image;
-
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.structure.client.view.ImageCache.LoadCallback;
 import stroom.widget.htree.client.CellRenderer;
 import stroom.widget.htree.client.ShadowBox;
 import stroom.widget.htree.client.ShadowBox.Colors;
@@ -82,12 +80,9 @@ public final class PipelineElementRenderer
         if (url != null) {
             // Get the image element from the cache. This is necessary as the
             // canvas need images to be loaded before it can render them.
-            ImageCache.getImage(url, new LoadCallback() {
-                @Override
-                public void onLoad(final ImageElement imageElement) {
-                    // Draw the image.
-                    drawImage(ctx, x, y, imageElement, element);
-                }
+            ImageCache.getImage(url, imageElement -> {
+                // Draw the image.
+                drawImage(ctx, x, y, imageElement, element);
             });
         } else {
             // We don't have an image so just render text.

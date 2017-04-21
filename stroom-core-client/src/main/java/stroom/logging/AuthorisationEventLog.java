@@ -16,13 +16,13 @@
 
 package stroom.logging;
 
-import stroom.util.logging.StroomLogger;
 import event.logging.Authorisation;
 import event.logging.Event;
 import event.logging.Group;
 import event.logging.Outcome;
 import event.logging.User;
 import org.springframework.stereotype.Component;
+import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 

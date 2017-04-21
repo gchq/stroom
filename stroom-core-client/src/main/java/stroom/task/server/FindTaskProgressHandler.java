@@ -16,13 +16,12 @@
 
 package stroom.task.server;
 
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
-
 import stroom.entity.shared.ResultList;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.shared.FindTaskProgressAction;
 import stroom.task.shared.TaskProgress;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 

@@ -16,10 +16,6 @@
 
 package stroom.dashboard.server;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
 import stroom.dashboard.expression.Generator;
 import stroom.dashboard.server.format.FieldFormatter;
 import stroom.dashboard.shared.Row;
@@ -33,6 +29,10 @@ import stroom.query.shared.Field;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.SharedString;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class TableComponentResultCreator implements ComponentResultCreator {
     private final FieldFormatter fieldFormatter;

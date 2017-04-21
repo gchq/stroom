@@ -16,19 +16,17 @@
 
 package stroom.feed.server;
 
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.FolderService;
 import stroom.explorer.server.AbstractExplorerDataProvider;
 import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
-import stroom.explorer.shared.ExplorerData;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.Map;
 
 @ProvidesExplorerData
 @Component

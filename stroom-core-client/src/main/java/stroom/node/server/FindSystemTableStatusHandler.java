@@ -16,8 +16,6 @@
 
 package stroom.node.server;
 
-import javax.annotation.Resource;
-
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.node.shared.FindSystemTableStatusAction;
@@ -25,6 +23,8 @@ import stroom.node.shared.NodeService;
 import stroom.node.shared.SystemTableStatus;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+
+import javax.annotation.Resource;
 
 @TaskHandlerBean(task = FindSystemTableStatusAction.class)
 public class FindSystemTableStatusHandler

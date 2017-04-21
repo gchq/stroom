@@ -21,9 +21,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.widget.xsdbrowser.client.view.XSDModel;
 import stroom.widget.xsdbrowser.client.view.XSDNode;
 
@@ -46,12 +43,7 @@ public class XSDBrowserPresenter extends MyPresenterWidget<XSDBrowserPresenter.X
     public void setModel(final XSDModel model) {
         this.model = model;
 
-        registerHandler(model.addDataSelectionHandler(new DataSelectionHandler<XSDNode>() {
-            @Override
-            public void onSelection(final DataSelectionEvent<XSDNode> event) {
-                getView().setSelectedNode(event.getSelectedItem(), event.isDoubleSelect());
-            }
-        }));
+        registerHandler(model.addDataSelectionHandler(event -> getView().setSelectedNode(event.getSelectedItem(), event.isDoubleSelect())));
 
         getView().setModel(model);
     }

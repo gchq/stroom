@@ -22,13 +22,11 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.script.shared.Script;
-import stroom.security.client.ClientSecurityContext;
 import stroom.app.client.event.DirtyKeyDownHander;
-import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.EntitySettingsPresenter;
+import stroom.script.shared.Script;
+import stroom.security.client.ClientSecurityContext;
 
 public class ScriptSettingsPresenter
         extends EntitySettingsPresenter<ScriptSettingsPresenter.ScriptSettingsView, Script> {

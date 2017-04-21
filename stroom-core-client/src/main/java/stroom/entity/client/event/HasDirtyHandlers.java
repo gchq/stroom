@@ -18,7 +18,6 @@ package stroom.entity.client.event;
 
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 
 public interface HasDirtyHandlers extends HasHandlers {

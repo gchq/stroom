@@ -17,8 +17,6 @@
 package stroom.streamstore.client.presenter;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.client.Timer;
@@ -134,12 +132,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     protected void onBind() {
         super.onBind();
 
-        registerHandler(getView().getTabBar().addSelectionHandler(new SelectionHandler<TabData>() {
-            @Override
-            public void onSelection(final SelectionEvent<TabData> event) {
-                selectTab(event.getSelectedItem());
-            }
-        }));
+        registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
     }
 
     private void selectTab(final TabData tab) {

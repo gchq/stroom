@@ -16,14 +16,6 @@
 
 package stroom.logging;
 
-import stroom.dashboard.server.DataSourceProviderRegistry;
-import stroom.dictionary.shared.DictionaryService;
-import stroom.entity.server.QueryDataLogUtil;
-import stroom.entity.shared.DocRef;
-import stroom.query.shared.DataSource;
-import stroom.query.shared.ExpressionOperator;
-import stroom.security.Insecure;
-import stroom.util.logging.StroomLogger;
 import event.logging.Criteria;
 import event.logging.Criteria.DataSources;
 import event.logging.Event;
@@ -34,6 +26,14 @@ import event.logging.Query.Advanced;
 import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
 import org.springframework.stereotype.Component;
+import stroom.dashboard.server.DataSourceProviderRegistry;
+import stroom.dictionary.shared.DictionaryService;
+import stroom.entity.server.QueryDataLogUtil;
+import stroom.entity.shared.DocRef;
+import stroom.query.shared.DataSource;
+import stroom.query.shared.ExpressionOperator;
+import stroom.security.Insecure;
+import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 

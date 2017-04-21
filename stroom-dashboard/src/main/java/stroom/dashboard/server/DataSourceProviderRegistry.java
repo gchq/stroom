@@ -16,12 +16,12 @@
 
 package stroom.dashboard.server;
 
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.DocRef;
 import stroom.query.shared.DataSource;
 import stroom.query.shared.DataSourceProvider;
 import stroom.util.spring.StroomBeanStore;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.HashMap;

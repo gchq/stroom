@@ -237,14 +237,12 @@ public class EntityPluginEventManager extends Plugin {
         // 10. Handle entity delete events.
         registerHandler(getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
             if (getSelectedItems().size() > 0) {
-                fetchPermissions(getSelectedItems()).onSuccess(documentPermissionMap -> {
-                    documentTypeCache.fetch().onSuccess(documentTypes -> {
-                        final List<ExplorerData> deletableItems = getExplorerDataListWithPermission(documentPermissionMap, DocumentPermissionNames.DELETE);
-                        if (deletableItems.size() > 0) {
-                            deleteItems(deletableItems);
-                        }
-                    });
-                });
+                fetchPermissions(getSelectedItems()).onSuccess(documentPermissionMap -> documentTypeCache.fetch().onSuccess(documentTypes -> {
+                    final List<ExplorerData> deletableItems = getExplorerDataListWithPermission(documentPermissionMap, DocumentPermissionNames.DELETE);
+                    if (deletableItems.size() > 0) {
+                        deleteItems(deletableItems);
+                    }
+                }));
             }
         }));
 
@@ -319,24 +317,22 @@ public class EntityPluginEventManager extends Plugin {
                 final boolean singleSelection = selectedItems.size() == 1;
                 final ExplorerData primarySelection = getPrimarySelection();
 
-                fetchPermissions(selectedItems).onSuccess(documentPermissionMap -> {
-                    documentTypeCache.fetch().onSuccess(documentTypes -> {
-                        final List<Item> menuItems = new ArrayList<>();
+                fetchPermissions(selectedItems).onSuccess(documentPermissionMap -> documentTypeCache.fetch().onSuccess(documentTypes -> {
+                    final List<Item> menuItems = new ArrayList<>();
 
-                        // Only allow the new menu to appear if we have a single selection.
-                        addNewMenuItem(menuItems, singleSelection, documentPermissionMap, primarySelection, documentTypes);
-                        menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
-                        menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
-                        menuItems.add(new Separator(5));
-                        menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
-                        menuItems.add(createSaveAsMenuItem(7, isEntityTabData(selectedTab)));
-                        menuItems.add(createSaveAllMenuItem(8, isTabItemSelected(selectedTab)));
-                        menuItems.add(new Separator(9));
-                        addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
+                    // Only allow the new menu to appear if we have a single selection.
+                    addNewMenuItem(menuItems, singleSelection, documentPermissionMap, primarySelection, documentTypes);
+                    menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
+                    menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
+                    menuItems.add(new Separator(5));
+                    menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
+                    menuItems.add(createSaveAsMenuItem(7, isEntityTabData(selectedTab)));
+                    menuItems.add(createSaveAllMenuItem(8, isTabItemSelected(selectedTab)));
+                    menuItems.add(new Separator(9));
+                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
-                        future.setResult(menuItems);
-                    });
-                });
+                    future.setResult(menuItems);
+                }));
                 return future;
             }
         });
@@ -501,9 +497,7 @@ public class EntityPluginEventManager extends Plugin {
     }
 
     private MenuItem createCopyMenuItem(final List<ExplorerData> explorerDataList, final int priority, final boolean enabled) {
-        final Command command = () -> {
-            ShowCopyEntityDialogEvent.fire(EntityPluginEventManager.this, explorerDataList);
-        };
+        final Command command = () -> ShowCopyEntityDialogEvent.fire(EntityPluginEventManager.this, explorerDataList);
 
         return new IconMenuItem(priority, GlyphIcons.COPY, GlyphIcons.COPY, "Copy", null, enabled,
                 command);

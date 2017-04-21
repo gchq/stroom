@@ -16,6 +16,9 @@
 
 package stroom.pipeline.structure.testclient.presenter;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineModelException;
@@ -25,11 +28,8 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.test.StroomUnitTest;
 import stroom.util.test.StroomJUnit4ClassRunner;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import stroom.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
 import java.util.List;

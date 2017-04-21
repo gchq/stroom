@@ -16,15 +16,15 @@
 
 package stroom.feed.server;
 
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-
 import stroom.feed.shared.FetchSupportedEncodingsAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedString;
+
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
 @TaskHandlerBean(task = FetchSupportedEncodingsAction.class)
 public class FetchSupportedEncodingsActionHandler

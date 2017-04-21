@@ -16,13 +16,13 @@
 
 package stroom.jobsystem.server;
 
-import javax.annotation.Resource;
-
 import stroom.jobsystem.shared.GetScheduledTimesAction;
 import stroom.jobsystem.shared.ScheduleService;
 import stroom.jobsystem.shared.ScheduledTimes;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+
+import javax.annotation.Resource;
 
 @TaskHandlerBean(task = GetScheduledTimesAction.class)
 public class GetScheduledTimesHandler extends AbstractTaskHandler<GetScheduledTimesAction, ScheduledTimes> {

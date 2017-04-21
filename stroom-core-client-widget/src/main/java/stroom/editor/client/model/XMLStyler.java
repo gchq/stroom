@@ -16,10 +16,10 @@
 
 package stroom.editor.client.model;
 
+import stroom.util.shared.Highlight;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import stroom.util.shared.Highlight;
 
 /**
  * A class for styling and formatting XML. This class attempts to recognise XML

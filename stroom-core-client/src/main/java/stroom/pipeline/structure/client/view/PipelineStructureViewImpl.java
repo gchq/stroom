@@ -29,7 +29,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.pipeline.structure.client.presenter.PipelineStructureUiHandlers;

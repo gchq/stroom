@@ -16,11 +16,13 @@
 
 package stroom.script.server;
 
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.PermissionInheritance;
@@ -29,8 +31,6 @@ import stroom.script.shared.FindScriptCriteria;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;
 import stroom.security.SecurityContext;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.HashSet;

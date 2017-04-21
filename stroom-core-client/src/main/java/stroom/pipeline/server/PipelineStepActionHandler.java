@@ -16,14 +16,14 @@
 
 package stroom.pipeline.server;
 
-import javax.annotation.Resource;
-
 import stroom.pipeline.server.task.SteppingTask;
 import stroom.pipeline.shared.PipelineStepAction;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
+
+import javax.annotation.Resource;
 
 @TaskHandlerBean(task = PipelineStepAction.class)
 public class PipelineStepActionHandler extends AbstractTaskHandler<PipelineStepAction, SteppingResult> {

@@ -18,11 +18,10 @@ package stroom.node.client;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.ClientSecurityContext;
 import stroom.app.client.MenuKeys;
 import stroom.app.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.security.client.ClientSecurityContext;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 
 public abstract class NodeToolsPlugin extends Plugin {

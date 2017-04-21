@@ -16,8 +16,6 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -69,13 +67,10 @@ public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(getView().getTabBar().addSelectionHandler(new SelectionHandler<TabData>() {
-            @Override
-            public void onSelection(final SelectionEvent<TabData> event) {
-                final TabData tab = event.getSelectedItem();
-                if (tab != null && tab != selectedTab) {
-                    changeSelectedTab(tab);
-                }
+        registerHandler(getView().getTabBar().addSelectionHandler(event -> {
+            final TabData tab = event.getSelectedItem();
+            if (tab != null && tab != selectedTab) {
+                changeSelectedTab(tab);
             }
         }));
     }

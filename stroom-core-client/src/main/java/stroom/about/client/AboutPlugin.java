@@ -18,7 +18,6 @@ package stroom.about.client;
 
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -60,11 +59,6 @@ public class AboutPlugin extends Plugin {
                 new KeyedParentMenuItem(5, "Help", event.getMenuItems(), MenuKeys.HELP_MENU));
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, new Separator(2));
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU,
-                new IconMenuItem(3, ImageIcon.create(resources.about()), null, "About", null, true, new Command() {
-                    @Override
-                    public void execute() {
-                        provider.get().forceReveal();
-                    }
-                }));
+                new IconMenuItem(3, ImageIcon.create(resources.about()), null, "About", null, true, () -> provider.get().forceReveal()));
     }
 }

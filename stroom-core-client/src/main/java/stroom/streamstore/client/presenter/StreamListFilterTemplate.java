@@ -16,11 +16,11 @@
 
 package stroom.streamstore.client.presenter;
 
-import java.util.Arrays;
-import java.util.List;
-
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.HasDisplayValue;
+
+import java.util.Arrays;
+import java.util.List;
 
 public enum StreamListFilterTemplate implements HasDisplayValue {
     RAW_LAST_HOUR("Raw last hour", 1), RAW_LAST_DAY("Raw last day", 24), RAW_LAST_WEEK("Raw last week",

@@ -16,21 +16,19 @@
 
 package stroom.datafeed.server;
 
-import java.io.IOException;
-import java.util.Enumeration;
+import org.springframework.stereotype.Component;
+import stroom.util.logging.StroomLogger;
+import stroom.util.spring.StroomBeanStore;
+import stroom.util.zip.StroomStatusCode;
+import stroom.util.zip.StroomStreamException;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.stereotype.Component;
-
-import stroom.util.logging.StroomLogger;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.zip.StroomStatusCode;
-import stroom.util.zip.StroomStreamException;
+import java.io.IOException;
+import java.util.Enumeration;
 
 /**
  * <p>

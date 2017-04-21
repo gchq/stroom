@@ -16,9 +16,6 @@
 
 package stroom.dashboard.client.vis;
 
-import stroom.script.shared.Script;
-import stroom.visualisation.client.presenter.VisFunction;
-import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style;
@@ -30,6 +27,9 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.ui.Frame;
+import stroom.script.shared.Script;
+import stroom.visualisation.client.presenter.VisFunction;
+import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 
 import java.util.List;
 

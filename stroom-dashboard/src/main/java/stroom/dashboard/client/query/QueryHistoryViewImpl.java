@@ -24,10 +24,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-
+import stroom.cell.list.client.CustomCellList;
 import stroom.dashboard.client.query.QueryHistoryPresenter.QueryHistoryView;
 import stroom.dashboard.shared.Query;
-import stroom.cell.list.client.CustomCellList;
 
 public class QueryHistoryViewImpl extends ViewImpl implements QueryHistoryView {
     public interface Binder extends UiBinder<Widget, QueryHistoryViewImpl> {

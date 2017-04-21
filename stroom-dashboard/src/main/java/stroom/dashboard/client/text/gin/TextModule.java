@@ -17,7 +17,6 @@
 package stroom.dashboard.client.text.gin;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-
 import stroom.dashboard.client.text.BasicTextSettingsPresenter;
 import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettingsView;
 import stroom.dashboard.client.text.BasicTextSettingsViewImpl;

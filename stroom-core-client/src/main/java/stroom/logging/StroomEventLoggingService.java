@@ -16,30 +16,28 @@
 
 package stroom.logging;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Date;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-
-import org.springframework.stereotype.Component;
-
-import stroom.security.SecurityContext;
-import stroom.servlet.HttpServletRequestHolder;
-import stroom.util.BuildInfoUtil;
-import stroom.util.logging.StroomLogger;
-import event.logging.EventLoggingService;
 import event.logging.Device;
 import event.logging.Event;
 import event.logging.Event.EventDetail;
 import event.logging.Event.EventSource;
 import event.logging.Event.EventTime;
+import event.logging.EventLoggingService;
 import event.logging.System;
 import event.logging.User;
 import event.logging.impl.DefaultEventLoggingService;
-import event.logging.util.EventLoggingUtil;
 import event.logging.util.DeviceUtil;
+import event.logging.util.EventLoggingUtil;
+import org.springframework.stereotype.Component;
+import stroom.security.SecurityContext;
+import stroom.servlet.HttpServletRequestHolder;
+import stroom.util.BuildInfoUtil;
+import stroom.util.logging.StroomLogger;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Date;
 
 @Component
 public class StroomEventLoggingService extends DefaultEventLoggingService implements EventLoggingService {

@@ -1,8 +1,8 @@
 package edu.ycp.cs.dh.acegwt.client.ace;
 
-import java.util.Map;
-
 import com.google.gwt.core.client.JavaScriptObject;
+
+import java.util.Map;
 
 /**
  * Ace command's argument could be either string or string-to-string map.

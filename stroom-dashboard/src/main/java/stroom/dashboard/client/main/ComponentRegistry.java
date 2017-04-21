@@ -16,15 +16,15 @@
 
 package stroom.dashboard.client.main;
 
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
 
 @Singleton
 public class ComponentRegistry {

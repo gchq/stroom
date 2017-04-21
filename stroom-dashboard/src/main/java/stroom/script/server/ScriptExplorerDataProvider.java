@@ -16,19 +16,17 @@
 
 package stroom.script.server;
 
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.FolderService;
 import stroom.explorer.server.AbstractExplorerDataProvider;
 import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
-import stroom.explorer.shared.ExplorerData;
 import stroom.script.shared.FindScriptCriteria;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.Map;
 
 @ProvidesExplorerData
 @Component

@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasRows;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.data.pager.client.Pager;
 import stroom.streamstore.client.presenter.DataPresenter.DataView;
 import stroom.widget.tab.client.presenter.LayerContainer;

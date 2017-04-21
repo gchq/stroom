@@ -16,12 +16,11 @@
 
 package stroom.dashboard.server.download;
 
+import org.junit.Test;
+import stroom.util.test.StroomUnitTest;
+
 import java.io.IOException;
 import java.io.StringWriter;
-
-import org.junit.Test;
-
-import stroom.util.test.StroomUnitTest;
 
 public class TestCSVWriter extends StroomUnitTest {
     @Test

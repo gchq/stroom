@@ -16,8 +16,6 @@
 
 package stroom.node.server;
 
-import javax.annotation.Resource;
-
 import stroom.cluster.server.ClusterCallService;
 import stroom.cluster.server.ClusterNodeManager;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
@@ -27,6 +25,8 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+
+import javax.annotation.Resource;
 
 @TaskHandlerBean(task = ClusterNodeInfoAction.class)
 public class ClusterNodeInfoHandler extends AbstractTaskHandler<ClusterNodeInfoAction, ClusterNodeInfo> {

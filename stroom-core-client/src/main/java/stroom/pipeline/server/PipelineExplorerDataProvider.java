@@ -16,21 +16,19 @@
 
 package stroom.pipeline.server;
 
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.FolderService;
 import stroom.explorer.server.AbstractExplorerDataProvider;
 import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
 import stroom.explorer.shared.EntityData;
-import stroom.explorer.shared.ExplorerData;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 @ProvidesExplorerData

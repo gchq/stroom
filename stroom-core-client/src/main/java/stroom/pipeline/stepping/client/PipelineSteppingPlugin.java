@@ -66,10 +66,8 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
             } else {
                 // If we don't have a pipeline id then try to guess one for the
                 // supplied stream.
-                dispatcher.exec(new GetPipelineForStreamAction(event.getStreamId(), event.getChildStreamId())).onSuccess(result -> {
-                    choosePipeline(result, event.getStreamId(), event.getEventId(),
-                            event.getChildStreamType());
-                });
+                dispatcher.exec(new GetPipelineForStreamAction(event.getStreamId(), event.getChildStreamId())).onSuccess(result -> choosePipeline(result, event.getStreamId(), event.getEventId(),
+                        event.getChildStreamType()));
             }
         }
     }

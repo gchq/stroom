@@ -17,7 +17,6 @@
 package stroom.dashboard.client.table;
 
 import com.google.gwt.resources.client.ClientBundle;
-import stroom.dashboard.client.vis.VisStyle;
 
 public interface TableResources extends ClientBundle {
     @Source("table.css")

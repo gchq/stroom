@@ -17,8 +17,8 @@
 package stroom.pipeline.client.gin;
 
 import com.google.inject.Singleton;
-
 import stroom.app.client.gin.PluginModule;
+import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XSLTPlugin;
@@ -72,7 +72,6 @@ import stroom.pipeline.structure.client.view.NewPipelineReferenceViewImpl;
 import stroom.pipeline.structure.client.view.NewPropertyViewImpl;
 import stroom.pipeline.structure.client.view.PipelineStructureViewImpl;
 import stroom.pipeline.structure.client.view.PipelineTreeViewImpl;
-import stroom.editor.client.view.EditorMenuPresenter;
 
 public class PipelineModule extends PluginModule {
     @Override

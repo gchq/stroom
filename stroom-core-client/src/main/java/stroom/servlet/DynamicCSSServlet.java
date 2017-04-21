@@ -16,22 +16,20 @@
 
 package stroom.servlet;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
+import org.springframework.stereotype.Component;
+import stroom.datafeed.server.DataFeedService;
+import stroom.node.server.StroomPropertyService;
+import stroom.util.io.CloseableUtil;
+import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.stereotype.Component;
-
-import stroom.datafeed.server.DataFeedService;
-import stroom.node.server.StroomPropertyService;
-import stroom.util.io.CloseableUtil;
-import stroom.util.io.StreamUtil;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 
 /**
  * <p>

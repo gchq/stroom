@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.entity.client.presenter.MoveEntityPresenter.MoveEntityView;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.item.client.ItemListBox;

@@ -16,6 +16,7 @@
 
 package stroom.dispatch.server;
 
+import org.springframework.stereotype.Component;
 import stroom.dispatch.client.DispatchService;
 import stroom.dispatch.shared.Action;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
@@ -29,7 +30,6 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
 import stroom.util.task.TaskIdFactory;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 

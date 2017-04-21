@@ -16,12 +16,12 @@
 
 package stroom.pipeline.shared;
 
-import java.util.List;
-
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.util.shared.SharedObject;
+
+import java.util.List;
 
 public abstract class AbstractFetchDataResult implements SharedObject {
     private static final long serialVersionUID = 7559713171858774241L;

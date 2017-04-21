@@ -16,11 +16,11 @@
 
 package stroom.dashboard.client.event;
 
-import java.util.Set;
-
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+
+import java.util.Set;
 
 public class ComponentChangedEvent extends GwtEvent<ComponentChangedEvent.Handler> {
     public interface Handler extends EventHandler {

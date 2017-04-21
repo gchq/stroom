@@ -21,7 +21,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class NamePresenter extends MyPresenterWidget<NamePresenter.NameView> {

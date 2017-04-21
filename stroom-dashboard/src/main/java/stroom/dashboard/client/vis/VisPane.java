@@ -16,14 +16,13 @@
 
 package stroom.dashboard.client.vis;
 
-import java.util.List;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
-
 import stroom.script.shared.Script;
 import stroom.visualisation.client.presenter.VisFunction;
+
+import java.util.List;
 
 public interface VisPane extends IsWidget, RequiresResize {
     void injectScripts(List<Script> scripts, VisFunction function);

@@ -16,16 +16,11 @@
 
 package stroom.dashboard.server.vis;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-
 import stroom.dashboard.server.vis.CompiledStructure.FieldRef;
 import stroom.dashboard.server.vis.VisSettings.Control;
 import stroom.dashboard.server.vis.VisSettings.Data;
@@ -34,6 +29,10 @@ import stroom.dashboard.server.vis.VisSettings.Structure;
 import stroom.dashboard.server.vis.VisSettings.Tab;
 import stroom.query.shared.Field;
 import stroom.query.shared.Format.Type;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class StructureBuilder {
     private final Map<String, Control> controls = new HashMap<String, Control>();

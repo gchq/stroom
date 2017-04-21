@@ -16,14 +16,14 @@
 
 package stroom.streamstore.client.view;
 
-import stroom.entity.client.EntityItemListBox;
-import stroom.entity.shared.DocRef;
-import stroom.streamstore.client.presenter.EntityChoicePresenter.EntityChoiceView;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
+import stroom.entity.client.EntityItemListBox;
+import stroom.entity.shared.DocRef;
+import stroom.streamstore.client.presenter.EntityChoicePresenter.EntityChoiceView;
 
 import java.util.List;
 

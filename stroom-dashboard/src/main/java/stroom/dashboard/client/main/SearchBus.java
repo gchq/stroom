@@ -56,12 +56,7 @@ public class SearchBus {
         };
 
         // Listen for logout events.
-        eventBus.addHandler(LogoutEvent.getType(), new LogoutEvent.LogoutHandler() {
-            @Override
-            public void onLogout(final LogoutEvent event) {
-                reset();
-            }
-        });
+        eventBus.addHandler(LogoutEvent.getType(), event -> reset());
     }
 
     private void reset() {

@@ -23,7 +23,6 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.annotations.ProxyStandard;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-
 import stroom.security.client.ClientSecurityContext;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskEndEvent.TaskEndHandler;

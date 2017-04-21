@@ -16,14 +16,14 @@
 
 package stroom.pipeline.processor.shared;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import stroom.dispatch.shared.Action;
 import stroom.dispatch.shared.TreeAction;
 import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.ResultList;
 import stroom.util.shared.SharedObject;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class FetchProcessorAction extends Action<ResultList<SharedObject>>
         implements TreeAction<SharedObject>, HasIsConstrained {

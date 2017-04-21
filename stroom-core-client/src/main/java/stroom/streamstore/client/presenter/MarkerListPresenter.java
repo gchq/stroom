@@ -16,7 +16,6 @@
 
 package stroom.streamstore.client.presenter;
 
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
@@ -86,20 +85,17 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
                 return null;
             }
         };
-        expanderColumn.setFieldUpdater(new FieldUpdater<Marker, Expander>() {
-            @Override
-            public void update(final int index, final Marker marker, final Expander value) {
-                final Severity severity = marker.getSeverity();
-                if (severity != null) {
-                    if (expandedSeverities.contains(severity)) {
-                        expandedSeverities.remove(severity);
-                    } else {
-                        expandedSeverities.add(severity);
-                    }
+        expanderColumn.setFieldUpdater((index, marker, value) -> {
+            final Severity severity = marker.getSeverity();
+            if (severity != null) {
+                if (expandedSeverities.contains(severity)) {
+                    expandedSeverities.remove(severity);
+                } else {
+                    expandedSeverities.add(severity);
                 }
-
-                dataPresenter.update(true);
             }
+
+            dataPresenter.update(true);
         });
         getView().addColumn(expanderColumn, "<br/>", ColumnSizeConstants.CHECKBOX_COL);
     }

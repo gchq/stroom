@@ -22,10 +22,9 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
-import stroom.query.shared.Condition;
 import stroom.entity.client.EntityItemListBox;
 import stroom.item.client.ItemListBox;
+import stroom.query.shared.Condition;
 import stroom.streamstore.client.presenter.StreamAttributePresenter.StreamAttributeView;
 
 public class StreamAttributeViewImpl extends ViewImpl implements StreamAttributeView {

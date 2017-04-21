@@ -16,24 +16,28 @@
 
 package stroom.logging;
 
-import java.util.Date;
-
-import javax.annotation.Resource;
-
-import event.logging.*;
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.Criteria;
+import event.logging.Event;
+import event.logging.Export;
+import event.logging.Import;
+import event.logging.MultiObject;
+import event.logging.ObjectOutcome;
+import event.logging.Query;
+import event.logging.Query.Advanced;
+import event.logging.util.EventLoggingUtil;
 import org.springframework.stereotype.Component;
-
-import stroom.security.Insecure;
 import stroom.entity.shared.FolderService;
 import stroom.feed.shared.Feed;
+import stroom.security.Insecure;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.logging.StroomLogger;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.Query.Advanced;
-import event.logging.util.EventLoggingUtil;
+
+import javax.annotation.Resource;
+import java.util.Date;
 
 @Component
 @Insecure

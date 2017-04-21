@@ -29,8 +29,6 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.app.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.widget.util.client.Future;
-import stroom.widget.util.client.FutureImpl;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
@@ -52,6 +50,8 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.util.shared.Indicators;
+import stroom.widget.util.client.Future;
+import stroom.widget.util.client.FutureImpl;
 
 public class ElementPresenter extends MyPresenterWidget<ElementView> implements HasDirtyHandlers {
     public interface ElementView extends View {

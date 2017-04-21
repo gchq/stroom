@@ -16,9 +16,7 @@
 
 package stroom.streamstore.client.presenter;
 
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
@@ -217,25 +215,22 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             };
             getView().addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
 
-            header.setUpdater(new ValueUpdater<TickBoxState>() {
-                @Override
-                public void update(final TickBoxState value) {
-                    if (value.equals(TickBoxState.UNTICK)) {
-                        // masterEntityIdSet.clear();
-                        // masterEntityIdSet.setMatchAll(false);
-                        entityIdSet.clear();
-                        entityIdSet.setMatchAll(false);
-                    }
-                    if (value.equals(TickBoxState.TICK)) {
-                        // masterEntityIdSet.clear();
-                        // masterEntityIdSet.setMatchAll(true);
-                        entityIdSet.clear();
-                        entityIdSet.setMatchAll(true);
-                    }
-                    dataProvider.getDataProvider()
-                            .updateRowData(dataProvider.getDataProvider().getRanges()[0].getStart(), resultList);
-                    DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
+            header.setUpdater(value -> {
+                if (value.equals(TickBoxState.UNTICK)) {
+                    // masterEntityIdSet.clear();
+                    // masterEntityIdSet.setMatchAll(false);
+                    entityIdSet.clear();
+                    entityIdSet.setMatchAll(false);
                 }
+                if (value.equals(TickBoxState.TICK)) {
+                    // masterEntityIdSet.clear();
+                    // masterEntityIdSet.setMatchAll(true);
+                    entityIdSet.clear();
+                    entityIdSet.setMatchAll(true);
+                }
+                dataProvider.getDataProvider()
+                        .updateRowData(dataProvider.getDataProvider().getRanges()[0].getStart(), resultList);
+                DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
             });
 
         } else {
@@ -243,28 +238,25 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         }
 
         // Add Handlers
-        column.setFieldUpdater(new FieldUpdater<StreamAttributeMap, TickBoxState>() {
-            @Override
-            public void update(final int index, final StreamAttributeMap row, final TickBoxState value) {
-                if (value.toBoolean()) {
-                    // masterEntityIdSet.add(row.getStream());
-                    entityIdSet.add(row.getStream());
+        column.setFieldUpdater((index, row, value) -> {
+            if (value.toBoolean()) {
+                // masterEntityIdSet.add(row.getStream());
+                entityIdSet.add(row.getStream());
 
-                } else {
-                    // De-selecting one and currently matching all ?
-                    if (Boolean.TRUE.equals(entityIdSet.getMatchAll())) {
-                        // masterEntityIdSet.setMatchAll(false);
-                        entityIdSet.setMatchAll(false);
+            } else {
+                // De-selecting one and currently matching all ?
+                if (Boolean.TRUE.equals(entityIdSet.getMatchAll())) {
+                    // masterEntityIdSet.setMatchAll(false);
+                    entityIdSet.setMatchAll(false);
 
-                        final Set<Long> resultStreamIdSet = getResultStreamIdSet();
-                        // masterEntityIdSet.addAll(resultStreamIdSet);
-                        entityIdSet.addAll(resultStreamIdSet);
-                    }
-                    // masterEntityIdSet.remove(row.getStream());
-                    entityIdSet.remove(row.getStream());
+                    final Set<Long> resultStreamIdSet = getResultStreamIdSet();
+                    // masterEntityIdSet.addAll(resultStreamIdSet);
+                    entityIdSet.addAll(resultStreamIdSet);
                 }
-                DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
+                // masterEntityIdSet.remove(row.getStream());
+                entityIdSet.remove(row.getStream());
             }
+            DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
         });
     }
 

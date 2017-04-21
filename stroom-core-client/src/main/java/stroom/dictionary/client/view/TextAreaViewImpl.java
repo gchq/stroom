@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.dictionary.client.presenter.TextAreaPresenter.TextAreaView;
 
 public class TextAreaViewImpl extends ViewImpl implements TextAreaView {

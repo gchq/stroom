@@ -16,7 +16,8 @@
 
 package stroom.servlet;
 
-import java.io.IOException;
+import org.springframework.stereotype.Component;
+import stroom.util.cert.CertificateUtil;
 
 import javax.annotation.Resource;
 import javax.servlet.Filter;
@@ -27,10 +28,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.stereotype.Component;
-
-import stroom.util.cert.CertificateUtil;
+import java.io.IOException;
 
 /**
  * Basic filter to check that a certificate is allowed for a URL.

@@ -16,7 +16,6 @@
 
 package stroom.monitoring.client;
 
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -40,12 +39,7 @@ public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(Job.MANAGE_JOBS_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
-                    new IconMenuItem(9, GlyphIcons.JOBS, GlyphIcons.JOBS, "Jobs", null, true, new Command() {
-                        @Override
-                        public void execute() {
-                            open();
-                        }
-                    }));
+                    new IconMenuItem(9, GlyphIcons.JOBS, GlyphIcons.JOBS, "Jobs", null, true, () -> open()));
         }
     }
 }

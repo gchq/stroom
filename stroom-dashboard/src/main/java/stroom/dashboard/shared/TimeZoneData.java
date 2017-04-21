@@ -16,9 +16,9 @@
 
 package stroom.dashboard.shared;
 
-import java.util.List;
-
 import stroom.util.shared.SharedObject;
+
+import java.util.List;
 
 public class TimeZoneData implements SharedObject {
     private static final long serialVersionUID = -7430894966676067923L;

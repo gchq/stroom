@@ -30,15 +30,15 @@
 
 package stroom.widget.htree.client.treelayout;
 
+import stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel;
+import stroom.widget.htree.client.treelayout.Configuration.Location;
+import stroom.widget.htree.client.treelayout.internal.util.Contract;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel;
-import stroom.widget.htree.client.treelayout.Configuration.Location;
-import stroom.widget.htree.client.treelayout.internal.util.Contract;
 
 /**
  * Implements the actual tree layout algorithm.

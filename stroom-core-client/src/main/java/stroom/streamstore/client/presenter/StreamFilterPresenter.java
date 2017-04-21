@@ -16,8 +16,6 @@
 
 package stroom.streamstore.client.presenter;
 
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -70,22 +68,19 @@ public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresent
 
         view.getStreamStatus().addItems(StreamStatus.values());
 
-        view.getStreamListFilterTemplate().addSelectionHandler(new SelectionHandler<StreamListFilterTemplate>() {
-            @Override
-            public void onSelection(final SelectionEvent<StreamListFilterTemplate> event) {
-                final StreamListFilterTemplate template = event.getSelectedItem();
-                if (template != null) {
-                    final Period period = new Period();
-                    period.setFromMs(System.currentTimeMillis() - template.getHourPeriod() * 60 * 60 * 1000);
-                    criteria.obtainFindStreamCriteria().setCreatePeriod(period);
-                    criteria.obtainFindStreamCriteria().obtainStreamTypeIdSet().clear();
+        view.getStreamListFilterTemplate().addSelectionHandler(event -> {
+            final StreamListFilterTemplate template = event.getSelectedItem();
+            if (template != null) {
+                final Period period = new Period();
+                period.setFromMs(System.currentTimeMillis() - template.getHourPeriod() * 60 * 60 * 1000);
+                criteria.obtainFindStreamCriteria().setCreatePeriod(period);
+                criteria.obtainFindStreamCriteria().obtainStreamTypeIdSet().clear();
 
-                    criteria.obtainFindStreamCriteria().obtainStreamTypeIdSet()
-                            .addAllEntities(template.getStreamType(streamTypeUiManager));
-                    read();
-                }
-
+                criteria.obtainFindStreamCriteria().obtainStreamTypeIdSet()
+                        .addAllEntities(template.getStreamType(streamTypeUiManager));
+                read();
             }
+
         });
 
     }

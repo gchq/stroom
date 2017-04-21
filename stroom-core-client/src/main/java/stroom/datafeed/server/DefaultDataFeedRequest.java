@@ -16,6 +16,9 @@
 
 package stroom.datafeed.server;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.security.Insecure;
@@ -25,10 +28,11 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
 import stroom.util.task.ServerTask;
 import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.zip.*;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
+import stroom.util.zip.HeaderMap;
+import stroom.util.zip.StroomHeaderArguments;
+import stroom.util.zip.StroomStatusCode;
+import stroom.util.zip.StroomStreamException;
+import stroom.util.zip.StroomStreamProcessor;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;

@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.dashboard.client.vis.VisPresenter.VisView;
 import stroom.widget.layout.client.view.ResizeFlowPanel;
 import stroom.widget.spinner.client.SpinnerSmall;

@@ -25,14 +25,10 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.user.client.ui.SimplePanel;
-
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditor;
 import stroom.util.shared.Indicator;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Severity;
-import stroom.editor.client.presenter.Option;
 
 public class RightBar extends Composite {
     public interface Style extends CssResource {
@@ -279,34 +275,31 @@ public class RightBar extends Composite {
      */
     private void showIndicatorPopup(final int xPos, final int yPos, final boolean showLeft, final String html) {
         indicatorPopup.setHTML(html);
-        indicatorPopup.setPopupPositionAndShow(new PositionCallback() {
-            @Override
-            public void setPosition(final int offsetWidth, final int offsetHeight) {
-                int x = xPos;
-                final int minX = 0;
-                final int maxX = Window.getClientWidth() - offsetWidth;
-                int y = yPos;
-                final int minY = 0;
-                final int maxY = Window.getClientHeight() - offsetHeight;
+        indicatorPopup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
+            int x = xPos;
+            final int minX = 0;
+            final int maxX = Window.getClientWidth() - offsetWidth;
+            int y = yPos;
+            final int minY = 0;
+            final int maxY = Window.getClientHeight() - offsetHeight;
 
-                if (showLeft) {
-                    x -= offsetWidth;
-                }
-
-                if (x < minX) {
-                    x = minX;
-                } else if (x > maxX) {
-                    x = maxX;
-                }
-
-                if (y < minY) {
-                    y = minY;
-                } else if (y > maxY) {
-                    y = maxY;
-                }
-
-                indicatorPopup.setPopupPosition(x, y);
+            if (showLeft) {
+                x -= offsetWidth;
             }
+
+            if (x < minX) {
+                x = minX;
+            } else if (x > maxX) {
+                x = maxX;
+            }
+
+            if (y < minY) {
+                y = minY;
+            } else if (y > maxY) {
+                y = maxY;
+            }
+
+            indicatorPopup.setPopupPosition(x, y);
         });
     }
 

@@ -16,20 +16,18 @@
 
 package stroom.dashboard.server;
 
-import java.io.File;
-
-import stroom.util.test.StroomUnitTest;
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.dashboard.server.vis.VisSettings;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.test.StroomUnitTest;
+
+import java.io.File;
 
 public class TestVisSettings extends StroomUnitTest {
     @Test

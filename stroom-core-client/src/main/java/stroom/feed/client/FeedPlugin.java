@@ -16,6 +16,11 @@
 
 package stroom.feed.client;
 
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 import stroom.app.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
@@ -25,11 +30,6 @@ import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.shared.Feed;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.StreamType;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Arrays;
 import java.util.HashSet;

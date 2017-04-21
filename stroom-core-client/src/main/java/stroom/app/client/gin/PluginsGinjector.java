@@ -17,7 +17,6 @@
 package stroom.app.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-
 import stroom.help.client.HelpPlugin;
 
 public interface PluginsGinjector {

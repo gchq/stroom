@@ -17,10 +17,10 @@
 package stroom.node.client;
 
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.widget.util.client.Future;
-import stroom.widget.util.client.FutureImpl;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.FetchClientPropertiesAction;
+import stroom.widget.util.client.Future;
+import stroom.widget.util.client.FutureImpl;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

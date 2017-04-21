@@ -20,7 +20,6 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.logging.EntityEventLog;
-import stroom.security.SecurityContext;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 

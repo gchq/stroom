@@ -17,7 +17,6 @@
 package stroom.dashboard.client.text.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-
 import stroom.dashboard.client.text.TextPlugin;
 import stroom.dashboard.client.text.TextPresenter;
 

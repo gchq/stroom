@@ -18,7 +18,6 @@ package stroom.editor.client.event;
 
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-
 import stroom.editor.client.event.ChangeFilterEvent.ChangeFilterHandler;
 
 public interface HasChangeFilterHandlers extends HasHandlers {

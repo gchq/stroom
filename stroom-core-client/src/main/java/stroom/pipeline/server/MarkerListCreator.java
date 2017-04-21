@@ -16,14 +16,7 @@
 
 package stroom.pipeline.server;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.lang.ArrayUtils;
-
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.util.shared.Expander;
 import stroom.util.shared.Marker;
@@ -31,6 +24,12 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.util.shared.StreamLocation;
 import stroom.util.shared.Summary;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MarkerListCreator {
     public List<Marker> createFullList(final String string, final Severity... expandedSeverities) throws IOException {

@@ -18,7 +18,6 @@ package stroom.dashboard.client.vis.gin;
 
 import com.google.inject.Singleton;
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-
 import stroom.dashboard.client.vis.BasicVisSettingsPresenter;
 import stroom.dashboard.client.vis.BasicVisSettingsPresenter.BasicVisSettingsView;
 import stroom.dashboard.client.vis.BasicVisSettingsViewImpl;

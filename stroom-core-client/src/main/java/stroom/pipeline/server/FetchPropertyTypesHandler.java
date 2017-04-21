@@ -16,13 +16,13 @@
 
 package stroom.pipeline.server;
 
-import javax.annotation.Resource;
-
 import stroom.pipeline.server.factory.ElementRegistryFactory;
 import stroom.pipeline.shared.FetchPropertyTypesAction;
 import stroom.pipeline.shared.FetchPropertyTypesResult;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+
+import javax.annotation.Resource;
 
 @TaskHandlerBean(task = FetchPropertyTypesAction.class)
 public class FetchPropertyTypesHandler extends AbstractTaskHandler<FetchPropertyTypesAction, FetchPropertyTypesResult> {

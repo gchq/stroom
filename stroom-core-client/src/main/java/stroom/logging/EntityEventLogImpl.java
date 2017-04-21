@@ -16,36 +16,34 @@
 
 package stroom.logging;
 
-import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import javax.annotation.Resource;
-
-import stroom.util.logging.StroomLogger;
-import org.springframework.stereotype.Component;
-
-import stroom.security.Insecure;
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.PageResponse;
-import stroom.util.spring.StroomBeanStore;
 import event.logging.BaseObject;
 import event.logging.CopyMove;
 import event.logging.CopyMoveOutcome;
 import event.logging.Criteria;
-import event.logging.Query;
 import event.logging.Criteria.ResultPage;
 import event.logging.Event;
 import event.logging.Event.EventDetail.Update;
 import event.logging.MultiObject;
 import event.logging.Object;
 import event.logging.ObjectOutcome;
+import event.logging.Query;
 import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
+import org.springframework.stereotype.Component;
+import stroom.entity.shared.BaseCriteria;
+import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.NamedEntity;
+import stroom.entity.shared.PageResponse;
+import stroom.security.Insecure;
+import stroom.util.logging.StroomLogger;
+import stroom.util.spring.StroomBeanStore;
+
+import javax.annotation.Resource;
+import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 @Insecure

@@ -25,10 +25,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-
+import stroom.cell.list.client.CustomCellList;
 import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesView;
 import stroom.dashboard.shared.Query;
-import stroom.cell.list.client.CustomCellList;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;

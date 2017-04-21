@@ -20,7 +20,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.app.client.presenter.AppPresenter;
 
 public class AppViewImpl extends ViewImpl implements AppPresenter.AppView {

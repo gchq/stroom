@@ -16,12 +16,12 @@
 
 package stroom.dashboard.shared;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.TableSettings;
 import stroom.util.shared.OffsetRange;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class TableResultRequest extends ComponentResultRequest {
     private static final long serialVersionUID = 8683770109061652092L;

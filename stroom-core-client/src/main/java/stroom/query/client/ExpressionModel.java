@@ -16,11 +16,11 @@
 
 package stroom.query.client;
 
-import java.util.List;
-
 import stroom.query.shared.ExpressionItem;
 import stroom.query.shared.ExpressionOperator;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+
+import java.util.List;
 
 public class ExpressionModel {
     public DefaultTreeForTreeLayout<ExpressionItem> getTreeFromExpression(final ExpressionOperator expression) {

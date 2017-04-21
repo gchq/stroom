@@ -16,8 +16,6 @@
 
 package stroom.dashboard.server;
 
-import java.text.ParseException;
-
 import stroom.dashboard.expression.Expression;
 import stroom.dashboard.expression.ExpressionParser;
 import stroom.dashboard.expression.FieldIndexMap;
@@ -27,6 +25,8 @@ import stroom.dashboard.shared.ValidateExpressionAction;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+
+import java.text.ParseException;
 
 @TaskHandlerBean(task = ValidateExpressionAction.class)
 public class ValidateExpressionHandler extends AbstractTaskHandler<ValidateExpressionAction, ValidateExpressionResult> {

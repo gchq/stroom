@@ -16,9 +16,7 @@
 
 package stroom.importexport.client.presenter;
 
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
@@ -31,7 +29,6 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
@@ -133,16 +130,13 @@ public class ImportConfigConfirmPresenter extends
             if (warnings) {
                 ConfirmEvent.fireWarn(ImportConfigConfirmPresenter.this,
                         "There are warnings in the items selected.  Are you sure you want to import?.",
-                        new ConfirmCallback() {
-                            @Override
-                            public void onResult(final boolean result) {
-                                if (result) {
-                                    importData();
-                                } else {
-                                    // Re-enable popup buttons.
-                                    EnablePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                                            ImportConfigConfirmPresenter.this);
-                                }
+                        result -> {
+                            if (result) {
+                                importData();
+                            } else {
+                                // Re-enable popup buttons.
+                                EnablePopupEvent.fire(ImportConfigConfirmPresenter.this,
+                                        ImportConfigConfirmPresenter.this);
                             }
                         });
 
@@ -190,30 +184,22 @@ public class ImportConfigConfirmPresenter extends
         dataGridView.addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
 
         // Add Handlers
-        column.setFieldUpdater(new FieldUpdater<ImportState, TickBoxState>() {
-            @Override
-            public void update(final int index, final ImportState row, final TickBoxState value) {
-                row.setAction(value.toBoolean());
-            }
-        });
-        header.setUpdater(new ValueUpdater<TickBoxState>() {
-            @Override
-            public void update(final TickBoxState value) {
-                if (confirmList != null) {
-                    if (value.equals(TickBoxState.UNTICK)) {
-                        for (final ImportState item : confirmList) {
-                            item.setAction(false);
-                        }
+        column.setFieldUpdater((index, row, value) -> row.setAction(value.toBoolean()));
+        header.setUpdater(value -> {
+            if (confirmList != null) {
+                if (value.equals(TickBoxState.UNTICK)) {
+                    for (final ImportState item : confirmList) {
+                        item.setAction(false);
                     }
-                    if (value.equals(TickBoxState.TICK)) {
-                        for (final ImportState item : confirmList) {
-                            item.setAction(true);
-                        }
-                    }
-                    // Refresh list
-                    dataGridView.setRowData(0, confirmList);
-                    dataGridView.setRowCount(confirmList.size());
                 }
+                if (value.equals(TickBoxState.TICK)) {
+                    for (final ImportState item : confirmList) {
+                        item.setAction(true);
+                    }
+                }
+                // Refresh list
+                dataGridView.setRowData(0, confirmList);
+                dataGridView.setRowCount(confirmList.size());
             }
         });
     }

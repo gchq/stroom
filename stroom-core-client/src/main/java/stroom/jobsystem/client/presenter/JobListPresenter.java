@@ -16,7 +16,6 @@
 
 package stroom.jobsystem.client.presenter;
 
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
@@ -94,17 +93,14 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                 return TickBoxState.fromBoolean(row.isEnabled());
             }
         };
-        enabledColumn.setFieldUpdater(new FieldUpdater<Job, TickBoxState>() {
-            @Override
-            public void update(final int index, final Job row, final TickBoxState value) {
-                final boolean newValue = value.toBoolean();
-                jobSaver.save(new EntitySaveTask<Job>(new EntityRow<Job>(row)) {
-                    @Override
-                    protected void setValue(final Job entity) {
-                        entity.setEnabled(newValue);
-                    }
-                });
-            }
+        enabledColumn.setFieldUpdater((index, row, value) -> {
+            final boolean newValue = value.toBoolean();
+            jobSaver.save(new EntitySaveTask<Job>(new EntityRow<Job>(row)) {
+                @Override
+                protected void setValue(final Job entity) {
+                    entity.setEnabled(newValue);
+                }
+            });
         });
         getView().addColumn(enabledColumn, "Enabled", 80);
 

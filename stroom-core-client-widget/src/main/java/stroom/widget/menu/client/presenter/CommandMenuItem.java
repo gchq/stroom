@@ -16,9 +16,7 @@
 
 package stroom.widget.menu.client.presenter;
 
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.Image;
 
 public abstract class CommandMenuItem extends MenuItem {
     private final String shortcut;

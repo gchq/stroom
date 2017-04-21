@@ -16,14 +16,14 @@
 
 package stroom.node.server;
 
-import javax.annotation.Resource;
-
-import stroom.security.Insecure;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.node.shared.FetchClientPropertiesAction;
+import stroom.security.Insecure;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+
+import javax.annotation.Resource;
 
 @TaskHandlerBean(task = FetchClientPropertiesAction.class)
 @Insecure

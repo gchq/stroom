@@ -19,15 +19,14 @@ package stroom.visualisation.client;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.ClientSecurityContext;
-import stroom.visualisation.client.presenter.VisualisationPresenter;
-import stroom.visualisation.shared.Visualisation;
 import stroom.app.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.entity.client.presenter.EntityEditPresenter;
+import stroom.security.client.ClientSecurityContext;
+import stroom.visualisation.client.presenter.VisualisationPresenter;
+import stroom.visualisation.shared.Visualisation;
 
 public class VisualisationPlugin extends EntityPlugin<Visualisation> {
     private final Provider<VisualisationPresenter> editorProvider;

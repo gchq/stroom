@@ -16,15 +16,15 @@
 
 package stroom.dashboard.server.download;
 
-import java.io.IOException;
-import java.util.List;
-
 import stroom.dashboard.expression.Generator;
 import stroom.dashboard.server.SampleGenerator;
 import stroom.query.Item;
 import stroom.query.Items;
 import stroom.query.ResultStore;
 import stroom.query.shared.Field;
+
+import java.io.IOException;
+import java.util.List;
 
 public class SearchResultWriter {
     public interface Target {

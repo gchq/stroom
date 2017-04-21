@@ -16,8 +16,13 @@
 
 package stroom.cache.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.cache.StroomCacheManager;
-import stroom.cache.shared.*;
+import stroom.cache.shared.CacheInfo;
+import stroom.cache.shared.CacheNodeRow;
+import stroom.cache.shared.CacheRow;
+import stroom.cache.shared.FetchCacheNodeRowAction;
+import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.entity.cluster.FindServiceClusterTask;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
@@ -32,12 +37,10 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 @TaskHandlerBean(task = FetchCacheNodeRowAction.class)
@@ -66,14 +69,11 @@ class FetchCacheNodeRowHandler extends AbstractTaskHandler<FetchCacheNodeRowActi
 
         // Sort the list of node names.
         final List<Node> nodes = new ArrayList<Node>(collector.getTargetNodes());
-        Collections.sort(nodes, new Comparator<Node>() {
-            @Override
-            public int compare(final Node o1, final Node o2) {
-                if (o1.getName() == null || o2.getName() == null) {
-                    return 0;
-                }
-                return o1.getName().compareToIgnoreCase(o2.getName());
+        Collections.sort(nodes, (o1, o2) -> {
+            if (o1.getName() == null || o2.getName() == null) {
+                return 0;
             }
+            return o1.getName().compareToIgnoreCase(o2.getName());
         });
 
         for (final Node node : nodes) {

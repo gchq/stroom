@@ -16,13 +16,12 @@
 
 package stroom.widget.customdatebox.client;
 
-import java.util.Date;
-
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.datepicker.client.DateBox;
 import com.google.gwt.user.datepicker.client.DatePicker;
-
 import stroom.util.shared.HasLongValue;
+
+import java.util.Date;
 
 public class CustomDateBox extends DateBox implements HasLongValue {
     public static class CustomDateBoxFormat implements Format {

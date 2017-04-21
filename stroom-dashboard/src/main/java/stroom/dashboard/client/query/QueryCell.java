@@ -23,7 +23,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-
 import stroom.dashboard.shared.Query;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 

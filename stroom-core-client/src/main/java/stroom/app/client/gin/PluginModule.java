@@ -17,7 +17,6 @@
 package stroom.app.client.gin;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-
 import stroom.app.client.presenter.Plugin;
 
 public abstract class PluginModule extends AbstractPresenterModule {

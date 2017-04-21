@@ -16,16 +16,15 @@
 
 package stroom.streamstore.client.presenter;
 
-import java.util.List;
-
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.util.shared.Highlight;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.util.shared.Highlight;
+
+import java.util.List;
 
 public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {

@@ -18,7 +18,6 @@ package stroom.task.client;
 
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-
 import stroom.task.client.TaskEndEvent.TaskEndHandler;
 
 public interface HasTaskEndHandlers extends HasHandlers {

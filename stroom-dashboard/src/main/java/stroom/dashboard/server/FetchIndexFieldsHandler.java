@@ -16,6 +16,7 @@
 
 package stroom.dashboard.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.FetchIndexFieldsAction;
 import stroom.query.shared.DataSource;
 import stroom.query.shared.IndexFields;
@@ -23,7 +24,6 @@ import stroom.security.SecurityContext;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 

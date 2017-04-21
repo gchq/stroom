@@ -16,18 +16,18 @@
 
 package stroom.dashboard.shared;
 
+import stroom.query.shared.ComponentSettings;
+import stroom.query.shared.QueryData;
+import stroom.query.shared.TableSettings;
+import stroom.query.shared.VisDashboardSettings;
+import stroom.util.shared.SharedObject;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-
-import stroom.query.shared.ComponentSettings;
-import stroom.query.shared.QueryData;
-import stroom.query.shared.TableSettings;
-import stroom.query.shared.VisDashboardSettings;
-import stroom.util.shared.SharedObject;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "component", propOrder = { "type", "id", "name", "settings" })

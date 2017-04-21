@@ -16,22 +16,21 @@
 
 package stroom.app.client;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.event.LogoutEvent;
-import stroom.security.client.event.RequestLogoutEvent;
 import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.OpenContentTabEvent;
+import stroom.security.client.event.LogoutEvent;
+import stroom.security.client.event.RequestLogoutEvent;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.TabData;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ContentManager implements HasHandlers {
     public interface CloseCallback {
@@ -50,26 +49,13 @@ public class ContentManager implements HasHandlers {
     public ContentManager(final EventBus eventBus) {
         this.eventBus = eventBus;
 
-        eventBus.addHandler(RequestCloseTabEvent.getType(), new RequestCloseTabEvent.Handler() {
-            @Override
-            public void onCloseTab(final RequestCloseTabEvent event) {
-                final TabData tabData = event.getTabData();
-                final CloseHandler closeHandler = handlerMap.get(tabData);
-                close(closeHandler, tabData, false);
-            }
+        eventBus.addHandler(RequestCloseTabEvent.getType(), event -> {
+            final TabData tabData = event.getTabData();
+            final CloseHandler closeHandler = handlerMap.get(tabData);
+            close(closeHandler, tabData, false);
         });
-        eventBus.addHandler(RequestCloseAllTabsEvent.getType(), new RequestCloseAllTabsEvent.Handler() {
-            @Override
-            public void onCloseAllTabs(final RequestCloseAllTabsEvent event) {
-                closeAll(false);
-            }
-        });
-        eventBus.addHandler(RequestLogoutEvent.getType(), new RequestLogoutEvent.Handler() {
-            @Override
-            public void onLogoutRequest(final RequestLogoutEvent event) {
-                closeAll(true);
-            }
-        });
+        eventBus.addHandler(RequestCloseAllTabsEvent.getType(), event -> closeAll(false));
+        eventBus.addHandler(RequestLogoutEvent.getType(), event -> closeAll(true));
     }
 
     private void closeAll(final boolean logoffAfterClose) {
@@ -94,18 +80,15 @@ public class ContentManager implements HasHandlers {
     }
 
     private void close(final CloseHandler closeHandler, final TabData tabData, final boolean logoffAfterClose) {
-        closeHandler.onCloseRequest(new CloseCallback() {
-            @Override
-            public void closeTab(final boolean ok) {
-                if (ok) {
-                    forceClose(tabData);
+        closeHandler.onCloseRequest(ok -> {
+            if (ok) {
+                forceClose(tabData);
 
-                    // Logoff if there are no more open tabs and we have been
-                    // asked
-                    // to logoff after close.
-                    if (logoffAfterClose && handlerMap.size() == 0) {
-                        LogoutEvent.fire(ContentManager.this);
-                    }
+                // Logoff if there are no more open tabs and we have been
+                // asked
+                // to logoff after close.
+                if (logoffAfterClose && handlerMap.size() == 0) {
+                    LogoutEvent.fire(ContentManager.this);
                 }
             }
         });

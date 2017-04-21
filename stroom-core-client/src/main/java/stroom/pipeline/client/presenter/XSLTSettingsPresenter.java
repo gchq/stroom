@@ -22,11 +22,10 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.security.client.ClientSecurityContext;
 import stroom.app.client.event.DirtyKeyDownHander;
 import stroom.entity.client.presenter.EntitySettingsPresenter;
 import stroom.pipeline.shared.XSLT;
+import stroom.security.client.ClientSecurityContext;
 
 public class XSLTSettingsPresenter extends EntitySettingsPresenter<XSLTSettingsPresenter.XSLTSettingsView, XSLT> {
     public interface XSLTSettingsView extends View {

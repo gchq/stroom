@@ -16,13 +16,13 @@
 
 package stroom.dashboard.shared;
 
+import stroom.util.shared.SharedObject;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
-
-import stroom.util.shared.SharedObject;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "layout", propOrder = { "preferredSize" })

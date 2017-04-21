@@ -18,7 +18,6 @@ package stroom.dashboard.client.vis;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-
 import stroom.dashboard.client.main.SettingsPresenter;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 

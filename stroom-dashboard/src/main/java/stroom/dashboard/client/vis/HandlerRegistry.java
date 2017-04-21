@@ -16,10 +16,10 @@
 
 package stroom.dashboard.client.vis;
 
+import com.google.web.bindery.event.shared.HandlerRegistration;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class HandlerRegistry {
     private List<HandlerRegistration> handlerRegistrations;

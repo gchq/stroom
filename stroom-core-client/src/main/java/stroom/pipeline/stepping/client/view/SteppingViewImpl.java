@@ -27,7 +27,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
 import stroom.widget.tab.client.presenter.LayerContainer;
 

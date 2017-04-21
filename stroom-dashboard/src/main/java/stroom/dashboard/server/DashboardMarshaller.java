@@ -17,7 +17,6 @@
 package stroom.dashboard.server;
 
 import org.springframework.stereotype.Component;
-
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.entity.server.EntityMarshaller;

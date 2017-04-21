@@ -16,9 +16,17 @@
 
 package stroom.jobsystem.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
-import stroom.jobsystem.shared.*;
+import stroom.jobsystem.shared.FetchJobDataAction;
+import stroom.jobsystem.shared.FindJobNodeCriteria;
+import stroom.jobsystem.shared.Job;
+import stroom.jobsystem.shared.JobNode;
+import stroom.jobsystem.shared.JobNodeInfo;
+import stroom.jobsystem.shared.JobNodeRow;
+import stroom.jobsystem.shared.JobNodeService;
+import stroom.jobsystem.shared.JobService;
 import stroom.node.shared.Node;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
@@ -29,10 +37,13 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.SharedMap;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 @TaskHandlerBean(task = FetchJobDataAction.class)
 @Scope(StroomScope.TASK)

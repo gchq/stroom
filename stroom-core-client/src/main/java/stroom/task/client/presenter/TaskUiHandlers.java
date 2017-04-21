@@ -17,7 +17,6 @@
 package stroom.task.client.presenter;
 
 import com.gwtplatform.mvp.client.UiHandlers;
-
 import stroom.util.shared.TaskId;
 
 public interface TaskUiHandlers extends UiHandlers {

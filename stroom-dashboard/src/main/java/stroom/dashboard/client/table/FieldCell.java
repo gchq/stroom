@@ -16,7 +16,10 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.gwt.cell.client.*;
+import com.google.gwt.cell.client.CompositeCell;
+import com.google.gwt.cell.client.HasCell;
+import com.google.gwt.cell.client.ImageResourceCell;
+import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -38,12 +41,7 @@ public class FieldCell extends CompositeCell<Field> {
                 return field.getName();
             }
         };
-        name.setFieldUpdater(new FieldUpdater<Field, String>() {
-            @Override
-            public void update(final int index, final Field object, final String value) {
-                object.setName(value);
-            }
-        });
+        name.setFieldUpdater((index, object, value) -> object.setName(value));
         cells.add(name);
 
         final Column<Field, ImageResource> group = new Column<Field, ImageResource>(new ImageResourceCell()) {

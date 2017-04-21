@@ -16,17 +16,14 @@
 
 package stroom.dashboard.server.vis;
 
-import java.io.IOException;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-
 import stroom.dashboard.server.MyDoubleSerialiser;
+
+import java.io.IOException;
 
 public class VisSettingsUtil {
     public static VisSettings read(final String json) throws IOException {

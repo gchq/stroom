@@ -16,18 +16,17 @@
 
 package stroom.task.server;
 
-import javax.inject.Inject;
-
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import org.springframework.context.annotation.Scope;
-
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseResultList;
 import stroom.servlet.HttpServletRequestHolder;
+import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindUserTaskProgressAction;
 import stroom.task.shared.TaskProgress;
 import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = FindUserTaskProgressAction.class)
 @Scope(StroomScope.TASK)

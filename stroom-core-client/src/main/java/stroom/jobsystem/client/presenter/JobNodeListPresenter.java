@@ -17,7 +17,6 @@
 package stroom.jobsystem.client.presenter;
 
 import com.google.gwt.cell.client.Cell.Context;
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -178,18 +177,15 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
             }
         };
 
-        maxColumn.setFieldUpdater(new FieldUpdater<JobNodeRow, Number>() {
-            @Override
-            public void update(final int index, final JobNodeRow row, final Number value) {
-                if (row instanceof JobNodeRow) {
-                    final JobNodeRow jobNodeRow = row;
-                    jobNodeSaver.save(new EntitySaveTask<JobNode>(jobNodeRow) {
-                        @Override
-                        protected void setValue(final JobNode entity) {
-                            entity.setTaskLimit(value.intValue());
-                        }
-                    });
-                }
+        maxColumn.setFieldUpdater((index, row, value) -> {
+            if (row instanceof JobNodeRow) {
+                final JobNodeRow jobNodeRow = row;
+                jobNodeSaver.save(new EntitySaveTask<JobNode>(jobNodeRow) {
+                    @Override
+                    protected void setValue(final JobNode entity) {
+                        entity.setTaskLimit(value.intValue());
+                    }
+                });
             }
         });
         getView().addColumn(maxColumn, "Max", 59);
@@ -236,17 +232,14 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
                 return TickBoxState.fromBoolean(row.getEntity().isEnabled());
             }
         };
-        enabledColumn.setFieldUpdater(new FieldUpdater<JobNodeRow, TickBoxState>() {
-            @Override
-            public void update(final int index, final JobNodeRow jobNodeRow, final TickBoxState value) {
-                final boolean newValue = value.toBoolean();
-                jobNodeSaver.save(new EntitySaveTask<JobNode>(jobNodeRow) {
-                    @Override
-                    protected void setValue(final JobNode entity) {
-                        entity.setEnabled(newValue);
-                    }
-                });
-            }
+        enabledColumn.setFieldUpdater((index, jobNodeRow, value) -> {
+            final boolean newValue = value.toBoolean();
+            jobNodeSaver.save(new EntitySaveTask<JobNode>(jobNodeRow) {
+                @Override
+                protected void setValue(final JobNode entity) {
+                    entity.setEnabled(newValue);
+                }
+            });
         });
         getView().addColumn(enabledColumn, "Enabled", 80);
 

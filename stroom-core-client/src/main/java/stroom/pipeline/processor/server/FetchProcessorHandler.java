@@ -38,7 +38,6 @@ import stroom.util.shared.SharedObject;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -93,20 +92,17 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
             processors.addAll(streamProcessors);
 
             final List<StreamProcessor> sorted = new ArrayList<>(processors);
-            Collections.sort(sorted, new Comparator<StreamProcessor>() {
-                @Override
-                public int compare(final StreamProcessor o1, final StreamProcessor o2) {
-                    if (o1.getPipeline() != null && o2.getPipeline() != null) {
-                        return o1.getPipeline().getName().compareTo(o2.getPipeline().getName());
-                    }
-                    if (o1.getPipeline() != null) {
-                        return -1;
-                    }
-                    if (o2.getPipeline() != null) {
-                        return 1;
-                    }
-                    return o1.compareTo(o2);
+            Collections.sort(sorted, (o1, o2) -> {
+                if (o1.getPipeline() != null && o2.getPipeline() != null) {
+                    return o1.getPipeline().getName().compareTo(o2.getPipeline().getName());
                 }
+                if (o1.getPipeline() != null) {
+                    return -1;
+                }
+                if (o2.getPipeline() != null) {
+                    return 1;
+                }
+                return o1.compareTo(o2);
             });
 
             for (final StreamProcessor streamProcessor : sorted) {

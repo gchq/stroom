@@ -16,12 +16,12 @@
 
 package stroom.visualisation.client.presenter;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.dashboard.client.vis.HandlerRegistry;
 import stroom.entity.shared.DocRef;
 import stroom.security.client.event.LogoutEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Singleton;
 import java.util.HashMap;
@@ -42,21 +42,13 @@ public class VisFunctionCache {
 
     public void bind() {
         // Listen for logout events.
-        handlerRegistry.registerHandler(eventBus.addHandler(LogoutEvent.getType(), new LogoutEvent.LogoutHandler() {
-            @Override
-            public void onLogout(final LogoutEvent event) {
-                map.clear();
-            }
-        }));
+        handlerRegistry.registerHandler(eventBus.addHandler(LogoutEvent.getType(), event -> map.clear()));
         handlerRegistry.registerHandler(
-                eventBus.addHandler(ClearFunctionCacheEvent.getType(), new ClearFunctionCacheEvent.Handler() {
-                    @Override
-                    public void onClear(final ClearFunctionCacheEvent event) {
-                        if (event.getVisualisation() != null) {
-                            map.remove(event.getVisualisation());
-                        } else {
-                            map.clear();
-                        }
+                eventBus.addHandler(ClearFunctionCacheEvent.getType(), event -> {
+                    if (event.getVisualisation() != null) {
+                        map.remove(event.getVisualisation());
+                    } else {
+                        map.clear();
                     }
                 }));
     }

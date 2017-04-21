@@ -16,12 +16,12 @@
 
 package stroom.script.client;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.vis.ClearScriptCacheEvent;
 import stroom.dashboard.client.vis.HandlerRegistry;
 import stroom.entity.shared.DocRef;
 import stroom.security.client.event.LogoutEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Singleton;
 import java.util.HashSet;
@@ -41,21 +41,13 @@ public class ScriptCache {
 
     public void bind() {
         // Listen for logout events.
-        handlerRegistry.registerHandler(eventBus.addHandler(LogoutEvent.getType(), new LogoutEvent.LogoutHandler() {
-            @Override
-            public void onLogout(final LogoutEvent event) {
-                loadedScripts.clear();
-            }
-        }));
+        handlerRegistry.registerHandler(eventBus.addHandler(LogoutEvent.getType(), event -> loadedScripts.clear()));
         handlerRegistry.registerHandler(
-                eventBus.addHandler(ClearScriptCacheEvent.getType(), new ClearScriptCacheEvent.Handler() {
-                    @Override
-                    public void onClear(final ClearScriptCacheEvent event) {
-                        if (event.getScript() != null) {
-                            loadedScripts.remove(event.getScript());
-                        } else {
-                            loadedScripts.clear();
-                        }
+                eventBus.addHandler(ClearScriptCacheEvent.getType(), event -> {
+                    if (event.getScript() != null) {
+                        loadedScripts.remove(event.getScript());
+                    } else {
+                        loadedScripts.clear();
                     }
                 }));
     }

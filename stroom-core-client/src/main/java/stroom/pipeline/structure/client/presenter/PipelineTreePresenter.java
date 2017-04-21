@@ -16,7 +16,6 @@
 
 package stroom.pipeline.structure.client.presenter;
 
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -24,7 +23,6 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.alert.client.event.AlertEvent;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
@@ -71,12 +69,7 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
         super.onBind();
 
         if (selectionModel != null) {
-            registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-                @Override
-                public void onSelectionChange(final SelectionChangeEvent event) {
-                    getView().refresh();
-                }
-            }));
+            registerHandler(selectionModel.addSelectionChangeHandler(event -> getView().refresh()));
         }
     }
 

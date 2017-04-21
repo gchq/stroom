@@ -16,11 +16,11 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import stroom.widget.xsdbrowser.client.view.XSDNode.XSDAttribute;
 import stroom.widget.xsdbrowser.client.view.XSDNode.XSDType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class XSDConstraint {
     private XSDNode restrictionNode;

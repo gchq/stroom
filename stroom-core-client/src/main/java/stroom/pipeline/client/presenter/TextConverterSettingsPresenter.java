@@ -18,19 +18,16 @@ package stroom.pipeline.client.presenter;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.security.client.ClientSecurityContext;
 import stroom.app.client.event.DirtyKeyDownHander;
 import stroom.entity.client.presenter.EntitySettingsPresenter;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.security.client.ClientSecurityContext;
 
 public class TextConverterSettingsPresenter
         extends EntitySettingsPresenter<TextConverterSettingsPresenter.TextConverterSettingsView, TextConverter> {
@@ -65,12 +62,7 @@ public class TextConverterSettingsPresenter
         registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
 
         registerHandler(
-                view.getConverterType().addSelectionHandler(new SelectionHandler<TextConverter.TextConverterType>() {
-                    @Override
-                    public void onSelection(final SelectionEvent<TextConverterType> event) {
-                        setDirty(true);
-                    }
-                }));
+                view.getConverterType().addSelectionHandler(event -> setDirty(true)));
     }
 
     @Override

@@ -23,10 +23,9 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.client.table.DownloadPresenter.DownloadView;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.item.client.ItemListBox;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;

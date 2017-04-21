@@ -16,14 +16,10 @@
 
 package stroom.streamstore.client.presenter;
 
-import java.util.ArrayList;
-
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-
 import stroom.cell.info.client.InfoColumn;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -51,6 +47,8 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
+
+import java.util.ArrayList;
 
 public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<StreamTask>>implements HasRead<BaseEntity> {
     private final EntityServiceFindActionDataProvider<FindStreamTaskCriteria, StreamTask> dataProvider;

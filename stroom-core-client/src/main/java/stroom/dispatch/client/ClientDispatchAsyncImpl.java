@@ -117,65 +117,63 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
         // Set the default behaviour of the future to show an error.
         future.onFailure(throwable -> AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, null));
 
-        Scheduler.get().scheduleDeferred(() -> {
-            dispatchService.exec(action, new AsyncCallback<R>() {
-                @Override
-                public void onSuccess(final R result) {
-                    if (showWorking) {
-                        // Remove the task from the task count.
-                        decrementTaskCount();
-                    }
-
-                    // Let the callback handle success.
-                    handleSuccess(result);
+        Scheduler.get().scheduleDeferred(() -> dispatchService.exec(action, new AsyncCallback<R>() {
+            @Override
+            public void onSuccess(final R result) {
+                if (showWorking) {
+                    // Remove the task from the task count.
+                    decrementTaskCount();
                 }
 
-                @Override
-                public void onFailure(final Throwable throwable) {
-                    if (showWorking) {
-                        // Remove the task from the task count.
-                        decrementTaskCount();
-                    }
+                // Let the callback handle success.
+                handleSuccess(result);
+            }
 
-                    if (message != null && message.length() >= LOGIN_HTML.length() && message.contains(LOGIN_HTML)) {
+            @Override
+            public void onFailure(final Throwable throwable) {
+                if (showWorking) {
+                    // Remove the task from the task count.
+                    decrementTaskCount();
+                }
+
+                if (message != null && message.length() >= LOGIN_HTML.length() && message.contains(LOGIN_HTML)) {
+                    if (!("Logout".equalsIgnoreCase(action.getTaskName()))) {
+                        // Logout.
+                        AlertEvent.fireError(ClientDispatchAsyncImpl.this,
+                                "Your user session appears to have terminated", message, null);
+                    }
+                } else if (throwable instanceof StatusCodeException) {
+                    final StatusCodeException scEx = (StatusCodeException) throwable;
+                    if (scEx.getStatusCode() >= 100) {
                         if (!("Logout".equalsIgnoreCase(action.getTaskName()))) {
                             // Logout.
-                            AlertEvent.fireError(ClientDispatchAsyncImpl.this,
-                                    "Your user session appears to have terminated", message, null);
-                        }
-                    } else if (throwable instanceof StatusCodeException) {
-                        final StatusCodeException scEx = (StatusCodeException) throwable;
-                        if (scEx.getStatusCode() >= 100) {
-                            if (!("Logout".equalsIgnoreCase(action.getTaskName()))) {
-                                // Logout.
-                                AlertEvent.fireError(ClientDispatchAsyncImpl.this, "An error has occurred",
-                                        scEx.getStatusCode() + " - " + scEx.getMessage(), null);
-                            }
+                            AlertEvent.fireError(ClientDispatchAsyncImpl.this, "An error has occurred",
+                                    scEx.getStatusCode() + " - " + scEx.getMessage(), null);
                         }
                     }
-
-                    handleFailure(throwable);
                 }
 
-                private void handleSuccess(final R result) {
-                    try {
-                        future.setResult(result);
+                handleFailure(throwable);
+            }
 
-                    } catch (final Throwable throwable) {
-                        AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, null);
-                    }
+            private void handleSuccess(final R result) {
+                try {
+                    future.setResult(result);
+
+                } catch (final Throwable throwable) {
+                    AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, null);
                 }
+            }
 
-                private void handleFailure(final Throwable throwable) {
-                    try {
-                        future.setThrowable(throwable);
+            private void handleFailure(final Throwable throwable) {
+                try {
+                    future.setThrowable(throwable);
 
-                    } catch (final Throwable throwable2) {
-                        AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable2, null);
-                    }
+                } catch (final Throwable throwable2) {
+                    AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable2, null);
                 }
-            });
-        });
+            }
+        }));
 
         return future;
     }

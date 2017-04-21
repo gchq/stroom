@@ -213,12 +213,9 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
             // Defer actually updating the layout, so that if we receive many
             // mouse events before layout/paint occurs, we'll only update once.
             if (layoutCommand == null) {
-                layoutCommand = new ScheduledCommand() {
-                    @Override
-                    public void execute() {
-                        layoutCommand = null;
-                        forceLayout();
-                    }
+                layoutCommand = () -> {
+                    layoutCommand = null;
+                    forceLayout();
                 };
                 Scheduler.get().scheduleDeferred(layoutCommand);
             }

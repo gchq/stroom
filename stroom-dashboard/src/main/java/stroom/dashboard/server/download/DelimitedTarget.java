@@ -16,14 +16,14 @@
 
 package stroom.dashboard.server.download;
 
+import stroom.dashboard.server.format.FieldFormatter;
+import stroom.query.shared.Field;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-
-import stroom.dashboard.server.format.FieldFormatter;
-import stroom.query.shared.Field;
 
 public class DelimitedTarget implements SearchResultWriter.Target {
     private final FieldFormatter fieldFormatter;

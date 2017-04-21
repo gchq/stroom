@@ -16,6 +16,7 @@
 
 package stroom.script.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.DocRef;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.Script;
@@ -25,7 +26,6 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedList;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

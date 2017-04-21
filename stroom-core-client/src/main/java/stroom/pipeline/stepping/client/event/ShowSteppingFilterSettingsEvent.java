@@ -19,9 +19,8 @@ package stroom.pipeline.stepping.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-
-import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.pipeline.shared.SteppingFilterSettings;
 
 public class ShowSteppingFilterSettingsEvent
         extends GwtEvent<ShowSteppingFilterSettingsEvent.ShowSteppingFilterSettingsHandler> {

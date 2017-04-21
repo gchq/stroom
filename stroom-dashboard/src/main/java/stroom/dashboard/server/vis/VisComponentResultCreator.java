@@ -16,14 +16,6 @@
 
 package stroom.dashboard.server.vis;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -32,7 +24,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-
 import stroom.dashboard.expression.Generator;
 import stroom.dashboard.expression.ObjectCompareUtil;
 import stroom.dashboard.expression.TypeConverter;
@@ -53,9 +44,17 @@ import stroom.query.ResultStore;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.Format.Type;
 import stroom.query.shared.VisDashboardSettings;
+import stroom.util.shared.SharedObject;
 import stroom.visualisation.shared.Visualisation;
 import stroom.visualisation.shared.VisualisationService;
-import stroom.util.shared.SharedObject;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class VisComponentResultCreator implements ComponentResultCreator {
     private static class ObjectComparator implements Comparator<Object> {
@@ -467,12 +466,7 @@ public class VisComponentResultCreator implements ComponentResultCreator {
 
             if (sorts.size() > 0) {
                 // Sort the sort options by sort priority.
-                Collections.sort(sorts, new Comparator<Sort>() {
-                    @Override
-                    public int compare(final Sort o1, final Sort o2) {
-                        return Integer.compare(o1.getPriority(), o2.getPriority());
-                    }
-                });
+                Collections.sort(sorts, (o1, o2) -> Integer.compare(o1.getPriority(), o2.getPriority()));
 
                 final Comparator<Object> comparator = new ValuesComparator(sorts);
                 Collections.sort(store.getList(), comparator);

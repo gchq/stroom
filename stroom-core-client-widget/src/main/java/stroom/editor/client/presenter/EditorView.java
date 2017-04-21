@@ -16,20 +16,19 @@
 
 package stroom.editor.client.presenter;
 
-import java.util.List;
-
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
 import com.google.gwt.user.client.ui.HasText;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
-
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
+import stroom.editor.client.event.HasFormatHandlers;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Indicators;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
-import stroom.editor.client.event.HasFormatHandlers;
+
+import java.util.List;
 
 public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers, HasText, HasMouseDownHandlers,
         HasContextMenuHandlers, HasUiHandlers<EditorUiHandlers> {

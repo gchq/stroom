@@ -16,12 +16,12 @@
 
 package stroom.dashboard.server;
 
+import stroom.query.shared.QueryKey;
+
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import stroom.query.shared.QueryKey;
 
 public class ActiveQueries {
     private final ConcurrentHashMap<QueryKey, ActiveQuery> activeQueries = new ConcurrentHashMap<>();

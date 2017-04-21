@@ -16,11 +16,10 @@
 
 package stroom.entity.server;
 
+import com.google.web.bindery.requestfactory.shared.ServiceLocator;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.support.WebApplicationContextUtils;
-
-import com.google.web.bindery.requestfactory.shared.ServiceLocator;
 
 @Component
 public class SpringServiceLocator implements ServiceLocator {

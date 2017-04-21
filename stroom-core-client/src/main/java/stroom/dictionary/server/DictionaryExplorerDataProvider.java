@@ -16,6 +16,7 @@
 
 package stroom.dictionary.server;
 
+import org.springframework.stereotype.Component;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.dictionary.shared.FindDictionaryCriteria;
@@ -23,12 +24,9 @@ import stroom.entity.shared.FolderService;
 import stroom.explorer.server.AbstractExplorerDataProvider;
 import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
-import stroom.explorer.shared.ExplorerData;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.Map;
 
 @ProvidesExplorerData
 @Component

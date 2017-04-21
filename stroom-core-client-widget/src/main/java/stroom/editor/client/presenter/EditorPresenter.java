@@ -25,14 +25,14 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
-import stroom.util.shared.Highlight;
-import stroom.util.shared.Indicators;
 import stroom.editor.client.event.ChangeFilterEvent;
 import stroom.editor.client.event.ChangeFilterEvent.ChangeFilterHandler;
 import stroom.editor.client.event.FormatEvent.FormatHandler;
 import stroom.editor.client.event.HasChangeFilterHandlers;
 import stroom.editor.client.event.HasFormatHandlers;
 import stroom.editor.client.view.EditorMenuPresenter;
+import stroom.util.shared.Highlight;
+import stroom.util.shared.Indicators;
 
 import java.util.List;
 

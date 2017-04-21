@@ -19,7 +19,6 @@ package stroom.pipeline.structure.client.view;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.view.client.SelectionModel;
-
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 public abstract class TreePanel<E> extends Composite {

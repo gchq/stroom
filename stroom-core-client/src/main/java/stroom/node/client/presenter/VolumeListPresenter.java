@@ -17,7 +17,6 @@
 package stroom.node.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

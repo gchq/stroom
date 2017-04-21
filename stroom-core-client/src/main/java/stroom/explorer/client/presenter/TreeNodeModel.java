@@ -1,6 +1,5 @@
 package stroom.explorer.client.presenter;
 
-import stroom.explorer.shared.ExplorerData;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.OpenEvent;

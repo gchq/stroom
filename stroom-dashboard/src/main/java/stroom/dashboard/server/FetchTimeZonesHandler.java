@@ -16,19 +16,18 @@
 
 package stroom.dashboard.server;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.joda.time.DateTimeZone;
 import org.springframework.context.annotation.Scope;
-
 import stroom.dashboard.shared.FetchTimeZonesAction;
 import stroom.dashboard.shared.TimeZoneData;
 import stroom.security.Insecure;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @TaskHandlerBean(task = FetchTimeZonesAction.class)
 @Scope(StroomScope.TASK)

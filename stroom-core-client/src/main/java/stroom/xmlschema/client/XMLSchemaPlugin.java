@@ -19,13 +19,12 @@ package stroom.xmlschema.client;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.ClientSecurityContext;
 import stroom.app.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.entity.client.presenter.EntityEditPresenter;
+import stroom.security.client.ClientSecurityContext;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
 import stroom.xmlschema.shared.XMLSchema;
 

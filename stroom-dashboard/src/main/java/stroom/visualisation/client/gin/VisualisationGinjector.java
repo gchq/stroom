@@ -17,7 +17,6 @@
 package stroom.visualisation.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-
 import stroom.visualisation.client.VisualisationPlugin;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
 

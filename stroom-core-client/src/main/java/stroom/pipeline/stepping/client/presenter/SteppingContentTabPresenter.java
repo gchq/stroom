@@ -22,7 +22,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.app.client.ContentManager.CloseCallback;
 import stroom.app.client.ContentManager.CloseHandler;
 import stroom.content.client.event.RefreshContentTabEvent;
@@ -72,13 +71,10 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
             ConfirmEvent.fire(this,
                     pipeline.getType() + " '" + pipeline.getName()
                             + "' has unsaved changes. Are you sure you want to close this item?",
-                    new ConfirmCallback() {
-                        @Override
-                        public void onResult(final boolean result) {
-                            callback.closeTab(result);
-                            if (result) {
-                                unbind();
-                            }
+                    result -> {
+                        callback.closeTab(result);
+                        if (result) {
+                            unbind();
                         }
                     });
         } else {

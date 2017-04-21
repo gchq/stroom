@@ -16,10 +16,10 @@
 
 package stroom.dashboard.server.format;
 
+import stroom.query.shared.Field;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import stroom.query.shared.Field;
 
 public class FieldFormatter {
     private final FormatterFactory formatterFactory;

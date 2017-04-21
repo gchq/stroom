@@ -19,13 +19,12 @@ package stroom.node.client.presenter;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.ClientSecurityContext;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.ManageEntityPresenter;
 import stroom.entity.shared.StringCriteria.MatchStyle;
 import stroom.node.shared.FindGlobalPropertyCriteria;
 import stroom.node.shared.GlobalProperty;
+import stroom.security.client.ClientSecurityContext;
 
 public class ManageGlobalPropertyPresenter extends ManageEntityPresenter<FindGlobalPropertyCriteria, GlobalProperty> {
     private final ManageGlobalPropertyListPresenter manageGlobalPropertyListPresenter;

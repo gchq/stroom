@@ -17,10 +17,10 @@
 package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.widget.util.client.Future;
-import stroom.widget.util.client.FutureImpl;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.FetchDocumentTypesAction;
+import stroom.widget.util.client.Future;
+import stroom.widget.util.client.FutureImpl;
 
 import javax.inject.Inject;
 

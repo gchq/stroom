@@ -18,7 +18,6 @@ package stroom.dashboard.client.unknown;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ResultComponent;

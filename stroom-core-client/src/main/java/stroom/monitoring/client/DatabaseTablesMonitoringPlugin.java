@@ -16,7 +16,6 @@
 
 package stroom.monitoring.client;
 
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -41,12 +40,7 @@ public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTab
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(Node.MANAGE_NODES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
-                    new IconMenuItem(7, GlyphIcons.DATABASE, GlyphIcons.DATABASE, "Database Tables", null, true, new Command() {
-                        @Override
-                        public void execute() {
-                            open();
-                        }
-                    }));
+                    new IconMenuItem(7, GlyphIcons.DATABASE, GlyphIcons.DATABASE, "Database Tables", null, true, () -> open()));
         }
     }
 }

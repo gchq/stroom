@@ -18,7 +18,6 @@ package stroom.query.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -140,12 +139,9 @@ public class TermEditor extends Composite {
 
             read(term);
 
-            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-                @Override
-                public void execute() {
-                    bind();
-                    layout.setVisible(true);
-                }
+            Scheduler.get().scheduleDeferred(() -> {
+                bind();
+                layout.setVisible(true);
             });
 
             editing = true;

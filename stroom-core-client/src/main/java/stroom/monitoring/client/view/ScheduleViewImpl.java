@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.monitoring.client.presenter.SchedulePresenter.ScheduleView;
 
 public class ScheduleViewImpl extends ViewImpl implements ScheduleView {

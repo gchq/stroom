@@ -25,7 +25,6 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.presenter.AlertCallback;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;

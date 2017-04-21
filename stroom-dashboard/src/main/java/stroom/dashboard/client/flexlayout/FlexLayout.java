@@ -16,12 +16,7 @@
 
 package stroom.dashboard.client.flexlayout;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -34,7 +29,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
-
 import stroom.dashboard.client.flexlayout.Splitter.SplitInfo;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.Components;
@@ -48,6 +42,10 @@ import stroom.data.grid.client.Glass;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LinkTab;
 import stroom.widget.tab.client.view.LinkTabBar;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class FlexLayout extends Composite implements RequiresResize, ProvidesResize {
     private enum Pos {
@@ -948,12 +946,9 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
             }
 
             // Perform a resize on all child layouts.
-            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-                @Override
-                public void execute() {
-                    for (final TabLayout w : layoutToWidgetMap.values()) {
-                        w.onResize();
-                    }
+            Scheduler.get().scheduleDeferred(() -> {
+                for (final TabLayout w : layoutToWidgetMap.values()) {
+                    w.onResize();
                 }
             });
         }

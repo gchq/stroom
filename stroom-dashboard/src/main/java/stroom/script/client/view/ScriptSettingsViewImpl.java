@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
 import stroom.util.shared.HasReadOnly;
 import stroom.widget.layout.client.view.ResizeSimplePanel;

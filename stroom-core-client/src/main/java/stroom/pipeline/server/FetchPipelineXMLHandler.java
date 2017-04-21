@@ -16,8 +16,6 @@
 
 package stroom.pipeline.server;
 
-import javax.annotation.Resource;
-
 import stroom.entity.server.MarshalOptions;
 import stroom.pipeline.shared.FetchPipelineXMLAction;
 import stroom.pipeline.shared.PipelineEntity;
@@ -25,6 +23,8 @@ import stroom.pipeline.shared.PipelineEntityService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedString;
+
+import javax.annotation.Resource;
 
 @TaskHandlerBean(task = FetchPipelineXMLAction.class)
 public class FetchPipelineXMLHandler extends AbstractTaskHandler<FetchPipelineXMLAction, SharedString> {

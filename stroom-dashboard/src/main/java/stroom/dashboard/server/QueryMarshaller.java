@@ -17,10 +17,9 @@
 package stroom.dashboard.server;
 
 import org.springframework.stereotype.Component;
-
 import stroom.dashboard.shared.Query;
-import stroom.query.shared.QueryData;
 import stroom.entity.server.EntityMarshaller;
+import stroom.query.shared.QueryData;
 
 @Component
 public class QueryMarshaller extends EntityMarshaller<Query, QueryData> {

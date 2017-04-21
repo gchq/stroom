@@ -22,9 +22,6 @@ import com.google.gwt.dom.client.IFrameElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.InitializeEvent;
-import com.google.gwt.event.logical.shared.InitializeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
@@ -40,7 +37,6 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
 
 public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {

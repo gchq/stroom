@@ -35,7 +35,6 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
-
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.util.shared.HasBooleanValue;
 

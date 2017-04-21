@@ -16,16 +16,14 @@
 
 package stroom.dashboard.server;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
-
 import stroom.query.SearchDataSourceProvider;
 import stroom.util.spring.StroomBeanStore;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class SearchDataSourceProviderRegistry implements InitializingBean {

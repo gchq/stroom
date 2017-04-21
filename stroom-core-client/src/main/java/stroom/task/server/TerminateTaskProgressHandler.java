@@ -16,6 +16,7 @@
 
 package stroom.task.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.cluster.TerminateTaskClusterTask;
@@ -23,7 +24,6 @@ import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 

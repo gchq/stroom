@@ -16,13 +16,6 @@
 
 package stroom.widget.tab.client.view;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
@@ -32,7 +25,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
-
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -46,6 +38,13 @@ import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabListPresenter;
 import stroom.widget.util.client.DoubleClickTest;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class AbstractTabBar extends Widget implements TabBar, RequiresResize {
     private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<TabData, AbstractTab>();
@@ -425,14 +424,11 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
             tabItemListPresenter = new TabListPresenter();
             popupSupport = new PopupSupportImpl(tabItemListPresenter.getView(), null, null, element);
 
-            tabItemListPresenter.addSelectionHandler(new SelectionHandler<TabData>() {
-                @Override
-                public void onSelection(final SelectionEvent<TabData> event) {
-                    popupSupport.hide();
+            tabItemListPresenter.addSelectionHandler(event -> {
+                popupSupport.hide();
 
-                    final TabData tabData = event.getSelectedItem();
-                    fireTabSelection(tabData);
-                }
+                final TabData tabData = event.getSelectedItem();
+                fireTabSelection(tabData);
             });
         }
 

@@ -16,6 +16,7 @@
 
 package stroom.cache.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.cache.StroomCacheManager;
 import stroom.cache.shared.CacheClearAction;
 import stroom.cache.shared.CacheRow;
@@ -28,7 +29,6 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 

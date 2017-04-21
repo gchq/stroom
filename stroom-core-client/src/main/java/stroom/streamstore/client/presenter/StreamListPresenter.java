@@ -18,10 +18,9 @@ package stroom.streamstore.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.ClientSecurityContext;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;

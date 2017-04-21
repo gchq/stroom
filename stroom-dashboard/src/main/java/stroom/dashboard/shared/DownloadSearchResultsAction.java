@@ -16,9 +16,9 @@
 
 package stroom.dashboard.shared;
 
+import stroom.dispatch.shared.Action;
 import stroom.query.shared.QueryKey;
 import stroom.query.shared.Search;
-import stroom.dispatch.shared.Action;
 import stroom.util.shared.ResourceGeneration;
 
 public class DownloadSearchResultsAction extends Action<ResourceGeneration> {

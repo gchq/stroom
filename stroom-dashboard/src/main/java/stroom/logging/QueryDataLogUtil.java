@@ -16,19 +16,19 @@
 
 package stroom.logging;
 
-import java.util.List;
-
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm;
-import stroom.dictionary.shared.Dictionary;
-import stroom.dictionary.shared.DictionaryService;
-import stroom.dictionary.shared.FindDictionaryCriteria;
 import event.logging.BaseAdvancedQueryItem;
 import event.logging.BaseAdvancedQueryOperator;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
+import stroom.dictionary.shared.Dictionary;
+import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.shared.FindDictionaryCriteria;
+import stroom.query.shared.ExpressionItem;
+import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.ExpressionOperator.Op;
+import stroom.query.shared.ExpressionTerm;
+
+import java.util.List;
 
 public class QueryDataLogUtil {
     public static void appendOperator(final List<BaseAdvancedQueryItem> items,

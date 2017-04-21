@@ -16,9 +16,9 @@
 
 package stroom.servlet;
 
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.util.test.StroomUnitTest;
 
 public class TestRejectPostFilter extends StroomUnitTest {
     @Test

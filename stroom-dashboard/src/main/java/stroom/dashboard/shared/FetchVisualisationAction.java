@@ -18,8 +18,6 @@ package stroom.dashboard.shared;
 
 import stroom.dispatch.shared.Action;
 import stroom.entity.shared.DocRef;
-import stroom.query.shared.IndexFields;
-import stroom.util.shared.SharedString;
 import stroom.visualisation.shared.Visualisation;
 
 public class FetchVisualisationAction extends Action<Visualisation> {

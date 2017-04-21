@@ -16,13 +16,13 @@
 
 package stroom.monitoring.shared;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import stroom.dispatch.shared.Action;
 import stroom.dispatch.shared.TreeAction;
 import stroom.entity.shared.ResultList;
 import stroom.util.shared.SharedObject;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class FetchMonitoringDataAction extends Action<ResultList<SharedObject>>implements TreeAction<SharedObject> {
     private static final long serialVersionUID = -6808045615241590297L;

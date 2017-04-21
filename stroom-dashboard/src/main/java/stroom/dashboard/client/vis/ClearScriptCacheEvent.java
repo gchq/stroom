@@ -16,10 +16,10 @@
 
 package stroom.dashboard.client.vis;
 
-import stroom.entity.shared.DocRef;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import stroom.entity.shared.DocRef;
 
 public class ClearScriptCacheEvent extends GwtEvent<ClearScriptCacheEvent.Handler> {
     public interface Handler extends EventHandler {

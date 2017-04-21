@@ -16,8 +16,6 @@
 
 package stroom.pipeline.server;
 
-import javax.annotation.Resource;
-
 import stroom.entity.server.MarshalOptions;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
@@ -25,6 +23,8 @@ import stroom.pipeline.shared.SavePipelineXMLAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
+
+import javax.annotation.Resource;
 
 @TaskHandlerBean(task = SavePipelineXMLAction.class)
 public class SavePipelineXMLHandler extends AbstractTaskHandler<SavePipelineXMLAction, VoidResult> {

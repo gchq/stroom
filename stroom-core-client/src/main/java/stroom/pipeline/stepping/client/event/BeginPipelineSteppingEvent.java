@@ -16,11 +16,10 @@
 
 package stroom.pipeline.stepping.client.event;
 
-import stroom.entity.shared.DocRef;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-
+import stroom.entity.shared.DocRef;
 import stroom.streamstore.shared.StreamType;
 
 public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEvent.Handler> {

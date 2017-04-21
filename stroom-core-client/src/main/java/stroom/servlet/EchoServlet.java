@@ -16,9 +16,9 @@
 
 package stroom.servlet;
 
+import org.springframework.stereotype.Component;
 import stroom.streamstore.server.fs.BlockGZIPInputStream;
 import stroom.util.io.StreamUtil;
-import org.springframework.stereotype.Component;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;

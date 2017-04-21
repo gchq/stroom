@@ -16,10 +16,7 @@
 
 package stroom.node.server;
 
-import javax.annotation.Resource;
-
 import org.springframework.context.annotation.Scope;
-
 import stroom.entity.cluster.FlushServiceClusterTask;
 import stroom.node.shared.FlushVolumeStatusAction;
 import stroom.node.shared.VolumeService;
@@ -29,6 +26,8 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
+
+import javax.annotation.Resource;
 
 @TaskHandlerBean(task = FlushVolumeStatusAction.class)
 @Scope(StroomScope.TASK)

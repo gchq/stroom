@@ -16,11 +16,11 @@
 
 package stroom.importexport.shared;
 
-import java.util.List;
-
 import stroom.dispatch.shared.Action;
 import stroom.entity.shared.ImportState;
 import stroom.util.shared.ResourceKey;
+
+import java.util.List;
 
 public class ImportConfigAction extends Action<ResourceKey> {
     private static final long serialVersionUID = 1799514675431383541L;

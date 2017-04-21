@@ -20,7 +20,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.widget.popup.client.event.ShowPopupEvent;

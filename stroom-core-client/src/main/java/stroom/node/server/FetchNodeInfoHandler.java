@@ -16,17 +16,7 @@
 
 package stroom.node.server;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
-
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
-
 import stroom.cluster.server.ClusterNodeManager;
 import stroom.cluster.server.ClusterState;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
@@ -43,6 +33,13 @@ import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @TaskHandlerBean(task = FetchNodeInfoAction.class)
 @Scope(StroomScope.TASK)
@@ -69,14 +66,11 @@ class FetchNodeInfoHandler extends AbstractTaskHandler<FetchNodeInfoAction, Resu
         final Node masterNode = clusterState.getMasterNode();
         final List<Node> allNodes = nodeService.find(nodeService.createCriteria());
 
-        Collections.sort(allNodes, new Comparator<Node>() {
-            @Override
-            public int compare(final Node o1, final Node o2) {
-                if (o1.getName() == null || o2.getName() == null) {
-                    return 0;
-                }
-                return o1.getName().compareToIgnoreCase(o2.getName());
+        Collections.sort(allNodes, (o1, o2) -> {
+            if (o1.getName() == null || o2.getName() == null) {
+                return 0;
             }
+            return o1.getName().compareToIgnoreCase(o2.getName());
         });
 
         final ArrayList<NodeInfoResult> responseList = new ArrayList<NodeInfoResult>();

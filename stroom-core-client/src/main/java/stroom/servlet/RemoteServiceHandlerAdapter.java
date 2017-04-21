@@ -16,8 +16,6 @@
 
 package stroom.servlet;
 
-import stroom.util.logging.StroomLogger;
-import stroom.util.thread.ThreadScopeContextHolder;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.RPC;
@@ -28,6 +26,8 @@ import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.context.ServletContextAware;
 import org.springframework.web.servlet.HandlerAdapter;
 import org.springframework.web.servlet.ModelAndView;
+import stroom.util.logging.StroomLogger;
+import stroom.util.thread.ThreadScopeContextHolder;
 
 import javax.annotation.Resource;
 import javax.servlet.Servlet;

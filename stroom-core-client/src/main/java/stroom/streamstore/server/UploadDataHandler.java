@@ -28,7 +28,6 @@ import stroom.task.server.TaskManager;
 import stroom.util.shared.ResourceKey;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.nio.file.Path;
 
 @TaskHandlerBean(task = UploadDataAction.class)

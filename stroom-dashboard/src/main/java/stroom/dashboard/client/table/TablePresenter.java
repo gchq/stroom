@@ -17,9 +17,7 @@
 package stroom.dashboard.client.table;
 
 import com.google.gwt.cell.client.Cell;
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -40,7 +38,6 @@ import stroom.cell.expander.client.ExpanderCell;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
@@ -60,8 +57,6 @@ import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
-import stroom.pipeline.client.event.ChangeDataEvent;
-import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.ComponentSettings;
 import stroom.query.shared.Field;
@@ -388,12 +383,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 return null;
             }
         };
-        column.setFieldUpdater(new FieldUpdater<Row, Expander>() {
-            @Override
-            public void update(final int index, final Row result, final Expander value) {
-                tableResultRequest.setGroupOpen(result.getGroupKey(), !value.isExpanded());
-                refresh();
-            }
+        column.setFieldUpdater((index, result, value) -> {
+            tableResultRequest.setGroupOpen(result.getGroupKey(), !value.isExpanded());
+            refresh();
         });
         dataGrid.addColumn(column, "<br/>", lastExpanderColumnWidth);
         existingColumns.add(column);
@@ -439,12 +431,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         };
 
         final FieldHeader fieldHeader = new FieldHeader(fieldsManager, field);
-        fieldHeader.setUpdater(new ValueUpdater<Field>() {
-            @Override
-            public void update(final Field value) {
-                dataGrid.redrawHeaders();
-            }
-        });
+        fieldHeader.setUpdater(value -> dataGrid.redrawHeaders());
 
         dataGrid.addResizableColumn(column, fieldHeader, field.getWidth());
         existingColumns.add(column);
@@ -482,12 +469,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         if (currentSearchModel != null) {
             searchModelHandlerRegistrations
-                    .add(currentSearchModel.getIndexLoader().addChangeDataHandler(new ChangeDataHandler<IndexLoader>() {
-                        @Override
-                        public void onChange(final ChangeDataEvent<IndexLoader> event) {
-                            updateFields();
-                        }
-                    }));
+                    .add(currentSearchModel.getIndexLoader().addChangeDataHandler(event -> updateFields()));
         }
 
         updateFields();

@@ -16,6 +16,9 @@
 
 package stroom.entity.server;
 
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.Query;
+import event.logging.Query.Advanced;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
 import stroom.logging.EntityEventLog;
@@ -23,9 +26,6 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedLong;
 import stroom.util.shared.SharedObject;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.Query;
-import event.logging.Query.Advanced;
 
 import javax.inject.Inject;
 

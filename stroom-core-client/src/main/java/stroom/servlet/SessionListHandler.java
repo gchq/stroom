@@ -16,26 +16,24 @@
 
 package stroom.servlet;
 
-import java.util.ArrayList;
-import java.util.Map.Entry;
-
-import javax.inject.Inject;
-
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
-
-import stroom.security.Insecure;
 import stroom.entity.cluster.FindServiceClusterTask;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.node.shared.Node;
+import stroom.security.Insecure;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Map.Entry;
 
 @TaskHandlerBean(task = SessionListAction.class)
 @Scope(value = StroomScope.TASK)

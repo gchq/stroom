@@ -16,11 +16,13 @@
 
 package stroom.servlet;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.security.Insecure;
+import stroom.task.server.TaskManager;
+import stroom.util.date.DateUtil;
+import stroom.util.spring.StroomScope;
+import stroom.util.task.TaskIdFactory;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletException;
@@ -30,15 +32,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
-import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.security.Insecure;
-import stroom.task.server.TaskManager;
-import stroom.util.date.DateUtil;
-import stroom.util.task.TaskIdFactory;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Component(SessionListServlet.BEAN_NAME)
 @Scope(StroomScope.THREAD)
@@ -95,12 +92,7 @@ public class SessionListServlet extends HttpServlet {
             table.add(row);
         }
 
-        Collections.sort(table, new Comparator<List<String>>() {
-            @Override
-            public int compare(final List<String> l1, final List<String> l2) {
-                return l2.get(0).compareTo(l1.get(0));
-            }
-        });
+        Collections.sort(table, (l1, l2) -> l2.get(0).compareTo(l1.get(0)));
 
         response.getWriter().write(
                 "<html><head><link type=\"text/css\" href=\"css/SessionList.css\" rel=\"stylesheet\" /></head><body>");

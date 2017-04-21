@@ -19,10 +19,8 @@ package stroom.dashboard.client.table;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates.Template;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-
 import stroom.dashboard.client.table.FieldsManager.Style;
 
 public class FieldsCell extends AbstractCell<Boolean> {

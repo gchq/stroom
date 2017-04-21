@@ -16,17 +16,16 @@
 
 package stroom.logging;
 
-import javax.annotation.Resource;
-
-import org.springframework.stereotype.Component;
-
-import stroom.util.logging.StroomLogger;
 import event.logging.AuthenticateAction;
 import event.logging.AuthenticateOutcome;
 import event.logging.AuthenticateOutcomeReason;
 import event.logging.Event;
 import event.logging.Event.EventDetail.Authenticate;
 import event.logging.User;
+import org.springframework.stereotype.Component;
+import stroom.util.logging.StroomLogger;
+
+import javax.annotation.Resource;
 
 @Component
 public class AuthenticationEventLog {

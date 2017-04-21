@@ -59,14 +59,11 @@ public class ContentTabPanePresenter extends CurveTabLayoutPresenter<ContentTabP
         super(eventBus, view, proxy);
 
         registerHandler(eventBus.addHandler(RefreshCurrentContentTabEvent.getType(),
-                new RefreshCurrentContentTabEvent.Handler() {
-                    @Override
-                    public void onRefresh(final RefreshCurrentContentTabEvent event) {
-                        final TabData selectedTab = getSelectedTab();
-                        if (selectedTab != null && selectedTab instanceof Refreshable) {
-                            final Refreshable refreshable = (Refreshable) selectedTab;
-                            refreshable.refresh();
-                        }
+                event -> {
+                    final TabData selectedTab = getSelectedTab();
+                    if (selectedTab != null && selectedTab instanceof Refreshable) {
+                        final Refreshable refreshable = (Refreshable) selectedTab;
+                        refreshable.refresh();
                     }
                 }));
 

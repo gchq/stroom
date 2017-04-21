@@ -19,7 +19,6 @@ package stroom.dashboard.client.table;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
 import stroom.dashboard.client.main.ComponentRegistry;
 
 public class TablePlugin {

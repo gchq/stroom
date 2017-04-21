@@ -28,7 +28,6 @@ import stroom.app.client.ContentManager.CloseHandler;
 import stroom.app.client.presenter.Plugin;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.widget.util.client.Future;
 import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityServiceCopyAction;
@@ -47,6 +46,7 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.util.client.Future;
 
 import java.util.HashMap;
 import java.util.Map;

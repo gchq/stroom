@@ -16,6 +16,12 @@
 
 package stroom.logging;
 
+import event.logging.BaseObject;
+import event.logging.Group;
+import event.logging.Groups;
+import event.logging.Object;
+import event.logging.util.EventLoggingUtil;
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Document;
@@ -29,12 +35,6 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamTypeService;
 import stroom.util.logging.StroomLogger;
-import event.logging.BaseObject;
-import event.logging.Group;
-import event.logging.Groups;
-import event.logging.Object;
-import event.logging.util.EventLoggingUtil;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Named;

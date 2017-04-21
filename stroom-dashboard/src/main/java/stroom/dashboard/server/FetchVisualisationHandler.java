@@ -16,6 +16,7 @@
 
 package stroom.dashboard.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.security.SecurityContext;
 import stroom.task.server.AbstractTaskHandler;
@@ -23,7 +24,6 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
 import stroom.visualisation.shared.Visualisation;
 import stroom.visualisation.shared.VisualisationService;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 
