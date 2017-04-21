@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#219** : Made further changes to use lambda expressions where possible to simplify code.
 
+* Issue **#231** : Changed the way internal statistics are created so that multiple facets of a statistic, e.g. Free & Used Memory, are combined into a single statistic to allow combined visualisation.
+
 ## [v5.0-beta.18] - 2017-04-13
 
 * Issue **#172** : Further improvement to dashboard L&F.
