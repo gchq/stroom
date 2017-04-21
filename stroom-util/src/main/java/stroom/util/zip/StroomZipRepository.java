@@ -54,7 +54,7 @@ public class StroomZipRepository {
     public final static int MAX_FILENAME_LENGTH = 255;
 
     private final static StroomLogger LOGGER = StroomLogger.getLogger(StroomZipRepository.class);
-    private final static Pattern ZIP_PATTERN = Pattern.compile(".*\\.zip");
+    private final static Pattern ZIP_PATTERN = Pattern.compile(".*\\.zip$");
     private final static Pattern ZIP_EXTENSION_PATTERN = Pattern.compile("\\.zip(\\.lock)?$");
 
     //TODO the regex is a bit simple as the non-id part could include numbers as well so
