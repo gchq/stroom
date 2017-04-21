@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#242** : Improved the way properties are injected into some areas of the code to fix an issue where 'stroom.maxStreamSize' and other properties were not being set.
 
+* Issue **#241** : XMLFilter now ignores the XSLT name pattern if an empty string is supplied.
+
 ## [v5.0-beta.18] - 2017-04-13
 
 * Issue **#172** : Further improvement to dashboard L&F.
