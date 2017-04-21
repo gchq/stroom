@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#205** : File permissions in distribution have now been changed to `0750` for directories and shell scripts and `0640` for all other files.
 
-* Issue **#221** : Fixed issue where `*.zip.bad` files were beiung picked up for proxy aggregation.
+* Issue **#221** : Fixed issue where `*.zip.bad` files were being picked up for proxy aggregation.
 
 * Issue **#242** : Improved the way properties are injected into some areas of the code to fix an issue where 'stroom.maxStreamSize' and other properties were not being set.
 
