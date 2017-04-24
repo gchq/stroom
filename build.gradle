@@ -166,8 +166,16 @@ def getSourcesLib(jar, version){
 }
 
 def fileDependency(jar){
+    return fileDependency(jar, false)
+}
+
+def fileDependency(jar, useSources){
     def path = files(getLib(fileDependencies."$jar".jar, fileDependencies."$jar".version))
-    print "${jar} - ${path.getAsPath()}\n"
+    print "Getting file dependency - ${jar} - ${path.getAsPath()}\n"
+    if (useSources){
+        print "Gettings sources"
+        return files(getSourcesLib(fileDependencies."$jar".jar, fileDependencies."$jar".version))
+    }
     return files(getLib(fileDependencies."$jar".jar, fileDependencies."$jar".version))
 }
 

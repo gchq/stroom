@@ -17,6 +17,17 @@ parent.subprojects.each { p ->
 }
 gwtSourceDirs << sourceSets.main.compileClasspath
 
+gwtSourceDirs.add(files(fileDependency('queryApiSources', true)).getAsPath())
+
+String result = gwtSourceDirs.join(",")
+print "\n\r"
+print "\n\r"
+print "\n\r"
+print result
+print "\n\r"
+print "\n\r"
+print "\n\r"
+
 dependencies {
     compile project(':stroom-index-client')
     compile project(':stroom-statistics-client')
