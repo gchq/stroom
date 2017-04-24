@@ -21,8 +21,9 @@
     </formats>
     <includeBaseDirectory>false</includeBaseDirectory>
     <dependencySets>
+        <!-- Add libraries -->
         <dependencySet>
-            <outputDirectory>/stroom-app/lib</outputDirectory>
+            <outputDirectory>stroom-app/lib</outputDirectory>
             <includes>
                 <include>stroom:stroom-app</include>
                 <include>stroom:stroom-util</include>
@@ -35,32 +36,27 @@
         </dependencySet>
     </dependencySets>
     <fileSets>
+        <!-- Add everything else except shell scripts -->
         <fileSet>
             <directory>${project.basedir}</directory>
-            <outputDirectory>/stroom-app</outputDirectory>
             <includes>
-                <include>apache*/**</include>
-                <include>template*/**</include>
-                <include>bin/*</include>
-                <include>Dockerfile</include>
+                <include>stroom-app/**</include>
             </includes>
             <excludes>
-                <!-- Exclude all shell scripts -->
                 <exclude>**/*.sh</exclude>
             </excludes>
             <useDefaultExcludes>true</useDefaultExcludes>
             <fileMode>0640</fileMode>
             <directoryMode>0750</directoryMode>
         </fileSet>
+        <!-- Add shell scripts separately to set permissions -->
         <fileSet>
             <directory>${project.basedir}</directory>
-            <outputDirectory>/stroom-app</outputDirectory>
             <includes>
                 <include>**/*.sh</include>
             </includes>
             <excludes>
-                <!-- Exclude development scripts -->
-                <exclude>bin/dev*.sh</exclude>
+                <exclude>**/dev*.sh</exclude>
             </excludes>
             <useDefaultExcludes>true</useDefaultExcludes>
             <fileMode>0750</fileMode>
