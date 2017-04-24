@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#205** : File permissions in distribution have now been changed to `0750` for directories and shell scripts and `0640` for all other files.
+
 ## [v5.0-beta.19] - 2017-04-21
 
 * Issue **#155** : Changed password values to be obfuscated in the UI as 20 asterisks regardless of length.
