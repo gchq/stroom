@@ -16,6 +16,7 @@
 
 package stroom.util.zip;
 
+import org.springframework.util.StringUtils;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.InitialByteArrayOutputStream;
 import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
@@ -24,13 +25,12 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Monitor;
 import stroom.util.task.TaskScopeContextHolder;
-import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -50,10 +50,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * then both stroom-proxy and stroom can use it.
  */
 public abstract class StroomZipRepositoryProcessor {
-    public final static String LOCK_EXTENSION = ".lock";
-    public final static String ZIP_EXTENSION = ".zip";
-    public final static String ERROR_EXTENSION = ".err";
-    public final static String BAD_EXTENSION = ".bad";
     public final static int DEFAULT_MAX_AGGREGATION = 10000;
     public final static int DEFAULT_MAX_FILE_SCAN = 10000;
     public final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
@@ -62,7 +58,7 @@ public abstract class StroomZipRepositoryProcessor {
      * Flag set to stop things
      */
     private final Monitor monitor;
-    private final Map<String, List<File>> feedToFileMap = new ConcurrentHashMap<String, List<File>>();
+    private final Map<String, List<File>> feedToFileMap = new ConcurrentHashMap<>();
     /**
      * The max number of parts to send in a zip file
      */
@@ -145,7 +141,7 @@ public abstract class StroomZipRepositoryProcessor {
                 final List<File> fileList = entry.getValue();
 
                 // Sort the map so the items are processed in order
-                Collections.sort(fileList, (arg1, arg2) -> arg1.getName().compareTo(arg2.getName()));
+                fileList.sort(Comparator.comparing(File::getName));
 
                 final StringBuilder msg = new StringBuilder();
                 msg.append(feedName);
@@ -264,11 +260,11 @@ public abstract class StroomZipRepositoryProcessor {
                 final String targetName = StroomFileNameUtil.getFilePathForId(entrySequence++);
 
                 sendEntry(stroomStreamHandlerList, stroomZipFile, sourceName, streamProgress,
-                          new StroomZipEntry(null, targetName, StroomZipFileType.Meta));
+                        new StroomZipEntry(null, targetName, StroomZipFileType.Meta));
                 sendEntry(stroomStreamHandlerList, stroomZipFile, sourceName, streamProgress,
-                          new StroomZipEntry(null, targetName, StroomZipFileType.Context));
+                        new StroomZipEntry(null, targetName, StroomZipFileType.Context));
                 sendEntry(stroomStreamHandlerList, stroomZipFile, sourceName, streamProgress,
-                          new StroomZipEntry(null, targetName, StroomZipFileType.Data));
+                        new StroomZipEntry(null, targetName, StroomZipFileType.Data));
             }
         } catch (final IOException io) {
             stroomZipRepository.addErrorMessage(stroomZipFile, io.getMessage(), bad);
@@ -310,7 +306,7 @@ public abstract class StroomZipRepositoryProcessor {
             for (final StroomStreamHandler stroomStreamHandler : stroomStreamHandlerList) {
                 stroomStreamHandler.handleEntryStart(targetEntry);
             }
-            int read = 0;
+            int read;
             long totalRead = 0;
             while ((read = inputStream.read(data)) != -1) {
                 totalRead += read;
