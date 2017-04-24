@@ -135,7 +135,6 @@ public class StreamProcessorFilterServiceImpl
         return Boolean.FALSE;
     }
 
-    @Secured(StreamProcessor.VIEW_PROCESSORS_PERMISSION)
     @Override
     public BaseResultList<StreamProcessorFilter> find(final FindStreamProcessorFilterCriteria criteria) throws RuntimeException {
         return super.find(criteria);

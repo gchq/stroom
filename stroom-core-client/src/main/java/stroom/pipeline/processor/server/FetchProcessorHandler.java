@@ -54,74 +54,67 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
 
     @Override
     public ResultList<SharedObject> exec(final FetchProcessorAction action) {
-        // Get permissions for this user.
-        final boolean update = securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION);
-        final boolean view = securityContext.hasAppPermission(StreamProcessor.VIEW_PROCESSORS_PERMISSION);
-
         final List<SharedObject> values = new ArrayList<>();
 
-        if (view) {
-            final FindStreamProcessorFilterCriteria criteria = new FindStreamProcessorFilterCriteria();
-            final FindStreamProcessorCriteria criteriaRoot = new FindStreamProcessorCriteria();
-            if (action.getPipelineId() != null) {
-                criteria.obtainPipelineIdSet().add(action.getPipelineId());
-                criteriaRoot.obtainPipelineIdSet().add(action.getPipelineId());
+        final FindStreamProcessorFilterCriteria criteria = new FindStreamProcessorFilterCriteria();
+        final FindStreamProcessorCriteria criteriaRoot = new FindStreamProcessorCriteria();
+        if (action.getPipelineId() != null) {
+            criteria.obtainPipelineIdSet().add(action.getPipelineId());
+            criteriaRoot.obtainPipelineIdSet().add(action.getPipelineId());
+        }
+        if (action.getFolderId() != null) {
+            criteria.obtainFolderIdSet().add(action.getFolderId());
+            criteriaRoot.obtainFolderIdSet().add(action.getFolderId());
+        }
+
+        // If the user is not an admin then only show them filters that were created by them.
+        if (!securityContext.isAdmin()) {
+            criteria.setCreateUser(securityContext.getUserId());
+        }
+
+        criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
+        criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
+        criteriaRoot.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
+
+        final BaseResultList<StreamProcessor> streamProcessors = streamProcessorService.find(criteriaRoot);
+
+        final BaseResultList<StreamProcessorFilter> streamProcessorFilters = streamProcessorFilterService
+                .find(criteria);
+
+        // Get unique processors.
+        final Set<StreamProcessor> processors = new HashSet<>();
+        processors.addAll(streamProcessors);
+
+        final List<StreamProcessor> sorted = new ArrayList<>(processors);
+        Collections.sort(sorted, (o1, o2) -> {
+            if (o1.getPipeline() != null && o2.getPipeline() != null) {
+                return o1.getPipeline().getName().compareTo(o2.getPipeline().getName());
             }
-            if (action.getFolderId() != null) {
-                criteria.obtainFolderIdSet().add(action.getFolderId());
-                criteriaRoot.obtainFolderIdSet().add(action.getFolderId());
+            if (o1.getPipeline() != null) {
+                return -1;
             }
-
-            // If the user is not allowed to update stream processor filters
-            // then only show them filters that were created by them.
-            if (!update) {
-                criteria.setCreateUser(securityContext.getUserId());
+            if (o2.getPipeline() != null) {
+                return 1;
             }
+            return o1.compareTo(o2);
+        });
 
-            criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
-            criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
-            criteriaRoot.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
+        for (final StreamProcessor streamProcessor : sorted) {
+            final Expander processorExpander = new Expander(0, false, false);
+            final StreamProcessorRow streamProcessorRow = new StreamProcessorRow(processorExpander,
+                    streamProcessor);
+            values.add(streamProcessorRow);
 
-            final BaseResultList<StreamProcessor> streamProcessors = streamProcessorService.find(criteriaRoot);
+            // If the job row is open then add child rows.
+            if (action.getExpandedRows() == null || action.isRowExpanded(streamProcessorRow)) {
+                processorExpander.setExpanded(true);
 
-            final BaseResultList<StreamProcessorFilter> streamProcessorFilters = streamProcessorFilterService
-                    .find(criteria);
-
-            // Get unique processors.
-            final Set<StreamProcessor> processors = new HashSet<>();
-            processors.addAll(streamProcessors);
-
-            final List<StreamProcessor> sorted = new ArrayList<>(processors);
-            Collections.sort(sorted, (o1, o2) -> {
-                if (o1.getPipeline() != null && o2.getPipeline() != null) {
-                    return o1.getPipeline().getName().compareTo(o2.getPipeline().getName());
-                }
-                if (o1.getPipeline() != null) {
-                    return -1;
-                }
-                if (o2.getPipeline() != null) {
-                    return 1;
-                }
-                return o1.compareTo(o2);
-            });
-
-            for (final StreamProcessor streamProcessor : sorted) {
-                final Expander processorExpander = new Expander(0, false, false);
-                final StreamProcessorRow streamProcessorRow = new StreamProcessorRow(processorExpander,
-                        streamProcessor);
-                values.add(streamProcessorRow);
-
-                // If the job row is open then add child rows.
-                if (action.getExpandedRows() == null || action.isRowExpanded(streamProcessorRow)) {
-                    processorExpander.setExpanded(true);
-
-                    // Add filters.
-                    for (final StreamProcessorFilter streamProcessorFilter : streamProcessorFilters) {
-                        if (streamProcessor.equals(streamProcessorFilter.getStreamProcessor())) {
-                            final StreamProcessorFilterRow streamProcessorFilterRow = new StreamProcessorFilterRow(
-                                    streamProcessorFilter);
-                            values.add(streamProcessorFilterRow);
-                        }
+                // Add filters.
+                for (final StreamProcessorFilter streamProcessorFilter : streamProcessorFilters) {
+                    if (streamProcessor.equals(streamProcessorFilter.getStreamProcessor())) {
+                        final StreamProcessorFilterRow streamProcessorFilterRow = new StreamProcessorFilterRow(
+                                streamProcessorFilter);
+                        values.add(streamProcessorFilterRow);
                     }
                 }
             }

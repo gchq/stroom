@@ -64,15 +64,12 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MultiSelectionModel;
 
-import java.util.Collections;
-
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
         implements HasRead<BaseEntity> {
     private final ProcessorListPresenter processorListPresenter;
     private final ExpressionTreePresenter expressionPresenter;
     private final StreamFilterPresenter streamFilterPresenter;
     private final ClientDispatchAsync dispatcher;
-    private final ClientSecurityContext securityContext;
 
     private PipelineEntity pipelineEntity;
     private SharedObject selectedProcessor;
@@ -80,17 +77,17 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     private GlyphButtonView editButton;
     private GlyphButtonView removeButton;
 
+    private boolean allowUpdate;
+
     @Inject
     public ProcessorPresenter(final EventBus eventBus, final ProcessorView view,
                               final ProcessorListPresenter processorListPresenter, final ExpressionTreePresenter expressionPresenter,
-                              final StreamFilterPresenter streamFilterPresenter, final ClientDispatchAsync dispatcher,
-                              final ClientSecurityContext securityContext) {
+                              final StreamFilterPresenter streamFilterPresenter, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.processorListPresenter = processorListPresenter;
         this.expressionPresenter = expressionPresenter;
         this.streamFilterPresenter = streamFilterPresenter;
         this.dispatcher = dispatcher;
-        this.securityContext = securityContext;
 
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
@@ -102,11 +99,19 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     @Override
     public void read(final BaseEntity entity) {
         processorListPresenter.read(entity);
-
         if (entity instanceof PipelineEntity) {
             this.pipelineEntity = (PipelineEntity) entity;
+        }
+    }
+
+    public void setAllowUpdate(final boolean allowUpdate) {
+        this.allowUpdate = allowUpdate;
+
+        if (this.pipelineEntity != null && allowUpdate) {
             createButtons();
         }
+
+        processorListPresenter.setAllowUpdate(allowUpdate);
     }
 
     private void createButtons() {
@@ -118,17 +123,17 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             removeButton = processorListPresenter.getView().addButton(GlyphIcons.REMOVE);
             removeButton.setTitle("Remove Processor");
             registerHandler(addButton.addClickHandler(event -> {
-                if (allowUpdate()) {
+                if (allowUpdate) {
                     addProcessor();
                 }
             }));
             registerHandler(editButton.addClickHandler(event -> {
-                if (allowUpdate()) {
+                if (allowUpdate) {
                     editProcessor();
                 }
             }));
             registerHandler(removeButton.addClickHandler(event -> {
-                if (allowUpdate()) {
+                if (allowUpdate) {
                     removeProcessor();
                 }
             }));
@@ -137,23 +142,19 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    private boolean allowUpdate() {
-        return securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION);
-    }
-
     private void enableButtons(final boolean enabled) {
         if (addButton != null) {
-            addButton.setEnabled(allowUpdate());
+            addButton.setEnabled(allowUpdate);
         }
         if (editButton != null) {
-            if (allowUpdate()) {
+            if (allowUpdate) {
                 editButton.setEnabled(enabled);
             } else {
                 editButton.setEnabled(false);
             }
         }
         if (removeButton != null) {
-            if (allowUpdate()) {
+            if (allowUpdate) {
                 removeButton.setEnabled(enabled);
             } else {
                 removeButton.setEnabled(false);
@@ -168,7 +169,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         registerHandler(processorListPresenter.getSelectionModel().addSelectionHandler(event -> {
             updateData();
             if (event.getSelectionType().isDoubleSelect()) {
-                if (allowUpdate()) {
+                if (allowUpdate) {
                     editProcessor();
                 }
             }
@@ -275,7 +276,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             if (entities.size() > 1) {
                 final ExpressionOperator or = new ExpressionOperator(Op.OR);
 
-                Collections.sort(entities, new EntityReferenceComparator());
+                entities.sort(new EntityReferenceComparator());
                 for (final DocRef entity : entities) {
                     addEntity(or, entity, label);
                 }
@@ -355,13 +356,13 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         return processorListPresenter.getSelectionModel();
     }
 
-    public void addProcessor() {
+    private void addProcessor() {
         if (pipelineEntity != null) {
             addOrEditProcessor(null);
         }
     }
 
-    public void editProcessor() {
+    private void editProcessor() {
         if (pipelineEntity != null && selectedProcessor != null) {
             if (selectedProcessor instanceof StreamProcessorFilterRow) {
                 final StreamProcessorFilterRow streamProcessorFilterRow = (StreamProcessorFilterRow) selectedProcessor;
@@ -371,7 +372,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    public void addOrEditProcessor(final StreamProcessorFilter filter) {
+    private void addOrEditProcessor(final StreamProcessorFilter filter) {
         final FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
 
         if (filter != null && filter.getFindStreamCriteria() != null) {
@@ -397,7 +398,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                                     }
                                 });
                     } else {
-                        validateFeed(filter, findStreamCriteria);
+                        validateFeed(null, findStreamCriteria);
                     }
 
                 } else {
@@ -474,7 +475,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    public void removeProcessor() {
+    private void removeProcessor() {
         if (selectedProcessor != null) {
             if (selectedProcessor instanceof StreamProcessorRow) {
                 final StreamProcessorRow streamProcessorRow = (StreamProcessorRow) selectedProcessor;
