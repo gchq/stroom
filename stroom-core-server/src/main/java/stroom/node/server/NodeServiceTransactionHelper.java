@@ -16,28 +16,18 @@
 
 package stroom.node.server;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.inject.Inject;
-import javax.sql.DataSource;
-
-import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.StroomDatabaseInfo;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
-import stroom.node.shared.SystemTableStatus;
+import stroom.util.logging.StroomLogger;
+
+import javax.inject.Inject;
+import java.util.List;
 
 /**
  * Helper class so that we can split out some transactions away from
@@ -50,14 +40,11 @@ public class NodeServiceTransactionHelper {
 
     private final StroomEntityManager entityManager;
     private final StroomDatabaseInfo stroomDatabaseInfo;
-    private final DataSource dataSource;
 
     @Inject
-    NodeServiceTransactionHelper(final StroomEntityManager entityManager, final StroomDatabaseInfo stroomDatabaseInfo,
-                                 final DataSource dataSource) {
+    NodeServiceTransactionHelper(final StroomEntityManager entityManager, final StroomDatabaseInfo stroomDatabaseInfo) {
         this.entityManager = entityManager;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
-        this.dataSource = dataSource;
     }
 
     @SuppressWarnings("unchecked")
@@ -100,7 +87,7 @@ public class NodeServiceTransactionHelper {
      * Create a new transaction to create the node .... only ever called once at
      * initial deployment time.
      */
-    @Transactional(readOnly = false, propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Node buildNode(final String nodeName, final String rackName) {
         Node node = getNode(nodeName);
 
@@ -118,53 +105,5 @@ public class NodeServiceTransactionHelper {
         }
 
         return node;
-    }
-
-    @Transactional(readOnly = true)
-    public List<SystemTableStatus> findSystemTableStatus() {
-        final List<SystemTableStatus> rtnList = new ArrayList<>();
-        Connection connection = null;
-
-        try {
-            connection = dataSource.getConnection();
-            connection.setReadOnly(true);
-
-            if (stroomDatabaseInfo.isMysql()) {
-                try (PreparedStatement ps = connection.prepareStatement("show table status where comment != 'VIEW'")) {
-                    try (ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            final SystemTableStatus status = new SystemTableStatus();
-                            status.setTable(rs.getString("Name"));
-                            status.setCount(rs.getLong("Rows"));
-                            status.setDataSize(rs.getLong("Data_length"));
-                            status.setIndexSize(rs.getLong("Index_length"));
-
-                            rtnList.add(status);
-                        }
-                        rs.close();
-                    }
-                    ps.close();
-                }
-
-            } else {
-                final DatabaseMetaData databaseMetaData = connection.getMetaData();
-
-                final ResultSet resultSet = databaseMetaData.getTables(null, null, null, new String[] { "TABLE" });
-
-                while (resultSet.next()) {
-                    final SystemTableStatus status = new SystemTableStatus();
-                    status.setTable(resultSet.getString("TABLE_NAME"));
-                    rtnList.add(status);
-                }
-
-                resultSet.close();
-            }
-
-        } catch (final Exception ex) {
-            LOGGER.error("findSystemTableStatus()", ex);
-        } finally {
-            ConnectionUtil.close(connection);
-        }
-        return rtnList;
     }
 }

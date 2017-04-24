@@ -25,6 +25,8 @@ public class FindTaskProgressAction extends FindAction<FindTaskProgressCriteria,
         implements TreeAction<TaskProgress> {
     private static final long serialVersionUID = -5285569438944240375L;
 
+    public static final String MANAGE_TASKS_PERMISSION = "Manage Tasks";
+
     public FindTaskProgressAction() {
         // Default constructor necessary for GWT serialisation.
     }

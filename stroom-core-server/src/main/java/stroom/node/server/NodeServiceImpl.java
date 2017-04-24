@@ -16,20 +16,18 @@
 
 package stroom.node.server;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.NamedEntityServiceImpl;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeService;
 import stroom.node.shared.Rack;
-import stroom.node.shared.SystemTableStatus;
 import stroom.security.Secured;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import java.util.List;
 
 /**
  * <p>
@@ -89,11 +87,6 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
     @Override
     public Class<Node> getEntityClass() {
         return Node.class;
-    }
-
-    @Override
-    public List<SystemTableStatus> findSystemTableStatus() {
-        return nodeServiceUtil.findSystemTableStatus();
     }
 
     @Override

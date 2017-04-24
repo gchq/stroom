@@ -23,8 +23,8 @@ import stroom.app.client.ContentManager;
 import stroom.app.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.presenter.TaskProgressMonitoringPresenter;
-import stroom.node.shared.Node;
 import stroom.security.client.ClientSecurityContext;
+import stroom.task.shared.FindTaskProgressAction;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -38,7 +38,7 @@ public class TaskProgressMonitoringPlugin extends MonitoringPlugin<TaskProgressM
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(Node.MANAGE_NODES_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(FindTaskProgressAction.MANAGE_TASKS_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem(13, GlyphIcons.JOBS, GlyphIcons.JOBS, "Server Tasks", null, true, () -> open()));
         }

@@ -16,17 +16,36 @@
 
 package stroom.node.shared;
 
+import stroom.entity.shared.OrderBy;
 import stroom.util.shared.SharedObject;
 
 /**
  * API to table status
  */
-public class SystemTableStatus implements SharedObject {
+public class DBTableStatus implements SharedObject {
     private static final long serialVersionUID = -5061144975403180924L;
+
+    public static final OrderBy DATABASE = new OrderBy("Database");
+    public static final OrderBy TABLE = new OrderBy("Table");
+    public static final OrderBy ROW_COUNT = new OrderBy("Count");
+    public static final OrderBy DATA_SIZE = new OrderBy("Data Size");
+    public static final OrderBy INDEX_SIZE = new OrderBy("Index Size");
+
+    public static final String MANAGE_DB_PERMISSION = "Manage DB";
+
+    private String db;
     private String table;
     private Long count;
     private Long dataSize;
     private Long indexSize;
+
+    public String getDb() {
+        return db;
+    }
+
+    public void setDb(final String db) {
+        this.db = db;
+    }
 
     public String getTable() {
         return table;

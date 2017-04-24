@@ -16,15 +16,11 @@
 
 package stroom.node.shared;
 
-import stroom.entity.shared.FindService;
-import stroom.entity.shared.NamedEntityService;
+import stroom.entity.shared.BaseCriteria.OrderByDirection;
+import stroom.entity.shared.OrderBy;
 
 import java.util.List;
 
-/**
- * <p>
- * Class to manage nodes.
- * </p>
- */
-public interface NodeService extends NamedEntityService<Node>, FindService<Node, FindNodeCriteria> {
+public interface DBTableService {
+    List<DBTableStatus> findSystemTableStatus(OrderBy orderBy, OrderByDirection orderByDirection);
 }
