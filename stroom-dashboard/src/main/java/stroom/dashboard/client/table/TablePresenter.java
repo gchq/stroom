@@ -43,6 +43,7 @@ import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DownloadSearchResultsAction;
 import stroom.dashboard.shared.ParamUtil;
 import stroom.dashboard.shared.Row;
@@ -68,6 +69,7 @@ import stroom.query.shared.IndexFieldsMap;
 import stroom.query.shared.QueryKey;
 import stroom.query.shared.Search;
 import stroom.query.shared.TableSettings;
+import stroom.security.client.ClientSecurityContext;
 import stroom.util.shared.Expander;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedObject;
@@ -82,7 +84,6 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -119,12 +120,19 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private int[] maxResults = TableSettings.DEFAULT_MAX_RESULTS;
 
     @Inject
-    public TablePresenter(final EventBus eventBus, final TableView view, final LocationManager locationManager, final MenuListPresenter menuListPresenter,
-                          final ExpressionPresenter expressionPresenter, final FormatPresenter formatPresenter,
+    public TablePresenter(final EventBus eventBus,
+                          final TableView view,
+                          final ClientSecurityContext securityContext,
+                          final LocationManager locationManager,
+                          final MenuListPresenter menuListPresenter,
+                          final ExpressionPresenter expressionPresenter,
+                          final FormatPresenter formatPresenter,
                           final FilterPresenter filterPresenter,
                           final Provider<FieldAddPresenter> fieldAddPresenterProvider,
-                          final Provider<TableSettingsPresenter> settingsPresenterProvider, final DownloadPresenter downloadPresenter,
-                          final ClientDispatchAsync dispatcher, final ClientPropertyCache clientPropertyCache,
+                          final Provider<TableSettingsPresenter> settingsPresenterProvider,
+                          final DownloadPresenter downloadPresenter,
+                          final ClientDispatchAsync dispatcher,
+                          final ClientPropertyCache clientPropertyCache,
                           final TimeZones timeZones) {
         super(eventBus, view, settingsPresenterProvider);
         this.locationManager = locationManager;
@@ -142,6 +150,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Download
         downloadButton = dataGrid.addButton(GlyphIcons.DOWNLOAD);
+        downloadButton.setVisible(securityContext.hasAppPermission(Dashboard.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         fieldsManager = new FieldsManager(this, menuListPresenter, expressionPresenter, formatPresenter,
                 filterPresenter);
@@ -178,6 +187,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 onAddField(event);
             }
         }));
+
         registerHandler(downloadButton.addClickHandler(event -> {
             if (currentSearchModel != null) {
                 if (currentSearchModel.isSearching()) {
@@ -208,30 +218,33 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             final HandlerRegistration handlerRegistration = fieldAddPresenter
                     .addSelectionChangeHandler(selectionHandler);
 
-            final List<Field> addFields = new ArrayList<Field>();
+            final List<Field> addFields = new ArrayList<>();
             if (currentSearchModel.getIndexLoader().getIndexFieldNames() != null) {
                 for (final String indexFieldName : currentSearchModel.getIndexLoader().getIndexFieldNames()) {
                     final Field field = new Field(indexFieldName);
                     field.setExpression(ParamUtil.makeParam(indexFieldName));
-                    final IndexField indexField = getIndexFieldsMap().get(indexFieldName);
-                    if (indexField != null) {
-                        switch (indexField.getFieldType()) {
-                            case DATE_FIELD:
-                                field.setFormat(new Format(Type.DATE_TIME));
-                                break;
-                            case NUMERIC_FIELD:
-                                field.setFormat(new Format(Type.NUMBER));
-                                break;
-                            case ID:
-                                field.setFormat(new Format(Type.NUMBER));
-                                break;
-                            default:
-                                field.setFormat(new Format(Type.GENERAL));
-                                break;
+                    final IndexFieldsMap indexFieldsMap = getIndexFieldsMap();
+                    if (indexFieldsMap != null) {
+                        final IndexField indexField = indexFieldsMap.get(indexFieldName);
+                        if (indexField != null) {
+                            switch (indexField.getFieldType()) {
+                                case DATE_FIELD:
+                                    field.setFormat(new Format(Type.DATE_TIME));
+                                    break;
+                                case NUMERIC_FIELD:
+                                    field.setFormat(new Format(Type.NUMBER));
+                                    break;
+                                case ID:
+                                    field.setFormat(new Format(Type.NUMBER));
+                                    break;
+                                default:
+                                    field.setFormat(new Format(Type.GENERAL));
+                                    break;
+                            }
                         }
-                    }
 
-                    addFields.add(field);
+                        addFields.add(field);
+                    }
                 }
             }
 
@@ -345,7 +358,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             // Disable download of current results.
             downloadButton.setEnabled(false);
 
-            dataGrid.setRowData(0, new ArrayList<Row>());
+            dataGrid.setRowData(0, new ArrayList<>());
             dataGrid.setRowCount(0, true);
 
             dataGrid.getSelectionModel().clear();
@@ -493,12 +506,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void updateFields() {
-        List<Field> fields = null;
-        if (tableSettings.getFields() != null) {
-            fields = tableSettings.getFields();
-        } else {
-            fields = new ArrayList<Field>();
-            tableSettings.setFields(fields);
+        if (tableSettings.getFields() == null) {
+            tableSettings.setFields(new ArrayList<>());
         }
 
         // Update columns.
@@ -506,13 +515,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void removeHiddenFields() {
-        final Iterator<Field> iter = tableSettings.getFields().iterator();
-        while (iter.hasNext()) {
-            final Field field = iter.next();
-            if (!field.isVisible()) {
-                iter.remove();
-            }
-        }
+        tableSettings.getFields().removeIf(field -> !field.isVisible());
     }
 
     private int ensureHiddenField(final String indexFieldName) {
@@ -531,7 +534,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return tableSettings.getFields().size() - 1;
     }
 
-    public IndexFieldsMap getIndexFieldsMap() {
+    private IndexFieldsMap getIndexFieldsMap() {
         if (currentSearchModel != null && currentSearchModel.getIndexLoader() != null
                 && currentSearchModel.getIndexLoader().getIndexFieldsMap() != null) {
             return currentSearchModel.getIndexLoader().getIndexFieldsMap();
@@ -540,7 +543,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return null;
     }
 
-    public void updateColumns() {
+    void updateColumns() {
         final List<Field> fields = tableSettings.getFields();
 
         // First remove existing hidden fields.
@@ -645,7 +648,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         tableResultRequest.setRange(0, 100);
     }
 
-    public void clearAndRefresh() {
+    void clearAndRefresh() {
         clear();
     }
 
@@ -701,7 +704,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private class AddSelectionHandler implements SelectionChangeEvent.Handler {
         private final FieldAddPresenter presenter;
 
-        public AddSelectionHandler(final FieldAddPresenter presenter) {
+        AddSelectionHandler(final FieldAddPresenter presenter) {
             this.presenter = presenter;
         }
 
