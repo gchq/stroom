@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#249** : Removed spaces between values and units.
 
+* Issue **#237** : Users without 'Download Search Results' permission will no longer see the download button on the table component in a dashboard.
+
 ## [v5.0-beta.19] - 2017-04-21
 
 * Issue **#155** : Changed password values to be obfuscated in the UI as 20 asterisks regardless of length.
