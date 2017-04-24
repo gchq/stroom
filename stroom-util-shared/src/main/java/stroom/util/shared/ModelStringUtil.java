@@ -130,9 +130,9 @@ public final class ModelStringUtil {
                 if (decPt > 0 && decPt + 2 < str.length()) {
                     str = str.substring(0, decPt + 2);
                 }
-                return str + " " + lastDivider.unit[0];
+                return str + lastDivider.unit[0];
             } else {
-                return (long) nextNumber + " " + lastDivider.unit[0];
+                return (long) nextNumber + lastDivider.unit[0];
             }
         }
 

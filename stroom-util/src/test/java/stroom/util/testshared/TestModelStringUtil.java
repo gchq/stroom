@@ -41,37 +41,37 @@ public class TestModelStringUtil {
     @Test
     public void testDurationString() {
         Assert.assertEquals("", ModelStringUtil.formatDurationString(null));
-        Assert.assertEquals("-10.0 ms", ModelStringUtil.formatDurationString(-10L));
-        Assert.assertEquals("0.0 ms", ModelStringUtil.formatDurationString(0L));
-        Assert.assertEquals("1.0 ms", ModelStringUtil.formatDurationString(1L));
-        Assert.assertEquals("999 ms", ModelStringUtil.formatDurationString(999L));
-        Assert.assertEquals("1.0 s", ModelStringUtil.formatDurationString(1000L));
-        Assert.assertEquals("2.0 s", ModelStringUtil.formatDurationString(2000L));
-        Assert.assertEquals("10 s", ModelStringUtil.formatDurationString(10000L));
-        Assert.assertEquals("1.0 m", ModelStringUtil.formatDurationString(60 * 1000L));
-        Assert.assertEquals("1.0 h", ModelStringUtil.formatDurationString(60 * 60 * 1000L));
+        Assert.assertEquals("-10.0ms", ModelStringUtil.formatDurationString(-10L));
+        Assert.assertEquals("0.0ms", ModelStringUtil.formatDurationString(0L));
+        Assert.assertEquals("1.0ms", ModelStringUtil.formatDurationString(1L));
+        Assert.assertEquals("999ms", ModelStringUtil.formatDurationString(999L));
+        Assert.assertEquals("1.0s", ModelStringUtil.formatDurationString(1000L));
+        Assert.assertEquals("2.0s", ModelStringUtil.formatDurationString(2000L));
+        Assert.assertEquals("10s", ModelStringUtil.formatDurationString(10000L));
+        Assert.assertEquals("1.0m", ModelStringUtil.formatDurationString(60 * 1000L));
+        Assert.assertEquals("1.0h", ModelStringUtil.formatDurationString(60 * 60 * 1000L));
     }
 
     @Test
     public void testFormatMetricByteSizeString() {
-        Assert.assertEquals("1.0 B", ModelStringUtil.formatMetricByteSizeString(1L));
-        Assert.assertEquals("999 B", ModelStringUtil.formatMetricByteSizeString(999L));
-        Assert.assertEquals("1.0 K", ModelStringUtil.formatMetricByteSizeString(1000L));
-        Assert.assertEquals("1.0 K", ModelStringUtil.formatMetricByteSizeString(1096L));
-        Assert.assertEquals("1.1 K", ModelStringUtil.formatMetricByteSizeString(1127L));
-        Assert.assertEquals("1.9 K", ModelStringUtil.formatMetricByteSizeString(1946L));
-        Assert.assertEquals("10 K", ModelStringUtil.formatMetricByteSizeString(10240L));
+        Assert.assertEquals("1.0B", ModelStringUtil.formatMetricByteSizeString(1L));
+        Assert.assertEquals("999B", ModelStringUtil.formatMetricByteSizeString(999L));
+        Assert.assertEquals("1.0K", ModelStringUtil.formatMetricByteSizeString(1000L));
+        Assert.assertEquals("1.0K", ModelStringUtil.formatMetricByteSizeString(1096L));
+        Assert.assertEquals("1.1K", ModelStringUtil.formatMetricByteSizeString(1127L));
+        Assert.assertEquals("1.9K", ModelStringUtil.formatMetricByteSizeString(1946L));
+        Assert.assertEquals("10K", ModelStringUtil.formatMetricByteSizeString(10240L));
     }
 
     @Test
     public void testFormatIECByteSizeString() {
-        Assert.assertEquals("1.0 B", ModelStringUtil.formatIECByteSizeString(1L));
-        Assert.assertEquals("999 B", ModelStringUtil.formatIECByteSizeString(999L));
-        Assert.assertEquals("1.0 K", ModelStringUtil.formatIECByteSizeString(1024L));
-        Assert.assertEquals("1.0 K", ModelStringUtil.formatIECByteSizeString(1126L));
-        Assert.assertEquals("1.1 K", ModelStringUtil.formatIECByteSizeString(1127L));
-        Assert.assertEquals("1.9 K", ModelStringUtil.formatIECByteSizeString(1946L));
-        Assert.assertEquals("10 K", ModelStringUtil.formatIECByteSizeString(10240L));
+        Assert.assertEquals("1.0B", ModelStringUtil.formatIECByteSizeString(1L));
+        Assert.assertEquals("999B", ModelStringUtil.formatIECByteSizeString(999L));
+        Assert.assertEquals("1.0K", ModelStringUtil.formatIECByteSizeString(1024L));
+        Assert.assertEquals("1.0K", ModelStringUtil.formatIECByteSizeString(1126L));
+        Assert.assertEquals("1.1K", ModelStringUtil.formatIECByteSizeString(1127L));
+        Assert.assertEquals("1.9K", ModelStringUtil.formatIECByteSizeString(1946L));
+        Assert.assertEquals("10K", ModelStringUtil.formatIECByteSizeString(10240L));
     }
 
     @Test
