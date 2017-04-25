@@ -1,0 +1,14 @@
+apply plugin: 'groovy'
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    compile 'de.undercouch:gradle-download-task:1.1'
+
+    compile gradleApi()
+    compile localGroovy()
+    testCompile gradleTestKit()
+}
