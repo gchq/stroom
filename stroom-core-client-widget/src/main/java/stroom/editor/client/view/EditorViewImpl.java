@@ -38,6 +38,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import edu.ycp.cs.dh.acegwt.client.ace.AceAnnotationType;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
@@ -295,13 +296,26 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
      */
     @Override
     public void format() {
-        FormatEvent.fire(this);
+        final int scrollTop = editor.getScrollTop();
+        final AceEditorCursorPosition cursorPosition = editor.getCursorPosition();
+
         if (AceEditorMode.XML.equals(mode)) {
             final String formatted = new XmlFormatter().format(getText());
             setText(formatted);
         } else {
             editor.beautify();
         }
+
+        if (cursorPosition != null) {
+            editor.moveTo(cursorPosition.getRow(), cursorPosition.getColumn());
+        }
+        if (scrollTop > 0) {
+            editor.setScrollTop(scrollTop);
+        }
+
+        editor.focus();
+
+        FormatEvent.fire(this);
     }
 
     @Override

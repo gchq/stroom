@@ -362,6 +362,17 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 	}-*/;
 
 	/**
+	 * Move the selection to given row, col.
+	 *
+	 * @param row the row to go to
+	 * @param col the col to go to
+	 */
+	public native void moveTo(int row, int col) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		editor.selection.moveTo(row, col);
+	}-*/;
+
+	/**
 	 * Set whether or not the horizontal scrollbar is always visible.
 	 *
 	 * @param hScrollBarAlwaysVisible true if the horizontal scrollbar is always
@@ -791,6 +802,16 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 	private native JavaScriptObject getSelectionJS() /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		return editor.getSession().getSelection();
+	}-*/;
+
+	public native int getScrollTop() /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		return editor.getSession().getScrollTop();
+	}-*/;
+
+	public native void setScrollTop(final int scrollTop) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		editor.getSession().setScrollTop(scrollTop);
 	}-*/;
 
 	/**

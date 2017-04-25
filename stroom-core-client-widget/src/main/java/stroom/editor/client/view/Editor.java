@@ -23,6 +23,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditor;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
@@ -297,6 +298,38 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     public void beautify() {
         if (editor.isAttached()) {
             editor.beautify();
+        }
+    }
+
+    public int getScrollTop() {
+        if (editor.isAttached()) {
+            return editor.getScrollTop();
+        }
+        return -1;
+    }
+
+    public void setScrollTop(final int scrollTop) {
+        if (editor.isAttached()) {
+            editor.setScrollTop(scrollTop);
+        }
+    }
+
+    public AceEditorCursorPosition getCursorPosition() {
+        if (editor.isAttached()) {
+            return editor.getCursorPosition();
+        }
+        return null;
+    }
+
+    public void moveTo(final int row, final int col) {
+        if (editor.isAttached()) {
+            editor.moveTo(row, col);
+        }
+    }
+
+    public void focus() {
+        if (editor.isAttached()) {
+            editor.focus();
         }
     }
 
