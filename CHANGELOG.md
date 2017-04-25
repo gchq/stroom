@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#243** : The error marker pane should now discover and display all error types even if they are preceded by over 1000 warnings.
 
+* Issue **#254** : Fixed search result download.
+
 ## [v5.0-beta.19] - 2017-04-21
 
 * Issue **#155** : Changed password values to be obfuscated in the UI as 20 asterisks regardless of length.
