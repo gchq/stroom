@@ -53,7 +53,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
     private final SearchResultCreator searchResultCreator;
     private final SearchEventLog searchEventLog;
     private final SearchDataSourceProviderRegistry searchDataSourceProviderRegistry;
-    private final ActiveQueriesManager searchSessionManager;
+    private final ActiveQueriesManager activeQueriesManager;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final SecurityContext securityContext;
 
@@ -61,13 +61,13 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
     SearchBusPollActionHandler(final QueryService queryService, final SearchResultCreator searchResultCreator,
                                final SearchEventLog searchEventLog,
                                final SearchDataSourceProviderRegistry searchDataSourceProviderRegistry,
-                               final ActiveQueriesManager searchSessionManager,
+                               final ActiveQueriesManager activeQueriesManager,
                                final ClusterResultCollectorCache clusterResultCollectorCache, final SecurityContext securityContext) {
         this.queryService = queryService;
         this.searchResultCreator = searchResultCreator;
         this.searchEventLog = searchEventLog;
         this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
-        this.searchSessionManager = searchSessionManager;
+        this.activeQueriesManager = activeQueriesManager;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
         this.securityContext = securityContext;
     }
@@ -91,7 +91,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             }
 
             final String searchSessionId = action.getSessionId() + "_" + action.getApplicationInstanceId();
-            final ActiveQueries searchSession = searchSessionManager.get(searchSessionId);
+            final ActiveQueries searchSession = activeQueriesManager.get(searchSessionId);
             final Map<QueryKey, SearchResult> searchResultMap = new HashMap<>();
 
             // First kill off any queries that are no longer required by the UI.
@@ -146,13 +146,13 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             }
 
             // Keep the cluster result collector cache fresh.
-            if (activeQuery != null && activeQuery.getSearchResultCollector() instanceof ClusterResultCollector<?>) {
+            if (activeQuery.getSearchResultCollector() instanceof ClusterResultCollector<?>) {
                 clusterResultCollectorCache
                         .get(((ClusterResultCollector<?>) activeQuery.getSearchResultCollector()).getId());
             }
 
             // Perform the search or update results.
-            if (searchRequest != null && activeQuery != null) {
+            if (searchRequest != null) {
                 result = searchResultCreator.createResult(activeQuery, searchRequest);
             }
         } catch (final Exception e) {

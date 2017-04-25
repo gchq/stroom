@@ -23,6 +23,7 @@ import stroom.dashboard.server.download.SearchResultWriter;
 import stroom.dashboard.server.format.FieldFormatter;
 import stroom.dashboard.server.format.FormatterFactory;
 import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsAction;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
@@ -34,12 +35,11 @@ import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.task.server.TaskManager;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -55,14 +55,16 @@ public class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSe
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile(" +");
 
-    @Resource
-    private SessionResourceStore sessionResourceStore;
-    @Resource
-    private TaskManager taskManager;
-    @Resource
-    private SearchEventLog searchEventLog;
-    @Resource
-    private ActiveQueriesManager activeQueriesManager;
+    private final SessionResourceStore sessionResourceStore;
+    private final SearchEventLog searchEventLog;
+    private final ActiveQueriesManager activeQueriesManager;
+
+    @Inject
+    DownloadSearchResultsHandler(final SessionResourceStore sessionResourceStore, final SearchEventLog searchEventLog, final ActiveQueriesManager activeQueriesManager) {
+        this.sessionResourceStore = sessionResourceStore;
+        this.searchEventLog = searchEventLog;
+        this.activeQueriesManager = activeQueriesManager;
+    }
 
     @Override
     public ResourceGeneration exec(final DownloadSearchResultsAction action) {
@@ -72,7 +74,7 @@ public class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSe
 
         final Search search = action.getSearch();
 
-        ResourceKey resourceKey = null;
+        ResourceKey resourceKey;
         try {
             // Import file.
             String fileName = action.getQueryKey().toString();
@@ -83,14 +85,15 @@ public class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSe
             resourceKey = sessionResourceStore.createTempFile(fileName);
             final Path file = sessionResourceStore.getTempFile(resourceKey);
 
-            final ActiveQueries searchSession = activeQueriesManager.get(action.getSessionId());
+            final String searchSessionId = action.getSessionId() + "_" + action.getApplicationInstanceId();
+            final ActiveQueries searchSession = activeQueriesManager.get(searchSessionId);
             final ActiveQuery activeQuery = searchSession.getExistingQuery(action.getQueryKey());
 
             if (activeQuery == null) {
                 throw new EntityServiceException("The requested search data is not available");
             }
 
-            download(activeQuery, action.getComponentId(), file, action.getFileType().toString(), action.isSample(),
+            download(activeQuery, action.getComponentId(), file, action.getFileType(), action.isSample(),
                     action.getPercent(), action.getDateTimeLocale());
 
             searchEventLog.downloadResults(search.getDataSourceRef(), search.getExpression());
@@ -104,7 +107,7 @@ public class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSe
     }
 
     private void download(final ActiveQuery activeQuery, final String componentId, final Path file,
-                          final String fileType, final boolean sample, final int percent, final String dateTimeLocale) {
+                          final DownloadSearchResultFileType fileType, final boolean sample, final int percent, final String dateTimeLocale) {
         final FormatterFactory formatterFactory = new FormatterFactory(dateTimeLocale);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
 
@@ -121,19 +124,15 @@ public class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSe
 
             // Write delimited file.
             switch (fileType) {
-                case "CSV":
+                case CSV:
                     target = new DelimitedTarget(fieldFormatter, outputStream, ",");
                     break;
-                case "TSV":
+                case TSV:
                     target = new DelimitedTarget(fieldFormatter, outputStream, "\t");
                     break;
-                case "EXCEL":
+                case EXCEL:
                     target = new ExcelTarget(outputStream);
                     break;
-            }
-
-            if (target == null) {
-                throw new RuntimeException("No target created for file type: " + fileType);
             }
 
             final ComponentResultCreator componentResultCreator = activeQuery.getComponentResultCreatorMap()
