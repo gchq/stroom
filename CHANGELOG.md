@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#254** : Fixed search result download.
 
+* Issue **#209** : Statistics are now queryable in a dashboard if a user has 'use' permissions on a statistic.
+
 ## [v5.0-beta.19] - 2017-04-21
 
 * Issue **#155** : Changed password values to be obfuscated in the UI as 20 asterisks regardless of length.
