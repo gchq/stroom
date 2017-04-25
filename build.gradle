@@ -1,9 +1,18 @@
+buildscript {
+    repositories {
+        mavenLocal()
+    }
+    dependencies {
+        classpath group: 'gchq', name: 'urlDependencyPlugin', version: 'v0.1'
+    }
+}
+apply plugin: 'gchq.urldependencies'
+
 def stroomVersion = '6.0-beta.1-SNAPSHOT'
 
 task wrapper(type: Wrapper) {
     gradleVersion = '3.3'
 }
-apply plugin: UrlDependency.class
 
 allprojects {
     apply plugin: 'maven'
