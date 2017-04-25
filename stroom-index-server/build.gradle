@@ -15,8 +15,8 @@
  */
 
 dependencies {
-    compile urlDependencies.get('stroom-query-common-6.0-beta.1-SNAPSHOT')
-    compile urlDependencies.get('stroom-expression-6.0-beta.1-SNAPSHOT')
+    compile urlDependencies.get(versions.stroomQueryCommon)
+    compile urlDependencies.get(versions.stroomExpression)
     compile project(':stroom-pipeline')
     compile project(':stroom-core-server')
     compile project(':stroom-index-shared')
