@@ -1,7 +1,7 @@
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.file.collections.SimpleFileCollection
 
-class GitHubReleaseDependencyExtension {
+class UrlDependencyExtension {
     def dependencies = [:]
     def files = [:]
     def libs = "libs"
