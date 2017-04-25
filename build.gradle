@@ -3,7 +3,7 @@ def stroomVersion = '6.0-beta.1-SNAPSHOT'
 task wrapper(type: Wrapper) {
     gradleVersion = '3.3'
 }
-apply plugin: GitHubReleaseDependency.class
+apply plugin: UrlDependency.class
 
 allprojects {
     apply plugin: 'maven'

@@ -1,10 +1,10 @@
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
-class GitHubReleaseDependency implements Plugin<Project> {
+class UrlDependency implements Plugin<Project> {
     void apply(Project project) {
 
-        project.extensions.create("urlDependencies", GitHubReleaseDependencyExtension)
+        project.extensions.create("urlDependencies", UrlDependencyExtension)
 
         project.task('downloadUrlDependencies') {
             shouldRunAfter 'assemble'
