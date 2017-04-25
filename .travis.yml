@@ -26,7 +26,7 @@ install: "./.travis.install.sh"
 
 # We need to run shadowJar otherwise we won't be able to publish to DockerHub
 # We need to include --info otherwise there'll be no standard out for so long that Travis kills the job
-script: ./gradlew clean build shadowJar --info
+script: ./gradlew downloadUrlDependencies clean build shadowJar --info
 
 # Push to DockerHub. The username and password were added using the Travis CLI.
 # The configuration below will only push an image if the branch being built is master.
