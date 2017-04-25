@@ -15,8 +15,8 @@
  */
 
 dependencies {
-    compile gitHubDeps.getDepPath('stroom-query-common-6.0-beta.1-SNAPSHOT')
-    compile gitHubDeps.getDepPath('stroom-expression-6.0-beta.1-SNAPSHOT')
+    compile gitHubDeps.get('stroom-query-common-6.0-beta.1-SNAPSHOT')
+    compile gitHubDeps.get('stroom-expression-6.0-beta.1-SNAPSHOT')
     compile project(':stroom-pipeline')
     compile project(':stroom-core-server')
     compile project(':stroom-index-shared')
