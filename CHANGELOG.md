@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#247** : The editor pane now attempts to maintain the scroll position when formatting content.
 
+* Issue **#251** : Volume and memory statistics are now recorded in bytes and not MiB.
+
 ## [v5.0-beta.19] - 2017-04-21
 
 * Issue **#155** : Changed password values to be obfuscated in the UI as 20 asterisks regardless of length.
