@@ -11,8 +11,6 @@ class UrlDependency implements Plugin<Project> {
             doLast {
                 for(dependency in project.urlDependencies.dependencies){
                     download(dependency.value, "libs/${dependency.key}.jar")
-
-                    project.urlDependencies.files.put(dependency.key, "libs/${dependency.key}.jar")
                 }
             }
         }

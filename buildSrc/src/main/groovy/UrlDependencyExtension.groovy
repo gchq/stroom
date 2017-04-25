@@ -3,11 +3,9 @@ import org.gradle.api.internal.file.collections.SimpleFileCollection
 
 class UrlDependencyExtension {
     def dependencies = [:]
-    def files = [:]
     def libs = "libs"
-    def attachTo
 
-    void add(String name, String url){
+    void compile(String name, String url){
         dependencies.put(name, url)
     }
 
@@ -22,6 +20,4 @@ class UrlDependencyExtension {
     FileCollection get(String name) {
         return new SimpleFileCollection(new File(getAsPath(name)))
     }
-
-
 }

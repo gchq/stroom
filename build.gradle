@@ -97,22 +97,21 @@ project(':stroom-entity-shared') {
 }
 
 urlDependencies {
-    attachTo assemble
     libs "libs"
-    add ('stroom-query-api-6.0-beta.1-SNAPSHOT',
+    compile('stroom-query-api-6.0-beta.1-SNAPSHOT',
         'https://github.com/gchq/stroom-query/releases/download/6.0-beta.1-SNAPSHOT/stroom-query-api-6.0-beta.1-SNAPSHOT.jar')
-    add('stroom-query-api-6.0-beta.1-SNAPSHOT-sources',
+    compile('stroom-query-api-6.0-beta.1-SNAPSHOT-sources',
         'https://github.com/gchq/stroom-query/releases/download/6.0-beta.1-SNAPSHOT/stroom-query-api-6.0-beta.1-SNAPSHOT-sources.jar')
-    add('event-logging-v3.1.0',
+    compile('event-logging-v3.1.0',
         'https://github.com/gchq/event-logging/releases/download/v3.1.0/event-logging-v3.1.0.jar')
-    add('stroom-query-common-6.0-beta.1-SNAPSHOT',
+    compile('stroom-query-common-6.0-beta.1-SNAPSHOT',
         'https://github.com/gchq/stroom-query/releases/download/6.0-beta.1-SNAPSHOT/stroom-query-common-6.0-beta.1-SNAPSHOT.jar')
-    add('stroom-expression-6.0-beta.1-SNAPSHOT',
+    compile('stroom-expression-6.0-beta.1-SNAPSHOT',
         'https://github.com/gchq/stroom-expression/releases/download/6.0-beta.1-SNAPSHOT/stroom-expression-6.0-beta.1-SNAPSHOT.jar')
-    add('hbase-common-shaded-v1.2.1-all',
+    compile('hbase-common-shaded-v1.2.1-all',
     'https://github.com/gchq/hbase-common-shaded/releases/download/v1.2.1-all/hbase-common-shaded-v1.2.1-all.jar')
-    add('hadoop-hdfs-shaded-v2.6.4-all',
+    compile('hadoop-hdfs-shaded-v2.6.4-all',
             'https://github.com/gchq/hadoop-hdfs-shaded/releases/download/v2.6.4-all/hadoop-hdfs-shaded-v2.6.4-all.jar')
-    add('hadoop-common-shaded-v2.6.4-all',
+    compile('hadoop-common-shaded-v2.6.4-all',
     'https://github.com/gchq/hadoop-common-shaded/releases/download/v2.6.4-all/hadoop-common-shaded-v2.6.4-all.jar')
 }
