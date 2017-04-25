@@ -4,7 +4,7 @@ dependencies {
     compile project(':stroom-security-api')
     compile project(':stroom-statistics-api')
 
-    compile urlDependencies.get('event-logging-v3.1.0')
+    compile urlDependencies.get(versions.eventLogging)
 
     compile 'org.hibernate:hibernate-core:4.3.8.Final' /* LATEST 5.2.5.Final */
     compile 'org.hibernate:hibernate-entitymanager:4.3.8.Final'  /* LATEST 5.2.5.Final */

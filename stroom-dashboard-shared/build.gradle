@@ -15,7 +15,7 @@
  */
 
 dependencies {
-    compile urlDependencies.get('stroom-query-api-6.0-beta.1-SNAPSHOT')
+    compile urlDependencies.get(versions.stroomQueryApi)
 
     compile project(':stroom-entity-shared')
 }

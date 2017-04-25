@@ -1,8 +1,8 @@
 dependencies {
     compile project(':stroom-core-server')
     compile 'org.apache.poi:poi-ooxml:3.15'
-    compile urlDependencies.get('hadoop-common-shaded-v2.6.4-all')
-    compile urlDependencies.get('hadoop-hdfs-shaded-v2.6.4-all')
+    compile urlDependencies.get(versions.hadoopCommonShaded)
+    compile urlDependencies.get(versions.hadoopHdfsShaded)
     //Using 1.x because there is a classpath conflict with 2.x
 //    compile 'com.sun.jersey:jersey-client:1.19'
     compile 'org.glassfish.jersey.core:jersey-client:2.23.2'
