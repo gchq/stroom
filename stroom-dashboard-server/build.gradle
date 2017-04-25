@@ -18,7 +18,7 @@ dependencies {
     compile project(':stroom-dashboard-shared')
     compile project(':stroom-core-server')
 
-    compile gitHubDeps.get('stroom-expression-6.0-beta.1-SNAPSHOT')
+    compile urlDependencies.get('stroom-expression-6.0-beta.1-SNAPSHOT')
 
     compile 'org.apache.poi:poi-ooxml:3.15'
     compile 'org.glassfish.jersey.core:jersey-client:2.25.1'

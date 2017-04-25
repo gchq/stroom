@@ -96,7 +96,7 @@ project(':stroom-entity-shared') {
     }
 }
 
-gitHubDeps {
+urlDependencies {
     attachTo assemble
     libs "libs"
     add ('stroom-query-api-6.0-beta.1-SNAPSHOT',
