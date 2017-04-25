@@ -77,8 +77,6 @@ import java.util.concurrent.atomic.AtomicReference;
 @EntityEventHandler(type = Volume.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
 public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolumeCriteria>
         implements VolumeService, EntityEvent.Handler, Clearable {
-    private static final double MEBIBYTE = 1024 * 1024;
-
     /**
      * How many permanent copies should we keep?
      */
@@ -363,10 +361,10 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
 
             if (statistics != null) {
                 final long now = System.currentTimeMillis();
-                addStatisticEvent(now, volume, "Limit (MiB)", volume.getBytesLimit());
-                addStatisticEvent(now, volume, "Used (MiB)", volumeState.getBytesUsed());
-                addStatisticEvent(now, volume, "Free (MiB)", volumeState.getBytesFree());
-                addStatisticEvent(now, volume, "Total (MiB)", volumeState.getBytesTotal());
+                addStatisticEvent(now, volume, "Limit", volume.getBytesLimit());
+                addStatisticEvent(now, volume, "Used", volumeState.getBytesUsed());
+                addStatisticEvent(now, volume, "Free", volumeState.getBytesFree());
+                addStatisticEvent(now, volume, "Total", volumeState.getBytesTotal());
             }
         } catch (final Throwable t) {
             LOGGER.warn(t.getMessage());
@@ -381,7 +379,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             tags.add(new StatisticTag("Node", volume.getNode().getName()));
             tags.add(new StatisticTag("Path", volume.getPath()));
             tags.add(new StatisticTag("Type", type));
-            statistics.putEvent(new StatisticEvent(timeMs, "Volumes", tags, bytes / MEBIBYTE));
+            statistics.putEvent(new StatisticEvent(timeMs, "Volumes", tags, bytes));
         }
     }
 

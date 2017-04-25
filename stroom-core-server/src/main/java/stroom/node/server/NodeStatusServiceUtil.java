@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 import stroom.node.shared.RecordCountService;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
-import stroom.util.ByteSizeUnit;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
@@ -122,22 +121,22 @@ public class NodeStatusServiceUtil {
         final long nonHeapMax = nonHeapUsage.getMax();
 
         if (heapUsed > 0) {
-            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Heap Used (MiB)", ByteSizeUnit.MEBIBYTE.unitValue(heapUsed)));
+            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Heap Used", heapUsed));
         }
         if (heapComitted > 0) {
-            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Heap Committed (MiB)", ByteSizeUnit.MEBIBYTE.unitValue(heapComitted)));
+            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Heap Committed", heapComitted));
         }
         if (heapMax > 0) {
-            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Heap Max (MiB)", ByteSizeUnit.MEBIBYTE.unitValue(heapMax)));
+            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Heap Max", heapMax));
         }
         if (nonHeapUsed > 0) {
-            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Non Heap Used (MiB)", ByteSizeUnit.MEBIBYTE.unitValue(nonHeapUsed)));
+            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Non Heap Used", nonHeapUsed));
         }
         if (nonHeapComitted > 0) {
-            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Non Heap Committed (MiB)", ByteSizeUnit.MEBIBYTE.unitValue(nonHeapComitted)));
+            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Non Heap Committed", nonHeapComitted));
         }
         if (nonHeapMax > 0) {
-            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Non Heap Max (MiB)", ByteSizeUnit.MEBIBYTE.unitValue(nonHeapMax)));
+            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Non Heap Max", nonHeapMax));
         }
 
         // Get the current CPU stats.
