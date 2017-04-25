@@ -379,7 +379,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             tags.add(new StatisticTag("Node", volume.getNode().getName()));
             tags.add(new StatisticTag("Path", volume.getPath()));
             tags.add(new StatisticTag("Type", type));
-            statistics.putEvent(new StatisticEvent(timeMs, "Volumes", tags, bytes));
+            statistics.putEvent(StatisticEvent.createValue(timeMs, "Volumes", tags, bytes.doubleValue()));
         }
     }
 

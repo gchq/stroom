@@ -5,7 +5,7 @@
    <engineName>SQL</engineName>
    <name>Volumes</name>
    <precision>60000</precision>
-   <rollUpType>CUSTOM</rollUpType>
+   <rollUpType>NONE</rollUpType>
    <statisticType>VALUE</statisticType>
    <uuid>ac4d8d10-6f75-4946-9708-18b8cb42a5a3</uuid>
 </statisticStore>

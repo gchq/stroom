@@ -99,7 +99,7 @@ public class NodeStatusServiceUtil {
         // These stat events are being generated every minute so use a precision
         // of 60s
         final StatisticTag typeTag = new StatisticTag("Type", type);
-        return new StatisticEvent(timeMs, stat, Arrays.asList(nodeTag, typeTag), value);
+        return StatisticEvent.createValue(timeMs, stat, Arrays.asList(nodeTag, typeTag), value);
     }
 
     public List<StatisticEvent> buildNodeStatus() {

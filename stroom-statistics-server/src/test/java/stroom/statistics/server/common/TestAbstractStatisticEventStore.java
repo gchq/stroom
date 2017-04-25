@@ -245,7 +245,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
     }
 
     private StatisticEvent buildEvent(final List<StatisticTag> tagList) {
-        return new StatisticEvent(EVENT_TIME, EVENT_NAME, tagList, EVENT_COUNT);
+        return StatisticEvent.createCount(EVENT_TIME, EVENT_NAME, tagList, EVENT_COUNT);
     }
 
     private List<StatisticTag> buildTagList() {

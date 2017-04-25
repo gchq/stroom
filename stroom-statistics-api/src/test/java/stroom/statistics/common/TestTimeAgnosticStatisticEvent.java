@@ -16,12 +16,12 @@
 
 package stroom.statistics.common;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.lang.SerializationUtils;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestTimeAgnosticStatisticEvent {
     @Test
@@ -30,7 +30,7 @@ public class TestTimeAgnosticStatisticEvent {
         tagList.add(new StatisticTag("tag1", "val1"));
         tagList.add(new StatisticTag("tag2", "val2"));
 
-        final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent = new TimeAgnosticStatisticEvent("MtStatName",
+        final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent = TimeAgnosticStatisticEvent.createCount("MtStatName",
                 tagList, 42L);
 
         // if we can't serialise the object then we should get an exception here

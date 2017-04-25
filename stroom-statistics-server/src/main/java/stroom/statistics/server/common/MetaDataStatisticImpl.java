@@ -16,13 +16,7 @@
 
 package stroom.statistics.server.common;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.Resource;
-
 import org.springframework.util.StringUtils;
-
 import stroom.statistic.server.MetaDataStatistic;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
@@ -33,6 +27,10 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomStartup;
 import stroom.util.zip.HeaderMap;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This is deliberately not declared as a component as the StatisticsConfiguration creates the bean.
@@ -97,8 +95,7 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
                 return null;
             }
         }
-        return new StatisticEvent(timeMs, template.getName(), statisticTagList, increment);
-
+        return StatisticEvent.createCount(timeMs, template.getName(), statisticTagList, increment);
     }
 
     @Override

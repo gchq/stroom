@@ -903,8 +903,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                     final Statistics statisticEventStore = factory.instance();
 
                     // Value type event as the queue size is not additive
-                    statisticEventStore.putEvent(new StatisticEvent(System.currentTimeMillis(),
-                            "Stream Task Queue Size", null, new Double(queueSize)));
+                    statisticEventStore.putEvent(StatisticEvent.createValue(System.currentTimeMillis(),
+                            "Stream Task Queue Size", null, queueSize));
                 } catch (final Throwable t) {
                     LOGGER.error(t.getMessage(), t);
                 }

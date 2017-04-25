@@ -636,11 +636,11 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
                 StatisticEvent statisticEvent;
 
                 if (statisticType.equals(StatisticType.COUNT)) {
-                    statisticEvent = new StatisticEvent(timeMs, statName, Collections.emptyList(),
+                    statisticEvent = StatisticEvent.createCount(timeMs, statName, Collections.emptyList(),
                             value);
                 } else {
                     final double valueValue = value;
-                    statisticEvent = new StatisticEvent(timeMs, statName, Collections.emptyList(),
+                    statisticEvent = StatisticEvent.createValue(timeMs, statName, Collections.emptyList(),
                             valueValue);
                 }
 

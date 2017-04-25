@@ -30,7 +30,7 @@ public class TestSQLStatisticsEventValidator {
 
     @Test
     public void testValidateEvent_NoTags() throws Exception {
-        final StatisticEvent event = new StatisticEvent(123L, "statName", null, 1);
+        final StatisticEvent event = StatisticEvent.createCount(123L, "statName", null, 1);
 
         final List<String> warnings = validator.validateEvent(event);
 
@@ -43,7 +43,7 @@ public class TestSQLStatisticsEventValidator {
         tags.add(new StatisticTag("x" + SQLStatisticConstants.NAME_SEPARATOR + "x", "someValue1"));
         tags.add(new StatisticTag("yy", "someValue2"));
 
-        final StatisticEvent event = new StatisticEvent(123L, "statName", tags, 1);
+        final StatisticEvent event = StatisticEvent.createCount(123L, "statName", tags, 1);
 
         final List<String> warnings = validator.validateEvent(event);
 
@@ -56,7 +56,7 @@ public class TestSQLStatisticsEventValidator {
         tags.add(new StatisticTag("xx", "someValue1"));
         tags.add(new StatisticTag("yy", "some" + SQLStatisticConstants.NAME_SEPARATOR + "Value2"));
 
-        final StatisticEvent event = new StatisticEvent(123L, "statName", tags, 1);
+        final StatisticEvent event = StatisticEvent.createCount(123L, "statName", tags, 1);
 
         final List<String> warnings = validator.validateEvent(event);
 
@@ -71,7 +71,7 @@ public class TestSQLStatisticsEventValidator {
         tags.add(new StatisticTag("y" + SQLStatisticConstants.NAME_SEPARATOR + "y",
                 "some" + SQLStatisticConstants.NAME_SEPARATOR + "Value2"));
 
-        final StatisticEvent event = new StatisticEvent(123L, "statName", tags, 1);
+        final StatisticEvent event = StatisticEvent.createCount(123L, "statName", tags, 1);
 
         final List<String> warnings = validator.validateEvent(event);
 

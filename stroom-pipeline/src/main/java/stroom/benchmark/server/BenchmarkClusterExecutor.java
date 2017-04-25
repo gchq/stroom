@@ -485,14 +485,14 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
             }
 
-            statisticEventList.add(new StatisticEvent(nowMs,
+            statisticEventList.add(StatisticEvent.createValue(nowMs,
                     ROOT_TEST_NAME, Arrays.asList(new StatisticTag("Node", node.getName()),
-                    new StatisticTag("Feed", feed.getName()), new StatisticTag("Type", EPS)),
+                            new StatisticTag("Feed", feed.getName()), new StatisticTag("Type", EPS)),
                     (double) toEPS(nodeWritten, nodePeriod)));
 
-            statisticEventList.add(new StatisticEvent(nowMs,
+            statisticEventList.add(StatisticEvent.createValue(nowMs,
                     ROOT_TEST_NAME, Arrays.asList(new StatisticTag("Node", node.getName()),
-                    new StatisticTag("Feed", feed.getName()), new StatisticTag("Type", ERROR)),
+                            new StatisticTag("Feed", feed.getName()), new StatisticTag("Type", ERROR)),
                     (double) toEPS(nodeError, nodePeriod)));
 
         }

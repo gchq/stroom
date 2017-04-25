@@ -225,7 +225,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
 
         final long timeMs = System.currentTimeMillis();
 
-        final StatisticEvent statisticEvent = new StatisticEvent(timeMs, STAT_NAME, tags, value);
+        final StatisticEvent statisticEvent = StatisticEvent.createCount(timeMs, STAT_NAME, tags, value);
 
         return new RolledUpStatisticEvent(statisticEvent);
     }

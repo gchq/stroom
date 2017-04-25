@@ -1,10 +1,6 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <data>
-   <customRollUpMask>
-      <rolledUpTagPosition>0</rolledUpTagPosition>
-      <rolledUpTagPosition>1</rolledUpTagPosition>
-      <rolledUpTagPosition>2</rolledUpTagPosition>
-   </customRollUpMask>
+   <customRollUpMask/>
    <field>
       <fieldName>Id</fieldName>
    </field>

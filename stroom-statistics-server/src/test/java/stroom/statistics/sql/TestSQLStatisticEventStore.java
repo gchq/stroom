@@ -16,12 +16,6 @@
 
 package stroom.statistics.sql;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
-import stroom.entity.shared.DocRef;
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +25,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-
+import stroom.entity.shared.DocRef;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticStoreCache;
@@ -39,7 +33,12 @@ import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.util.concurrent.AtomicSequence;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 import stroom.util.thread.ThreadUtil;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestSQLStatisticEventStore extends StroomUnitTest {
@@ -69,7 +68,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
 
     private StatisticEvent createEvent(final long timeMs) {
         eventCount.incrementAndGet();
-        return new StatisticEvent(timeMs, "NAME" + atomicSequence.next(), null, 1L);
+        return StatisticEvent.createCount(timeMs, "NAME" + atomicSequence.next(), null, 1L);
     }
 
     private final StatisticStoreCache mockStatisticsDataSourceCache = new StatisticStoreCache() {
@@ -205,7 +204,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     }
 
     private void processEvents(final int eventCount, final int expectedProcessedCount, final long firstEventTimeMs,
-            final long eventTimeDeltaMs) {
+                               final long eventTimeDeltaMs) {
         final SQLStatisticEventStore store = new SQLStatisticEventStore(1, 1, 10000, null,
                 mockStatisticsDataSourceCache, mockSqlStatisticCache, null, propertyService);
 

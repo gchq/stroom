@@ -174,7 +174,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
     }
 
     private RolledUpStatisticEvent buildGoodEvent(final int id) {
-        final StatisticEvent goodEvent = new StatisticEvent(123, "shortName" + id, null, 1);
+        final StatisticEvent goodEvent = StatisticEvent.createCount(123, "shortName" + id, null, 1);
         return new RolledUpStatisticEvent(goodEvent);
     }
 
@@ -184,13 +184,13 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
             sb.append("0123456789");
         }
 
-        final StatisticEvent badEvent = new StatisticEvent(123, sb.toString() + id, null, 1);
+        final StatisticEvent badEvent = StatisticEvent.createCount(123, sb.toString() + id, null, 1);
 
         return new RolledUpStatisticEvent(badEvent);
     }
 
     private RolledUpStatisticEvent buildCustomCountEvent(final int id, final long countValue) {
-        final StatisticEvent goodEvent = new StatisticEvent(123, "shortName" + id, null, countValue);
+        final StatisticEvent goodEvent = StatisticEvent.createCount(123, "shortName" + id, null, countValue);
 
         return new RolledUpStatisticEvent(goodEvent);
     }

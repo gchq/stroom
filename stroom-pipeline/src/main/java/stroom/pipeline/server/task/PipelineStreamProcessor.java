@@ -316,7 +316,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private void recordStats(final Feed feed, final PipelineEntity pipelineEntity) {
         try {
             statisticEventStoreFactory.instance()
-                    .putEvent(new StatisticEvent(System.currentTimeMillis(), "PipelineStreamProcessor",
+                    .putEvent(StatisticEvent.createCount(System.currentTimeMillis(), "PipelineStreamProcessor",
                             Arrays.asList(
                                     new StatisticTag("Feed", feed.getName()),
                                     new StatisticTag("Pipeline", pipelineEntity.getName()),

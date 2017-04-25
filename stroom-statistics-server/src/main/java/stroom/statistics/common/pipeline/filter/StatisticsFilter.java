@@ -16,6 +16,11 @@
 
 package stroom.statistics.common.pipeline.filter;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
@@ -38,11 +43,6 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -57,7 +57,7 @@ import java.util.Map;
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "StatisticsFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS,
-        PipelineElementType.VISABILITY_SIMPLE }, icon = ElementIcons.STATISTICS)
+        PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.STATISTICS)
 public class StatisticsFilter extends AbstractXMLFilter {
     /**
      * Define all the element and attribute names
@@ -88,8 +88,8 @@ public class StatisticsFilter extends AbstractXMLFilter {
     /**
      * Events attributes
      */
-    private Map<String, String> currentTagToValueMap = new HashMap<String, String>();
-    private final Map<String, String> emptyTagToValueMap = new HashMap<String, String>();
+    private Map<String, String> currentTagToValueMap = new HashMap<>();
+    private final Map<String, String> emptyTagToValueMap = new HashMap<>();
     private String currentTagName;
     private String currentTagValue;
     private Long currentEventTimeMs;
@@ -247,7 +247,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
         }
     }
 
-    void clearCurrentVariables() {
+    private void clearCurrentVariables() {
         currentEventTimeMs = null;
         currentStatisticValue = null;
         currentStatisticCount = null;
@@ -260,7 +260,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
 
     }
 
-    void clearCurrentTagNameAndValue() {
+    private void clearCurrentTagNameAndValue() {
         currentTagName = null;
         currentTagValue = null;
     }
@@ -303,7 +303,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
             } else if (STATISTIC.equals(localName)) {
                 StatisticEvent statisticEvent;
 
-                final List<StatisticTag> tagList = new ArrayList<StatisticTag>(
+                final List<StatisticTag> tagList = new ArrayList<>(
                         statisticsDataSource.getStatisticFieldCount());
 
                 // construct a list of stat tags in the correct order, as
@@ -325,16 +325,16 @@ public class StatisticsFilter extends AbstractXMLFilter {
                         currentStatisticCount = 1L;
                     }
 
-                    statisticEvent = new StatisticEvent(currentEventTimeMs, statisticsDataSource.getName(),
-                            new ArrayList<StatisticTag>(tagList), currentStatisticCount);
+                    statisticEvent = StatisticEvent.createCount(currentEventTimeMs, statisticsDataSource.getName(),
+                            new ArrayList<>(tagList), currentStatisticCount);
 
                 } else {
                     if (currentStatisticValue == null) {
                         throw new RuntimeException(
                                 "No <value> element was found. Value statistics must have a valid value");
                     }
-                    statisticEvent = new StatisticEvent(currentEventTimeMs, statisticsDataSource.getName(),
-                            new ArrayList<StatisticTag>(tagList), currentStatisticValue);
+                    statisticEvent = StatisticEvent.createValue(currentEventTimeMs, statisticsDataSource.getName(),
+                            new ArrayList<>(tagList), currentStatisticValue);
                 }
 
                 putEvent(statisticEvent);

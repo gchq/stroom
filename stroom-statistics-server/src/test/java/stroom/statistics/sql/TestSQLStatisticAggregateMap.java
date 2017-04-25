@@ -423,9 +423,9 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         StatisticEvent event;
 
         if (value instanceof Long) {
-            event = new StatisticEvent(timeMs, statName, buildTagList(valueSuffix), (Long) value);
+            event = StatisticEvent.createCount(timeMs, statName, buildTagList(valueSuffix), (Long) value);
         } else {
-            event = new StatisticEvent(timeMs, statName, buildTagList(valueSuffix), (Double) value);
+            event = StatisticEvent.createValue(timeMs, statName, buildTagList(valueSuffix), (Double) value);
         }
 
         return AbstractStatistics.generateTagRollUps(event, buildStatisticDataSource(StatisticRollUpType.ALL));
