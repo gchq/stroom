@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#212** : Changes made to text in any editor including those made with cut and paste are now correctly handled so that altered content is now saved.
 
+* Issue **#247** : The editor pane now attempts to maintain the scroll position when formatting content.
+
 ## [v5.0-beta.19] - 2017-04-21
 
 * Issue **#155** : Changed password values to be obfuscated in the UI as 20 asterisks regardless of length.
