@@ -17,7 +17,6 @@
 package stroom.pipeline.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.cache.server.XSLTPool;
 import stroom.feed.shared.FeedService;
 import stroom.logging.StreamEventLog;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -26,7 +25,6 @@ import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
@@ -44,8 +42,8 @@ import javax.inject.Inject;
 @Scope(StroomScope.TASK)
 public class FetchDataHandler extends AbstractFetchDataHandler<FetchDataAction> {
     @Inject
-    public FetchDataHandler(final StreamStore streamStore, final FeedService feedService, final XSLTService xsltService, final XSLTPool templatesPool, final FeedHolder feedHolder, final PipelineHolder pipelineHolder, final StreamHolder streamHolder, final PipelineEntityService pipelineEntityService, final PipelineFactory pipelineFactory, final ErrorReceiverProxy errorReceiverProxy, final PipelineDataCache pipelineDataCache, final StreamEventLog streamEventLog, final SecurityContext securityContext) {
-        super(streamStore, feedService, xsltService, templatesPool, feedHolder, pipelineHolder, streamHolder, pipelineEntityService, pipelineFactory, errorReceiverProxy, pipelineDataCache, streamEventLog, securityContext);
+    FetchDataHandler(final StreamStore streamStore, final FeedService feedService, final FeedHolder feedHolder, final PipelineHolder pipelineHolder, final StreamHolder streamHolder, final PipelineEntityService pipelineEntityService, final PipelineFactory pipelineFactory, final ErrorReceiverProxy errorReceiverProxy, final PipelineDataCache pipelineDataCache, final StreamEventLog streamEventLog, final SecurityContext securityContext) {
+        super(streamStore, feedService, feedHolder, pipelineHolder, streamHolder, pipelineEntityService, pipelineFactory, errorReceiverProxy, pipelineDataCache, streamEventLog, securityContext);
     }
 
     @Override

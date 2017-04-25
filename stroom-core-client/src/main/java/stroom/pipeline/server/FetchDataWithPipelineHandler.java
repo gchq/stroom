@@ -17,7 +17,6 @@
 package stroom.pipeline.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.cache.server.XSLTPool;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.shared.FeedService;
 import stroom.logging.StreamEventLog;
@@ -27,7 +26,6 @@ import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
@@ -45,25 +43,25 @@ import javax.inject.Inject;
 @Scope(StroomScope.TASK)
 public class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWithPipelineAction> {
     @Inject
-    public FetchDataWithPipelineHandler(final StreamStore streamStore, final FeedService feedService, final XSLTService xsltService, final XSLTPool templatesPool, final FeedHolder feedHolder, final PipelineHolder pipelineHolder, final StreamHolder streamHolder, final PipelineEntityService pipelineEntityService, final PipelineFactory pipelineFactory, final ErrorReceiverProxy errorReceiverProxy, final PipelineDataCache pipelineDataCache, final StreamEventLog streamEventLog, final SecurityContext securityContext) {
-        super(streamStore, feedService, xsltService, templatesPool, feedHolder, pipelineHolder, streamHolder, pipelineEntityService, pipelineFactory, errorReceiverProxy, pipelineDataCache, streamEventLog, securityContext);
+    FetchDataWithPipelineHandler(final StreamStore streamStore, final FeedService feedService, final FeedHolder feedHolder, final PipelineHolder pipelineHolder, final StreamHolder streamHolder, final PipelineEntityService pipelineEntityService, final PipelineFactory pipelineFactory, final ErrorReceiverProxy errorReceiverProxy, final PipelineDataCache pipelineDataCache, final StreamEventLog streamEventLog, final SecurityContext securityContext) {
+        super(streamStore, feedService, feedHolder, pipelineHolder, streamHolder, pipelineEntityService, pipelineFactory, errorReceiverProxy, pipelineDataCache, streamEventLog, securityContext);
     }
 
     @Override
     public AbstractFetchDataResult exec(final FetchDataWithPipelineAction action) {
-            // Because we are securing this to require XSLT then we must check that
-            // some has been provided
-            if (action.getPipeline() == null) {
-                throw new EntityServiceException("No pipeline has been supplied");
-            }
+        // Because we are securing this to require XSLT then we must check that
+        // some has been provided
+        if (action.getPipeline() == null) {
+            throw new EntityServiceException("No pipeline has been supplied");
+        }
 
-            final Long streamId = action.getStreamId();
+        final Long streamId = action.getStreamId();
 
-            if (streamId != null) {
-                return getData(streamId, action.getChildStreamType(), action.getStreamRange(), action.getPageRange(),
-                        action.isMarkerMode(), action.getPipeline(), action.isShowAsHtml());
-            }
+        if (streamId != null) {
+            return getData(streamId, action.getChildStreamType(), action.getStreamRange(), action.getPageRange(),
+                    action.isMarkerMode(), action.getPipeline(), action.isShowAsHtml());
+        }
 
-            return null;
+        return null;
     }
 }
