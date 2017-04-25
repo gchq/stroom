@@ -16,8 +16,8 @@
 
 package stroom.editor.client.presenter;
 
-import com.google.gwt.event.dom.client.HasKeyDownHandlers;
-import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
@@ -37,7 +37,7 @@ import stroom.util.shared.Indicators;
 import java.util.List;
 
 public class EditorPresenter extends MyPresenterWidget<EditorView>
-        implements HasKeyDownHandlers, HasFormatHandlers, HasChangeFilterHandlers, HasText, EditorUiHandlers {
+        implements HasFormatHandlers, HasChangeFilterHandlers, HasText, EditorUiHandlers, HasValueChangeHandlers<String> {
     private final EditorMenuPresenter contextMenu;
 
     private boolean showFilterSettings;
@@ -155,8 +155,8 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
     }
 
     @Override
-    public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
-        return getView().addKeyDownHandler(handler);
+    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
+        return getView().addValueChangeHandler(handler);
     }
 
     @Override

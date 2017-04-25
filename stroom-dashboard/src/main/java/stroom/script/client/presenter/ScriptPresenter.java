@@ -16,11 +16,9 @@
 
 package stroom.script.client.presenter;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
-import stroom.app.client.event.DirtyKeyDownHander;
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.dashboard.client.vis.ClearScriptCacheEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
@@ -90,12 +88,7 @@ public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Sc
 //                    codePresenter.getStylesOption().setOn(false);
 //                    codePresenter.getStylesOption().setAvailable(false);
 
-                    registerHandler(codePresenter.addKeyDownHandler(new DirtyKeyDownHander() {
-                        @Override
-                        public void onDirty(final KeyDownEvent event) {
-                            setDirty(true);
-                        }
-                    }));
+                    registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
                     registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
 
                     loadResource(codePresenter, callback);

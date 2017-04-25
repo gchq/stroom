@@ -16,10 +16,8 @@
 
 package stroom.pipeline.client.presenter;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.app.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
@@ -96,12 +94,7 @@ public class XSLTPresenter extends EntityEditTabPresenter<LinkTabPanelView, XSLT
         codePresenter = editorPresenterProvider.get();
         codePresenter.setReadOnly(readOnly);
 
-        registerHandler(codePresenter.addKeyDownHandler(new DirtyKeyDownHander() {
-            @Override
-            public void onDirty(final KeyDownEvent event) {
-                setDirty(true);
-            }
-        }));
+        registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
         registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
 
         if (getEntity() != null) {

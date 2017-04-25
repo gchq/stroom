@@ -17,6 +17,10 @@
 package stroom.editor.client.view;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditor;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
@@ -24,7 +28,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
 
-public class Editor extends Composite {
+public class Editor extends Composite implements HasValueChangeHandlers<String> {
     private String text = "";
     private boolean textDirty;
 
@@ -58,6 +62,9 @@ public class Editor extends Composite {
     private boolean useWrapMode;
     private boolean useWrapModeDirty;
 
+    private boolean addChangeHandler;
+    private boolean addedChangeHandler;
+
     private boolean started;
 
     private final AceEditor editor;
@@ -84,6 +91,7 @@ public class Editor extends Composite {
                 updateGotoLine();
                 updateScrollMargin();
                 updateUseWrapMode();
+                updateChangeHandler();
             }
         });
 
@@ -289,6 +297,26 @@ public class Editor extends Composite {
     public void beautify() {
         if (editor.isAttached()) {
             editor.beautify();
+        }
+    }
+
+    @Override
+    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
+        addChangeHandler = true;
+        updateChangeHandler();
+        return addHandler(handler, ValueChangeEvent.getType());
+    }
+
+    private void updateChangeHandler() {
+        if (editor.isAttached() && addChangeHandler && !addedChangeHandler) {
+            addedChangeHandler = true;
+            editor.addOnChangeHandler(obj -> {
+                // Only fire value change events for edits, not where setText() is called.
+                if (!textDirty) {
+                    ValueChangeEvent.fire(Editor.this, null);
+                }
+            });
+            addChangeHandler = false;
         }
     }
 

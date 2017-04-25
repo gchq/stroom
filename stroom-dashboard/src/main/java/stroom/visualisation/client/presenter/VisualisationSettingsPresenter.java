@@ -59,7 +59,7 @@ public class VisualisationSettingsPresenter
 
         registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
         registerHandler(view.getFunctionName().addKeyDownHandler(keyDownHander));
-        registerHandler(editorPresenter.addKeyDownHandler(keyDownHander));
+        registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
         view.setScriptView(scriptPresenter.getView());
         view.setSettingsView(editorPresenter.getView());
 

@@ -19,7 +19,6 @@
 package stroom.pipeline.stepping.client.presenter;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -27,7 +26,6 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.app.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.event.DirtyEvent;
@@ -307,12 +305,9 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             setOptions(codePresenter);
             codePresenter.getLineNumbersOption().setOn(true);
 
-            registerHandler(codePresenter.addKeyDownHandler(new DirtyKeyDownHander() {
-                @Override
-                public void onDirty(final KeyDownEvent event) {
-                    dirtyCode = true;
-                    DirtyEvent.fire(ElementPresenter.this, true);
-                }
+            registerHandler(codePresenter.addValueChangeHandler(event -> {
+                dirtyCode = true;
+                DirtyEvent.fire(ElementPresenter.this, true);
             }));
             registerHandler(codePresenter.addFormatHandler(event -> {
                 dirtyCode = true;

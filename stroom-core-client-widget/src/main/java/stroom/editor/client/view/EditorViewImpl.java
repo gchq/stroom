@@ -24,6 +24,7 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
@@ -346,6 +347,11 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     @Override
     public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
         return layout.addDomHandler(handler, KeyDownEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
+        return editor.addValueChangeHandler(handler);
     }
 
     @Override

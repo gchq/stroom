@@ -18,6 +18,7 @@ package stroom.editor.client.presenter;
 
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.user.client.ui.HasText;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
@@ -31,7 +32,7 @@ import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import java.util.List;
 
 public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers, HasText, HasMouseDownHandlers,
-        HasContextMenuHandlers, HasUiHandlers<EditorUiHandlers> {
+        HasContextMenuHandlers, HasUiHandlers<EditorUiHandlers>, HasValueChangeHandlers<String> {
     void setText(String text);
 
     void setFirstLineNumber(int firstLineNumber);

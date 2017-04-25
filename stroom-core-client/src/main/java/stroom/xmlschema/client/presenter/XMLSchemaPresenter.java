@@ -16,11 +16,9 @@
 
 package stroom.xmlschema.client.presenter;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.PresenterWidget;
-import stroom.app.client.event.DirtyKeyDownHander;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
@@ -133,12 +131,9 @@ public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView,
 
         if (!readOnly) {
             // Enable controls based on user permission
-            registerHandler(codePresenter.addKeyDownHandler(new DirtyKeyDownHander() {
-                @Override
-                public void onDirty(final KeyDownEvent event) {
-                    setDirty(true);
-                    updateDiagram = true;
-                }
+            registerHandler(codePresenter.addValueChangeHandler(event -> {
+                setDirty(true);
+                updateDiagram = true;
             }));
         }
     }
