@@ -21,7 +21,6 @@ import stroom.dashboard.expression.FieldIndexMap;
 import stroom.mapreduce.BlockingPairQueue;
 import stroom.mapreduce.PairQueue;
 import stroom.mapreduce.UnsafePairQueue;
-import stroom.node.server.NodeCache;
 import stroom.query.CompiledDepths;
 import stroom.query.CompiledFields;
 import stroom.query.Item;
@@ -31,13 +30,12 @@ import stroom.query.Payload;
 import stroom.query.TableCoprocessorSettings;
 import stroom.query.TablePayload;
 import stroom.query.shared.CoprocessorSettings;
-import stroom.query.shared.DataSource;
 import stroom.query.shared.TableSettings;
+import stroom.security.SecurityContext;
 import stroom.statistics.common.StatisticDataPoint;
 import stroom.statistics.common.StatisticDataSet;
 import stroom.statistics.common.StatisticsFactory;
 import stroom.statistics.server.common.AbstractStatistics;
-import stroom.statistics.server.common.StatisticsDataSourceProvider;
 import stroom.statistics.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.task.server.AbstractTaskHandler;
@@ -47,7 +45,7 @@ import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,83 +54,90 @@ import java.util.Map.Entry;
 @TaskHandlerBean(task = StatStoreSearchTask.class)
 @Scope(value = StroomScope.TASK)
 public class StatStoreSearchTaskHandler extends AbstractTaskHandler<StatStoreSearchTask, VoidResult> {
-    @Resource
-    private TaskMonitor taskMonitor;
-    @Resource
-    private NodeCache nodeCache;
-    @Resource
-    private StatisticsFactory statisticsFactory;
-    @Resource
-    private StatisticsDataSourceProvider statisticsDataSourceProvider;
+    private final TaskMonitor taskMonitor;
+    private final StatisticsFactory statisticsFactory;
+    private final SecurityContext securityContext;
+
+    @Inject
+    StatStoreSearchTaskHandler(final TaskMonitor taskMonitor, final StatisticsFactory statisticsFactory, final SecurityContext securityContext) {
+        this.taskMonitor = taskMonitor;
+        this.statisticsFactory = statisticsFactory;
+        this.securityContext = securityContext;
+    }
 
     @Override
     public VoidResult exec(final StatStoreSearchTask task) {
-        final StatStoreSearchResultCollector resultCollector = task.getResultCollector();
+        try {
+            securityContext.elevatePermissions();
 
-        if (!task.isTerminated()) {
-            taskMonitor.info(task.getSearchName() + " - initialising");
+            final StatStoreSearchResultCollector resultCollector = task.getResultCollector();
 
-            final StatisticStoreEntity entity = task.getEntity();
-            final DataSource dataSource = statisticsDataSourceProvider.getDataSource(entity.getUuid());
+            if (!task.isTerminated()) {
+                taskMonitor.info(task.getSearchName() + " - initialising");
 
-            // Get the statistic store service class based on the engine of the
-            // datasource being searched
-            final AbstractStatistics statisticEventStore = (AbstractStatistics) statisticsFactory
-                    .instance(entity.getEngineName());
-            final StatisticDataSet statisticDataSet = statisticEventStore.searchStatisticsData(task.getSearch(),
-                    entity);
+                final StatisticStoreEntity entity = task.getEntity();
 
-            // Produce payloads for each coprocessor.
-            Map<Integer, Payload> payloadMap = null;
+                // Get the statistic store service class based on the engine of the
+                // datasource being searched
+                final AbstractStatistics statisticEventStore = (AbstractStatistics) statisticsFactory
+                        .instance(entity.getEngineName());
+                final StatisticDataSet statisticDataSet = statisticEventStore.searchStatisticsData(task.getSearch(),
+                        entity);
 
-            final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
-            for (final Entry<Integer, CoprocessorSettings> entry : task.getCoprocessorMap().entrySet()) {
-                final TableSettings tableSettings = ((TableCoprocessorSettings) entry.getValue()).getTableSettings();
-                final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(),
-                        tableSettings.showDetail());
-                final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(),
-                        fieldIndexMap, task.getSearch().getParamMap());
+                // Produce payloads for each coprocessor.
+                Map<Integer, Payload> payloadMap = null;
 
-                // Create a queue of string arrays.
-                final PairQueue<String, Item> queue = new BlockingPairQueue<>(taskMonitor);
-                final ItemMapper mapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),
-                        compiledDepths.getMaxGroupDepth());
+                final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
+                for (final Entry<Integer, CoprocessorSettings> entry : task.getCoprocessorMap().entrySet()) {
+                    final TableSettings tableSettings = ((TableCoprocessorSettings) entry.getValue()).getTableSettings();
+                    final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(),
+                            tableSettings.showDetail());
+                    final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(),
+                            fieldIndexMap, task.getSearch().getParamMap());
 
-                performSearch(task, entity, compiledFields, mapper, statisticDataSet, fieldIndexMap);
+                    // Create a queue of string arrays.
+                    final PairQueue<String, Item> queue = new BlockingPairQueue<>(taskMonitor);
+                    final ItemMapper mapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(),
+                            compiledDepths.getMaxGroupDepth());
 
-                // partition and reduce based on table settings.
-                final UnsafePairQueue<String, Item> outputQueue = new UnsafePairQueue<>();
+                    performSearch(entity, mapper, statisticDataSet, fieldIndexMap);
 
-                // Create a partitioner to perform result reduction if needed.
-                final ItemPartitioner partitioner = new ItemPartitioner(compiledDepths.getDepths(),
-                        compiledDepths.getMaxDepth());
-                partitioner.setOutputCollector(outputQueue);
+                    // partition and reduce based on table settings.
+                    final UnsafePairQueue<String, Item> outputQueue = new UnsafePairQueue<>();
 
-                // Partition the data prior to forwarding to the target node.
-                partitioner.read(queue);
+                    // Create a partitioner to perform result reduction if needed.
+                    final ItemPartitioner partitioner = new ItemPartitioner(compiledDepths.getDepths(),
+                            compiledDepths.getMaxDepth());
+                    partitioner.setOutputCollector(outputQueue);
 
-                // Perform partitioning.
-                partitioner.partition();
+                    // Partition the data prior to forwarding to the target node.
+                    partitioner.read(queue);
 
-                final Payload payload = new TablePayload(outputQueue);
-                if (payloadMap == null) {
-                    payloadMap = new HashMap<>();
+                    // Perform partitioning.
+                    partitioner.partition();
+
+                    final Payload payload = new TablePayload(outputQueue);
+                    if (payloadMap == null) {
+                        payloadMap = new HashMap<>();
+                    }
+                    payloadMap.put(entry.getKey(), payload);
                 }
-                payloadMap.put(entry.getKey(), payload);
+
+                resultCollector.handle(payloadMap);
             }
 
-            resultCollector.handle(payloadMap);
+            // Let the result handler know search has finished.
+            resultCollector.getResultHandler().setComplete(true);
+
+            return VoidResult.INSTANCE;
+
+        } finally {
+            securityContext.restorePermissions();
         }
-
-        // Let the result handler know search has finished.
-        resultCollector.getResultHandler().setComplete(true);
-
-        return VoidResult.INSTANCE;
     }
 
-    private void performSearch(final StatStoreSearchTask task, final StatisticStoreEntity dataSource,
-            final CompiledFields compiledFields, final ItemMapper mapper, final StatisticDataSet statisticDataSet,
-            final FieldIndexMap fieldIndexMap) {
+    private void performSearch(final StatisticStoreEntity dataSource, final ItemMapper mapper, final StatisticDataSet statisticDataSet,
+                               final FieldIndexMap fieldIndexMap) {
         final List<String> tagsForStatistic = dataSource.getFieldNames();
 
         final int[] indexes = new int[7 + tagsForStatistic.size()];
