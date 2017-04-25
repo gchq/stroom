@@ -18,9 +18,9 @@ dependencies {
     compile project(':stroom-statistics-shared')
     compile project(':stroom-pipeline')
 
-    compile gitHubDeps.getDepPath('stroom-query-common-6.0-beta.1-SNAPSHOT')
-    compile gitHubDeps.getDepPath('hadoop-common-shaded-v2.6.4-all')
-    compile gitHubDeps.getDepPath('hbase-common-shaded-v1.2.1-all')
+    compile gitHubDeps.get('stroom-query-common-6.0-beta.1-SNAPSHOT')
+    compile gitHubDeps.get('hadoop-common-shaded-v2.6.4-all')
+    compile gitHubDeps.get('hbase-common-shaded-v1.2.1-all')
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

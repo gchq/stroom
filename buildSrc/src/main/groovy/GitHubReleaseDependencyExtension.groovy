@@ -11,11 +11,17 @@ class GitHubReleaseDependencyExtension {
         dependencies.put(name, url)
     }
 
-    FileCollection getDepPath(String name) {
-        return new SimpleFileCollection(new File("libs/${name}.jar"))
+    String getAsPath(String name){
+        return "libs/${name}.jar"
     }
 
-    FileCollection getDepPathForGwt(String name) {
-        return new SimpleFileCollection(new File("../libs/${name}.jar"))
+    FileCollection getAsFile(String path){
+        return new SimpleFileCollection(new File(path))
     }
+
+    FileCollection get(String name) {
+        return new SimpleFileCollection(new File(getAsPath(name)))
+    }
+
+
 }

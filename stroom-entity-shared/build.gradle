@@ -15,7 +15,7 @@
  */
 
 dependencies {
-    compile gitHubDeps.getDepPath('stroom-query-api-6.0-beta.1-SNAPSHOT')
+    compile gitHubDeps.get('stroom-query-api-6.0-beta.1-SNAPSHOT')
 
     compile project(':stroom-util-shared')
 
