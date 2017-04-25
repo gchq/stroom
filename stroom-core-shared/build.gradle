@@ -16,7 +16,7 @@
 
 dependencies {
     compile project(':stroom-entity-shared')
-    compile fileDependency('queryApi')
+    compile gitHubDeps.getDepPath('stroom-query-api-6.0-beta.1-SNAPSHOT')
 
     compile 'com.google.gwt:gwt-servlet:2.8.0'
 }
