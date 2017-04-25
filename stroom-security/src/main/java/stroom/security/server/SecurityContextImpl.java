@@ -78,7 +78,7 @@ class SecurityContextImpl implements SecurityContext {
     @Override
     public void pushUser(final String name) {
         UserRef userRef = INTERNAL_PROCESSING_USER;
-        if (name != null && !"INTERNAL".equals(name)) {
+        if (name != null && !INTERNAL_PROCESSING_USER.getName().equals(name)) {
             userRef = userService.getUserByName(name);
         }
 
