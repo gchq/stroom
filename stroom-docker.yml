@@ -1,9 +1,19 @@
 name: stroom
 root: ~/git_work/stroom/
+pre_window: source ~/git_work/stroom-resources/.aliases
 
 windows:
   - shell:
-  - vim: vim pom.xml
-  - MySQL: docker start stroom-db && sleep 10 && mysql -h"172.17.0.2" -P"3306" -u"stroomuser" -p"stroompassword1" stroom
+      layout: main-vertical
+      panes:
+        - 
+        - cd ~/git_work/stroom-resources && bounceStroom
+        - cd ~/git_work/stroom-resources
+  - VI: vim build.gradle ./*/build.gradle
+  - MySql: 
+      layout: even-vertical 
+      panes:
+        - sleep 20 && stroomdb
+        - sleep 20 && stroomdbbash
   - Chrome: /usr/bin/google-chrome-stable http://localhost:8888/ &
 
