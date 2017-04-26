@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#257** : The dashboard text pane now provides padding at the top to allow for tabs and controls.
 
+* Issue **#174** : Index shard checking is now done asynchronously during startup to reduce startup time.
+
 ## [v5.0-beta.19] - 2017-04-21
 
 * Issue **#155** : Changed password values to be obfuscated in the UI as 20 asterisks regardless of length.
