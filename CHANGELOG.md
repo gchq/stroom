@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#209** : Statistics are now queryable in a dashboard if a user has 'use' permissions on a statistic.
 
+* Issue **#255** : Fixed issue where error indicators were not being shown in the schema validator pane because the text needed to be formatted so that it spanned multiple lines before attempting to add annotations.
+
 ## [v5.0-beta.19] - 2017-04-21
 
 * Issue **#155** : Changed password values to be obfuscated in the UI as 20 asterisks regardless of length.
