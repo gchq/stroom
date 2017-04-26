@@ -24,7 +24,7 @@ import stroom.index.shared.IndexShard;
 import stroom.cache.AbstractCacheBean.Destroyable;
 
 public interface IndexShardWriter extends Destroyable {
-    boolean check();
+    void check();
 
     boolean open(boolean create);
 

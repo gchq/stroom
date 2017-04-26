@@ -149,7 +149,8 @@ public class ClusterWorkerImpl implements ClusterWorker {
                     done = true;
                 } catch (final Exception ex) {
                     lastException = ex;
-                    LOGGER.warn(ex.getMessage(), ex);
+                    LOGGER.warn(ex.getMessage());
+                    LOGGER.debug(ex.getMessage(), ex);
                     ThreadUtil.sleepUpTo(1000L * tryCount);
                     tryCount++;
                 }

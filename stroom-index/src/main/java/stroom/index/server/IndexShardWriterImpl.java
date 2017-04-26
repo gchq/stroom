@@ -85,6 +85,8 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     private volatile Integer lastCommitDocumentCount;
     private volatile Long lastCommitDurationMs;
 
+    private volatile boolean checked;
+
     /**
      * When we are in debug mode we track some important info from the LUCENE
      * log so that we can report some debug info
@@ -161,6 +163,9 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         boolean success = false;
 
         try {
+            // Ensure all shards are checked before they are opened.
+            check();
+
             // Never open deleted index shards.
             if (!IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
                 final long startMs = System.currentTimeMillis();
@@ -293,41 +298,40 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     }
 
     @Override
-    public synchronized boolean check() {
-        boolean success = false;
+    public synchronized void check() {
+        if (!checked) {
+            checked = true;
 
-        // Don't clean deleted indexes.
-        if (!IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
-            try {
-                // Output some debug.
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Checking index - " + indexShard);
-                }
-                // Mark the index as closed.
-                setStatus(IndexShardStatus.CLOSED);
-
-                if (dir.isDirectory()) {
-                    final File[] files = dir.listFiles();
-                    if (files != null && files.length > 0) {
-                        // The directory exists and contains files so make sure it
-                        // is unlocked.
-                        new SimpleFSLockFactory(dir).clearLock(IndexWriter.WRITE_LOCK_NAME);
-
-                        // Sync the DB.
-                        sync();
-                        success = true;
-                    } else {
-                        throw new IndexException("Unable to find any index shard data in directory: " + dir.getCanonicalPath());
+            // Don't check deleted shards.
+            if (!IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
+                try {
+                    // Output some debug.
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Checking index - " + indexShard);
                     }
-                } else {
-                    throw new IndexException("Unable to find index shard directory: " + dir.getCanonicalPath());
+                    // Mark the index as closed.
+                    setStatus(IndexShardStatus.CLOSED);
+
+                    if (dir.isDirectory()) {
+                        final File[] files = dir.listFiles();
+                        if (files != null && files.length > 0) {
+                            // The directory exists and contains files so make sure it
+                            // is unlocked.
+                            new SimpleFSLockFactory(dir).clearLock(IndexWriter.WRITE_LOCK_NAME);
+
+                            // Sync the DB.
+                            sync();
+                        } else {
+                            throw new IndexException("Unable to find any index shard data in directory: " + dir.getCanonicalPath());
+                        }
+                    } else {
+                        throw new IndexException("Unable to find index shard directory: " + dir.getCanonicalPath());
+                    }
+                } catch (final Throwable t) {
+                    LOGGER.error(t.getMessage(), t);
                 }
-            } catch (final Throwable t) {
-                LOGGER.error(t.getMessage(), t);
             }
         }
-
-        return success;
     }
 
     @Override

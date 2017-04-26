@@ -35,6 +35,8 @@ import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.Node;
 import stroom.query.shared.IndexFields;
+import stroom.task.server.GenericServerTask;
+import stroom.task.server.TaskManager;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -46,13 +48,16 @@ import stroom.util.thread.ThreadScopeRunnable;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -69,19 +74,22 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
     private final IndexService indexService;
     private final IndexShardService indexShardService;
     private final NodeCache nodeCache;
+    private final TaskManager taskManager;
 
     private final StroomPropertyService stroomPropertyService;
 
     private final ConcurrentHashMap<IndexShard, IndexShardWriter> ownedWriters = new ConcurrentHashMap<>();
+    private final AtomicBoolean deletingShards = new AtomicBoolean();
 
     @Inject
     IndexShardWriterCacheImpl(final CacheManager cacheManager, final StroomPropertyService stroomPropertyService,
-                              final IndexService indexService, final IndexShardService indexShardService, final NodeCache nodeCache) {
+                              final IndexService indexService, final IndexShardService indexShardService, final NodeCache nodeCache, final TaskManager taskManager) {
         super(cacheManager, "Index Shard Writer Cache", MAX_CACHE_ENTRIES);
         this.stroomPropertyService = stroomPropertyService;
         this.indexService = indexService;
         this.indexShardService = indexShardService;
         this.nodeCache = nodeCache;
+        this.taskManager = taskManager;
 
         setMaxIdleTime(10, TimeUnit.SECONDS);
         setMaxLiveTime(1, TimeUnit.DAYS);
@@ -142,7 +150,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
         final IndexShard indexShard = indexShardService.createIndexShard(key, nodeCache.getDefaultNode());
 
         // Create a writer to use the location.
-        final IndexShardWriter writer = connectWrapper(indexShard);
+        final IndexShardWriter writer = connectWrapper(indexShard, new HashMap<>());
 
         // Open the writer.
         final boolean success = writer.open(true);
@@ -167,13 +175,13 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
     /**
      * Wrap the entity bean with our manager class
      */
-    private IndexShardWriter connectWrapper(final IndexShard indexShard) {
+    private IndexShardWriter connectWrapper(final IndexShard indexShard, final Map<Index, Index> loadedIndexes) {
         // Load the index.
         Index index = indexShard.getIndex();
         // In tests the index service is often null but normally we want to load
         // the index so we unmarshal fields.
         if (indexService != null) {
-            index = indexService.load(index);
+            index = loadedIndexes.computeIfAbsent(index, indexService::load);
         }
 
         final int ramBufferSizeMB = getRamBufferSize();
@@ -205,7 +213,13 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
     public void startup() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         loadAllAtStartup();
+
+        // Asynchronously check that all of the shards can be opened etc.
+        checkShards();
+
+        // Asynchronously delete all logically deleted shards.
         deleteLogicallyDeleted();
+
         LOGGER.debug(() -> "Started in " + logExecutionTime);
     }
 
@@ -234,16 +248,13 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
 
         final List<IndexShard> list = indexShardService.find(criteria);
+        final Map<Index, Index> loadedIndexes = new HashMap<>();
 
         for (final IndexShard indexShard : list) {
             try {
-                final IndexShardWriter writer = connectWrapper(indexShard);
-                // Remember this writer.
+                final IndexShardWriter writer = connectWrapper(indexShard, loadedIndexes);
+                // Take ownership and remember this writer.
                 ownedWriters.put(indexShard, writer);
-
-                // Check that the writer is ok.
-                LOGGER.debug(() -> "loadAllAtStartup() - Checking index shard " + indexShard.getId());
-                writer.check();
 
             } catch (final Exception e) {
                 LOGGER.error(e::getMessage, e);
@@ -253,27 +264,84 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
     }
 
     /**
+     * Check the health of all owned shards.
+     */
+    private void checkShards() {
+        final GenericServerTask task = new GenericServerTask(null, null,
+                null, "Check Shards", "Checking Shards...");
+        final Runnable runnable = () -> {
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+            final Iterator<Entry<IndexShard, IndexShardWriter>> iter = ownedWriters.entrySet().iterator();
+            while (!task.isTerminated() && iter.hasNext()) {
+                final Entry<IndexShard, IndexShardWriter> entry = iter.next();
+                final IndexShardWriter writer = entry.getValue();
+                try {
+                    if (writer != null) {
+                        LOGGER.debug(() -> "checkShards() - Checking index shard " + writer.getIndexShard().getId());
+                        writer.check();
+                    }
+                } catch (final Exception e) {
+                    LOGGER.error(e::getMessage, e);
+                }
+            }
+            LOGGER.debug(() -> "checkShards() - Completed in " + logExecutionTime);
+        };
+
+        // In tests we don't have a task manager.
+        if (taskManager == null) {
+            runnable.run();
+        } else {
+            task.setRunnable(runnable);
+            taskManager.execAsync(task);
+        }
+    }
+
+    /**
      * Delete anything that has been marked to delete
      */
     private void deleteLogicallyDeleted() {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        final Iterator<Entry<IndexShard, IndexShardWriter>> iter = ownedWriters.entrySet().iterator();
-        while (iter.hasNext()) {
-            final Entry<IndexShard, IndexShardWriter> entry = iter.next();
-            final IndexShardWriter writer = entry.getValue();
+        if (deletingShards.compareAndSet(false, true)) {
             try {
-                if (writer != null && writer.isDeleted()) {
-                    LOGGER.debug(() -> "deleteLogicallyDeleted() - Deleting index shard " + writer.getIndexShard().getId());
+                final GenericServerTask task = new GenericServerTask(null, null,
+                        null, "Delete Logically Deleted Shards", "Deleting Logically Deleted Shards...");
+                final Runnable runnable = () -> {
+                    try {
+                        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+                        final Iterator<Entry<IndexShard, IndexShardWriter>> iter = ownedWriters.entrySet().iterator();
+                        while (!task.isTerminated() && iter.hasNext()) {
+                            final Entry<IndexShard, IndexShardWriter> entry = iter.next();
+                            final IndexShardWriter writer = entry.getValue();
+                            try {
+                                if (writer != null && writer.isDeleted()) {
+                                    LOGGER.debug(() -> "deleteLogicallyDeleted() - Deleting index shard " + writer.getIndexShard().getId());
 
-                    if (writer.deleteFromDisk()) {
-                        iter.remove();
+                                    if (writer.deleteFromDisk()) {
+                                        iter.remove();
+                                    }
+                                }
+                            } catch (final Exception e) {
+                                LOGGER.error(e::getMessage, e);
+                            }
+                        }
+                        LOGGER.debug(() -> "deleteLogicallyDeleted() - Completed in " + logExecutionTime);
+                    } finally {
+                        deletingShards.set(false);
                     }
+                };
+
+                // In tests we don't have a task manager.
+                if (taskManager == null) {
+                    runnable.run();
+                } else {
+                    task.setRunnable(runnable);
+                    taskManager.execAsync(task);
                 }
+
             } catch (final Exception e) {
                 LOGGER.error(e::getMessage, e);
+                deletingShards.set(false);
             }
         }
-        LOGGER.debug(() -> "deleteLogicallyDeleted() - Completed in " + logExecutionTime);
     }
 
     /**
