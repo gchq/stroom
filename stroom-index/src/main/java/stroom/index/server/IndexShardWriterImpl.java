@@ -163,9 +163,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         boolean success = false;
 
         try {
-            // Ensure all shards are checked before they are opened.
-            check();
-
             // Never open deleted index shards.
             if (!IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
                 final long startMs = System.currentTimeMillis();
@@ -195,6 +192,9 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                                     "Unable to create directories for new index in \"" + dir.getAbsolutePath() + "\"");
                         }
                     }
+                } else {
+                    // Ensure all shards are checked before they are opened.
+                    check();
                 }
 
                 // Create lucene directory object.
