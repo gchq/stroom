@@ -18,12 +18,15 @@ package stroom.resources;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
+import com.sun.deploy.net.HttpResponse;
+import com.sun.org.apache.xerces.internal.util.Status;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.codec.Base64;
 import org.glassfish.jersey.server.ContainerRequest;
 import stroom.entity.shared.EntityServiceException;
 import stroom.security.Insecure;
 import stroom.security.server.AuthenticationService;
+import stroom.security.server.AuthorisationService;
 import stroom.security.server.JWTUtils;
 
 import javax.ws.rs.Consumes;
@@ -46,6 +49,7 @@ import java.util.Optional;
 public class AuthenticationResource {
 
     private AuthenticationService authenticationService;
+    private AuthorisationService authorisationService;
 
     @GET
     @Path("/getToken")
@@ -83,8 +87,26 @@ public class AuthenticationResource {
         }
     }
 
+    @GET
+    @Path("authorise")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Timed
+    @Insecure
+    public Response authoriseForStatistic(AuthorisationRequest authorisationRequest){
+        boolean result = authorisationService.hasDocumentPermission(
+                authorisationRequest.getDocumentType(),
+                authorisationRequest.getDocumentUuid(),
+                authorisationRequest.getPermissions());
+        return result ? Response.ok().build() : Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
     public void setAuthenticationService(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
+    }
+
+    public void setAuthorisationService(AuthorisationService authorisationService){
+        this.authorisationService = authorisationService;
     }
 
     private static Optional<UsernamePasswordToken> extractCredentialsFromHeader(ContainerRequest request){
@@ -104,3 +126,4 @@ public class AuthenticationResource {
         }
     }
 }
+w
