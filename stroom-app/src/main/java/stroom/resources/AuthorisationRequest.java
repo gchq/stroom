@@ -19,4 +19,3 @@ public class AuthorisationRequest {
         return permissions;
     }
 }
-

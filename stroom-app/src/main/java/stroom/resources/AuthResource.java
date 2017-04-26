@@ -18,6 +18,8 @@ package stroom.resources;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
+import com.sun.deploy.net.HttpResponse;
+import com.sun.org.apache.xerces.internal.util.Status;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.codec.Base64;
 import org.glassfish.jersey.server.ContainerRequest;
