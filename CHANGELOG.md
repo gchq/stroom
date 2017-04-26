@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.20] - 2017-04-26
+
 * Issue **#205** : File permissions in distribution have now been changed to `0750` for directories and shell scripts and `0640` for all other files.
 
 * Issue **#240** : Separate application permissions are now required to manage DB tables and tasks.
@@ -321,7 +323,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.19...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.20...HEAD
+[v5.0-beta.20]: https://github.com/gchq/stroom/compare/v5.0-beta.19...v5.0-beta.20
 [v5.0-beta.19]: https://github.com/gchq/stroom/compare/v5.0-beta.18...v5.0-beta.19
 [v5.0-beta.18]: https://github.com/gchq/stroom/compare/v5.0-beta.17...v5.0-beta.18
 [v5.0-beta.17]: https://github.com/gchq/stroom/compare/v5.0-beta.16...v5.0-beta.17
