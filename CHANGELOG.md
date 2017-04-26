@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#174** : Index shard checking is now done asynchronously during startup to reduce startup time.
 
+* Issue **#225** : Fixed NPE that was caused by processing instruction SAX events unexpectedly being fired by Xerces before start document events. This looks like it might be a bug in Xerces but the code now copes with the unexpected processing instruction event anyway.
+
 ## [v5.0-beta.19] - 2017-04-21
 
 * Issue **#155** : Changed password values to be obfuscated in the UI as 20 asterisks regardless of length.
