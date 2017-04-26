@@ -16,9 +16,11 @@
 
 package stroom.main.client.view;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.MySplitLayoutPanel;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -28,6 +30,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
+import stroom.util.shared.EqualsUtil;
 
 public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     public interface Binder extends UiBinder<Widget, MainViewImpl> {
@@ -35,6 +38,10 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
 
     private final Widget widget;
 
+    @UiField
+    SimplePanel banner;
+    @UiField
+    FlowPanel main;
     @UiField
     Spinner spinner;
     @UiField
@@ -48,10 +55,12 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     private MySplitLayoutPanel splitPanel;
     private Widget westWidget;
     private Widget centerWidget;
+    private String currentBanner;
 
     @Inject
     public MainViewImpl(final Binder binder) {
         this.widget = binder.createAndBindUi(this);
+        banner.setVisible(false);
         widget.sinkEvents(Event.KEYEVENTS);
     }
 
@@ -126,5 +135,21 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     @Override
     public SpinnerDisplay getSpinner() {
         return spinner;
+    }
+
+    @Override
+    public void setBanner(final String text) {
+        if (!EqualsUtil.isEquals(currentBanner, text)) {
+            currentBanner = text;
+            if (text == null || text.trim().length() == 0) {
+                main.getElement().getStyle().setTop(0, Unit.PX);
+                banner.setVisible(false);
+                banner.getElement().setInnerText("");
+            } else {
+                main.getElement().getStyle().setTop(20, Unit.PX);
+                banner.setVisible(true);
+                banner.getElement().setInnerText(text);
+            }
+        }
     }
 }

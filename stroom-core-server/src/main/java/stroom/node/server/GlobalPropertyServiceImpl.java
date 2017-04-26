@@ -27,6 +27,7 @@ import stroom.node.shared.GlobalPropertyService;
 import stroom.security.Secured;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -46,6 +47,18 @@ public class GlobalPropertyServiceImpl extends NamedEntityServiceImpl<GlobalProp
     @Inject
     GlobalPropertyServiceImpl(final StroomEntityManager entityManager) {
         super(entityManager);
+    }
+
+    @Override
+    public GlobalProperty save(final GlobalProperty entity) throws RuntimeException {
+        final GlobalProperty prop = super.save(entity);
+
+        // Update the local property so that this node at least sees the latest value.
+        if (prop != null) {
+            StroomProperties.setProperty(prop.getName(), prop.getValue(), StroomProperties.Source.DB);
+        }
+
+        return prop;
     }
 
     @Override

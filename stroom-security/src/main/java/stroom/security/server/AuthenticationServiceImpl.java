@@ -16,6 +16,14 @@
 
 package stroom.security.server;
 
+import event.logging.AuthenticateOutcomeReason;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.IncorrectCredentialsException;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.subject.Subject;
+import org.joda.time.DateTime;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.logging.AuthenticationEventLog;
@@ -29,15 +37,8 @@ import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.cert.CertificateUtil;
+import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
-import event.logging.AuthenticateOutcomeReason;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.IncorrectCredentialsException;
-import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.subject.Subject;
-import org.joda.time.DateTime;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -50,6 +51,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public static final String USER_SESSION_KEY = AuthenticationServiceImpl.class.getName() + "_US";
     public static final String USER_ID_SESSION_KEY = AuthenticationServiceImpl.class.getName() + "_UID";
     private static final int DEFAULT_DAYS_TO_PASSWORD_EXPIRY = 90;
+    private static final String PREVENT_LOGIN_PROPERTY = "stroom.maintenance.preventLogin";
 
     private static final StroomLogger LOGGER = StroomLogger.getLogger(AuthenticationServiceImpl.class);
 
@@ -70,6 +72,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.securityContext = securityContext;
+    }
+
+    private void checkLoginAllowed(final User user) {
+        if (user != null) {
+            final boolean preventLogin = StroomProperties.getBooleanProperty(PREVENT_LOGIN_PROPERTY, false);
+            if (preventLogin) {
+                securityContext.pushUser(user.getName());
+                try {
+                    if (!securityContext.isAdmin()) {
+                        throw new AuthenticationException("You are not allowed to login at this time");
+                    }
+                } finally {
+                    securityContext.popUser();
+                }
+            }
+        }
     }
 
     /**
@@ -99,6 +117,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 currentUser.login(token);
 
                 user = (User) currentUser.getPrincipal();
+                checkLoginAllowed(user);
 
                 // Pass back the user info
                 user = handleLogin(request, user, userName);
@@ -138,7 +157,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             }
         }
 
-        LOGGER.warn("login() - Bad Credentials %s", userName);
+        LOGGER.warn("login() - %s", e.getMessage());
 
         try {
             throw e;
@@ -331,6 +350,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return user;
         }
         user = loginWithCertificate();
+        checkLoginAllowed(user);
 
         return user;
     }

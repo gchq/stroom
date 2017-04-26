@@ -20,6 +20,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.security.client.event.CurrentUserChangedEvent;
@@ -29,12 +30,11 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
 
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.Set;
 
 @Singleton
-public class CurrentUser extends ClientSecurityContext implements HasHandlers {
+public class CurrentUser implements ClientSecurityContext, HasHandlers {
     private final EventBus eventBus;
     private final Provider<ClientDispatchAsync> dispatcherProvider;
     private User user;

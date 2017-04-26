@@ -23,19 +23,25 @@ import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.ManageEntityEditPresenter;
 import stroom.entity.shared.EntityServiceSaveAction;
+import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.GlobalProperty;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.popup.client.presenter.PopupSize;
 
 public final class ManageGlobalPropertyEditPresenter
         extends ManageEntityEditPresenter<ManageGlobalPropertyEditPresenter.GlobalPropertyEditView, GlobalProperty> {
-    final ClientDispatchAsync dispatcher;
+    private final ClientDispatchAsync dispatcher;
+    private final ClientPropertyCache clientPropertyCache;
 
     @Inject
-    public ManageGlobalPropertyEditPresenter(final EventBus eventBus, final GlobalPropertyEditView view,
-                                             final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
+    public ManageGlobalPropertyEditPresenter(final EventBus eventBus,
+                                             final GlobalPropertyEditView view,
+                                             final ClientDispatchAsync dispatcher,
+                                             final ClientSecurityContext securityContext,
+                                             final ClientPropertyCache clientPropertyCache) {
         super(eventBus, dispatcher, view, securityContext);
         this.dispatcher = dispatcher;
+        this.clientPropertyCache = clientPropertyCache;
     }
 
     @Override
@@ -70,9 +76,11 @@ public final class ManageGlobalPropertyEditPresenter
             setEntity(result);
             if (hideOnSave) {
                 hide();
+
+                // Refresh client properties in case they were affected by this change.
+                clientPropertyCache.refresh();
             }
         });
-
     }
 
     @Override

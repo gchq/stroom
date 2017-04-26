@@ -20,7 +20,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.rpc.StatusCodeException;
@@ -28,58 +27,27 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.shared.Action;
-import stroom.security.client.ClientSecurityContext;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
-import stroom.task.shared.RefreshAction;
 import stroom.util.client.RandomId;
 import stroom.util.shared.SharedObject;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 
-import javax.inject.Provider;
-
 public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers {
     private static final String LOGIN_HTML = "<title>Login</title>";
-    private static final int ONE_MINUTE = 1000 * 60;
 
     private final EventBus eventBus;
     private final DispatchServiceAsync dispatchService;
     private final String applicationInstanceId;
-    private boolean refreshing = false;
 
     @Inject
-    public ClientDispatchAsyncImpl(final EventBus eventBus, final Provider<ClientSecurityContext> securityContextProvider,
+    public ClientDispatchAsyncImpl(final EventBus eventBus,
                                    final DispatchServiceAsync dispatchService) {
         this.eventBus = eventBus;
         this.dispatchService = dispatchService;
         this.applicationInstanceId = RandomId.createDiscrimiator();
 
-        final Timer refreshTimer = new Timer() {
-            @Override
-            public void run() {
-                if (!refreshing) {
-                    final ClientSecurityContext securityContext = securityContextProvider.get();
-                    if (securityContext != null && securityContext.isLoggedIn()) {
-                        refreshing = true;
-                        final RefreshAction action = new RefreshAction();
-                        action.setApplicationInstanceId(applicationInstanceId);
-                        exec(action).onSuccess(result -> {
-                            if (result != null) {
-                                AlertEvent.fireWarn(ClientDispatchAsyncImpl.this, result.toString(), () -> refreshing = false);
-                            } else {
-                                refreshing = false;
-                            }
-                        }).onFailure(throwable -> refreshing = false);
-                    }
-                }
-            }
-        };
-        // Refresh all actions on the server every minute so that they
-        // don't die.
-        refreshTimer.scheduleRepeating(ONE_MINUTE);
-
-        // realService = GWT.create(DispatchService.class);
         final String endPointName = GWT.getModuleBaseURL() + "dispatch.rpc";
         final ServiceDefTarget target = (ServiceDefTarget) dispatchService;
         target.setServiceEntryPoint(endPointName);

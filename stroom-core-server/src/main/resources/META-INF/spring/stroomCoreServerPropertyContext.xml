@@ -293,10 +293,15 @@
             <property name="requireRestart" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.maintenanceMessage"/>
+            <property name="name" value="stroom.maintenance.message"/>
             <property name="value" value=""/>
-            <property name="description"
-                      value="Provide a message to prevent further logins and alert currently logged in users about an outage."/>
+            <property name="description" value="Provide a warning message to users about an outage or other significant event."/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.maintenance.preventLogin"/>
+            <property name="value" value="false"/>
+            <property name="description" value="Prevent new logins to the system. This is useful if the system is scheduled to have an outage."/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
