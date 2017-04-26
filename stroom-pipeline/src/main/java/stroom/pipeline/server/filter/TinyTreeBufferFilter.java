@@ -37,6 +37,7 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     private final ReceivingContentHandler handler;
     private final PipelineConfiguration pipe;
     private NodeInfo root;
+    private boolean startedDocument;
 
     public TinyTreeBufferFilter() {
         configuration = Configuration.newConfiguration();
@@ -63,6 +64,7 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
         handler.reset();
         handler.setPipelineConfiguration(pipe);
         handler.setReceiver(builder);
+        startedDocument = false;
     }
 
     @Override
@@ -101,8 +103,11 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
      */
     @Override
     public void startDocument() throws SAXException {
-        handler.startDocument();
-        super.startDocument();
+        if (!startedDocument) {
+            startedDocument = true;
+            handler.startDocument();
+            super.startDocument();
+        }
     }
 
     /**
@@ -124,6 +129,7 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
         }
 
         super.endDocument();
+        startedDocument = false;
     }
 
     /**
@@ -269,6 +275,9 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
      */
     @Override
     public void processingInstruction(final String target, final String data) throws SAXException {
+        // Ensure we have started a document - this avoids some unexpected behaviour in XMLParser where we receive processing instruction events before a startDocument() event, see gh-225.
+        startDocument();
+
         handler.processingInstruction(target, data);
         super.processingInstruction(target, data);
     }

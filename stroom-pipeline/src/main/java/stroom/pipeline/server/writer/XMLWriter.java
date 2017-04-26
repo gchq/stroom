@@ -72,6 +72,8 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     private CharBufferWriter stringWriter;
     private BufferedWriter bufferedWriter;
 
+    private boolean startedDocument;
+
     public XMLWriter() {
         this.locationFactory = null;
     }
@@ -94,6 +96,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
             th.setResult(new StreamResult(bufferedWriter));
             th.setDocumentLocator(locator);
             handler = th;
+            startedDocument = false;
 
         } catch (final TransformerConfigurationException e) {
             fatal(e);
@@ -126,14 +129,18 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     @Override
     public void startDocument() throws SAXException {
-        handler.startDocument();
-        super.startDocument();
+        if (!startedDocument) {
+            startedDocument = true;
+            handler.startDocument();
+            super.startDocument();
+        }
     }
 
     @Override
     public void endDocument() throws SAXException {
         handler.endDocument();
         super.endDocument();
+        startedDocument = false;
     }
 
     /**
@@ -379,6 +386,9 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      */
     @Override
     public void processingInstruction(final String target, final String data) throws SAXException {
+        // Ensure we have started a document - this avoids some unexpected behaviour in XMLParser where we receive processing instruction events before a startDocument() event, see gh-225.
+        startDocument();
+
         handler.processingInstruction(target, data);
         super.processingInstruction(target, data);
     }
