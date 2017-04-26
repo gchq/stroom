@@ -119,7 +119,6 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                 rawPresenter.format();
                 rawPresenter.setHighlights(highlights);
                 rawPresenter.setControlsVisible(playButtonVisible);
-                rawPresenter.format();
             }
         });
     }

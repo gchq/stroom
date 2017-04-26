@@ -229,14 +229,13 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
             if (!inputPresenter.getText().equals(input)) {
                 inputPresenter.setText(input);
+                if (formatInput) {
+                    inputPresenter.format();
+                }
             }
 
             inputPresenter.setFirstLineNumber(inputStartLineNo);
             inputPresenter.setIndicators(inputIndicators);
-
-            if (formatInput) {
-                inputPresenter.format();
-            }
         }
     }
 
@@ -247,14 +246,13 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
             if (!outputPresenter.getText().equals(output)) {
                 outputPresenter.setText(output);
+                if (formatOutput) {
+                    outputPresenter.format();
+                }
             }
 
             outputPresenter.setFirstLineNumber(outputStartLineNo);
             outputPresenter.setIndicators(outputIndicators);
-
-            if (formatOutput) {
-                outputPresenter.format();
-            }
         }
     }
 
