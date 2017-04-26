@@ -24,6 +24,7 @@ import stroom.resources.AuthenticationResource;
 import stroom.resources.SearchResource;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.security.server.AuthenticationService;
+import stroom.security.server.AuthorisationService;
 import stroom.util.upgrade.UpgradeDispatcherServlet;
 
 import javax.servlet.ServletException;
@@ -84,5 +85,8 @@ public class Resources {
     private void configureAuthenticationResource(ApplicationContext applicationContext){
         AuthenticationService authenticationService = applicationContext.getBean(AuthenticationService.class);
         authenticationResource.setAuthenticationService(authenticationService);
+
+        AuthorisationService authorisationService = applicationContext.getBean(AuthorisationService.class);
+        authenticationResource.setAuthorisationService(authorisationService);
     }
 }
