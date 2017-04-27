@@ -58,10 +58,10 @@ public class AuthenticationResource {
     @Timed
     @Insecure
     // We're going to use BasicHttpAuthentication by passing the token in with the header.
-    public Response getToken(ContainerRequest request){
+    public Response getToken(ContainerRequest request) {
         Optional<UsernamePasswordToken> credentials = extractCredentialsFromHeader(request);
 
-        if(credentials.isPresent()){
+        if (credentials.isPresent()) {
             // FIXME: Bad credentials are not an exceptional case and I shouldn't have to use try-catch to detect one.
             try {
                 // If we're not logged in the getting a token will fail.
@@ -72,14 +72,13 @@ public class AuthenticationResource {
                 return Response
                         .ok(token, MediaType.TEXT_PLAIN)
                         .build();
-            } catch (EntityServiceException e){
+            } catch (EntityServiceException e) {
                 return Response
                         .status(Response.Status.UNAUTHORIZED)
                         .entity(e.getMessage())
                         .build();
             }
-        }
-        else{
+        } else {
             return Response
                     .status(Response.Status.BAD_REQUEST)
                     .entity("This method expects a username and password (like this: 'username:password') in the Authorization header, encoded as Base64.")
@@ -93,7 +92,7 @@ public class AuthenticationResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
     @Insecure
-    public Response authoriseForStatistic(AuthorisationRequest authorisationRequest){
+    public Response authoriseForStatistic(AuthorisationRequest authorisationRequest) {
         boolean result = authorisationService.hasDocumentPermission(
                 authorisationRequest.getDocumentType(),
                 authorisationRequest.getDocumentUuid(),
@@ -105,11 +104,11 @@ public class AuthenticationResource {
         this.authenticationService = authenticationService;
     }
 
-    public void setAuthorisationService(AuthorisationService authorisationService){
+    public void setAuthorisationService(AuthorisationService authorisationService) {
         this.authorisationService = authorisationService;
     }
 
-    private static Optional<UsernamePasswordToken> extractCredentialsFromHeader(ContainerRequest request){
+    private static Optional<UsernamePasswordToken> extractCredentialsFromHeader(ContainerRequest request) {
         try {
             String authorizationHeader = request.getHeaderString("Authorization");
             if (Strings.isNullOrEmpty(authorizationHeader) || !authorizationHeader.contains("Basic")) {
