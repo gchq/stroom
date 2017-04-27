@@ -1,25 +1,22 @@
 package stroom.resources;
 
+import stroom.query.api.DocRef;
+
 public class AuthorisationRequest {
-    private String documentType;
-    private String documentUuid;
+    private DocRef docRef;
     private String permissions;
 
-    public AuthorisationRequest(String documentType, String documentUuid, String permissions){
-        this.documentType = documentType;
-        this.documentUuid = documentUuid;
+    public AuthorisationRequest(DocRef docRef, String permissions){
+        this.docRef = docRef;
         this.permissions = permissions;
     }
 
-    public String getDocumentType() {
-        return documentType;
-    }
-
-    public String getDocumentUuid() {
-        return documentUuid;
+    public DocRef getDocRef() {
+        return docRef;
     }
 
     public String getPermissions() {
         return permissions;
     }
 }
+

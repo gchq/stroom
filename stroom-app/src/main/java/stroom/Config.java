@@ -18,5 +18,16 @@ package stroom;
 
 import io.dropwizard.Configuration;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
 public class Config extends Configuration {
+
+    @NotNull
+    @Valid
+    private String zookeeperUrl;
+
+    public String getZookeeperUrl() {
+        return zookeeperUrl;
+    }
 }
