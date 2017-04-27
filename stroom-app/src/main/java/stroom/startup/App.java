@@ -19,9 +19,23 @@ package stroom.startup;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.curator.x.discovery.ServiceDiscovery;
+import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
+import org.apache.curator.x.discovery.ServiceInstance;
+import org.apache.curator.x.discovery.ServiceType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.Config;
 
+import static org.apache.shiro.web.filter.mgt.DefaultFilter.port;
+
 public class App extends Application<Config> {
+    private final Logger LOGGER = LoggerFactory.getLogger(App.class);
+
     public static void main(String[] args) throws Exception {
         new App().run(args);
     }
@@ -42,5 +56,36 @@ public class App extends Application<Config> {
         springContexts.start(environment, configuration);
         Resources resources = new Resources(environment.jersey(), servlets.upgradeDispatcherServletHolder);
         HealthChecks healthChecks = new HealthChecks(environment.healthChecks(), resources);
+
+        createServiceDiscovery(configuration, "TODO: IPADDRESS");
+    }
+
+    private void createServiceDiscovery(Config config, String ipAddress) {
+        LOGGER.info("Starting Curator client using Zookeeper at '{}'...", config.getZookeeperUrl());
+        RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
+        CuratorFramework client = CuratorFrameworkFactory.newClient(config.getZookeeperUrl(), retryPolicy);
+        client.start();
+
+        try {
+            LOGGER.info("Setting up instance for '{}' service, running on '{}:{}'...", "stroom", ipAddress, port);
+            ServiceInstance<String> instance = ServiceInstance.<String>builder()
+                    .serviceType(ServiceType.PERMANENT)
+                    .name("stroom")
+                    .address(ipAddress)
+                    .port(8080)
+                    .build();
+
+            ServiceDiscovery serviceDiscovery = ServiceDiscoveryBuilder
+                    .builder(String.class)
+                    .client(client)
+                    .basePath("stroom-services")
+                    .thisInstance(instance)
+                    .build();
+
+            serviceDiscovery.start();
+            LOGGER.info("Service instance created successfully!");
+        } catch (Exception e){
+            LOGGER.error("Service instance creation failed! ", e);
+        }
     }
 }

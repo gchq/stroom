@@ -46,6 +46,10 @@ dependencies {
     compile "ch.qos.logback:logback-classic:1.2.1"
     compile "org.slf4j:log4j-over-slf4j:1.7.22"
 
+    compile urlDependencies.get(versions.stroomQueryApi)
+    compile urlDependencies.get(versions.stroomQueryCommon)
+
+
     compile project(':stroom-core-server')
     compile project(':stroom-index-server')
     compile project(':stroom-statistics-server')
@@ -54,10 +58,11 @@ dependencies {
     compile "io.dropwizard:dropwizard-core:1.0.6"
     compile "io.dropwizard:dropwizard-assets:1.0.6"
 
-    // TODO Added after adding shading
-    compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
-    compile group: 'org.glassfish.web', name: 'javax.el', version: '2.2.6'
+    compile 'javax.el:javax.el-api:3.0.0'
+    compile 'org.glassfish.web:javax.el:3.0.0'
 
+    compile 'org.apache.curator:curator-framework:2.11.1'
+    compile'org.apache.curator:curator-x-discovery:2.11.1'
 
     compile 'org.springframework.security:spring-security-web:4.2.1.RELEASE'
     compile "org.springframework.security:spring-security-web:4.2.1.RELEASE"

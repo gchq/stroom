@@ -18,8 +18,6 @@ package stroom.resources;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
-import com.sun.deploy.net.HttpResponse;
-import com.sun.org.apache.xerces.internal.util.Status;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.codec.Base64;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -33,7 +31,6 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Optional;
@@ -46,7 +43,7 @@ import java.util.Optional;
 @Path("auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Insecure
-public class AuthenticationResource {
+public class AuthResource {
 
     private AuthenticationService authenticationService;
     private AuthorisationService authorisationService;
@@ -95,8 +92,8 @@ public class AuthenticationResource {
     @Insecure
     public Response authoriseForStatistic(AuthorisationRequest authorisationRequest){
         boolean result = authorisationService.hasDocumentPermission(
-                authorisationRequest.getDocumentType(),
-                authorisationRequest.getDocumentUuid(),
+                authorisationRequest.getDocRef().getType(),
+                authorisationRequest.getDocRef().getUuid(),
                 authorisationRequest.getPermissions());
         return result ? Response.ok().build() : Response.status(Response.Status.UNAUTHORIZED).build();
     }
