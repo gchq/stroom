@@ -20,7 +20,7 @@ import io.dropwizard.jersey.setup.JerseyEnvironment;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.context.ApplicationContext;
 import stroom.index.shared.IndexService;
-import stroom.resources.AuthenticationResource;
+import stroom.resources.AuthResource;
 import stroom.resources.SearchResource;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.security.server.AuthenticationService;
@@ -32,14 +32,14 @@ import javax.servlet.ServletException;
 public class Resources {
 
     private final SearchResource searchResource;
-    private final AuthenticationResource authenticationResource;
+    private final AuthResource authResource;
 
     public Resources(JerseyEnvironment jersey, ServletHolder upgradeDispatcherServlerHolder){
         searchResource = new SearchResource();
         jersey.register(searchResource);
 
-        authenticationResource = new AuthenticationResource();
-        jersey.register(authenticationResource);
+        authResource = new AuthResource();
+        jersey.register(authResource);
 
         new Thread(() -> register(upgradeDispatcherServlerHolder)).start();
 
@@ -84,9 +84,9 @@ public class Resources {
 
     private void configureAuthenticationResource(ApplicationContext applicationContext){
         AuthenticationService authenticationService = applicationContext.getBean(AuthenticationService.class);
-        authenticationResource.setAuthenticationService(authenticationService);
+        authResource.setAuthenticationService(authenticationService);
 
         AuthorisationService authorisationService = applicationContext.getBean(AuthorisationService.class);
-        authenticationResource.setAuthorisationService(authorisationService);
+        authResource.setAuthorisationService(authorisationService);
     }
 }
