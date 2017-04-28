@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#263** : The explorer tree now allows you to collapse the root 'System' node after it is first displayed.
+
 ## [v5.0-beta.20] - 2017-04-26
 
 * Issue **#205** : File permissions in distribution have now been changed to `0750` for directories and shell scripts and `0640` for all other files.
