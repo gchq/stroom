@@ -145,7 +145,7 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
                                 if (index == -1) {
                                     nextSelection = null;
 
-                                    if (result.getOpenedItems() != null) {
+                                    if (result != null && result.getOpenedItems() != null) {
                                         for (int i = result.getOpenedItems().size() - 1; i >= 0 && nextSelection == null; i--) {
                                             final ExplorerData item = result.getOpenedItems().get(i);
                                             if (rows.contains(item)) {
@@ -167,7 +167,7 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
                             // folders might have been opened to make this happen. The server will tell us which
                             // folders these were so we can add them to the set of open folders to ensure they
                             // aren't immediately closed on the next refresh.
-                            if (result.getOpenedItems() != null) {
+                            if (result != null && result.getOpenedItems() != null) {
                                 for (final ExplorerData openedItem : result.getOpenedItems()) {
                                     addOpenItem(openedItem);
                                 }
