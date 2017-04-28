@@ -35,7 +35,6 @@ import stroom.util.spring.StroomScope;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -114,13 +113,7 @@ class ExplorerServiceImpl implements ExplorerService {
         if (children != null) {
             // Once we have reached the minimum depth or have a parent that isn't open, we still need to try and add a
             // single item at this level so that we know that the parent has children.
-            boolean addAllChildren;
-
-            if (openItems.contains(parent)) {
-                addAllChildren = true;
-            } else {
-                addAllChildren = false;
-            }
+            final boolean addAllChildren = openItems.contains(parent);
 
             // We need to add add least one item to the tree to be able to determine if the parent is a leaf node.
             final Iterator<ExplorerData> iterator = children.iterator();
@@ -274,7 +267,7 @@ class ExplorerServiceImpl implements ExplorerService {
         }
 
         // Sort types by priority.
-        Collections.sort(documentTypes, (o1, o2) -> {
+        documentTypes.sort((o1, o2) -> {
             final int comparison = Integer.compare(o1.getPriority(), o2.getPriority());
             if (comparison != 0) {
                 return comparison;
