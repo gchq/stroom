@@ -22,13 +22,13 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.EntityItemListBox;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityReferenceFindAction;
-import stroom.item.client.ItemListBox;
 import stroom.query.shared.Condition;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.StreamAttributeCondition;
+
+import java.util.List;
 
 public class StreamAttributePresenter extends MyPresenterWidget<StreamAttributePresenter.StreamAttributeView> {
     @Inject
@@ -36,21 +36,21 @@ public class StreamAttributePresenter extends MyPresenterWidget<StreamAttributeP
                                     final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
 
-        final EntityReferenceFindAction<FindStreamAttributeKeyCriteria> findAction = new EntityReferenceFindAction<>(
-                new FindStreamAttributeKeyCriteria());
-        dispatcher.exec(findAction).onSuccess(resultList -> view.getStreamAttributeKey().addItems(resultList));
+        final FindStreamAttributeKeyCriteria criteria = new FindStreamAttributeKeyCriteria();
+        criteria.setOrderBy(FindStreamAttributeKeyCriteria.ORDER_BY_NAME);
+        dispatcher.exec(new EntityReferenceFindAction<>(criteria)).onSuccess(view::setKeys);
     }
 
     public void read(final StreamAttributeCondition condition) {
-        getView().getStreamAttributeKey().setSelectedItem(condition.getStreamAttributeKey());
-        getView().getStreamAttributeCondition().setSelectedItem(condition.getCondition());
-        getView().setStreamAttributeValue(condition.getFieldValue());
+        getView().setKey(condition.getStreamAttributeKey());
+        getView().setCondition(condition.getCondition());
+        getView().setValue(condition.getFieldValue());
     }
 
     public boolean write(final StreamAttributeCondition condition) {
-        final DocRef attributeKey = getView().getStreamAttributeKey().getSelectedItem();
-        final Condition attributeCondition = getView().getStreamAttributeCondition().getSelectedItem();
-        final String attributeValue = getView().getStreamAttributeValue();
+        final DocRef attributeKey = getView().getKey();
+        final Condition attributeCondition = getView().getCondition();
+        final String attributeValue = getView().getValue();
         if (attributeCondition != null && attributeValue != null && attributeValue.length() > 0) {
             condition.setStreamAttributeKey(attributeKey);
             condition.setCondition(attributeCondition);
@@ -64,12 +64,18 @@ public class StreamAttributePresenter extends MyPresenterWidget<StreamAttributeP
     }
 
     public interface StreamAttributeView extends View {
-        ItemListBox<Condition> getStreamAttributeCondition();
+        Condition getCondition();
 
-        EntityItemListBox getStreamAttributeKey();
+        void setCondition(Condition condition);
 
-        String getStreamAttributeValue();
+        void setKeys(List<DocRef> keys);
 
-        void setStreamAttributeValue(String value);
+        DocRef getKey();
+
+        void setKey(DocRef key);
+
+        String getValue();
+
+        void setValue(String value);
     }
 }

@@ -60,9 +60,9 @@ public class StreamAttributeListPresenter
         super(eventBus, view);
         this.streamAttributePresenter = streamAttributePresenter;
 
-        selectionModel = new MySingleSelectionModel<StreamAttributeCondition>();
+        selectionModel = new MySingleSelectionModel<>();
 
-        list = new CellTableViewImpl<StreamAttributeCondition>(true, (Resources) GWT.create(DefaultResources.class));
+        list = new CellTableViewImpl<>(true, GWT.create(DefaultResources.class));
         // Text.
         final Column<StreamAttributeCondition, String> textColumn = new Column<StreamAttributeCondition, String>(
                 new TextCell()) {
@@ -101,7 +101,7 @@ public class StreamAttributeListPresenter
     }
 
     public void read(final List<StreamAttributeCondition> data) {
-        this.data = new ArrayList<StreamAttributeCondition>(data);
+        this.data = new ArrayList<>(data);
         refresh();
         enableButtons();
     }

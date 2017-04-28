@@ -23,9 +23,12 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.entity.client.EntityItemListBox;
+import stroom.entity.shared.DocRef;
 import stroom.item.client.ItemListBox;
 import stroom.query.shared.Condition;
 import stroom.streamstore.client.presenter.StreamAttributePresenter.StreamAttributeView;
+
+import java.util.List;
 
 public class StreamAttributeViewImpl extends ViewImpl implements StreamAttributeView {
     public interface Binder extends UiBinder<Widget, StreamAttributeViewImpl> {
@@ -34,17 +37,17 @@ public class StreamAttributeViewImpl extends ViewImpl implements StreamAttribute
     private final Widget widget;
 
     @UiField(provided = true)
-    ItemListBox<Condition> streamAttributeCondition;
+    EntityItemListBox key;
     @UiField(provided = true)
-    EntityItemListBox streamAttributeKey;
+    ItemListBox<Condition> condition;
     @UiField
-    TextBox streamAttributeValue;
+    TextBox value;
 
     @Inject
     public StreamAttributeViewImpl(final Binder binder) {
-        streamAttributeKey = new EntityItemListBox("", false);
-        streamAttributeCondition = new ItemListBox<Condition>("");
-        streamAttributeCondition.addItems(Condition.SIMPLE_CONDITIONS);
+        key = new EntityItemListBox("", false);
+        condition = new ItemListBox<>("");
+        condition.addItems(Condition.SIMPLE_CONDITIONS);
         widget = binder.createAndBindUi(this);
     }
 
@@ -54,22 +57,37 @@ public class StreamAttributeViewImpl extends ViewImpl implements StreamAttribute
     }
 
     @Override
-    public EntityItemListBox getStreamAttributeKey() {
-        return streamAttributeKey;
+    public void setKeys(final List<DocRef> keys) {
+        key.addItems(keys);
     }
 
     @Override
-    public ItemListBox<Condition> getStreamAttributeCondition() {
-        return streamAttributeCondition;
+    public DocRef getKey() {
+        return key.getSelectedItem();
     }
 
     @Override
-    public String getStreamAttributeValue() {
-        return streamAttributeValue.getText();
+    public void setKey(final DocRef key) {
+        this.key.setSelectedItem(key);
     }
 
     @Override
-    public void setStreamAttributeValue(final String value) {
-        streamAttributeValue.setText(value);
+    public Condition getCondition() {
+        return condition.getSelectedItem();
+    }
+
+    @Override
+    public void setCondition(final Condition condition) {
+        this.condition.setSelectedItem(condition);
+    }
+
+    @Override
+    public String getValue() {
+        return value.getValue();
+    }
+
+    @Override
+    public void setValue(final String value) {
+        this.value.setValue(value);
     }
 }
