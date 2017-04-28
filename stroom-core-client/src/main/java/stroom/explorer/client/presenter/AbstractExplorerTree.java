@@ -21,7 +21,7 @@ import stroom.explorer.shared.ExplorerData;
 
 import java.util.List;
 
-public abstract class AbstractExporerTree extends Composite {
+public abstract class AbstractExplorerTree extends Composite {
     /**
      * Called by the model after refresh to select the initial item.
      * @param selection
