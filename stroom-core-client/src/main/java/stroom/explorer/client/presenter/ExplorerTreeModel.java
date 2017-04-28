@@ -173,6 +173,9 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
                                 }
                             }
 
+                            // We do not want the root to always be forced open.
+                            minDepth = 0;
+
                             // We do not want to ensure specific items are visible on every refresh as we might
                             // want to close some folders. To do this we need to forget which nodes we wanted to
                             // ensure visibility of. We can forget them now as we have a result that should have

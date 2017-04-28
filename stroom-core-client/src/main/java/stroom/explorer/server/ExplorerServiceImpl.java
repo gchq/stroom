@@ -68,17 +68,18 @@ class ExplorerServiceImpl implements ExplorerService {
         allOpen.addAll(forcedOpen);
 
         final TreeModel filteredModel = new TreeModelImpl();
-        addDescendants(FolderRootExplorerDataProvider.ROOT, masterTreeModel, filteredModel, criteria.getFilter(), allOpen, criteria.getMinDepth(), 0);
+        addDescendants(FolderRootExplorerDataProvider.ROOT, masterTreeModel, filteredModel, criteria.getFilter(), allOpen, 0);
 
         // Add root node.
         result.getTreeStructure().add(null, FolderRootExplorerDataProvider.ROOT);
-        addChildren(FolderRootExplorerDataProvider.ROOT, filteredModel, criteria.getOpenItems(), forcedOpen, criteria.getMinDepth(), 0, result);
+        addChildren(FolderRootExplorerDataProvider.ROOT, filteredModel, criteria.getOpenItems(), forcedOpen, 0, result);
 
         return result;
     }
 
     private Set<ExplorerData> getForcedOpenItems(final TreeModel masterTreeModel, final FindExplorerDataCriteria criteria) {
         final Set<ExplorerData> forcedOpen = new HashSet<>();
+        // Add parents of  nodes that we have been requested to ensure are visible.
         if (criteria.getEnsureVisible() != null && criteria.getEnsureVisible().size() > 0) {
             for (final ExplorerData ensureVisible : criteria.getEnsureVisible()) {
 
@@ -89,10 +90,24 @@ class ExplorerServiceImpl implements ExplorerService {
                 }
             }
         }
+        // Add nodes that should be forced open because they are deeper than the minimum expansion depth.
+        if (criteria.getMinDepth() != null && criteria.getMinDepth() > 0) {
+            forceMinDepthOpen(masterTreeModel, forcedOpen, null, criteria.getMinDepth(), 1);
+        }
         return forcedOpen;
     }
 
-    private boolean addDescendants(final ExplorerData parent, final TreeModel treeModelIn, final TreeModel treeModelOut, final ExplorerTreeFilter filter, final Set<ExplorerData> openItems, final Integer minDepth, final int currentDepth) {
+    private void forceMinDepthOpen(final TreeModel masterTreeModel, final Set<ExplorerData> forcedOpen, final ExplorerData parent, final int minDepth, final int depth) {
+        final List<ExplorerData> children = masterTreeModel.getChildMap().get(parent);
+        for (final ExplorerData child : children) {
+            forcedOpen.add(child);
+            if (minDepth > depth) {
+                forceMinDepthOpen(masterTreeModel, forcedOpen, child, minDepth, depth + 1);
+            }
+        }
+    }
+
+    private boolean addDescendants(final ExplorerData parent, final TreeModel treeModelIn, final TreeModel treeModelOut, final ExplorerTreeFilter filter, final Set<ExplorerData> openItems, final int currentDepth) {
         boolean added = false;
 
         final List<ExplorerData> children = treeModelIn.getChildMap().get(parent);
@@ -101,7 +116,7 @@ class ExplorerServiceImpl implements ExplorerService {
             // single item at this level so that we know that the parent has children.
             boolean addAllChildren;
 
-            if (openItems.contains(parent) || currentDepth < minDepth) {
+            if (openItems.contains(parent)) {
                 addAllChildren = true;
             } else {
                 addAllChildren = false;
@@ -113,7 +128,7 @@ class ExplorerServiceImpl implements ExplorerService {
                 final ExplorerData child = iterator.next();
 
                 // Recurse right down to find out if a descendant is being added and therefore if we need to include this as an ancestor.
-                final boolean hasChildren = addDescendants(child, treeModelIn, treeModelOut, filter, openItems, minDepth, currentDepth + 1);
+                final boolean hasChildren = addDescendants(child, treeModelIn, treeModelOut, filter, openItems, currentDepth + 1);
                 if (hasChildren) {
                     treeModelOut.add(parent, child);
                     added = true;
@@ -173,7 +188,7 @@ class ExplorerServiceImpl implements ExplorerService {
         return nameFilter == null || explorerData.getDisplayValue().toLowerCase().contains(nameFilter.toLowerCase());
     }
 
-    private void addChildren(final ExplorerData parent, final TreeModel filteredModel, final Set<ExplorerData> openItems, final Set<ExplorerData> forcedOpen, final Integer minDepth, final int currentDepth, final FetchExplorerDataResult result) {
+    private void addChildren(final ExplorerData parent, final TreeModel filteredModel, final Set<ExplorerData> openItems, final Set<ExplorerData> forcedOpen, final int currentDepth, final FetchExplorerDataResult result) {
         parent.setDepth(currentDepth);
 
         // See if we need to force this item open.
@@ -187,11 +202,11 @@ class ExplorerServiceImpl implements ExplorerService {
         if (children == null) {
             parent.setNodeState(HasNodeState.NodeState.LEAF);
 
-        } else if (force || openItems.contains(parent) || currentDepth < minDepth) {
+        } else if (force || openItems.contains(parent)) {
             parent.setNodeState(HasNodeState.NodeState.OPEN);
             for (final ExplorerData child : children) {
                 result.getTreeStructure().add(parent, child);
-                addChildren(child, filteredModel, openItems, forcedOpen, minDepth, currentDepth + 1, result);
+                addChildren(child, filteredModel, openItems, forcedOpen, currentDepth + 1, result);
             }
 
         } else {
