@@ -86,7 +86,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
                     }
                 };
 
-                final GenericServerTask task = new GenericServerTask(parentTask, null, null, "Process",
+                final GenericServerTask task = GenericServerTask.create(parentTask,  "Process",
                         null);
                 task.setRunnable(processor::process);
                 taskManager.execAsync(task, taskCallback);

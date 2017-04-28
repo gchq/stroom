@@ -292,8 +292,7 @@ public class ProxyAggregationExecutor {
             @Override
             public void execute(final String message, final Runnable runnable) {
                 if (!stop) {
-                    final GenericServerTask genericServerTask = new GenericServerTask(task, task.getSessionId(), task.getUserId(),
-                            task.getTaskName(), message);
+                    final GenericServerTask genericServerTask = GenericServerTask.create(task, task.getTaskName(), message);
                     genericServerTask.setRunnable(runnable);
                     taskPool.fork(genericServerTask);
                 }

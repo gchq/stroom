@@ -5,7 +5,7 @@ import stroom.security.shared.UserRef;
 import java.util.Deque;
 import java.util.LinkedList;
 
-public final class CurrentUserState {
+final class CurrentUserState {
     private static class State {
         private final UserRef userRef;
         private final boolean elevatePermissions;
@@ -19,18 +19,18 @@ public final class CurrentUserState {
             return userRef;
         }
 
-        public boolean isElevatePermissions() {
+        boolean isElevatePermissions() {
             return elevatePermissions;
         }
     }
 
-    private static final ThreadLocal<Deque<State>> THREAD_LOCAL = InheritableThreadLocal.withInitial(() -> new LinkedList<>());
+    private static final ThreadLocal<Deque<State>> THREAD_LOCAL = InheritableThreadLocal.withInitial(LinkedList::new);
 
     private CurrentUserState() {
         // Utility.
     }
 
-    public static void pushUserRef(final UserRef userRef) {
+    static void pushUserRef(final UserRef userRef) {
         final Deque<State> deque = THREAD_LOCAL.get();
 
         final State state = deque.peek();
@@ -41,13 +41,13 @@ public final class CurrentUserState {
         }
     }
 
-    public static UserRef popUserRef() {
+    static UserRef popUserRef() {
         final Deque<State> deque = THREAD_LOCAL.get();
         final State state = deque.pop();
         return state.getUserRef();
     }
 
-    public static UserRef currentUserRef() {
+    static UserRef currentUserRef() {
         final Deque<State> deque = THREAD_LOCAL.get();
         final State state = deque.peek();
         if (state != null) {
@@ -56,7 +56,7 @@ public final class CurrentUserState {
         return null;
     }
 
-    public static void elevatePermissions() {
+    static void elevatePermissions() {
         final Deque<State> deque = THREAD_LOCAL.get();
         final State state = deque.peek();
         if (state != null) {
@@ -66,18 +66,14 @@ public final class CurrentUserState {
         }
     }
 
-    public static void restorePermissions() {
+    static void restorePermissions() {
         final Deque<State> deque = THREAD_LOCAL.get();
         deque.pop();
     }
 
-    public static boolean isElevatePermissions() {
+    static boolean isElevatePermissions() {
         final Deque<State> deque = THREAD_LOCAL.get();
         final State state = deque.peek();
-        if (state != null) {
-            return state.isElevatePermissions();
-        }
-
-        return false;
+        return state != null && state.isElevatePermissions();
     }
 }

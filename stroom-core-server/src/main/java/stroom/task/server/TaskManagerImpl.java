@@ -33,12 +33,16 @@ import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.task.*;
+import stroom.util.task.ExternalShutdownController;
+import stroom.util.task.HasMonitor;
+import stroom.util.task.MonitorInfoUtil;
+import stroom.util.task.TaskScopeContextHolder;
+import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.ThreadScopeRunnable;
 import stroom.util.thread.ThreadUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -57,22 +61,26 @@ import java.util.concurrent.locks.ReentrantLock;
 @Component("taskManager")
 public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskProgressCriteria> {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(TaskManagerImpl.class);
+
+    private final TaskHandlerBeanRegistry taskHandlerBeanRegistry;
+    private final NodeCache nodeCache;
+    private final StroomBeanStore beanStore;
+    private final SecurityContext securityContext;
+
     private final AtomicInteger currentAsyncTaskCount = new AtomicInteger();
     private final Map<TaskId, TaskThread<?>> currentTasks = new ConcurrentHashMap<>(1024, 0.75F, 1024);
     private final AtomicBoolean stop = new AtomicBoolean();
     // The thread pools that will be used to execute tasks.
     private final ConcurrentHashMap<ThreadPool, ThreadPoolExecutor> threadPoolMap = new ConcurrentHashMap<>();
     private final ReentrantLock poolCreationLock = new ReentrantLock();
-    @Resource
-    private TaskHandlerBeanRegistry taskHandlerBeanRegistry;
-    @Resource
-    private NodeCache nodeCache;
-    @Resource
-    private StroomBeanStore beanStore;
-    @Resource
-    private SecurityContext securityContext;
 
-    public TaskManagerImpl() {
+    @Inject
+    TaskManagerImpl(final TaskHandlerBeanRegistry taskHandlerBeanRegistry, final NodeCache nodeCache, final StroomBeanStore beanStore, final SecurityContext securityContext) {
+        this.taskHandlerBeanRegistry = taskHandlerBeanRegistry;
+        this.nodeCache = nodeCache;
+        this.beanStore = beanStore;
+        this.securityContext = securityContext;
+
         // When we are running unit tests we need to make sure that all Stroom
         // threads complete and are shutdown between tests.
         ExternalShutdownController.addTerminateHandler(TaskManagerImpl.class, () -> shutdown());
@@ -95,7 +103,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
                         // Create the new thread pool for this priority
                         executor = new ThreadPoolExecutor(threadPool.getCorePoolSize(), threadPool.getMaxPoolSize(),
-                                60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), taskThreadFactory);
+                                60L, TimeUnit.SECONDS, new SynchronousQueue<>(), taskThreadFactory);
                         threadPoolMap.put(threadPool, executor);
                     }
                 }
@@ -364,7 +372,6 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Task has null user: " + task.getClass().getSimpleName());
                 }
-                userId = ServerTask.INTERNAL_PROCESSING_USER;
             }
 
             securityContext.pushUser(userId);

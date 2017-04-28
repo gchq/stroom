@@ -16,6 +16,7 @@
 
 package stroom.cluster.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
@@ -28,7 +29,6 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.thread.ThreadUtil;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 import java.util.HashSet;
@@ -132,7 +132,7 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
             if (node.equals(thisNode)) {
                 addEnabledActiveNode(clusterState, node);
             } else {
-                final GenericServerTask genericServerTask = new GenericServerTask(updateClusterStateTask, null, null,
+                final GenericServerTask genericServerTask = GenericServerTask.create(updateClusterStateTask,
                         "Get Active Nodes", "Getting active nodes");
                 genericServerTask.setRunnable(() -> {
                     try {

@@ -16,6 +16,13 @@
 
 package stroom.search.server.shard;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.util.Version;
+import org.springframework.context.annotation.Scope;
 import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
 import stroom.node.server.StroomPropertyService;
@@ -31,13 +38,6 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.util.Version;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -143,8 +143,7 @@ public class IndexShardSearchTaskHandler extends AbstractTaskHandler<IndexShardS
             final IndexSearcher searcher = new IndexSearcher(reader);
 
             try {
-                final GenericServerTask searchingTask = new GenericServerTask(task, task.getSessionId(),
-                        task.getUserId(), "Index Searcher", "");
+                final GenericServerTask searchingTask = GenericServerTask.create(task, "Index Searcher", "");
                 searchingTask.setRunnable(() -> {
                     try {
                         searcher.search(query, collector);

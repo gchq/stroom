@@ -16,17 +16,22 @@
 
 package stroom.task.cluster;
 
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 import stroom.cluster.server.ClusterCallService;
 import stroom.node.shared.Node;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.*;
+import stroom.util.logging.StroomLogger;
+import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.SharedObject;
+import stroom.util.shared.SimpleThreadPool;
+import stroom.util.shared.Task;
+import stroom.util.shared.TaskId;
+import stroom.util.shared.ThreadPool;
 import stroom.util.task.TaskScopeContextHolder;
 import stroom.util.thread.ThreadUtil;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -42,8 +47,8 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
 
     public static final String BEAN_NAME = "clusterDispatchAsync";
     public static final String RECEIVE_RESULT_METHOD = "receiveResult";
-    static final Class<?>[] RECEIVE_RESULT_METHOD_ARGS = { ClusterTask.class, Node.class, TaskId.class,
-            CollectorId.class, SharedObject.class, Throwable.class, Boolean.class };
+    static final Class<?>[] RECEIVE_RESULT_METHOD_ARGS = {ClusterTask.class, Node.class, TaskId.class,
+            CollectorId.class, SharedObject.class, Throwable.class, Boolean.class};
 
     public static final ThreadPool THREAD_POOL = new SimpleThreadPool(5);
     private static final String RECEIVE_RESULT = "receiveResult";
@@ -56,7 +61,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
 
     @Inject
     public ClusterDispatchAsyncImpl(final TaskManager taskManager, final ClusterResultCollectorCache collectorCache,
-            @Named("clusterCallServiceRemote") final ClusterCallService clusterCallService) {
+                                    @Named("clusterCallServiceRemote") final ClusterCallService clusterCallService) {
         this.taskManager = taskManager;
         this.collectorCache = collectorCache;
         this.clusterCallService = clusterCallService;
@@ -64,7 +69,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
 
     @Override
     public <R extends SharedObject> void execAsync(final ClusterTask<R> task, final ClusterResultCollector<R> collector,
-            final Node sourceNode, final Set<Node> targetNodes) {
+                                                   final Node sourceNode, final Set<Node> targetNodes) {
         // Try and discover the parent task for this task as one hasn't been
         // supplied.
         if (!TaskScopeContextHolder.contextExists()) {
@@ -76,7 +81,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     }
 
     private <R extends SharedObject> void execAsync(final Task<?> sourceTask, final ClusterTask<R> clusterTask,
-            final ClusterResultCollector<R> collector, final Node sourceNode, final Set<Node> targetNodes) {
+                                                    final ClusterResultCollector<R> collector, final Node sourceNode, final Set<Node> targetNodes) {
         if (sourceTask == null) {
             throw new NullPointerException("A source task must be provided");
         }
@@ -123,7 +128,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
             sb.append("'");
             final String message = sb.toString();
 
-            final GenericServerTask clusterCallTask = new GenericServerTask(sourceTask,clusterTask.getSessionId(), clusterTask.getUserId(), "Cluster call", message);
+            final GenericServerTask clusterCallTask = GenericServerTask.create(sourceTask, clusterTask.getSessionId(), clusterTask.getUserId(), "Cluster call", message);
             // Create a runnable so we can execute the remote call
             // asynchronously.
             clusterCallTask.setRunnable(() -> {
@@ -151,26 +156,19 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
      * processed by the named collector in a new task thread so that result
      * consumption does not hold on to the HTTP connection.
      *
-     * @param task
-     *            The task that was executed on the target worker node.
-     * @param targetNode
-     *            The worker node that is returning the result.
-     * @param sourceTaskId
-     *            The id of the parent task that owns this worker cluster task.
-     * @param collectorId
-     *            The id of the collector to send results back to.
-     * @param result
-     *            The result of the remote task execution.
-     * @param throwable
-     *            An exception that may have been thrown during remote task
-     *            execution in the result of task failure.
-     * @param success
-     *            Whether or not the remote task executed successfully.
+     * @param task         The task that was executed on the target worker node.
+     * @param targetNode   The worker node that is returning the result.
+     * @param sourceTaskId The id of the parent task that owns this worker cluster task.
+     * @param collectorId  The id of the collector to send results back to.
+     * @param result       The result of the remote task execution.
+     * @param throwable    An exception that may have been thrown during remote task
+     *                     execution in the result of task failure.
+     * @param success      Whether or not the remote task executed successfully.
      */
     @SuppressWarnings("unchecked")
     public <R extends SharedObject> Boolean receiveResult(final stroom.task.cluster.ClusterTask<R> task,
-            final Node targetNode, final TaskId sourceTaskId, final CollectorId collectorId, final R result,
-            final Throwable throwable, final Boolean success) {
+                                                          final Node targetNode, final TaskId sourceTaskId, final CollectorId collectorId, final R result,
+                                                          final Throwable throwable, final Boolean success) {
         boolean successfullyReceived = false;
 
         DebugTrace.debugTraceIn(task, receiveResult, success);
@@ -217,7 +215,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                         sb.append("'");
                         final String message = sb.toString();
 
-                        final GenericServerTask genericServerTask = new GenericServerTask(sourceTask, task.getSessionId(),
+                        final GenericServerTask genericServerTask = GenericServerTask.create(sourceTask, task.getSessionId(),
                                 task.getUserId(), "Cluster result", message);
                         genericServerTask.setRunnable(() -> {
                             final LogExecutionTime logExecutionTime = new LogExecutionTime();

@@ -26,9 +26,9 @@ import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceKey;
-import stroom.util.task.ServerTask;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -49,12 +49,18 @@ public class ExportConfigServlet extends HttpServlet {
 
     private static final long serialVersionUID = -4533441835216235920L;
 
-    @Resource
-    private transient SecurityContext securityContext;
-    @Resource
-    private transient ImportExportService importExportService;
-    @Resource(name = "resourceStore")
-    private transient ResourceStore resourceStore;
+    private final transient SecurityContext securityContext;
+    private final transient ImportExportService importExportService;
+    private final transient ResourceStore resourceStore;
+
+    @Inject
+    public ExportConfigServlet(final SecurityContext securityContext,
+                               final ImportExportService importExportService,
+                               @Named("resourceStore") final ResourceStore resourceStore) {
+        this.securityContext = securityContext;
+        this.importExportService = importExportService;
+        this.resourceStore = resourceStore;
+    }
 
     /**
      * Method Interceptor needs to go on public API By-pass authentication /
@@ -72,23 +78,18 @@ public class ExportConfigServlet extends HttpServlet {
             throws ServletException, IOException {
         final ResourceKey tempResourceKey = resourceStore.createTempFile("StroomConfig.zip");
 
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER);
         try {
-            try {
-                final Path tempFile = resourceStore.getTempFile(tempResourceKey);
+            final Path tempFile = resourceStore.getTempFile(tempResourceKey);
 
-                final DocRefs docRefs = new DocRefs();
-                docRefs.add(new DocRef(Folder.ENTITY_TYPE,"0", "System"));
+            final DocRefs docRefs = new DocRefs();
+            docRefs.add(new DocRef(Folder.ENTITY_TYPE, "0", "System"));
 
-                importExportService.exportConfig(docRefs, tempFile, new ArrayList<>());
+            importExportService.exportConfig(docRefs, tempFile, new ArrayList<>());
 
-                StreamUtil.streamToStream(Files.newInputStream(tempFile), resp.getOutputStream(), true);
+            StreamUtil.streamToStream(Files.newInputStream(tempFile), resp.getOutputStream(), true);
 
-            } finally {
-                resourceStore.deleteTempFile(tempResourceKey);
-            }
         } finally {
-            securityContext.popUser();
+            resourceStore.deleteTempFile(tempResourceKey);
         }
     }
 }

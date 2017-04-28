@@ -77,15 +77,19 @@ class SecurityContextImpl implements SecurityContext {
 
     @Override
     public void pushUser(final String name) {
-        UserRef userRef = INTERNAL_PROCESSING_USER;
-        if (name != null && !INTERNAL_PROCESSING_USER.getName().equals(name)) {
-            userRef = userService.getUserByName(name);
-        }
+        UserRef userRef = null;
 
-        if (userRef == null) {
-            final String message = "Unable to push user '" + name + "' as user is unknown";
-            LOGGER.error(message);
-            throw new AuthenticationServiceException(message);
+        if (name != null) {
+            if (INTERNAL_PROCESSING_USER.getName().equals(name)) {
+                userRef = INTERNAL_PROCESSING_USER;
+            } else {
+                userRef = userService.getUserByName(name);
+                if (userRef == null) {
+                    final String message = "Unable to push user '" + name + "' as user is unknown";
+                    LOGGER.error(message);
+                    throw new AuthenticationServiceException(message);
+                }
+            }
         }
 
         CurrentUserState.pushUserRef(userRef);
@@ -365,13 +369,13 @@ class SecurityContextImpl implements SecurityContext {
                                 if (permissions.contains(allowedPermission)) {
 //                                    // Don't allow owner permissions to be inherited.
 //                                    if (!DocumentPermissionNames.OWNER.equals(allowedPermission)) {
-                                        try {
-                                            documentPermissionService.addPermission(userRef, destDocRef, allowedPermission);
-                                        } catch (final RollbackException | TransactionException e) {
-                                            LOGGER.debug(e.getMessage(), e);
-                                        } catch (final Exception e) {
-                                            LOGGER.error(e.getMessage(), e);
-                                        }
+                                    try {
+                                        documentPermissionService.addPermission(userRef, destDocRef, allowedPermission);
+                                    } catch (final RollbackException | TransactionException e) {
+                                        LOGGER.debug(e.getMessage(), e);
+                                    } catch (final Exception e) {
+                                        LOGGER.error(e.getMessage(), e);
+                                    }
 //                                    }
                                 }
                             }

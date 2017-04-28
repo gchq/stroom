@@ -290,8 +290,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                     "Writing test streams\n", taskMonitor, taskManager, concurrentWriters);
             for (int i = 1; i <= streamCount && !isTerminated(); i++) {
                 final int count = i;
-                final GenericServerTask writerTask = new GenericServerTask(null, null, null,
-                        "WriteBenchmarkData", "Writing benchmark data");
+                final GenericServerTask writerTask = GenericServerTask.create("WriteBenchmarkData", "Writing benchmark data");
                 writerTask.setRunnable(() -> {
                     final Stream stream = writeData(feed, streamType, data);
 

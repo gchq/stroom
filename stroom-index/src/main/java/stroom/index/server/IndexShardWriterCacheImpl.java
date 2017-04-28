@@ -267,8 +267,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
      * Check the health of all owned shards.
      */
     private void checkShards() {
-        final GenericServerTask task = new GenericServerTask(null, null,
-                null, "Check Shards", "Checking Shards...");
+        final GenericServerTask task = GenericServerTask.create("Check Shards", "Checking Shards...");
         final Runnable runnable = () -> {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
             final Iterator<Entry<IndexShard, IndexShardWriter>> iter = ownedWriters.entrySet().iterator();
@@ -302,8 +301,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
     private void deleteLogicallyDeleted() {
         if (deletingShards.compareAndSet(false, true)) {
             try {
-                final GenericServerTask task = new GenericServerTask(null, null,
-                        null, "Delete Logically Deleted Shards", "Deleting Logically Deleted Shards...");
+                final GenericServerTask task = GenericServerTask.create("Delete Logically Deleted Shards", "Deleting Logically Deleted Shards...");
                 final Runnable runnable = () -> {
                     try {
                         final LogExecutionTime logExecutionTime = new LogExecutionTime();

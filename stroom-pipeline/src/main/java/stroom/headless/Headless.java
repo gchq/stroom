@@ -140,7 +140,7 @@ public class Headless extends AbstractCommandLineTool {
 
     @Override
     public void run() {
-        new TaskScopeRunnable(new GenericServerTask(null, null, null, "Headless Stroom", null)) {
+        new TaskScopeRunnable(GenericServerTask.create("Headless Stroom", null)) {
             @Override
             protected void exec() {
                 new ThreadScopeRunnable() {
