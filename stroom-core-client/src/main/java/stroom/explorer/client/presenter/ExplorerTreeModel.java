@@ -200,10 +200,6 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
         }
     }
 
-//    public void clear() {
-//        exporerTree.setData(new ArrayList<>());
-//    }
-
     public void reset() {
         exporerTree.setData(new ArrayList<>());
         clearOpenItems();
