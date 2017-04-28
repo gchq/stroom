@@ -45,7 +45,6 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
     private Set<ExplorerData> ensureVisible;
 
     private FindExplorerDataCriteria currentCriteria;
-    private FetchExplorerDataResult currentResult;
     private boolean fetching;
 
     private boolean includeNullSelection;
@@ -189,7 +188,6 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
     }
 
     protected void onDataChanged(final FetchExplorerDataResult result) {
-        currentResult = result;
     }
 
     private void addToRows(final ExplorerData parent, final TreeStructure treeStructure, final List<ExplorerData> rows) {
@@ -202,11 +200,12 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
         }
     }
 
-    public void clear() {
-        exporerTree.setData(new ArrayList<>());
-    }
+//    public void clear() {
+//        exporerTree.setData(new ArrayList<>());
+//    }
 
     public void reset() {
+        exporerTree.setData(new ArrayList<>());
         clearOpenItems();
         minDepth = 1;
         ensureVisible = null;

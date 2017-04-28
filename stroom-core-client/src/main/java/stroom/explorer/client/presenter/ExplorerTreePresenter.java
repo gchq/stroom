@@ -132,7 +132,7 @@ public class ExplorerTreePresenter
         // Set the data for the type filter.
         documentTypeCache.fetch().onSuccess(typeFilterPresenter::setDocumentTypes);
 
-        explorerTree.getTreeModel().clear();
+//        explorerTree.getTreeModel().clear();
         explorerTree.getTreeModel().reset();
         explorerTree.getTreeModel().setRequiredPermissions(DocumentPermissionNames.READ);
         explorerTree.getTreeModel().setIncludedTypeSet(null);

@@ -53,10 +53,6 @@ public abstract class DropDownTreePresenter extends MyPresenterWidget<DropDownTr
 
     protected abstract void focus();
 
-    public void setCellTree(final Widget widget) {
-        getView().setCellTree(widget);
-    }
-
     @Override
     public void onHide(final boolean autoClose, final boolean ok) {
         // Do nothing.
