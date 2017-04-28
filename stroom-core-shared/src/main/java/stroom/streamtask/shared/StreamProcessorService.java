@@ -19,5 +19,8 @@ package stroom.streamtask.shared;
 import stroom.entity.shared.BaseEntityService;
 import stroom.entity.shared.FindService;
 
+import java.util.Set;
+
 public interface StreamProcessorService extends BaseEntityService<StreamProcessor>, FindService<StreamProcessor, FindStreamProcessorCriteria> {
+    StreamProcessor loadByIdInsecure(long id) throws RuntimeException;
 }

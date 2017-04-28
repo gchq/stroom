@@ -24,6 +24,7 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.SQLUtil;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
@@ -44,6 +45,12 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
     @Inject
     StreamProcessorServiceImpl(final StroomEntityManager entityManager) {
         super(entityManager);
+    }
+
+    @Insecure
+    @Override
+    public StreamProcessor loadByIdInsecure(final long id) throws RuntimeException {
+        return loadById(id);
     }
 
     @Override

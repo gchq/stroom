@@ -16,57 +16,50 @@
 
 package stroom.test;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import stroom.CommonTestControl;
 import stroom.dashboard.shared.Dashboard;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.DocRef;
+import stroom.entity.shared.Folder;
+import stroom.entity.shared.FolderService;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.jobsystem.shared.JobNodeService;
 import stroom.jobsystem.shared.JobService;
-import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
-import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.security.server.DBRealm;
-import stroom.statistics.common.FindStatisticsEntityCriteria;
 import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.shared.StatisticStore;
-import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeKeyService;
-import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Script to create some base data for testing.
@@ -85,6 +78,8 @@ public final class SetupSampleDataBean {
     private DBRealm dbRealm;
     @Resource
     private FeedService feedService;
+    @Resource
+    private FolderService folderService;
     @Resource
     private StreamStore streamStore;
     @Resource
@@ -138,107 +133,109 @@ public final class SetupSampleDataBean {
         LOGGER.info("Creating admin user");
         dbRealm.createOrRefreshAdmin();
 
-        // Sample data/config can exist in many projects so here we define all
-        // the root directories that we want to
-        // process
-        final Path[] rootDirs = new Path[] {StroomCoreServerTestFileUtil.getTestResourcesDir().toPath().resolve(ROOT_DIR_NAME),
-                Paths.get("./stroom-statistics-server/src/test/resources").resolve(ROOT_DIR_NAME) };
+        createRandomExplorerData(null, "", 0, 2);
 
-        // process each root dir in turn
-        for (final Path dir : rootDirs) {
-            loadDirectory(shutdown, dir);
-        }
-
-        generateSampleStatisticsData();
-
-        // code to check that the statisticsDataSource objects are stored
-        // correctly
-        final BaseResultList<StatisticStoreEntity> statisticsDataSources = statisticsDataSourceService
-                .find(FindStatisticsEntityCriteria.instance());
-
-        for (final StatisticStoreEntity statisticsDataSource : statisticsDataSources) {
-            LOGGER.info(String.format("Retreiving statisticsDataSource with name: %s, engine: %s and type: %s",
-                    statisticsDataSource.getName(), statisticsDataSource.getEngineName(),
-                    statisticsDataSource.getStatisticType()));
-        }
-
-        // Add volumes to all indexes.
-        final BaseResultList<Volume> volumeList = volumeService.find(new FindVolumeCriteria());
-        final BaseResultList<Index> indexList = indexService.find(new FindIndexCriteria());
-        final Set<Volume> volumeSet = new HashSet<Volume>(volumeList);
-
-        for (final Index index : indexList) {
-            index.setVolumes(volumeSet);
-            indexService.save(index);
-
-            // Find the pipeline for this index.
-            final BaseResultList<PipelineEntity> pipelines = pipelineEntityService
-                    .find(new FindPipelineEntityCriteria(index.getName()));
-
-            if (pipelines == null || pipelines.size() == 0) {
-                LOGGER.warn("No pipeline found for index '" + index.getName() + "'");
-            } else if (pipelines.size() > 1) {
-                LOGGER.warn("More than 1 pipeline found for index '" + index.getName() + "'");
-            } else {
-                final PipelineEntity pipeline = pipelines.getFirst();
-
-                // Create a processor for this index.
-                final FindStreamCriteria criteria = new FindStreamCriteria();
-                criteria.obtainStreamTypeIdSet().add(StreamType.EVENTS);
-                streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
-                // final StreamProcessorFilter filter =
-                // streamProcessorFilterService.createNewFilter(pipeline,
-                // criteria, true, 10);
-                //
-                // // Enable the filter.
-                // filter.setEnabled(true);
-                // streamProcessorFilterService.save(filter);
-                //
-                // // Enable the processor.
-                // final StreamProcessor streamProcessor =
-                // filter.getStreamProcessor();
-                // streamProcessor.setEnabled(true);
-                // streamProcessorService.save(streamProcessor);
-            }
-        }
-
-        final List<Feed> feeds = feedService.find(new FindFeedCriteria());
-
-        // Create stream processors for all feeds.
-        for (final Feed feed : feeds) {
-            // Find the pipeline for this feed.
-            final BaseResultList<PipelineEntity> pipelines = pipelineEntityService
-                    .find(new FindPipelineEntityCriteria(feed.getName()));
-
-            if (pipelines == null || pipelines.size() == 0) {
-                LOGGER.warn("No pipeline found for feed '" + feed.getName() + "'");
-            } else if (pipelines.size() > 1) {
-                LOGGER.warn("More than 1 pipeline found for feed '" + feed.getName() + "'");
-            } else {
-                final PipelineEntity pipeline = pipelines.getFirst();
-
-                // Create a processor for this feed.
-                final FindStreamCriteria criteria = new FindStreamCriteria();
-                criteria.obtainFeeds().obtainInclude().add(feed);
-                criteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS);
-                criteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE);
-                streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
-                // final StreamProcessorFilter filter =
-                // streamProcessorFilterService.createNewFilter(pipeline,
-                // criteria, true, 10);
-                //
-                // // Enable the filter.
-                // filter.setEnabled(true);
-                // streamProcessorFilterService.save(filter);
-                //
-                // // Enable the processor.
-                // final StreamProcessor streamProcessor =
-                // filter.getStreamProcessor();
-                // streamProcessor.setEnabled(true);
-                // streamProcessorService.save(streamProcessor);
-            }
-        }
-
+//        // Sample data/config can exist in many projects so here we define all
+//        // the root directories that we want to
+//        // process
+//        final Path[] rootDirs = new Path[]{StroomCoreServerTestFileUtil.getTestResourcesDir().toPath().resolve(ROOT_DIR_NAME),
+//                Paths.get("./stroom-statistics-server/src/test/resources").resolve(ROOT_DIR_NAME)};
+//
+//        // process each root dir in turn
+//        for (final Path dir : rootDirs) {
+//            loadDirectory(shutdown, dir);
+//        }
+//
+//        generateSampleStatisticsData();
+//
+//        // code to check that the statisticsDataSource objects are stored
+//        // correctly
+//        final BaseResultList<StatisticStoreEntity> statisticsDataSources = statisticsDataSourceService
+//                .find(FindStatisticsEntityCriteria.instance());
+//
+//        for (final StatisticStoreEntity statisticsDataSource : statisticsDataSources) {
+//            LOGGER.info(String.format("Retreiving statisticsDataSource with name: %s, engine: %s and type: %s",
+//                    statisticsDataSource.getName(), statisticsDataSource.getEngineName(),
+//                    statisticsDataSource.getStatisticType()));
+//        }
+//
+//        // Add volumes to all indexes.
+//        final BaseResultList<Volume> volumeList = volumeService.find(new FindVolumeCriteria());
+//        final BaseResultList<Index> indexList = indexService.find(new FindIndexCriteria());
+//        final Set<Volume> volumeSet = new HashSet<Volume>(volumeList);
+//
+//        for (final Index index : indexList) {
+//            index.setVolumes(volumeSet);
+//            indexService.save(index);
+//
+//            // Find the pipeline for this index.
+//            final BaseResultList<PipelineEntity> pipelines = pipelineEntityService
+//                    .find(new FindPipelineEntityCriteria(index.getName()));
+//
+//            if (pipelines == null || pipelines.size() == 0) {
+//                LOGGER.warn("No pipeline found for index '" + index.getName() + "'");
+//            } else if (pipelines.size() > 1) {
+//                LOGGER.warn("More than 1 pipeline found for index '" + index.getName() + "'");
+//            } else {
+//                final PipelineEntity pipeline = pipelines.getFirst();
+//
+//                // Create a processor for this index.
+//                final FindStreamCriteria criteria = new FindStreamCriteria();
+//                criteria.obtainStreamTypeIdSet().add(StreamType.EVENTS);
+//                streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
+//                // final StreamProcessorFilter filter =
+//                // streamProcessorFilterService.createNewFilter(pipeline,
+//                // criteria, true, 10);
+//                //
+//                // // Enable the filter.
+//                // filter.setEnabled(true);
+//                // streamProcessorFilterService.save(filter);
+//                //
+//                // // Enable the processor.
+//                // final StreamProcessor streamProcessor =
+//                // filter.getStreamProcessor();
+//                // streamProcessor.setEnabled(true);
+//                // streamProcessorService.save(streamProcessor);
+//            }
+//        }
+//
+//        final List<Feed> feeds = feedService.find(new FindFeedCriteria());
+//
+//        // Create stream processors for all feeds.
+//        for (final Feed feed : feeds) {
+//            // Find the pipeline for this feed.
+//            final BaseResultList<PipelineEntity> pipelines = pipelineEntityService
+//                    .find(new FindPipelineEntityCriteria(feed.getName()));
+//
+//            if (pipelines == null || pipelines.size() == 0) {
+//                LOGGER.warn("No pipeline found for feed '" + feed.getName() + "'");
+//            } else if (pipelines.size() > 1) {
+//                LOGGER.warn("More than 1 pipeline found for feed '" + feed.getName() + "'");
+//            } else {
+//                final PipelineEntity pipeline = pipelines.getFirst();
+//
+//                // Create a processor for this feed.
+//                final FindStreamCriteria criteria = new FindStreamCriteria();
+//                criteria.obtainFeeds().obtainInclude().add(feed);
+//                criteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS);
+//                criteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE);
+//                streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
+//                // final StreamProcessorFilter filter =
+//                // streamProcessorFilterService.createNewFilter(pipeline,
+//                // criteria, true, 10);
+//                //
+//                // // Enable the filter.
+//                // filter.setEnabled(true);
+//                // streamProcessorFilterService.save(filter);
+//                //
+//                // // Enable the processor.
+//                // final StreamProcessor streamProcessor =
+//                // filter.getStreamProcessor();
+//                // streamProcessor.setEnabled(true);
+//                // streamProcessorService.save(streamProcessor);
+//            }
+//        }
+//
         if (shutdown) {
             commonTestControl.shutdown();
         }
@@ -370,6 +367,26 @@ public final class SetupSampleDataBean {
             sb.append("\n");
         }
         return sb.toString();
+    }
+
+    private void createRandomExplorerData(final Folder parentFolder, final String path, final int depth, final int maxDepth) {
+        for (int i = 0; i < 100; i++) {
+            final String folderName = "TEST_FOLDER_" + path + i;
+            LOGGER.info("Creating folder: " + folderName);
+            final Folder folder = folderService.create(DocRef.create(parentFolder), folderName);
+
+            for (int j = 0; j < 20; j++) {
+                final String newPath = path + String.valueOf(i) + "_";
+                final String feedName = "TEST_FEED_" + newPath + j;
+
+                LOGGER.info("Creating feed: " + feedName);
+                feedService.create(DocRef.create(folder), feedName);
+
+                if (depth < maxDepth) {
+                    createRandomExplorerData(folder, newPath, depth + 1, maxDepth);
+                }
+            }
+        }
     }
 
     private String createNum(final int max) {
