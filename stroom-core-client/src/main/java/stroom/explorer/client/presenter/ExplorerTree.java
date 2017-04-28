@@ -49,7 +49,7 @@ import stroom.widget.util.client.SelectionType;
 import java.util.List;
 import java.util.Set;
 
-public class ExplorerTree extends AbstractExporerTree {
+public class ExplorerTree extends AbstractExplorerTree {
     private final ExplorerTreeModel treeModel;
     private final MultiSelectionModel<ExplorerData> selectionModel;
     private final CellTable<ExplorerData> cellTable;

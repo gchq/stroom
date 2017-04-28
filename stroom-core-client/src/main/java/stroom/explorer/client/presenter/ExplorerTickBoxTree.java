@@ -44,7 +44,7 @@ import stroom.widget.util.client.MultiSelectEvent;
 
 import java.util.List;
 
-public class ExplorerTickBoxTree extends AbstractExporerTree {
+public class ExplorerTickBoxTree extends AbstractExplorerTree {
     private final ExplorerTreeModel treeModel;
     private final TickBoxSelectionModel selectionModel;
     private final CellTable<ExplorerData> cellTable;

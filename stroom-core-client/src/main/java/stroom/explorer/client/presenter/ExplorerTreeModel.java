@@ -37,7 +37,7 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
 
     private final NameFilterTimer timer = new NameFilterTimer();
     private final ExplorerTreeFilterBuilder explorerTreeFilterBuilder = new ExplorerTreeFilterBuilder();
-    private final AbstractExporerTree exporerTree;
+    private final AbstractExplorerTree explorerTree;
     private final Widget loading;
     private final ClientDispatchAsync dispatcher;
 
@@ -49,8 +49,8 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
 
     private boolean includeNullSelection;
 
-    ExplorerTreeModel(final AbstractExporerTree exporerTree, final Widget loading, final ClientDispatchAsync dispatcher) {
-        this.exporerTree = exporerTree;
+    ExplorerTreeModel(final AbstractExplorerTree explorerTree, final Widget loading, final ClientDispatchAsync dispatcher) {
+        this.explorerTree = explorerTree;
         this.loading = loading;
         this.dispatcher = dispatcher;
     }
@@ -123,7 +123,7 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
                                 }
                             }
 
-                            exporerTree.setData(rows);
+                            explorerTree.setData(rows);
                             loading.setVisible(false);
 
                             // If we have been asked to ensure something is visible then chances are we are
@@ -158,7 +158,7 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
                                 }
 
                                 if (nextSelection != null) {
-                                    exporerTree.setInitialSelectedItem(nextSelection);
+                                    explorerTree.setInitialSelectedItem(nextSelection);
                                 }
                             }
 
@@ -201,7 +201,7 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
     }
 
     public void reset() {
-        exporerTree.setData(new ArrayList<>());
+        explorerTree.setData(new ArrayList<>());
         clearOpenItems();
         minDepth = 1;
         ensureVisible = null;
