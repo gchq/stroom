@@ -46,6 +46,8 @@ public class LoginPresenter extends MyPresenter<LoginPresenter.LoginView, LoginP
     }
 
     public interface LoginView extends View, HasUiHandlers<LoginUiHandlers> {
+        void setBanner(String text);
+
         void setHTML(String html);
 
         void setBuildVersion(String buildVersion);
@@ -85,6 +87,8 @@ public class LoginPresenter extends MyPresenter<LoginPresenter.LoginView, LoginP
                     view.setNodeName("Node Name: " + result.get(ClientProperties.NODE_NAME));
                 })
                 .onFailure(caught -> AlertEvent.fireError(LoginPresenter.this, caught.getMessage(), null));
+
+        registerHandler(clientPropertyCache.addPropertyChangeHandler(event -> getView().setBanner(event.getProperties().get(ClientProperties.MAINTENANCE_MESSAGE))));
     }
 
     @ProxyEvent

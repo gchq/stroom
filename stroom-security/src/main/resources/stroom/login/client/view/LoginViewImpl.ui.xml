@@ -3,12 +3,30 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:panel="urn:import:stroom.widget.panel.client.view">
     <ui:style>
-        .layout {
+        .max {
         position: absolute;
         left: 0px;
+        right: 0px;
         top: 0px;
-        width: 100%;
-        height: 100%;
+        bottom: 0px;
+        overflow: hidden;
+        }
+
+        .banner {
+        position: absolute;
+        left: 0px;
+        right: 0px;
+        top: 0px;
+        height: 20px;
+        overflow: hidden;
+        text-align: center;
+        font-weight: 500;
+        background-color: yellow;
+        border: 1px solid black;
+        padding: 1px;
+        }
+
+        .layout {
         padding-top: 35px;
         }
 
@@ -53,68 +71,73 @@
         5px;
         }
     </ui:style>
-    <g:FocusPanel styleName="{style.layout}">
-        <g:DockLayoutPanel unit="PX" width="100%" height="100%">
-            <g:center>
-                <g:SimplePanel styleName="{style.paddingLeft}">
-                    <panel:RoundEdgedPanel width="100%"
-                                           height="100%">
-                        <g:SimplePanel ui:field="html"/>
-                        <g:FlowPanel styleName="{style.buildInfo}">
-                            <g:Label ui:field="buildVersion"/>
-                            <g:Label ui:field="buildDate"/>
-                            <g:Label ui:field="upDate"/>
-                            <g:Label ui:field="nodeName"/>
-                        </g:FlowPanel>
-                    </panel:RoundEdgedPanel>
-                </g:SimplePanel>
-            </g:center>
-            <g:east size="215">
-                <g:SimplePanel styleName="{style.paddingRight}">
-                    <panel:RoundEdgedPanel width="100%"
-                                           height="100%">
-                        <g:FlowPanel>
-                            <g:Grid styleName="stroom-control-grid">
-                                <g:row>
-                                    <g:cell>
-                                        <div style="font-weight:500;padding-bottom:5px;">Login</div>
-                                    </g:cell>
-                                </g:row>
-                                <g:row>
-                                    <g:customCell>
-                                        <g:FlowPanel>
-                                            <g:Label text="User Name:"/>
-                                            <g:TextBox ui:field="userName"/>
-                                        </g:FlowPanel>
-                                    </g:customCell>
-                                </g:row>
-                                <g:row>
-                                    <g:customCell>
-                                        <g:FlowPanel>
-                                            <g:Label text="Password:"/>
-                                            <g:PasswordTextBox ui:field="password"/>
-                                        </g:FlowPanel>
-                                    </g:customCell>
-                                </g:row>
-                                <g:row>
-                                    <g:customCell>
-                                        <g:Button ui:field="login" text="Login"/>
-                                    </g:customCell>
-                                </g:row>
-                                <g:row>
-                                    <g:customCell>
-                                        <g:HTMLPanel styleName="{style.reset}">
-                                            <g:Anchor text="Reset your password"
-                                                      ui:field="reset"/>
-                                        </g:HTMLPanel>
-                                    </g:customCell>
-                                </g:row>
-                            </g:Grid>
-                        </g:FlowPanel>
-                        <g:Label ui:field="error" styleName="gwt-Label {style.error}"/>
-                    </panel:RoundEdgedPanel>
-                </g:SimplePanel>
-            </g:east>
-        </g:DockLayoutPanel>
+    <g:FocusPanel styleName="{style.max}">
+        <g:FlowPanel styleName="{style.max}">
+            <g:SimplePanel ui:field="banner" styleName="{style.banner}"/>
+            <g:FlowPanel ui:field="main" styleName="{style.max} {style.layout}">
+                <g:DockLayoutPanel unit="PX" width="100%" height="100%">
+                    <g:center>
+                        <g:SimplePanel styleName="{style.paddingLeft}">
+                            <panel:RoundEdgedPanel width="100%"
+                                                   height="100%">
+                                <g:SimplePanel ui:field="html"/>
+                                <g:FlowPanel styleName="{style.buildInfo}">
+                                    <g:Label ui:field="buildVersion"/>
+                                    <g:Label ui:field="buildDate"/>
+                                    <g:Label ui:field="upDate"/>
+                                    <g:Label ui:field="nodeName"/>
+                                </g:FlowPanel>
+                            </panel:RoundEdgedPanel>
+                        </g:SimplePanel>
+                    </g:center>
+                    <g:east size="215">
+                        <g:SimplePanel styleName="{style.paddingRight}">
+                            <panel:RoundEdgedPanel width="100%"
+                                                   height="100%">
+                                <g:FlowPanel>
+                                    <g:Grid styleName="stroom-control-grid">
+                                        <g:row>
+                                            <g:cell>
+                                                <div style="font-weight:500;padding-bottom:5px;">Login</div>
+                                            </g:cell>
+                                        </g:row>
+                                        <g:row>
+                                            <g:customCell>
+                                                <g:FlowPanel>
+                                                    <g:Label text="User Name:"/>
+                                                    <g:TextBox ui:field="userName"/>
+                                                </g:FlowPanel>
+                                            </g:customCell>
+                                        </g:row>
+                                        <g:row>
+                                            <g:customCell>
+                                                <g:FlowPanel>
+                                                    <g:Label text="Password:"/>
+                                                    <g:PasswordTextBox ui:field="password"/>
+                                                </g:FlowPanel>
+                                            </g:customCell>
+                                        </g:row>
+                                        <g:row>
+                                            <g:customCell>
+                                                <g:Button ui:field="login" text="Login"/>
+                                            </g:customCell>
+                                        </g:row>
+                                        <g:row>
+                                            <g:customCell>
+                                                <g:HTMLPanel styleName="{style.reset}">
+                                                    <g:Anchor text="Reset your password"
+                                                              ui:field="reset"/>
+                                                </g:HTMLPanel>
+                                            </g:customCell>
+                                        </g:row>
+                                    </g:Grid>
+                                </g:FlowPanel>
+                                <g:Label ui:field="error" styleName="gwt-Label {style.error}"/>
+                            </panel:RoundEdgedPanel>
+                        </g:SimplePanel>
+                    </g:east>
+                </g:DockLayoutPanel>
+            </g:FlowPanel>
+        </g:FlowPanel>
     </g:FocusPanel>
 </ui:UiBinder>
