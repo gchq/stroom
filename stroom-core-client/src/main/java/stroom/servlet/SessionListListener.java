@@ -22,7 +22,6 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
-import stroom.security.SecurityContext;
 import stroom.task.server.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TerminateTaskProgressAction;
@@ -45,8 +44,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Component
 public class SessionListListener implements HttpSessionListener, SessionListService, BeanFactoryAware {
-    private static final ConcurrentHashMap<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>();
-    private static final ConcurrentHashMap<String, String> lastRequestUserAgent = new ConcurrentHashMap<String, String>();
+    private static final ConcurrentHashMap<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, String> lastRequestUserAgent = new ConcurrentHashMap<>();
     private static transient StroomLogger logger;
 
     private static transient volatile BeanFactory beanFactory;
@@ -123,14 +122,15 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
 
     @Override
     public BaseResultList<SessionDetails> find(final BaseCriteria criteria) {
-        final SecurityContext securityContext = getSecurityContext();
         final ArrayList<SessionDetails> rtn = new ArrayList<>();
         for (final HttpSession httpSession : sessionMap.values()) {
             final SessionDetails sessionDetails = new SessionDetails();
 
-            if (securityContext != null && securityContext.getUserId() != null) {
-                sessionDetails.setUserName(securityContext.getUserId());
+            final Object user = httpSession.getAttribute("stroom.security.server.AuthenticationServiceImpl_UID");
+            if (user != null) {
+                sessionDetails.setUserName(user.toString());
             }
+
             sessionDetails.setId(httpSession.getId());
             sessionDetails.setCreateMs(httpSession.getCreationTime());
             sessionDetails.setLastAccessedMs(httpSession.getLastAccessedTime());
@@ -143,17 +143,6 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
 
     @Override
     public BaseCriteria createCriteria() {
-        return null;
-    }
-
-    private SecurityContext getSecurityContext() {
-        if (beanFactory != null) {
-            final StroomBeanStore stroomBeanStore = beanFactory.getBean(StroomBeanStore.class);
-            if (stroomBeanStore != null) {
-                return stroomBeanStore.getBean(SecurityContext.class);
-            }
-        }
-
         return null;
     }
 
