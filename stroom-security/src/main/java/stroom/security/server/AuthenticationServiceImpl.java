@@ -105,9 +105,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             loginFailure(userName, new AuthenticationException("No user name"));
 
         } else {
-            try {
-                final HttpServletRequest request = httpServletRequestHolder.get();
+            final HttpServletRequest request = httpServletRequestHolder.get();
 
+            try {
                 // Create the authentication token from the user name and
                 // password
                 final UsernamePasswordToken token = new UsernamePasswordToken(userName, password, true,
@@ -118,8 +118,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 currentUser.login(token);
 
                 user = (User) currentUser.getPrincipal();
-                checkLoginAllowed(user);
+            } catch (final RuntimeException e) {
+                loginFailure(userName, e);
+            }
 
+            // Ensure regular users are allowed to login at this time.
+            checkLoginAllowed(user);
+
+            try {
                 // Pass back the user info
                 user = handleLogin(request, user, userName);
 
@@ -284,6 +290,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
+    @Insecure
     public void refreshCurrentUser() throws RuntimeException {
         if (sessionExists()) {
             final HttpServletRequest request = httpServletRequestHolder.get();
@@ -351,18 +358,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return user;
         }
         user = loginWithCertificate();
-        checkLoginAllowed(user);
 
         return user;
     }
 
     private User loginWithCertificate() {
+        User user;
+
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("loginWithCertificate()");
         }
 
         final HttpServletRequest request = httpServletRequestHolder.get();
         final String certificateDn = CertificateUtil.extractCertificateDN(request);
+
         try {
             if (certificateDn == null) {
                 return null;
@@ -380,8 +389,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             final Subject currentUser = SecurityUtils.getSubject();
             currentUser.login(token);
 
-            final User user = (User) currentUser.getPrincipal();
+            user = (User) currentUser.getPrincipal();
+        } catch (final RuntimeException ex) {
+            final String message = EntityServiceExceptionUtil.unwrapMessage(ex, ex);
 
+            // Audit the failed login
+            eventLog.logon(certificateDn, false, message, AuthenticateOutcomeReason.OTHER);
+
+            throw EntityServiceExceptionUtil.create(ex);
+        }
+
+        // Ensure regular users are allowed to login at this time.
+        checkLoginAllowed(user);
+
+        try {
             // Pass back the user info
             return handleLogin(request, user, certificateDn);
 
