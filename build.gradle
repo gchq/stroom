@@ -116,7 +116,7 @@ project(':stroom-entity-shared') {
 }
 
 urlDependencies {
-    libs "jars"
+    libs "libs"
     compile(versions.stroomQueryApi,
         'https://github.com/gchq/stroom-query/releases/download/v0.1.0/stroom-query-api-v0.1.0.jar')
     compile(versions.stroomQueryApiSources,
