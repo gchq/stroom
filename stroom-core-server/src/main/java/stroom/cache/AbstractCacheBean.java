@@ -16,11 +16,6 @@
 
 package stroom.cache;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import stroom.cache.shared.CacheInfo;
-import stroom.util.logging.StroomLogger;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
@@ -30,6 +25,11 @@ import net.sf.ehcache.Statistics;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.constructs.blocking.SelfPopulatingCache;
 import net.sf.ehcache.event.CacheEventListenerAdapter;
+import stroom.cache.shared.CacheInfo;
+import stroom.util.logging.StroomLogger;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
     public interface Destroyable {
@@ -92,8 +92,10 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
     private final Ehcache cache;
 
     public AbstractCacheBean(final CacheManager cacheManager, final String name, final int maxCacheEntries) {
-        final CacheConfiguration cacheConfiguration = new CacheConfiguration(name, maxCacheEntries);
+        this(cacheManager, new CacheConfiguration(name, maxCacheEntries));
+    }
 
+    public AbstractCacheBean(final CacheManager cacheManager, final CacheConfiguration cacheConfiguration) {
         Ehcache cache = new Cache(cacheConfiguration);
         cache = new SelfPopulatingCache(cache, key -> create((K) key));
         cache.getCacheEventNotificationService().registerListener(new CacheListener(this));
