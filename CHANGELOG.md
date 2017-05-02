@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#269** : When users are prevented from logging in with 'preventLogin' their failed login count is no longer incremented.
 
+* Issue **#267** : The login page now shows the maintenance message.
+
 ## [v5.0-beta.20] - 2017-04-26
 
 * Issue **#205** : File permissions in distribution have now been changed to `0750` for directories and shell scripts and `0640` for all other files.
