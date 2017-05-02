@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#176** : Added an optimisation to the explorer tree that prevents the need for a server call when collapsing tree nodes.
 
+* Issue **#273** : Removed an unnecessary script from the build.
+
 ## [v5.0-beta.20] - 2017-04-26
 
 * Issue **#205** : File permissions in distribution have now been changed to `0750` for directories and shell scripts and `0640` for all other files.
