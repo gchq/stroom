@@ -53,7 +53,7 @@
         <fileSet>
             <directory>${project.basedir}</directory>
             <includes>
-                <include>**/*.sh</include>
+                <include>stroom-app/**/*.sh</include>
             </includes>
             <excludes>
                 <exclude>**/dev*.sh</exclude>
