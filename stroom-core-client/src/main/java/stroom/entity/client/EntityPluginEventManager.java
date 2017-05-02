@@ -422,7 +422,7 @@ public class EntityPluginEventManager extends Plugin {
         // Only allow users to change permissions if they have a single item selected.
         if (singleSelection) {
             final List<ExplorerData> ownedItems = getExplorerDataListWithPermission(documentPermissionMap, DocumentPermissionNames.OWNER);
-            if (ownedItems.size() == 1) {
+            if (ownedItems.size() == 1 && ownedItems.get(0) instanceof EntityData) {
                 menuItems.add(new Separator(7));
                 menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 8, true));
             }
