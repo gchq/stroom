@@ -10,21 +10,10 @@ apply plugin: 'gchq.urldependencies'
 
 ext.versions = [
         stroom: '6.0-beta.1-SNAPSHOT',
-<<<<<<< HEAD
         stroomQueryApi: 'stroom-query-api-v0.1.0',
         stroomQueryApiSources: 'stroom-query-api-v0.1.0-sources',
         eventLogging: 'event-logging-v3.1.0',
-<<<<<<< HEAD
         stroomQueryCommon: 'stroom-query-common-v0.1.0',
-=======
-        stroomQueryCommon: 'stroom-query-common-v0.1.0.',
->>>>>>> Version updates and build fixes
-=======
-        stroomQueryApi: 'stroom-query-api-v1.0.0-SNAPSHOT',
-        stroomQueryApiSources: 'stroom-query-api-v1.0.0-SNAPSHOT-sources',
-        eventLogging: 'event-logging-v3.1.0',
-        stroomQueryCommon: 'stroom-query-common-v1.0.0-SNAPSHOT',
->>>>>>> Update versions
         stroomExpression: 'stroom-expression-v0.1.0',
         hbaseCommonShaded: 'hbase-common-shaded-v1.2.1-all',
         hadoopHdfsShaded: 'hadoop-hdfs-shaded-v2.6.4-all',
@@ -133,7 +122,7 @@ urlDependencies {
     compile(versions.stroomQueryApiSources,
         'https://github.com/gchq/stroom-query/releases/download/v0.1.0/stroom-query-api-v0.1.0-sources.jar')
     compile(versions.stroomQueryCommon,
-            'https://github.com/gchq/stroom-query/releases/download/v0.1.0/stroom-query-common-v0.1.0.jar')
+        'https://github.com/gchq/stroom-query/releases/download/v0.1.0/stroom-query-common-v0.1.0.jar')
     compile(versions.eventLogging,
         'https://github.com/gchq/event-logging/releases/download/v3.1.0/event-logging-v3.1.0.jar')
     compile(versions.stroomExpression,
