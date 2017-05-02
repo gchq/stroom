@@ -28,10 +28,10 @@ public class EventSearchTask extends AbstractSearchTask<EventRefs> {
 
     private final int resultSendFrequency;
 
-    public EventSearchTask(final String sessionId, final String userName, final FindStreamCriteria streamFilter,
+    public EventSearchTask(final String userToken, final FindStreamCriteria streamFilter,
             final Search search, final EventRef minEvent, final EventRef maxEvent, final long maxStreams,
             final long maxEvents, final long maxEventsPerStream, final int resultSendFrequency) {
-        super(null, sessionId, userName, streamFilter, search);
+        super(null, userToken, streamFilter, search);
         this.minEvent = minEvent;
         this.maxEvent = maxEvent;
         this.maxStreams = maxStreams;

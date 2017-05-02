@@ -58,7 +58,7 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
             criteria.setPageRequest(new PageRequest());
 
             final FindServiceClusterTask<FindTaskProgressCriteria, TaskProgress> clusterTask = new FindServiceClusterTask<>(
-                    action.getSessionId(), action.getUserId(), action.getTaskName(), TaskManager.class, criteria);
+                    action.getUserToken(), action.getTaskName(), TaskManager.class, criteria);
             final DefaultClusterResultCollector<ResultList<TaskProgress>> collector = dispatchHelper
                     .execAsync(clusterTask, TargetType.ACTIVE);
 

@@ -78,7 +78,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
     }
 
     @Override
-    public SearchResultCollector createCollector(final String sessionId, final String userName, final QueryKey queryKey,
+    public SearchResultCollector createCollector(final String userToken, final QueryKey queryKey,
                                                  final SearchRequest searchRequest) {
         // Get the current time in millis since epoch.
         final long nowEpochMilli = System.currentTimeMillis();
@@ -100,7 +100,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + queryKey.toString() + "'";
-        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(sessionId, userName, searchName, search, node,
+        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(userToken, searchName, search, node,
                 SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorMap.getMap(), nowEpochMilli);
 
         // Create a handler for search results.

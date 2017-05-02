@@ -27,9 +27,9 @@ public class FindClearServiceClusterTask<C extends BaseCriteria> extends Cluster
     private Class<?> beanClass;
     private C criteria;
 
-    public FindClearServiceClusterTask(final String sessionId, final String userName, final String taskName,
+    public FindClearServiceClusterTask(final String userToken, final String taskName,
                                        final Class<?> beanClass, final C criteria) {
-        super(sessionId, userName, taskName);
+        super(userToken, taskName);
         this.beanClass = beanClass;
         this.criteria = criteria;
     }

@@ -32,6 +32,7 @@ import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
+import stroom.util.shared.UserTokenUtil;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.ExternalShutdownController;
 import stroom.util.task.HasMonitor;
@@ -203,7 +204,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
         try {
             TaskScopeContextHolder.addContext(task);
             try {
-                doExec(task, callback, taskThread);
+                doExec(task, callback);
             } catch (final Throwable t) {
                 try {
                     callback.onFailure(t);
@@ -295,7 +296,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                             throw new TaskTerminatedException(stop.get());
                         }
 
-                        doExec(task, callback, taskThread);
+                        doExec(task, callback);
 
                     } catch (final Throwable t) {
                         try {
@@ -360,21 +361,21 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
         }
     }
 
-    private <R> void doExec(final Task<R> task, final TaskCallback<R> callback, final TaskThread<R> taskThread) {
+    private <R> void doExec(final Task<R> task, final TaskCallback<R> callback) {
         final Thread currentThread = Thread.currentThread();
         final String oldThreadName = currentThread.getName();
 
         currentThread.setName(oldThreadName + " - " + task.getClass().getSimpleName());
         try {
 
-            String userId = task.getUserId();
-            if (userId == null) {
+            String userToken = task.getUserToken();
+            if (userToken == null) {
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Task has null user: " + task.getClass().getSimpleName());
+                    LOGGER.debug("Task has null user token: " + task.getClass().getSimpleName());
                 }
             }
 
-            securityContext.pushUser(userId);
+            securityContext.pushUser(userToken);
             try {
 
                 // Create a task monitor bean to be injected inside the handler.
@@ -489,8 +490,8 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
         } else {
             taskProgress.setTaskName(task.getTaskName());
         }
-        taskProgress.setSessionId(task.getSessionId());
-        taskProgress.setUserName(task.getUserId());
+        taskProgress.setSessionId(UserTokenUtil.getSessionId(task.getUserToken()));
+        taskProgress.setUserName(UserTokenUtil.getUserId(task.getUserToken()));
         taskProgress.setThreadName(taskThread.getThreadName());
         taskProgress.setTaskInfo(taskThread.getInfo());
         taskProgress.setSubmitTimeMs(taskThread.getSubmitTimeMs());

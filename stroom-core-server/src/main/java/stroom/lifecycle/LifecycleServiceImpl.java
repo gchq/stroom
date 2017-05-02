@@ -146,7 +146,7 @@ public class LifecycleServiceImpl implements ContextAwareService {
             protected void exec() {
                 if (lock.tryLock()) {
 
-                    securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER);
+                    securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
                     try {
                         Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
                         scheduledTaskExecutor.execute();

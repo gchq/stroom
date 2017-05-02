@@ -54,6 +54,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.UserTokenUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
@@ -496,7 +497,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             if (loadedFilter != null) {
 
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
-                securityContext.pushUser(loadedFilter.getCreateUser());
+                securityContext.pushUser(UserTokenUtil.create(loadedFilter.getCreateUser(), null));
                 try {
                     LOGGER.debug("createTasksForFilter() - streamProcessorFilter %s", loadedFilter.toString());
 
@@ -750,7 +751,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         tracker.setStatus("Searching...");
         final StreamProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(null, filter.getUpdateUser(), findStreamCriteria, search,
+        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.create(filter.getUpdateUser(), null), findStreamCriteria, search,
                 minEvent, maxEvent, maxStreams, maxEvents, maxEventsPerStream, POLL_INTERVAL_MS);
         taskManager.execAsync(eventSearchTask, new TaskCallbackAdaptor<EventRefs>() {
             @Override

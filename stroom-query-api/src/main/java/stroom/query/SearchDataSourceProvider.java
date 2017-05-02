@@ -20,7 +20,7 @@ import stroom.query.shared.QueryKey;
 import stroom.query.shared.SearchRequest;
 
 public interface SearchDataSourceProvider {
-    SearchResultCollector createCollector(String sessionId, String userName, QueryKey queryKey,
+    SearchResultCollector createCollector(String userToken, QueryKey queryKey,
             SearchRequest searchRequest);
 
     String getEntityType();

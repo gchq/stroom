@@ -27,7 +27,6 @@ public class DispatchEntityEventTask extends ServerTask<VoidResult>implements Se
     private final EntityEvent entityEvent;
 
     public DispatchEntityEventTask(final EntityEvent entityEvent) {
-        super(null, null, null);
         this.entityEvent = entityEvent;
     }
 

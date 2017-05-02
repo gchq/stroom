@@ -34,7 +34,7 @@ public class KeyedTaskQueue implements TaskQueue {
     public static class UserKeyProvider implements KeyProvider {
         @Override
         public Object getKey(final Task<?> task) {
-            return task.getUserId();
+            return task.getUserToken();
         }
     }
 

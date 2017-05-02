@@ -57,6 +57,7 @@ import stroom.task.server.TaskManager;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedObject;
+import stroom.util.task.ServerTask;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
@@ -138,7 +139,7 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
 
         final SearchDataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
                 .getProvider(LuceneSearchDataSourceProvider.ENTITY_TYPE);
-        final SearchResultCollector searchResultCollector = dataSourceProvider.createCollector(null, null,
+        final SearchResultCollector searchResultCollector = dataSourceProvider.createCollector(ServerTask.INTERNAL_PROCESSING_USER_TOKEN,
                 new BasicQueryKey(query.getName()), searchRequest);
         final ActiveQuery activeQuery = new ActiveQuery(searchResultCollector);
 

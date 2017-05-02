@@ -44,7 +44,7 @@ public class UploadDataHandler extends AbstractTaskHandler<UploadDataAction, Res
             // Import file.
             final Path file = sessionResourceStore.getTempFile(action.getKey());
 
-            taskManager.exec(new StreamUploadTask(action.getSessionId(), action.getUserId(), action.getFileName(), file,
+            taskManager.exec(new StreamUploadTask(action.getUserToken(), action.getFileName(), file,
                     action.getFeed(), action.getStreamType(), action.getEffectiveMs(), action.getMetaData()));
 
         } catch (final Exception ex) {

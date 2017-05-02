@@ -25,6 +25,7 @@ import javax.inject.Named;
 import stroom.entity.shared.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.logging.StroomLogger;
+import stroom.util.shared.UserTokenUtil;
 import stroom.util.spring.StroomScope;
 import net.sf.ehcache.CacheException;
 import org.springframework.context.annotation.Scope;
@@ -125,7 +126,7 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
             this.task = task;
 
             // Set the current user.
-            currentUserHolder.setCurrentUser(task.getUserId());
+            currentUserHolder.setCurrentUser(UserTokenUtil.getUserId(task.getUserToken()));
 
             final DocRef pipelineRef = task.getPipelineRef();
 

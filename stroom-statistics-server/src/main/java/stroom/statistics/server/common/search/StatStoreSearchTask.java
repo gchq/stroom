@@ -34,10 +34,10 @@ public class StatStoreSearchTask extends ServerTask<VoidResult>implements Serial
     private final Map<Integer, CoprocessorSettings> coprocessorMap;
     private volatile transient StatStoreSearchResultCollector resultCollector;
 
-    public StatStoreSearchTask(final String sessionId, final String userName, final String searchName,
+    public StatStoreSearchTask(final String userToken, final String searchName,
             final Search search, final StatisticStoreEntity entity,
             final Map<Integer, CoprocessorSettings> coprocessorMap) {
-        super(null, sessionId, userName);
+        super(null, userToken);
         this.searchName = searchName;
         this.search = search;
         this.entity = entity;

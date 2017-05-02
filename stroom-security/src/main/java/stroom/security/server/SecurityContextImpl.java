@@ -62,8 +62,10 @@ class SecurityContextImpl implements SecurityContext {
     private final DocumentPermissionService documentPermissionService;
     private final GenericEntityService genericEntityService;
 
-
-    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", "INTERNAL", false, true);
+    private static final String INTERNAL = "INTERNAL";
+    private static final String SYSTEM = "system";
+    private static final String USER = "user";
+    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", INTERNAL, false, true);
 
     @Inject
     SecurityContextImpl(final DocumentPermissionsCache documentPermissionsCache, final UserGroupsCache userGroupsCache, final UserAppPermissionsCache userAppPermissionsCache, final UserService userService, final DocumentPermissionService documentPermissionService, final GenericEntityService genericEntityService) {
@@ -76,19 +78,39 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
-    public void pushUser(final String name) {
+    public void pushUser(final String token) {
         UserRef userRef = null;
 
-        if (name != null) {
-            if (INTERNAL_PROCESSING_USER.getName().equals(name)) {
-                userRef = INTERNAL_PROCESSING_USER;
-            } else {
-                userRef = userService.getUserByName(name);
-                if (userRef == null) {
-                    final String message = "Unable to push user '" + name + "' as user is unknown";
-                    LOGGER.error(message);
-                    throw new AuthenticationServiceException(message);
+        if (token != null) {
+            final String[] parts = token.split("\\|", -1);
+            if (parts.length < 2) {
+                LOGGER.error("Unexpected token format '" + token + "'");
+                throw new AuthenticationServiceException("Unexpected token format '" + token + "'");
+            }
+
+            final String type = parts[0];
+            final String name = parts[1];
+//            final String sessionId = parts[2];
+
+            if (SYSTEM.equals(type)) {
+                if (INTERNAL.equals(name)) {
+                    userRef = INTERNAL_PROCESSING_USER;
+                } else {
+                    LOGGER.error("Unexpected system user '" + name + "'");
+                    throw new AuthenticationServiceException("Unexpected system user '" + name + "'");
                 }
+            } else if (USER.equals(type)) {
+                if (name.length() > 0) {
+                    userRef = userService.getUserByName(name);
+                    if (userRef == null) {
+                        final String message = "Unable to push user '" + name + "' as user is unknown";
+                        LOGGER.error(message);
+                        throw new AuthenticationServiceException(message);
+                    }
+                }
+            } else {
+                LOGGER.error("Unexpected token type '" + type + "'");
+                throw new AuthenticationServiceException("Unexpected token type '" + type + "'");
             }
         }
 

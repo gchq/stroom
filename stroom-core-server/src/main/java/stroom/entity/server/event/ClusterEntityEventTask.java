@@ -26,7 +26,7 @@ public class ClusterEntityEventTask extends ClusterTask<VoidResult> {
     private final EntityEvent entityEvent;
 
     public ClusterEntityEventTask(final Task<?> parentTask, final EntityEvent entityEvent) {
-        super(parentTask, "EntityEvent");
+        super(parentTask.getUserToken(), "EntityEvent");
         this.entityEvent = entityEvent;
     }
 

@@ -81,7 +81,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             if (LOGGER.isDebugEnabled()) {
                 final StringBuilder sb = new StringBuilder(
                         "Only the following search queries should be active for session '");
-                sb.append(action.getSessionId());
+                sb.append(action.getUserToken());
                 sb.append("'\n");
                 for (final QueryKey queryKey : action.getSearchActionMap().keySet()) {
                     sb.append("\t");
@@ -90,7 +90,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                 LOGGER.debug(sb.toString());
             }
 
-            final String searchSessionId = action.getSessionId() + "_" + action.getApplicationInstanceId();
+            final String searchSessionId = action.getUserToken() + "_" + action.getApplicationInstanceId();
             final ActiveQueries searchSession = activeQueriesManager.get(searchSessionId);
             final Map<QueryKey, SearchResult> searchResultMap = new HashMap<>();
 
@@ -102,7 +102,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                 final QueryKey queryKey = entry.getKey();
                 final SearchRequest searchRequest = entry.getValue();
 
-                final SearchResult searchResult = processRequest(action.getSessionId(), action.getUserId(),
+                final SearchResult searchResult = processRequest(action.getUserToken(),
                         searchSession, queryKey, searchRequest);
                 if (searchResult != null) {
                     searchResultMap.put(queryKey, searchResult);
@@ -115,7 +115,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
         }
     }
 
-    private SearchResult processRequest(final String sessionId, final String userId, final ActiveQueries activeQueries,
+    private SearchResult processRequest(final String userToken, final ActiveQueries activeQueries,
                                         final QueryKey queryKey, final SearchRequest searchRequest) {
         SearchResult result = null;
 
@@ -129,7 +129,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             // this is new.
             if (activeQuery == null) {
                 // Create a collector for this query.
-                final SearchResultCollector newCollector = createCollector(sessionId, userId, queryKey, searchRequest);
+                final SearchResultCollector newCollector = createCollector(userToken, queryKey, searchRequest);
 
                 // Create a new active query to store the result collector and
                 // any other state that we wish to maintain for the duration of
@@ -166,7 +166,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
         return result;
     }
 
-    private SearchResultCollector createCollector(final String sessionId, final String userId, final QueryKey queryKey,
+    private SearchResultCollector createCollector(final String userToken, final QueryKey queryKey,
                                                   final SearchRequest searchRequest) {
         final Search search = searchRequest.getSearch();
         try {
@@ -181,8 +181,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             }
 
             // Create a collector for this search.
-            final SearchResultCollector searchResultCollector = searchDataSourceProvider.createCollector(sessionId,
-                    userId, queryKey, searchRequest);
+            final SearchResultCollector searchResultCollector = searchDataSourceProvider.createCollector(userToken, queryKey, searchRequest);
 
             // Add this search to the history so the user can get back to this
             // search again.

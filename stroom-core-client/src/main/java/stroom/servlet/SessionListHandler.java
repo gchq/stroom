@@ -50,8 +50,7 @@ class SessionListHandler extends AbstractTaskHandler<SessionListAction, ResultLi
     public ResultList<SessionDetails> exec(final SessionListAction action) {
         final DefaultClusterResultCollector<ResultList<SessionDetails>> collector = dispatchHelper
                 .execAsync(
-                        new FindServiceClusterTask<BaseCriteria, SessionDetails>(action.getSessionId(),
-                                action.getUserId(), "Get session list", SessionListService.class, null),
+                        new FindServiceClusterTask<BaseCriteria, SessionDetails>(action.getUserToken(), "Get session list", SessionListService.class, null),
                         TargetType.ACTIVE);
 
         final ArrayList<SessionDetails> rtnList = new ArrayList<SessionDetails>();

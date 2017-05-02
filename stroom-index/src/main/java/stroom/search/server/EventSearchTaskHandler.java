@@ -67,8 +67,8 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
         coprocessorMap.put(0, settings);
 
         // Create an asynchronous search task.
-        final String searchName = "Search " + task.getSessionId();
-        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(task.getSessionId(), task.getUserId(), searchName,
+        final String searchName = "Event Search";
+        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(task.getUserToken(), searchName,
                 search, node, task.getResultSendFrequency(), coprocessorMap, nowEpochMilli);
 
         // Create a collector to store search results.

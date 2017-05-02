@@ -39,6 +39,7 @@ import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.cert.CertificateUtil;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
+import stroom.util.shared.UserTokenUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -78,7 +79,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (user != null) {
             final boolean preventLogin = StroomProperties.getBooleanProperty(PREVENT_LOGIN_PROPERTY, false);
             if (preventLogin) {
-                securityContext.pushUser(user.getName());
+                securityContext.pushUser(UserTokenUtil.create(user.getName(), null));
                 try {
                     if (!securityContext.isAdmin()) {
                         throw new AuthenticationException("You are not allowed to login at this time");

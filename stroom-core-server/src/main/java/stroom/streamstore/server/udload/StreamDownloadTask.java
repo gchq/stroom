@@ -16,11 +16,10 @@
 
 package stroom.streamstore.server.udload;
 
-import java.io.File;
-import java.nio.file.Path;
-
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.util.task.ServerTask;
+
+import java.nio.file.Path;
 
 public class StreamDownloadTask extends ServerTask<StreamDownloadResult> {
     private FindStreamCriteria criteria;
@@ -30,9 +29,9 @@ public class StreamDownloadTask extends ServerTask<StreamDownloadResult> {
     public StreamDownloadTask() {
     }
 
-    public StreamDownloadTask(final String sessionId, final String userName, final FindStreamCriteria criteria,
-            final Path file, final StreamDownloadSettings settings) {
-        super(null, sessionId, userName);
+    public StreamDownloadTask(final String userToken, final FindStreamCriteria criteria,
+                              final Path file, final StreamDownloadSettings settings) {
+        super(null, userToken);
         this.criteria = criteria;
         this.file = file;
         this.settings = settings;

@@ -28,9 +28,9 @@ public class FindServiceClusterTask<C extends BaseCriteria, E extends SharedObje
     private final Class<?> beanClass;
     private final C criteria;
 
-    public FindServiceClusterTask(final String sessionId, final String userName, final String taskName,
+    public FindServiceClusterTask(final String userToken, final String taskName,
                                   final Class<?> beanClass, final C criteria) {
-        super(sessionId, userName, taskName);
+        super(userToken, taskName);
         this.beanClass = beanClass;
         this.criteria = criteria;
     }

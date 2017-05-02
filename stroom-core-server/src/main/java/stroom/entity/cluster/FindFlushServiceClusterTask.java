@@ -27,9 +27,9 @@ public class FindFlushServiceClusterTask<C extends BaseCriteria> extends Cluster
     private final Class<?> beanClass;
     private final C criteria;
 
-    public FindFlushServiceClusterTask(final String sessionId, final String userName, final String taskName,
+    public FindFlushServiceClusterTask(final String userToken, final String taskName,
                                        final Class<?> beanClass, final C criteria) {
-        super(sessionId, userName, taskName);
+        super(userToken, taskName);
         this.beanClass = beanClass;
         this.criteria = criteria;
     }

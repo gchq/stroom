@@ -57,6 +57,7 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Highlight;
+import stroom.util.shared.UserTokenUtil;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 import org.springframework.context.annotation.Scope;
@@ -132,7 +133,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
     @Override
     public SteppingResult exec(final SteppingTask request) {
         // Set the current user so they are visible during translation.
-        currentUserHolder.setCurrentUser(request.getUserId());
+        currentUserHolder.setCurrentUser(UserTokenUtil.getUserId(request.getUserToken()));
 
         StepData stepData = null;
         generalErrors = new HashSet<>();

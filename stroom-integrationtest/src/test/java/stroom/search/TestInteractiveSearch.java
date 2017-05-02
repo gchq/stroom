@@ -65,6 +65,7 @@ import stroom.task.server.TaskManager;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedObject;
+import stroom.util.task.ServerTask;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
@@ -506,7 +507,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
 
         final SearchDataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
                 .getProvider(LuceneSearchDataSourceProvider.ENTITY_TYPE);
-        final SearchResultCollector searchResultCollector = dataSourceProvider.createCollector(null, null,
+        final SearchResultCollector searchResultCollector = dataSourceProvider.createCollector(ServerTask.INTERNAL_PROCESSING_USER_TOKEN,
                 new BasicQueryKey(query.getName()), searchRequest);
         final ActiveQuery activeQuery = new ActiveQuery(searchResultCollector);
 
@@ -615,9 +616,9 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
         final CountDownLatch complete = new CountDownLatch(1);
         final Search search = new Search(searchData.getDataSource(), expression, null);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(null, "test", new FindStreamCriteria(), search,
+        final EventSearchTask eventSearchTask = new EventSearchTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, new FindStreamCriteria(), search,
                 new EventRef(1, 1), new EventRef(Long.MAX_VALUE, Long.MAX_VALUE), 1000, 1000, 1000, 100);
-        final AtomicReference<EventRefs> results = new AtomicReference<EventRefs>();
+        final AtomicReference<EventRefs> results = new AtomicReference<>();
         taskManager.execAsync(eventSearchTask, new TaskCallback<EventRefs>() {
             @Override
             public void onSuccess(final EventRefs result) {

@@ -58,6 +58,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Indicators;
+import stroom.util.task.ServerTask;
 import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
 import stroom.util.zip.StroomStreamProcessor;
@@ -339,7 +340,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         streamCriteria.obtainStreamIdSet().setMatchAll(Boolean.TRUE);
         streamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE);
         streamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS);
-        final SteppingTask action = new SteppingTask(null, "Test User");
+        final SteppingTask action = new SteppingTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
         action.setPipeline(DocRef.create(pipelineEntity));
         action.setCriteria(streamCriteria);
 

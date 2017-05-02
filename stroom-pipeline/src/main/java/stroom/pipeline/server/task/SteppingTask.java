@@ -41,8 +41,8 @@ public class SteppingTask extends ServerTask<SteppingResult> {
     private DocRef pipeline;
     private Map<String, String> code;
 
-    public SteppingTask(final String sessionId, final String userName) {
-        super(null, sessionId, userName);
+    public SteppingTask(final String userToken) {
+        super(null, userToken);
     }
 
     public FindStreamCriteria getCriteria() {

@@ -18,16 +18,12 @@ package stroom.node.server;
 
 import stroom.node.shared.NodeInfoResult;
 import stroom.task.cluster.ClusterTask;
+import stroom.util.task.ServerTask;
 
 public class NodeInfoClusterTask extends ClusterTask<NodeInfoResult> {
     private static final long serialVersionUID = -2205811554553456872L;
 
     public NodeInfoClusterTask() {
-        super(null, null, null);
-    }
-
-    @Override
-    public String getTaskName() {
-        return "NodeInfoAction";
+        super(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, "Node Info Cluster Task");
     }
 }

@@ -37,10 +37,10 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
     private final Map<Integer, CoprocessorSettings> coprocessorMap;
     private final long now;
 
-    public ClusterSearchTask(final String sessionId, final String userName, final String taskName, final Search search,
+    public ClusterSearchTask(final String userToken, final String taskName, final Search search,
                              final List<Long> shards, final Node targetNode, final IndexField[] storedFields,
                              final int resultSendFrequency, final Map<Integer, CoprocessorSettings> coprocessorMap, final long now) {
-        super(sessionId, userName, taskName);
+        super(userToken, taskName);
         this.search = search;
         this.shards = shards;
         this.targetNode = targetNode;

@@ -38,10 +38,10 @@ public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializab
 
     private volatile transient ClusterSearchResultCollector resultCollector;
 
-    public AsyncSearchTask(final String sessionId, final String userName, final String searchName, final Search search,
+    public AsyncSearchTask(final String userToken, final String searchName, final Search search,
                            final Node targetNode, final int resultSendFrequency,
                            final Map<Integer, CoprocessorSettings> coprocessorMap, final long now) {
-        super(null, sessionId, userName);
+        super(null, userToken);
         this.searchName = searchName;
         this.search = search;
         this.targetNode = targetNode;

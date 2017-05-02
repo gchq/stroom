@@ -33,7 +33,7 @@ public class PipelineStepActionHandler extends AbstractTaskHandler<PipelineStepA
     @Override
     public SteppingResult exec(final PipelineStepAction action) {
         // Copy the action settings to the server task.
-        final SteppingTask task = new SteppingTask(action.getSessionId(), action.getUserId());
+        final SteppingTask task = new SteppingTask(action.getUserToken());
         task.setCriteria(action.getCriteria());
         task.setChildStreamType(action.getChildStreamType());
         task.setStepLocation(action.getStepLocation());

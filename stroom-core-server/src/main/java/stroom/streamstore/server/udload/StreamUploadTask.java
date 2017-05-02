@@ -33,10 +33,10 @@ public class StreamUploadTask extends ServerTask<VoidResult> {
     public StreamUploadTask() {
     }
 
-    public StreamUploadTask(final String sessionId, final String userName, final String fileName, final Path file,
+    public StreamUploadTask(final String userToken, final String fileName, final Path file,
                             final DocRef feed, final DocRef streamType, final Long effectiveMs,
                             final String metaData) {
-        super(null, sessionId, userName);
+        super(null, userToken);
         this.fileName = fileName;
         this.file = file;
         this.feed = feed;

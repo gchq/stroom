@@ -71,7 +71,7 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
     @Override
     @Insecure
     public void processRequest() {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER);
+        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
         try {
             final String feedName = headerMap.get(StroomHeaderArguments.FEED);
 

@@ -27,9 +27,9 @@ public class TerminateTaskClusterTask extends ClusterTask<BaseResultList<TaskPro
     private final FindTaskCriteria criteria;
     private final boolean kill;
 
-    public TerminateTaskClusterTask(final String sessionId, final String userName, final String taskName,
+    public TerminateTaskClusterTask(final String userToken, final String taskName,
                                     final FindTaskCriteria criteria, final boolean kill) {
-        super(sessionId, userName, taskName);
+        super(userToken, taskName);
         this.criteria = criteria;
         this.kill = kill;
     }

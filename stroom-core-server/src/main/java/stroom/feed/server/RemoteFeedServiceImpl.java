@@ -42,7 +42,7 @@ public class RemoteFeedServiceImpl implements RemoteFeedService {
     @Override
     @Insecure
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER);
+        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
         try {
             final Feed feed = feedService.loadByName(request.getFeedName());
 

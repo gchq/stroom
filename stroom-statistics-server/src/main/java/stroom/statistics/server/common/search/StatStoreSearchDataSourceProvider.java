@@ -44,7 +44,7 @@ public class StatStoreSearchDataSourceProvider implements SearchDataSourceProvid
     }
 
     @Override
-    public SearchResultCollector createCollector(final String sessionId, final String userName, final QueryKey queryKey,
+    public SearchResultCollector createCollector(final String userToken, final QueryKey queryKey,
             final SearchRequest searchRequest) {
         final Search search = searchRequest.getSearch();
 
@@ -62,7 +62,7 @@ public class StatStoreSearchDataSourceProvider implements SearchDataSourceProvid
 
         // Create a stat store search task.
         final String searchName = "Search '" + queryKey.toString() + "'";
-        final StatStoreSearchTask statStoreSearchTask = new StatStoreSearchTask(sessionId, userName, searchName, search,
+        final StatStoreSearchTask statStoreSearchTask = new StatStoreSearchTask(userToken, searchName, search,
                 entity, coprocessorMap.getMap());
 
         // Create a handler for search results.

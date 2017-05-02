@@ -94,7 +94,7 @@ public class StatusServlet extends HttpServlet implements DataFeedService {
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
             throws ServletException, IOException {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER);
+        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
         try {
             response.setContentType("text/plain");
 

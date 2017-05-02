@@ -42,7 +42,7 @@ class FlushIndexShardActionHandler extends AbstractTaskHandler<FlushIndexShardAc
     @Override
     public VoidResult exec(final FlushIndexShardAction action) {
         final FindFlushServiceClusterTask<FindIndexShardCriteria> clusterTask = new FindFlushServiceClusterTask<>(
-                action.getSessionId(), action.getUserId(), action.getTaskName(), IndexShardWriterCache.class,
+                action.getUserToken(), action.getTaskName(), IndexShardWriterCache.class,
                 action.getCriteria());
 
         dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
