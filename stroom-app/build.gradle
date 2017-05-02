@@ -51,12 +51,14 @@ dependencies {
     compile project(':stroom-statistics-server')
     compile project(':stroom-dashboard-server')
     compile project(':stroom-security-server')
-    compile "io.dropwizard:dropwizard-core:1.0.6"
-    compile "io.dropwizard:dropwizard-assets:1.0.6"
+    compile "io.dropwizard:dropwizard-core:1.0.6" 
+    compile "io.dropwizard:dropwizard-assets:1.0.6" 
 
     // TODO Added after adding shading
-    compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
-    compile group: 'org.glassfish.web', name: 'javax.el', version: '2.2.6'
+    //compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
+    //3.0.1-b08 recomended version from http://hibernate.org/validator/documentation/getting-started/
+    //compile group: 'org.glassfish', name: 'javax.el', version: '3.0.1-b08'
+    //compile group: 'org.glassfish.web', name: 'javax.el', version: '2.2.6'
 
 
     compile 'org.springframework.security:spring-security-web:4.2.1.RELEASE'

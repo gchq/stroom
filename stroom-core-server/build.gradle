@@ -8,7 +8,10 @@ dependencies {
 
     compile 'org.hibernate:hibernate-core:4.3.8.Final' /* LATEST 5.2.5.Final */
     compile 'org.hibernate:hibernate-entitymanager:4.3.8.Final'  /* LATEST 5.2.5.Final */
-    compile 'org.hibernate:hibernate-validator:5.3.3.Final'
+
+    //dropwizard 1.0.6 uses 5.2.4 so be consistent with that to avoid problems with different versions of
+    //javax.el
+    compile 'org.hibernate:hibernate-validator:5.2.4.Final'  /* LATEST 5.4.1.Final */
 
     compile('com.googlecode.ehcache-spring-annotations:ehcache-spring-annotations:1.2.0') {
         exclude(module: 'guava')
