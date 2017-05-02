@@ -16,6 +16,7 @@
 
 package stroom.security.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.security.Secured;
@@ -27,6 +28,7 @@ import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -34,6 +36,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = FetchUserRefAction.class)
+@Scope(StroomScope.TASK)
 @Secured(User.MANAGE_USERS_PERMISSION)
 public class FetchUserRefHandler
         extends AbstractTaskHandler<FetchUserRefAction, ResultList<UserRef>> {

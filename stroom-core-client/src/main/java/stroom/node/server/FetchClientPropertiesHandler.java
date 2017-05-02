@@ -16,16 +16,19 @@
 
 package stroom.node.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.node.shared.FetchClientPropertiesAction;
 import stroom.security.Insecure;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchClientPropertiesAction.class)
+@Scope(value = StroomScope.TASK)
 @Insecure
 public class FetchClientPropertiesHandler extends AbstractTaskHandler<FetchClientPropertiesAction, ClientProperties> {
     private final ClientPropertiesService clientPropertiesService;

@@ -24,18 +24,24 @@ import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.ResourceKey;
+import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.nio.file.Path;
 
 @TaskHandlerBean(task = ImportConfigAction.class)
+@org.springframework.context.annotation.Scope(value = StroomScope.TASK)
 public class ImportConfigHandler extends AbstractTaskHandler<ImportConfigAction, ResourceKey> {
-    @Resource
-    private ImportExportService importExportService;
-    @Resource
-    private ImportExportEventLog eventLog;
-    @Resource
-    private SessionResourceStore sessionResourceStore;
+    private final ImportExportService importExportService;
+    private final ImportExportEventLog eventLog;
+    private final SessionResourceStore sessionResourceStore;
+
+    @Inject
+    ImportConfigHandler(final ImportExportService importExportService, final ImportExportEventLog eventLog, final SessionResourceStore sessionResourceStore) {
+        this.importExportService = importExportService;
+        this.eventLog = eventLog;
+        this.sessionResourceStore = sessionResourceStore;
+    }
 
     @Override
     @Secured("Import Configuration")

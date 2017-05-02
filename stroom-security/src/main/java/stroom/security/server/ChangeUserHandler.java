@@ -16,6 +16,7 @@
 
 package stroom.security.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.logging.AuthorisationEventLog;
 import stroom.security.Secured;
 import stroom.security.shared.ChangeSet;
@@ -26,11 +27,13 @@ import stroom.security.shared.UserService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
+import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = ChangeUserAction.class)
+@Scope(StroomScope.TASK)
 @Secured(User.MANAGE_USERS_PERMISSION)
 public class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult> {
     private final UserService userService;

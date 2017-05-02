@@ -16,8 +16,7 @@
 
 package stroom.entity.cluster;
 
-import javax.annotation.Resource;
-
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.ResultList;
@@ -25,14 +24,22 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedObject;
 import stroom.util.spring.StroomBeanStore;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = FindServiceClusterTask.class)
+@Scope(value = StroomScope.TASK)
 public class FindServiceClusterHandler
         extends AbstractTaskHandler<FindServiceClusterTask<BaseCriteria, SharedObject>, ResultList<SharedObject>> {
-    @Resource
-    private StroomBeanStore stroomBeanStore;
+    private final StroomBeanStore stroomBeanStore;
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Inject
+    FindServiceClusterHandler(final StroomBeanStore stroomBeanStore) {
+        this.stroomBeanStore = stroomBeanStore;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public ResultList<SharedObject> exec(final FindServiceClusterTask<BaseCriteria, SharedObject> task) {
         if (task == null) {

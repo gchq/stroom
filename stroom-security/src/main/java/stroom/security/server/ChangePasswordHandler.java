@@ -16,16 +16,19 @@
 
 package stroom.security.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.security.Insecure;
 import stroom.security.shared.ChangePasswordAction;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = ChangePasswordAction.class)
+@Scope(value = StroomScope.TASK)
 @Insecure
 public class ChangePasswordHandler extends AbstractTaskHandler<ChangePasswordAction, UserAndPermissions> {
     private final AuthenticationService authenticationService;

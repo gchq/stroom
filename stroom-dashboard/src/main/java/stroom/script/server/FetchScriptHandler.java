@@ -34,17 +34,17 @@ import java.util.List;
 import java.util.Set;
 
 @TaskHandlerBean(task = FetchScriptAction.class)
+@Scope(value = StroomScope.TASK)
 /**
  * For now we deliberately require visualisation view permissions to access
  * scripts.
  */
-@Scope(StroomScope.TASK)
 class FetchScriptHandler extends AbstractTaskHandler<FetchScriptAction, SharedList<Script>> {
     private final ScriptService scriptService;
     private final SecurityContext securityContext;
 
     @Inject
-    FetchScriptHandler(final ScriptService scriptService,  final SecurityContext securityContext) {
+    FetchScriptHandler(final ScriptService scriptService, final SecurityContext securityContext) {
         this.scriptService = scriptService;
         this.securityContext = securityContext;
     }
@@ -72,7 +72,7 @@ class FetchScriptHandler extends AbstractTaskHandler<FetchScriptAction, SharedLi
     }
 
     private void loadScripts(final DocRef docRef, final Set<DocRef> uiLoadedScripts, final Set<DocRef> loadedScripts,
-            final List<Script> scripts, final Set<String> actionFetchSet) {
+                             final List<Script> scripts, final Set<String> actionFetchSet) {
         // Prevent circular reference loading with this set.
         if (!loadedScripts.contains(docRef)) {
             loadedScripts.add(docRef);

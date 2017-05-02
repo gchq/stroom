@@ -16,6 +16,7 @@
 
 package stroom.importexport.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.ImportState;
 import stroom.importexport.shared.ImportConfigConfirmationAction;
 import stroom.security.Secured;
@@ -23,10 +24,12 @@ import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedList;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = ImportConfigConfirmationAction.class)
+@Scope(value = StroomScope.TASK)
 public class ImportConfigConfirmationHandler
         extends AbstractTaskHandler<ImportConfigConfirmationAction, SharedList<ImportState>> {
     private final ImportExportService importExportService;

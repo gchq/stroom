@@ -16,13 +16,16 @@
 
 package stroom.lifecycle;
 
+import org.springframework.context.annotation.Scope;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.VoidResult;
+import stroom.util.spring.StroomScope;
 
 @TaskHandlerBean(task = LifecycleTask.class)
+@Scope(value = StroomScope.TASK)
 public class LifecycleTaskHandler extends AbstractTaskHandler<LifecycleTask, VoidResult> {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(LifecycleTaskHandler.class);
 

@@ -16,16 +16,19 @@
 
 package stroom.entity.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = EntityServiceLoadAction.class)
+@Scope(value = StroomScope.TASK)
 class EntityServiceLoadHandler
         extends AbstractTaskHandler<EntityServiceLoadAction<BaseEntity>, BaseEntity> {
     private final GenericEntityService entityService;

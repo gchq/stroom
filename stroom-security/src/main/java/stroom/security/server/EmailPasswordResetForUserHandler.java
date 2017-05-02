@@ -16,17 +16,24 @@
 
 package stroom.security.server;
 
-import javax.annotation.Resource;
-
+import org.springframework.context.annotation.Scope;
 import stroom.security.shared.EmailPasswordResetForUserAction;
 import stroom.security.shared.User;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = EmailPasswordResetForUserAction.class)
+@Scope(value = StroomScope.TASK)
 public class EmailPasswordResetForUserHandler extends AbstractTaskHandler<EmailPasswordResetForUserAction, User> {
-    @Resource
-    private AuthenticationService authenticationService;
+    private final AuthenticationService authenticationService;
+
+    @Inject
+    EmailPasswordResetForUserHandler(final AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
+    }
 
     @Override
     public User exec(final EmailPasswordResetForUserAction task) {

@@ -16,6 +16,7 @@
 
 package stroom.pipeline.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.pipeline.server.factory.PipelineDataValidator;
 import stroom.pipeline.server.factory.PipelineStackLoader;
 import stroom.pipeline.shared.FetchPipelineDataAction;
@@ -29,12 +30,14 @@ import stroom.security.SecurityContext;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedList;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 
 @TaskHandlerBean(task = FetchPipelineDataAction.class)
+@Scope(value = StroomScope.TASK)
 public class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineDataAction, SharedList<PipelineData>> {
     private final PipelineEntityService pipelineEntityService;
     private final PipelineStackLoader pipelineStackLoader;

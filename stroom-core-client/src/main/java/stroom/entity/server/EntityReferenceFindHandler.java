@@ -19,6 +19,7 @@ package stroom.entity.server;
 import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
@@ -28,12 +29,14 @@ import stroom.entity.shared.ResultList;
 import stroom.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
 @TaskHandlerBean(task = EntityReferenceFindAction.class)
+@Scope(value = StroomScope.TASK)
 class EntityReferenceFindHandler
         extends AbstractTaskHandler<EntityReferenceFindAction<BaseCriteria>, ResultList<DocRef>> {
     private final EntityServiceBeanRegistry beanRegistry;

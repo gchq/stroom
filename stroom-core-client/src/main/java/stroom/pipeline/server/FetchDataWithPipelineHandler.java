@@ -39,8 +39,8 @@ import stroom.util.spring.StroomScope;
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchDataWithPipelineAction.class)
-@Secured(Stream.VIEW_DATA_WITH_PIPELINE_PERMISSION)
 @Scope(StroomScope.TASK)
+@Secured(Stream.VIEW_DATA_WITH_PIPELINE_PERMISSION)
 public class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWithPipelineAction> {
     @Inject
     FetchDataWithPipelineHandler(final StreamStore streamStore, final FeedService feedService, final FeedHolder feedHolder, final PipelineHolder pipelineHolder, final StreamHolder streamHolder, final PipelineEntityService pipelineEntityService, final PipelineFactory pipelineFactory, final ErrorReceiverProxy errorReceiverProxy, final PipelineDataCache pipelineDataCache, final StreamEventLog streamEventLog, final SecurityContext securityContext) {

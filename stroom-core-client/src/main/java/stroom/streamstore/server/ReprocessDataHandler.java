@@ -17,6 +17,7 @@
 package stroom.streamstore.server;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityIdSet;
 import stroom.pipeline.shared.PipelineEntity;
@@ -31,6 +32,7 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.Severity;
 import stroom.util.shared.SharedList;
+import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -40,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 
 @TaskHandlerBean(task = ReprocessDataAction.class)
+@Scope(StroomScope.TASK)
 @Secured(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)
 public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, SharedList<ReprocessDataInfo>> {
     public static final int MAX_STREAM_TO_REPROCESS = 1000;

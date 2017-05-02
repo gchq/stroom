@@ -16,6 +16,7 @@
 
 package stroom.pipeline.processor.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.pipeline.processor.shared.CreateProcessorAction;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
@@ -25,10 +26,12 @@ import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
 
 @TaskHandlerBean(task = CreateProcessorAction.class)
+@Scope(StroomScope.TASK)
 @Secured(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)
 public class CreateProcessorHandler extends AbstractTaskHandler<CreateProcessorAction, StreamProcessorFilter> {
     @Resource

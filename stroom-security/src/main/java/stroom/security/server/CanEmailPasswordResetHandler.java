@@ -16,19 +16,26 @@
 
 package stroom.security.server;
 
-import javax.annotation.Resource;
-
+import org.springframework.context.annotation.Scope;
 import stroom.security.Insecure;
 import stroom.security.shared.CanEmailPasswordResetAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedBoolean;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = CanEmailPasswordResetAction.class)
+@Scope(value = StroomScope.TASK)
 @Insecure
 public class CanEmailPasswordResetHandler extends AbstractTaskHandler<CanEmailPasswordResetAction, SharedBoolean> {
-    @Resource
-    private AuthenticationService authenticationService;
+    private final AuthenticationService authenticationService;
+
+    @Inject
+    CanEmailPasswordResetHandler(final AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
+    }
 
     @Override
     public SharedBoolean exec(final CanEmailPasswordResetAction task) {

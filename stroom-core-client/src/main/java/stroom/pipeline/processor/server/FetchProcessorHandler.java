@@ -16,6 +16,7 @@
 
 package stroom.pipeline.processor.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.pipeline.processor.client.presenter.StreamProcessorFilterRow;
@@ -34,6 +35,7 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.Expander;
 import stroom.util.shared.SharedObject;
+import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -43,6 +45,7 @@ import java.util.List;
 import java.util.Set;
 
 @TaskHandlerBean(task = FetchProcessorAction.class)
+@Scope(StroomScope.TASK)
 @Secured(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)
 public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, ResultList<SharedObject>> {
     @Resource

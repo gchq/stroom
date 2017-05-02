@@ -16,16 +16,19 @@
 
 package stroom.security.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.security.Secured;
 import stroom.security.shared.FetchUserAppPermissionsAction;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchUserAppPermissionsAction.class)
+@Scope(value = StroomScope.TASK)
 @Secured(User.MANAGE_USERS_PERMISSION)
 public class FetchUserAppPermissionsHandler
         extends AbstractTaskHandler<FetchUserAppPermissionsAction, UserAppPermissions> {

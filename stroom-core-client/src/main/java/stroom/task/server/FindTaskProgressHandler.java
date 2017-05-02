@@ -27,8 +27,8 @@ import stroom.util.spring.StroomScope;
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FindTaskProgressAction.class)
-@Secured(FindTaskProgressAction.MANAGE_TASKS_PERMISSION)
 @Scope(StroomScope.TASK)
+@Secured(FindTaskProgressAction.MANAGE_TASKS_PERMISSION)
 class FindTaskProgressHandler
         extends FindTaskProgressHandlerBase<FindTaskProgressAction, ResultList<TaskProgress>> {
     @Inject

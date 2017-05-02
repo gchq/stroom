@@ -16,6 +16,7 @@
 
 package stroom.security.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
@@ -35,6 +36,7 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.VoidResult;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -45,6 +47,7 @@ import java.util.Map;
 import java.util.Set;
 
 @TaskHandlerBean(task = ChangeDocumentPermissionsAction.class)
+@Scope(value = StroomScope.TASK)
 @Insecure
 public class ChangeDocumentPermissionsHandler
         extends AbstractTaskHandler<ChangeDocumentPermissionsAction, VoidResult> {

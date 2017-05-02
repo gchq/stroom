@@ -16,6 +16,7 @@
 
 package stroom.streamstore.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
@@ -26,11 +27,13 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.util.shared.ResourceKey;
+import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
 import java.nio.file.Path;
 
 @TaskHandlerBean(task = UploadDataAction.class)
+@Scope(StroomScope.TASK)
 @Secured(Stream.IMPORT_DATA_PERMISSION)
 public class UploadDataHandler extends AbstractTaskHandler<UploadDataAction, ResourceKey> {
     @Resource

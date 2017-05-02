@@ -16,13 +16,7 @@
 
 package stroom.jobsystem.server;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.annotation.Resource;
-
+import org.springframework.context.annotation.Scope;
 import stroom.jobsystem.shared.JobNode;
 import stroom.node.shared.Node;
 import stroom.streamtask.server.TaskStatusTraceLog;
@@ -30,20 +24,32 @@ import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.logging.StroomLogger;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 @TaskHandlerBean(task = DistributedTaskRequestClusterTask.class)
+@Scope(value = StroomScope.TASK)
 public class DistributedTaskRequestClusterHandler
         implements TaskHandler<DistributedTaskRequestClusterTask, DistributedTaskRequestResult> {
     protected static final StroomLogger LOGGER = StroomLogger.getLogger(DistributedTaskRequestClusterHandler.class);
 
-    @Resource
-    private DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
+    private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
+    @Inject
+    DistributedTaskRequestClusterHandler(final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
+        this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
+    }
+
     @Override
     public void exec(final DistributedTaskRequestClusterTask request,
-            final TaskCallback<DistributedTaskRequestResult> callback) {
+                     final TaskCallback<DistributedTaskRequestResult> callback) {
         final Node node = request.getNode();
 
         if (LOGGER.isDebugEnabled()) {

@@ -17,16 +17,24 @@
 package stroom.security.server;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 
+import org.springframework.context.annotation.Scope;
 import stroom.security.shared.ResetPasswordAction;
 import stroom.security.shared.User;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
 @TaskHandlerBean(task = ResetPasswordAction.class)
+@Scope(value = StroomScope.TASK)
 public class ResetPasswordHandler extends AbstractTaskHandler<ResetPasswordAction, User> {
-    @Resource
-    private AuthenticationService authenticationService;
+    private final AuthenticationService authenticationService;
+
+    @Inject
+    ResetPasswordHandler(final AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
+    }
 
     @Override
     public User exec(final ResetPasswordAction task) {

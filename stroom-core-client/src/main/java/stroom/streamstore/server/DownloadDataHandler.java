@@ -16,6 +16,7 @@
 
 package stroom.streamstore.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.logging.StreamEventLog;
 import stroom.security.Secured;
@@ -29,12 +30,14 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
 @TaskHandlerBean(task = DownloadDataAction.class)
+@Scope(StroomScope.TASK)
 @Secured(Stream.EXPORT_DATA_PERMISSION)
 public class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction, ResourceGeneration> {
     @Resource

@@ -16,21 +16,28 @@
 
 package stroom.entity.cluster;
 
-import javax.annotation.Resource;
-
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.FindCloseService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = FindCloseServiceClusterTask.class)
+@Scope(value = StroomScope.TASK)
 public class FindCloseServiceClusterHandler extends AbstractTaskHandler<FindCloseServiceClusterTask<?>, VoidResult> {
-    @Resource
-    private StroomBeanStore stroomBeanStore;
+    private final StroomBeanStore stroomBeanStore;
+
+    @Inject
+    FindCloseServiceClusterHandler(final StroomBeanStore stroomBeanStore) {
+        this.stroomBeanStore = stroomBeanStore;
+    }
 
     @Override
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public VoidResult exec(final FindCloseServiceClusterTask<?> task) {
         if (task == null) {
             throw new RuntimeException("No task supplied");

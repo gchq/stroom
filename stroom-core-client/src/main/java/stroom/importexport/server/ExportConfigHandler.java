@@ -16,7 +16,7 @@
 
 package stroom.importexport.server;
 
-import stroom.entity.server.GenericEntityService;
+import org.springframework.context.annotation.Scope;
 import stroom.importexport.shared.ExportConfigAction;
 import stroom.logging.ImportExportEventLog;
 import stroom.security.Secured;
@@ -26,22 +26,26 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 @TaskHandlerBean(task = ExportConfigAction.class)
+@Scope(value = StroomScope.TASK)
 public class ExportConfigHandler extends AbstractTaskHandler<ExportConfigAction, ResourceGeneration> {
-    @Resource
-    private ImportExportService importExportService;
-    @Resource
-    private ImportExportEventLog eventLog;
-    @Resource
-    private SessionResourceStore sessionResourceStore;
-    @Resource
-    private GenericEntityService genericEntityService;
+    private final ImportExportService importExportService;
+    private final ImportExportEventLog eventLog;
+    private final SessionResourceStore sessionResourceStore;
+
+    @Inject
+    ExportConfigHandler(final ImportExportService importExportService, final ImportExportEventLog eventLog, final SessionResourceStore sessionResourceStore) {
+        this.importExportService = importExportService;
+        this.eventLog = eventLog;
+        this.sessionResourceStore = sessionResourceStore;
+    }
 
     @Override
     @Secured("Export Configuration")
