@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-public class TreeNodeModel<T> implements OpenHandler<TreeNode>, CloseHandler<TreeNode> {
+public abstract class TreeNodeModel<T> implements OpenHandler<TreeNode>, CloseHandler<TreeNode> {
     private final HashSet<T> openItems = new HashSet<T>();
 
     @SuppressWarnings("unchecked")
@@ -62,10 +62,14 @@ public class TreeNodeModel<T> implements OpenHandler<TreeNode>, CloseHandler<Tre
     public void toggleOpenState(final T item) {
         if (openItems.contains(item)) {
             openItems.remove(item);
+            refresh(false);
         } else {
             openItems.add(item);
+            refresh(true);
         }
     }
+
+    protected abstract void refresh(final boolean full);
 
     public HashSet<T> getOpenItems() {
         // Ensure that we always get a new set returned so that changes to the open items after this set is returned are

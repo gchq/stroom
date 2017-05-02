@@ -168,12 +168,10 @@ public class ExplorerTree extends AbstractExplorerTree {
             if (open) {
                 if (!treeModel.getOpenItems().contains(selected)) {
                     treeModel.toggleOpenState(selected);
-                    refresh();
                 }
             } else {
                 if (treeModel.getOpenItems().contains(selected)) {
                     treeModel.toggleOpenState(selected);
-                    refresh();
                 }
             }
         }
@@ -330,7 +328,6 @@ public class ExplorerTree extends AbstractExplorerTree {
                                 super.onCellPreview(event);
 
                                 treeModel.toggleOpenState(selectedItem);
-                                refresh();
                             } else {
                                 final boolean doubleClick = doubleClickTest.test(selectedItem);
                                 doSelect(selectedItem, new SelectionType(doubleClick, false, allowMultiSelect, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));

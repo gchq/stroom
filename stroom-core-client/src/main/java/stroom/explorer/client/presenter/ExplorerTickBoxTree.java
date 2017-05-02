@@ -177,12 +177,10 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
             if (open) {
                 if (!treeModel.getOpenItems().contains(selected)) {
                     treeModel.toggleOpenState(selected);
-                    refresh();
                 }
             } else {
                 if (treeModel.getOpenItems().contains(selected)) {
                     treeModel.toggleOpenState(selected);
-                    refresh();
                 }
             }
         }
@@ -340,7 +338,6 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
                             super.onCellPreview(event);
 
                             treeModel.toggleOpenState(selectedItem);
-                            refresh();
                         }
                     }
                 }
