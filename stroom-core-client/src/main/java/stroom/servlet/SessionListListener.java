@@ -27,6 +27,7 @@ import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
+import stroom.util.task.ServerTask;
 import stroom.util.task.TaskIdFactory;
 import stroom.util.thread.ThreadScopeRunnable;
 import stroom.util.zip.StroomHeaderArguments;
@@ -106,6 +107,7 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
                     criteria.setSessionId(sessionId);
                     final TerminateTaskProgressAction action = new TerminateTaskProgressAction(
                             "Terminate session: " + sessionId, criteria, false);
+                    action.setUserToken(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
                     action.setId(TaskIdFactory.create());
 
                     final TaskManager taskManager = getTaskManager();
