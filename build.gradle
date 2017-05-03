@@ -1,9 +1,11 @@
 buildscript {
     repositories {
         mavenLocal()
+        jcenter()
     }
     dependencies {
         classpath group: 'gchq', name: 'urlDependencyPlugin', version: 'v0.1'
+        //classpath group: 'ca.cutterslade.gradle', name: 'gradle-dependency-analyze', version: '1.1.0'
     }
 }
 apply plugin: 'gchq.urldependencies'
@@ -15,13 +17,13 @@ ext.versions = [
         stroomQueryApiSources: 'stroom-query-api-v0.1.0-sources',
         stroomQueryCommon: 'stroom-query-common-v0.1.0',
         stroomExpression: 'stroom-expression-v0.1.0',
-        hbaseCommonShaded: 'hbase-common-shaded-v1.2.1-all',
-        hadoopHdfsShaded: 'hadoop-hdfs-shaded-v2.6.4-all',
-        hadoopCommonShaded: 'hadoop-common-shaded-v2.6.4-all'
+        //hbaseCommonShaded: 'hbase-common-shaded-v1.2.1-2-all',
+        hadoopHdfsShaded: 'hadoop-hdfs-shaded-v2.6.4-2-all',
+        hadoopCommonShaded: 'hadoop-common-shaded-v2.6.4-2-all'
 ]
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.3'
+    gradleVersion = '3.5'
 }
 
 allprojects {
@@ -34,6 +36,9 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
+    
+    //analyze missing dependencies for the code base
+    //apply plugin: 'ca.cutterslade.analyze'
     apply plugin: 'idea'
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -127,10 +132,10 @@ urlDependencies {
         'https://github.com/gchq/stroom-query/releases/download/v0.1.0/stroom-query-common-v0.1.0.jar')
     compile(versions.stroomExpression,
         'https://github.com/gchq/stroom-expression/releases/download/v0.1.0/stroom-expression-v0.1.0.jar')
-    compile(versions.hbaseCommonShaded,
-    'https://github.com/gchq/hbase-common-shaded/releases/download/v1.2.1-all/hbase-common-shaded-v1.2.1-all.jar')
+    //compile(versions.hbaseCommonShaded,
+    //'https://github.com/gchq/hbase-common-shaded/releases/download/v1.2.1-2-all/hbase-common-shaded-v1.2.1-2-all.jar')
     compile(versions.hadoopHdfsShaded,
-            'https://github.com/gchq/hadoop-hdfs-shaded/releases/download/v2.6.4-all/hadoop-hdfs-shaded-v2.6.4-all.jar')
+            'https://github.com/gchq/hadoop-hdfs-shaded/releases/download/v2.6.4-2-all/hadoop-hdfs-shaded-v2.6.4-2-all.jar')
     compile(versions.hadoopCommonShaded,
-    'https://github.com/gchq/hadoop-common-shaded/releases/download/v2.6.4-all/hadoop-common-shaded-v2.6.4-all.jar')
+    'https://github.com/gchq/hadoop-common-shaded/releases/download/v2.6.4-2-all/hadoop-common-shaded-v2.6.4-2-all.jar')
 }

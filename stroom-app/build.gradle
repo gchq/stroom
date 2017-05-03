@@ -51,13 +51,19 @@ dependencies {
     compile project(':stroom-statistics-server')
     compile project(':stroom-dashboard-server')
     compile project(':stroom-security-server')
-    compile "io.dropwizard:dropwizard-core:1.0.6" 
-    compile "io.dropwizard:dropwizard-assets:1.0.6" 
+    compile ("io.dropwizard:dropwizard-core:1.1.0" ) {
+        exclude ( group: "org.glassfish.web", module: "javax.el" )
+    }
+    compile ("io.dropwizard:dropwizard-assets:1.1.0" ) {
+        exclude ( group: "org.glassfish.web", module: "javax.el" )
+    }
 
     // TODO Added after adding shading
     //compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
     //3.0.1-b08 recomended version from http://hibernate.org/validator/documentation/getting-started/
-    //compile group: 'org.glassfish', name: 'javax.el', version: '3.0.1-b08'
+    compile group: 'org.glassfish', name: 'javax.el', version: '3.0.1-b08'
+    //compile group: 'org.glassfish', name: 'javax.el', version: '3.0.0'
+    compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
     //compile group: 'org.glassfish.web', name: 'javax.el', version: '2.2.6'
 
 
@@ -69,8 +75,8 @@ dependencies {
 
     compile "org.apache.geronimo.specs:geronimo-servlet_3.0_spec:1.0"
 
-    testCompile 'io.dropwizard:dropwizard-testing:1.0.6'
-    testCompile 'io.dropwizard:dropwizard-client:1.0.6'
+    testCompile 'io.dropwizard:dropwizard-testing:1.1.0'
+    testCompile 'io.dropwizard:dropwizard-client:1.1.0'
 }
 
 sourceSets {

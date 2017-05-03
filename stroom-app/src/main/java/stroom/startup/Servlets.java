@@ -26,7 +26,7 @@ public class Servlets {
     public Servlets(MutableServletContextHandler servletContextHandler){
         upgradeDispatcherServletHolder = Servlets.newUpgradeDispatcherServlet();
 
-        addServlet(servletContextHandler, upgradeDispatcherServletHolder, 3, "/*.rpc", new String[]{
+        addServlet(servletContextHandler, upgradeDispatcherServletHolder, 3, "*.rpc", new String[]{
                 "/dispatch.rpc",
                 "/dynamic.css",
                 "/script",
