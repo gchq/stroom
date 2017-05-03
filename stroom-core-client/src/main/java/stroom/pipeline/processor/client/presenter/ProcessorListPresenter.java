@@ -163,6 +163,10 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                     final StreamProcessor processor = streamProcessorRow.getEntity();
                     TooltipUtil.addHeading(html, "Stream Processor");
                     TooltipUtil.addRowData(html, "Id", String.valueOf(processor.getId()));
+                    TooltipUtil.addRowData(html, "Created By", processor.getCreateUser());
+                    StreamTooltipPresenterUtil.addRowDateString(html, "Created On", processor.getCreateTime());
+                    TooltipUtil.addRowData(html, "Updated By", processor.getUpdateUser());
+                    StreamTooltipPresenterUtil.addRowDateString(html, "Updated On", processor.getUpdateTime());
                     TooltipUtil.addRowData(html, "Pipeline", toNameString(processor.getPipeline()));
 
                 } else if (row instanceof StreamProcessorFilterRow) {
@@ -172,10 +176,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                     TooltipUtil.addHeading(html, "Stream Processor Filter");
                     TooltipUtil.addRowData(html, "Id", filter.getId());
                     TooltipUtil.addRowData(html, "Created By", filter.getCreateUser());
-                    StreamTooltipPresenterUtil.addRowDateString(html, "Min Stream Create Ms",
-                            tracker.getMinStreamCreateMs());
-                    StreamTooltipPresenterUtil.addRowDateString(html, "Max Stream Create Ms",
-                            tracker.getMaxStreamCreateMs());
+                    StreamTooltipPresenterUtil.addRowDateString(html, "Created On", filter.getCreateTime());
+                    TooltipUtil.addRowData(html, "Updated By", filter.getUpdateUser());
+                    StreamTooltipPresenterUtil.addRowDateString(html, "Updated On", filter.getUpdateTime());
+                    StreamTooltipPresenterUtil.addRowDateString(html, "Min Stream Create Ms", tracker.getMinStreamCreateMs());
+                    StreamTooltipPresenterUtil.addRowDateString(html, "Max Stream Create Ms", tracker.getMaxStreamCreateMs());
                     StreamTooltipPresenterUtil.addRowDateString(html, "Stream Create Ms", tracker.getStreamCreateMs());
                     TooltipUtil.addRowData(html, "Stream Create %", tracker.getTrackerStreamCreatePercentage());
                     StreamTooltipPresenterUtil.addRowDateString(html, "Last Poll", tracker.getLastPollMs());
