@@ -101,6 +101,10 @@ public class AuthResource {
         this.authenticationService = authenticationService;
     }
 
+    public void setAuthorisationService(AuthorisationService authorisationService) {
+        this.authorisationService = authorisationService;
+    }
+
     private static Optional<UsernamePasswordToken> extractCredentialsFromHeader(ContainerRequest request) {
         try {
             String authorizationHeader = request.getHeaderString("Authorization");
