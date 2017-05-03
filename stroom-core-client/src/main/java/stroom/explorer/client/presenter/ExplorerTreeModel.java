@@ -33,9 +33,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
+public class ExplorerTreeModel {
     public static final ExplorerData NULL_SELECTION = new SimpleExplorerItem(null, null, "None", null);
 
+    private final OpenItems<ExplorerData> openItems = new OpenItems<>();
     private final NameFilterTimer timer = new NameFilterTimer();
     private final ExplorerTreeFilterBuilder explorerTreeFilterBuilder = new ExplorerTreeFilterBuilder();
     private final AbstractExplorerTree explorerTree;
@@ -89,8 +90,7 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
         fetchData();
     }
 
-    @Override
-    protected void refresh(final boolean fetch) {
+    private void refresh(final boolean fetch) {
         if (fetch) {
             // Fetch data from the server to update the tree.
             fetchData();
@@ -102,10 +102,10 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
 
     private void fetchData() {
         final ExplorerTreeFilter explorerTreeFilter = explorerTreeFilterBuilder.build();
-        final Set<ExplorerData> openItems = getOpenItems();
         if (explorerTreeFilter != null) {
+            final Set<ExplorerData> allOpenItems = openItems.getAllOpenItems();
             // Fetch a list of data items that belong to this parent.
-            currentCriteria = new FindExplorerDataCriteria(openItems, explorerTreeFilter, minDepth, ensureVisible);
+            currentCriteria = new FindExplorerDataCriteria(allOpenItems, explorerTreeFilter, minDepth, ensureVisible);
 
             if (!fetching) {
                 fetching = true;
@@ -132,10 +132,13 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
                             // folders might have been opened to make this happen. The server will tell us which
                             // folders these were so we can add them to the set of open folders to ensure they
                             // aren't immediately closed on the next refresh.
-                            if (result != null && result.getOpenedItems() != null) {
+                            if (result.getOpenedItems() != null) {
                                 for (final ExplorerData openedItem : result.getOpenedItems()) {
-                                    addOpenItem(openedItem);
+                                    openItems.open(openedItem);
                                 }
+                            }
+                            if (result.getTemporaryOpenedItems() != null) {
+                                openItems.setTemporaryOpenItems(result.getTemporaryOpenedItems());
                             }
 
                             // Remember the new tree structure.
@@ -162,7 +165,7 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
                                 if (index == -1) {
                                     nextSelection = null;
 
-                                    if (result != null && result.getOpenedItems() != null) {
+                                    if (result.getOpenedItems() != null) {
                                         for (int i = result.getOpenedItems().size() - 1; i >= 0 && nextSelection == null; i--) {
                                             final ExplorerData item = result.getOpenedItems().get(i);
                                             if (rows.contains(item)) {
@@ -202,7 +205,7 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
         // Build the row list from the tree structure.
         final List<ExplorerData> rows = new ArrayList<>();
         if (currentTreeStructure != null) {
-            addToRows(currentTreeStructure.getRoot(), currentTreeStructure, rows);
+            addToRows(currentTreeStructure.getRoot(), currentTreeStructure, rows, openItems.getAllOpenItems());
         }
 
         // If we are allowing null selection then insert a node at the root to make it
@@ -218,14 +221,14 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
         return rows;
     }
 
-    private void addToRows(final ExplorerData parent, final TreeStructure treeStructure, final List<ExplorerData> rows) {
+    private void addToRows(final ExplorerData parent, final TreeStructure treeStructure, final List<ExplorerData> rows, final Set<ExplorerData> openItems) {
         rows.add(parent);
 
-        if (getOpenItems().contains(parent)) {
+        if (openItems.contains(parent)) {
             final List<ExplorerData> children = treeStructure.getChildren(parent);
             if (children != null) {
                 for (final ExplorerData child : children) {
-                    addToRows(child, treeStructure, rows);
+                    addToRows(child, treeStructure, rows, openItems);
                 }
             }
 
@@ -244,7 +247,7 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
 
     public void reset() {
         explorerTree.setData(new ArrayList<>());
-        clearOpenItems();
+        openItems.clear();
         minDepth = 1;
         ensureVisible = null;
     }
@@ -255,6 +258,20 @@ public class ExplorerTreeModel extends TreeNodeModel<ExplorerData> {
 
     public boolean isIncludeNullSelection() {
         return includeNullSelection;
+    }
+
+    public void setItemOpen(final ExplorerData item, final boolean open) {
+        if (item != null) {
+            if (open != openItems.isOpen(item)) {
+                refresh(openItems.toggleOpenState(item));
+            }
+        }
+    }
+
+    public void toggleOpenState(final ExplorerData item) {
+        if (item != null) {
+            refresh(openItems.toggleOpenState(item));
+        }
     }
 
     private class NameFilterTimer extends Timer {

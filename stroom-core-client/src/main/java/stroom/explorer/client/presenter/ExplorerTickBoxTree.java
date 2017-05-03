@@ -173,17 +173,7 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
 
     private void setOpenState(boolean open) {
         final ExplorerData selected = getKeyBoardSelected();
-        if (selected != null) {
-            if (open) {
-                if (!treeModel.getOpenItems().contains(selected)) {
-                    treeModel.toggleOpenState(selected);
-                }
-            } else {
-                if (treeModel.getOpenItems().contains(selected)) {
-                    treeModel.toggleOpenState(selected);
-                }
-            }
-        }
+        treeModel.setItemOpen(selected, open);
     }
 
     private void selectCurrent() {

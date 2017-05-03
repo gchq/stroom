@@ -29,16 +29,18 @@ public class ExplorerTreeFilter implements SharedObject {
     private Set<String> tags;
     private Set<String> requiredPermissions;
     private String nameFilter;
+    private boolean nameFilterChange;
 
     public ExplorerTreeFilter() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ExplorerTreeFilter(final Set<String> includedTypes, final Set<String> tags, final Set<String> requiredPermissions, final String nameFilter) {
+    public ExplorerTreeFilter(final Set<String> includedTypes, final Set<String> tags, final Set<String> requiredPermissions, final String nameFilter, final boolean nameFilterChange) {
         this.includedTypes = includedTypes;
         this.tags = tags;
         this.requiredPermissions = requiredPermissions;
         this.nameFilter = nameFilter;
+        this.nameFilterChange = nameFilterChange;
     }
 
     public Set<String> getIncludedTypes() {
@@ -57,6 +59,10 @@ public class ExplorerTreeFilter implements SharedObject {
         return nameFilter;
     }
 
+    public boolean isNameFilterChange() {
+        return nameFilterChange;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == this) {
@@ -71,6 +77,7 @@ public class ExplorerTreeFilter implements SharedObject {
         builder.append(tags, filter.tags);
         builder.append(requiredPermissions, filter.requiredPermissions);
         builder.append(nameFilter, filter.nameFilter);
+        builder.append(nameFilterChange, filter.nameFilterChange);
         return builder.isEquals();
     }
 
@@ -81,6 +88,7 @@ public class ExplorerTreeFilter implements SharedObject {
         builder.append(tags);
         builder.append(requiredPermissions);
         builder.append(nameFilter);
+        builder.append(nameFilterChange);
         return builder.toHashCode();
     }
 }

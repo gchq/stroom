@@ -28,6 +28,7 @@ public class FetchExplorerDataResult implements SharedObject {
 
     private TreeStructure treeStructure = new TreeStructure();
     private List<ExplorerData> openedItems = new ArrayList<>();
+    private HashSet<ExplorerData> temporaryOpenedItems;
 
     public FetchExplorerDataResult() {
         // Default constructor necessary for GWT serialisation.
@@ -39,5 +40,13 @@ public class FetchExplorerDataResult implements SharedObject {
 
     public List<ExplorerData> getOpenedItems() {
         return openedItems;
+    }
+
+    public HashSet<ExplorerData> getTemporaryOpenedItems() {
+        return temporaryOpenedItems;
+    }
+
+    public void setTemporaryOpenedItems(final HashSet<ExplorerData> temporaryOpenedItems) {
+        this.temporaryOpenedItems = temporaryOpenedItems;
     }
 }
