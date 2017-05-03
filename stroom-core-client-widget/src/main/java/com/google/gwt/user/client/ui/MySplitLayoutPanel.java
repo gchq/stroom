@@ -46,12 +46,10 @@ import com.google.gwt.user.client.Event;
  * A panel that adds user-positioned splitters between each of its child
  * widgets.
  * <p>
- * <p>
  * This panel is used in the same way as {@link DockLayoutPanel}, except that
  * its children's sizes are always specified in {@link Unit#PX} units, and each
  * pair of child widgets has a splitter between them that the user can drag.
  * </p>
- * <p>
  * <p>
  * This widget will <em>only</em> work in standards mode, which requires that
  * the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
@@ -76,8 +74,6 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     private static Element glassElem = null;
 
     private ScheduledCommand delayedLayoutCommand;
-    private ScheduledCommand resizeCommand;
-    // private ScheduledCommand adjustSplitSizesCommand;
 
     private double[] hSplits;
     private double[] vSplits;
@@ -89,17 +85,6 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     public MySplitLayoutPanel() {
         super(Unit.PX);
         setStyleName("gwt-SplitLayoutPanel");
-        // doDelayedLayout();
-    }
-
-    private void doDelayedLayout() {
-        if (delayedLayoutCommand == null) {
-            delayedLayoutCommand = () -> {
-                delayedLayoutCommand = null;
-                onResize();
-            };
-            Scheduler.get().scheduleDeferred(delayedLayoutCommand);
-        }
     }
 
     public void setHSplits(final String str) {
@@ -135,31 +120,29 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     @Override
     public void onResize() {
         if (!isResizing) {
-            if ((hSplits != null || vSplits != null)) {
-                // Immediately adjust the split sizes.
-                adjustSplitSizes();
+            // Attempt immediate layout so the display appears to update immediately.
+            doLayout();
+            // Now do deferred layout to compensate for delayed attachment of children.
+            doDelayedLayout();
+        } else {
+            super.onResize();
+        }
+    }
 
-                // Resize the split panel once loaded so we can update the sizes
-                // of widgets based on a supplied split pos.
-                if (resizeCommand == null) {
-                    resizeCommand = () -> {
-                        resizeCommand = null;
-                        adjustSplitSizes();
-                    };
-                    Scheduler.get().scheduleDeferred(resizeCommand);
-                }
-            } else {
-                // Defer actually updating the layout, so that if we receive
-                // many mouse events before layout/paint occurs, we'll only
-                // update once.
-                if (resizeCommand == null) {
-                    resizeCommand = () -> {
-                        resizeCommand = null;
-                        MySplitLayoutPanel.super.onResize();
-                    };
-                    Scheduler.get().scheduleDeferred(resizeCommand);
-                }
-            }
+    private void doDelayedLayout() {
+        if (delayedLayoutCommand == null) {
+            delayedLayoutCommand = () -> {
+                delayedLayoutCommand = null;
+                doLayout();
+            };
+            Scheduler.get().scheduleDeferred(delayedLayoutCommand);
+        }
+    }
+
+    private void doLayout() {
+        if ((hSplits != null || vSplits != null)) {
+            // Adjust the split sizes.
+            adjustSplitSizes();
         } else {
             super.onResize();
         }
@@ -227,21 +210,11 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
                 }
             }
 
-            // Defer actually updating the layout, so that if we receive many
-            // mouse events before layout/paint occurs, we'll only update once.
+            // Defer actually updating the layout, so that if we receive many mouse events before layout/paint occurs, we'll only update once.
             if (doLayout) {
-//                &&
-//            } adjustSplitSizesCommand == null) {
-//                adjustSplitSizesCommand = new ScheduledCommand() {
-//                    @Override
-//                    public void execute() {
-//                        adjustSplitSizesCommand = null;
                 isResizing = true;
                 forceLayout();
                 isResizing = false;
-//                    }
-//                };
-//                Scheduler.get().scheduleDeferred(adjustSplitSizesCommand);
             }
         }
     }
@@ -297,11 +270,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     }
 
     private Splitter getAssociatedSplitter(final Widget child) {
-        // If a widget has a next sibling, it must be a splitter, because the
-        // only
-        // widget that *isn't* followed by a splitter must be the CENTER, which
-        // has
-        // no associated splitter.
+        // If a widget has a next sibling, it must be a splitter, because the only widget that *isn't* followed by a splitter must be the CENTER, which has no associated splitter.
         final int idx = getWidgetIndex(child);
         if (idx > -1 && idx < getWidgetCount() - 1) {
             final Widget splitter = getWidget(idx + 1);
@@ -347,9 +316,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
             glassElem.getStyle().setBorderWidth(0, Unit.PX);
             glassElem.getStyle().setZIndex(2);
 
-            // We need to set the background color or mouse events will go right
-            // through the glassElem. If the SplitPanel contains an iframe, the
-            // iframe will capture the event and the slider will stop moving.
+            // We need to set the background color or mouse events will go right through the glassElem. If the SplitPanel contains an iframe, the iframe will capture the event and the slider will stop moving.
             glassElem.getStyle().setBackgroundColor("white");
             glassElem.getStyle().setOpacity(0);
             glassElem.getStyle().setProperty("filter", "alpha(opacity=0)");
@@ -504,9 +471,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
             this.minSize = minSize;
             final LayoutData layout = (LayoutData) target.getLayoutData();
 
-            // Try resetting the associated widget's size, which will enforce
-            // the new
-            // minSize value.
+            // Try resetting the associated widget's size, which will enforce the new minSize value.
             setAssociatedWidgetSize((int) layout.size);
         }
 
@@ -530,8 +495,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
 
             layout.size = size;
 
-            // Defer actually updating the layout, so that if we receive many
-            // mouse events before layout/paint occurs, we'll only update once.
+            // Defer actually updating the layout, so that if we receive many mouse events before layout/paint occurs, we'll only update once.
             if (layoutCommand == null) {
                 layoutCommand = () -> {
                     layoutCommand = null;
