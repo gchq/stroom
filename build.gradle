@@ -1,9 +1,12 @@
 buildscript {
     repositories {
         mavenLocal()
+        jcenter()
     }
     dependencies {
         classpath group: 'gchq', name: 'urlDependencyPlugin', version: 'v0.1'
+        classpath 'ca.cutterslade.gradle:gradle-dependency-analyze:1.1.0'
+
     }
 }
 apply plugin: 'gchq.urldependencies'
@@ -35,6 +38,10 @@ allprojects {
 subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
+
+    //TODO: If you enable this the build will flag up dependency inconsistencies
+//    apply plugin: 'ca.cutterslade.analyze'
+
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
@@ -73,11 +80,6 @@ subprojects {
         mavenLocal()
 
         maven { url "http://repo.maven.apache.org/maven2" }
-    }
-
-    dependencies {
-        testCompile 'junit:junit:4.12'
-        testCompile 'org.mockito:mockito-core:2.0.2-beta'
     }
 }
 
