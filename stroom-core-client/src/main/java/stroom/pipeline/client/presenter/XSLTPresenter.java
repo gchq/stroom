@@ -18,7 +18,6 @@ package stroom.pipeline.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
@@ -42,7 +41,7 @@ public class XSLTPresenter extends EntityEditTabPresenter<LinkTabPanelView, XSLT
     @Inject
     public XSLTPresenter(final EventBus eventBus, final LinkTabPanelView view,
                          final XSLTSettingsPresenter settingsPresenter, final Provider<EditorPresenter> editorPresenterProvider,
-                         final ClientSecurityContext securityContext, final ClientDispatchAsync dispatcher) {
+                         final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;

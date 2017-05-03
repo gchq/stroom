@@ -101,7 +101,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     }
 
     public String getText() {
-        if (editor.isAttached()) {
+        if (started) {
             return editor.getText();
         }
 
@@ -121,7 +121,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     }
 
     private void updateText() {
-        if (editor.isAttached() && textDirty) {
+        if (started && textDirty) {
             editor.setText(this.text);
             textDirty = false;
         }
@@ -134,7 +134,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     }
 
     private void updateFirstLineNumber() {
-        if (editor.isAttached() && firstLineNumberDirty) {
+        if (started && firstLineNumberDirty) {
             editor.setFirstLineNumber(firstLineNumber);
             firstLineNumberDirty = false;
         }
@@ -147,7 +147,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     }
 
     private void updateAnnotations() {
-        if (editor.isAttached() && annotationsDirty) {
+        if (started && annotationsDirty) {
             editor.clearAnnotations();
             if (annotations != null) {
                 for (final Annotation annotation : annotations) {
@@ -166,7 +166,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     }
 
     private void updateMarkers() {
-        if (editor.isAttached() && markersDirty) {
+        if (started && markersDirty) {
             editor.removeAllMarkers();
             if (markers != null) {
                 for (final Marker marker : markers) {
@@ -184,7 +184,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     }
 
     private void updateReadOnly() {
-        if (editor.isAttached() && readOnlyDirty) {
+        if (started && readOnlyDirty) {
             editor.setReadOnly(readOnly);
             readOnlyDirty = false;
         }
@@ -197,7 +197,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     }
 
     private void updateMode() {
-        if (editor.isAttached() && modeDirty) {
+        if (started && modeDirty) {
             if (mode != null) {
                 try {
                     editor.setMode(mode);
@@ -216,7 +216,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     }
 
     private void updateTheme() {
-        if (editor.isAttached() && themeDirty) {
+        if (started && themeDirty) {
             if (theme != null) {
                 try {
                     editor.setTheme(theme);
@@ -235,7 +235,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     }
 
     private void updateShowGutter() {
-        if (editor.isAttached() && showGutterDirty) {
+        if (started && showGutterDirty) {
             editor.setShowGutter(showGutter);
             showGutterDirty = false;
         }
@@ -248,14 +248,14 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     }
 
     private void updateGotoLine() {
-        if (editor.isAttached() && gotoLineDirty) {
+        if (started && gotoLineDirty) {
             editor.gotoLine(gotoLine);
             gotoLineDirty = false;
         }
     }
 
     public int getLineCount() {
-        if (editor.isAttached()) {
+        if (started) {
             return editor.getLineCount();
         }
         return 0;
