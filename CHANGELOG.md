@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#264** : Added created by/on and updated by/on info to pipeline stream processor info tooltips.
 
+* Issue **#222** : Explorer items now auto expand when a quick filter is used.
+
 ## [v5.0-beta.20] - 2017-04-26
 
 * Issue **#205** : File permissions in distribution have now been changed to `0750` for directories and shell scripts and `0640` for all other files.
