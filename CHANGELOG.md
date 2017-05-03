@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#274** : The editor pane was only returning the current user edited text when attached to the DOM which meant changes to text were ignored if an editor pane was not visible when save was pressed. This has now been fixed so that the current content of an editor pane is always returned even when it is in a detached state.
 
+* Issue **#264** : Added created by/on and updated by/on info to pipeline stream processor info tooltips.
+
 ## [v5.0-beta.20] - 2017-04-26
 
 * Issue **#205** : File permissions in distribution have now been changed to `0750` for directories and shell scripts and `0640` for all other files.
