@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#273** : Removed an unnecessary script from the build.
 
+* Issue **#277** : Fixed a layout issue that was causing the feed section of the processor filter popup to take up too much room.
+
 ## [v5.0-beta.20] - 2017-04-26
 
 * Issue **#205** : File permissions in distribution have now been changed to `0750` for directories and shell scripts and `0640` for all other files.
