@@ -16,7 +16,6 @@
 
 package stroom.startup;
 
-import org.eclipse.jetty.server.session.HashSessionManager;
 import org.eclipse.jetty.server.session.SessionHandler;
 import stroom.Config;
 import stroom.security.spring.SecurityConfiguration;
@@ -29,8 +28,7 @@ import stroom.util.thread.ThreadScopeContextHolder;
 public class Environment {
     public static void configure(Config config, io.dropwizard.setup.Environment environment) {
         // Set up a session manager for Jetty
-        HashSessionManager manager = new HashSessionManager();
-        SessionHandler sessions = new SessionHandler(manager);
+        SessionHandler sessions = new SessionHandler();
         environment.servlets().setSessionHandler(sessions);
 
         // We want Stroom to use the root path so we need to move Dropwizard's path.

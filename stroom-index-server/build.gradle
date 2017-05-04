@@ -36,11 +36,12 @@ dependencies {
 //    compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.8.6'
 
     // Jersey JSON serialiser
-    compile 'org.glassfish.jersey.media:jersey-media-json-jackson:2.25'
+    compile 'org.glassfish.jersey.media:jersey-media-json-jackson:2.25.1'
 
     // Jersey + Spring
-    compile('org.glassfish.jersey.ext:jersey-spring3:2.25') {
+    compile('org.glassfish.jersey.ext:jersey-spring3:2.25.1') {
         exclude(module: 'asm-all-repackaged')
+        exclude(module: 'jersey-container-servlet-core')
     }
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')

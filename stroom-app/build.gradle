@@ -52,8 +52,12 @@ dependencies {
     compile project(':stroom-security-api')
     compile project(':stroom-index-shared')
 
-    compile 'io.dropwizard:dropwizard-core:1.0.6'
-    compile 'io.dropwizard:dropwizard-assets:1.0.6'
+    compile ("io.dropwizard:dropwizard-core:1.1.0" ) {
+        exclude ( group: "org.glassfish.web", module: "javax.el" )
+    }
+    compile ("io.dropwizard:dropwizard-assets:1.1.0" ) {
+        exclude ( group: "org.glassfish.web", module: "javax.el" )
+    }
     compile 'io.dropwizard.metrics:metrics-annotation:3.1.2'
     compile 'io.dropwizard:dropwizard-jersey:1.0.6'
     compile 'io.dropwizard:dropwizard-jetty:1.0.6'

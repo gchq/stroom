@@ -6,7 +6,6 @@ buildscript {
     dependencies {
         classpath group: 'gchq', name: 'urlDependencyPlugin', version: 'v0.1'
         classpath 'ca.cutterslade.gradle:gradle-dependency-analyze:1.1.0'
-
     }
 }
 apply plugin: 'gchq.urldependencies'
@@ -15,16 +14,16 @@ ext.versions = [
         stroom: '6.0-beta.1-SNAPSHOT',
         stroomQueryApi: 'stroom-query-api-v0.1.0',
         stroomQueryApiSources: 'stroom-query-api-v0.1.0-sources',
-        eventLogging: 'event-logging-v3.1.0',
         stroomQueryCommon: 'stroom-query-common-v0.1.0',
         stroomExpression: 'stroom-expression-v0.1.0',
-        hbaseCommonShaded: 'hbase-common-shaded-v1.2.1-all',
+        eventLogging: 'event-logging-v3.1.0',
+//        hbaseCommonShaded: 'hbase-common-shaded-v1.2.1-all',
         hadoopHdfsShaded: 'hadoop-hdfs-shaded-v2.6.4-all',
         hadoopCommonShaded: 'hadoop-common-shaded-v2.6.4-all'
 ]
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.3'
+    gradleVersion = '3.5'
 }
 
 allprojects {
@@ -37,6 +36,9 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
+    
+    //analyze missing dependencies for the code base
+    //apply plugin: 'ca.cutterslade.analyze'
     apply plugin: 'idea'
 
     //TODO: If you enable this the build will flag up dependency inconsistencies
@@ -125,14 +127,14 @@ urlDependencies {
         'https://github.com/gchq/stroom-query/releases/download/v0.1.0/stroom-query-api-v0.1.0-sources.jar')
     compile(versions.stroomQueryCommon,
         'https://github.com/gchq/stroom-query/releases/download/v0.1.0/stroom-query-common-v0.1.0.jar')
-    compile(versions.eventLogging,
-        'https://github.com/gchq/event-logging/releases/download/v3.1.0/event-logging-v3.1.0.jar')
     compile(versions.stroomExpression,
         'https://github.com/gchq/stroom-expression/releases/download/v0.1.0/stroom-expression-v0.1.0.jar')
-    compile(versions.hbaseCommonShaded,
-    'https://github.com/gchq/hbase-common-shaded/releases/download/v1.2.1-all/hbase-common-shaded-v1.2.1-all.jar')
+    compile(versions.eventLogging,
+            'https://github.com/gchq/event-logging/releases/download/v3.1.0/event-logging-v3.1.0.jar')
+//    compile(versions.hbaseCommonShaded,
+//    'https://github.com/gchq/hbase-common-shaded/releases/download/v1.2.1-all/hbase-common-shaded-v1.2.1-all.jar')
     compile(versions.hadoopHdfsShaded,
-            'https://github.com/gchq/hadoop-hdfs-shaded/releases/download/v2.6.4-all/hadoop-hdfs-shaded-v2.6.4-all.jar')
+            'https://github.com/gchq/hadoop-hdfs-shaded/releases/download/v2.6.4-2-all/hadoop-hdfs-shaded-v2.6.4-2-all.jar')
     compile(versions.hadoopCommonShaded,
-    'https://github.com/gchq/hadoop-common-shaded/releases/download/v2.6.4-all/hadoop-common-shaded-v2.6.4-all.jar')
+    'https://github.com/gchq/hadoop-common-shaded/releases/download/v2.6.4-2-all/hadoop-common-shaded-v2.6.4-2-all.jar')
 }
