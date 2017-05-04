@@ -306,10 +306,10 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                         }
 
                         if (t instanceof ThreadDeath || t instanceof TaskTerminatedException) {
-                            LOGGER.warn("exec() - Task killed!");
-                            LOGGER.debug("exec()", t);
+                            LOGGER.warn("exec() - Task killed! (" + task.getClass().getSimpleName() + ")");
+                            LOGGER.debug("exec() (" + task.getClass().getSimpleName() + ")", t);
                         } else {
-                            LOGGER.error(t.getMessage(), t);
+                            LOGGER.error(t.getMessage() + " (" + task.getClass().getSimpleName() + ")", t);
                         }
 
                     } finally {
@@ -340,7 +340,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
                 } catch (final Throwable t) {
                     try {
-                        LOGGER.fatal("exec() - Unexpected Exception", t);
+                        LOGGER.fatal("exec() - Unexpected Exception (" + task.getClass().getSimpleName() + ")", t);
                         throw new RuntimeException(t.getMessage(), t);
 
                     } finally {
@@ -367,7 +367,6 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
         currentThread.setName(oldThreadName + " - " + task.getClass().getSimpleName());
         try {
-
             String userToken = task.getUserToken();
             if (userToken == null) {
                 if (LOGGER.isDebugEnabled()) {
