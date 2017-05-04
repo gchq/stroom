@@ -114,7 +114,7 @@ public class MyDateBox extends Composite implements DateBoxView {
                 current = new Date();
             }
             datePicker.setCurrentMonth(current);
-            datePicker.setValue(current);
+            datePicker.setValue(current, false);
             popup.showRelativeTo(this);
         }
     }
@@ -178,6 +178,8 @@ public class MyDateBox extends Composite implements DateBoxView {
             if (tIndex != -1) {
                 textBox.setCursorPos(tIndex);
             }
+
+            hideDatePicker();
         }
 
         public void onBlur(BlurEvent event) {
