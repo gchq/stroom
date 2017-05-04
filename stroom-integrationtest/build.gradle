@@ -18,6 +18,9 @@ dependencies {
     testCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
 
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.0.2-beta'
+
     // Use default DB config.
     compile project(':stroom-config')
 }

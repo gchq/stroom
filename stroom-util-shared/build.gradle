@@ -1,7 +1,4 @@
 dependencies {
-    compile project(':stroom-entity-shared')
-    compile project(':stroom-security-api')
-
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.0.2-beta'
 }

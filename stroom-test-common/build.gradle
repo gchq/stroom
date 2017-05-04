@@ -1,3 +1,6 @@
 dependencies {
     compile project(':stroom-util')
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.0.2-beta'
 }

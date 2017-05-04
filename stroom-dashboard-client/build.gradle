@@ -2,4 +2,7 @@ dependencies {
     compile project(':stroom-dashboard-shared')
     compile project(':stroom-core-client')
     compile project(':stroom-security-client')
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.0.2-beta'
 }
