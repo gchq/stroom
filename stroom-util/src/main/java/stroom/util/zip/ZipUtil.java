@@ -149,30 +149,30 @@ public final class ZipUtil {
     }
 
     public static void unzip(final Path zipFile, final Path dir) throws IOException {
-        final ZipInputStream zip = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipFile)));
+        try (final ZipInputStream zip = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
+            ZipEntry zipEntry;
+            while ((zipEntry = zip.getNextEntry()) != null) {
+                try {
+                    // Get output file.
+                    final Path file = dir.resolve(zipEntry.getName());
 
-        ZipEntry zipEntry = null;
-        while ((zipEntry = zip.getNextEntry()) != null) {
-            // Get output file.
-            final Path file = dir.resolve(zipEntry.getName());
+                    if (zipEntry.isDirectory()) {
+                        // Make sure output directories exist.
+                        Files.createDirectories(file);
+                    } else {
+                        // Make sure output directories exist.
+                        Files.createDirectories(file.getParent());
 
-            if (zipEntry.isDirectory()) {
-                // Make sure output directories exist.
-                Files.createDirectories(file);
-            } else {
-                // Make sure output directories exist.
-                Files.createDirectories(file.getParent());
-
-                // Write file.
-                try (final OutputStream outputStream = Files.newOutputStream(file)) {
-                    StreamUtil.streamToStream(zip, outputStream, false);
+                        // Write file.
+                        try (final OutputStream outputStream = Files.newOutputStream(file)) {
+                            StreamUtil.streamToStream(zip, outputStream, false);
+                        }
+                    }
+                } finally {
+                    zip.closeEntry();
                 }
             }
-
-            zip.closeEntry();
         }
-
-        zip.close();
     }
 
     public static List<String> pathList(final File zipFile) throws IOException {

@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class ImportExportSerializerImpl implements ImportExportSerializer {
@@ -190,17 +191,22 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
         try {
             // Look for matching files
             final String match = "." + entityType + ".";
-            final List<Path> paths = Files.walk(dir)
-                    .filter(p -> p.getFileName().toString().contains(match))
-                    .map(p -> {
-                        String name = p.getFileName().toString();
-                        name = name.substring(0, name.indexOf(match) + match.length() - 1);
-                        return p.getParent().resolve(name);
-                    })
-                    .collect(Collectors.toSet())
-                    .stream()
-                    .sorted(Comparator.comparingInt(Path::getNameCount))
-                    .collect(Collectors.toList());
+            List<Path> paths;
+            try (final Stream<Path> stream = Files.walk(dir)) {
+                final Set<Path> set = stream
+                        .filter(p -> p.getFileName().toString().contains(match))
+                        .map(p -> {
+                            String name = p.getFileName().toString();
+                            name = name.substring(0, name.indexOf(match) + match.length() - 1);
+                            return p.getParent().resolve(name);
+                        })
+                        .collect(Collectors.toSet());
+                try (Stream<Path> s = set.stream()) {
+                    paths = s
+                            .sorted(Comparator.comparingInt(Path::getNameCount))
+                            .collect(Collectors.toList());
+                }
+            }
 
             paths.forEach(path -> {
                 ImportState importState = null;
@@ -213,21 +219,25 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
 
                     // Find all of the files associated with this document config.
                     final String matchingConfig = relativePath.getFileName().toString();
-                    final List<Path> parts = Files.list(path.getParent())
-                            .filter(p -> p.getFileName().toString().startsWith(matchingConfig))
-                            .collect(Collectors.toList());
 
                     // Create a map of all of the data required to import this document.
                     final Map<String, String> dataMap = new HashMap<>();
-                    parts.forEach(part -> {
-                        try {
-                            final String key = dir.relativize(part).toString();
-                            final String content = new String(Files.readAllBytes(part), Charset.forName("UTF-8"));
-                            dataMap.put(key, content);
-                        } catch (final IOException e) {
-                            LOGGER.error(e.getMessage(), e);
-                        }
-                    });
+                    try (final Stream<Path> stream = Files.list(path.getParent())) {
+                        final List<Path> parts = stream
+                                .filter(p -> p.getFileName().toString().startsWith(matchingConfig))
+                                .collect(Collectors.toList());
+
+                        parts.forEach(part -> {
+                            try {
+                                final String key = dir.relativize(part).toString();
+                                final String content = new String(Files.readAllBytes(part), Charset.forName("UTF-8"));
+                                dataMap.put(key, content);
+                            } catch (final Throwable e) {
+                                LOGGER.error(e.getMessage(), e);
+                                LOGGER.error("DATA SIZE = " + dataMap.size());
+                            }
+                        });
+                    }
 
                     // Find out if this item exists.
                     // TODO : In v6 the UUID will be part of the file name so that we don't have to read the config to get it.
