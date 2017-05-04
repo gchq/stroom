@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#280** : Fixed 'No user is currently authenticated' issue when viewing jobs and nodes.
+
+## [v5.0-beta.21] - 2017-05-04
+
 * Issue **#263** : The explorer tree now allows you to collapse the root 'System' node after it is first displayed.
 
 * Issue **#266** : The explorer tree now resets (clears and collapses all previously open nodes) and shows the currently selected item every time an explorer drop down in opened.
@@ -357,7 +361,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.20...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.21...HEAD
+[v5.0-beta.21]: https://github.com/gchq/stroom/compare/v5.0-beta.20...v5.0-beta.21
 [v5.0-beta.20]: https://github.com/gchq/stroom/compare/v5.0-beta.19...v5.0-beta.20
 [v5.0-beta.19]: https://github.com/gchq/stroom/compare/v5.0-beta.18...v5.0-beta.19
 [v5.0-beta.18]: https://github.com/gchq/stroom/compare/v5.0-beta.17...v5.0-beta.18
