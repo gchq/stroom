@@ -38,11 +38,8 @@ subprojects {
     apply plugin: 'java'
     
     //analyze missing dependencies for the code base
-    //apply plugin: 'ca.cutterslade.analyze'
+    apply plugin: 'ca.cutterslade.analyze'
     apply plugin: 'idea'
-
-    //TODO: If you enable this the build will flag up dependency inconsistencies
-//    apply plugin: 'ca.cutterslade.analyze'
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
