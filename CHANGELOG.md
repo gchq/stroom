@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#280** : Fixed 'No user is currently authenticated' issue when viewing jobs and nodes.
 
+* Issue **#278** : The date picker now hides once you select a date.
+
 ## [v5.0-beta.21] - 2017-05-04
 
 * Issue **#263** : The explorer tree now allows you to collapse the root 'System' node after it is first displayed.
