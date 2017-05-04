@@ -118,36 +118,40 @@ public class ProxyAggregationExecutor {
 
     public void aggregate(final Task<?> task, final String proxyDir, final Boolean aggregate,
                           final Integer maxAggregation, final Long maxStreamSize) {
-        this.task = task;
-        if (proxyDir != null) {
-            this.proxyDir = proxyDir;
+        try {
+            this.task = task;
+            if (proxyDir != null) {
+                this.proxyDir = proxyDir;
+            }
+            this.aggregate = aggregate;
+            if (maxAggregation != null) {
+                stroomZipRepositoryProcessor.setMaxAggregation(maxAggregation);
+            }
+            if (maxStreamSize != null) {
+                stroomZipRepositoryProcessor.setMaxStreamSize(maxStreamSize);
+            }
+
+            taskMonitor.addTerminateHandler(() -> stop());
+
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+            LOGGER.info("exec() - started");
+
+            boolean complete = false;
+            while (!complete && !taskMonitor.isTerminated()) {
+                taskMonitor.info("Aggregate started %s, maxAggregation %s, maxAggregationScan %s, maxStreamSize %s",
+                        DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
+                        ModelStringUtil.formatCsv(stroomZipRepositoryProcessor.getMaxAggregation()),
+                        ModelStringUtil.formatCsv(stroomZipRepositoryProcessor.getMaxFileScan()),
+                        ModelStringUtil.formatIECByteSizeString(stroomZipRepositoryProcessor.getMaxStreamSize()));
+
+                final StroomZipRepository stroomZipRepository = new StroomZipRepository(this.proxyDir);
+                complete = stroomZipRepositoryProcessor.process(stroomZipRepository);
+            }
+
+            LOGGER.info("exec() - completed in %s", logExecutionTime);
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
         }
-        this.aggregate = aggregate;
-        if (maxAggregation != null) {
-            stroomZipRepositoryProcessor.setMaxAggregation(maxAggregation);
-        }
-        if (maxStreamSize != null) {
-            stroomZipRepositoryProcessor.setMaxStreamSize(maxStreamSize);
-        }
-
-        taskMonitor.addTerminateHandler(() -> stop());
-
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        LOGGER.info("exec() - started");
-
-        boolean complete = false;
-        while (!complete && !taskMonitor.isTerminated()) {
-            taskMonitor.info("Aggregate started %s, maxAggregation %s, maxAggregationScan %s, maxStreamSize %s",
-                    DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
-                    ModelStringUtil.formatCsv(stroomZipRepositoryProcessor.getMaxAggregation()),
-                    ModelStringUtil.formatCsv(stroomZipRepositoryProcessor.getMaxFileScan()),
-                    ModelStringUtil.formatIECByteSizeString(stroomZipRepositoryProcessor.getMaxStreamSize()));
-
-            final StroomZipRepository stroomZipRepository = new StroomZipRepository(this.proxyDir);
-            complete = stroomZipRepositoryProcessor.process(stroomZipRepository);
-        }
-
-        LOGGER.info("exec() - completed in %s", logExecutionTime);
     }
 
     private List<StreamTargetStroomStreamHandler> openStreamHandlers(final Feed feed) {
