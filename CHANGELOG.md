@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#278** : The date picker now hides once you select a date.
 
+* Issue **#281** : Directory streams etc are now auto closed to prevent systems running out of file handles.
+
 ## [v5.0-beta.21] - 2017-05-04
 
 * Issue **#263** : The explorer tree now allows you to collapse the root 'System' node after it is first displayed.
