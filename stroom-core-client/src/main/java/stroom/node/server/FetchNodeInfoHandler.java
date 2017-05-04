@@ -60,7 +60,7 @@ class FetchNodeInfoHandler extends AbstractTaskHandler<FetchNodeInfoAction, Resu
         // Get pings back from all enabled nodes in the cluster.
         // Wait up to 5 seconds to get responses from each node.
         final DefaultClusterResultCollector<NodeInfoResult> collector = dispatchHelper
-                .execAsync(new NodeInfoClusterTask(), 5, TimeUnit.SECONDS, TargetType.ENABLED);
+                .execAsync(new NodeInfoClusterTask(action.getUserToken()), 5, TimeUnit.SECONDS, TargetType.ENABLED);
 
         final ClusterState clusterState = clusterNodeManager.getQuickClusterState();
         final Node masterNode = clusterState.getMasterNode();

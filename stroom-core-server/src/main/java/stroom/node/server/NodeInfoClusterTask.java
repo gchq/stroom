@@ -23,7 +23,7 @@ import stroom.util.task.ServerTask;
 public class NodeInfoClusterTask extends ClusterTask<NodeInfoResult> {
     private static final long serialVersionUID = -2205811554553456872L;
 
-    public NodeInfoClusterTask() {
-        super(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, "Node Info Cluster Task");
+    public NodeInfoClusterTask(final String userToken) {
+        super(userToken, "Node Info Cluster Task");
     }
 }

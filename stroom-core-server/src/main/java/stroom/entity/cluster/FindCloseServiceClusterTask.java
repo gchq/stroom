@@ -18,7 +18,6 @@ package stroom.entity.cluster;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.task.cluster.ClusterTask;
-import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 
 public class FindCloseServiceClusterTask<C extends BaseCriteria> extends ClusterTask<VoidResult> {
