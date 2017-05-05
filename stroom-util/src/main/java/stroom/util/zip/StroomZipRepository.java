@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,8 +35,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * Class that represents a repository on the file system. By default files are
@@ -90,17 +89,17 @@ public class StroomZipRepository {
     public StroomZipRepository(final String dir, final boolean lock, final int lockDeleteAgeMs,
                                final String zipFilenameDelimiter) {
         this.lockDeleteAgeMs = lockDeleteAgeMs;
-        if (!isDelimiterValid(zipFilenameDelimiter)){
+        if (!isDelimiterValid(zipFilenameDelimiter)) {
             LOGGER.error("zipFilenameDelimiter property [%s] is invalid, using the default [%s] instead",
-                         zipFilenameDelimiter,
-                         DEFAULT_ZIP_FILENAME_DELIMITER);
+                    zipFilenameDelimiter,
+                    DEFAULT_ZIP_FILENAME_DELIMITER);
             this.zipFilenameDelimiter = DEFAULT_ZIP_FILENAME_DELIMITER;
         } else {
             this.zipFilenameDelimiter = zipFilenameDelimiter == null ? DEFAULT_ZIP_FILENAME_DELIMITER : zipFilenameDelimiter;
         }
 
         if (this.zipFilenameDelimiter != null && !this.zipFilenameDelimiter.isEmpty()) {
-            templatePartPattern = Pattern.compile( Pattern.quote(this.zipFilenameDelimiter) + ".*" );
+            templatePartPattern = Pattern.compile(Pattern.quote(this.zipFilenameDelimiter) + ".*");
         } else {
             templatePartPattern = null;
         }
@@ -216,7 +215,7 @@ public class StroomZipRepository {
      * Build a list of valid file types. The list must contain files (just the numerical part of the
      * base name) and not be locked e.g. "001" for "001.zip", "100111" for "100111.zip", "102" for "102%SOME_FEED.zip" etc.
      * "100112.zip.lock" would be ignored.
-     *
+     * <p>
      * Directories should use our standard form e.g. "001", "002" etc.
      */
     private void buildZipFileLists(final File dir, final List<String> fileList, final List<String> dirList) {
@@ -237,7 +236,7 @@ public class StroomZipRepository {
                     dirList.add(kidFileName);
                 } catch (final Exception ex) {
                     LOGGER.warn("Directory " + dir + " contains invalid directory " + kidFileName
-                                + " that is not 3 digits!");
+                            + " that is not 3 digits!");
                 }
             } else {
                 // Only match files that end in '*.zip'.
@@ -291,8 +290,8 @@ public class StroomZipRepository {
             throw new RuntimeException("No longer allowed to write new streams to a finished repository");
         }
         final String filename = StroomFileNameUtil.constructFilename(zipFilenameDelimiter, fileCount.incrementAndGet(),
-                                                                  filenameTemplate, headerMap,
-                                                                  ZIP_EXTENSION);
+                filenameTemplate, headerMap,
+                ZIP_EXTENSION);
         final File file = new File(baseLockDir, filename);
         // Ensure parent dir's exist
         FileUtil.mkdirs(file.getParentFile());
@@ -316,7 +315,7 @@ public class StroomZipRepository {
         final String path = zipFile.getFile().getAbsolutePath();
         if (path.endsWith(BAD_EXTENSION)) {
             return new File(path.substring(0, path.length() - ZIP_EXTENSION.length() - BAD_EXTENSION.length())
-                            + ERROR_EXTENSION + BAD_EXTENSION);
+                    + ERROR_EXTENSION + BAD_EXTENSION);
         } else {
             return new File(path.substring(0, path.length() - ZIP_EXTENSION.length()) + ERROR_EXTENSION);
         }
@@ -410,26 +409,28 @@ public class StroomZipRepository {
 
         try {
             if (Files.isDirectory(path)) {
-                Files.walk(path).sorted(Comparator.reverseOrder()).forEach(p -> {
-                    try {
-                        if (p.toString().endsWith(".zip.lock")) {
-                            final long oldestTimeMs = System.currentTimeMillis() - lockDeleteAgeMs;
-                            final long lastModMs = Files.getLastModifiedTime(p).toMillis();
-                            if (lastModMs < oldestTimeMs) {
-                                try {
-                                    Files.delete(p);
-                                    LOGGER.info("clean() - Removed old lock file due to age " + p.toString() + " " + DateUtil.createNormalDateTimeString());
-                                } catch (final IOException e) {
-                                    LOGGER.error("clean() - Unable to remove old lock file due to age " + p.toString());
+                try (final Stream<Path> stream = Files.walk(path)) {
+                    stream.sorted(Comparator.reverseOrder()).forEach(p -> {
+                        try {
+                            if (p.toString().endsWith(".zip.lock")) {
+                                final long oldestTimeMs = System.currentTimeMillis() - lockDeleteAgeMs;
+                                final long lastModMs = Files.getLastModifiedTime(p).toMillis();
+                                if (lastModMs < oldestTimeMs) {
+                                    try {
+                                        Files.delete(p);
+                                        LOGGER.info("clean() - Removed old lock file due to age " + p.toString() + " " + DateUtil.createNormalDateTimeString());
+                                    } catch (final IOException e) {
+                                        LOGGER.error("clean() - Unable to remove old lock file due to age " + p.toString());
+                                    }
                                 }
+                            } else if (p.getFileName().toString().length() == 3 && Files.isDirectory(p)) {
+                                deleteDirIfNotActive(p.toFile());
                             }
-                        } else if (p.getFileName().toString().length() == 3 && Files.isDirectory(p)) {
-                            deleteDirIfNotActive(p.toFile());
+                        } catch (final Exception e) {
+                            LOGGER.error(e.getMessage(), e);
                         }
-                    } catch (final Exception e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                });
+                    });
+                }
             }
         } catch (final IOException e) {
             LOGGER.error("Failed to clean repo " + path);

@@ -34,7 +34,6 @@ import stroom.util.zip.StroomZipFile;
 import stroom.util.zip.StroomZipFileType;
 
 import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -59,8 +58,8 @@ public class DataLoader {
     }
 
     private void readDir(final Path dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
-        try {
-            Files.list(dir).forEach(file -> {
+        try (final java.util.stream.Stream<Path> stream = Files.list(dir)) {
+            stream.forEach(file -> {
                 if (!file.getFileName().startsWith(".")) {
                     if (Files.isDirectory(file)) {
                         readDir(file, mandateEffectiveDate, effectiveMs);

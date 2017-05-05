@@ -314,7 +314,6 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                             }
 
 
-
                         } else {
                             if (!securityContext.hasDocumentPermission(folderRef.getType(), folderRef.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(entityType))) {
                                 throw new PermissionException("You do not have permission to create '" + docRef + "' in '" + folderRef);

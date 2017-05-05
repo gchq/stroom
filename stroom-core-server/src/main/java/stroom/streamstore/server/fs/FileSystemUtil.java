@@ -16,6 +16,12 @@
 
 package stroom.streamstore.server.fs;
 
+import org.apache.commons.lang.StringUtils;
+import stroom.node.shared.Volume;
+import stroom.streamstore.shared.StreamType;
+import stroom.util.io.FileUtil;
+import stroom.util.logging.StroomLogger;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,33 +30,26 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.apache.commons.lang.StringUtils;
-
-import stroom.entity.server.util.EntityServiceExceptionUtil;
-import stroom.node.shared.Volume;
-import stroom.streamstore.shared.StreamType;
-import stroom.util.io.FileUtil;
-import stroom.util.logging.StroomLogger;
+import java.util.stream.Stream;
 
 /**
  * Utility class to open a File based on it's meta data.
- *
+ * <p>
  * Stream's on the file system are stored in directories.
- *
+ * <p>
  * If the stream is compressed it ends with the "bgz" (block gzip compression)
  * which is our own random access file format. If the file is not compressed if
  * it ends with "dat" Raw data file (used for indexed child streams)
- *
+ * <p>
  * Child streams have an appended "."[type] extension and then .bgz or .dat.
- *
+ * <p>
  * A typical stream with 2 children could be: .../001/100/001=001002001.bgz
  * .../001/100/001=001002001.ctx.bgz .../001/100/001=001002001.idx.dat
- *
+ * <p>
  * Those children can have further child streams: .../001/100/001=001002001.bgz
  * .../001/100/001=001002001.ctx.bgz .../001/100/001=001002001.ctx.idx.dat
  * .../001/100/001=001002001.idx.dat
- *
+ * <p>
  * Any files ended in .lock are locked output streams that have not yet closed.
  */
 public final class FileSystemUtil {
@@ -225,15 +224,17 @@ public final class FileSystemUtil {
 
         try {
             if (Files.isDirectory(path)) {
-                Files.walk(path).sorted(Comparator.reverseOrder()).forEach(p -> {
-                    try {
-                        Files.delete(p);
-                        LOGGER.debug("Deleted file " + p);
-                    } catch (final IOException e) {
-                        LOGGER.error("Failed to delete file " + p);
-                        success.set(false);
-                    }
-                });
+                try (final Stream<Path> stream = Files.walk(path)) {
+                    stream.sorted(Comparator.reverseOrder()).forEach(p -> {
+                        try {
+                            Files.delete(p);
+                            LOGGER.debug("Deleted file " + p);
+                        } catch (final IOException e) {
+                            LOGGER.error("Failed to delete file " + p);
+                            success.set(false);
+                        }
+                    });
+                }
             }
         } catch (final IOException e) {
             LOGGER.error("Failed to delete file " + path);
@@ -249,7 +250,7 @@ public final class FileSystemUtil {
      * API mkdirs). We do this to ensure if we fail to make one we check that it
      * has not been created between that last time we checked.
      * </p>
-     *
+     * <p>
      * <p>
      * WE ASSUME here that mkdir is ATOMIC .... which it is.
      * </p>

@@ -30,6 +30,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 @Component
@@ -84,31 +85,31 @@ public class ContentPackImport {
                 AtomicInteger successCounter = new AtomicInteger();
                 AtomicInteger failedCounter = new AtomicInteger();
 
-                Files.list(contentPacksDir)
-                        .filter(path -> path.toString().endsWith("zip"))
-                        .sorted()
-                        .forEachOrdered((contentPackPath) -> {
-                            boolean result = importContentPack(contentPacksDir, contentPackPath);
-                            if (result) {
-                                successCounter.incrementAndGet();
-                            } else {
-                                failedCounter.incrementAndGet();
-                            }
-                            Path destDir = result ? importedDir : failedDir;
-                            Path filename = contentPackPath.getFileName();
-                            Path destPath = destDir.resolve(filename);
-                            try {
-                                Files.move(contentPackPath, destPath, StandardCopyOption.REPLACE_EXISTING);
-                            } catch (IOException e) {
-                                throw new RuntimeException(String.format("Error moving file from %s to %s",
-                                        contentPackPath.toAbsolutePath(), destPath.toAbsolutePath()));
-                            }
-                        });
+                try (final Stream<Path> stream = Files.list(contentPacksDir)) {
+                    stream.filter(path -> path.toString().endsWith("zip"))
+                            .sorted()
+                            .forEachOrdered((contentPackPath) -> {
+                                boolean result = importContentPack(contentPacksDir, contentPackPath);
+                                if (result) {
+                                    successCounter.incrementAndGet();
+                                } else {
+                                    failedCounter.incrementAndGet();
+                                }
+                                Path destDir = result ? importedDir : failedDir;
+                                Path filename = contentPackPath.getFileName();
+                                Path destPath = destDir.resolve(filename);
+                                try {
+                                    Files.move(contentPackPath, destPath, StandardCopyOption.REPLACE_EXISTING);
+                                } catch (IOException e) {
+                                    throw new RuntimeException(String.format("Error moving file from %s to %s",
+                                            contentPackPath.toAbsolutePath(), destPath.toAbsolutePath()));
+                                }
+                            });
 
-                LOGGER.info("Content pack import counts - success: %s, failed: %s",
-                        successCounter.get(),
-                        failedCounter.get());
-
+                    LOGGER.info("Content pack import counts - success: %s, failed: %s",
+                            successCounter.get(),
+                            failedCounter.get());
+                }
             } catch (IOException e) {
                 LOGGER.error("Unable to read content pack files from %s", contentPacksDir.toAbsolutePath(), e);
             }
