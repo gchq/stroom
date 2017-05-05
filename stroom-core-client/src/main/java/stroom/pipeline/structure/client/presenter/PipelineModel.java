@@ -46,8 +46,8 @@ import java.util.Set;
 
 public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType("Source", null,
-            new String[] { PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS,
-                    PipelineElementType.VISABILITY_SIMPLE },
+            new String[]{PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS,
+                    PipelineElementType.VISABILITY_SIMPLE},
             ElementIcons.STREAM);
 
     public static final PipelineElement SOURCE_ELEMENT = new PipelineElement();
@@ -91,7 +91,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         final PipelineDataMerger pipelineDataMerger = new PipelineDataMerger();
 
         // Merge pipeline data together.
-        List<PipelineData> combined = null;
+        List<PipelineData> combined;
         if (baseStack != null) {
             combined = new ArrayList<>(baseStack.size() + 1);
         } else {
@@ -182,7 +182,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     }
 
     private void copyProperties(final String id, final List<PipelineProperty> source, final List<PipelineProperty> dest,
-            final List<PipelineProperty> ignore) {
+                                final List<PipelineProperty> ignore) {
         final Set<PipelineProperty> set = new HashSet<>();
 
         if (ignore != null) {
@@ -198,7 +198,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     }
 
     private void copyReferences(final String id, final List<PipelineReference> source,
-            final List<PipelineReference> dest, final List<PipelineReference> ignore) {
+                                final List<PipelineReference> dest, final List<PipelineReference> ignore) {
         final Set<PipelineReference> set = new HashSet<>();
 
         if (ignore != null) {
@@ -227,13 +227,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
                 final PipelineElement linkTo = combinedData.getElements().get(link.getTo());
 
                 parentMap.put(linkTo, linkFrom);
-
-                List<PipelineElement> children = childMap.get(linkFrom);
-                if (children == null) {
-                    children = new ArrayList<>();
-                    childMap.put(linkFrom, children);
-                }
-                children.add(linkTo);
+                childMap.computeIfAbsent(linkFrom, k -> new ArrayList<>()).add(linkTo);
             }
         }
 
@@ -262,8 +256,8 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     }
 
     public PipelineElement addElement(final PipelineElement parent, final PipelineElementType elementType,
-            final String id) throws PipelineModelException {
-        PipelineElement element = null;
+                                      final String id) throws PipelineModelException {
+        PipelineElement element;
 
         if (id == null || id.length() == 0) {
             throw new PipelineModelException("No id has been set for this element");
@@ -284,7 +278,11 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
             }
 
             pipelineData.addElement(element);
-            pipelineData.addLink(PipelineDataUtil.createLink(parent.getId(), id));
+
+            // Don't create links from source as 'Source' is a dummy element and elements without links to them will automatically be linked to source.
+            if (!SOURCE_ELEMENT.getId().equals(parent.getId())) {
+                pipelineData.addLink(PipelineDataUtil.createLink(parent.getId(), id));
+            }
 
             buildCombinedData();
             refresh();
@@ -307,7 +305,11 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         if (pipelineData.getRemovedElements().contains(existingElement)) {
             pipelineData.getRemovedElements().remove(existingElement);
         }
-        pipelineData.addLink(PipelineDataUtil.createLink(parent.getId(), id));
+
+        // Don't create links from source as 'Source' is a dummy element and elements without links to them will automatically be linked to source.
+        if (!SOURCE_ELEMENT.getId().equals(parent.getId())) {
+            pipelineData.addLink(PipelineDataUtil.createLink(parent.getId(), id));
+        }
 
         buildCombinedData();
         refresh();

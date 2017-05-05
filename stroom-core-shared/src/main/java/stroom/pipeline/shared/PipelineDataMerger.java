@@ -16,6 +16,13 @@
 
 package stroom.pipeline.shared;
 
+import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineLink;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelineReference;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,13 +33,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import stroom.pipeline.shared.data.PipelineData;
-import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.shared.data.PipelineLink;
-import stroom.pipeline.shared.data.PipelineProperty;
-import stroom.pipeline.shared.data.PipelineReference;
-
 public class PipelineDataMerger {
     private final Map<String, PipelineElement> allElementMap = new HashMap<>();
     private final Map<String, PipelineElement> elementMap = new HashMap<>();
@@ -42,8 +42,7 @@ public class PipelineDataMerger {
     private final List<PipelineElement> sourceList = new ArrayList<>();
 
     public static Map<String, PipelineElementType> createElementMap() {
-        final Map<String, PipelineElementType> elementMap = new HashMap<>();
-        return elementMap;
+        return new HashMap<>();
     }
 
     public PipelineDataMerger() {
@@ -55,6 +54,7 @@ public class PipelineDataMerger {
     }
 
     public void merge(final List<PipelineData> configStack) throws PipelineModelException {
+        // Merge elements.
         for (final PipelineData pipelineData : configStack) {
             if (pipelineData != null) {
                 // Merge elements.
@@ -75,6 +75,9 @@ public class PipelineDataMerger {
             }
         }
 
+        // Create a set of potential source elements, i.e. elements with no links to them.
+        final Set<String> sourceIds = new HashSet<>(elementMap.keySet());
+
         // Now we have a set of elements merge everything else.
         for (final PipelineData pipelineData : configStack) {
             if (pipelineData != null) {
@@ -84,12 +87,7 @@ public class PipelineDataMerger {
                     if (element != null) {
                         final String elementType = element.getType();
                         if (elementType != null) {
-                            Map<String, PipelineProperty> map = propertyMap.get(property.getElement());
-                            if (map == null) {
-                                map = new HashMap<>();
-                                propertyMap.put(property.getElement(), map);
-                            }
-                            map.put(property.getName(), property);
+                            propertyMap.computeIfAbsent(property.getElement(), k -> new HashMap<>()).put(property.getName(), property);
                         }
                     }
                 }
@@ -109,16 +107,9 @@ public class PipelineDataMerger {
                     if (element != null) {
                         final String elementType = element.getType();
                         if (elementType != null) {
-                            Map<String, List<PipelineReference>> map = pipelineReferenceMap.get(reference.getElement());
-                            if (map == null) {
-                                map = new HashMap<>();
-                                pipelineReferenceMap.put(reference.getElement(), map);
-                            }
-                            List<PipelineReference> list = map.get(reference.getName());
-                            if (list == null) {
-                                list = new ArrayList<>();
-                                map.put(reference.getName(), list);
-                            }
+                            final List<PipelineReference> list = pipelineReferenceMap
+                                    .computeIfAbsent(reference.getElement(), k -> new HashMap<>())
+                                    .computeIfAbsent(reference.getName(), k -> new ArrayList<>());
                             if (!list.contains(reference)) {
                                 list.add(reference);
                             }
@@ -137,6 +128,9 @@ public class PipelineDataMerger {
 
                 // Merge links.
                 for (final PipelineLink link : pipelineData.getLinks().getAdd()) {
+                    // If an element is linked to (even by an element that has been removed) then the element is not to be considered a source.
+                    sourceIds.remove(link.getTo());
+
                     final PipelineElement fromElement = elementMap.get(link.getFrom());
                     final PipelineElement toElement = elementMap.get(link.getTo());
 
@@ -146,13 +140,7 @@ public class PipelineDataMerger {
                         final String toType = elementMap.get(link.getTo()).getType();
 
                         if (fromType != null && toType != null) {
-                            List<PipelineLink> list = linkMap.get(link.getFrom());
-                            if (list == null) {
-                                list = new ArrayList<>();
-                                linkMap.put(link.getFrom(), list);
-                            }
-
-                            list.add(link);
+                            linkMap.computeIfAbsent(link.getFrom(), k -> new ArrayList<>()).add(link);
                         }
                     }
                 }
@@ -188,13 +176,7 @@ public class PipelineDataMerger {
             }
         }
 
-        final Set<String> sourceIds = new HashSet<>(elementMap.keySet());
-        for (final List<PipelineLink> links : linkMap.values()) {
-            for (final PipelineLink link : links) {
-                sourceIds.remove(link.getTo());
-            }
-        }
-
+        // Turn the set of source ids into a list of elements.
         sourceList.clear();
         for (final String sourceId : sourceIds) {
             sourceList.add(elementMap.get(sourceId));
