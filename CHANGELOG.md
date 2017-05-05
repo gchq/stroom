@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#281** : Made further changes to cope with Files.list() and Files.walk() returning streams that should be closed with 'try with resources' construct.
+
 ## [v5.0-beta.22] - 2017-05-04
 
 * Issue **#280** : Fixed 'No user is currently authenticated' issue when viewing jobs and nodes.
