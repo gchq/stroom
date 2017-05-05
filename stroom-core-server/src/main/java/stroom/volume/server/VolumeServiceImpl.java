@@ -39,6 +39,7 @@ import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
 import stroom.node.shared.VolumeService;
 import stroom.node.shared.VolumeState;
+import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
@@ -155,6 +156,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     @Transactional(readOnly = true)
+    @Insecure
     @Override
     public Set<Volume> getStreamVolumeSet(final Node node) {
         LocalVolumeUse localVolumeUse = null;
@@ -167,6 +169,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     @Transactional(readOnly = true)
+    @Insecure
     @Override
     public Set<Volume> getIndexVolumeSet(final Node node, final Set<Volume> allowedVolumes) {
         return getVolumeSet(node, null, null, VolumeUseStatus.ACTIVE, LocalVolumeUse.REQUIRED, allowedVolumes, 1);
