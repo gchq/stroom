@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#224** : Removing an element from the pipeline structure now removes all child elements too.
 
+* Issue **#282** : Users can now upload data with just 'Data - View' and ''Data - Import' application permissions, plus update permission on the appropriate feed.
+
 ## [v5.0-beta.22] - 2017-05-04
 
 * Issue **#280** : Fixed 'No user is currently authenticated' issue when viewing jobs and nodes.
