@@ -86,16 +86,16 @@ public class TestStroomZipRepository extends StroomUnitTest {
     public void testClean() throws IOException {
         final String repoDir = getCurrentTestDir().getCanonicalPath() + File.separator + "repo2";
 
-        StroomZipRepository StroomZipRepository = new StroomZipRepository(repoDir, false, 10000, ZIP_FILENAME_DELIMITER);
+        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, false, 10000, ZIP_FILENAME_DELIMITER);
 
-        final StroomZipOutputStream out1 = StroomZipRepository.getStroomZipOutputStream();
+        final StroomZipOutputStream out1 = stroomZipRepository.getStroomZipOutputStream();
         StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),
                 "SOME_DATA".getBytes(StreamUtil.DEFAULT_CHARSET));
         Assert.assertFalse(out1.getFinalFile().isFile());
         out1.close();
         Assert.assertTrue(out1.getFinalFile().isFile());
 
-        final StroomZipOutputStream out2 = StroomZipRepository.getStroomZipOutputStream();
+        final StroomZipOutputStream out2 = stroomZipRepository.getStroomZipOutputStream();
         StroomZipOutputStreamUtil.addSimpleEntry(out2, new StroomZipEntry(null, "file", StroomZipFileType.Data),
                 "SOME_DATA".getBytes(StreamUtil.DEFAULT_CHARSET));
         Assert.assertFalse(out2.getFinalFile().isFile());
@@ -103,24 +103,24 @@ public class TestStroomZipRepository extends StroomUnitTest {
 
         // Leave open
 
-        StroomZipRepository = new StroomZipRepository(repoDir, false, 1000, ZIP_FILENAME_DELIMITER);
+        stroomZipRepository = new StroomZipRepository(repoDir, false, 10000, ZIP_FILENAME_DELIMITER);
         Assert.assertTrue("Expecting pucker file to be left", out1.getFinalFile().isFile());
         Assert.assertTrue("Expecting lock file to not be deleted",
                 new File(out2.getFinalFile().getAbsolutePath() + StroomZipRepository.LOCK_EXTENSION).isFile());
 
-        final StroomZipOutputStream out3 = StroomZipRepository.getStroomZipOutputStream();
+        final StroomZipOutputStream out3 = stroomZipRepository.getStroomZipOutputStream();
         StroomZipOutputStreamUtil.addSimpleEntry(out3, new StroomZipEntry(null, "file", StroomZipFileType.Data),
                 "SOME_DATA".getBytes(StreamUtil.DEFAULT_CHARSET));
         final File lockFile3 = new File(out3.getFinalFile().getAbsolutePath() + StroomZipRepository.LOCK_EXTENSION);
         Assert.assertTrue(lockFile3.isFile());
 
-        StroomZipRepository.clean();
+        stroomZipRepository.clean();
         Assert.assertTrue(lockFile3.isFile());
 
         if (!lockFile3.setLastModified(System.currentTimeMillis() - (48 * 60 * 60 * 1000))) {
             Assert.fail("Unable to set LastModified");
         }
-        StroomZipRepository.clean();
+        stroomZipRepository.clean();
         Assert.assertFalse("Expecting old lock file to be deleted", lockFile3.isFile());
     }
 
