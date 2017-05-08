@@ -51,11 +51,14 @@ dependencies {
 
     compile project(':stroom-core-server')
     compile project(':stroom-security-server')
-    compile project(':stroom-util')
-    compile project(':stroom-entity-shared')
-    compile project(':stroom-security-api')
-    compile project(':stroom-index-shared')
+    compile project(':stroom-dashboard-server')
     compile project(':stroom-index-server')
+    compile project(':stroom-statistics-server')
+
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-index-shared')
+    compile project(':stroom-util')
+    compile project(':stroom-security-api')
 
     compile 'org.glassfish:javax.el:3.0.1-b08'
 

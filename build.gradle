@@ -17,7 +17,6 @@ ext.versions = [
         stroomQueryCommon: 'stroom-query-common-v0.1.0',
         stroomExpression: 'stroom-expression-v0.1.0',
         eventLogging: 'event-logging-v3.1.0',
-//        hbaseCommonShaded: 'hbase-common-shaded-v1.2.1-all',
         hadoopHdfsShaded: 'hadoop-hdfs-shaded-v2.6.4-all',
         hadoopCommonShaded: 'hadoop-common-shaded-v2.6.4-all'
 ]

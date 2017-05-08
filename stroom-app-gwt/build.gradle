@@ -25,7 +25,7 @@ dependencies {
     compile project(':stroom-index-client')
     compile project(':stroom-statistics-client')
     compile project(':stroom-dashboard-client')
-
+    compile project(':stroom-security-shared')
     compile project(':stroom-core-client')
     compile project(':stroom-security-client-api')
     compile project(':stroom-core-client-widget')
