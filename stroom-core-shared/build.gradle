@@ -20,6 +20,7 @@ dependencies {
     compile urlDependencies.get(versions.stroomQueryApi)
 
     compile 'org.hibernate:hibernate-core:4.3.8.Final' /* LATEST 5.2.5.Final */
+    permitUnusedDeclared 'org.hibernate:hibernate-core:4.3.8.Final' /* LATEST 5.2.5.Final */
     compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
     compile 'javax.validation:validation-api:1.0.0.GA'
     compile 'com.google.gwt:gwt-servlet:2.8.0'

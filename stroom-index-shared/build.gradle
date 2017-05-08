@@ -1,3 +1,8 @@
 dependencies {
     compile project(':stroom-core-shared')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+
+    compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
+    compile 'org.hibernate:hibernate-core:4.3.8.Final'
 }

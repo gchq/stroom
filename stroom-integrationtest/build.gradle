@@ -1,9 +1,14 @@
 dependencies {
     compile project(':stroom-core-server')
+    permitUnusedDeclared project(':stroom-core-server')
     compile project(':stroom-index-server')
+    permitUnusedDeclared project(':stroom-index-server')
     compile project(':stroom-statistics-server')
+    permitUnusedDeclared project(':stroom-statistics-server')
     compile project(':stroom-dashboard-server')
+    permitUnusedDeclared project(':stroom-dashboard-server')
     compile project(':stroom-security-server')
+    permitUnusedDeclared project(':stroom-security-server')
 
     // javax.el not provided as no app container in tests.
     //compile 'javax.el:javax.el-api:3.0.0'
@@ -19,10 +24,10 @@ dependencies {
     testCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
 
     testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.0.2-beta'
 
     // Use default DB config.
     compile project(':stroom-config')
+    permitUnusedDeclared project(':stroom-config')
 }
 
 task setupSampleData(type: JavaExec) {

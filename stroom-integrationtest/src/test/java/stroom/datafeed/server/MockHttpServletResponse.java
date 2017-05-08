@@ -118,26 +118,6 @@ public class MockHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
-    public int getStatus() {
-        return 0;
-    }
-
-    @Override
-    public String getHeader(final String name) {
-        return null;
-    }
-
-    @Override
-    public Collection<String> getHeaders(final String name) {
-        return null;
-    }
-
-    @Override
-    public Collection<String> getHeaderNames() {
-        return null;
-    }
-
-    @Override
     public void flushBuffer() throws IOException {
     }
 
@@ -202,11 +182,6 @@ public class MockHttpServletResponse implements HttpServletResponse {
 
     @Override
     public void setContentLength(final int arg0) {
-    }
-
-    @Override
-    public void setContentLengthLong(final long len) {
-
     }
 
     public int getResponseCode() {

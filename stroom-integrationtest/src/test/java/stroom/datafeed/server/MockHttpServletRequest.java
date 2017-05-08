@@ -170,11 +170,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public String changeSessionId() {
-        return null;
-    }
-
-    @Override
     public HttpSession getSession(final boolean arg0) {
         return null;
     }
@@ -197,36 +192,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
     @Override
     public boolean isRequestedSessionIdFromUrl() {
         return false;
-    }
-
-    @Override
-    public boolean authenticate(final HttpServletResponse response) throws IOException, ServletException {
-        return false;
-    }
-
-    @Override
-    public void login(final String username, final String password) throws ServletException {
-
-    }
-
-    @Override
-    public void logout() throws ServletException {
-
-    }
-
-    @Override
-    public Collection<Part> getParts() throws IOException, ServletException {
-        return null;
-    }
-
-    @Override
-    public Part getPart(final String name) throws IOException, ServletException {
-        return null;
-    }
-
-    @Override
-    public <T extends HttpUpgradeHandler> T upgrade(final Class<T> handlerClass) throws IOException, ServletException {
-        return null;
     }
 
     @Override
@@ -265,11 +230,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public long getContentLengthLong() {
-        return 0;
-    }
-
-    @Override
     public String getContentType() {
         return null;
     }
@@ -303,41 +263,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
     @Override
     public int getLocalPort() {
         return 0;
-    }
-
-    @Override
-    public ServletContext getServletContext() {
-        return null;
-    }
-
-    @Override
-    public AsyncContext startAsync() throws IllegalStateException {
-        return null;
-    }
-
-    @Override
-    public AsyncContext startAsync(final ServletRequest servletRequest, final ServletResponse servletResponse) throws IllegalStateException {
-        return null;
-    }
-
-    @Override
-    public boolean isAsyncStarted() {
-        return false;
-    }
-
-    @Override
-    public boolean isAsyncSupported() {
-        return false;
-    }
-
-    @Override
-    public AsyncContext getAsyncContext() {
-        return null;
-    }
-
-    @Override
-    public DispatcherType getDispatcherType() {
-        return null;
     }
 
     @Override
@@ -503,19 +428,5 @@ public class MockHttpServletRequest implements HttpServletRequest {
             return inputStream.toString();
         }
 
-        @Override
-        public boolean isFinished() {
-            return false;
-        }
-
-        @Override
-        public boolean isReady() {
-            return false;
-        }
-
-        @Override
-        public void setReadListener(final ReadListener readListener) {
-
-        }
     }
 }

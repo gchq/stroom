@@ -20,10 +20,11 @@ dependencies {
     compile project(':stroom-util-shared')
     compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
 
-//    compile 'org.hibernate:hibernate-core:4.3.8.Final' /* LATEST 5.2.5.Final */
     compile 'javax.validation:validation-api:1.0.0.GA'
-//    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
-//    compile 'com.google.jsinterop:jsinterop-annotations:1.0.1'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
+    permitUnusedDeclared'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
+    compile 'com.google.jsinterop:jsinterop-annotations:1.0.1'
+    permitUnusedDeclared 'com.google.jsinterop:jsinterop-annotations:1.0.1'
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.0.2-beta'
