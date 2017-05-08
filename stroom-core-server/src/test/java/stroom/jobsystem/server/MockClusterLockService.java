@@ -18,7 +18,6 @@ package stroom.jobsystem.server;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
 import stroom.util.spring.StroomSpringProfiles;
 
 @Profile(StroomSpringProfiles.TEST)

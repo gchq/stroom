@@ -16,12 +16,11 @@
 
 package stroom.util.test;
 
-import java.io.File;
-
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
 import stroom.util.io.FileUtil;
+
+import java.io.File;
 
 @Category(UnitTest.class)
 @RunWith(StroomJUnit4ClassRunner.class)

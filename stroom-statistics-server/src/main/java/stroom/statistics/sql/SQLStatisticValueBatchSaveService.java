@@ -16,16 +16,17 @@
 
 package stroom.statistics.sql;
 
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.sql.SQLSafe;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -41,11 +42,9 @@ import java.util.List;
 @Component
 public class SQLStatisticValueBatchSaveService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticValueBatchSaveService.class);
-
-    @Resource
-    DataSource cachedSqlDataSource;
-
     public static final String SAVE_CALL;
+
+    private final DataSource statisticsDataSource;
 
     static {
         final StringBuilder sql = new StringBuilder();
@@ -61,6 +60,11 @@ public class SQLStatisticValueBatchSaveService {
         sql.append(SQLStatisticNames.VALUE);
         sql.append(") VALUES ( ?, ?, ?, ?) ");
         SAVE_CALL = sql.toString();
+    }
+
+    @Inject
+    public SQLStatisticValueBatchSaveService(@Named("statisticsDataSource") final DataSource statisticsDataSource) {
+        this.statisticsDataSource = statisticsDataSource;
     }
 
     @SuppressWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
@@ -92,15 +96,15 @@ public class SQLStatisticValueBatchSaveService {
                 sql.append(item.getCreateMs());
                 sql.append(",'");
                 sql.append(SQLSafe.escapeChars(item.getName())); // must escape
-                                                                    // any bad
-                                                                    // chars as
-                                                                    // we risk
-                                                                    // sql
-                                                                    // injecction
-                                                                    // (not an
-                                                                    // issue for
-                                                                    // prepared
-                                                                    // statements)
+                // any bad
+                // chars as
+                // we risk
+                // sql
+                // injecction
+                // (not an
+                // issue for
+                // prepared
+                // statements)
                 sql.append("',");
                 sql.append(item.getType().getPrimitiveValue());
                 sql.append(",");
@@ -211,6 +215,6 @@ public class SQLStatisticValueBatchSaveService {
     }
 
     protected Connection getConnection() throws SQLException {
-        return cachedSqlDataSource.getConnection();
+        return statisticsDataSource.getConnection();
     }
 }

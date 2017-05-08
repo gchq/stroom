@@ -16,13 +16,12 @@
 
 package stroom.util.io;
 
-import java.io.ByteArrayInputStream;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.util.test.StroomJUnit4ClassRunner;
+
+import java.io.ByteArrayInputStream;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestLineReader {

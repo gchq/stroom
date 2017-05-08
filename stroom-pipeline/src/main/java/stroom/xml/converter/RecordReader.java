@@ -16,10 +16,10 @@
 
 package stroom.xml.converter;
 
+import stroom.util.io.WrappedReader;
+
 import java.io.IOException;
 import java.io.Reader;
-
-import stroom.util.io.WrappedReader;
 
 /**
  * <p>

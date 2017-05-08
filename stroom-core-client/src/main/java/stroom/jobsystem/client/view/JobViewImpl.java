@@ -21,7 +21,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.jobsystem.client.presenter.JobPresenter;
 import stroom.jobsystem.client.presenter.JobPresenter.JobView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;

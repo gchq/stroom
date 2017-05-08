@@ -38,7 +38,6 @@ import stroom.util.spring.StroomScope;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -61,20 +60,17 @@ class FetchNodeInfoHandler extends AbstractTaskHandler<FetchNodeInfoAction, Resu
         // Get pings back from all enabled nodes in the cluster.
         // Wait up to 5 seconds to get responses from each node.
         final DefaultClusterResultCollector<NodeInfoResult> collector = dispatchHelper
-                .execAsync(new NodeInfoClusterTask(), 5, TimeUnit.SECONDS, TargetType.ENABLED);
+                .execAsync(new NodeInfoClusterTask(action.getUserToken()), 5, TimeUnit.SECONDS, TargetType.ENABLED);
 
         final ClusterState clusterState = clusterNodeManager.getQuickClusterState();
         final Node masterNode = clusterState.getMasterNode();
         final List<Node> allNodes = nodeService.find(nodeService.createCriteria());
 
-        Collections.sort(allNodes, new Comparator<Node>() {
-            @Override
-            public int compare(final Node o1, final Node o2) {
-                if (o1.getName() == null || o2.getName() == null) {
-                    return 0;
-                }
-                return o1.getName().compareToIgnoreCase(o2.getName());
+        Collections.sort(allNodes, (o1, o2) -> {
+            if (o1.getName() == null || o2.getName() == null) {
+                return 0;
             }
+            return o1.getName().compareToIgnoreCase(o2.getName());
         });
 
         final ArrayList<NodeInfoResult> responseList = new ArrayList<NodeInfoResult>();

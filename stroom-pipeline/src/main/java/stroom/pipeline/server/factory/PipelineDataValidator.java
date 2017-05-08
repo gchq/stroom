@@ -16,13 +16,7 @@
 
 package stroom.pipeline.server.factory;
 
-import java.util.List;
-import java.util.Map;
-
-import javax.inject.Inject;
-
 import org.springframework.stereotype.Component;
-
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -31,6 +25,10 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.data.SourcePipeline;
+
+import javax.inject.Inject;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class PipelineDataValidator {

@@ -16,10 +16,10 @@
 
 package stroom.pipeline.server.writer;
 
+import stroom.util.CharBuffer;
+
 import java.io.IOException;
 import java.io.Writer;
-
-import stroom.util.CharBuffer;
 
 public class CharBufferWriter extends Writer {
     private final CharBuffer sb;

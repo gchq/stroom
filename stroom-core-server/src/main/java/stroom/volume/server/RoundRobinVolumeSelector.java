@@ -16,10 +16,10 @@
 
 package stroom.volume.server;
 
+import stroom.node.shared.Volume;
+
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import stroom.node.shared.Volume;
 
 public class RoundRobinVolumeSelector implements VolumeSelector {
     public static final String NAME = "RoundRobin";

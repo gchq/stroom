@@ -16,8 +16,6 @@
 
 package stroom.task.cluster;
 
-import java.io.Serializable;
-
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.SharedObject;
@@ -28,35 +26,35 @@ import stroom.util.shared.ThreadPool;
 import stroom.util.task.HasMonitor;
 import stroom.util.task.MonitorImpl;
 import stroom.util.task.TaskIdFactory;
-import jdk.nashorn.internal.objects.NativeDebug;
+
+import java.io.Serializable;
 
 public abstract class ClusterTask<R extends SharedObject> implements Task<R>, Serializable, HasMonitor {
     private static final long serialVersionUID = 4730274660149532350L;
 
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(5);
 
-    private final String sessionId;
-    private final String userId;
+    private final String userToken;
     private String taskName;
 
     private transient TaskId id;
     private transient MonitorImpl monitor;
 
-    public ClusterTask(final Task<?> parentTask, final String taskName) {
-        if (parentTask != null) {
-            this.sessionId = parentTask.getSessionId();
-            this.userId = parentTask.getUserId();
-        } else {
-            this.sessionId = null;
-            this.userId = null;
-        }
+//    public ClusterTask(final Task<?> parentTask, final String userToken, final String taskName) {
+//        if (parentTask != null) {
+//            this.userToken = parentTask.getUserToken();
+//        } else {
+//            this.userToken = null;
+//        }
+//        if (userToken != null) {
+//            this.userToken = userToken;
+//        }
+//
+//        this.taskName = taskName;
+//    }
 
-        this.taskName = taskName;
-    }
-
-    public ClusterTask(final String sessionId, final String userName, final String taskName) {
-        this.sessionId = sessionId;
-        this.userId = userName;
+    public ClusterTask(final String userToken, final String taskName) {
+        this.userToken = userToken;
         this.taskName = taskName;
     }
 
@@ -87,13 +85,8 @@ public abstract class ClusterTask<R extends SharedObject> implements Task<R>, Se
     }
 
     @Override
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    @Override
-    public String getUserId() {
-        return userId;
+    public String getUserToken() {
+        return userToken;
     }
 
     @Override

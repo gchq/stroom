@@ -16,6 +16,9 @@
 
 package stroom.pipeline.server.task;
 
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 import stroom.AbstractProcessIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.feed.shared.Feed;
@@ -38,9 +41,6 @@ import stroom.task.server.TaskMonitorImpl;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.io.File;

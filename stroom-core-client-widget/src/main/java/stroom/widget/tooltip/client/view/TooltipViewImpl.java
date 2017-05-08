@@ -22,7 +22,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.widget.tooltip.client.presenter.TooltipPresenter.TooltipView;
 
 public class TooltipViewImpl extends ViewImpl implements TooltipView {

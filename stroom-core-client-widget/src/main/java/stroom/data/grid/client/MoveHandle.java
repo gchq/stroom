@@ -16,8 +16,6 @@
 
 package stroom.data.grid.client;
 
-import java.util.List;
-
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -29,10 +27,11 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
-
 import stroom.data.grid.client.DataGridViewImpl.ColSettings;
 import stroom.data.grid.client.DataGridViewImpl.DefaultResources;
 import stroom.data.grid.client.DataGridViewImpl.Heading;
+
+import java.util.List;
 
 public class MoveHandle<R> extends Widget {
     public static final int LINE_WIDTH = 2;

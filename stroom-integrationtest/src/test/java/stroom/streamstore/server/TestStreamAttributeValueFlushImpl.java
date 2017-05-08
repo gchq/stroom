@@ -16,11 +16,10 @@
 
 package stroom.streamstore.server;
 
-import javax.annotation.Resource;
-
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
+
+import javax.annotation.Resource;
 
 public class TestStreamAttributeValueFlushImpl extends AbstractCoreIntegrationTest {
     @Resource

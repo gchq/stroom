@@ -16,11 +16,11 @@
 
 package stroom.widget.popup.client.presenter;
 
-import java.util.List;
-
 import com.google.gwt.dom.client.Element;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.List;
 
 public interface PopupView extends View, HasUiHandlers<PopupUiHandlers> {
     enum PopupType {

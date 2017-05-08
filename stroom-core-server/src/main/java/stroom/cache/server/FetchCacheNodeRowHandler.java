@@ -42,7 +42,6 @@ import stroom.util.spring.StroomScope;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 @TaskHandlerBean(task = FetchCacheNodeRowAction.class)
@@ -65,20 +64,17 @@ class FetchCacheNodeRowHandler extends AbstractTaskHandler<FetchCacheNodeRowActi
         final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
         criteria.setName(new StringCriteria(action.getCacheName(), null));
         final FindServiceClusterTask<FindCacheInfoCriteria, CacheInfo> task = new FindServiceClusterTask<>(
-                action.getSessionId(), action.getUserId(), "Find cache info", StroomCacheManager.class, criteria);
+                action.getUserToken(), "Find cache info", StroomCacheManager.class, criteria);
         final DefaultClusterResultCollector<ResultList<CacheInfo>> collector = dispatchHelper.execAsync(task,
                 TargetType.ACTIVE);
 
         // Sort the list of node names.
         final List<Node> nodes = new ArrayList<Node>(collector.getTargetNodes());
-        Collections.sort(nodes, new Comparator<Node>() {
-            @Override
-            public int compare(final Node o1, final Node o2) {
-                if (o1.getName() == null || o2.getName() == null) {
-                    return 0;
-                }
-                return o1.getName().compareToIgnoreCase(o2.getName());
+        Collections.sort(nodes, (o1, o2) -> {
+            if (o1.getName() == null || o2.getName() == null) {
+                return 0;
             }
+            return o1.getName().compareToIgnoreCase(o2.getName());
         });
 
         for (final Node node : nodes) {

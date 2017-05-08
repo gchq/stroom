@@ -113,7 +113,7 @@ public class StreamAttributeKey extends AuditedEntity implements HasName, HasDis
                 valueString = ModelStringUtil.formatCsv(valueLong);
 
             } else if (StreamAttributeFieldUse.SIZE_FIELD.equals(getFieldType())) {
-                valueString = ModelStringUtil.formatByteSizeString(Long.valueOf(valueString));
+                valueString = ModelStringUtil.formatIECByteSizeString(Long.valueOf(valueString));
 
             } else if (StreamAttributeFieldUse.NUMERIC_FIELD.equals(getFieldType())) {
                 valueString = ModelStringUtil.formatCsv(Long.valueOf(valueString));

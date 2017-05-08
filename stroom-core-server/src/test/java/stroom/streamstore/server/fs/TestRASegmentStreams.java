@@ -16,16 +16,16 @@
 
 package stroom.streamstore.server.fs;
 
-import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
-import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.server.fs.serializable.SegmentOutputStream;
-import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomUnitTest;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
+import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
+import stroom.streamstore.server.fs.serializable.SegmentOutputStream;
+import stroom.util.io.StreamUtil;
+import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;

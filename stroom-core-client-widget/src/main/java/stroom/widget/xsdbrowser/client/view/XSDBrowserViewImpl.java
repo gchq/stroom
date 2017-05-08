@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter.XSDBrowserView;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserUiHandlers;
 

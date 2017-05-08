@@ -50,10 +50,10 @@ import stroom.util.zip.StroomZipFile;
 import stroom.util.zip.StroomZipFileType;
 
 import javax.annotation.Resource;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.List;
 
 @TaskHandlerBean(task = StreamUploadTask.class)
@@ -73,7 +73,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
     private StreamTypeService streamTypeService;
     @Resource(name = "cachedFeedService")
     private FeedService feedService;
-    // @Resource
+    @Resource
     private MetaDataStatistic metaDataStatistics;
 
     @Resource(name = "prototypeThreadLocalBuffer")
@@ -138,7 +138,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
         try {
             progressMonitor.info("Zip");
 
-            stroomZipFile = new StroomZipFile(streamUploadTask.getFile());
+            stroomZipFile = new StroomZipFile(streamUploadTask.getFile().toFile());
 
             final List<List<String>> groupedFileLists = stroomZipFile.getStroomZipNameSet()
                     .getBaseNameGroupedList(AGGREGATION_DELIMITER);
@@ -166,7 +166,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
                     .buildSingleHandlerList(streamStore, feedService, metaDataStatistics, feed, streamType);
             final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(headerMap, handlerList,
                     readThreadLocalBuffer.getBuffer(), "Upload");
-            try (FileInputStream inputStream = new FileInputStream(streamUploadTask.getFile())) {
+            try (final InputStream inputStream = Files.newInputStream(streamUploadTask.getFile())) {
                 stroomStreamProcessor.process(inputStream, "Upload");
                 stroomStreamProcessor.closeHandlers();
             }

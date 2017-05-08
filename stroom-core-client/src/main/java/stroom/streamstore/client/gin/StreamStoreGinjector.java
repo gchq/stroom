@@ -17,7 +17,6 @@
 package stroom.streamstore.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter;
 import stroom.streamstore.client.presenter.StreamFilterPresenter;
 import stroom.streamstore.client.presenter.StreamListPresenter;

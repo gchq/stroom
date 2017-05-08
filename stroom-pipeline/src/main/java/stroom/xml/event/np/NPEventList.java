@@ -18,7 +18,6 @@ package stroom.xml.event.np;
 
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-
 import stroom.xml.event.EventList;
 
 public final class NPEventList implements EventList {

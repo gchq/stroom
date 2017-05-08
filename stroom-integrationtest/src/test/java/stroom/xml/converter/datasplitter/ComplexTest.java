@@ -16,13 +16,12 @@
 
 package stroom.xml.converter.datasplitter;
 
-import javax.annotation.Resource;
-
 import org.junit.Ignore;
 import org.junit.Test;
-
 import stroom.AbstractProcessIntegrationTest;
 import stroom.util.spring.StroomBeanStore;
+
+import javax.annotation.Resource;
 
 // FIXME : Fix this test.
 @Ignore("Create a new test")

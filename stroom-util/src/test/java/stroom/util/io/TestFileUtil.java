@@ -16,19 +16,18 @@
 
 package stroom.util.io;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.util.concurrent.SimpleExecutor;
-import stroom.util.test.StroomUnitTest;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestFileUtil extends StroomUnitTest {

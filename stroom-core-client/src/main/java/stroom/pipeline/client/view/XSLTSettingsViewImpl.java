@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.pipeline.client.presenter.XSLTSettingsPresenter.XSLTSettingsView;
 import stroom.util.shared.HasReadOnly;
 

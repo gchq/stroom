@@ -17,9 +17,7 @@
 package stroom.entity.client.view;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -27,7 +25,6 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.entity.client.presenter.NameEntityView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
@@ -43,22 +40,12 @@ public class NameEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>imple
     @Inject
     public NameEntityViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        widget.addAttachHandler(new AttachEvent.Handler() {
-            @Override
-            public void onAttachOrDetach(AttachEvent event) {
-                focus();
-            }
-        });
+        widget.addAttachHandler(event -> focus());
     }
 
     @Override
     public void focus() {
-        Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-            @Override
-            public void execute() {
-                name.setFocus(true);
-            }
-        });
+        Scheduler.get().scheduleDeferred(() -> name.setFocus(true));
     }
 
     @Override

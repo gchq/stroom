@@ -16,12 +16,12 @@
 
 package stroom.streamstore.server;
 
-import java.io.Closeable;
-import java.io.InputStream;
-
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.zip.HeaderMap;
+
+import java.io.Closeable;
+import java.io.InputStream;
 
 /**
  * <p>

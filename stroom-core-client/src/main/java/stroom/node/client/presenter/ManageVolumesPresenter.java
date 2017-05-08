@@ -23,7 +23,6 @@ import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceDeleteAction;
@@ -31,7 +30,6 @@ import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.node.client.view.WrapperView;
 import stroom.node.shared.FlushVolumeStatusAction;
 import stroom.node.shared.Volume;
-import stroom.util.shared.VoidResult;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -92,26 +90,16 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
         }));
         registerHandler(openButton.addClickHandler(event -> open(popupUiHandlers)));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
-        registerHandler(rescanButton.addClickHandler(event -> dispatcher.execute(new FlushVolumeStatusAction(), new AsyncCallbackAdaptor<VoidResult>() {
-            @Override
-            public void onSuccess(final VoidResult result) {
-                // Ignore these results as they don't
-                // have all the volumes.
-                refresh();
-            }
-        })));
+        registerHandler(rescanButton.addClickHandler(event -> dispatcher.exec(new FlushVolumeStatusAction()).onSuccess(result -> refresh())));
     }
 
     private void open(final PopupUiHandlers popupUiHandlers) {
         final Volume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            dispatcher.execute(new EntityServiceLoadAction<Volume>(DocRefUtil.create(volume), null),
-                    new AsyncCallbackAdaptor<Volume>() {
-                        @Override
-                        public void onSuccess(final Volume result) {
-                            final VolumeEditPresenter editor = editProvider.get();
-                            editor.editVolume(result, popupUiHandlers);
-                        }
+            dispatcher.exec(new EntityServiceLoadAction<Volume>(DocRefUtil.create(volume), null))
+                    .onSuccess(result -> {
+                        final VolumeEditPresenter editor = editProvider.get();
+                        editor.editVolume(result, popupUiHandlers);
                     });
         }
     }
@@ -128,14 +116,7 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final Volume volume : list) {
-                                final EntityServiceDeleteAction<Volume> action = new EntityServiceDeleteAction<Volume>(
-                                        volume);
-                                dispatcher.execute(action, new AsyncCallbackAdaptor<Volume>() {
-                                    @Override
-                                    public void onSuccess(final Volume result) {
-                                        refresh();
-                                    }
-                                });
+                                dispatcher.exec(new EntityServiceDeleteAction<>(volume)).onSuccess(r -> refresh());
                             }
                         }
                     });
@@ -144,7 +125,7 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
 
     @Override
     protected void revealInParent() {
-        final PopupSize popupSize = new PopupSize(800, 400, true);
+        final PopupSize popupSize = new PopupSize(1000, 600, true);
         ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, null, popupSize, "Manage Volumes", null, null);
     }
 

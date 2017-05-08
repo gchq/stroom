@@ -19,6 +19,8 @@ package stroom.task.cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 import stroom.cluster.server.ClusterCallService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
@@ -27,8 +29,6 @@ import stroom.task.server.TaskManager;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.TaskId;
 import stroom.util.thread.ThreadUtil;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -155,7 +155,8 @@ public class ClusterWorkerImpl implements ClusterWorker {
                     done = true;
                 } catch (final Exception ex) {
                     lastException = ex;
-                    LOGGER.warn(ex.getMessage(), ex);
+                    LOGGER.warn(ex.getMessage());
+                    LOGGER.debug(ex.getMessage(), ex);
                     ThreadUtil.sleepUpTo(1000L * tryCount);
                     tryCount++;
                 }

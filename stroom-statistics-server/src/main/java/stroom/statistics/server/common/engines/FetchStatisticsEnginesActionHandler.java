@@ -16,21 +16,19 @@
 
 package stroom.statistics.server.common.engines;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
-
 import stroom.statistics.common.StatisticsFactory;
 import stroom.statistics.shared.common.engines.FetchStatisticsEnginesAction;
 import stroom.statistics.shared.common.engines.FetchStatisticsEnginesResults;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 @TaskHandlerBean(task = FetchStatisticsEnginesAction.class)
 @Scope(value = StroomScope.TASK)

@@ -16,10 +16,8 @@
 
 package stroom.widget.util.client;
 
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.HasSelection;
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
-import stroom.widget.util.client.MultiSelectEvent.Handler;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

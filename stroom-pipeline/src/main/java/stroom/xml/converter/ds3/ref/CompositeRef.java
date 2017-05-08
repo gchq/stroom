@@ -16,10 +16,10 @@
 
 package stroom.xml.converter.ds3.ref;
 
-import java.util.List;
-
 import stroom.xml.converter.ds3.Buffer;
 import stroom.xml.converter.ds3.CharBuffer;
+
+import java.util.List;
 
 public class CompositeRef implements Ref {
     private final List<Ref> refs;

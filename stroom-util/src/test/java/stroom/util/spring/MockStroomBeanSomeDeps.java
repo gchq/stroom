@@ -16,11 +16,11 @@
 
 package stroom.util.spring;
 
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
 
 @Component
 @Profile(StroomSpringProfiles.TEST)

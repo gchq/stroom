@@ -16,22 +16,20 @@
 
 package stroom.util.task;
 
-import java.util.ArrayDeque;
-
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomSpringProfiles;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.test.StroomSpringJUnit4ClassRunner;
+import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.test.ComponentTest;
+import stroom.util.test.StroomSpringJUnit4ClassRunner;
 import stroom.util.thread.ThreadUtil;
+
+import javax.annotation.Resource;
+import java.util.ArrayDeque;
 
 @Category(ComponentTest.class)
 @ActiveProfiles(StroomSpringProfiles.TEST)

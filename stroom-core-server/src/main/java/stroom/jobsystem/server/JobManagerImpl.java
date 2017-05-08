@@ -16,12 +16,7 @@
 
 package stroom.jobsystem.server;
 
-import java.util.List;
-
-import javax.annotation.Resource;
-
 import org.springframework.stereotype.Component;
-
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.FindJobNodeCriteria;
 import stroom.jobsystem.shared.Job;
@@ -31,6 +26,9 @@ import stroom.jobsystem.shared.JobNodeService;
 import stroom.jobsystem.shared.JobService;
 import stroom.lifecycle.LifecycleServiceImpl;
 import stroom.node.shared.Node;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * The job manager is used to update the database with the status of all job

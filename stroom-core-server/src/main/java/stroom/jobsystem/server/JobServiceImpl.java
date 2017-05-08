@@ -16,8 +16,11 @@
 
 package stroom.jobsystem.server;
 
+import org.apache.commons.lang.builder.CompareToBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.NamedEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.StroomEntityManager;
@@ -28,9 +31,6 @@ import stroom.security.Secured;
 import stroom.util.spring.StroomBeanMethod;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
-import org.apache.commons.lang.builder.CompareToBuilder;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

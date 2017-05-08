@@ -61,7 +61,7 @@ public class PermissionsListPresenter
 
         // Selection.
         final Column<String, TickBoxState> selectionColumn = new Column<String, TickBoxState>(
-                new TickBoxCell(appearance, false, false, updateable)) {
+                TickBoxCell.create(appearance, false, false, updateable)) {
             @Override
             public TickBoxState getValue(final String permission) {
                 TickBoxState tickBoxState = TickBoxState.UNTICK;

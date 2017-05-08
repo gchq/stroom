@@ -16,8 +16,8 @@
 
 package stroom.node.shared;
 
-import stroom.entity.shared.Clearable;
 import stroom.entity.shared.BaseEntityService;
+import stroom.entity.shared.Clearable;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.Flushable;
 

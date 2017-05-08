@@ -16,20 +16,19 @@
 
 package stroom.statistics.server.common.rollup;
 
+import org.junit.Assert;
+import org.junit.Test;
+import stroom.statistics.shared.CustomRollUpMask;
+import stroom.statistics.shared.StatisticField;
+import stroom.statistics.shared.StatisticsDataSourceData;
+import stroom.statistics.shared.StatisticsDataSourceFieldChangeAction;
+import stroom.util.test.StroomUnitTest;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import stroom.util.test.StroomUnitTest;
-import org.junit.Assert;
-import org.junit.Test;
-
-import stroom.statistics.shared.CustomRollUpMask;
-import stroom.statistics.shared.StatisticField;
-import stroom.statistics.shared.StatisticsDataSourceData;
-import stroom.statistics.shared.StatisticsDataSourceFieldChangeAction;
 
 public class TestStatisticsDataSourceFieldChangeHandler extends StroomUnitTest {
     /**

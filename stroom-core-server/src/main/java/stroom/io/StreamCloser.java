@@ -16,6 +16,15 @@
 
 package stroom.io;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.server.StreamTarget;
+import stroom.util.spring.StroomScope;
+
+import javax.annotation.Resource;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,17 +33,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.StreamTarget;
-import stroom.util.spring.StroomScope;
 
 @Component
 @Scope(StroomScope.TASK)

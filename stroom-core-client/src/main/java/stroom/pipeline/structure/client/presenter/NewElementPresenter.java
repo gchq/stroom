@@ -18,14 +18,11 @@ package stroom.pipeline.structure.client.presenter;
 
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -49,12 +46,9 @@ public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.N
     public NewElementPresenter(final EventBus eventBus, final NewElementView view) {
         super(eventBus, view);
 
-        registerHandler(view.getIdBox().addKeyDownHandler(new KeyDownHandler() {
-            @Override
-            public void onKeyDown(final KeyDownEvent event) {
-                if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-                    hide();
-                }
+        registerHandler(view.getIdBox().addKeyDownHandler(event -> {
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+                hide();
             }
         }));
     }

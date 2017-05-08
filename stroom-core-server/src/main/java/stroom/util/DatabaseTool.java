@@ -16,14 +16,14 @@
 
 package stroom.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.entity.server.util.ConnectionUtil;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.entity.server.util.ConnectionUtil;
 
 public class DatabaseTool extends AbstractCommandLineTool {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseTool.class);

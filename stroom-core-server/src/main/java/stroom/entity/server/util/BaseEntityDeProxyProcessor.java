@@ -16,6 +16,10 @@
 
 package stroom.entity.server.util;
 
+import org.hibernate.Hibernate;
+import org.hibernate.proxy.AbstractLazyInitializer;
+import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.proxy.LazyInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseEntity;
@@ -23,10 +27,6 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.HasEntity;
 import stroom.entity.shared.HasPassword;
 import stroom.util.shared.SharedObject;
-import org.hibernate.Hibernate;
-import org.hibernate.proxy.AbstractLazyInitializer;
-import org.hibernate.proxy.HibernateProxy;
-import org.hibernate.proxy.LazyInitializer;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -57,7 +57,7 @@ public class BaseEntityDeProxyProcessor {
     private final HashMap<BaseEntity, BaseEntity> objectsDone = new HashMap<>();
 
     private final boolean incoming;
-    private static final String PASSWORD_MASK = "*****";
+    private static final String PASSWORD_MASK = "********************";
 
     public BaseEntityDeProxyProcessor(final boolean incoming) {
         this.incoming = incoming;

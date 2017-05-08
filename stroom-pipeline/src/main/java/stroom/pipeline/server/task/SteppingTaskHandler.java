@@ -18,6 +18,7 @@ package stroom.pipeline.server.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
@@ -58,9 +59,9 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Highlight;
+import stroom.util.shared.UserTokenUtil;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
-import org.springframework.context.annotation.Scope;
 
 import javax.annotation.Resource;
 import javax.xml.parsers.SAXParserFactory;
@@ -134,7 +135,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
     @Override
     public SteppingResult exec(final SteppingTask request) {
         // Set the current user so they are visible during translation.
-        currentUserHolder.setCurrentUser(request.getUserId());
+        currentUserHolder.setCurrentUser(UserTokenUtil.getUserId(request.getUserToken()));
 
         StepData stepData = null;
         generalErrors = new HashSet<>();

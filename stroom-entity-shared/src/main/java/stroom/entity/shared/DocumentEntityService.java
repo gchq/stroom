@@ -16,9 +16,12 @@
 
 package stroom.entity.shared;
 
+import stroom.entity.shared.ImportState.ImportMode;
 import stroom.query.api.DocRef;
+import stroom.util.shared.Message;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface DocumentEntityService<E extends DocumentEntity> extends BaseEntityService<E>, HasLoadByUuid<E>, ProvidesNamePattern {
@@ -42,9 +45,9 @@ public interface DocumentEntityService<E extends DocumentEntity> extends BaseEnt
 
     List<E> findByFolder(DocRef folder, Set<String> fetchSet) throws RuntimeException;
 
-    E importEntity(E entity, DocRef folder);
+    DocRef importDocument(Folder folder, Map<String, String> dataMap, final ImportState importState, final ImportMode importMode);
 
-    E exportEntity(E entity);
+    Map<String, String> exportDocument(DocRef docRef, boolean omitAuditFields, List<Message> messageList);
 
     /**
      * Get a list of all possible permissions for the associated document type.

@@ -27,8 +27,6 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
-import com.google.gwt.event.logical.shared.ResizeEvent;
-import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -41,7 +39,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class Dialog extends AbstractPopupPanel {
@@ -172,12 +169,7 @@ public class Dialog extends AbstractPopupPanel {
         setGlassEnabled(isModal());
 
         if (resizeHandlerRegistration == null) {
-            resizeHandlerRegistration = Window.addResizeHandler(new ResizeHandler() {
-                @Override
-                public void onResize(final ResizeEvent event) {
-                    windowWidth = event.getWidth();
-                }
-            });
+            resizeHandlerRegistration = Window.addResizeHandler(event -> windowWidth = event.getWidth());
         }
         super.show();
     }

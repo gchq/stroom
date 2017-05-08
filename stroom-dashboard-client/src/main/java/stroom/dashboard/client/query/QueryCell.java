@@ -50,7 +50,7 @@ public class QueryCell extends AbstractCell<QueryEntity> {
                         value.getName()));
 
             } else {
-                final String time = ClientDateUtil.createDateTimeString(value.getCreateTime());
+                final String time = ClientDateUtil.toISOString(value.getCreateTime());
                 final StringBuilder expression = new StringBuilder();
                 value.getQuery().getExpression().append(expression, "", true);
 

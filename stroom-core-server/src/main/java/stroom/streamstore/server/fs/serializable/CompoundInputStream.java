@@ -16,11 +16,11 @@
 
 package stroom.streamstore.server.fs.serializable;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.shared.StreamType;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Class that wraps 3 streams (data, boundary, and segment) and provides handy

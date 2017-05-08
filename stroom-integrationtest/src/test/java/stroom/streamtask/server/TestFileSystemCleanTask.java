@@ -16,17 +16,8 @@
 
 package stroom.streamtask.server;
 
-import java.io.File;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.List;
-
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
@@ -46,6 +37,13 @@ import stroom.streamstore.shared.StreamType;
 import stroom.task.server.TaskManager;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Collection;
+import java.util.List;
 
 public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     private static final int NEG_SIXTY = -60;

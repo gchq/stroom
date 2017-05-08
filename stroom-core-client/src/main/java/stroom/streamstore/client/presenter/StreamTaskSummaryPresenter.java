@@ -17,8 +17,6 @@
 package stroom.streamstore.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -49,7 +47,6 @@ import stroom.widget.util.client.MultiSelectionModel;
 public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<SummaryDataRow>>
         implements HasRead<BaseEntity> {
     private EntityServiceFindSummaryActionDataProvider<FindStreamTaskCriteria> dataProvider;
-//    private final InterceptingSelectionChangeHandler interceptingSelectionChangeHandler = new InterceptingSelectionChangeHandler();
 
     @Inject
     public StreamTaskSummaryPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
@@ -82,7 +79,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
                         null);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", 15);
+        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
 
         getView().addResizableColumn(new OrderByColumn<SummaryDataRow, String>(new TextCell(),
                 FindStreamTaskCriteria.ORDER_BY_PIPELINE_NAME) {
@@ -100,7 +97,8 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
                     }
                 }, "Feed", 250);
 
-        getView().addResizableColumn(new Column<SummaryDataRow, String>(new TextCell()) {
+        getView().addResizableColumn(
+                new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_PRIORITY) {
             @Override
             public String getValue(final SummaryDataRow row) {
                 return row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_PRIORITY);

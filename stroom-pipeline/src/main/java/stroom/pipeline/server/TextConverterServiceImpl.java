@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
@@ -38,8 +39,8 @@ public class TextConverterServiceImpl extends DocumentEntityServiceImpl<TextConv
     private final StroomDatabaseInfo stroomDatabaseInfo;
 
     @Inject
-    TextConverterServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext, final StroomDatabaseInfo stroomDatabaseInfo) {
-        super(entityManager, securityContext);
+    TextConverterServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final StroomDatabaseInfo stroomDatabaseInfo) {
+        super(entityManager, importExportHelper, securityContext);
         this.stroomDatabaseInfo = stroomDatabaseInfo;
     }
 

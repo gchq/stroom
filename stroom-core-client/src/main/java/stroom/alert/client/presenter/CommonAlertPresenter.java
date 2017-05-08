@@ -16,15 +16,11 @@
 
 package stroom.alert.client.presenter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.CommonAlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
@@ -32,6 +28,9 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class CommonAlertPresenter extends MyPresenterWidget<CommonAlertPresenter.CommonAlertView>
         implements PopupUiHandlers {

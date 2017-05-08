@@ -30,20 +30,29 @@ import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
+import stroom.entity.shared.ImportState;
+import stroom.entity.shared.ImportState.ImportMode;
+import stroom.entity.shared.ImportState.State;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.importexport.server.Config;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.query.api.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
 
 import javax.annotation.Resource;
 import javax.persistence.Transient;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -63,14 +72,17 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     private final SecurityContext securityContext;
     private final EntityServiceHelper<E> entityServiceHelper;
     private final FindServiceHelper<E, C> findServiceHelper;
+    private final ImportExportHelper importExportHelper;
+
     private final QueryAppender<E, C> queryAppender;
     // TODO : REMOVE WHEN WE REMOVE FOLDER REFERENCES FROM ENTITIES.
     @Resource
     private FolderService folderService;
     private String entityType;
 
-    protected DocumentEntityServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext) {
+    protected DocumentEntityServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
         this.entityManager = entityManager;
+        this.importExportHelper = importExportHelper;
         this.securityContext = securityContext;
         this.queryAppender = createQueryAppender(entityManager);
         this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass(), queryAppender);
@@ -141,11 +153,13 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         checkCreatePermission(entity, folderRef);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public E load(final E entity) throws RuntimeException {
         return load(entity, Collections.emptySet());
     }
 
+    @Transactional(readOnly = true)
     @Override
     public E load(final E entity, final Set<String> fetchSet) throws RuntimeException {
         if (entity == null) {
@@ -154,12 +168,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return loadById(entity.getId(), fetchSet);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public E loadById(final long id) throws RuntimeException {
         return loadById(id, Collections.emptySet());
     }
 
     @SuppressWarnings("unchecked")
+    @Transactional(readOnly = true)
     @Override
     public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
         E entity = null;
@@ -175,7 +191,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         sql.append(" WHERE e.id = ");
         sql.arg(id);
 
-        final List<E> resultList = getEntityManager().executeQueryResultList(sql);
+        final List<E> resultList = getEntityManager().executeQueryResultList(sql, null, true);
         if (resultList != null && resultList.size() > 0) {
             entity = resultList.get(0);
         }
@@ -189,6 +205,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     // TODO : Remove this method when the explorer service is broken out as a separate micro service.
+    @Transactional(readOnly = true)
     public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
         E entity = null;
 
@@ -203,7 +220,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         sql.append(" WHERE e.id = ");
         sql.arg(id);
 
-        final List<E> resultList = getEntityManager().executeQueryResultList(sql);
+        final List<E> resultList = getEntityManager().executeQueryResultList(sql, null, true);
         if (resultList != null && resultList.size() > 0) {
             entity = resultList.get(0);
         }
@@ -215,12 +232,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return entity;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public final E loadByUuid(final String uuid) throws RuntimeException {
         return loadByUuid(uuid, null);
     }
 
     @SuppressWarnings("unchecked")
+    @Transactional(readOnly = true)
     @Override
     public final E loadByUuid(final String uuid, final Set<String> fetchSet) throws RuntimeException {
         final SQLBuilder sql = new SQLBuilder();
@@ -231,7 +250,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         sql.append(" WHERE e.uuid = ");
         sql.arg(uuid);
 
-        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql));
+        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql, null, true));
         final E entity = list.getFirst();
 
         if (entity != null) {
@@ -243,6 +262,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     // TODO : Remove this method when the explorer service is broken out as a separate micro service.
+    @Transactional(readOnly = true)
     public final E loadByUuidInsecure(final String uuid, final Set<String> fetchSet) throws RuntimeException {
         final SQLBuilder sql = new SQLBuilder();
         sql.append("SELECT e FROM ");
@@ -252,7 +272,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         sql.append(" WHERE e.uuid = ");
         sql.arg(uuid);
 
-        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql));
+        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql, null, true));
         final E entity = list.getFirst();
 
         if (entity != null) {
@@ -262,12 +282,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return entity;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public final E loadByName(final DocRef folder, final String name) throws RuntimeException {
         return loadByName(folder, name, null);
     }
 
     @SuppressWarnings("unchecked")
+    @Transactional(readOnly = true)
     @Override
     public final E loadByName(final DocRef folder, final String name, final Set<String> fetchSet) throws RuntimeException {
         final SQLBuilder sql = new SQLBuilder();
@@ -291,9 +313,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             }
         }
 
-        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql));
+        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql, null, true));
 
-        // FIXME: Fix onOce folders have been removed from entities. For now filter by parent group id manually
+        // FIXME: Fix once folders have been removed from entities. For now filter by parent group id manually
         E entity = null;
         if (getEntityClass().equals(Folder.class)) {
             for (final E e : list) {
@@ -303,7 +325,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                         break;
                     }
                 } else {
-                    if (EqualsUtil.isEquals(folder.getUuid(), e.getFolder().getUuid())) {
+                    if (e.getFolder() != null && EqualsUtil.isEquals(folder.getUuid(), e.getFolder().getUuid())) {
                         entity = e;
                         break;
                     }
@@ -421,6 +443,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return filterResults(list, DocumentPermissionNames.READ);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public BaseResultList<E> find(final C criteria) throws RuntimeException {
         // Make sure the required permission is a valid one.
@@ -474,6 +497,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     // TODO : Remove this method when the explorer service is broken out as a separate micro service.
+    @Transactional(readOnly = true)
     public BaseResultList<E> findInsecure(final C criteria) throws RuntimeException {
         final List<E> list = findServiceHelper.find(criteria);
         return BaseResultList.createCriterialBasedList(list, criteria);
@@ -488,31 +512,73 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     @Override
-    public E importEntity(final E entity, final DocRef folder) {
-        // Only allow administrators to import documents with no folder.
-        if (folder == null) {
-            if (!securityContext.isAdmin()) {
-                throw new PermissionException("Only administrators can create root level entries");
+    public DocRef importDocument(final Folder folder, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+        E entity = null;
+
+        try {
+            // Get the main config data.
+            String mainConfigPath = null;
+            for (final String key : dataMap.keySet()) {
+                if (key.endsWith(getEntityType() + ".xml")) {
+                    mainConfigPath = key;
+                }
             }
-        } else {
-            if (!securityContext.hasDocumentPermission(Folder.ENTITY_TYPE, folder.getUuid(), DocumentPermissionNames.IMPORT)) {
-                throw new PermissionException("You do not have permission to import " + getDocReference(entity) + " into folder " + folder);
+
+            if (mainConfigPath == null) {
+                throw new RuntimeException("Unable to find config data");
             }
+
+            final Config config = new Config();
+            config.read(new StringReader(dataMap.get(mainConfigPath)));
+
+            final String uuid = config.getString("uuid");
+            if (uuid == null) {
+                throw new RuntimeException("Unable to get UUID for item");
+            }
+
+            entity = loadByUuid(uuid, Collections.singleton("all"));
+
+            if (entity == null) {
+                entity = getEntityClass().newInstance();
+                entity.setFolder(folder);
+
+                if (importMode == ImportMode.CREATE_CONFIRMATION) {
+                    importState.setState(State.NEW);
+                }
+            } else {
+                if (importMode == ImportMode.CREATE_CONFIRMATION) {
+                    importState.setState(State.UPDATE);
+                }
+            }
+
+            importExportHelper.performImport(entity, dataMap, mainConfigPath, importState, importMode);
+
+            // We don't want to overwrite any marshaled data so disable marshalling on creation.
+            setFolder(entity, DocRefUtil.create(folder));
+
+            // Save directly so there is no marshalling of objects that would destroy imported data.
+            if (importMode == ImportMode.IGNORE_CONFIRMATION
+                    || (importMode == ImportMode.ACTION_CONFIRMATION && importState.isAction())) {
+                entity = getEntityManager().saveEntity(entity);
+            }
+
+        } catch (final Exception e) {
+            importState.addMessage(Severity.ERROR, e.getMessage());
         }
 
-        // We don't want to overwrite any marshaled data so disable marshalling on creation.
-        setFolder(entity, folder);
-
-        // Save directly so there is no marshalling of objects that would destroy imported data.
-        return getEntityManager().saveEntity(entity);
+        return DocRefUtil.create(entity);
     }
 
     @Override
-    public E exportEntity(final E entity) {
-        if (!securityContext.hasDocumentPermission(entity.getType(), entity.getUuid(), DocumentPermissionNames.EXPORT)) {
-            throw new PermissionException("You do not have permission to export " + getDocReference(entity));
+    public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
+            final E entity = entityServiceHelper.loadByUuid(docRef.getUuid());
+            if (entity != null) {
+                return importExportHelper.performExport(entity, omitAuditFields, messageList);
+            }
         }
-        return entityServiceHelper.load(entity);
+
+        return Collections.emptyMap();
     }
 
     @Transient
@@ -520,15 +586,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     public String getNamePattern() {
         return StroomProperties.getProperty(NAME_PATTERN_PROPERTY, NAME_PATTERN_VALUE);
     }
-
-//    protected void validateName(final String name) {
-//        final String pattern = getNamePattern();
-//        if (pattern != null && pattern.length() > 0) {
-//            if (name == null || !name.matches(pattern)) {
-//                throw new EntityServiceException("Invalid name \"" + name + "\" (" + getEntityType() + "  " + pattern + ")");
-//            }
-//        }
-//    }
 
     private String getDocReference(BaseEntity entity) {
         return "(" + DocRefUtil.create(entity).toString() + ")";

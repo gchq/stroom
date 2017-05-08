@@ -20,7 +20,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.dispatch.client.ClientDispatchAsync;
 
 public class NodeEditPresenter extends MyPresenterWidget<NodeEditPresenter.NodeEditView> {

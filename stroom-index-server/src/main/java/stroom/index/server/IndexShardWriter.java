@@ -23,7 +23,7 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 
 public interface IndexShardWriter extends Destroyable {
-    boolean check();
+    void check();
 
     boolean open(boolean create);
 

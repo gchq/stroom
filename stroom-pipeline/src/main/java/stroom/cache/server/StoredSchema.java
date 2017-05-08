@@ -16,9 +16,9 @@
 
 package stroom.cache.server;
 
-import javax.xml.validation.Schema;
-
 import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
+
+import javax.xml.validation.Schema;
 
 public class StoredSchema {
     private final Schema schema;

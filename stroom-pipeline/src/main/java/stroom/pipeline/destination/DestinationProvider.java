@@ -16,9 +16,9 @@
 
 package stroom.pipeline.destination;
 
-import java.io.IOException;
-
 import stroom.pipeline.server.factory.Target;
+
+import java.io.IOException;
 
 public interface DestinationProvider extends Target {
     Destination borrowDestination() throws IOException;

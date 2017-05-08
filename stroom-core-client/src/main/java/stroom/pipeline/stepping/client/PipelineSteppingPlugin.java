@@ -22,10 +22,8 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.presenter.Plugin;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceFindAction;
-import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.feed.shared.Feed;
@@ -68,14 +66,8 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
             } else {
                 // If we don't have a pipeline id then try to guess one for the
                 // supplied stream.
-                dispatcher.execute(new GetPipelineForStreamAction(event.getStreamId(), event.getChildStreamId()),
-                        new AsyncCallbackAdaptor<SharedDocRef>() {
-                            @Override
-                            public void onSuccess(final SharedDocRef result) {
-                                choosePipeline(result, event.getStreamId(), event.getEventId(),
-                                        event.getChildStreamType());
-                            }
-                        });
+                dispatcher.exec(new GetPipelineForStreamAction(event.getStreamId(), event.getChildStreamId())).onSuccess(result -> choosePipeline(result, event.getStreamId(), event.getEventId(),
+                        event.getChildStreamType()));
             }
         }
     }
@@ -95,13 +87,10 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                 streamAttributeMapCriteria.obtainFindStreamCriteria().obtainStreamIdSet().add(streamId);
                 streamAttributeMapCriteria.getFetchSet().add(Feed.ENTITY_TYPE);
 
-                dispatcher.execute(new EntityServiceFindAction<>(streamAttributeMapCriteria), new AsyncCallbackAdaptor<ResultList<StreamAttributeMap>>() {
-                    @Override
-                    public void onSuccess(final ResultList<StreamAttributeMap> result) {
-                        if (result != null && result.size() == 1) {
-                            final StreamAttributeMap row = result.get(0);
-                            openEditor(pipeline, row.getStream(), eventId, childStreamType);
-                        }
+                dispatcher.exec(new EntityServiceFindAction<FindStreamAttributeMapCriteria, StreamAttributeMap>(streamAttributeMapCriteria)).onSuccess(result -> {
+                    if (result != null && result.size() == 1) {
+                        final StreamAttributeMap row = result.get(0);
+                        openEditor(pipeline, row.getStream(), eventId, childStreamType);
                     }
                 });
             }

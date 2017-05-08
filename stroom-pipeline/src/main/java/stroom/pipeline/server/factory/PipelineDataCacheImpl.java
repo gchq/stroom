@@ -16,22 +16,20 @@
 
 package stroom.pipeline.server.factory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
-
+import net.sf.ehcache.CacheManager;
 import org.springframework.stereotype.Component;
-
-import stroom.security.Insecure;
 import stroom.cache.AbstractCacheBean;
 import stroom.entity.shared.VersionedEntityDecorator;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
-import net.sf.ehcache.CacheManager;
+import stroom.security.Insecure;
+
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Insecure
 @Component

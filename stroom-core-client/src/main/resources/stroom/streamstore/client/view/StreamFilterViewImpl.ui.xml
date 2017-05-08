@@ -1,8 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:l="urn:import:stroom.item.client"
-  xmlns:c="urn:import:stroom.widget.customdatebox.client"
-  xmlns:v="urn:import:stroom.widget.tickbox.client.view">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:l="urn:import:stroom.item.client"
+             xmlns:c="urn:import:stroom.widget.customdatebox.client"
+>
   <ui:style>
     .label {
     	display: block;
@@ -10,20 +10,20 @@
     	white-space: nowrap;
     	margin: 0px;
     }
-    
+
     .panel {
     	width: 200px;
     	margin-bottom: 4px;
     	display: inline-block;
     	vertical-align: top;
     }
-    
+
     .atts {
     	margin-bottom: 4px;
     	display: inline-block;
     	vertical-align: top;
     }
-    
+
     .noMargin {
     	margin: 0px;
     }
@@ -39,8 +39,8 @@
       <l:ItemListBox ui:field="streamListFilterTemplate" addStyleNames="{style.noMargin}" width="100%" />
     </g:FlowPanel>
     </g:north>
-    
-    <g:south size="269">
+
+    <g:south size="270">
     <g:FlowPanel width="100%" ui:field="southPanel" addStyleNames="{style.topMargin}">
     <g:FlowPanel width="100%">
       <g:FlowPanel ui:field="streamIdPanel" addStyleNames="{style.panel}">
@@ -55,15 +55,15 @@
     <g:FlowPanel ui:field="createdPanel" addStyleNames="{style.panel}" width="100%">
       <g:Label text="Created:" addStyleNames="{style.label}" width="100%" />
       <g:FlowPanel width="100%">
-        <c:CustomDateBox ui:field="createFrom" addStyleNames="{style.noMargin}" />
-        <c:CustomDateBox ui:field="createTo" addStyleNames="{style.noMargin}" />
+        <c:MyDateBox ui:field="createFrom" addStyleNames="{style.noMargin}" />
+        <c:MyDateBox ui:field="createTo" addStyleNames="{style.noMargin}" />
       </g:FlowPanel>
     </g:FlowPanel>
     <g:FlowPanel ui:field="effectivePanel" addStyleNames="{style.panel}" width="100%">
       <g:Label text="Effective:" addStyleNames="{style.label}" width="100%"/>
       <g:FlowPanel width="100%">
-        <c:CustomDateBox ui:field="effectiveFrom" addStyleNames="{style.noMargin}" />
-        <c:CustomDateBox ui:field="effectiveTo" addStyleNames="{style.noMargin}" />
+        <c:MyDateBox ui:field="effectiveFrom" addStyleNames="{style.noMargin}" />
+        <c:MyDateBox ui:field="effectiveTo" addStyleNames="{style.noMargin}" />
       </g:FlowPanel>
     </g:FlowPanel>
     <g:FlowPanel ui:field="streamAttributesPanel" addStyleNames="{style.atts}" width="100%">
@@ -78,8 +78,8 @@
       <g:FlowPanel addStyleNames="{style.panel}" width="100%">
         <g:Label text="Status Time:" addStyleNames="{style.label}" width="100%"/>
         <g:FlowPanel width="100%">
-          <c:CustomDateBox ui:field="statusFrom" addStyleNames="{style.noMargin}" />
-          <c:CustomDateBox ui:field="statusTo" addStyleNames="{style.noMargin}" />
+          <c:MyDateBox ui:field="statusFrom" addStyleNames="{style.noMargin}" />
+          <c:MyDateBox ui:field="statusTo" addStyleNames="{style.noMargin}" />
         </g:FlowPanel>
       </g:FlowPanel>
     </g:FlowPanel>

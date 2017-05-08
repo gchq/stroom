@@ -34,12 +34,14 @@ import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityService;
 import stroom.query.api.DocRef;
+import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.server.exception.AuthenticationServiceException;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
+import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.security.spring.SecurityConfiguration;
@@ -48,6 +50,7 @@ import stroom.util.spring.StroomScope;
 import javax.inject.Inject;
 import javax.persistence.RollbackException;
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -55,35 +58,65 @@ import java.util.Set;
 @Profile(SecurityConfiguration.PROD_SECURITY)
 @Scope(value = StroomScope.PROTOTYPE, proxyMode = ScopedProxyMode.INTERFACES)
 class SecurityContextImpl implements SecurityContext {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
-    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", "INTERNAL_PROCESSING_USER", false, true);
-    private final UserPermissionsCache userPermissionCache;
+
     private final DocumentPermissionsCache documentPermissionsCache;
+    private final UserGroupsCache userGroupsCache;
+    private final UserAppPermissionsCache userAppPermissionsCache;
     private final UserService userService;
     private final DocumentPermissionService documentPermissionService;
     private final GenericEntityService genericEntityService;
 
+    private static final String INTERNAL = "INTERNAL";
+    private static final String SYSTEM = "system";
+    private static final String USER = "user";
+    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", INTERNAL, false, true);
+
     @Inject
-    SecurityContextImpl(final UserPermissionsCache userPermissionCache, final DocumentPermissionsCache documentPermissionsCache, final UserService userService, final DocumentPermissionService documentPermissionService, final GenericEntityService genericEntityService) {
-        this.userPermissionCache = userPermissionCache;
+    SecurityContextImpl(final DocumentPermissionsCache documentPermissionsCache, final UserGroupsCache userGroupsCache, final UserAppPermissionsCache userAppPermissionsCache, final UserService userService, final DocumentPermissionService documentPermissionService, final GenericEntityService genericEntityService) {
         this.documentPermissionsCache = documentPermissionsCache;
+        this.userGroupsCache = userGroupsCache;
+        this.userAppPermissionsCache = userAppPermissionsCache;
         this.userService = userService;
         this.documentPermissionService = documentPermissionService;
         this.genericEntityService = genericEntityService;
     }
 
     @Override
-    public void pushUser(final String name) {
-        UserRef userRef = INTERNAL_PROCESSING_USER;
-        if (name != null && !"INTERNAL_PROCESSING_USER".equals(name)) {
-            userRef = userService.getUserRefByName(name);
-        }
+    public void pushUser(final String token) {
+        UserRef userRef = null;
 
-        if (userRef == null) {
-            final String message = "Unable to push user '" + name + "' as user is unknown";
-            LOGGER.error(message);
-            throw new AuthenticationServiceException(message);
+        if (token != null) {
+            final String[] parts = token.split("\\|", -1);
+            if (parts.length < 2) {
+                LOGGER.error("Unexpected token format '" + token + "'");
+                throw new AuthenticationServiceException("Unexpected token format '" + token + "'");
+            }
+
+            final String type = parts[0];
+            final String name = parts[1];
+//            final String sessionId = parts[2];
+
+            if (SYSTEM.equals(type)) {
+                if (INTERNAL.equals(name)) {
+                    userRef = INTERNAL_PROCESSING_USER;
+                } else {
+                    LOGGER.error("Unexpected system user '" + name + "'");
+                    throw new AuthenticationServiceException("Unexpected system user '" + name + "'");
+                }
+            } else if (USER.equals(type)) {
+                if (name.length() > 0) {
+                    userRef = userService.getUserRefByName(name);
+                    if (userRef == null) {
+                        final String message = "Unable to push user '" + name + "' as user is unknown";
+                        LOGGER.error(message);
+                        throw new AuthenticationServiceException(message);
+                    }
+                }
+            } else {
+                LOGGER.error("Unexpected token type '" + type + "'");
+                throw new AuthenticationServiceException("Unexpected token type '" + type + "'");
+            }
         }
 
         CurrentUserState.pushUserRef(userRef);
@@ -178,6 +211,7 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
+    @Insecure
     public boolean hasAppPermission(final String permission) {
         // Get the current user.
         final UserRef userRef = getUserRef();
@@ -192,15 +226,48 @@ class SecurityContextImpl implements SecurityContext {
             return true;
         }
 
-        final UserPermissions userPermissions = userPermissionCache.get(userRef);
-        boolean result = userPermissions.hasAppPermission(permission);
+        // See if the user has permission.
+        boolean result = hasAppPermission(userRef, permission);
 
         // If the user doesn't have the requested permission see if they are an admin.
         if (!result && !PermissionNames.ADMINISTRATOR.equals(permission)) {
-            result = userPermissions.hasAppPermission(PermissionNames.ADMINISTRATOR);
+            result = hasAppPermission(userRef, PermissionNames.ADMINISTRATOR);
         }
 
         return result;
+    }
+
+    private boolean hasAppPermission(final UserRef userRef, final String permission) {
+        // See if the user has an explicit permission.
+        boolean result = hasUserAppPermission(userRef, permission);
+
+        // See if the user belongs to a group that has permission.
+        if (!result) {
+            final List<UserRef> userGroups = userGroupsCache.get(userRef);
+            result = hasUserGroupsAppPermission(userGroups, permission);
+        }
+
+        return result;
+    }
+
+    private boolean hasUserGroupsAppPermission(final List<UserRef> userGroups, final String permission) {
+        if (userGroups != null) {
+            for (final UserRef userGroup : userGroups) {
+                final boolean result = hasUserAppPermission(userGroup, permission);
+                if (result) {
+                    return result;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasUserAppPermission(final UserRef userRef, final String permission) {
+        final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
+        if (userAppPermissions != null) {
+            return userAppPermissions.getUserPermissons().contains(permission);
+        }
+        return false;
     }
 
     @Override
@@ -218,17 +285,61 @@ class SecurityContextImpl implements SecurityContext {
             throw new AuthenticationServiceException("No user is currently logged in");
         }
 
-        final UserPermissions userPermissions = userPermissionCache.get(userRef);
-        boolean result = userPermissions.hasDocumentPermission(documentType, documentId, permission);
+        final DocRef docRef = new DocRef(documentType, documentId);
+        boolean result = hasDocumentPermission(userRef, docRef, permission);
 
         // If the user doesn't have read permission then check to see if the current task has been set to have elevated permissions.
         if (!result && DocumentPermissionNames.READ.equals(permission)) {
             if (CurrentUserState.isElevatePermissions()) {
-                result = userPermissions.hasDocumentPermission(documentType, documentId, DocumentPermissionNames.USE);
+                result = hasDocumentPermission(userRef, docRef, DocumentPermissionNames.USE);
             }
         }
 
         return result;
+    }
+
+    private boolean hasDocumentPermission(final UserRef userRef, final DocRef docRef, final String permission) {
+        // See if the user has an explicit permission.
+        boolean result = hasUserDocumentPermission(userRef, docRef, permission);
+
+        // See if the user belongs to a group that has permission.
+        if (!result) {
+            final List<UserRef> userGroups = userGroupsCache.get(userRef);
+            result = hasUserGroupsDocumentPermission(userGroups, docRef, permission);
+        }
+
+        return result;
+    }
+
+    private boolean hasUserGroupsDocumentPermission(final List<UserRef> userGroups, final DocRef docRef, final String permission) {
+        if (userGroups != null) {
+            for (final UserRef userGroup : userGroups) {
+                final boolean result = hasUserDocumentPermission(userGroup, docRef, permission);
+                if (result) {
+                    return result;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasUserDocumentPermission(final UserRef userRef, final DocRef docRef, final String permission) {
+        final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
+        if (documentPermissions != null) {
+            final Set<String> permissions = documentPermissions.getPermissionsForUser(userRef);
+            if (permissions != null) {
+                String perm = permission;
+                while (perm != null) {
+                    if (permissions.contains(perm)) {
+                        return true;
+                    }
+
+                    // If the user doesn't explicitly have this permission then see if they have a higher permission that infers this one.
+                    perm = DocumentPermissionNames.getHigherPermission(perm);
+                }
+            }
+        }
+        return false;
     }
 
     @Override
@@ -242,8 +353,6 @@ class SecurityContextImpl implements SecurityContext {
                 final DocRef docRef = new DocRef(documentType, documentUuid);
                 documentPermissionService.clearDocumentPermissions(docRef);
 
-                // Make sure the cache updates for the current user.
-                userPermissionCache.remove(userRef);
                 // Make sure cache updates for the document.
                 documentPermissionsCache.remove(docRef);
             }
@@ -275,8 +384,6 @@ class SecurityContextImpl implements SecurityContext {
                 // TODO : This should be part of the explorer service.
                 copyPermissions(sourceType, sourceUuid, documentType, documentUuid);
 
-                // Make sure the cache updates for the current user.
-                userPermissionCache.remove(userRef);
                 // Make sure cache updates for the document.
                 documentPermissionsCache.remove(docRef);
             }

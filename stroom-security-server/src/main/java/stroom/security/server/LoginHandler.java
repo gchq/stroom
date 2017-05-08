@@ -21,22 +21,24 @@ import stroom.security.Insecure;
 import stroom.security.shared.LoginAction;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
-import stroom.security.shared.UserRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
-import java.util.Set;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = LoginAction.class)
 @Scope(value = StroomScope.TASK)
 @Insecure
 public class LoginHandler extends AbstractTaskHandler<LoginAction, UserAndPermissions> {
-    @Resource
-    private AuthenticationService authenticationService;
-    @Resource
-    private UserPermissionsCache userPermissionCache;
+    private final AuthenticationService authenticationService;
+    private final UserAndPermissionsHelper userAndPermissionsHelper;
+
+    @Inject
+    LoginHandler(final AuthenticationService authenticationService, final UserAndPermissionsHelper userAndPermissionsHelper) {
+        this.authenticationService = authenticationService;
+        this.userAndPermissionsHelper = userAndPermissionsHelper;
+    }
 
     @Override
     public UserAndPermissions exec(final LoginAction task) {
@@ -45,12 +47,6 @@ public class LoginHandler extends AbstractTaskHandler<LoginAction, UserAndPermis
             return null;
         }
 
-        // Get permissions for this user.
-        final UserPermissions userPermissions = userPermissionCache.get(UserRef.create(user));
-        if (userPermissions == null) {
-            return null;
-        }
-        final Set<String> appPermissionSet = userPermissions.getAppPermissionSet();
-        return new UserAndPermissions(user, appPermissionSet);
+        return userAndPermissionsHelper.get(user);
     }
 }

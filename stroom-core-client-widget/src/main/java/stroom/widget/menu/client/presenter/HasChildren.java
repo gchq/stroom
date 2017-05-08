@@ -16,10 +16,10 @@
 
 package stroom.widget.menu.client.presenter;
 
+import stroom.widget.util.client.Future;
+
 import java.util.List;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
-
 public interface HasChildren {
-    void getChildren(AsyncCallback<List<Item>> callback);
+    Future<List<Item>> getChildren();
 }

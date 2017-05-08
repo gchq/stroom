@@ -16,12 +16,13 @@
 
 package stroom.importexport.server;
 
-import java.io.File;
-import java.util.List;
-
-import stroom.entity.shared.EntityActionConfirmation;
-import stroom.entity.shared.FindFolderCriteria;
+import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.ImportState;
+import stroom.util.shared.Message;
 import stroom.util.shared.SharedList;
+
+import java.nio.file.Path;
+import java.util.List;
 
 /**
  * API to get data in and out.
@@ -30,17 +31,17 @@ public interface ImportExportService {
     /**
      * Get a list of entities for Stroom to be able to import.
      */
-    SharedList<EntityActionConfirmation> createImportConfirmationList(File data);
+    SharedList<ImportState> createImportConfirmationList(Path data);
 
     /**
      * Perform an import using a confirmation list.
      */
-    void performImportWithConfirmation(File data, List<EntityActionConfirmation> confirmList);
+    void performImportWithConfirmation(Path data, List<ImportState> confirmList);
 
     /**
      * Perform an import without using a confirmation list.
      */
-    void performImportWithoutConfirmation(File data);
+    void performImportWithoutConfirmation(Path data);
 
     /**
      * Export a Stroom repository
@@ -48,5 +49,5 @@ public interface ImportExportService {
      * Also in the zip file output content that can be exploded and stored in
      * source control. Used for tracking changes with XSLT and feeds.
      */
-    void exportConfig(FindFolderCriteria criteria, File data, boolean ignoreErrors, List<String> messageList);
+    void exportConfig(DocRefs docRefs, Path data, List<Message> messageList);
 }

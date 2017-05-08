@@ -16,24 +16,31 @@
 
 package stroom.node.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
+import stroom.node.shared.DBTableService;
+import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindSystemTableStatusAction;
-import stroom.node.shared.NodeService;
-import stroom.node.shared.SystemTableStatus;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = FindSystemTableStatusAction.class)
+@Scope(value = StroomScope.TASK)
 public class FindSystemTableStatusHandler
-        extends AbstractTaskHandler<FindSystemTableStatusAction, ResultList<SystemTableStatus>> {
-    @Resource
-    private NodeService nodeService;
+        extends AbstractTaskHandler<FindSystemTableStatusAction, ResultList<DBTableStatus>> {
+    private final DBTableService dbTableService;
+
+    @Inject
+    FindSystemTableStatusHandler(final DBTableService dbTableService) {
+        this.dbTableService = dbTableService;
+    }
 
     @Override
-    public BaseResultList<SystemTableStatus> exec(final FindSystemTableStatusAction action) {
-        return BaseResultList.createUnboundedList(nodeService.findSystemTableStatus());
+    public BaseResultList<DBTableStatus> exec(final FindSystemTableStatusAction action) {
+        return BaseResultList.createUnboundedList(dbTableService.findSystemTableStatus(action.getOrderBy(), action.getOrderByDirection()));
     }
 }

@@ -16,15 +16,8 @@
 
 package stroom.streamstore.server;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.feed.shared.Feed;
@@ -33,6 +26,11 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.FileSystemCleanExecutor;
 import stroom.util.io.FileUtil;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest {
     @Resource

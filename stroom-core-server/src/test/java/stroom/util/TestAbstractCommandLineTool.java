@@ -16,12 +16,12 @@
 
 package stroom.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.util.test.StroomUnitTest;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestAbstractCommandLineTool extends StroomUnitTest {

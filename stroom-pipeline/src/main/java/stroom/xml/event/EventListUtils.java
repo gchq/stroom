@@ -16,6 +16,23 @@
 
 package stroom.xml.event;
 
+import net.sf.saxon.om.NodeInfo;
+import net.sf.saxon.query.QueryResult;
+import net.sf.saxon.s9api.Serializer.Property;
+import net.sf.saxon.xpath.XPathEvaluator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+import stroom.entity.server.util.XMLUtil;
+import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.util.CharBuffer;
+import stroom.xml.event.simple.StartElement;
+
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
 import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
 import java.util.ArrayDeque;
@@ -24,25 +41,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
-
-import stroom.entity.server.util.XMLUtil;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.util.CharBuffer;
-import stroom.xml.event.simple.StartElement;
-import net.sf.saxon.om.NodeInfo;
-import net.sf.saxon.query.QueryResult;
-import net.sf.saxon.s9api.Serializer.Property;
-import net.sf.saxon.xpath.XPathEvaluator;
 
 public final class EventListUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventListUtils.class);

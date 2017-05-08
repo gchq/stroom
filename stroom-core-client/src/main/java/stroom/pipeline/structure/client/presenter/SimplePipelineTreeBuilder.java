@@ -16,6 +16,10 @@
 
 package stroom.pipeline.structure.client.presenter;
 
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,10 +28,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 public class SimplePipelineTreeBuilder extends DefaultPipelineTreeBuilder {
     private final Set<String> roles;

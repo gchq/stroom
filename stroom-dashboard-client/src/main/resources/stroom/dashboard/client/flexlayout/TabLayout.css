@@ -28,11 +28,9 @@
 	position: relative;
 	width: 100%;
 	height: 100%;
-	padding-top: 24px;	
 	overflow: hidden;
 	
 	border-radius: 2px;
-	box-shadow: rgba(0, 0, 0, 0.0980392) 0px 2px 4px, rgba(0, 0, 0, 0.0980392) 0px 0px 3px;
 	background-color: rgb(255, 255, 255);
 }
 
@@ -42,15 +40,25 @@
 	top: 0px;
 	width: 100%;
 	height: 24px;
-	padding: 0 24px 0px 3px;
+	padding: 0 48px 0 0;
 	cursor: default;
 	overflow: hidden;
+	z-index: 5;
 }
 
 .tabLayout .barInner {
 	position: relative;
+	padding-top: 2px;
 	width: 100%;
 	height: 100%;
+}
+
+.tabLayout .buttons {
+	position: absolute;
+	right: 0px;
+	top: 0px;
+	padding: 1px;
+	z-index: 5;
 }
 
 .tabLayout .content {

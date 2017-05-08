@@ -17,7 +17,6 @@
 package stroom.cache.server;
 
 import org.xml.sax.SAXException;
-
 import stroom.refdata.MapStore;
 import stroom.refdata.MapStoreBuilder;
 import stroom.refdata.MapStoreBuilderImpl;

@@ -16,11 +16,11 @@
 
 package stroom.statistics.common;
 
+import stroom.statistics.common.rollup.RollUpBitMask;
+
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
-
-import stroom.statistics.common.rollup.RollUpBitMask;
 
 public class RollUpBitMaskUtil {
     /**

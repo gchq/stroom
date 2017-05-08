@@ -42,7 +42,7 @@ import stroom.widget.util.client.MultiSelectEvent;
 
 import java.util.List;
 
-public class ExplorerTickBoxTree extends AbstractExporerTree {
+public class ExplorerTickBoxTree extends AbstractExplorerTree {
     private final ExplorerTreeModel treeModel;
     private final TickBoxSelectionModel selectionModel;
     private final CellTable<ExplorerData> cellTable;
@@ -171,19 +171,7 @@ public class ExplorerTickBoxTree extends AbstractExporerTree {
 
     private void setOpenState(boolean open) {
         final ExplorerData selected = getKeyBoardSelected();
-        if (selected != null) {
-            if (open) {
-                if (!treeModel.getOpenItems().contains(selected)) {
-                    treeModel.toggleOpenState(selected);
-                    refresh();
-                }
-            } else {
-                if (treeModel.getOpenItems().contains(selected)) {
-                    treeModel.toggleOpenState(selected);
-                    refresh();
-                }
-            }
-        }
+        treeModel.setItemOpen(selected, open);
     }
 
     private void selectCurrent() {
@@ -338,7 +326,6 @@ public class ExplorerTickBoxTree extends AbstractExporerTree {
                             super.onCellPreview(event);
 
                             treeModel.toggleOpenState(selectedItem);
-                            refresh();
                         }
                     }
                 }

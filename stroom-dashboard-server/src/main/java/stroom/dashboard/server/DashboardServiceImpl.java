@@ -29,6 +29,8 @@ import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.shared.PermissionInheritance;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.query.api.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
@@ -53,8 +55,8 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
     private String xmlTemplate;
 
     @Inject
-    DashboardServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext, final ResourceLoader resourceLoader) {
-        super(entityManager, securityContext);
+    DashboardServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final ResourceLoader resourceLoader) {
+        super(entityManager, importExportHelper, securityContext);
         this.resourceLoader = resourceLoader;
     }
 
@@ -69,9 +71,8 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
     }
 
     @Override
-    public Dashboard create(final DocRef folder, final String name) throws RuntimeException {
-        final Dashboard dashboard = super.create(folder, name);
-
+    public Dashboard create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
+        final Dashboard dashboard = super.create(folder, name, permissionInheritance);
         // Add the template.
         if (dashboard.getData() == null) {
             dashboard.setData(getTemplate());

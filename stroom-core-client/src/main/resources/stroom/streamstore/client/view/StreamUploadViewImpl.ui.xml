@@ -21,7 +21,7 @@
       <g:row>
         <g:cell>Effective:</g:cell>
         <g:customCell>
-          <c:CustomDateBox ui:field="effective" />
+          <c:MyDateBox ui:field="effective" />
         </g:customCell>
       </g:row>
       <g:row>

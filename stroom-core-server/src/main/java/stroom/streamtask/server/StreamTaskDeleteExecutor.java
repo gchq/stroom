@@ -16,24 +16,17 @@
 
 package stroom.streamtask.server;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-
-import javax.inject.Inject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.server.StroomPropertyService;
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.shared.Period;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
+import stroom.node.server.StroomPropertyService;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterService;
@@ -42,7 +35,12 @@ import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.util.date.DateUtil;
 import stroom.util.spring.StroomFrequencySchedule;
+import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
+
+import javax.inject.Inject;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @Scope(value = StroomScope.TASK)

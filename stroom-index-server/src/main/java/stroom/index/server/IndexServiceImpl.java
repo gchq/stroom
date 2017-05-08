@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.util.StroomEntityManager;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
@@ -36,8 +37,8 @@ import javax.inject.Inject;
 @AutoMarshal
 public class IndexServiceImpl extends DocumentEntityServiceImpl<Index, FindIndexCriteria> implements IndexService {
     @Inject
-    IndexServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext) {
-        super(entityManager, securityContext);
+    IndexServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
     }
 
     @Override

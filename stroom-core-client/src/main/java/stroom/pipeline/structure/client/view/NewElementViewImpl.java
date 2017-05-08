@@ -17,7 +17,6 @@
 package stroom.pipeline.structure.client.view;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -26,7 +25,6 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.pipeline.structure.client.presenter.NewElementPresenter.NewElementView;
 
 public class NewElementViewImpl extends ViewImpl implements NewElementView {
@@ -50,12 +48,7 @@ public class NewElementViewImpl extends ViewImpl implements NewElementView {
 
     @Override
     public void focus() {
-        Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-            @Override
-            public void execute() {
-                id.setFocus(true);
-            }
-        });
+        Scheduler.get().scheduleDeferred(() -> id.setFocus(true));
     }
 
     @Override

@@ -16,11 +16,6 @@
 
 package stroom.content.client.presenter;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -28,7 +23,6 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
-
 import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.CloseContentTabEvent.CloseContentTabHandler;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
@@ -45,6 +39,9 @@ import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ContentTabPanePresenter extends CurveTabLayoutPresenter<ContentTabPanePresenter.ContentTabPaneProxy>
         implements OpenContentTabHandler, CloseContentTabHandler, SelectContentTabHandler, RefreshContentTabHandler {
     @ProxyCodeSplit
@@ -58,62 +55,56 @@ public class ContentTabPanePresenter extends CurveTabLayoutPresenter<ContentTabP
 
     @Inject
     public ContentTabPanePresenter(final EventBus eventBus, final CurveTabLayoutView view,
-            final ContentTabPaneProxy proxy) {
+                                   final ContentTabPaneProxy proxy) {
         super(eventBus, view, proxy);
 
         registerHandler(eventBus.addHandler(RefreshCurrentContentTabEvent.getType(),
-                new RefreshCurrentContentTabEvent.Handler() {
-                    @Override
-                    public void onRefresh(final RefreshCurrentContentTabEvent event) {
-                        final TabData selectedTab = getSelectedTab();
-                        if (selectedTab != null && selectedTab instanceof Refreshable) {
-                            final Refreshable refreshable = (Refreshable) selectedTab;
-                            refreshable.refresh();
-                        }
+                event -> {
+                    final TabData selectedTab = getSelectedTab();
+                    if (selectedTab != null && selectedTab instanceof Refreshable) {
+                        final Refreshable refreshable = (Refreshable) selectedTab;
+                        refreshable.refresh();
                     }
                 }));
 
         getView().setRightIndent(32);
 
         // Handle the history
-        registerHandler(History.addValueChangeHandler(new ValueChangeHandler<String>() {
-            @Override
-            public void onValueChange(final ValueChangeEvent<String> event) {
-                if (!ignoreHistory) {
-                    ignoreHistory = true;
-                    try {
-                        // Try and stop the user leaving Stroom.
-                        if ("".equals(event.getValue())) {
-                            History.forward();
+        registerHandler(History.addValueChangeHandler(event -> {
+            if (!ignoreHistory) {
+                ignoreHistory = true;
+                try {
+                    // Try and stop the user leaving Stroom.
+                    if ("".equals(event.getValue())) {
+                        History.forward();
+                    } else {
+                        final String key = event.getValue();
+
+                        final int id = Integer.valueOf(key);
+                        final int diff = id - currentHistoryId;
+                        currentHistoryId = id;
+
+                        currentIndex = currentIndex + diff;
+
+                        if (historyList.size() == 0) {
+                            currentIndex = 0;
                         } else {
-                            final String key = event.getValue();
-
-                            final int id = Integer.valueOf(key);
-                            final int diff = id - currentHistoryId;
-                            currentHistoryId = id;
-
-                            currentIndex = currentIndex + diff;
-
-                            if (historyList.size() == 0) {
-                                currentIndex = 0;
-                            } else {
-                                if (currentIndex >= historyList.size()) {
-                                    currentIndex = historyList.size() - 1;
-                                }
-                                if (currentIndex < 0) {
-                                    currentIndex = 0;
-                                }
-
-                                final TabData tabData = historyList.get(currentIndex);
-                                selectTab(tabData);
+                            if (currentIndex >= historyList.size()) {
+                                currentIndex = historyList.size() - 1;
                             }
-                        }
+                            if (currentIndex < 0) {
+                                currentIndex = 0;
+                            }
 
-                    } catch (final Exception e) {
-                        // Ignore.
+                            final TabData tabData = historyList.get(currentIndex);
+                            selectTab(tabData);
+                        }
                     }
-                    ignoreHistory = false;
+
+                } catch (final Exception e) {
+                    // Ignore.
                 }
+                ignoreHistory = false;
             }
         }));
     }

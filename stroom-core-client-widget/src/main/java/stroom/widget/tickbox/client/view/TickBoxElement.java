@@ -21,7 +21,6 @@ import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-
 import stroom.cell.tickbox.shared.TickBoxState;
 
 public final class TickBoxElement extends ImageElement {

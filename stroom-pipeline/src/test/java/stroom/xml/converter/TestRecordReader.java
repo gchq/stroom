@@ -16,15 +16,14 @@
 
 package stroom.xml.converter;
 
-import java.io.IOException;
-import java.io.StringReader;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import stroom.util.test.StroomUnitTest;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.io.IOException;
+import java.io.StringReader;
 
 /**
  * Test that we can chunk up a input stream into records.

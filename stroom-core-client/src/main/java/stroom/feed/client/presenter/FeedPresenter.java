@@ -19,8 +19,6 @@ package stroom.feed.client.presenter;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -50,12 +48,9 @@ public class FeedPresenter extends EntityEditTabPresenter<LinkTabPanelView, Feed
                          final Provider<StreamTaskPresenter> streamTaskPresenterProvider) {
         super(eventBus, view, securityContext);
 
-        tabContentProvider.setDirtyHandler(new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                if (event.isDirty()) {
-                    setDirty(true);
-                }
+        tabContentProvider.setDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
             }
         });
 

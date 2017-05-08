@@ -16,10 +16,10 @@
 
 package stroom.streamstore.server.fs;
 
-import java.io.IOException;
-
 import stroom.entity.shared.PageRequest;
 import stroom.streamstore.server.fs.serializable.SegmentInputStream;
+
+import java.io.IOException;
 
 /**
  * Helper class for pages of data.

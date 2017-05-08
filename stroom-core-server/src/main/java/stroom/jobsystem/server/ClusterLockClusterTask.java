@@ -26,7 +26,7 @@ public class ClusterLockClusterTask extends ClusterTask<SharedBoolean> {
     private final ClusterLockStyle lockStyle;
 
     public ClusterLockClusterTask(final ClusterLockTask parent) {
-        super(parent, "ClusterLockClusterTask");
+        super(parent.getUserToken(), "ClusterLockClusterTask");
         this.key = parent.getKey();
         this.lockStyle = parent.getLockStyle();
     }

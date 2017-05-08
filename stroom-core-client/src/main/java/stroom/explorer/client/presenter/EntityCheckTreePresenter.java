@@ -16,17 +16,17 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.explorer.shared.ExplorerData;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.data.client.event.DataSelectionEvent;
+import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
+import stroom.data.client.event.HasDataSelectionHandlers;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.explorer.shared.ExplorerData;
 
 import java.util.Set;
 

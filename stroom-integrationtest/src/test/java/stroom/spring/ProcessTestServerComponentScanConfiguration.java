@@ -18,16 +18,17 @@ package stroom.spring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-
-import stroom.dashboard.server.QueryServiceImpl;
-import stroom.security.server.UserServiceImpl;
 import stroom.DatabaseCommonTestControl;
 import stroom.cluster.server.ClusterNodeManagerImpl;
+import stroom.dashboard.server.QueryServiceImpl;
 import stroom.dictionary.DictionaryServiceImpl;
+import stroom.entity.shared.FolderService;
 import stroom.feed.server.FeedServiceImpl;
+import stroom.feed.shared.FeedService;
 import stroom.folder.server.FolderServiceImpl;
 import stroom.importexport.server.ImportExportServiceImpl;
 import stroom.jobsystem.server.ClusterLockServiceImpl;
@@ -42,34 +43,40 @@ import stroom.node.server.RecordCountServiceImpl;
 import stroom.pipeline.server.PipelineEntityServiceImpl;
 import stroom.pipeline.server.TextConverterServiceImpl;
 import stroom.pipeline.server.XSLTServiceImpl;
+import stroom.pipeline.shared.PipelineEntityService;
 import stroom.resource.server.ResourceStoreImpl;
+import stroom.security.server.UserServiceImpl;
 import stroom.statistics.server.common.MetaDataStatisticImpl;
 import stroom.statistics.server.common.StatisticEventStoreFactoryImpl;
 import stroom.streamstore.server.StreamAttributeKeyServiceImpl;
 import stroom.streamstore.server.StreamTypeServiceImpl;
 import stroom.streamstore.server.fs.FileSystemStreamStore;
+import stroom.streamstore.shared.StreamTypeService;
 import stroom.streamtask.server.StreamProcessorFilterServiceImpl;
 import stroom.streamtask.server.StreamProcessorServiceImpl;
 import stroom.streamtask.server.StreamProcessorTaskFactory;
 import stroom.streamtask.server.StreamTaskCreatorImpl;
 import stroom.streamtask.server.StreamTaskServiceImpl;
+import stroom.streamtask.shared.StreamProcessorFilterService;
+import stroom.streamtask.shared.StreamProcessorService;
 import stroom.volume.server.VolumeServiceImpl;
 import stroom.xmlschema.server.XMLSchemaServiceImpl;
 
 /**
  * Configures the context for process integration tests.
- *
+ * <p>
  * Reuses production configurations but defines its own component scan.
- *
+ * <p>
  * This configuration relies on @ActiveProfile(StroomSpringProfiles.TEST) being
  * applied to the tests.
  */
+
 /**
  * Exclude other configurations that might be found accidentally during a
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = { "stroom" }, excludeFilters = {
+@ComponentScan(basePackages = {"stroom"}, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),
 
         // Exclude these so we get the mocks instead.
@@ -115,11 +122,41 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = TextConverterServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = VolumeServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = XMLSchemaServiceImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = XSLTServiceImpl.class) })
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = XSLTServiceImpl.class)})
 public class ProcessTestServerComponentScanConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessTestServerComponentScanConfiguration.class);
 
     public ProcessTestServerComponentScanConfiguration() {
         LOGGER.info("ProcessConfiguration loading...");
+    }
+
+    @Bean(name = "cachedFolderService")
+    public FolderService getCachedFolderService(final FolderService folderService) {
+        return folderService;
+    }
+
+    @Bean(name = "cachedStreamTypeService")
+    public StreamTypeService getCachedStreamTypeService(final StreamTypeService streamTypeService) {
+        return streamTypeService;
+    }
+
+    @Bean(name = "cachedFeedService")
+    public FeedService getCachedFeedService(final FeedService feedService) {
+        return feedService;
+    }
+
+    @Bean(name = "cachedPipelineEntityService")
+    public PipelineEntityService getCachedPipelineEntityService(final PipelineEntityService pipelineEntityService) {
+        return pipelineEntityService;
+    }
+
+    @Bean(name = "cachedStreamProcessorService")
+    public StreamProcessorService getCachedStreamProcessorService(final StreamProcessorService streamProcessorService) {
+        return streamProcessorService;
+    }
+
+    @Bean(name = "cachedStreamProcessorFilterService")
+    public StreamProcessorFilterService getCachedStreamProcessorFilterService(final StreamProcessorFilterService streamProcessorFilterService) {
+        return streamProcessorFilterService;
     }
 }

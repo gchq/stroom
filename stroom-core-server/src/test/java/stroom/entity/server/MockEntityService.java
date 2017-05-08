@@ -16,12 +16,12 @@
 
 package stroom.entity.server;
 
-import stroom.entity.shared.Entity;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.BaseEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.entity.shared.BaseEntityService;
+import stroom.entity.shared.Entity;
 import stroom.entity.shared.FindService;
 
 import java.util.ArrayList;

@@ -16,6 +16,8 @@
 
 package stroom.util;
 
+import stroom.util.io.StreamUtil;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -26,8 +28,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
-
-import stroom.util.io.StreamUtil;
 
 public class BackupConfig {
     public static void main(final String[] args) throws IOException {

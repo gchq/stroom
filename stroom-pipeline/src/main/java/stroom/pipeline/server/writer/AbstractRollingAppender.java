@@ -16,15 +16,14 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.IOException;
-
-import javax.annotation.Resource;
-
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingDestinationFactory;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.util.task.TaskMonitor;
+
+import javax.annotation.Resource;
+import java.io.IOException;
 
 public abstract class AbstractRollingAppender extends AbstractDestinationProvider implements RollingDestinationFactory {
     @Resource

@@ -16,12 +16,12 @@
 
 package stroom.jobsystem.server;
 
+import stroom.jobsystem.shared.JobNode;
+import stroom.util.shared.SharedObject;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import stroom.jobsystem.shared.JobNode;
-import stroom.util.shared.SharedObject;
 
 public class DistributedTaskRequestResult implements SharedObject {
     private static final long serialVersionUID = -6827229808827594370L;

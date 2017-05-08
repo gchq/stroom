@@ -16,20 +16,11 @@
 
 package stroom.cache.server;
 
-import java.io.IOException;
-import java.io.InputStream;
-
-import javax.inject.Inject;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
-
 import stroom.pipeline.server.DefaultLocationFactory;
 import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
@@ -38,6 +29,13 @@ import stroom.pipeline.server.filter.LSResourceResolverImpl;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.xmlschema.server.XMLSchemaCache;
+
+import javax.inject.Inject;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import java.io.IOException;
+import java.io.InputStream;
 
 @Component
 public class SchemaLoaderImpl implements SchemaLoader {

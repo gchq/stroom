@@ -83,7 +83,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
 
     private StatisticEvent createEvent(final long timeMs) {
         eventCount.incrementAndGet();
-        return new StatisticEvent(timeMs, "NAME" + atomicSequence.next(), null, 1L);
+        return StatisticEvent.createCount(timeMs, "NAME" + atomicSequence.next(), null, 1L);
     }
 
     @Test
@@ -202,7 +202,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     }
 
     private void processEvents(final int eventCount, final int expectedProcessedCount, final long firstEventTimeMs,
-            final long eventTimeDeltaMs) {
+                               final long eventTimeDeltaMs) {
         final SQLStatisticEventStore store = new SQLStatisticEventStore(1, 1, 10000, null,
                 mockStatisticsDataSourceCache, mockSqlStatisticCache, null, propertyService);
 

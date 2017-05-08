@@ -16,6 +16,8 @@
 
 package stroom.streamstore.server.fs;
 
+import stroom.io.SeekableOutputStream;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -25,8 +27,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import stroom.io.SeekableOutputStream;
 
 /**
  * Class to write the same data to a number of streams.

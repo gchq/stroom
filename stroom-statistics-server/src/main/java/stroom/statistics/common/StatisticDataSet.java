@@ -16,11 +16,11 @@
 
 package stroom.statistics.common;
 
+import stroom.statistics.shared.StatisticType;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-
-import stroom.statistics.shared.StatisticType;
 
 public class StatisticDataSet implements Iterable<StatisticDataPoint> {
     private final String statisticName;

@@ -16,9 +16,6 @@
 
 package stroom.streamstore.client.view;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -26,11 +23,12 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ClassificationLabel extends Composite {
     private static class LabelColour {
@@ -59,33 +57,27 @@ public class ClassificationLabel extends Composite {
     @UiField
     Label classification;
 
-    private final List<LabelColour> labelColours = new ArrayList<LabelColour>();
+    private final List<LabelColour> labelColours = new ArrayList<>();
 
     @Inject
     public ClassificationLabel(final ClientPropertyCache clientPropertyCache) {
         initWidget(binder.createAndBindUi(this));
 
-        clientPropertyCache.get(new AsyncCallbackAdaptor<ClientProperties>() {
-            @Override
-            public void onSuccess(final ClientProperties result) {
-                final String csv = result.get(ClientProperties.LABEL_COLOURS);
-                if (csv != null) {
-                    final String[] parts = csv.split(",");
-                    for (final String part : parts) {
-                        final String[] kv = part.split("=");
-                        if (kv.length == 2) {
-                            final LabelColour labelColour = new LabelColour(kv[0].toUpperCase(), kv[1]);
-                            labelColours.add(labelColour);
+        clientPropertyCache.get()
+                .onSuccess(result -> {
+                    final String csv = result.get(ClientProperties.LABEL_COLOURS);
+                    if (csv != null) {
+                        final String[] parts = csv.split(",");
+                        for (final String part : parts) {
+                            final String[] kv = part.split("=");
+                            if (kv.length == 2) {
+                                final LabelColour labelColour = new LabelColour(kv[0].toUpperCase(), kv[1]);
+                                labelColours.add(labelColour);
+                            }
                         }
                     }
-                }
-            }
-
-            @Override
-            public void onFailure(final Throwable caught) {
-                AlertEvent.fireError(ClassificationLabel.this, caught.getMessage(), null);
-            }
-        });
+                })
+                .onFailure(caught -> AlertEvent.fireError(ClassificationLabel.this, caught.getMessage(), null));
     }
 
     public void setClassification(final String text) {

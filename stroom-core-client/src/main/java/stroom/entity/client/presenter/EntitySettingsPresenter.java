@@ -18,9 +18,8 @@ package stroom.entity.client.presenter;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.security.client.ClientSecurityContext;
 import stroom.entity.shared.NamedEntity;
+import stroom.security.client.ClientSecurityContext;
 
 public abstract class EntitySettingsPresenter<V extends View, E extends NamedEntity> extends EntityEditPresenter<V, E> {
     public EntitySettingsPresenter(final EventBus eventBus, final V view, final ClientSecurityContext securityContext) {

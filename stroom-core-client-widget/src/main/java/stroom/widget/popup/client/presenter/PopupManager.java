@@ -16,48 +16,27 @@
 
 package stroom.widget.popup.client.presenter;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.PresenterWidget;
-
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.view.PopupSupportImpl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class PopupManager {
     private Map<PresenterWidget<?>, PopupSupport> popupMap;
 
     @Inject
     public PopupManager(final EventBus eventBus) {
-        eventBus.addHandler(ShowPopupEvent.getType(), new ShowPopupEvent.Handler() {
-            @Override
-            public void onShow(final ShowPopupEvent event) {
-                show(event);
-            }
-        });
-        eventBus.addHandler(HidePopupEvent.getType(), new HidePopupEvent.Handler() {
-            @Override
-            public void onHide(final HidePopupEvent event) {
-                hide(event.getPresenterWidget(), event.isAutoClose(), event.isOk());
-            }
-        });
-        eventBus.addHandler(DisablePopupEvent.getType(), new DisablePopupEvent.Handler() {
-            @Override
-            public void onDisable(final DisablePopupEvent event) {
-                disable(event.getPresenterWidget());
-            }
-        });
-        eventBus.addHandler(EnablePopupEvent.getType(), new EnablePopupEvent.Handler() {
-            @Override
-            public void onEnable(final EnablePopupEvent event) {
-                enable(event.getPresenterWidget());
-            }
-        });
+        eventBus.addHandler(ShowPopupEvent.getType(), event -> show(event));
+        eventBus.addHandler(HidePopupEvent.getType(), event -> hide(event.getPresenterWidget(), event.isAutoClose(), event.isOk()));
+        eventBus.addHandler(DisablePopupEvent.getType(), event -> disable(event.getPresenterWidget()));
+        eventBus.addHandler(EnablePopupEvent.getType(), event -> enable(event.getPresenterWidget()));
     }
 
     private void show(final ShowPopupEvent event) {

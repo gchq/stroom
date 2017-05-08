@@ -32,7 +32,6 @@ import stroom.dispatch.server.DispatchServiceImpl;
 import stroom.dispatch.shared.DispatchService;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.feed.server.RemoteFeedServiceRPC;
-import stroom.lifecycle.LifecycleServiceImpl;
 import stroom.servlet.DebugServlet;
 import stroom.servlet.DynamicCSSServlet;
 import stroom.servlet.EchoServlet;

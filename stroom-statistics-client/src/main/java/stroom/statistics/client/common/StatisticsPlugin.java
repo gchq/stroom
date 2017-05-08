@@ -21,7 +21,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
@@ -46,9 +45,9 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
 
     @Inject
     public StatisticsPlugin(final EventBus eventBus, final Provider<StatisticsDataSourcePresenter> editorProvider,
-            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager,
-            final ClientPropertyCache clientPropertyCache) {
+                            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
+                            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager,
+                            final ClientPropertyCache clientPropertyCache) {
         super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
     }
@@ -73,19 +72,13 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
                 // fields added/removed/changed
-                load(DocRefUtil.create(entity), new LoadCallback<StatisticStoreEntity>() {
-                    @Override
-                    public void onLoad(final StatisticStoreEntity entityFromDb) {
-                        doConfirmSave(presenter, entity, entityFromDb);
-                    }
-                });
-
+                load(DocRefUtil.create(entity)).onSuccess(entityFromDb -> doConfirmSave(presenter, entity, entityFromDb));
             }
         }
     }
 
     private void doConfirmSave(final EntityEditPresenter<?, StatisticStoreEntity> presenter,
-            final StatisticStoreEntity entity, final StatisticStoreEntity entityFromDb) {
+                               final StatisticStoreEntity entity, final StatisticStoreEntity entityFromDb) {
         // get the persisted versions of the fields we care about
         final String prevEngineName = entityFromDb.getEngineName();
         final StatisticType prevType = entityFromDb.getStatisticType();
@@ -105,18 +98,15 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
                 || !prevFieldList.equals(entity.getStatisticFields())
                 || !prevMaskSet.equals(entity.getCustomRollUpMasks()))) {
             ConfirmEvent.fireWarn(this, SafeHtmlUtils
-                    .fromTrustedString("Changes to the following attributes of a statistic data source:<br/><br/>"
-                            + "Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>Field list<br/>Custom roll-ups<br/><br/>"
-                            + "can potentially cause corruption of the existing statistics data. Please ensure you "
-                            + "understand the full consequences of the change.<br/><br/>" + "Do you wish to continue?"),
-                    new ConfirmCallback() {
-                        @Override
-                        public void onResult(final boolean result) {
-                            if (result) {
-                                doSave(presenter, entity);
-                            } else {
-                                // Re-enable popup buttons.
-                            }
+                            .fromTrustedString("Changes to the following attributes of a statistic data source:<br/><br/>"
+                                    + "Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>Field list<br/>Custom roll-ups<br/><br/>"
+                                    + "can potentially cause corruption of the existing statistics data. Please ensure you "
+                                    + "understand the full consequences of the change.<br/><br/>" + "Do you wish to continue?"),
+                    result -> {
+                        if (result) {
+                            doSave(presenter, entity);
+                        } else {
+                            // Re-enable popup buttons.
                         }
                     });
         } else {
@@ -127,12 +117,7 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
     }
 
     private void doSave(final EntityEditPresenter<?, StatisticStoreEntity> presenter,
-            final StatisticStoreEntity entity) {
-        save(entity, new SaveCallback<StatisticStoreEntity>() {
-            @Override
-            public void onSave(final StatisticStoreEntity entity) {
-                presenter.read(entity);
-            }
-        });
+                        final StatisticStoreEntity entity) {
+        save(entity).onSuccess(ent -> presenter.read(ent));
     }
 }

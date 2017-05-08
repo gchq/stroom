@@ -16,6 +16,19 @@
 
 package stroom.pipeline.server.writer;
 
+import org.apache.commons.lang.StringUtils;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.node.server.NodeCache;
+import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.PipelineHolder;
+import stroom.pipeline.state.SearchIdHolder;
+import stroom.pipeline.state.StreamHolder;
+import stroom.util.SystemPropertyUtil;
+import stroom.util.config.StroomProperties;
+import stroom.util.spring.StroomScope;
+
+import javax.annotation.Resource;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -25,21 +38,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-
-import javax.annotation.Resource;
-
-import stroom.util.config.StroomProperties;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.node.server.NodeCache;
-import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.SearchIdHolder;
-import stroom.pipeline.state.StreamHolder;
-import stroom.util.SystemPropertyUtil;
-import stroom.util.spring.StroomScope;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)

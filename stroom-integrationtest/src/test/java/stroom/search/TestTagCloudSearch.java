@@ -36,13 +36,13 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest;
+import stroom.query.api.ResultRequest.ResultStyle;
 import stroom.query.api.Row;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
 import stroom.util.shared.ParamUtil;
-import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
 import java.time.ZoneOffset;
@@ -97,7 +97,7 @@ public class TestTagCloudSearch extends AbstractSearchTest {
         final ExpressionBuilder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
         final Query query = new Query(dataSourceRef, expression.build());
 
-        final ResultRequest tableResultRequest = new ResultRequest(componentId, tableSettings);
+        final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultStyle.TABLE, true);
 
         final List<ResultRequest> resultRequests = Collections.singletonList(tableResultRequest);
 

@@ -16,21 +16,19 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import java.io.IOException;
-
-import javax.annotation.Resource;
-
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.pipeline.state.MetaDataHolder;
-import stroom.util.spring.StroomScope;
-import stroom.util.zip.HeaderMap;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.pipeline.state.MetaDataHolder;
+import stroom.util.spring.StroomScope;
+import stroom.util.zip.HeaderMap;
+
+import javax.annotation.Resource;
+import java.io.IOException;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)

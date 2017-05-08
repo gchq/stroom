@@ -16,11 +16,11 @@
 
 package stroom.node.shared;
 
+import stroom.util.shared.SharedObject;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-import stroom.util.shared.SharedObject;
 
 public class ClusterNodeInfo implements SharedObject {
     private static final long serialVersionUID = -15041191801817241L;

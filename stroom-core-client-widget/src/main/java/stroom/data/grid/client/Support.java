@@ -18,7 +18,6 @@ package stroom.data.grid.client;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-
 import stroom.data.grid.client.DataGridViewImpl.Heading;
 
 public abstract class Support {

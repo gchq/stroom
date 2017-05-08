@@ -16,13 +16,13 @@
 
 package stroom.task.shared;
 
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
-
 import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.OrderBy;
 import stroom.util.shared.CompareUtil;
+
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FindTaskProgressCriteria extends FindNamedEntityCriteria implements Comparator<TaskProgress> {
     private static final long serialVersionUID = 2014515855795611224L;

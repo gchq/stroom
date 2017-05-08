@@ -16,9 +16,9 @@
 
 package stroom.jobsystem.server;
 
-import java.io.Serializable;
-
 import stroom.util.shared.Task;
+
+import java.io.Serializable;
 
 public interface DistributedTask<R> extends Task<R>, Serializable {
     String getTraceString();

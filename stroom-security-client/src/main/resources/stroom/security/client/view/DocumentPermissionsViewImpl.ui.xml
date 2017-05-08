@@ -27,7 +27,7 @@
         </g:south>
 
         <g:center>
-            <v:ResizeSimplePanel ui:field="slideTab" styleName="{style.max}"/>
+            <v:ResizeSimplePanel ui:field="tabs" styleName="{style.max}"/>
         </g:center>
     </g:DockLayoutPanel>
 

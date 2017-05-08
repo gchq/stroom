@@ -24,7 +24,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TaskId;

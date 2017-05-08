@@ -16,8 +16,8 @@
 
 package stroom.streamstore.shared;
 
-import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.BaseEntityService;
+import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.FindService;
 
 public interface StreamAttributeKeyService extends BaseEntityService<StreamAttributeKey>, FindService<StreamAttributeKey, FindStreamAttributeKeyCriteria> {

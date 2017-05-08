@@ -18,7 +18,7 @@ package stroom.util;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class TestByteSizeUnit {
 
@@ -26,32 +26,32 @@ public class TestByteSizeUnit {
 
     @Test
     public void testFromShortName() {
-        assertEquals(ByteSizeUnit.MEGABYTE, ByteSizeUnit.fromShortName("MB"));
-        assertEquals(ByteSizeUnit.MEGABYTE, ByteSizeUnit.fromShortName("mb"));
+        assertEquals(ByteSizeUnit.MEBIBYTE, ByteSizeUnit.fromShortName("MiB"));
+        assertEquals(ByteSizeUnit.MEBIBYTE, ByteSizeUnit.fromShortName("mib"));
     }
 
     @Test
-    public void convertMbToB() {
-        double bytes = ByteSizeUnit.fromShortName("MB").convert(5, ByteSizeUnit.BYTE);
+    public void convertMiBToB() {
+        double bytes = ByteSizeUnit.fromShortName("MiB").convert(5, ByteSizeUnit.BYTE);
 
-        Assert.assertEquals(5* ByteSizeUnit.MEGABYTE.intBytes(), bytes, ASSERT_DELTA);
+        Assert.assertEquals(5* ByteSizeUnit.MEBIBYTE.intBytes(), bytes, ASSERT_DELTA);
     }
 
     @Test
-    public void convertBToKb() {
-        double bytes = ByteSizeUnit.fromShortName("B").convert(100, ByteSizeUnit.KILOBYTE);
+    public void convertBToKiB() {
+        double bytes = ByteSizeUnit.fromShortName("B").convert(100, ByteSizeUnit.KIBIBYTE);
 
-        Assert.assertEquals((double)100 / ByteSizeUnit.KILOBYTE.intBytes(), bytes, ASSERT_DELTA);
+        Assert.assertEquals((double)100 / ByteSizeUnit.KIBIBYTE.intBytes(), bytes, ASSERT_DELTA);
     }
 
     @Test
     public void fromBytes(){
-        Assert.assertEquals(ByteSizeUnit.KILOBYTE, ByteSizeUnit.fromBytes(1024));
+        Assert.assertEquals(ByteSizeUnit.KIBIBYTE, ByteSizeUnit.fromBytes(1024));
     }
 
     @Test
     public void unitValue(){
-        Assert.assertEquals(1, ByteSizeUnit.KILOBYTE.unitValue(1024), ASSERT_DELTA);
+        Assert.assertEquals(1, ByteSizeUnit.KIBIBYTE.unitValue(1024), ASSERT_DELTA);
     }
 
 }

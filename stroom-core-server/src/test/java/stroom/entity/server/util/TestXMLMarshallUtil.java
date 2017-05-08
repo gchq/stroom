@@ -16,16 +16,15 @@
 
 package stroom.entity.server.util;
 
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.entity.shared.Period;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamtask.server.StreamProcessorFilterMarshaller;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestXMLMarshallUtil extends StroomUnitTest {

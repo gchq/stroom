@@ -16,8 +16,6 @@
 
 package stroom.util.test;
 
-import java.io.File;
-
 import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunNotifier;
@@ -29,11 +27,12 @@ import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestContextManager;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
-
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.task.TaskScopeContextHolder;
 import stroom.util.thread.ThreadScopeContextHolder;
+
+import java.io.File;
 
 public class StroomSpringJUnit4ClassRunner extends SpringJUnit4ClassRunner {
     private final boolean cacheSpringContext = true;

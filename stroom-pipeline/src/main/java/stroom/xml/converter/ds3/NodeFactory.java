@@ -16,13 +16,13 @@
 
 package stroom.xml.converter.ds3;
 
+import stroom.xml.converter.ds3.ref.VarFactoryMap;
+import stroom.xml.converter.ds3.ref.VarMap;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import stroom.xml.converter.ds3.ref.VarFactoryMap;
-import stroom.xml.converter.ds3.ref.VarMap;
 
 public abstract class NodeFactory {
     public enum NodeType {

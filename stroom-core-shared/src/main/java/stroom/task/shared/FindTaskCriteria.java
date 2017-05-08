@@ -16,13 +16,14 @@
 
 package stroom.task.shared;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import stroom.entity.shared.HasIsConstrained;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
+import stroom.util.shared.UserTokenUtil;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class FindTaskCriteria implements SharedObject, HasIsConstrained {
     private static final long serialVersionUID = 2759048534848720682L;
@@ -74,7 +75,7 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
             }
         }
         if (sessionId != null) {
-            if (sessionId.equals(task.getSessionId())) {
+            if (sessionId.equals(UserTokenUtil.getSessionId(task.getUserToken()))) {
                 return true;
             }
         }

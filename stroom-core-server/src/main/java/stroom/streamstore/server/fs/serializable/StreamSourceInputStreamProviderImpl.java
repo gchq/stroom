@@ -16,13 +16,13 @@
 
 package stroom.streamstore.server.fs.serializable;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 import stroom.io.SeekableInputStream;
 import stroom.io.StreamCloser;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.shared.StreamType;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Wrapper for a nested input stream.

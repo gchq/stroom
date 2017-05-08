@@ -16,13 +16,12 @@
 
 package stroom.node.server;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.springframework.stereotype.Component;
-
 import stroom.node.shared.RecordCountService;
 import stroom.node.shared.RecordCounter;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Component
 public class RecordCountServiceImpl implements RecordCountService {

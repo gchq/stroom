@@ -209,6 +209,6 @@ public class SteppingFilterPresenter extends
         settings.setXPathFilters(null);
         settings.setXPathFilters(new HashSet<>(xPathFilters));
 
-        event.getXmlEditor().setFilterActive(settings.isActive());
+        event.getEditor().setFilterActive(settings.isActive());
     }
 }

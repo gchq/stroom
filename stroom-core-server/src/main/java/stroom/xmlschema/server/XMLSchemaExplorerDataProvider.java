@@ -34,8 +34,8 @@ public class XMLSchemaExplorerDataProvider extends AbstractExplorerDataProvider<
     private final XMLSchemaService xmlSchemaService;
 
     @Inject
-    XMLSchemaExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService, final XMLSchemaService xmlSchemaService) {
-        super(folderService);
+    XMLSchemaExplorerDataProvider(@Named("cachedFolderService") final FolderService cachedFolderService, final XMLSchemaService xmlSchemaService) {
+        super(cachedFolderService);
         this.xmlSchemaService = xmlSchemaService;
     }
 

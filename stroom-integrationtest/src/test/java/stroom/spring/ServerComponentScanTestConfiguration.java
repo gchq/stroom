@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-
 import stroom.cluster.server.ClusterNodeManagerImpl;
 import stroom.node.server.NodeConfigImpl;
 import stroom.streamtask.server.StreamProcessorTaskFactory;

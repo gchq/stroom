@@ -16,9 +16,9 @@
 
 package stroom.statistics.hbase.util.bytes;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.apache.hadoop.hbase.util.Bytes;
+
+import javax.xml.bind.DatatypeConverter;
 
 public class ByteArrayUtils {
     /**

@@ -22,7 +22,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
@@ -105,18 +104,15 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
                 message = "Are you sure you want to remove these script dependencies?";
             }
 
-            ConfirmEvent.fire(this, message, new ConfirmCallback() {
-                @Override
-                public void onResult(final boolean result) {
-                    if (result) {
-                        for (final DocRef script : list) {
-                            scripts.remove(script);
-                        }
-
-                        scriptListPresenter.getSelectionModel().clear();
-                        DirtyEvent.fire(ScriptDependencyListPresenter.this, true);
-                        refresh();
+            ConfirmEvent.fire(this, message, result -> {
+                if (result) {
+                    for (final DocRef script : list) {
+                        scripts.remove(script);
                     }
+
+                    scriptListPresenter.getSelectionModel().clear();
+                    DirtyEvent.fire(ScriptDependencyListPresenter.this, true);
+                    refresh();
                 }
             });
         }

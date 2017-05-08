@@ -16,11 +16,11 @@
 
 package stroom.resource;
 
-import java.io.InputStream;
-import java.io.Serializable;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+
+import java.io.InputStream;
+import java.io.Serializable;
 
 /**
  * A helper object for describing a resource.

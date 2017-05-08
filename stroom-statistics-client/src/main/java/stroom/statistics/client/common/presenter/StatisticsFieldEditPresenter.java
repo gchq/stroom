@@ -16,15 +16,11 @@
 
 package stroom.statistics.client.common.presenter;
 
-import java.util.List;
-
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.statistics.shared.StatisticField;
@@ -34,6 +30,8 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import java.util.List;
 
 public class StatisticsFieldEditPresenter
         extends MyPresenterWidget<StatisticsFieldEditPresenter.StatisticsFieldEditView> {
@@ -49,28 +47,22 @@ public class StatisticsFieldEditPresenter
 
     @Inject
     public StatisticsFieldEditPresenter(final EventBus eventBus, final StatisticsFieldEditView view,
-            final ClientPropertyCache clientPropertyCache) {
+                                        final ClientPropertyCache clientPropertyCache) {
         super(eventBus, view);
 
         final StatisticsFieldEditPresenter thisPresenter = this;
 
-        clientPropertyCache.get(new AsyncCallbackAdaptor<ClientProperties>() {
-            @Override
-            public void onSuccess(final ClientProperties result) {
-                String fieldNamePattern = result.get(ClientProperties.NAME_PATTERN);
+        clientPropertyCache.get()
+                .onSuccess(result -> {
+                    String fieldNamePattern = result.get(ClientProperties.NAME_PATTERN);
 
-                if (fieldNamePattern == null || fieldNamePattern.isEmpty()) {
-                    fieldNamePattern = StatisticStoreEntity.DEFAULT_NAME_PATTERN_VALUE;
-                }
+                    if (fieldNamePattern == null || fieldNamePattern.isEmpty()) {
+                        fieldNamePattern = StatisticStoreEntity.DEFAULT_NAME_PATTERN_VALUE;
+                    }
 
-                thisPresenter.setFieldNamePattern(fieldNamePattern);
-            }
-
-            @Override
-            public void onFailure(final Throwable caught) {
-                AlertEvent.fireError(StatisticsFieldEditPresenter.this, caught.getMessage(), null);
-            }
-        });
+                    thisPresenter.setFieldNamePattern(fieldNamePattern);
+                })
+                .onFailure(caught -> AlertEvent.fireError(StatisticsFieldEditPresenter.this, caught.getMessage(), null));
     }
 
     public void read(final StatisticField field, final List<StatisticField> otherFields) {

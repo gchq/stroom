@@ -38,6 +38,8 @@ import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.cert.CertificateUtil;
+import stroom.util.config.StroomProperties;
+import stroom.util.shared.UserTokenUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -52,6 +54,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public static final String USER_SESSION_KEY = AuthenticationServiceImpl.class.getName() + "_US";
     public static final String USER_ID_SESSION_KEY = AuthenticationServiceImpl.class.getName() + "_UID";
     private static final int DEFAULT_DAYS_TO_PASSWORD_EXPIRY = 90;
+    private static final String PREVENT_LOGIN_PROPERTY = "stroom.maintenance.preventLogin";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
@@ -74,6 +77,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         this.securityContext = securityContext;
     }
 
+    private void checkLoginAllowed(final User user) {
+        if (user != null) {
+            final boolean preventLogin = StroomProperties.getBooleanProperty(PREVENT_LOGIN_PROPERTY, false);
+            if (preventLogin) {
+                securityContext.pushUser(UserTokenUtil.create(user.getName(), null));
+                try {
+                    if (!securityContext.isAdmin()) {
+                        throw new AuthenticationException("You are not allowed to login at this time");
+                    }
+                } finally {
+                    securityContext.popUser();
+                }
+            }
+        }
+    }
+
     /**
      * @param userName
      * @param password
@@ -88,9 +107,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             loginFailure(userName, new AuthenticationException("No user name"));
 
         } else {
-            try {
-                final HttpServletRequest request = httpServletRequestHolder.get();
+            final HttpServletRequest request = httpServletRequestHolder.get();
 
+            try {
                 // Create the authentication token from the user name and password
                 final UsernamePasswordToken token = request == null ?
                         new UsernamePasswordToken(userName, password,true) :
@@ -101,7 +120,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 currentUser.login(token);
 
                 user = (User) currentUser.getPrincipal();
+            } catch (final RuntimeException e) {
+                loginFailure(userName, e);
+            }
 
+            // Ensure regular users are allowed to login at this time.
+            checkLoginAllowed(user);
+
+            try {
                 // Pass back the user info
                 user = handleLogin(request, user, userName);
 
@@ -140,7 +166,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             }
         }
 
-        LOGGER.warn("login() - Bad Credentials {}", userName);
+        LOGGER.warn("login() - {}", e.getMessage());
 
         try {
             throw e;
@@ -266,6 +292,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
+    @Insecure
     public void refreshCurrentUser() throws RuntimeException {
         if (sessionExists()) {
             final HttpServletRequest request = httpServletRequestHolder.get();
@@ -338,12 +365,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private User loginWithCertificate() {
+        User user;
+
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("loginWithCertificate()");
         }
 
         final HttpServletRequest request = httpServletRequestHolder.get();
         final String certificateDn = CertificateUtil.extractCertificateDN(request);
+
         try {
             if (certificateDn == null) {
                 return null;
@@ -361,8 +391,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             final Subject currentUser = SecurityUtils.getSubject();
             currentUser.login(token);
 
-            final User user = (User) currentUser.getPrincipal();
+            user = (User) currentUser.getPrincipal();
+        } catch (final RuntimeException ex) {
+            final String message = EntityServiceExceptionUtil.unwrapMessage(ex, ex);
 
+            // Audit the failed login
+            eventLog.logon(certificateDn, false, message, AuthenticateOutcomeReason.OTHER);
+
+            throw EntityServiceExceptionUtil.create(ex);
+        }
+
+        // Ensure regular users are allowed to login at this time.
+        checkLoginAllowed(user);
+
+        try {
             // Pass back the user info
             return handleLogin(request, user, certificateDn);
 

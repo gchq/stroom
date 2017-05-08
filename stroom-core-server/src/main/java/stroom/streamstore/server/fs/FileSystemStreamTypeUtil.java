@@ -16,6 +16,13 @@
 
 package stroom.streamstore.server.fs;
 
+import stroom.node.shared.Volume;
+import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamType.FileStoreType;
+import stroom.streamstore.shared.StreamVolume;
+import stroom.util.date.DateUtil;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,13 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import stroom.node.shared.Volume;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamType.FileStoreType;
-import stroom.streamstore.shared.StreamVolume;
-import stroom.util.date.DateUtil;
 
 public class FileSystemStreamTypeUtil {
     /**

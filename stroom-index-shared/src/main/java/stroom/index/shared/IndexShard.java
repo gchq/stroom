@@ -259,7 +259,7 @@ public class IndexShard extends AuditedEntity {
 
     @Transient
     public String getFileSizeString() {
-        return ModelStringUtil.formatByteSizeString(getFileSize());
+        return ModelStringUtil.formatIECByteSizeString(getFileSize());
     }
 
     @Transient

@@ -27,6 +27,17 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class KeyedTaskQueue implements TaskQueue {
+    public interface KeyProvider {
+        Object getKey(Task<?> task);
+    }
+
+    public static class UserKeyProvider implements KeyProvider {
+        @Override
+        public Object getKey(final Task<?> task) {
+            return task.getUserToken();
+        }
+    }
+
     public static final int DEFAULT_CAPACITY = 1000;
     /**
      * Main lock guarding all access
@@ -169,16 +180,5 @@ public class KeyedTaskQueue implements TaskQueue {
 
     public void setCapacity(final int capacity) {
         this.capacity = capacity;
-    }
-
-    public interface KeyProvider {
-        Object getKey(Task<?> task);
-    }
-
-    public static class UserKeyProvider implements KeyProvider {
-        @Override
-        public Object getKey(final Task<?> task) {
-            return task.getUserId();
-        }
     }
 }

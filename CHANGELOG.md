@@ -12,6 +12,222 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#281** : Made further changes to cope with Files.list() and Files.walk() returning streams that should be closed with 'try with resources' construct.
+
+* Issue **#224** : Removing an element from the pipeline structure now removes all child elements too.
+
+* Issue **#282** : Users can now upload data with just 'Data - View' and 'Data - Import' application permissions, plus update permission on the appropriate feed.
+
+* Issue **#199** : The explorer now scrolls selected items into view.
+
+## [v5.0-beta.22] - 2017-05-04
+
+* Issue **#280** : Fixed 'No user is currently authenticated' issue when viewing jobs and nodes.
+
+* Issue **#278** : The date picker now hides once you select a date.
+
+* Issue **#281** : Directory streams etc are now auto closed to prevent systems running out of file handles.
+
+## [v5.0-beta.21] - 2017-05-03
+
+* Issue **#263** : The explorer tree now allows you to collapse the root 'System' node after it is first displayed.
+
+* Issue **#266** : The explorer tree now resets (clears and collapses all previously open nodes) and shows the currently selected item every time an explorer drop down in opened.
+
+* Issue **#233** : Users now only see streams if they are administrators or have 'Data - View' permission. Non administrators will only see data that they have 'read' permission on for the associated feed and 'use' permission on for the associated pipeline if there is one.
+
+* Issue **#265** : The stream filter now orders stream attributes alphabetically.
+
+* Issue **#270** : Fixed security issue where null users were being treated as INTERNAL users.
+
+* Issue **#270** : Improved security by pushing user tokens rather than just user names so that internal system (processing) users are clearly identifiable by the security system and cannot be spoofed by regular user accounts.
+
+* Issue **#269** : When users are prevented from logging in with 'preventLogin' their failed login count is no longer incremented.
+
+* Issue **#267** : The login page now shows the maintenance message.
+
+* Issue **#276** : Session list now shows session user ids correctly.
+
+* Issue **#201** : The permissions menu item is no longer available on the root 'System' folder.
+
+* Issue **#176** : Improved performance of the explorer tree by increasing the size of the document permissions cache to 1M items and changing the eviction policy from LRU to LFU.
+
+* Issue **#176** : Added an optimisation to the explorer tree that prevents the need for a server call when collapsing tree nodes.
+
+* Issue **#273** : Removed an unnecessary script from the build.
+
+* Issue **#277** : Fixed a layout issue that was causing the feed section of the processor filter popup to take up too much room.
+
+* Issue **#274** : The editor pane was only returning the current user edited text when attached to the DOM which meant changes to text were ignored if an editor pane was not visible when save was pressed. This has now been fixed so that the current content of an editor pane is always returned even when it is in a detached state.
+
+* Issue **#264** : Added created by/on and updated by/on info to pipeline stream processor info tooltips.
+
+* Issue **#222** : Explorer items now auto expand when a quick filter is used.
+
+## [v5.0-beta.20] - 2017-04-26
+
+* Issue **#205** : File permissions in distribution have now been changed to `0750` for directories and shell scripts and `0640` for all other files.
+
+* Issue **#240** : Separate application permissions are now required to manage DB tables and tasks.
+
+* Issue **#210** : The statistics tables are now listed in the database tables monitoring pane.
+
+* Issue **#249** : Removed spaces between values and units.
+
+* Issue **#237** : Users without 'Download Search Results' permission will no longer see the download button on the table component in a dashboard.
+
+* Issue **#232** : Users can now inherit from pipelines that they have 'use' permissions on.
+
+* Issue **#191** : Max stream size was not being treated as IEC value, e.g. Mebibytes etc.
+
+* Issue **#235** : Users can now only view the processor filters that they have created if they have 'Manage Processors' permission unless they are an administrator in which case they will see all filters. Users without the 'Manage Processors' permission who are also not administrators will see no processor filters in the UI. Users with 'Manage Processors' permission who are not administrators will be able to update their own processor filters if they have 'update' permission on the associated pipeline. Administrators are able to update all processor filters.
+
+* Issue **#212** : Changes made to text in any editor including those made with cut and paste are now correctly handled so that altered content is now saved.
+
+* Issue **#247** : The editor pane now attempts to maintain the scroll position when formatting content.
+
+* Issue **#251** : Volume and memory statistics are now recorded in bytes and not MiB.
+
+* Issue **#243** : The error marker pane should now discover and display all error types even if they are preceded by over 1000 warnings.
+
+* Issue **#254** : Fixed search result download.
+
+* Issue **#209** : Statistics are now queryable in a dashboard if a user has 'use' permissions on a statistic.
+
+* Issue **#255** : Fixed issue where error indicators were not being shown in the schema validator pane because the text needed to be formatted so that it spanned multiple lines before attempting to add annotations.
+
+* Issue **#257** : The dashboard text pane now provides padding at the top to allow for tabs and controls.
+
+* Issue **#174** : Index shard checking is now done asynchronously during startup to reduce startup time.
+
+* Issue **#225** : Fixed NPE that was caused by processing instruction SAX events unexpectedly being fired by Xerces before start document events. This looks like it might be a bug in Xerces but the code now copes with the unexpected processing instruction event anyway.
+
+* Issue **#230** : The maintenance message can now be set with the property 'stroom.maintenance.message' and the message now appears as a banner at the top of the screen rather than an annoying popup. Non admin users can also be prevented from logging on to the system by setting the 'stroom.maintenance.preventLogin' property to 'true'.
+
+## [v5.0-beta.19] - 2017-04-21
+
+* Issue **#155** : Changed password values to be obfuscated in the UI as 20 asterisks regardless of length.
+
+* Issue **#188** : All of the writers in a pipeline now display IO in the UI when stepping.
+
+* Issue **#208** : Schema filter validation errors are now shown on the output pane during stepping.
+
+* Issue **#211** : Turned off print margins in all editors.
+
+* Issue **#200** : The stepping presenter now resizes the top pane to fit the tree structure even if it is several elements high.
+
+* Issue **#168** : Code and IO is now loaded lazily into the element presenter panes during stepping which prevents the scrollbar in the editors being in the wrong position.
+
+* Issue **#219** : Changed async dispatch code to work with new lambda classes rather than callbacks.
+
+* Issue **#205** : File permissions in distribution have now been changed to `0750` for directories and shell scripts and `0640` for all other files.
+
+* Issue **#221** : Fixed issue where `*.zip.bad` files were being picked up for proxy aggregation.
+
+* Issue **#242** : Improved the way properties are injected into some areas of the code to fix an issue where 'stroom.maxStreamSize' and other properties were not being set.
+
+* Issue **#241** : XMLFilter now ignores the XSLT name pattern if an empty string is supplied.
+
+* Issue **#236** : 'Manage Cache Permission' has been changed to 'Manage Cache'.
+
+* Issue **#219** : Made further changes to use lambda expressions where possible to simplify code.
+
+* Issue **#231** : Changed the way internal statistics are created so that multiple facets of a statistic, e.g. Free & Used Memory, are combined into a single statistic to allow combined visualisation.
+
+## [v5.0-beta.18] - 2017-04-13
+
+* Issue **#172** : Further improvement to dashboard L&F.
+
+* Issue **#194** : Fixed missing Roboto fonts.
+
+* Issue **#195** : Improved font weights and removed underlines from link tabs.
+
+* Issue **#196** : Reordered fields on stream, relative stream, volume and server task tables.
+
+* Issue **#182** : Changed the way dates and times are parsed and formatted and improved the datebox control L&F.
+
+* Issue **#198** : Renamed 'INTERNAL_PROCESSING_USER' to 'INTERNAL'.
+
+* Issue **#154** : Active tasks are now sortable by processor filter priority.
+
+* Issue **#204** : Pipeline processor statistics now include 'Node' as a tag.
+
+## [v5.0-beta.17] - 2017-04-05
+
+* Issue **#170** : Changed import/export to delegate import/export responsibility to individual services. Import/export now only works with items that have valid UUIDs specified.
+
+* Issue **#164** : Reduced caching to ensure tree items appear as soon as they are added.
+
+* Issue **#177** : Removed 'Meta Data-Bytes Received' statistic as it was a duplicate.
+
+* Issue **#152** : Changed the way index shard creation is locked so that only a single shard should be fetched from the cache with a given shard key at any one time.
+
+* Issue **#189** : You now have to click within a checkbox to select it within a table rather than just clicking the cell the checkbox is in.
+
+* Issue **#186** : Data is no longer artificially wrapped with the insertion of new lines server side. Instead the client now receives the data and an option to soft wrap lines has been added to the UI.
+
+* Issue **#167** : Fixed formatting of JavaScript and JSON.
+
+* Issue **#175** : Fixed visibility of items by inferred permissions.
+
+* Issue **#178** : Added new properties and corresponding configuration to connect and create a separate SQL statistics DB.
+
+* Issue **#172** : Improved dashboard L&F.
+
+* Issue **#169** : Improved L&F of tables to make better use of screen real estate.
+
+* Issue **#191** : Mebibytes (multiples of 1024) etc are now used as standard throughout the application for both memory and disk sizes and have single letter suffixes (B, K, M, G, T).
+
+## [v5.0-beta.16] - 2017-03-31
+
+* Issue **#173** : Fixed the way XML formatter deals with spaces in attribute values.
+
+## [v5.0-beta.15] - 2017-03-27
+
+* Issue **#151** : Fixed meta data statistics. 'metaDataStatistics' bean was declared as an interface and not a class.
+
+* Issue **#158** : Added a new global property 'stroom.proxy.zipFilenameDelimiter' to enable Stroom proxy repositories to be processed that have a custom file name pattern.
+
+## [v5.0-beta.14] - 2017-03-22
+
+* Issue **#153** : Clicking tick boxes and other cell components in tables no longer requires the row to be selected first.
+
+* Issue **#148** : The stream browsing UI no longer throws an error when attempting to clear markers from the error markers pane.
+
+* Issue **#160** : Stream processing tasks are now created within the security context of the user that created the associated stream processor filter.
+
+* Issue **#157** : Data is now formatted by the editor automatically on display.
+
+* Issue **#144** : Old processing output will now be deleted when content is reprocessed even if the new processing task does not produce output.
+
+* Issue **#159** : Fixed NPE thrown during import.
+
+* Issue **#166** : Fixed NPE thrown when searching statistics.
+
+* Issue **#165** : Dashboards now add a query and result table from a template by default on creation. This was broken when adding permission inheritance to documents.
+
+* Issue **#162** : The editor annotation popup now matches the style of other popups.
+
+* Issue **#163** : Imported the Roboto Mono font to ensure consistency of the editor across platforms.
+
+## [v5.0-beta.13] - 2017-03-20
+
+* Issue **#143** : Stroom now logs progress information about closing index shard writers during shutdown.
+
+* Issue **#140** : Replaced code editor to improve UI performance and add additional code formatting & styling options.
+
+* Issue **#146** : Object pool should no longer throw an error when abandoned objects are returned to the pool.
+
+* Issue **#142** : Changed the way permissions are cached so that changes to permissions provide immediate access to documents.
+
+* Issue **#123** : Changed the way entity service result caching works so that the underlying entity manager is cached instead of individual services. This allows entity result caching to be performed while still applying user permissions to cached results.
+
+* Issue **#156** : Attempts to open items that that user does not have permission to open no longer show an error and spin the progress indicator forever, instead the item will just not open.
+
+## [v5.0-beta.12] - 2017-03-13
+
+* Issue **#141** : Improved log output during entity reference migration and fixed statistic data source reference migration.
+
 ## [v5.0-beta.11] - 2017-02-23
 
 * Issue **#127** : Entity reference replacement should now work with references to 'StatisticsDataSource'.
@@ -160,9 +376,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
 ## [v5.0-beta.4] - 2016-10-03
-* Intial open source release
+* Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.22...HEAD
+[v5.0-beta.22]: https://github.com/gchq/stroom/compare/v5.0-beta.21...v5.0-beta.22
+[v5.0-beta.21]: https://github.com/gchq/stroom/compare/v5.0-beta.20...v5.0-beta.21
+[v5.0-beta.20]: https://github.com/gchq/stroom/compare/v5.0-beta.19...v5.0-beta.20
+[v5.0-beta.19]: https://github.com/gchq/stroom/compare/v5.0-beta.18...v5.0-beta.19
+[v5.0-beta.18]: https://github.com/gchq/stroom/compare/v5.0-beta.17...v5.0-beta.18
+[v5.0-beta.17]: https://github.com/gchq/stroom/compare/v5.0-beta.16...v5.0-beta.17
+[v5.0-beta.16]: https://github.com/gchq/stroom/compare/v5.0-beta.15...v5.0-beta.16
+[v5.0-beta.15]: https://github.com/gchq/stroom/compare/v5.0-beta.14...v5.0-beta.15
+[v5.0-beta.14]: https://github.com/gchq/stroom/compare/v5.0-beta.13...v5.0-beta.14
+[v5.0-beta.13]: https://github.com/gchq/stroom/compare/v5.0-beta.12...v5.0-beta.13
+[v5.0-beta.12]: https://github.com/gchq/stroom/compare/v5.0-beta.11...v5.0-beta.12
 [v5.0-beta.11]: https://github.com/gchq/stroom/compare/v5.0-beta.10...v5.0-beta.11
 [v5.0-beta.10]: https://github.com/gchq/stroom/compare/v5.0-beta.9...v5.0-beta.10
 [v5.0-beta.9]: https://github.com/gchq/stroom/compare/v5.0-beta.8...v5.0-beta.9

@@ -35,7 +35,6 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 @Component(SessionListServlet.BEAN_NAME)
@@ -93,12 +92,7 @@ public class SessionListServlet extends HttpServlet {
             table.add(row);
         }
 
-        Collections.sort(table, new Comparator<List<String>>() {
-            @Override
-            public int compare(final List<String> l1, final List<String> l2) {
-                return l2.get(0).compareTo(l1.get(0));
-            }
-        });
+        Collections.sort(table, (l1, l2) -> l2.get(0).compareTo(l1.get(0)));
 
         response.getWriter().write(
                 "<html><head><link type=\"text/css\" href=\"css/SessionList.css\" rel=\"stylesheet\" /></head><body>");

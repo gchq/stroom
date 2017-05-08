@@ -17,7 +17,6 @@
 package stroom.jobsystem.client.presenter;
 
 import com.google.gwt.cell.client.Cell.Context;
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -37,8 +36,13 @@ import stroom.entity.client.EntitySaveTask;
 import stroom.entity.client.SaveQueue;
 import stroom.entity.client.presenter.HasRead;
 import stroom.jobsystem.client.TaskTypeCell;
-import stroom.jobsystem.shared.*;
+import stroom.jobsystem.shared.FetchJobDataAction;
+import stroom.jobsystem.shared.Job;
+import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNode.JobType;
+import stroom.jobsystem.shared.JobNodeInfo;
+import stroom.jobsystem.shared.JobNodeRow;
+import stroom.jobsystem.shared.TaskType;
 import stroom.monitoring.client.presenter.SchedulePresenter;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
@@ -100,9 +104,9 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         final Column<JobNodeRow, TaskType> typeColumn = new Column<JobNodeRow, TaskType>(new TaskTypeCell()) {
             @Override
             public TaskType getValue(final JobNodeRow row) {
-                    if (row.getEntity().isPersistent()) {
-                        return new TaskType(row.getEntity().getJobType(), row.getEntity().getSchedule());
-                    }
+                if (row.getEntity().isPersistent()) {
+                    return new TaskType(row.getEntity().getJobType(), row.getEntity().getSchedule());
+                }
 
                 return null;
             }
@@ -173,18 +177,15 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
             }
         };
 
-        maxColumn.setFieldUpdater(new FieldUpdater<JobNodeRow, Number>() {
-            @Override
-            public void update(final int index, final JobNodeRow row, final Number value) {
-                if (row instanceof JobNodeRow) {
-                    final JobNodeRow jobNodeRow = row;
-                    jobNodeSaver.save(new EntitySaveTask<JobNode>(jobNodeRow) {
-                        @Override
-                        protected void setValue(final JobNode entity) {
-                            entity.setTaskLimit(value.intValue());
-                        }
-                    });
-                }
+        maxColumn.setFieldUpdater((index, row, value) -> {
+            if (row instanceof JobNodeRow) {
+                final JobNodeRow jobNodeRow = row;
+                jobNodeSaver.save(new EntitySaveTask<JobNode>(jobNodeRow) {
+                    @Override
+                    protected void setValue(final JobNode entity) {
+                        entity.setTaskLimit(value.intValue());
+                    }
+                });
             }
         });
         getView().addColumn(maxColumn, "Max", 59);
@@ -213,7 +214,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
                 if (row instanceof JobNodeRow) {
                     final JobNodeRow jobNodeRow = (row);
                     if (jobNodeRow.getJobNodeInfo() != null) {
-                        return ClientDateUtil.createDateTimeString(jobNodeRow.getJobNodeInfo().getLastExecutedTime());
+                        return ClientDateUtil.toISOString(jobNodeRow.getJobNodeInfo().getLastExecutedTime());
                     } else {
                         return "?";
                     }
@@ -225,23 +226,20 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
 
         // Enabled.
         final Column<JobNodeRow, TickBoxState> enabledColumn = new Column<JobNodeRow, TickBoxState>(
-                new TickBoxCell(false, false)) {
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final JobNodeRow row) {
                 return TickBoxState.fromBoolean(row.getEntity().isEnabled());
             }
         };
-        enabledColumn.setFieldUpdater(new FieldUpdater<JobNodeRow, TickBoxState>() {
-            @Override
-            public void update(final int index, final JobNodeRow jobNodeRow, final TickBoxState value) {
-                final boolean newValue = value.toBoolean();
-                jobNodeSaver.save(new EntitySaveTask<JobNode>(jobNodeRow) {
-                    @Override
-                    protected void setValue(final JobNode entity) {
-                        entity.setEnabled(newValue);
-                    }
-                });
-            }
+        enabledColumn.setFieldUpdater((index, jobNodeRow, value) -> {
+            final boolean newValue = value.toBoolean();
+            jobNodeSaver.save(new EntitySaveTask<JobNode>(jobNodeRow) {
+                @Override
+                protected void setValue(final JobNode entity) {
+                    entity.setEnabled(newValue);
+                }
+            });
         });
         getView().addColumn(enabledColumn, "Enabled", 80);
 

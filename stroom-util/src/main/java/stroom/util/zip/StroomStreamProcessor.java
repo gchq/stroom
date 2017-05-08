@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -214,9 +214,9 @@ public class StroomStreamProcessor {
     private void processZipStream(final InputStream inputStream, final String prefix) throws IOException {
         final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStream);
 
-        final Map<String, HeaderMap> bufferedHeaderMap = new HashMap<String, HeaderMap>();
-        final Map<String, Long> dataStreamSizeMap = new HashMap<String, Long>();
-        final List<String> sendDataList = new ArrayList<String>();
+        final Map<String, HeaderMap> bufferedHeaderMap = new HashMap<>();
+        final Map<String, Long> dataStreamSizeMap = new HashMap<>();
+        final List<String> sendDataList = new ArrayList<>();
         final StroomZipNameSet stroomZipNameSet = new StroomZipNameSet(false);
 
         final ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(byteCountInputStream);

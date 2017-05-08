@@ -16,6 +16,7 @@
 
 package stroom.explorer.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
@@ -31,6 +32,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedMap;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -40,6 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 @TaskHandlerBean(task = FetchExplorerPermissionsAction.class)
+@Scope(value = StroomScope.TASK)
 class FetchExplorerPermissionsHandler
         extends AbstractTaskHandler<FetchExplorerPermissionsAction, SharedMap<ExplorerData, ExplorerPermissions>> {
     private static final DocRef ROOT;

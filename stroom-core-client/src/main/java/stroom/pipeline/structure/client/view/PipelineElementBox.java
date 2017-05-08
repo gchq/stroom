@@ -23,7 +23,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
-
 import stroom.pipeline.shared.data.PipelineElement;
 
 public class PipelineElementBox extends Box<PipelineElement> {

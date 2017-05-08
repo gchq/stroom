@@ -25,6 +25,7 @@ import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.query.api.DocRef;
 import stroom.script.shared.FindScriptCriteria;
 import stroom.script.shared.Script;
@@ -39,8 +40,8 @@ import java.util.Set;
 @Transactional
 public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScriptCriteria> implements ScriptService {
     @Inject
-    ScriptServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext) {
-        super(entityManager, securityContext);
+    ScriptServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
     }
 
     @Override

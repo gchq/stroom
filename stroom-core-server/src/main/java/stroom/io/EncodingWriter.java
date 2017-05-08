@@ -16,13 +16,13 @@
 
 package stroom.io;
 
+import stroom.util.io.WrappedOutputStream;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
-
-import stroom.util.io.WrappedOutputStream;
 
 public class EncodingWriter extends Writer {
     private final OutputStreamWriter writer;

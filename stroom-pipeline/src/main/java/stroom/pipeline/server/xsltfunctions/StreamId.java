@@ -16,18 +16,17 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.pipeline.state.StreamHolder;
-import stroom.streamstore.shared.Stream;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.pipeline.state.StreamHolder;
+import stroom.streamstore.shared.Stream;
+import stroom.util.spring.StroomScope;
+
+import javax.annotation.Resource;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)

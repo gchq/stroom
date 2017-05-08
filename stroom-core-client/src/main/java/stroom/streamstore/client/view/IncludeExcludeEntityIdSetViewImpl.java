@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.streamstore.client.presenter.IncludeExcludeEntityIdSetPresenter.IncludeExcludeEntityIdSetView;
 import stroom.streamstore.client.presenter.IncludeExcludeEntityIdSetUiHandlers;
 import stroom.widget.button.client.GlyphButton;

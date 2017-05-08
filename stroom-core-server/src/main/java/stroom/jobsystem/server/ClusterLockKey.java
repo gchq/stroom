@@ -16,11 +16,11 @@
 
 package stroom.jobsystem.server;
 
-import java.io.Serializable;
-
 import stroom.util.date.DateUtil;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
+
+import java.io.Serializable;
 
 public class ClusterLockKey implements Serializable {
     private static final long serialVersionUID = -5425199832227725803L;

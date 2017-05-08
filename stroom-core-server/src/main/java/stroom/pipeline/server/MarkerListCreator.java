@@ -25,35 +25,27 @@ import stroom.util.shared.StoredError;
 import stroom.util.shared.StreamLocation;
 import stroom.util.shared.Summary;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class MarkerListCreator {
-    public List<Marker> createFullList(final String string, final Severity... expandedSeverities) throws IOException {
-        final Map<Severity, Integer> totals = new HashMap<Severity, Integer>();
-        final Map<Severity, List<StoredError>> markers = new HashMap<Severity, List<StoredError>>();
+    public List<Marker> createFullList(final Reader reader, final Severity... expandedSeverities) throws IOException {
+        final Map<Severity, Integer> totals = new HashMap<>();
+        final Map<Severity, List<StoredError>> markers = new HashMap<>();
 
-        final char[] chars = string.toCharArray();
-        int index = 0;
-        for (int i = 0; i < chars.length; i++) {
-            final char c = chars[i];
-
-            if (c == '\n') {
-                final String line = new String(chars, index, i - index);
-                addLine(line, totals, markers, expandedSeverities);
-                index = i + 1;
-            }
-        }
-        if (index < chars.length - 1) {
-            final String line = new String(chars, index, chars.length - index - 1);
+        final BufferedReader bufferedReader = new BufferedReader(reader);
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
             addLine(line, totals, markers, expandedSeverities);
         }
 
         // Combine markers into a list.
-        final List<Marker> markersList = new ArrayList<Marker>();
+        final List<Marker> markersList = new ArrayList<>();
         for (final Severity severity : Severity.SEVERITIES) {
             final Integer total = totals.get(severity);
             if (total != null) {
@@ -124,17 +116,13 @@ public class MarkerListCreator {
     }
 
     private void addMarker(final String line, final Severity severity, final Map<Severity, List<StoredError>> markers) {
-        List<StoredError> markerList = markers.get(severity);
-        if (markerList == null) {
-            markerList = new ArrayList<StoredError>();
-            markers.put(severity, markerList);
-        }
+        final List<StoredError> markerList = markers.computeIfAbsent(severity, k -> new ArrayList<>());
         if (markerList.size() < FetchMarkerResult.MAX_MARKERS) {
             int streamNo = -1;
             int lineNo = -1;
             int colNo = -1;
             String elementId = null;
-            String message = null;
+            String message = line;
 
             final int locatorStart = line.indexOf('[');
             if (locatorStart != -1) {
@@ -164,11 +152,7 @@ public class MarkerListCreator {
                     } else {
                         message = line.substring(locatorEnd + 1).trim();
                     }
-                } else {
-                    message = line;
                 }
-            } else {
-                message = line;
             }
 
             final StoredError storedError = new StoredError(severity, new StreamLocation(streamNo, lineNo, colNo),

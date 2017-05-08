@@ -16,10 +16,14 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import java.util.List;
-
-import javax.annotation.Resource;
-
+import net.sf.saxon.Configuration;
+import net.sf.saxon.event.Builder;
+import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
+import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -29,14 +33,9 @@ import stroom.util.date.DateUtil;
 import stroom.xml.event.EventList;
 import stroom.xml.event.np.EventListConsumer;
 import stroom.xml.event.np.NPEventList;
-import net.sf.saxon.Configuration;
-import net.sf.saxon.event.Builder;
-import net.sf.saxon.event.PipelineConfiguration;
-import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.om.EmptyAtomicSequence;
-import net.sf.saxon.om.Sequence;
-import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.tree.tiny.TinyBuilder;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 public abstract class AbstractLookup extends StroomExtensionFunctionCall {
     public static class SequenceMaker {

@@ -19,7 +19,6 @@ package stroom.util.testshared;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.util.shared.TaskIdImpl;
 import stroom.util.test.StroomJUnit4ClassRunner;
 

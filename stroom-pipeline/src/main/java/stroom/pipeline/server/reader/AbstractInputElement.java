@@ -16,13 +16,13 @@
 
 package stroom.pipeline.server.reader;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.server.factory.PipelineFactoryException;
 import stroom.pipeline.server.factory.TakesInput;
 import stroom.pipeline.server.factory.Target;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 public abstract class AbstractInputElement extends AbstractIOElement implements TakesInput, Target {
     @Override

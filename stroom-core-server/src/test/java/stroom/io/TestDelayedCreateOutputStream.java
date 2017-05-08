@@ -16,19 +16,18 @@
 
 package stroom.io;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import stroom.util.io.FileUtil;
+import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-
-import stroom.util.test.StroomUnitTest;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import stroom.util.io.FileUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestDelayedCreateOutputStream extends StroomUnitTest {

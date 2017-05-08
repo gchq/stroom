@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,12 @@ package stroom.util.zip;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.zip.DataFormatException;
 import java.util.zip.ZipException;
-
-import javax.servlet.http.HttpServletResponse;
 
 public class StroomStreamException extends RuntimeException {
     private static final long serialVersionUID = 1L;
@@ -168,5 +167,4 @@ public class StroomStreamException extends RuntimeException {
 
         unwrapMessage(stringBuilder, th.getCause(), depth - 1);
     }
-
 }

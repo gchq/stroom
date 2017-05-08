@@ -16,10 +16,10 @@
 
 package stroom.entity.server.util;
 
+import com.mchange.v2.c3p0.QueryConnectionTester;
+
 import java.sql.Connection;
 import java.sql.SQLException;
-
-import com.mchange.v2.c3p0.QueryConnectionTester;
 
 /**
  * During JUnit tests Hibernate auto generates the database schema in HSQLDB due

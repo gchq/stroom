@@ -16,15 +16,14 @@
 
 package stroom.streamtask.server;
 
-import javax.annotation.Resource;
-
 import org.springframework.context.annotation.Scope;
-
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
+
+import javax.annotation.Resource;
 
 @TaskHandlerBean(task = CreateStreamTasksTask.class)
 @Scope(value = StroomScope.TASK)

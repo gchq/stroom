@@ -16,9 +16,9 @@
 
 package stroom.resource.server;
 
-import java.io.File;
-
 import stroom.util.shared.ResourceKey;
+
+import java.nio.file.Path;
 
 /**
  * API to a store of generated resources. This store only last 1 hour so it
@@ -33,7 +33,7 @@ public interface ResourceStore {
     /**
      * Get a temporary file
      */
-    File getTempFile(ResourceKey key);
+    Path getTempFile(ResourceKey key);
 
     /**
      * Delete a temporary file.

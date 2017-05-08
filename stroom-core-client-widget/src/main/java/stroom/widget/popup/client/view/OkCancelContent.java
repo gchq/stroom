@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class OkCancelContent extends Composite implements HasEnabled {

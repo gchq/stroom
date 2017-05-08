@@ -16,23 +16,22 @@
 
 package stroom.streamstore.server;
 
-import javax.inject.Inject;
-
-import stroom.node.server.StroomPropertyService;
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
 import stroom.entity.server.util.SQLBuilder;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
+import stroom.node.server.StroomPropertyService;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamtask.server.AbstractBatchDeleteExecutor;
 import stroom.streamtask.server.BatchIdTransactionHelper;
 import stroom.util.spring.StroomFrequencySchedule;
+import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
+
+import javax.inject.Inject;
 
 @Component
 @Scope(value = StroomScope.TASK)

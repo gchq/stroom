@@ -16,16 +16,17 @@
 
 package stroom.pipeline.server;
 
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.XSLTService;
 import stroom.security.SecurityContext;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -37,8 +38,8 @@ public class XSLTServiceImpl extends DocumentEntityServiceImpl<XSLT, FindXSLTCri
     private final StroomDatabaseInfo stroomDatabaseInfo;
 
     @Inject
-    XSLTServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext, final StroomDatabaseInfo stroomDatabaseInfo) {
-        super(entityManager, securityContext);
+    XSLTServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final StroomDatabaseInfo stroomDatabaseInfo) {
+        super(entityManager, importExportHelper, securityContext);
         this.stroomDatabaseInfo = stroomDatabaseInfo;
     }
 

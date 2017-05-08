@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Utility class that you can feed a bunch of names and it will deduce if the
@@ -74,10 +76,11 @@ public class StroomZipNameSet {
     public StroomZipNameSet(boolean checkOrder) {
         entryMap = new HashMap<>();
         baseNameCheckOrderListIndex = new HashMap<>();
-        for (StroomZipFileType fileType : StroomZipFileType.values()) {
-            entryMap.put(fileType, new HashMap<>());
-            baseNameCheckOrderListIndex.put(fileType, 0);
-        }
+        Arrays.stream(StroomZipFileType.values())
+              .forEach(fileType -> {
+                  entryMap.put(fileType, new HashMap<>());
+                  baseNameCheckOrderListIndex.put(fileType, 0);
+              });
         baseNameLengthSet = new HashSet<>();
         baseNameSet = new HashSet<>();
         baseNameList = new ArrayList<>();
@@ -90,16 +93,16 @@ public class StroomZipNameSet {
         } else {
             baseNameCheckOrderList = null;
         }
-
     }
 
     public static StroomZipFileType getStroomZipFileType(final String fileName) {
-        for (Entry<StroomZipFileType, Set<String>> extMap : FILE_EXT_MAP.entrySet()) {
-            if (looksLike(fileName, extMap.getValue()) != null) {
-                return extMap.getKey();
-            }
-        }
-        return StroomZipFileType.Data;
+        StroomZipFileType type = FILE_EXT_MAP.entrySet()
+                                          .stream()
+                                          .filter(entry -> looksLike(fileName, entry.getValue()) != null)
+                                          .map(Entry::getKey)
+                                          .findFirst()
+                                          .orElse(StroomZipFileType.Data);
+        return type;
     }
 
     private static String looksLike(final String fileName, Set<String> extSet) {
@@ -116,7 +119,6 @@ public class StroomZipNameSet {
         for (String fileName : fileNameList) {
             add(fileName);
         }
-
     }
 
     public StroomZipEntry add(final String fileName) {
@@ -189,7 +191,6 @@ public class StroomZipNameSet {
                 // key this pair
                 keyEntry(StroomZipFileType.Data, bestMatch, baseName);
             }
-
         }
     }
 
@@ -197,31 +198,35 @@ public class StroomZipNameSet {
      * @return all the valid base names as we know them
      */
     public Set<String> getBaseNameSet() {
-        Set<String> fullSet = new HashSet<String>();
-        fullSet.addAll(entryMap.get(StroomZipFileType.Data).keySet());
-        fullSet.addAll(unknownFileNameSet);
-        return fullSet;
+        return Stream.concat(
+                entryMap.get(StroomZipFileType.Data).keySet().stream(),
+                unknownFileNameSet.stream())
+                     .collect(Collectors.toSet());
     }
 
     /**
      * @return all the valid base names as we know them
      */
     public List<String> getBaseNameList() {
-        List<String> fullList = new ArrayList<String>();
-        fullList.addAll(baseNameList);
-        fullList.addAll(unknownFileNameList);
-        return fullList;
+        return Stream.concat(
+                baseNameList.stream(),
+                unknownFileNameList.stream())
+                     .collect(Collectors.toList());
     }
+
 
     /**
      * @return given a delimiter grouping "e.g. '_'" return back sets of base
-     *         names around that grouping e.g. 001_01.dat 001_01.meta 001_02.dat
-     *         001_02.meta 002.dat 002.meta 003.dat 003.meta 004.dat 004.meta
-     *
-     *         would return a list {001_01, 001_02}, {002}, {003}, {004}
+     * names around that grouping e.g. 001_01.dat 001_01.meta 001_02.dat
+     * 001_02.meta 002.dat 002.meta 003.dat 003.meta 004.dat 004.meta
+     * <p>
+     * would return a list {001_01, 001_02}, {002}, {003}, {004}
      */
     public List<List<String>> getBaseNameGroupedList(String grouping) {
-        List<List<String>> rtnList = new ArrayList<List<String>>();
+        //TODO this method is not used by stroom-proxy or stroom-proxy-util but is used
+        //by StreamUploadTaskHandler in Stroom
+
+        List<List<String>> rtnList = new ArrayList<>();
 
         String currentGrouping = null;
         List<String> currentList = null;
@@ -232,13 +237,13 @@ public class StroomZipNameSet {
                 String newGrouping = baseName.substring(0, pos);
                 if (!newGrouping.equals(currentGrouping)) {
                     currentGrouping = newGrouping;
-                    currentList = new ArrayList<String>();
+                    currentList = new ArrayList<>();
                     rtnList.add(currentList);
                 }
                 currentList.add(baseName);
             } else {
                 currentGrouping = baseName;
-                currentList = new ArrayList<String>();
+                currentList = new ArrayList<>();
                 currentList.add(baseName);
                 rtnList.add(currentList);
             }

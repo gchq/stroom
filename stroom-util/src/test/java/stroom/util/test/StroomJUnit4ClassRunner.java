@@ -16,18 +16,16 @@
 
 package stroom.util.test;
 
+import org.junit.runner.notification.RunNotifier;
+import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.runners.model.FrameworkMethod;
+import org.junit.runners.model.InitializationError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.task.ExternalShutdownController;
 import stroom.util.thread.ThreadScopeContextHolder;
-import org.junit.runner.Description;
-import org.junit.runner.notification.Failure;
-import org.junit.runner.notification.RunNotifier;
-import org.junit.runners.BlockJUnit4ClassRunner;
-import org.junit.runners.model.FrameworkMethod;
-import org.junit.runners.model.InitializationError;
 
 import java.io.File;
 

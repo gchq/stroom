@@ -19,9 +19,8 @@ package stroom.pipeline.stepping.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.pipeline.shared.SteppingFilterSettings;
-import stroom.xmleditor.client.presenter.BaseXMLEditorPresenter;
 
 public class ShowSteppingFilterSettingsEvent
         extends GwtEvent<ShowSteppingFilterSettingsEvent.ShowSteppingFilterSettingsHandler> {
@@ -31,22 +30,22 @@ public class ShowSteppingFilterSettingsEvent
 
     private static Type<ShowSteppingFilterSettingsHandler> TYPE;
 
-    private final BaseXMLEditorPresenter xmlEditor;
+    private final EditorPresenter editor;
     private final boolean input;
     private final String elementId;
     private final SteppingFilterSettings settings;
 
-    private ShowSteppingFilterSettingsEvent(final BaseXMLEditorPresenter xmlEditor, final boolean input,
-            final String elementId, final SteppingFilterSettings settings) {
-        this.xmlEditor = xmlEditor;
+    private ShowSteppingFilterSettingsEvent(final EditorPresenter editor, final boolean input,
+                                            final String elementId, final SteppingFilterSettings settings) {
+        this.editor = editor;
         this.input = input;
         this.elementId = elementId;
         this.settings = settings;
     }
 
-    public static void fire(final HasHandlers source, final BaseXMLEditorPresenter xmlEditor, final boolean input,
-            final String elementId, final SteppingFilterSettings settings) {
-        source.fireEvent(new ShowSteppingFilterSettingsEvent(xmlEditor, input, elementId, settings));
+    public static void fire(final HasHandlers source, final EditorPresenter editor, final boolean input,
+                            final String elementId, final SteppingFilterSettings settings) {
+        source.fireEvent(new ShowSteppingFilterSettingsEvent(editor, input, elementId, settings));
     }
 
     public static Type<ShowSteppingFilterSettingsHandler> getType() {
@@ -66,8 +65,8 @@ public class ShowSteppingFilterSettingsEvent
         handler.onShow(this);
     }
 
-    public BaseXMLEditorPresenter getXmlEditor() {
-        return xmlEditor;
+    public EditorPresenter getEditor() {
+        return editor;
     }
 
     public boolean isInput() {

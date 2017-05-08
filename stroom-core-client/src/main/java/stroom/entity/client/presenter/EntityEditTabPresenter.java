@@ -18,10 +18,6 @@ package stroom.entity.client.presenter;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
@@ -71,28 +67,17 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
         saveButton.setEnabled(false);
         saveAsButton.setEnabled(false);
 
-        registerHandler(saveButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (saveButton.isEnabled()) {
-                    SaveEntityEvent.fire(EntityEditTabPresenter.this, EntityEditTabPresenter.this);
-                }
+        registerHandler(saveButton.addClickHandler(event -> {
+            if (saveButton.isEnabled()) {
+                SaveEntityEvent.fire(EntityEditTabPresenter.this, EntityEditTabPresenter.this);
             }
         }));
-        registerHandler(saveAsButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if (saveAsButton.isEnabled()) {
-                    ShowSaveAsEntityDialogEvent.fire(EntityEditTabPresenter.this, EntityEditTabPresenter.this);
-                }
+        registerHandler(saveAsButton.addClickHandler(event -> {
+            if (saveAsButton.isEnabled()) {
+                ShowSaveAsEntityDialogEvent.fire(EntityEditTabPresenter.this, EntityEditTabPresenter.this);
             }
         }));
-        registerHandler(getView().getTabBar().addSelectionHandler(new SelectionHandler<TabData>() {
-            @Override
-            public void onSelection(final SelectionEvent<TabData> event) {
-                selectTab(event.getSelectedItem());
-            }
-        }));
+        registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
     }
 
 

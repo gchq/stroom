@@ -19,7 +19,6 @@ package stroom.alert.client.view;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.alert.client.presenter.PromptPresenter;
 
 public class PromptViewImpl extends ViewImpl implements PromptPresenter.PromptView {

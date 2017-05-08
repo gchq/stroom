@@ -16,21 +16,19 @@
 
 package stroom.pipeline.server.filter;
 
-import java.util.List;
-
-import javax.annotation.Resource;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
 import stroom.pipeline.server.errorhandler.TerminatedException;
 import stroom.pipeline.server.factory.AbstractElement;
 import stroom.pipeline.server.factory.HasTargets;
 import stroom.pipeline.server.factory.Processor;
 import stroom.pipeline.server.factory.Target;
 import stroom.util.task.TaskMonitor;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * The abstract base class to use for all XMLFilter implementations. This class

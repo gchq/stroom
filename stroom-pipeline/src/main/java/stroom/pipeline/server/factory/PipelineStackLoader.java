@@ -16,9 +16,9 @@
 
 package stroom.pipeline.server.factory;
 
-import java.util.List;
-
 import stroom.pipeline.shared.PipelineEntity;
+
+import java.util.List;
 
 public interface PipelineStackLoader {
     /**

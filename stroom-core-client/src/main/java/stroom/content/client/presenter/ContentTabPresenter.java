@@ -16,11 +16,10 @@
 
 package stroom.content.client.presenter;
 
-import stroom.util.client.ImageUtil;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
+import stroom.util.client.ImageUtil;
 import stroom.widget.tab.client.presenter.TabData;
 
 public abstract class ContentTabPresenter<V extends View> extends MyPresenterWidget<V>implements TabData {

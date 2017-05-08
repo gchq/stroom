@@ -16,10 +16,10 @@
 
 package stroom.xml.converter.ds3;
 
+import org.xml.sax.Locator;
+
 import java.io.IOException;
 import java.io.Reader;
-
-import org.xml.sax.Locator;
 
 public class DS3Reader extends CharBuffer implements Locator {
     private final int initialSize;

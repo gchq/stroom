@@ -16,27 +16,34 @@
 
 package stroom.importexport.server;
 
-import stroom.entity.shared.EntityActionConfirmation;
+import org.springframework.context.annotation.Scope;
+import stroom.entity.shared.ImportState;
 import stroom.importexport.shared.ImportConfigConfirmationAction;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedList;
+import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = ImportConfigConfirmationAction.class)
+@Scope(value = StroomScope.TASK)
 public class ImportConfigConfirmationHandler
-        extends AbstractTaskHandler<ImportConfigConfirmationAction, SharedList<EntityActionConfirmation>> {
-    @Resource
-    private ImportExportService importExportService;
-    @Resource
-    private SessionResourceStore sessionResourceStore;
+        extends AbstractTaskHandler<ImportConfigConfirmationAction, SharedList<ImportState>> {
+    private final ImportExportService importExportService;
+    private final SessionResourceStore sessionResourceStore;
+
+    @Inject
+    public ImportConfigConfirmationHandler(final ImportExportService importExportService, final SessionResourceStore sessionResourceStore) {
+        this.importExportService = importExportService;
+        this.sessionResourceStore = sessionResourceStore;
+    }
 
     @Override
     @Secured("Import Configuration")
-    public SharedList<EntityActionConfirmation> exec(final ImportConfigConfirmationAction task) {
+    public SharedList<ImportState> exec(final ImportConfigConfirmationAction task) {
         try {
             return importExportService.createImportConfirmationList(sessionResourceStore.getTempFile(task.getKey()));
         } catch (final RuntimeException rex) {

@@ -16,13 +16,13 @@
 
 package stroom.streamtask.server;
 
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.spring.StroomSpringProfiles;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 /**
  * Mock object.
@@ -33,6 +33,11 @@ import org.springframework.stereotype.Component;
 @Component("streamProcessorService")
 public class MockStreamProcessorService extends MockEntityService<StreamProcessor, FindStreamProcessorCriteria>
         implements StreamProcessorService {
+    @Override
+    public StreamProcessor loadByIdInsecure(final long id) throws RuntimeException {
+        return loadById(id);
+    }
+
     @Override
     public boolean isMatch(final FindStreamProcessorCriteria criteria, final StreamProcessor entity) {
         if (!super.isMatch(criteria, entity)) {

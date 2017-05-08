@@ -16,17 +16,16 @@
 
 package stroom.statistics.sql;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import org.apache.commons.lang.mutable.MutableLong;
-
 import stroom.statistics.common.RolledUpStatisticEvent;
 import stroom.statistics.common.TimeAgnosticStatisticEvent;
 import stroom.statistics.common.exception.StatisticsEventValidationException;
 import stroom.statistics.shared.StatisticType;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class SQLStatisticAggregateMap {
     private final Map<SQLStatKey, MutableLong> countMap = new HashMap<SQLStatKey, MutableLong>();

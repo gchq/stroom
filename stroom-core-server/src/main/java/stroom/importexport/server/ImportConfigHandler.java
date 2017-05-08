@@ -16,7 +16,7 @@
 
 package stroom.importexport.server;
 
-import stroom.entity.shared.EntityActionConfirmation;
+import stroom.entity.shared.ImportState;
 import stroom.importexport.shared.ImportConfigAction;
 import stroom.logging.ImportExportEventLog;
 import stroom.security.Secured;
@@ -24,31 +24,37 @@ import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.ResourceKey;
+import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
-import java.io.File;
+import javax.inject.Inject;
+import java.nio.file.Path;
 
 @TaskHandlerBean(task = ImportConfigAction.class)
+@org.springframework.context.annotation.Scope(value = StroomScope.TASK)
 public class ImportConfigHandler extends AbstractTaskHandler<ImportConfigAction, ResourceKey> {
-    @Resource
-    private ImportExportService importExportService;
-    @Resource
-    private ImportExportEventLog eventLog;
-    @Resource
-    private SessionResourceStore sessionResourceStore;
+    private final ImportExportService importExportService;
+    private final ImportExportEventLog eventLog;
+    private final SessionResourceStore sessionResourceStore;
+
+    @Inject
+    ImportConfigHandler(final ImportExportService importExportService, final ImportExportEventLog eventLog, final SessionResourceStore sessionResourceStore) {
+        this.importExportService = importExportService;
+        this.eventLog = eventLog;
+        this.sessionResourceStore = sessionResourceStore;
+    }
 
     @Override
     @Secured("Import Configuration")
     public ResourceKey exec(final ImportConfigAction action) {
         // Import file.
-        final File file = sessionResourceStore.getTempFile(action.getKey());
+        final Path file = sessionResourceStore.getTempFile(action.getKey());
 
         // Log the import.
         eventLog._import(action);
 
         boolean foundOneAction = false;
-        for (final EntityActionConfirmation entityActionConfirmation : action.getConfirmList()) {
-            if (entityActionConfirmation.isAction()) {
+        for (final ImportState importState : action.getConfirmList()) {
+            if (importState.isAction()) {
                 foundOneAction = true;
                 break;
             }

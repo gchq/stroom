@@ -16,17 +16,16 @@
 
 package stroom.statistics.server;
 
-import java.util.List;
-import java.util.Set;
-
-import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
 import stroom.statistics.shared.StatisticStore;
+import stroom.util.spring.StroomSpringProfiles;
+
+import java.util.List;
+import java.util.Set;
 
 @Component
 @Profile(StroomSpringProfiles.TEST)

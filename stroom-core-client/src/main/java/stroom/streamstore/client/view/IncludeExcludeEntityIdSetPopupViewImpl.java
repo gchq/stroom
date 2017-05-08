@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.streamstore.client.presenter.IncludeExcludeEntityIdSetPopupPresenter.IncludeExcludeEntityIdSetPopupView;
 
 public class IncludeExcludeEntityIdSetPopupViewImpl extends ViewImpl implements IncludeExcludeEntityIdSetPopupView {

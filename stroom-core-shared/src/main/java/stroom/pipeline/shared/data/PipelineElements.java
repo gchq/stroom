@@ -16,16 +16,15 @@
 
 package stroom.pipeline.shared.data;
 
-import java.util.ArrayList;
-import java.util.List;
+import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
-
-import stroom.util.shared.SharedObject;
+import java.util.ArrayList;
+import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Elements", propOrder = { "add", "remove" })

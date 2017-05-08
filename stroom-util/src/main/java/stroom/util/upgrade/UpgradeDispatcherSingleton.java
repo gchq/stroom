@@ -18,10 +18,10 @@ package stroom.util.upgrade;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.context.WebApplicationContext;
 import stroom.util.spring.ContextAwareService;
 import stroom.util.thread.ThreadScopeContextHolder;
 import stroom.util.thread.ThreadUtil;
-import org.springframework.web.context.WebApplicationContext;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;

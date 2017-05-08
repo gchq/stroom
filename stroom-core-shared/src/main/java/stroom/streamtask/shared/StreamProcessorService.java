@@ -20,4 +20,5 @@ import stroom.entity.shared.BaseEntityService;
 import stroom.entity.shared.FindService;
 
 public interface StreamProcessorService extends BaseEntityService<StreamProcessor>, FindService<StreamProcessor, FindStreamProcessorCriteria> {
+    StreamProcessor loadByIdInsecure(long id) throws RuntimeException;
 }

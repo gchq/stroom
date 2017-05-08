@@ -18,15 +18,24 @@ package stroom.index.server;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
+import stroom.importexport.server.EntityPathResolver;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.util.spring.StroomSpringProfiles;
 
+import javax.inject.Inject;
+
 @Profile(StroomSpringProfiles.TEST)
 @Component("indexService")
 public class MockIndexService extends MockDocumentEntityService<Index, FindIndexCriteria> implements IndexService {
+    @Inject
+    public MockIndexService(final GenericEntityService genericEntityService, final EntityPathResolver entityPathResolver) {
+        super(genericEntityService, entityPathResolver);
+    }
+
     @Override
     public Class<Index> getEntityClass() {
         return Index.class;

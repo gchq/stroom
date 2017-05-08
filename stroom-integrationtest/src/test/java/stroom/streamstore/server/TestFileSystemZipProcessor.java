@@ -16,6 +16,22 @@
 
 package stroom.streamstore.server;
 
+import org.junit.Assert;
+import org.junit.Test;
+import stroom.AbstractCoreIntegrationTest;
+import stroom.CommonTestScenarioCreator;
+import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedService;
+import stroom.streamstore.server.fs.serializable.RANestedInputStream;
+import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.server.StreamTargetStroomStreamHandler;
+import stroom.util.io.StreamUtil;
+import stroom.util.test.FileSystemTestUtil;
+import stroom.util.zip.HeaderMap;
+import stroom.util.zip.StroomHeaderArguments;
+import stroom.util.zip.StroomStreamProcessor;
+
+import javax.annotation.Resource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -28,24 +44,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import javax.annotation.Resource;
-
-import stroom.util.zip.StroomStreamProcessor;
-import org.junit.Assert;
-import org.junit.Test;
-
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
-import stroom.streamstore.server.fs.serializable.RANestedInputStream;
-import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.server.StreamTargetStroomStreamHandler;
-import stroom.util.io.StreamUtil;
-import stroom.util.test.FileSystemTestUtil;
-import stroom.util.zip.StroomHeaderArguments;
-import stroom.util.zip.HeaderMap;
 
 public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     @Resource

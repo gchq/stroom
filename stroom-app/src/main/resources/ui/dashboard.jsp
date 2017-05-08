@@ -48,7 +48,6 @@
     <link rel="stylesheet" href="css/stroom-dashboard.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom.css" type="text/css" />
     <link rel="stylesheet" href="dynamic.css" type="text/css" />
-    <link rel="stylesheet" href="stroom/xmlarea.css" type="text/css" />
     
     <link rel="stylesheet" href="xsdbrowser/xsdbrowser.css" type="text/css" />      
    

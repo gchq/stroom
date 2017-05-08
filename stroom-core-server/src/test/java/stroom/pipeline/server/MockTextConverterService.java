@@ -16,13 +16,17 @@
 
 package stroom.pipeline.server;
 
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
+import stroom.importexport.server.EntityPathResolver;
 import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverterService;
 import stroom.util.spring.StroomSpringProfiles;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
 
 /**
  * <p>
@@ -37,6 +41,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class MockTextConverterService extends MockDocumentEntityService<TextConverter, FindTextConverterCriteria>
         implements TextConverterService {
+    @Inject
+    public MockTextConverterService(final GenericEntityService genericEntityService, final EntityPathResolver entityPathResolver) {
+        super(genericEntityService, entityPathResolver);
+    }
+
     @Override
     public Class<TextConverter> getEntityClass() {
         return TextConverter.class;

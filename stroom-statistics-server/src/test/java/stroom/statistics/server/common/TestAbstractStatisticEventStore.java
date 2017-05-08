@@ -23,6 +23,7 @@ import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Query;
+import stroom.query.api.SearchRequest;
 import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.FilterTermsTree;
 import stroom.statistics.common.FindEventCriteria;
@@ -232,7 +233,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
     }
 
     private void runIsDataSourceEnabled(final String propertyValue, final String engineName,
-            final boolean expectedResult) {
+                                        final boolean expectedResult) {
         final MockStroomPropertyService propertyService = new MockStroomPropertyService();
 
         propertyService.setProperty(CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME, propertyValue);
@@ -244,7 +245,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
     }
 
     private StatisticEvent buildEvent(final List<StatisticTag> tagList) {
-        return new StatisticEvent(EVENT_TIME, EVENT_NAME, tagList, EVENT_COUNT);
+        return StatisticEvent.createCount(EVENT_TIME, EVENT_NAME, tagList, EVENT_COUNT);
     }
 
     private List<StatisticTag> buildTagList() {
@@ -275,11 +276,11 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         // add the custom rollup masks, which only come into play if the type is
         // CUSTOM
         statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(new ArrayList<Integer>())); // no
-                                                                                                        // tags
+        // tags
         statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Arrays.asList(0, 1))); // tags
-                                                                                                    // 1&2
+        // 1&2
         statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Arrays.asList(1))); // tag
-                                                                                                // 2
+        // 2
 
         statisticsDataSource.setStatisticDataSourceDataObject(statisticsDataSourceData);
         statisticsDataSource.setRollUpType(statisticRollUpType);
@@ -292,11 +293,12 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
 
         final Query query = new Query(null, rootOperator.build());
+        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(query, dataSource);
+        AbstractStatistics.buildCriteria(searchRequest, dataSource);
 
     }
 
@@ -310,11 +312,12 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
                 Condition.IN_DICTIONARY, dateTerm);
 
         final Query query = new Query(null, rootOperator.build());
+        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(query, dataSource);
+        AbstractStatistics.buildCriteria(searchRequest, dataSource);
 
     }
 
@@ -332,11 +335,12 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
         final Query query = new Query(null, rootOperator.build());
+        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(query, dataSource);
+        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(searchRequest, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals(fromDate, criteria.getPeriod().getFrom().longValue());
@@ -359,11 +363,12 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
         final Query query = new Query(null, rootOperator.build());
+        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(query, dataSource);
+        AbstractStatistics.buildCriteria(searchRequest, dataSource);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -381,11 +386,12 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         rootOperator.addTerm(null, Condition.EQUALS, "xxx");
 
         final Query query = new Query(null, rootOperator.build());
+        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(query, dataSource);
+        AbstractStatistics.buildCriteria(searchRequest, dataSource);
     }
 
     @Test
@@ -403,11 +409,12 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         rootOperator.addTerm("MyField", Condition.EQUALS, "");
 
         final Query query = new Query(null, rootOperator.build());
+        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(query, dataSource);
+        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(searchRequest, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals("[]", criteria.getFilterTermsTree().toString());
@@ -429,11 +436,12 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         rootOperator.addTerm("MyField", Condition.EQUALS, "xxx");
 
         final Query query = new Query(null, rootOperator.build());
+        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(query, dataSource);
+        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(searchRequest, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals(fromDate, criteria.getPeriod().getFrom().longValue());

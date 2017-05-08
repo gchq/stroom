@@ -18,7 +18,6 @@ package stroom.entity.cluster;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.task.cluster.ClusterTask;
-import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 
 public class FindDeleteServiceClusterTask<C extends BaseCriteria> extends ClusterTask<VoidResult> {
@@ -27,9 +26,9 @@ public class FindDeleteServiceClusterTask<C extends BaseCriteria> extends Cluste
     private Class<?> beanClass;
     private C criteria;
 
-    public FindDeleteServiceClusterTask(final String sessionId, final String userName, final String taskName,
+    public FindDeleteServiceClusterTask(final String userToken, final String taskName,
                                         final Class<?> beanClass, final C criteria) {
-        super(sessionId, userName, taskName);
+        super(userToken, taskName);
         this.beanClass = beanClass;
         this.criteria = criteria;
     }

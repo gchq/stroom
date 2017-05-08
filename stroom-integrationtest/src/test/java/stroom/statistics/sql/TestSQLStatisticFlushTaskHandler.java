@@ -16,22 +16,13 @@
 
 package stroom.statistics.sql;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import javax.annotation.Resource;
-import javax.sql.DataSource;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
-import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.ConnectionUtil;
+import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.statistics.common.RolledUpStatisticEvent;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.exception.StatisticsEventValidationException;
@@ -39,9 +30,16 @@ import stroom.util.shared.Monitor;
 import stroom.util.shared.TerminateHandler;
 import stroom.util.task.TaskMonitor;
 
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
     @Resource
-    private DataSource cachedSqlDataSource;
+    private DataSource statisticsDataSource;
     @Resource
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
 
@@ -174,7 +172,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
     }
 
     private RolledUpStatisticEvent buildGoodEvent(final int id) {
-        final StatisticEvent goodEvent = new StatisticEvent(123, "shortName" + id, null, 1);
+        final StatisticEvent goodEvent = StatisticEvent.createCount(123, "shortName" + id, null, 1);
         return new RolledUpStatisticEvent(goodEvent);
     }
 
@@ -184,13 +182,13 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
             sb.append("0123456789");
         }
 
-        final StatisticEvent badEvent = new StatisticEvent(123, sb.toString() + id, null, 1);
+        final StatisticEvent badEvent = StatisticEvent.createCount(123, sb.toString() + id, null, 1);
 
         return new RolledUpStatisticEvent(badEvent);
     }
 
     private RolledUpStatisticEvent buildCustomCountEvent(final int id, final long countValue) {
-        final StatisticEvent goodEvent = new StatisticEvent(123, "shortName" + id, null, countValue);
+        final StatisticEvent goodEvent = StatisticEvent.createCount(123, "shortName" + id, null, countValue);
 
         return new RolledUpStatisticEvent(goodEvent);
     }
@@ -231,7 +229,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
     }
 
     private Connection getConnection() throws SQLException {
-        return cachedSqlDataSource.getConnection();
+        return statisticsDataSource.getConnection();
     }
 
     private static class MockTaskMonitor implements TaskMonitor {

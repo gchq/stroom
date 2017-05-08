@@ -16,11 +16,11 @@
 
 package stroom.task.cluster;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.concurrent.SimpleConcurrentMap;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DebugTrace {
     private static final Logger LOGGER = LoggerFactory.getLogger(DebugTrace.class);

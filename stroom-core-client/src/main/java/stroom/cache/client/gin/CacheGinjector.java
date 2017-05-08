@@ -17,7 +17,6 @@
 package stroom.cache.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-
 import stroom.cache.client.CacheMonitoringPlugin;
 import stroom.cache.client.presenter.CachePresenter;
 

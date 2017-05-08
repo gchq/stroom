@@ -16,18 +16,8 @@
 
 package stroom.pipeline.server.task;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.Resource;
-
-import stroom.test.StroomProcessTestFileUtil;
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractProcessIntegrationTest;
 import stroom.node.server.NodeCache;
 import stroom.streamstore.server.MockStreamStore;
@@ -40,7 +30,15 @@ import stroom.streamtask.server.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskManager;
 import stroom.test.ComparisonHelper;
+import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.shared.Severity;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTest {
     private static final String DIR = "TestTranslationTaskWithoutTranslation/";

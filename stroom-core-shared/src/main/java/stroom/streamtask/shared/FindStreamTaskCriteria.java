@@ -61,7 +61,9 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
 
     public static final OrderBy ORDER_BY_FEED_NAME = new OrderBy("Feed", "stream.feed.name", "F_NAME");
 
-    public static final OrderBy ORDER_BY_PIPELINE_NAME = new OrderBy("Pipeline", "streamProcessor.pipeline.name",
+    public static final OrderBy ORDER_BY_PRIORITY = new OrderBy("Priority", "streamProcessorFilter.priority", "PRIORITY_1");
+
+    public static final OrderBy ORDER_BY_PIPELINE_NAME = new OrderBy("Pipeline", "streamProcessorFilter.streamProcessor.pipeline.name",
             "P_NAME");
 
     public static final OrderBy ORDER_BY_STATUS = new OrderBy("Status", "pstatus", "STAT_ID1");

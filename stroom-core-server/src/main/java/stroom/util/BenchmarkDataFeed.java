@@ -16,6 +16,14 @@
 
 package stroom.util;
 
+import stroom.task.server.StroomThreadGroup;
+import stroom.util.date.DateUtil;
+import stroom.util.io.StreamUtil;
+import stroom.util.shared.ModelStringUtil;
+import stroom.util.thread.CustomThreadFactory;
+import stroom.util.zip.HeaderMap;
+
+import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -33,15 +41,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPOutputStream;
-
-import javax.net.ssl.HttpsURLConnection;
-
-import stroom.task.server.StroomThreadGroup;
-import stroom.util.date.DateUtil;
-import stroom.util.io.StreamUtil;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.thread.CustomThreadFactory;
-import stroom.util.zip.HeaderMap;
 
 public class BenchmarkDataFeed {
     private static class DataFeedResult {
@@ -273,11 +272,11 @@ public class BenchmarkDataFeed {
     }
 
     private String formatBytes(final int bytes) {
-        return bytes + " (" + ModelStringUtil.formatByteSizeString((long) bytes) + ")";
+        return bytes + " (" + ModelStringUtil.formatIECByteSizeString((long) bytes) + ")";
     }
 
     private String formatBytes(final long bytes) {
-        return bytes + " (" + ModelStringUtil.formatByteSizeString(bytes) + ")";
+        return bytes + " (" + ModelStringUtil.formatIECByteSizeString(bytes) + ")";
     }
 
     public void statusConfig() {

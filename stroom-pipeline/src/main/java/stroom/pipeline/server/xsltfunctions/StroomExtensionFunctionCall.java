@@ -16,8 +16,12 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import java.util.List;
-
+import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.Item;
+import net.sf.saxon.om.NodeInfo;
+import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.value.BooleanValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.LocationFactory;
@@ -25,12 +29,8 @@ import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
-import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.om.Item;
-import net.sf.saxon.om.NodeInfo;
-import net.sf.saxon.om.Sequence;
-import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.value.BooleanValue;
+
+import java.util.List;
 
 public abstract class StroomExtensionFunctionCall {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomExtensionFunctionCall.class);

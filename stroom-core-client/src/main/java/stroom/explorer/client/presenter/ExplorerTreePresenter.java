@@ -27,7 +27,6 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
@@ -35,7 +34,6 @@ import stroom.explorer.client.event.HighlightExplorerItemEvent;
 import stroom.explorer.client.event.OpenExplorerTabEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerData;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
@@ -131,15 +129,9 @@ public class ExplorerTreePresenter
     @Override
     public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
         documentTypeCache.clear();
-        documentTypeCache.fetch(new AsyncCallbackAdaptor<DocumentTypes>() {
-            @Override
-            public void onSuccess(final DocumentTypes documentTypes) {
-                // Set the data for the type filter.
-                typeFilterPresenter.setDocumentTypes(documentTypes);
-            }
-        });
+        // Set the data for the type filter.
+        documentTypeCache.fetch().onSuccess(typeFilterPresenter::setDocumentTypes);
 
-        explorerTree.getTreeModel().clear();
         explorerTree.getTreeModel().reset();
         explorerTree.getTreeModel().setRequiredPermissions(DocumentPermissionNames.READ);
         explorerTree.getTreeModel().setIncludedTypeSet(null);

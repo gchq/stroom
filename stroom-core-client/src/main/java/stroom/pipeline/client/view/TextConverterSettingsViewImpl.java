@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.shared.TextConverter.TextConverterType;

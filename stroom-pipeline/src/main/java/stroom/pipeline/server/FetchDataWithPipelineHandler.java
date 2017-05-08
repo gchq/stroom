@@ -18,18 +18,35 @@ package stroom.pipeline.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.EntityServiceException;
+import stroom.feed.shared.FeedService;
+import stroom.logging.StreamEventLog;
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.server.factory.PipelineDataCache;
+import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
+import stroom.pipeline.shared.PipelineEntityService;
+import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.PipelineHolder;
+import stroom.pipeline.state.StreamHolder;
 import stroom.security.Secured;
+import stroom.security.SecurityContext;
+import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
 
+import javax.inject.Inject;
+
 @TaskHandlerBean(task = FetchDataWithPipelineAction.class)
-@Secured(Stream.VIEW_DATA_WITH_PIPELINE_PERMISSION)
-//(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.VIEW_WITH_PIPELINE)
 @Scope(StroomScope.TASK)
+@Secured(Stream.VIEW_DATA_WITH_PIPELINE_PERMISSION)
 public class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWithPipelineAction> {
+    @Inject
+    FetchDataWithPipelineHandler(final StreamStore streamStore, final FeedService feedService, final FeedHolder feedHolder, final PipelineHolder pipelineHolder, final StreamHolder streamHolder, final PipelineEntityService pipelineEntityService, final PipelineFactory pipelineFactory, final ErrorReceiverProxy errorReceiverProxy, final PipelineDataCache pipelineDataCache, final StreamEventLog streamEventLog, final SecurityContext securityContext) {
+        super(streamStore, feedService, feedHolder, pipelineHolder, streamHolder, pipelineEntityService, pipelineFactory, errorReceiverProxy, pipelineDataCache, streamEventLog, securityContext);
+    }
+
     @Override
     public AbstractFetchDataResult exec(final FetchDataWithPipelineAction action) {
         // Because we are securing this to require XSLT then we must check that
@@ -47,8 +64,4 @@ public class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<Fetch
 
         return null;
     }
-
-//    //@Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.VIEW_WITH_PIPELINE)
-//    public void requireXSLT() {
-//    }
 }

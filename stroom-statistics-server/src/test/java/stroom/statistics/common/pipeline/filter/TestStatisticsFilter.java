@@ -16,6 +16,10 @@
 
 package stroom.statistics.common.pipeline.filter;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -35,10 +39,6 @@ import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;

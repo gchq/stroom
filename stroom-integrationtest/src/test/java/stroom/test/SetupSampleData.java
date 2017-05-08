@@ -17,25 +17,24 @@
 package stroom.test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-
-import stroom.logging.spring.EventLoggingConfiguration;
+import stroom.CommonTestControl;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.index.spring.IndexConfiguration;
+import stroom.logging.spring.EventLoggingConfiguration;
+import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;
-import stroom.visualisation.spring.VisualisationConfiguration;
-import stroom.CommonTestControl;
-import stroom.pipeline.spring.PipelineConfiguration;
-import stroom.spring.CachedServiceConfiguration;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ScopeTestConfiguration;
 import stroom.spring.ServerConfiguration;
+import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.TaskScopeContextHolder;
 import stroom.util.thread.ThreadScopeContextHolder;
+import stroom.visualisation.spring.VisualisationConfiguration;
 
 /**
  * Script to create some base data for testing.
@@ -56,10 +55,10 @@ public final class SetupSampleData {
                         SecurityConfiguration.MOCK_SECURITY);
                 appContext.register(ScopeConfiguration.class, PersistenceConfiguration.class,
                         SetupSampleDataComponentScanConfiguration.class, ServerConfiguration.class,
-                        CachedServiceConfiguration.class, SecurityConfiguration.class, ScopeTestConfiguration.class,
+                        SecurityConfiguration.class, ScopeTestConfiguration.class,
                         PipelineConfiguration.class, EventLoggingConfiguration.class, IndexConfiguration.class,
                         SearchConfiguration.class, ScriptConfiguration.class, VisualisationConfiguration.class,
-                        DashboardConfiguration.class);
+                        DashboardConfiguration.class, StatisticsConfiguration.class);
                 appContext.refresh();
                 final CommonTestControl commonTestControl = appContext.getBean(CommonTestControl.class);
 

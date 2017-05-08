@@ -16,8 +16,8 @@
 
 package stroom.pipeline.server.task;
 
-import stroom.xml.event.EventListUtils;
 import net.sf.saxon.om.NodeInfo;
+import stroom.xml.event.EventListUtils;
 
 public class NodeInfoSerializer {
     private NodeInfo nodeInfo;

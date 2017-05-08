@@ -44,12 +44,9 @@ public class IndexPresenter extends EntityEditTabPresenter<LinkTabPanelView, Ind
                           final Provider<IndexShardPresenter> indexShardPresenter, final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
 
-        tabContentProvider.setDirtyHandler(new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                if (event.isDirty()) {
-                    setDirty(true);
-                }
+        tabContentProvider.setDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
             }
         });
 

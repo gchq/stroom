@@ -16,13 +16,10 @@
 
 package stroom.xmlschema.client.presenter;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.PresenterWidget;
-import stroom.core.client.event.DirtyKeyDownHander;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -31,7 +28,6 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
 import stroom.widget.xsdbrowser.client.view.XSDModel;
-import stroom.xmleditor.client.presenter.XMLEditorPresenter;
 import stroom.xmlschema.shared.XMLSchema;
 
 public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView, XMLSchema> {
@@ -40,7 +36,7 @@ public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView,
     private static final TabData TEXT = new TabDataImpl("Text");
 
     private final XSDBrowserPresenter xsdBrowserPresenter;
-    private final XMLEditorPresenter codePresenter;
+    private final EditorPresenter codePresenter;
 
     private final XSDModel data = new XSDModel();
     private final XMLSchemaSettingsPresenter settingsPresenter;
@@ -50,7 +46,7 @@ public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView,
     @Inject
     public XMLSchemaPresenter(final EventBus eventBus, final LinkTabPanelView view,
                               final XMLSchemaSettingsPresenter settingsPresenter, final XSDBrowserPresenter xsdBrowserPresenter,
-                              final XMLEditorPresenter codePresenter,
+                              final EditorPresenter codePresenter,
                               final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
@@ -64,12 +60,9 @@ public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView,
 
         xsdBrowserPresenter.setModel(data);
 
-        settingsPresenter.addDirtyHandler(new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                if (event.isDirty()) {
-                    setDirty(true);
-                }
+        settingsPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
             }
         });
 
@@ -107,7 +100,8 @@ public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView,
             } else if (content.equals(codePresenter)) {
                 if (!shownText) {
                     shownText = true;
-                    codePresenter.setText(getEntity().getData(), 1, true);
+                    codePresenter.setText(getEntity().getData());
+                    codePresenter.format();
                 }
             }
         }
@@ -137,12 +131,9 @@ public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView,
 
         if (!readOnly) {
             // Enable controls based on user permission
-            registerHandler(codePresenter.addKeyDownHandler(new DirtyKeyDownHander() {
-                @Override
-                public void onDirty(final KeyDownEvent event) {
-                    setDirty(true);
-                    updateDiagram = true;
-                }
+            registerHandler(codePresenter.addValueChangeHandler(event -> {
+                setDirty(true);
+                updateDiagram = true;
             }));
         }
     }

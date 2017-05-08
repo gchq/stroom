@@ -34,8 +34,8 @@ public class DashboardExplorerDataProvider extends AbstractExplorerDataProvider<
     private final DashboardService dashboardService;
 
     @Inject
-    DashboardExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService, final DashboardService dashboardService) {
-        super(folderService);
+    DashboardExplorerDataProvider(@Named("cachedFolderService") final FolderService cachedFolderService, final DashboardService dashboardService) {
+        super(cachedFolderService);
         this.dashboardService = dashboardService;
     }
 

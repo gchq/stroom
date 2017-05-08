@@ -28,6 +28,7 @@ import stroom.query.api.ExpressionBuilder;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Query;
+import stroom.query.api.SearchRequest;
 import stroom.statistics.common.RolledUpStatisticEvent;
 import stroom.statistics.common.StatisticDataPoint;
 import stroom.statistics.common.StatisticDataSet;
@@ -64,7 +65,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     @Resource
     private CommonTestControl commonTestControl;
     @Resource
-    private DataSource cachedSqlDataSource;
+    private DataSource statisticsDataSource;
     @Resource
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
     @Resource
@@ -203,11 +204,12 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
         }
 
         final Query query = new Query(null, rootOperator.build(), null);
+        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName(STAT_NAME);
         dataSource.setRollUpType(StatisticRollUpType.NONE);
 
-        return sqlStatisticEventStore.searchStatisticsData(query, dataSource);
+        return sqlStatisticEventStore.searchStatisticsData(searchRequest, dataSource);
     }
 
     private void assertDataSetSize(final StatisticDataSet dataSet, final int size) {
@@ -227,7 +229,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
 
         final long timeMs = System.currentTimeMillis();
 
-        final StatisticEvent statisticEvent = new StatisticEvent(timeMs, STAT_NAME, tags, value);
+        final StatisticEvent statisticEvent = StatisticEvent.createCount(timeMs, STAT_NAME, tags, value);
 
         return new RolledUpStatisticEvent(statisticEvent);
     }
@@ -290,7 +292,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     }
 
     private Connection getConnection() throws SQLException {
-        return cachedSqlDataSource.getConnection();
+        return statisticsDataSource.getConnection();
     }
 
     private static class MockTaskMonitor implements TaskMonitor {

@@ -16,6 +16,7 @@
 
 package stroom.node.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.cluster.server.ClusterCallService;
 import stroom.cluster.server.ClusterNodeManager;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
@@ -25,17 +26,24 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 @TaskHandlerBean(task = ClusterNodeInfoAction.class)
+@Scope(value = StroomScope.TASK)
 public class ClusterNodeInfoHandler extends AbstractTaskHandler<ClusterNodeInfoAction, ClusterNodeInfo> {
-    @Resource(name = "clusterCallServiceRemote")
-    private ClusterCallService clusterCallService;
-    @Resource
-    private NodeCache nodeCache;
-    @Resource
-    private NodeService nodeService;
+    private final ClusterCallService clusterCallService;
+    private final NodeCache nodeCache;
+    private final NodeService nodeService;
+
+    @Inject
+    ClusterNodeInfoHandler(@Named("clusterCallServiceRemote") final ClusterCallService clusterCallService, final NodeCache nodeCache, final NodeService nodeService) {
+        this.clusterCallService = clusterCallService;
+        this.nodeCache = nodeCache;
+        this.nodeService = nodeService;
+    }
 
     @Override
     public ClusterNodeInfo exec(final ClusterNodeInfoAction action) {

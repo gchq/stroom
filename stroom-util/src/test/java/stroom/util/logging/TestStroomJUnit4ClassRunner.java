@@ -16,12 +16,11 @@
 
 package stroom.util.logging;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.test.StroomExpectedException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import stroom.util.test.StroomJUnit4ClassRunner;
 
 @RunWith(StroomJUnit4ClassRunner.class)

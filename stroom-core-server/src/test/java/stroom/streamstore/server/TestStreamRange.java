@@ -16,13 +16,12 @@
 
 package stroom.streamstore.server;
 
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestStreamRange extends StroomUnitTest {

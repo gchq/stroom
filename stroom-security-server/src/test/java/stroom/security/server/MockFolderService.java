@@ -18,13 +18,17 @@ package stroom.security.server;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderIdSet;
 import stroom.entity.shared.FolderService;
+import stroom.importexport.server.EntityPathResolver;
 import stroom.util.spring.StroomSpringProfiles;
+
+import javax.inject.Inject;
 
 /**
  * <p>
@@ -34,10 +38,9 @@ import stroom.util.spring.StroomSpringProfiles;
 @Profile(StroomSpringProfiles.TEST)
 @Component("folderService")
 public class MockFolderService extends MockDocumentEntityService<Folder, FindFolderCriteria> implements FolderService {
-    /**
-     * Constructor.
-     */
-    public MockFolderService() {
+    @Inject
+    public MockFolderService(final GenericEntityService genericEntityService, final EntityPathResolver entityPathResolver) {
+        super(genericEntityService, entityPathResolver);
         setupTestUser();
     }
 

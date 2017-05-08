@@ -17,25 +17,41 @@
 package stroom.security.server;
 
 import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.config.CacheConfiguration;
+import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
+import stroom.entity.server.event.EntityEvent;
+import stroom.entity.server.event.EntityEventBus;
+import stroom.entity.server.event.EntityEventHandler;
+import stroom.entity.shared.EntityAction;
 import stroom.query.api.DocRef;
 import stroom.security.shared.DocumentPermissions;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public class DocumentPermissionsCache extends AbstractCacheBean<DocRef, DocumentPermissions> {
-    private static final int MAX_CACHE_ENTRIES = 1000;
+@EntityEventHandler(action = EntityAction.CLEAR_CACHE)
+public class DocumentPermissionsCache extends AbstractCacheBean<DocRef, DocumentPermissions> implements EntityEvent.Handler {
+    private static final int MAX_CACHE_ENTRIES = 1000000;
 
     private final DocumentPermissionService documentPermissionService;
+    private final Provider<EntityEventBus> eventBusProvider;
+
+    private static final CacheConfiguration CACHE_CONFIGURATION = new CacheConfiguration("Document Permissions Cache", MAX_CACHE_ENTRIES);
+
+    static {
+        CACHE_CONFIGURATION.setMemoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LFU.toString());
+    }
 
     @Inject
     public DocumentPermissionsCache(final CacheManager cacheManager,
-            final DocumentPermissionService documentPermissionService) {
-        super(cacheManager, "Document Permissions Cache", MAX_CACHE_ENTRIES);
+                                    final DocumentPermissionService documentPermissionService, final Provider<EntityEventBus> eventBusProvider) {
+        super(cacheManager, CACHE_CONFIGURATION);
         this.documentPermissionService = documentPermissionService;
+        this.eventBusProvider = eventBusProvider;
         setMaxIdleTime(30, TimeUnit.MINUTES);
         setMaxLiveTime(30, TimeUnit.MINUTES);
     }
@@ -43,5 +59,16 @@ public class DocumentPermissionsCache extends AbstractCacheBean<DocRef, Document
     @Override
     protected DocumentPermissions create(final DocRef document) {
         return documentPermissionService.getPermissionsForDocument(document);
+    }
+
+    @Override
+    public void remove(final DocRef docRef) {
+        final EntityEventBus entityEventBus = eventBusProvider.get();
+        EntityEvent.fire(entityEventBus, docRef, EntityAction.CLEAR_CACHE);
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        super.remove(event.getDocRef());
     }
 }

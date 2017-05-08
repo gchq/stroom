@@ -16,12 +16,12 @@
 
 package stroom.pipeline.server.factory;
 
+import stroom.pipeline.shared.data.PipelineElementType.Category;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import stroom.pipeline.shared.data.PipelineElementType.Category;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

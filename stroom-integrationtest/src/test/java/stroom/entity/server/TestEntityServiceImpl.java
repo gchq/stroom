@@ -16,12 +16,11 @@
 
 package stroom.entity.server;
 
-import javax.annotation.Resource;
-
 import org.junit.Before;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
+
+import javax.annotation.Resource;
 
 public class TestEntityServiceImpl extends AbstractCoreIntegrationTest {
     @Resource

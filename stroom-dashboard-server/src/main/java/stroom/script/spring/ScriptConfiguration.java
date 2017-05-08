@@ -22,6 +22,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 
+
 /**
  * Exclude other configurations that might be found accidentally during a
  * component scan as configurations should be specified explicitly.

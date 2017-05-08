@@ -16,9 +16,9 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.util.test.StroomUnitTest;
 
 public class TestNumericIP extends StroomUnitTest {
     @Test

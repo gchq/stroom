@@ -16,6 +16,7 @@
 
 package stroom.process.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
@@ -26,15 +27,21 @@ import stroom.process.shared.SetId;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedMap;
+import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.Map.Entry;
 
 @TaskHandlerBean(task = LoadEntityIdSetAction.class)
+@Scope(value = StroomScope.TASK)
 public class LoadEntityIdSetHandler
         extends AbstractTaskHandler<LoadEntityIdSetAction, SharedMap<SetId, DocRefs>> {
-    @Resource
-    private GenericEntityService genericEntityService;
+    private final GenericEntityService genericEntityService;
+
+    @Inject
+    LoadEntityIdSetHandler(final GenericEntityService genericEntityService) {
+        this.genericEntityService = genericEntityService;
+    }
 
     @Override
     public SharedMap<SetId, DocRefs> exec(final LoadEntityIdSetAction action) {

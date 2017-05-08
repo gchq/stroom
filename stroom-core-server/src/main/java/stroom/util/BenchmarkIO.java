@@ -16,6 +16,18 @@
 
 package stroom.util;
 
+import stroom.streamstore.server.fs.BlockGZIPInputFile;
+import stroom.streamstore.server.fs.BlockGZIPOutputFile;
+import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.streamstore.server.fs.LockingFileOutputStream;
+import stroom.streamstore.server.fs.UncompressedInputStream;
+import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
+import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
+import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
+import stroom.streamstore.server.fs.serializable.SegmentOutputStream;
+import stroom.util.io.FileUtil;
+import stroom.util.io.StreamUtil;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -28,18 +40,6 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-
-import stroom.streamstore.server.fs.BlockGZIPInputFile;
-import stroom.streamstore.server.fs.BlockGZIPOutputFile;
-import stroom.streamstore.server.fs.FileSystemUtil;
-import stroom.streamstore.server.fs.LockingFileOutputStream;
-import stroom.streamstore.server.fs.UncompressedInputStream;
-import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
-import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.server.fs.serializable.SegmentOutputStream;
-import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
 
 public class BenchmarkIO {
     private static final int MB = 1000000;

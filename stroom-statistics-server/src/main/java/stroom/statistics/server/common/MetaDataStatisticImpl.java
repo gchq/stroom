@@ -16,15 +16,9 @@
 
 package stroom.statistics.server.common;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
-
 import stroom.statistic.server.MetaDataStatistic;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
@@ -34,6 +28,10 @@ import stroom.util.date.DateUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomStartup;
 import stroom.util.zip.HeaderMap;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This is deliberately not declared as a component as the StatisticsConfiguration creates the bean.
@@ -98,13 +96,12 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
                 return null;
             }
         }
-        return new StatisticEvent(timeMs, template.getName(), statisticTagList, increment);
-
+        return StatisticEvent.createCount(timeMs, template.getName(), statisticTagList, increment);
     }
 
     @Override
     public void recordStatistics(final HeaderMap metaData) {
-        if (templates != null && templates.size() > 0) {
+        if (statisticEventStore != null && templates != null) {
             for (final MetaDataStatisticTemplate template : templates) {
                 try {
                     final StatisticEvent statisticEvent = buildStatisticEvent(template, metaData);
@@ -114,7 +111,7 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
                         LOGGER.trace("recordStatistics() - abort {}", metaData);
                     }
                 } catch (final Exception ex) {
-                    LOGGER.trace("recordStatistics() - abort {}", metaData, ex);
+                    LOGGER.error("recordStatistics() - abort {}", metaData, ex);
                 }
             }
         }

@@ -16,6 +16,11 @@
 
 package stroom.util.config;
 
+import stroom.util.AbstractCommandLineTool;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -29,12 +34,6 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
-
-import stroom.util.AbstractCommandLineTool;
 
 /**
  * Usage java stroom.util.config.Configure <parameter file> <files to

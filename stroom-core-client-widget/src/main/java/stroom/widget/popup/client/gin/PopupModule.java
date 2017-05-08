@@ -17,7 +17,6 @@
 package stroom.widget.popup.client.gin;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-
 import stroom.widget.popup.client.presenter.PopupManager;
 
 public class PopupModule extends AbstractPresenterModule {
