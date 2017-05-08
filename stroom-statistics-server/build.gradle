@@ -25,7 +25,6 @@ dependencies {
 
     compile urlDependencies.get(versions.stroomQueryCommon)
     compile urlDependencies.get(versions.hadoopCommonShaded) 
-    //compile urlDependencies.get(versions.hbaseCommonShaded)
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

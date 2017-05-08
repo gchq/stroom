@@ -13,7 +13,6 @@ dependencies {
     compile 'com.google.inject:guice:3.0'
     compile 'com.gwtplatform:gwtp-mvp-client:0.7'
 
-
     testCompile project(path: ':stroom-util')
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile 'junit:junit:4.12'

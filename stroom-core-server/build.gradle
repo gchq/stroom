@@ -34,9 +34,9 @@ dependencies {
     compile 'org.hibernate:hibernate-entitymanager:4.3.8.Final'  /* LATEST 5.2.5.Final */
     permitUnusedDeclared 'org.hibernate:hibernate-entitymanager:4.3.8.Final'  /* LATEST 5.2.5.Final */
 
-    //dropwizard 1.0.6 uses hibernate-validator 5.2.4.Final 
-    //dropwizard 1.1.0 uses hibernate-validator 5.3.4.Final
-    //so be consistent with dropwizard to avoid problems with different versions of javax.el
+    // dropwizard 1.0.6 uses hibernate-validator 5.2.4.Final
+    // dropwizard 1.1.0 uses hibernate-validator 5.3.4.Final
+    // so be consistent with dropwizard to avoid problems with different versions of javax.el
     compile 'org.hibernate:hibernate-validator:5.3.4.Final'  /* LATEST 5.4.1.Final */
     permitUnusedDeclared 'org.hibernate:hibernate-validator:5.3.4.Final'  /* LATEST 5.4.1.Final */
 
@@ -46,12 +46,11 @@ dependencies {
     compile 'org.flywaydb:flyway-core:4.0.3'
     compile 'org.hsqldb:hsqldb:2.3.4'
     permitUnusedDeclared 'org.hsqldb:hsqldb:2.3.4'
-
     compile 'mysql:mysql-connector-java:5.1.40' /* LATEST 6.0.5 */
     permitUnusedDeclared 'mysql:mysql-connector-java:5.1.40' /* LATEST 6.0.5 */
+
     compile 'org.apache.lucene:lucene-core:5.5.3' /* LATEST 6.3.0 */
     permitUnusedDeclared 'org.apache.lucene:lucene-core:5.5.3' /* LATEST 6.3.0 */
-//    compile 'org.apache.lucene:lucene-backward-codecs:5.5.3' /* LATEST 6.3.0 */
     compile 'org.apache.lucene:lucene-analyzers-common:5.5.3' /* LATEST 6.3.0 */
     permitUnusedDeclared 'org.apache.lucene:lucene-analyzers-common:5.5.3' /* LATEST 6.3.0 */
     compile 'org.apache.lucene:lucene-queryparser:5.5.3' /* LATEST 6.3.0 */
