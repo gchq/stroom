@@ -63,10 +63,6 @@ dependencies {
     compile ("io.dropwizard:dropwizard-assets:1.1.0" ) {
         exclude ( group: "org.glassfish.web", module: "javax.el" )
     }
-    compile 'org.glassfish:javax.el:3.0.1-b08'
-    permitUnusedDeclared 'org.glassfish:javax.el:3.0.1-b08'
-    compile 'javax.el:javax.el-api:3.0.0'
-    permitUnusedDeclared 'javax.el:javax.el-api:3.0.0'
 
     compile 'io.dropwizard.metrics:metrics-annotation:3.1.2'
     compile 'io.dropwizard:dropwizard-jersey:1.0.6'
