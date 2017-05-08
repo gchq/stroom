@@ -17,5 +17,5 @@ logging:
       logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{5} - %X{code} %msg %n"
       timeZone: UTC
 
-zookeeperUrl: 172.20.0.5:2181
+zookeeperUrl: 172.18.0.2:2181
 hostNameOrIpAddress: localhost:8080

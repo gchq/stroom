@@ -133,5 +133,5 @@ urlDependencies {
     compile(versions.hadoopHdfsShaded,
         'https://github.com/gchq/hadoop-hdfs-shaded/releases/download/v2.6.4/hadoop-hdfs-shaded-v2.6.4-all.jar')
     compile(versions.hadoopCommonShaded,
-        'https://github.com/gchq/hadoop-common-shaded/releases/download/v2.6.4-all/hadoop-common-shaded-v2.6.4-all.jar')
+        'https://github.com/gchq/hadoop-common-shaded/releases/download/v2.6.4/hadoop-common-shaded-v2.6.4-all.jar')
 }
