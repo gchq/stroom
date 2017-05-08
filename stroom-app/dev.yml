@@ -18,3 +18,4 @@ logging:
       timeZone: UTC
 
 zookeeperUrl: 172.20.0.5:2181
+hostNameOrIpAddress: localhost:8080

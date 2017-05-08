@@ -127,11 +127,11 @@ urlDependencies {
     compile(versions.stroomExpression,
         'https://github.com/gchq/stroom-expression/releases/download/v0.1.0/stroom-expression-v0.1.0.jar')
     compile(versions.eventLogging,
-            'https://github.com/gchq/event-logging/releases/download/v3.1.0/event-logging-v3.1.0.jar')
+        'https://github.com/gchq/event-logging/releases/download/v3.1.0/event-logging-v3.1.0.jar')
 //    compile(versions.hbaseCommonShaded,
 //    'https://github.com/gchq/hbase-common-shaded/releases/download/v1.2.1-all/hbase-common-shaded-v1.2.1-all.jar')
     compile(versions.hadoopHdfsShaded,
-            'https://github.com/gchq/hadoop-hdfs-shaded/releases/download/v2.6.4-2-all/hadoop-hdfs-shaded-v2.6.4-2-all.jar')
+        'https://github.com/gchq/hadoop-hdfs-shaded/releases/download/v2.6.4/hadoop-hdfs-shaded-v2.6.4-all.jar')
     compile(versions.hadoopCommonShaded,
-    'https://github.com/gchq/hadoop-common-shaded/releases/download/v2.6.4-2-all/hadoop-common-shaded-v2.6.4-2-all.jar')
+        'https://github.com/gchq/hadoop-common-shaded/releases/download/v2.6.4-all/hadoop-common-shaded-v2.6.4-all.jar')
 }

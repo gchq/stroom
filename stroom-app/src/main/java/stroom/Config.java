@@ -27,7 +27,15 @@ public class Config extends Configuration {
     @Valid
     private String zookeeperUrl;
 
+    @NotNull
+    @Valid
+    private String hostNameOrIpAddress;
+
     public String getZookeeperUrl() {
         return zookeeperUrl;
+    }
+
+    public String getHostNameOrIpAddress() {
+        return hostNameOrIpAddress;
     }
 }

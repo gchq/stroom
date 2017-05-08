@@ -57,21 +57,21 @@ public class App extends Application<Config> {
         Resources resources = new Resources(environment.jersey(), servlets.upgradeDispatcherServletHolder);
         HealthChecks healthChecks = new HealthChecks(environment.healthChecks(), resources);
 
-        createServiceDiscovery(configuration, "TODO: IPADDRESS");
+        createServiceDiscovery(configuration);
     }
 
-    private void createServiceDiscovery(Config config, String ipAddress) {
+    private void createServiceDiscovery(Config config) {
         LOGGER.info("Starting Curator client using Zookeeper at '{}'...", config.getZookeeperUrl());
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
         CuratorFramework client = CuratorFrameworkFactory.newClient(config.getZookeeperUrl(), retryPolicy);
         client.start();
 
         try {
-            LOGGER.info("Setting up instance for '{}' service, running on '{}:{}'...", "stroom", ipAddress, port);
+            LOGGER.info("Setting up instance for '{}' service, running on '{}:{}'...", "stroom", config.getHostNameOrIpAddress(), port);
             ServiceInstance<String> instance = ServiceInstance.<String>builder()
                     .serviceType(ServiceType.PERMANENT)
                     .name("stroom")
-                    .address(ipAddress)
+                    .address(config.getHostNameOrIpAddress())
                     .port(8080)
                     .build();
 
