@@ -37,6 +37,8 @@ public class App extends Application<Config> {
     private final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) throws Exception {
+        // Hibernate requires JBoss Logging. The SLF4J API jar wasn't being detected so this sets it manually.
+        System.setProperty("org.jboss.logging.provider", "slf4j");
         new App().run(args);
     }
 
