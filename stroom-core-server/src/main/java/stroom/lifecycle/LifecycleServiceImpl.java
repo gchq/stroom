@@ -18,26 +18,27 @@ package stroom.lifecycle;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.jobsystem.server.ScheduledTaskExecutor;
 import stroom.security.SecurityContext;
 import stroom.task.server.StroomThreadGroup;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
+import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
+import stroom.util.spring.ContextAwareService;
 import stroom.util.spring.StroomBeanLifeCycle;
 import stroom.util.spring.StroomBeanMethodExecutable;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.ContextAwareService;
 import stroom.util.task.ServerTask;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.ThreadScopeRunnable;
 import stroom.util.thread.ThreadUtil;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -52,39 +53,58 @@ public class LifecycleServiceImpl implements ContextAwareService {
     private static final int ONE_SECOND = 1000;
     private static final long DEFAULT_INTERVAL = 10 * ONE_SECOND;
 
-    // Time to wait between executions (in milliseconds).
-    private long executionInterval = DEFAULT_INTERVAL;
+    private final TaskManager taskManager;
+    private final StroomBeanLifeCycle stroomBeanLifeCycle;
+    private final StroomEntityManager entityManager;
+    private final ScheduledTaskExecutor scheduledTaskExecutor;
+    private final SecurityContext securityContext;
 
     // The scheduled executor that executes executable beans.
     private ScheduledExecutorService scheduledExecutorService;
 
-    @Resource
-    private TaskManager taskManager;
-    @Resource
-    private StroomBeanLifeCycle stroomBeanLifeCycle;
-    @Resource
-    private StroomEntityManager entityManager;
-    @Resource
-    private StroomBeanStore stroomBeanStore;
-    @Resource
-    private ScheduledTaskExecutor scheduledTaskExecutor;
-    @Resource
-    private SecurityContext securityContext;
-
     private final AtomicInteger startingBeanCount = new AtomicInteger();
     private final AtomicInteger stoppingBeanCount = new AtomicInteger();
 
-    @Value("#{propertyConfigurer.getProperty('stroom.startOnLoad')}")
-    private boolean useLifecycle = true;
     private boolean startingUp = false;
     private boolean running = false;
+    private boolean enabled;
+    private long executionInterval;
+
+    @Inject
+    public LifecycleServiceImpl(final TaskManager taskManager,
+                                final StroomBeanLifeCycle stroomBeanLifeCycle,
+                                final StroomEntityManager entityManager,
+                                final ScheduledTaskExecutor scheduledTaskExecutor,
+                                final SecurityContext securityContext,
+                                @Value("#{propertyConfigurer.getProperty('stroom.lifecycle.enabled')}") final String enabled,
+                                @Value("#{propertyConfigurer.getProperty('stroom.lifecycle.executionInterval')}") final String executionIntervalString) {
+        this.taskManager = taskManager;
+        this.stroomBeanLifeCycle = stroomBeanLifeCycle;
+        this.entityManager = entityManager;
+        this.scheduledTaskExecutor = scheduledTaskExecutor;
+        this.securityContext = securityContext;
+        this.enabled = PropertyUtil.toBoolean(enabled, false);
+
+        Long executionInterval;
+        try {
+            executionInterval = ModelStringUtil.parseDurationString(executionIntervalString);
+            if (executionInterval == null) {
+                executionInterval = DEFAULT_INTERVAL;
+            }
+        } catch (final NumberFormatException e) {
+            LOGGER.error("Unable to parse property 'stroom.lifecycle.executionInterval' value '" + executionIntervalString
+                    + "', using default of '10s' instead", e);
+            executionInterval = DEFAULT_INTERVAL;
+        }
+        this.executionInterval = executionInterval;
+    }
 
     /**
      * Called when the application context is initialised.
      */
     @Override
     public void init() {
-        if (useLifecycle) {
+        if (enabled) {
             // Do this async so that we don't delay starting the web app up
             new Thread(() -> {
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
@@ -101,20 +121,9 @@ public class LifecycleServiceImpl implements ContextAwareService {
     @Override
     public void destroy() {
         LOGGER.debug("contextDestroyed()");
-        if (useLifecycle) {
+        if (enabled) {
             shutdown();
         }
-    }
-
-    /**
-     * Determines whether the lifecycle service will be used application server
-     * is loaded.
-     *
-     * @param useLifecycle True if we want to use the lifecycle when the application
-     *                     server is loaded.
-     */
-    public void setUseLifecycle(final boolean useLifecycle) {
-        this.useLifecycle = useLifecycle;
     }
 
     public void startup() {
@@ -138,7 +147,7 @@ public class LifecycleServiceImpl implements ContextAwareService {
             protected void exec() {
                 if (lock.tryLock()) {
 
-                    securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER);
+                    securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
                     try {
                         Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
                         scheduledTaskExecutor.execute();
@@ -234,13 +243,5 @@ public class LifecycleServiceImpl implements ContextAwareService {
 
     public boolean isRunning() {
         return running;
-    }
-
-    public void setExecutionInterval(final long executionInterval, final TimeUnit unit) {
-        this.executionInterval = TimeUnit.MILLISECONDS.convert(executionInterval, unit);
-    }
-
-    public void setExecutionIntervalMillis(final long executionInterval) {
-        this.executionInterval = executionInterval;
     }
 }

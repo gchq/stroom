@@ -16,6 +16,7 @@
 
 package stroom.entity.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceCopyAction;
@@ -23,10 +24,12 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = EntityServiceCopyAction.class)
+@Scope(value = StroomScope.TASK)
 class EntityServiceCopyHandler
         extends AbstractTaskHandler<EntityServiceCopyAction<DocumentEntity>, DocumentEntity> {
     private final EntityServiceBeanRegistry beanRegistry;
@@ -57,7 +60,7 @@ class EntityServiceCopyHandler
 
         try {
             // Validate the entity name.
-            NameValidationUtil.validate(entityService, entity);
+            NameValidationUtil.validate(entityService, action.getName());
 
             result = entityService.copy(entity, action.getFolder(), action.getName(), action.getPermissionInheritance());
             entityEventLog.create(result);

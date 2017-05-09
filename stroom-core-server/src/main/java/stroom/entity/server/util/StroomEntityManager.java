@@ -16,15 +16,14 @@
 
 package stroom.entity.server.util;
 
-import java.util.List;
-
-import javax.persistence.FlushModeType;
-
-import stroom.entity.shared.Entity;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.Entity;
 import stroom.entity.shared.Flushable;
 import stroom.entity.shared.SummaryDataRow;
+
+import javax.persistence.FlushModeType;
+import java.util.List;
 
 public interface StroomEntityManager extends Flushable {
     <T extends Entity> T loadEntity(Class<?> clazz, T entity);
@@ -51,6 +50,9 @@ public interface StroomEntityManager extends Flushable {
 
     @SuppressWarnings("rawtypes")
     List executeQueryResultList(SQLBuilder sql, BaseCriteria criteria);
+
+    @SuppressWarnings("rawtypes")
+    List executeQueryResultList(SQLBuilder sql, BaseCriteria criteria, boolean allowCaching);
 
     long executeQueryLongResult(SQLBuilder sql);
 

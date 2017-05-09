@@ -19,7 +19,6 @@ package stroom.menubar.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-
 import stroom.widget.menu.client.presenter.MenuItems;
 
 public class BeforeRevealMenubarEvent extends GwtEvent<BeforeRevealMenubarEvent.Handler> {

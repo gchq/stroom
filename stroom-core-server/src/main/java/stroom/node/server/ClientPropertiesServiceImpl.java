@@ -16,12 +16,12 @@
 
 package stroom.node.server;
 
+import org.springframework.stereotype.Component;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.util.BuildInfoUtil;
 import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
-import org.springframework.stereotype.Component;
 
 @Component
 public class ClientPropertiesServiceImpl implements ClientPropertiesService {

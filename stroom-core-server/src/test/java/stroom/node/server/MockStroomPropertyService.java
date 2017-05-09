@@ -16,14 +16,13 @@
 
 package stroom.node.server;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
-
 import stroom.util.spring.PropertyProvider;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class MockStroomPropertyService extends PropertyPlaceholderConfigurer
         implements StroomPropertyService, PropertyProvider {

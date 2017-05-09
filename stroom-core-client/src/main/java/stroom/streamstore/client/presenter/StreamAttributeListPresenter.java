@@ -16,20 +16,14 @@
 
 package stroom.streamstore.client.presenter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.data.table.client.CellTableView;
 import stroom.data.table.client.CellTableViewImpl;
 import stroom.data.table.client.CellTableViewImpl.DefaultResources;
@@ -39,6 +33,9 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MySingleSelectionModel;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class StreamAttributeListPresenter
         extends MyPresenterWidget<StreamAttributeListPresenter.StreamAttributeListView>
@@ -62,9 +59,9 @@ public class StreamAttributeListPresenter
         super(eventBus, view);
         this.streamAttributePresenter = streamAttributePresenter;
 
-        selectionModel = new MySingleSelectionModel<StreamAttributeCondition>();
+        selectionModel = new MySingleSelectionModel<>();
 
-        list = new CellTableViewImpl<StreamAttributeCondition>(true, (Resources) GWT.create(DefaultResources.class));
+        list = new CellTableViewImpl<>(true, GWT.create(DefaultResources.class));
         // Text.
         final Column<StreamAttributeCondition, String> textColumn = new Column<StreamAttributeCondition, String>(
                 new TextCell()) {
@@ -99,16 +96,11 @@ public class StreamAttributeListPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-            @Override
-            public void onSelectionChange(final SelectionChangeEvent event) {
-                enableButtons();
-            }
-        }));
+        registerHandler(selectionModel.addSelectionChangeHandler(event -> enableButtons()));
     }
 
     public void read(final List<StreamAttributeCondition> data) {
-        this.data = new ArrayList<StreamAttributeCondition>(data);
+        this.data = new ArrayList<>(data);
         refresh();
         enableButtons();
     }

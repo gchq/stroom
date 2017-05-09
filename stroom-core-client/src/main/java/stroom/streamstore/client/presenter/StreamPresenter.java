@@ -31,12 +31,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
+import stroom.core.client.LocationManager;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.dispatch.client.ExportFileCompleteHandler;
+import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseEntity;
@@ -61,8 +60,6 @@ import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.util.shared.SharedList;
-import stroom.util.shared.SharedLong;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.button.client.ImageButtonView;
@@ -82,6 +79,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     public static final String STREAM_RELATION_LIST = "STREAM_RELATION_LIST";
     public static final String STREAM_LIST = "STREAM_LIST";
 
+    private final LocationManager locationManager;
     private final StreamListPresenter streamListPresenter;
     private final StreamRelationListPresenter streamRelationListPresenter;
     private final DataPresenter dataPresenter;
@@ -106,13 +104,14 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private ImageButtonView streamRelationListProcess;
 
     @Inject
-    public StreamPresenter(final EventBus eventBus, final StreamView view,
+    public StreamPresenter(final EventBus eventBus, final StreamView view, final LocationManager locationManager,
                            final StreamListPresenter streamListPresenter,
                            final StreamRelationListPresenter streamRelationListPresenter, final DataPresenter dataPresenter,
                            final Provider<StreamFilterPresenter> streamListFilterPresenter,
                            final Provider<StreamUploadPresenter> streamUploadPresenter, final Resources resources,
                            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
         super(eventBus, view);
+        this.locationManager = locationManager;
         this.streamListPresenter = streamListPresenter;
         this.streamRelationListPresenter = streamRelationListPresenter;
         this.streamListFilterPresenter = streamListFilterPresenter;
@@ -224,9 +223,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         registerHandler(streamListPresenter.addDataSelectionHandler(event -> setStreamListSelectableEnabled(event.getSelectedItem(),
                 findStreamAttributeMapCriteria.getFindStreamCriteria().obtainStatusSet().getSingleItem())));
         registerHandler(streamRelationListPresenter.getSelectionModel().addSelectionHandler(event -> showData()));
-        registerHandler(
-                streamRelationListPresenter.addDataSelectionHandler(event -> setStreamRelationListSelectableEnabled(event.getSelectedItem(), findStreamAttributeMapCriteria
-                        .getFindStreamCriteria().obtainStatusSet().getSingleItem())));
+        registerHandler(streamRelationListPresenter.addDataSelectionHandler(event -> setStreamRelationListSelectableEnabled(event.getSelectedItem(), findStreamAttributeMapCriteria
+                .getFindStreamCriteria().obtainStatusSet().getSingleItem())));
 
         registerHandler(streamListFilter.addClickHandler(event -> {
             final StreamFilterPresenter presenter = streamListFilterPresenter.get();
@@ -244,17 +242,13 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                                 ConfirmEvent.fire(StreamPresenter.this,
                                         "You are setting advanced filters!  It is recommendend you constrain your filter (e.g. by 'Created') to avoid an expensive query.  "
                                                 + "Are you sure you want to apply this advanced filter?",
-                                        new ConfirmCallback() {
-                                            @Override
-                                            public void onResult(final boolean confirm) {
-                                                if (confirm) {
-                                                    applyCriteriaAndShow(presenter);
-                                                    HidePopupEvent.fire(StreamPresenter.this, presenter);
-                                                } else {
-                                                    // Don't hide
-                                                }
+                                        confirm -> {
+                                            if (confirm) {
+                                                applyCriteriaAndShow(presenter);
+                                                HidePopupEvent.fire(StreamPresenter.this, presenter);
+                                            } else {
+                                                // Don't hide
                                             }
-
                                         });
 
                             } else {
@@ -283,17 +277,9 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                             findStreamAttributeMapCriteria.getFindStreamCriteria().obtainStatusSet()
                                     .getSingleItem());
 
-                    // Get a new list of streams.
+                    // Clear the current selection and get a new list of streams.
+                    streamListPresenter.getSelectionModel().clear();
                     streamListPresenter.refresh();
-
-                    // If something is selected refresh the
-                    // relations
-                    if (streamListPresenter.getSelectedStream() != null) {
-                        streamRelationListPresenter.setSelectedStream(streamListPresenter.getSelectedStream(), true,
-                                !StreamStatus.UNLOCKED.equals(getCriteria().obtainStatusSet().getSingleItem()));
-                    }
-
-                    showData();
                 }
             };
 
@@ -304,20 +290,15 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
         // Some button's may not exist due to permissions
         if (streamListUpload != null) {
-            registerHandler(streamListUpload.addClickHandler(new ClickHandler() {
-                @Override
-                public void onClick(final ClickEvent event) {
-                    streamUploadPresenter.get().show(StreamPresenter.this, DocRefUtil.create(feedCriteria));
-                }
-            }));
+            registerHandler(streamListUpload.addClickHandler(event -> streamUploadPresenter.get().show(StreamPresenter.this, DocRefUtil.create(feedCriteria))));
         }
         if (streamListDownload != null) {
             registerHandler(streamListDownload
-                    .addClickHandler(new DownloadStreamClickHandler(this, streamListPresenter, true, dispatcher)));
+                    .addClickHandler(new DownloadStreamClickHandler(this, streamListPresenter, true, dispatcher, locationManager)));
         }
         if (streamRelationListDownload != null) {
             registerHandler(streamRelationListDownload.addClickHandler(
-                    new DownloadStreamClickHandler(this, streamRelationListPresenter, false, dispatcher)));
+                    new DownloadStreamClickHandler(this, streamRelationListPresenter, false, dispatcher, locationManager)));
         }
         // Delete
         if (streamListDelete != null) {
@@ -681,15 +662,18 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     private static class DownloadStreamClickHandler extends AbstractStreamClickHandler {
+        private final LocationManager locationManager;
+
         public DownloadStreamClickHandler(final StreamPresenter streamPresenter,
                                           final AbstractStreamListPresenter streamListPresenter, final boolean useCriteria,
-                                          final ClientDispatchAsync dispatcher) {
+                                          final ClientDispatchAsync dispatcher, final LocationManager locationManager) {
             super(streamPresenter, streamListPresenter, useCriteria, dispatcher);
+            this.locationManager = locationManager;
         }
 
         @Override
         protected void performAction(final FindStreamCriteria criteria, final ClientDispatchAsync dispatcher) {
-            dispatcher.execute(new DownloadDataAction(criteria), new ExportFileCompleteHandler(null));
+            dispatcher.exec(new DownloadDataAction(criteria)).onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result));
         }
     }
 
@@ -726,47 +710,35 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             } else {
                 ConfirmEvent.fire(this,
                         "Are you sure you want to " + getDeleteText(deleteCriteria, false).toLowerCase() + " the selected items?",
-                        new ConfirmCallback() {
-                            @Override
-                            public void onResult(final boolean confirm) {
-                                if (confirm) {
-                                    if (!deleteCriteria.getStreamIdSet().isConstrained()) {
-                                        ConfirmEvent.fireWarn(DeleteStreamClickHandler.this,
-                                                "You have selected all items.  Are you sure you want to "
-                                                        + getDeleteText(deleteCriteria, false).toLowerCase() + " all the selected items?",
-                                                new ConfirmCallback() {
-                                                    @Override
-                                                    public void onResult(final boolean confirm) {
-                                                        if (confirm) {
-                                                            doDelete(deleteCriteria, dispatcher);
-                                                        }
-                                                    }
-                                                });
+                        confirm -> {
+                            if (confirm) {
+                                if (!deleteCriteria.getStreamIdSet().isConstrained()) {
+                                    ConfirmEvent.fireWarn(DeleteStreamClickHandler.this,
+                                            "You have selected all items.  Are you sure you want to "
+                                                    + getDeleteText(deleteCriteria, false).toLowerCase() + " all the selected items?",
+                                            confirm1 -> {
+                                                if (confirm1) {
+                                                    doDelete(deleteCriteria, dispatcher);
+                                                }
+                                            });
 
-                                    } else {
-                                        doDelete(deleteCriteria, dispatcher);
-                                    }
+                                } else {
+                                    doDelete(deleteCriteria, dispatcher);
                                 }
                             }
-
                         });
             }
         }
 
         void doDelete(final FindStreamCriteria criteria, final ClientDispatchAsync dispatcher) {
-            dispatcher.execute(new EntityServiceFindDeleteAction<FindStreamCriteria, Stream>(criteria),
-                    new AsyncCallbackAdaptor<SharedLong>() {
-                        @Override
-                        public void onSuccess(final SharedLong result) {
-                            getStreamListPresenter().getSelectedEntityIdSet().clear();
-                            getStreamListPresenter().getSelectedEntityIdSet().setMatchAll(false);
+            dispatcher.exec(new EntityServiceFindDeleteAction<FindStreamCriteria, Stream>(criteria)).onSuccess(result -> {
+                getStreamListPresenter().getSelectedEntityIdSet().clear();
+                getStreamListPresenter().getSelectedEntityIdSet().setMatchAll(false);
 
-                            AlertEvent.fireInfo(DeleteStreamClickHandler.this,
-                                    getDeleteText(criteria, true) + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), () -> refreshList());
-                        }
-                    });
+                AlertEvent.fireInfo(DeleteStreamClickHandler.this,
+                        getDeleteText(criteria, true) + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), () -> refreshList());
+            });
         }
-
     }
 
     private static class ProcessStreamClickHandler extends AbstractStreamClickHandler {
@@ -779,39 +751,32 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         @Override
         protected void performAction(final FindStreamCriteria criteria, final ClientDispatchAsync dispatcher) {
             if (criteria != null) {
-                ConfirmEvent.fire(this, "Are you sure you want to reprocess the selected items", new ConfirmCallback() {
-                    @Override
-                    public void onResult(final boolean confirm) {
-                        if (confirm) {
-                            dispatcher.execute(new ReprocessDataAction(criteria),
-                                    new AsyncCallbackAdaptor<SharedList<ReprocessDataInfo>>() {
-                                        @Override
-                                        public void onSuccess(final SharedList<ReprocessDataInfo> result) {
-                                            if (result != null && result.size() > 0) {
-                                                for (final ReprocessDataInfo info : result) {
-                                                    switch (info.getSeverity()) {
-                                                        case INFO:
-                                                            AlertEvent.fireInfo(ProcessStreamClickHandler.this, info.getMessage(),
-                                                                    info.getDetails(), null);
-                                                            break;
-                                                        case WARNING:
-                                                            AlertEvent.fireWarn(ProcessStreamClickHandler.this, info.getMessage(),
-                                                                    info.getDetails(), null);
-                                                            break;
-                                                        case ERROR:
-                                                            AlertEvent.fireError(ProcessStreamClickHandler.this, info.getMessage(),
-                                                                    info.getDetails(), null);
-                                                            break;
-                                                        case FATAL_ERROR:
-                                                            AlertEvent.fireError(ProcessStreamClickHandler.this, info.getMessage(),
-                                                                    info.getDetails(), null);
-                                                            break;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    });
-                        }
+                ConfirmEvent.fire(this, "Are you sure you want to reprocess the selected items", confirm -> {
+                    if (confirm) {
+                        dispatcher.exec(new ReprocessDataAction(criteria)).onSuccess(result -> {
+                            if (result != null && result.size() > 0) {
+                                for (final ReprocessDataInfo info : result) {
+                                    switch (info.getSeverity()) {
+                                        case INFO:
+                                            AlertEvent.fireInfo(ProcessStreamClickHandler.this, info.getMessage(),
+                                                    info.getDetails(), null);
+                                            break;
+                                        case WARNING:
+                                            AlertEvent.fireWarn(ProcessStreamClickHandler.this, info.getMessage(),
+                                                    info.getDetails(), null);
+                                            break;
+                                        case ERROR:
+                                            AlertEvent.fireError(ProcessStreamClickHandler.this, info.getMessage(),
+                                                    info.getDetails(), null);
+                                            break;
+                                        case FATAL_ERROR:
+                                            AlertEvent.fireError(ProcessStreamClickHandler.this, info.getMessage(),
+                                                    info.getDetails(), null);
+                                            break;
+                                    }
+                                }
+                            }
+                        });
                     }
                 });
             }

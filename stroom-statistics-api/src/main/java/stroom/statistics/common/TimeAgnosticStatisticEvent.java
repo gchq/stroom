@@ -16,14 +16,14 @@
 
 package stroom.statistics.common;
 
+import stroom.statistics.shared.StatisticType;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import stroom.statistics.shared.StatisticType;
 
 public class TimeAgnosticStatisticEvent implements Serializable {
     private static final long serialVersionUID = 6308709037286356273L;
@@ -37,44 +37,39 @@ public class TimeAgnosticStatisticEvent implements Serializable {
     private final Map<String, Integer> tagPositionMap;
     private final int hashCode;
 
-    /**
-     * @param name
-     * @param tagList
-     *            Must be ordered by tag name. Can be null.
-     * @param count
-     */
-    public TimeAgnosticStatisticEvent(final String name, final List<StatisticTag> tagList, final Long count) {
+    private TimeAgnosticStatisticEvent(final String name, final List<StatisticTag> tagList, final Long count, final Double value, final StatisticType statisticType) {
         this.name = name;
         this.tagList = buildTagList(tagList);
-        this.tagPositionMap = buildTagPositionMap();
-        this.value = null;
+        ;
         this.count = count;
-        statisticType = StatisticType.COUNT;
-        hashCode = buildHashCode();
-
-        if (count == null) {
-            throw new IllegalArgumentException("Statistic must have a count or value");
-        }
+        this.value = value;
+        this.statisticType = statisticType;
+        this.tagPositionMap = buildTagPositionMap();
+        this.hashCode = buildHashCode();
     }
 
     /**
      * @param name
-     * @param tagList
-     *            Must be ordered by tag name. Can be null.
+     * @param tagList Must be ordered by tag name. Can be null.
+     * @param count
+     */
+    public static TimeAgnosticStatisticEvent createCount(final String name, final List<StatisticTag> tagList, final Long count) {
+        if (count == null) {
+            throw new IllegalArgumentException("Statistic must have a count");
+        }
+        return new TimeAgnosticStatisticEvent(name, tagList, count, null, StatisticType.COUNT);
+    }
+
+    /**
+     * @param name
+     * @param tagList Must be ordered by tag name. Can be null.
      * @param value
      */
-    public TimeAgnosticStatisticEvent(final String name, final List<StatisticTag> tagList, final Double value) {
-        this.name = name;
-        this.tagList = buildTagList(tagList);
-        this.tagPositionMap = buildTagPositionMap();
-        this.value = value;
-        this.count = null;
-        statisticType = StatisticType.VALUE;
-        hashCode = buildHashCode();
-
-        if (value == null && count == null) {
-            throw new IllegalArgumentException("Statistic must have a count or value");
+    public static TimeAgnosticStatisticEvent createValue(final String name, final List<StatisticTag> tagList, final Double value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Statistic must have a value");
         }
+        return new TimeAgnosticStatisticEvent(name, tagList, null, value, StatisticType.VALUE);
     }
 
     private List<StatisticTag> buildTagList(final List<StatisticTag> tagList) {
@@ -85,7 +80,7 @@ public class TimeAgnosticStatisticEvent implements Serializable {
 
             return Collections.unmodifiableList(tempTagList);
         } else {
-            return Collections.unmodifiableList(Collections.<StatisticTag> emptyList());
+            return Collections.unmodifiableList(Collections.<StatisticTag>emptyList());
         }
     }
 
@@ -129,8 +124,7 @@ public class TimeAgnosticStatisticEvent implements Serializable {
     }
 
     /**
-     * @param tagName
-     *            The name of the tag in a {@link StatisticTag} object
+     * @param tagName The name of the tag in a {@link StatisticTag} object
      * @return The position of the tag in the tag list (0 based)
      */
     public Integer getTagPosition(final String tagName) {

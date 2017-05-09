@@ -16,23 +16,22 @@
 
 package stroom.statistics.sql;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Matcher;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-
 import stroom.statistics.common.FilterOperationMode;
 import stroom.statistics.common.FilterTermsTree;
 import stroom.statistics.common.FilterTermsTree.OperatorNode;
 import stroom.statistics.common.FilterTermsTree.TermNode;
 import stroom.statistics.common.PrintableNode;
 import stroom.util.test.StroomUnitTest;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Matcher;
 
 public class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
     private static class Result {

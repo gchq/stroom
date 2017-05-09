@@ -16,18 +16,17 @@
 
 package stroom.streamstore.client.presenter;
 
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -44,7 +43,6 @@ import stroom.util.shared.StoredError;
 import stroom.util.shared.StreamLocation;
 import stroom.util.shared.Summary;
 import stroom.util.shared.TreeRow;
-import stroom.xmleditor.client.view.LeftBar;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,7 +52,7 @@ import java.util.List;
 public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>> {
     private static HashSet<Severity> ALL_SEVERITIES = new HashSet<Severity>(Arrays.asList(Severity.SEVERITIES));
 
-    private static LeftBar.Resources resources;
+    private static Resources resources;
     private HashSet<Severity> expandedSeverities;
     private DataPresenter dataPresenter;
 
@@ -63,7 +61,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
         super(eventBus, new DataGridViewImpl<Marker>(false, DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, null));
 
         if (resources == null) {
-            resources = GWT.create(LeftBar.Resources.class);
+            resources = GWT.create(Resources.class);
         }
 
         addExpanderColumn();
@@ -87,22 +85,19 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
                 return null;
             }
         };
-        expanderColumn.setFieldUpdater(new FieldUpdater<Marker, Expander>() {
-            @Override
-            public void update(final int index, final Marker marker, final Expander value) {
-                final Severity severity = marker.getSeverity();
-                if (severity != null) {
-                    if (expandedSeverities.contains(severity)) {
-                        expandedSeverities.remove(severity);
-                    } else {
-                        expandedSeverities.add(severity);
-                    }
+        expanderColumn.setFieldUpdater((index, marker, value) -> {
+            final Severity severity = marker.getSeverity();
+            if (severity != null) {
+                if (expandedSeverities.contains(severity)) {
+                    expandedSeverities.remove(severity);
+                } else {
+                    expandedSeverities.add(severity);
                 }
-
-                dataPresenter.update(true);
             }
+
+            dataPresenter.update(true);
         });
-        getView().addColumn(expanderColumn, "<br/>", 16);
+        getView().addColumn(expanderColumn, "<br/>", ColumnSizeConstants.CHECKBOX_COL);
     }
 
     private void addSeverityColumn() {
@@ -110,19 +105,19 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
             @Override
             public ImageResource getValue(final Marker marker) {
                 switch (marker.getSeverity()) {
-                case FATAL_ERROR:
-                    return resources.fatal();
-                case ERROR:
-                    return resources.error();
-                case WARNING:
-                    return resources.warning();
-                case INFO:
-                    return resources.info();
+                    case FATAL_ERROR:
+                        return resources.fatal();
+                    case ERROR:
+                        return resources.error();
+                    case WARNING:
+                        return resources.warning();
+                    case INFO:
+                        return resources.info();
                 }
 
                 return resources.warning();
             }
-        }, "", 18);
+        }, "", ColumnSizeConstants.GLYPH_COL);
     }
 
     private void addElementId() {
@@ -166,7 +161,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
 
                     // Make summery items bold.
                     final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                    builder.appendHtmlConstant("<div style=\"font-weight:bold;\">");
+                    builder.appendHtmlConstant("<div style=\"font-weight:500;\">");
                     builder.appendEscaped(sb.toString());
                     builder.appendHtmlConstant("</div>");
 
@@ -278,5 +273,15 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
 
     public void setDataPresenter(final DataPresenter dataPresenter) {
         this.dataPresenter = dataPresenter;
+    }
+
+    public interface Resources extends ClientBundle {
+        ImageResource info();
+
+        ImageResource warning();
+
+        ImageResource error();
+
+        ImageResource fatal();
     }
 }

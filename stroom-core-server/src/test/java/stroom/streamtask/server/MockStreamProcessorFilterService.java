@@ -16,6 +16,8 @@
 
 package stroom.streamtask.server;
 
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -25,8 +27,6 @@ import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.util.spring.StroomSpringProfiles;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 /**
  * Mock object.

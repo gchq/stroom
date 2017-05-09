@@ -16,11 +16,11 @@
 
 package stroom.pool.shared;
 
-import java.util.Comparator;
-
 import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.OrderBy;
 import stroom.util.shared.CompareUtil;
+
+import java.util.Comparator;
 
 public class FindPoolInfoCriteria extends FindNamedEntityCriteria implements Comparator<PoolInfo> {
     private static final long serialVersionUID = 2756271393367666136L;

@@ -31,7 +31,7 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.streamstore.client.presenter.StreamTypeUiManager;
 import stroom.streamstore.client.presenter.StreamUploadPresenter.DataUploadView;
 import stroom.streamstore.shared.StreamType;
-import stroom.widget.customdatebox.client.CustomDateBox;
+import stroom.widget.customdatebox.client.MyDateBox;
 
 public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
     private final Widget widget;
@@ -42,11 +42,12 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
     @UiField
     FileUpload fileUpload;
     @UiField
-    CustomDateBox effective;
+    MyDateBox effective;
     @UiField
     FormPanel form;
     @UiField
     TextArea metaData;
+
     @Inject
     public StreamUploadViewImpl(final Binder binder, final StreamTypeUiManager streamTypeUiManager) {
         streamType = new EntityItemListBox("");
@@ -76,7 +77,7 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
 
     @Override
     public Long getEffectiveDate() {
-        return effective.getLongValue();
+        return effective.getMilliseconds();
     }
 
     @Override

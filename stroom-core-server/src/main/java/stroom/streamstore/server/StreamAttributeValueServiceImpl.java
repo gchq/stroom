@@ -16,16 +16,16 @@
 
 package stroom.streamstore.server;
 
-import stroom.entity.server.CriteriaLoggingUtil;
-import stroom.entity.server.QueryAppender;
-import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
-import stroom.streamstore.shared.StreamAttributeValue;
 import event.logging.BaseAdvancedQueryItem;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.entity.server.CriteriaLoggingUtil;
+import stroom.entity.server.QueryAppender;
+import stroom.entity.server.SystemEntityServiceImpl;
+import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.StroomEntityManager;
+import stroom.streamstore.shared.StreamAttributeValue;
 
 import javax.inject.Inject;
 import java.util.List;

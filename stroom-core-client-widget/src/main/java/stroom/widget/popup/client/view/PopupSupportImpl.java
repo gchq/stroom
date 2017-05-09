@@ -16,16 +16,11 @@
 
 package stroom.widget.popup.client.view;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.gwtplatform.mvp.client.View;
-
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
@@ -33,6 +28,9 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupSupport;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PopupSupportImpl implements PopupSupport {
     private static final int POPUP_SHADOW_WIDTH = 9;
@@ -106,30 +104,27 @@ public class PopupSupportImpl implements PopupSupport {
         popupPanel.show();
         // Defer the command to position and make visible because we need the
         // popup to size first.
-        Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-            @Override
-            public void execute() {
-                if (popup != null) {
-                    // Now get the popup size.
-                    final int w = popupPanel.getOffsetWidth();
-                    final int h = popupPanel.getOffsetHeight();
+        Scheduler.get().scheduleDeferred(() -> {
+            if (popup != null) {
+                // Now get the popup size.
+                final int w = popupPanel.getOffsetWidth();
+                final int h = popupPanel.getOffsetHeight();
 
-                    if (popupPosition == null) {
-                        // Center the popup in the client window.
-                        centerPopup(popup, w, h);
-                    } else {
-                        // Position the popup so it is as close as possible to
-                        // the required location but is all on screen.
-                        positionPopup(popup, popupType, popupPosition, w, h);
-                    }
-
-                    // Make the popup visible.
-                    popupPanel.setVisible(true);
-                    popupPanel.getElement().getStyle().setOpacity(1);
-
-                    // Tell the view that the popup is visible if necessary.
-                    onShow();
+                if (popupPosition == null) {
+                    // Center the popup in the client window.
+                    centerPopup(popup, w, h);
+                } else {
+                    // Position the popup so it is as close as possible to
+                    // the required location but is all on screen.
+                    positionPopup(popup, popupType, popupPosition, w, h);
                 }
+
+                // Make the popup visible.
+                popupPanel.setVisible(true);
+                popupPanel.getElement().getStyle().setOpacity(1);
+
+                // Tell the view that the popup is visible if necessary.
+                onShow();
             }
         });
     }

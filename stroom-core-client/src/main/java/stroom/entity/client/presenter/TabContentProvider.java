@@ -16,18 +16,16 @@
 
 package stroom.entity.client.presenter;
 
+import com.google.inject.Provider;
+import com.gwtplatform.mvp.client.PresenterWidget;
+import stroom.entity.client.event.DirtyEvent.DirtyHandler;
+import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.widget.tab.client.presenter.TabData;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.inject.Provider;
-import com.gwtplatform.mvp.client.PresenterWidget;
-
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
-import stroom.entity.client.event.HasDirtyHandlers;
-import stroom.widget.tab.client.presenter.TabData;
 
 public class TabContentProvider<E> implements HasRead<E>, HasWrite<E> {
     private final Map<TabData, Provider<?>> tabProviders = new HashMap<TabData, Provider<?>>();
@@ -56,18 +54,15 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E> {
                 // Handle dirty events.
                 if (currentPresenter instanceof HasDirtyHandlers && dirtyHandler != null) {
                     final HasDirtyHandlers hasDirtyHandlers = (HasDirtyHandlers) currentPresenter;
-                    hasDirtyHandlers.addDirtyHandler(new DirtyHandler() {
-                        @Override
-                        public void onDirty(final DirtyEvent event) {
-                            if (event.isDirty()) {
-                                if (dirtyTabs == null) {
-                                    dirtyTabs = new HashSet<TabData>();
-                                }
-
-                                dirtyTabs.add(tab);
+                    hasDirtyHandlers.addDirtyHandler(event -> {
+                        if (event.isDirty()) {
+                            if (dirtyTabs == null) {
+                                dirtyTabs = new HashSet<TabData>();
                             }
-                            dirtyHandler.onDirty(event);
+
+                            dirtyTabs.add(tab);
                         }
+                        dirtyHandler.onDirty(event);
                     });
                 }
             }

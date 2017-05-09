@@ -41,23 +41,11 @@ public class UserAppPermissions implements SharedObject {
         return user;
     }
 
-    public void setUser(final UserRef user) {
-        this.user = user;
-    }
-
     public Set<String> getAllPermissions() {
         return allPermissions;
     }
 
-    public void setAllPermissions(final Set<String> allPermissions) {
-        this.allPermissions = allPermissions;
-    }
-
     public Set<String> getUserPermissons() {
         return userPermissons;
-    }
-
-    public void setUserPermissons(final Set<String> userPermissons) {
-        this.userPermissons = userPermissons;
     }
 }

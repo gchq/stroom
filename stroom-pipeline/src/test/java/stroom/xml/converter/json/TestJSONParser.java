@@ -16,6 +16,39 @@
 
 package stroom.xml.converter.json;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
+import stroom.pipeline.server.DefaultLocationFactory;
+import stroom.pipeline.server.LocationFactory;
+import stroom.pipeline.server.StreamLocationFactory;
+import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
+import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.server.filter.XMLFilter;
+import stroom.pipeline.server.filter.XMLFilterFork;
+import stroom.pipeline.server.writer.JSONWriter;
+import stroom.pipeline.server.writer.OutputStreamAppender;
+import stroom.pipeline.server.writer.XMLWriter;
+import stroom.test.ComparisonHelper;
+import stroom.test.StroomProcessTestFileUtil;
+import stroom.util.io.FileUtil;
+import stroom.util.io.IgnoreCloseInputStream;
+import stroom.util.io.StreamUtil;
+import stroom.util.shared.Indicators;
+import stroom.util.test.FileSystemTestUtil;
+import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+import stroom.xmlschema.server.MockXMLSchemaService;
+import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.shared.XMLSchemaService;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -32,40 +65,6 @@ import java.io.Writer;
 import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.test.StroomProcessTestFileUtil;
-import stroom.util.test.StroomUnitTest;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.xml.sax.InputSource;
-import org.xml.sax.XMLReader;
-
-import stroom.pipeline.server.DefaultLocationFactory;
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.StreamLocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
-import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
-import stroom.pipeline.server.filter.XMLFilter;
-import stroom.pipeline.server.filter.XMLFilterFork;
-import stroom.pipeline.server.writer.JSONWriter;
-import stroom.pipeline.server.writer.OutputStreamAppender;
-import stroom.pipeline.server.writer.XMLWriter;
-import stroom.test.ComparisonHelper;
-import stroom.util.io.FileUtil;
-import stroom.util.io.IgnoreCloseInputStream;
-import stroom.util.io.StreamUtil;
-import stroom.util.shared.Indicators;
-import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.FileSystemTestUtil;
-import stroom.xmlschema.server.MockXMLSchemaService;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
-import stroom.xmlschema.shared.XMLSchema;
-import stroom.xmlschema.shared.XMLSchemaService;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestJSONParser extends StroomUnitTest {

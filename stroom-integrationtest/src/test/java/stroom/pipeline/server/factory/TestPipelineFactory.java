@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.factory;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractProcessIntegrationTest;
 import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.shared.PipelineDataMerger;
@@ -23,10 +25,8 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.test.StroomProcessTestFileUtil;
 import stroom.test.PipelineTestUtil;
-import org.junit.Assert;
-import org.junit.Test;
+import stroom.test.StroomProcessTestFileUtil;
 
 import javax.annotation.Resource;
 import java.util.Map;

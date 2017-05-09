@@ -16,14 +16,6 @@
 
 package stroom.benchmark.server;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.XMLUtil;
@@ -39,6 +31,13 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
 import stroom.util.task.TaskMonitor;
+
+import javax.annotation.Resource;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
 
 public abstract class AbstractBenchmark {
     // FIXME : Do something with this....

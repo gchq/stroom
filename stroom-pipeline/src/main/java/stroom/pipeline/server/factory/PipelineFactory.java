@@ -16,10 +16,10 @@
 
 package stroom.pipeline.server.factory;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.pipeline.destination.DestinationProvider;
@@ -360,7 +360,7 @@ public class PipelineFactory {
             if (controller != null) {
                 if (parentElement != null && parentElement instanceof OutputRecorder) {
                     // If the parent element is already an output recorder used
-                    // to replace a writer then reuse the same output recorder
+                    // to replace a destination then reuse the same output recorder
                     // for any downstream elements.
                     fragment = new Fragment(parentElement);
                     addMonitor(elementId, elementType, childElement, fragment, controller);
@@ -533,6 +533,15 @@ public class PipelineFactory {
                 recorder.setSettings(steppingFilterSettings);
 
                 result = new Fragment(fragment.getIn(), recorder);
+
+            } else if (out instanceof XMLFilter && elementType.hasRole(PipelineElementType.ROLE_WRITER)) {
+                final XMLFilter filter = (XMLFilter) out;
+
+                final OutputRecorder outputRecorder = elementFactory.getElementInstance(OutputRecorder.class);
+                outputRecorder.setElementId(elementId);
+                ((HasTargets) filter).setTarget(outputRecorder);
+
+                result = new Fragment(fragment.getIn(), outputRecorder);
 
             } else if (out instanceof XMLFilter && (elementType.hasRole(PipelineElementType.ROLE_MUTATOR)
                     || elementType.hasRole(PipelineElementType.ROLE_VALIDATOR))) {

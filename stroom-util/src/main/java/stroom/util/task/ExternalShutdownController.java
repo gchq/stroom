@@ -16,10 +16,10 @@
 
 package stroom.util.task;
 
+import stroom.util.shared.TerminateHandler;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import stroom.util.shared.TerminateHandler;
 
 public class ExternalShutdownController {
     private static final Map<Object, TerminateHandler> terminateHandlers = new ConcurrentHashMap<Object, TerminateHandler>();

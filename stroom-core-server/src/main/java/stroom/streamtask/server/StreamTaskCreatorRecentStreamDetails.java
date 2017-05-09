@@ -16,12 +16,12 @@
 
 package stroom.streamtask.server;
 
+import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamtask.shared.StreamProcessorFilter;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamtask.shared.StreamProcessorFilter;
 
 /**
  * Holds info about streams seen since last query We use this to help only

@@ -76,7 +76,7 @@ public class StatusServlet extends HttpServlet {
 
     /**
      * Method interceptor needs to go on public API By-pass authentication / authorisation checks.
-     *
+     * <p>
      * This servlet is NOT protected by default and should be filtered by Apache access controls, see documentation for
      * details.
      */
@@ -89,7 +89,7 @@ public class StatusServlet extends HttpServlet {
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
             throws ServletException, IOException {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER);
+        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
         try {
             response.setContentType("text/plain");
 

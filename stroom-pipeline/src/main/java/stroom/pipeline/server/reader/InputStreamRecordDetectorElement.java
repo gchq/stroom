@@ -16,13 +16,12 @@
 
 package stroom.pipeline.server.reader;
 
-import java.io.InputStream;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.pipeline.server.task.RecordDetector;
 import stroom.pipeline.server.task.SteppingController;
+
+import java.io.InputStream;
 
 @Component
 @Scope("prototype")

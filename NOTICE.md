@@ -211,7 +211,7 @@ The table below includes licences for all Maven dependencies. Not included in th
 | junit                                     | junit                                        | 4.12             | EPL 1.0       |         |               |
 | com.mchange                               | mchange-commons-java                         | 0.2.9            | EPL 1.0       |         |               |
 | com.thoughtworks.paranamer                | paranamer                                    | 2.3              | EPL 1.0       |         |               |
-| mysql                                     | mysql-connector-java                         | 5.1.40           | GPL\*           |         |               |
+| mysql                                     | mysql-connector-java                         | 5.1.40           | GPL\*         |         |               |
 | net.sourceforge.findbugs                  | annotations                                  | 1.3.2            | LGPL          |         |               |
 | org.beanshell                             | bsh-core                                     | 2.0b4            | LGPL          |         |               |
 | com.github.stephenc.findbugs              | findbugs-annotations                         | 1.3.9-1          | LGPL          |         |               |
@@ -233,9 +233,11 @@ The table below includes licences for all Maven dependencies. Not included in th
 | xmlenc                                    | xmlenc                                       | 0.52             | MIT           |         |               |
 | net.sf.saxon                              | Saxon-HE                                     | 9.6.0-6          | MPL 1.0       |         |               |
 | aopalliance                               | aopalliance                                  | 1                | Public domain |         |               |
-| Font Awesome fonts                        | n/a                                          | 4.4.0            | SIL Open Font |         |               |
+| Font Awesome Fonts                        | n/a                                          | 4.4.0            | SIL Open Font |         |               |
 | Font Awesome code                         | n/a                                          | 4.4.0            | MIT           |         |               |
-| Roboto font                               | n/a                                          | n/a              | AL 2.0        |         |               |
+| Roboto Fonts                              | n/a                                          | n/a              | AL 2.0        |         |               |
+| Roboto Mono Fonts                         | n/a                                          | n/a              | AL 2.0        |         |               |
+| Droid Sans Mono Font                      | n/a                                          | n/a              | AL 2.0        |         |               |
 
 \* The mysql-client-connector is distributed under a GPL license but has exceptions that allow it to be distributed with OSS without requiring the GPL license to be applied to the OSS. See [http://www.mysql.com/about/legal/licensing/foss-exception/](http://www.mysql.com/about/legal/licensing/foss-exception/) for details.
 

@@ -21,12 +21,15 @@ import org.slf4j.LoggerFactory;
 import stroom.CommonTestControl;
 import stroom.dashboard.shared.Dashboard;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.Folder;
+import stroom.entity.shared.FolderService;
+import stroom.entity.shared.ImportState.ImportMode;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.importexport.server.ImportExportSerializer.ImportMode;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
@@ -56,15 +59,13 @@ import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.io.StreamUtil;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -88,6 +89,8 @@ public final class SetupSampleDataBean {
     private DBRealm dbRealm;
     @Resource
     private FeedService feedService;
+    @Resource
+    private FolderService folderService;
     @Resource
     private StreamStore streamStore;
     @Resource
@@ -141,14 +144,16 @@ public final class SetupSampleDataBean {
         LOGGER.info("Creating admin user");
         dbRealm.createOrRefreshAdmin();
 
+//        createRandomExplorerData(null, "", 0, 2);
+
         // Sample data/config can exist in many projects so here we define all
         // the root directories that we want to
         // process
-        final File[] rootDirs = new File[] { new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), ROOT_DIR_NAME),
-                new File("./stroom-statistics-server/src/test/resources", ROOT_DIR_NAME) };
+        final Path[] rootDirs = new Path[]{StroomCoreServerTestFileUtil.getTestResourcesDir().toPath().resolve(ROOT_DIR_NAME),
+                Paths.get("./stroom-statistics-server/src/test/resources").resolve(ROOT_DIR_NAME)};
 
         // process each root dir in turn
-        for (final File dir : rootDirs) {
+        for (final Path dir : rootDirs) {
             loadDirectory(shutdown, dir);
         }
 
@@ -247,15 +252,15 @@ public final class SetupSampleDataBean {
         }
     }
 
-    public void loadDirectory(final boolean shutdown, final File importRootDir) throws IOException {
-        LOGGER.info("Loading sample data for directory: " + importRootDir.getAbsolutePath());
+    public void loadDirectory(final boolean shutdown, final Path importRootDir) throws IOException {
+        LOGGER.info("Loading sample data for directory: " + importRootDir.toAbsolutePath());
 
-        final File configDir = new File(importRootDir, "config");
-        final File dataDir = new File(importRootDir, "input");
+        final Path configDir = importRootDir.resolve("config");
+        final Path dataDir = importRootDir.resolve("input");
 
         createStreamAttributes();
 
-        if (configDir.exists()) {
+        if (Files.exists(configDir)) {
             // Load config.
             importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
@@ -279,7 +284,7 @@ public final class SetupSampleDataBean {
             LOGGER.info(String.format("Directory {} doesn't exist so skipping", configDir));
         }
 
-        if (dataDir.exists()) {
+        if (Files.exists(dataDir)) {
             // Load data.
             final DataLoader dataLoader = new DataLoader(feedService, streamStore);
 
@@ -350,7 +355,7 @@ public final class SetupSampleDataBean {
                     STATS_VALUE_FEED_NAME));
         }
 
-        try{
+        try {
             final Feed apiFeed = dataLoader.getFeed(STATS_COUNT_API_FEED_NAME);
             String sampleData = new String(Files.readAllBytes(Paths.get(STATS_COUNT_API_DATA_FILE)));
 
@@ -369,7 +374,7 @@ public final class SetupSampleDataBean {
 
     private String createRandomData() {
         final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy,HH:mm:ss");
-        final ZonedDateTime refDateTime =  ZonedDateTime.of(2010, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+        final ZonedDateTime refDateTime = ZonedDateTime.of(2010, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 
         final StringBuilder sb = new StringBuilder();
         sb.append("Date,Time,FileNo,LineNo,User,Message\n");
@@ -388,6 +393,26 @@ public final class SetupSampleDataBean {
             sb.append("\n");
         }
         return sb.toString();
+    }
+
+    private void createRandomExplorerData(final Folder parentFolder, final String path, final int depth, final int maxDepth) {
+        for (int i = 0; i < 100; i++) {
+            final String folderName = "TEST_FOLDER_" + path + i;
+            LOGGER.info("Creating folder: " + folderName);
+            final Folder folder = folderService.create(DocRefUtil.create(parentFolder), folderName);
+
+            for (int j = 0; j < 20; j++) {
+                final String newPath = path + String.valueOf(i) + "_";
+                final String feedName = "TEST_FEED_" + newPath + j;
+
+                LOGGER.info("Creating feed: " + feedName);
+                feedService.create(DocRefUtil.create(folder), feedName);
+
+                if (depth < maxDepth) {
+                    createRandomExplorerData(folder, newPath, depth + 1, maxDepth);
+                }
+            }
+        }
     }
 
     private String createNum(final int max) {

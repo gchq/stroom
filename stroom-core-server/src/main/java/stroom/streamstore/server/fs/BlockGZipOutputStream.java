@@ -16,15 +16,15 @@
 
 package stroom.streamstore.server.fs;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.zip.GZIPOutputStream;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.io.SeekableOutputStream;
 import stroom.io.StreamCloser;
+
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class BlockGZipOutputStream extends OutputStream implements SeekableOutputStream {
     private static final Logger LOGGER = LoggerFactory.getLogger(BlockGZipOutputStream.class);

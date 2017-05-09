@@ -22,11 +22,10 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasRows;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.data.pager.client.Pager;
 import stroom.streamstore.client.presenter.DataPresenter.DataView;
 import stroom.widget.tab.client.presenter.LayerContainer;
-import stroom.widget.tab.client.view.SlideTabBar;
+import stroom.widget.tab.client.view.LinkTabBar;
 
 public class DataViewImpl extends ViewImpl implements DataView {
     public interface Binder extends UiBinder<Widget, DataViewImpl> {
@@ -35,7 +34,7 @@ public class DataViewImpl extends ViewImpl implements DataView {
     private final Widget widget;
 
     @UiField
-    SlideTabBar tabBar;
+    LinkTabBar tabBar;
     @UiField
     Pager segmentPager;
     @UiField
@@ -70,7 +69,7 @@ public class DataViewImpl extends ViewImpl implements DataView {
     }
 
     @Override
-    public SlideTabBar getTabBar() {
+    public LinkTabBar getTabBar() {
         return tabBar;
     }
 

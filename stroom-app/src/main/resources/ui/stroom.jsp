@@ -36,6 +36,9 @@
     <!-- Roboto Font -->
 	<link rel="stylesheet" type="text/css" href="css/roboto.css">
 
+    <!-- Roboto Monospace Font -->
+    <link rel="stylesheet" type="text/css" href="css/Roboto_Mono.css">
+
     <!-- Standard GWT CSS plus Stroom modifications -->
     <link rel="stylesheet" href="css/standard.css" type="text/css" />
     <link rel="stylesheet" href="css/standard_mod.css" type="text/css" />
@@ -48,8 +51,8 @@
     <link rel="stylesheet" href="css/stroom-dashboard.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom.css" type="text/css" />
     <link rel="stylesheet" href="dynamic.css" type="text/css" />
-    <link rel="stylesheet" href="stroom/xmlarea.css" type="text/css" />
-    
+    <link rel="stylesheet" href="css/editor.css" type="text/css" />
+    <link rel="stylesheet" href="css/TabLayout.css" type="text/css" />
     <link rel="stylesheet" href="xsdbrowser/xsdbrowser.css" type="text/css" />      
    
     <!-- Themes -->
@@ -60,6 +63,16 @@
     <!-- Material Design Spinner -->
     <link rel="stylesheet" href="css/spinner.min.css" type="text/css" />
     <link rel="stylesheet" href="css/spinner.custom.css" type="text/css" />
+
+    <script type="text/javascript" src="stroom/moment-with-locales.min.js" charset="utf-8"></script>
+
+    <script type="text/javascript" src="stroom/ace/ace.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/beautify/beautify.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/theme-chrome.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/mode-text.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/mode-xml.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/mode-json.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/mode-javascript.js" charset="utf-8"></script>
 
     <script type="text/javascript" src='stroom/stroom.nocache.js'></script>
   </head>

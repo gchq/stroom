@@ -16,11 +16,6 @@
 
 package stroom.pipeline.server.factory;
 
-import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import stroom.entity.shared.BaseEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
@@ -28,6 +23,11 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.shared.HasType;
+
+import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ElementRegistry {
     private final Map<String, Class<Element>> elementMap = new HashMap<>();

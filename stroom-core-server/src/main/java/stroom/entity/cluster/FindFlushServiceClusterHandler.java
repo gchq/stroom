@@ -16,20 +16,27 @@
 
 package stroom.entity.cluster;
 
-import javax.annotation.Resource;
-
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.FindFlushService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = FindFlushServiceClusterTask.class)
+@Scope(value = StroomScope.TASK)
 public class FindFlushServiceClusterHandler extends AbstractTaskHandler<FindFlushServiceClusterTask<?>, VoidResult> {
-    @Resource
-    private StroomBeanStore stroomBeanStore;
+    private final StroomBeanStore stroomBeanStore;
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Inject
+    FindFlushServiceClusterHandler(final StroomBeanStore stroomBeanStore) {
+        this.stroomBeanStore = stroomBeanStore;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public VoidResult exec(final FindFlushServiceClusterTask<?> task) {
         if (task == null) {

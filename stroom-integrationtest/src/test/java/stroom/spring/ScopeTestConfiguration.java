@@ -16,16 +16,15 @@
 
 package stroom.spring;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.CustomScopeConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import stroom.util.spring.StroomScope;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 public class ScopeTestConfiguration {

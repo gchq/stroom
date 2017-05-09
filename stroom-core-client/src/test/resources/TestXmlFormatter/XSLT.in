@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<xsl:stylesheet xmlns="event-logging:3" xpath-default-namespace="records:2" xmlns:stroom="stroom" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.0">
+  <xsl:template match="records"> 
+    <Events xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd" Version="3.0.0">
+      <xsl:apply-templates /> 
+    </Events> 
+  </xsl:template> 
+  <xsl:template match="record"> 
+    <xsl:if test="data[@name = 'Action']/@value = 'OPEN'"> 
+      <xsl:variable name="date" select="data[@name = 'Time']/@value" /> 
+      <xsl:variable name="formattedDate" select="stroom:format-date($date, 'dd/MM/yyyy:HH:mm:ss')" />
+      <Event> 
+        <EventTime> 
+          <TimeCreated> 
+            <xsl:value-of select="$formattedDate" /> 
+          </TimeCreated> 
+        </EventTime> 
+        <EventSource> 
+          <Generator>Very Simple Provider</Generator> 
+          <Device> 
+            <IPAddress>3.3.3.3</IPAddress> 
+            <Location> 
+              <Country>UK</Country> 
+              <Site>Site</Site> 
+              <Building>Main</Building> 
+              <Floor>1</Floor> 
+              <Room>1</Room> 
+            </Location> 
+          </Device> 
+          <User> 
+            <Id> 
+              <xsl:value-of select="data[@name = 'User']/@value" /> 
+            </Id> 
+          </User> 
+        </EventSource> 
+        <EventDetail> 
+          <View> 
+            <Type>File</Type> 
+            <Title>UNKNOWN</Title> 
+            <Path> 
+              <xsl:value-of select="data[@name = 'File']/@value" /> 
+            </Path> 
+          </View> 
+        </EventDetail> 
+      </Event> 
+    </xsl:if> 
+  </xsl:template> 
+</xsl:stylesheet>

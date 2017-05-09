@@ -16,24 +16,22 @@
 
 package stroom.streamtask.server;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.XMLFilterImpl;
-
 import stroom.entity.server.util.XMLUtil;
 import stroom.io.EncodingWriter;
 import stroom.streamstore.server.fs.serializable.SegmentOutputStream;
 import stroom.util.CharBuffer;
 import stroom.util.io.StreamUtil;
+
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * Writes out XML and records segment boundaries as it goes.

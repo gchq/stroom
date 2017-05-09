@@ -1,0 +1,27 @@
+<?xml version="1.1" encoding="UTF-8"?> 
+<test xmlns="mynamespace" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="mynamespace file://mynamespace.xsd" version="1.0"> 
+  <element>true</element> <!-- This is comment 1 -->
+  <element> 
+  <!-- This is comment 2
+  it is a multi-line comment -->
+    <subElement> </subElement> 
+  </element>
+  
+  <element>  
+    <subElement> </subElement> 
+    <!-- 
+    This is comment 3
+      it is another multi-line comment 
+      --> 
+  </element>
+
+  <element><subElement> </subElement><!-- This is comment 4
+      it is another multi-line comment 
+      --></Splitter>
+      
+  <element><subElement> </subElement><!-- This is comment 5
+      it is another multi-line comment 
+      --><!-- This is comment 6
+      it is another multi-line comment 
+      --></element>
+</test>

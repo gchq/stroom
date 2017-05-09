@@ -16,12 +16,11 @@
 
 package stroom.widget.tab.client.presenter;
 
-import java.util.List;
-
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
-
 import stroom.widget.tab.client.event.HasMaximiseRequestHandlers;
 import stroom.widget.tab.client.event.HasRequestCloseTabHandlers;
+
+import java.util.List;
 
 public interface TabBar extends HasSelectionHandlers<TabData>, HasRequestCloseTabHandlers, HasMaximiseRequestHandlers {
     void addTab(TabData tab);

@@ -16,15 +16,15 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.value.SequenceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.spring.StroomBeanStore;
-import net.sf.saxon.Configuration;
-import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.value.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;

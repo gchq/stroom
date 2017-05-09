@@ -16,24 +16,22 @@
 
 package stroom.pipeline.destination;
 
-import java.io.IOException;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.server.StroomPropertyService;
 import org.springframework.stereotype.Component;
-
 import stroom.jobsystem.server.JobTrackedSchedule;
+import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.errorhandler.TerminatedException;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.task.TaskMonitor;
+
+import javax.annotation.Resource;
+import java.io.IOException;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 public class RollingDestinations {

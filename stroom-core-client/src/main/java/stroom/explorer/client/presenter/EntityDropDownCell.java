@@ -18,8 +18,6 @@ package stroom.explorer.client.presenter;
 
 import com.google.inject.Inject;
 import stroom.cell.dropdowntree.client.DropDownCell;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.query.api.DocRef;
@@ -34,12 +32,7 @@ public class EntityDropDownCell extends DropDownCell<DocRef> {
         this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
         changeSelection(null);
 
-        explorerDropDownTreePresenter.addDataSelectionHandler(new DataSelectionHandler<ExplorerData>() {
-            @Override
-            public void onSelection(final DataSelectionEvent<ExplorerData> event) {
-                changeSelection(event.getSelectedItem());
-            }
-        });
+        explorerDropDownTreePresenter.addDataSelectionHandler(event -> changeSelection(event.getSelectedItem()));
     }
 
     @Override

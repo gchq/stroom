@@ -84,7 +84,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -810,28 +809,16 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         // Ensure a user cannot match all feeds.
         feeds.setMatchAll(Boolean.FALSE);
 
+        final List<Feed> restrictedFeeds = getRestrictedFeeds(findStreamCriteria, requiredPermission);
+
         if (feeds.size() > 0) {
-            // If we are constrained by folder then limit feeds to those in the folders.
-            if (findStreamCriteria.getFolderIdSet() != null && findStreamCriteria.getFolderIdSet().isConstrained()) {
-                final List<Feed> restrictedFeeds = getRestrictedFeeds(findStreamCriteria, requiredPermission);
-                final Set<Long> restrictedFeedIds = new HashSet<>();
-                restrictedFeeds.stream().forEach(feed -> restrictedFeedIds.add(feed.getId()));
+            final Set<Long> restrictedFeedIds = new HashSet<>();
+            restrictedFeeds.stream().forEach(feed -> restrictedFeedIds.add(feed.getId()));
 
-                // Retain only the feeds that are within the folders.
-                feeds.getSet().retainAll(restrictedFeedIds);
-
-            } else {
-                // Filter requested feeds.
-                for (final long feedId : feeds) {
-                    final Feed feed = feedService.loadById(feedId);
-                    if (feed == null || !securityContext.hasDocumentPermission(feed.getType(), feed.getUuid(), requiredPermission)) {
-                        feeds.remove(feedId);
-                    }
-                }
-            }
+            // Retain only the feeds that the user has the required permission on.
+            feeds.getSet().retainAll(restrictedFeedIds);
 
         } else {
-            final List<Feed> restrictedFeeds = getRestrictedFeeds(findStreamCriteria, requiredPermission);
             feeds.addAllEntities(restrictedFeeds);
         }
 

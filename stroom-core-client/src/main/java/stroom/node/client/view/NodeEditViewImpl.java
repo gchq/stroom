@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.node.client.presenter.NodeEditPresenter.NodeEditView;
 
 public class NodeEditViewImpl extends ViewImpl implements NodeEditView {

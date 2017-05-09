@@ -16,15 +16,15 @@
 
 package stroom.widget.htree.client;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.OutlineStyle;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.FlowPanel;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class LayeredCanvas extends FlowPanel {
     private Map<String, Canvas> layerMap = new HashMap<String, Canvas>();

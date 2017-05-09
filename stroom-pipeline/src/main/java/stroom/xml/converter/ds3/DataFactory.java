@@ -16,11 +16,11 @@
 
 package stroom.xml.converter.ds3;
 
-import java.util.Set;
-
 import stroom.xml.converter.ds3.ref.RefResolver;
 import stroom.xml.converter.ds3.ref.VarFactoryMap;
 import stroom.xml.converter.ds3.ref.VarMap;
+
+import java.util.Set;
 
 public class DataFactory extends StoreFactory {
     private final String name;

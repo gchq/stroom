@@ -16,6 +16,9 @@
 
 package stroom.util.logging;
 
+import org.slf4j.Logger;
+import stroom.util.io.StreamUtil;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -24,10 +27,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.util.io.StreamUtil;
 
 /**
  * Utility to log messages to log4j from a print writer.

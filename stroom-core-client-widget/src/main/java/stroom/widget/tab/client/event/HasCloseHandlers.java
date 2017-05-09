@@ -18,7 +18,6 @@ package stroom.widget.tab.client.event;
 
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-
 import stroom.widget.tab.client.event.CloseEvent.CloseHandler;
 
 public interface HasCloseHandlers extends HasHandlers {

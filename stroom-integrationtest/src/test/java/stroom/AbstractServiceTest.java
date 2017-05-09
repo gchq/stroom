@@ -17,7 +17,6 @@
 package stroom;
 
 import org.springframework.test.context.ContextConfiguration;
-
 import stroom.spring.PersistenceConfiguration;
 
 @ContextConfiguration(classes = { PersistenceConfiguration.class })

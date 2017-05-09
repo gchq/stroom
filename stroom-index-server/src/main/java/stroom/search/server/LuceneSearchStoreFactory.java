@@ -18,6 +18,7 @@ package stroom.search.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.index.server.LuceneVersionUtil;
@@ -36,7 +37,9 @@ import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.SecurityContext;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
+import stroom.util.config.PropertyUtil;
 import stroom.util.config.StroomProperties;
+import stroom.util.shared.UserTokenUtil;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -49,7 +52,6 @@ public class LuceneSearchStoreFactory {
     public static final String ENTITY_TYPE = Index.ENTITY_TYPE;
     private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchStoreFactory.class);
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
-
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
     private final IndexService indexService;
@@ -57,17 +59,23 @@ public class LuceneSearchStoreFactory {
     private final NodeCache nodeCache;
     private final TaskManager taskManager;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
+    private final int maxBooleanClauseCount;
     private final SecurityContext securityContext;
 
     @Inject
-    public LuceneSearchStoreFactory(final IndexService indexService, final DictionaryService dictionaryService,
-                                    final NodeCache nodeCache, final TaskManager taskManager,
-                                    final ClusterResultCollectorCache clusterResultCollectorCache, final SecurityContext securityContext) {
+    public LuceneSearchStoreFactory(final IndexService indexService,
+                                    final DictionaryService dictionaryService,
+                                    final NodeCache nodeCache,
+                                    final TaskManager taskManager,
+                                    final ClusterResultCollectorCache clusterResultCollectorCache,
+                                    @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
+                                    final SecurityContext securityContext) {
         this.indexService = indexService;
         this.dictionaryService = dictionaryService;
         this.nodeCache = nodeCache;
         this.taskManager = taskManager;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
+        this.maxBooleanClauseCount = PropertyUtil.toInt(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
         this.securityContext = securityContext;
     }
 
@@ -91,8 +99,9 @@ public class LuceneSearchStoreFactory {
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
 
         // Create an asynchronous search task.
+        final String userToken = UserTokenUtil.create(securityContext.getUserId(), null);
         final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
-        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(null, securityContext.getUserId(), searchName, query, node,
+        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(userToken, searchName, query, node,
                 SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorSettingsMap.getMap(), searchRequest.getDateTimeLocale(), nowEpochMilli);
 
         // Create a handler for search results.
@@ -141,7 +150,7 @@ public class LuceneSearchStoreFactory {
             final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                    dictionaryService, indexFieldsMap, getMaxBooleanClauseCount(), timeZoneId, nowEpochMilli);
+                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, timeZoneId, nowEpochMilli);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
                     .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expression);
 
@@ -151,9 +160,5 @@ public class LuceneSearchStoreFactory {
         }
 
         return highlights;
-    }
-
-    public int getMaxBooleanClauseCount() {
-        return StroomProperties.getIntProperty("stroom.search.maxBooleanClauseCount", DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
     }
 }

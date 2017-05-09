@@ -16,13 +16,13 @@
 
 package stroom.util;
 
-import java.io.File;
-import java.io.IOException;
-
 import stroom.streamstore.server.fs.BlockGZIPInputFile;
 import stroom.streamstore.server.fs.UncompressedInputStream;
 import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 import stroom.util.zip.HeaderMap;
+
+import java.io.File;
+import java.io.IOException;
 
 public class FileMetaGrep extends AbstractCommandLineTool {
     private String[] repoPathParts = null;

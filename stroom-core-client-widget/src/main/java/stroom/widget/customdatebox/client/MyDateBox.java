@@ -16,27 +16,35 @@
 
 package stroom.widget.customdatebox.client;
 
-import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.TimeZone;
-import com.google.gwt.i18n.client.impl.cldr.DateTimeFormatInfoImpl_en_GB;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.datepicker.client.DatePicker;
 
 import java.util.Date;
 
-public class MyDateBox extends Composite implements HasText, HasValue<String> {
+public class MyDateBox extends Composite implements DateBoxView {
     private static final String DEFAULT_TIME = "T00:00:00.000Z";
 
     private final PopupPanel popup;
     private final DatePicker datePicker;
     private final TextBox textBox;
-    private final DateTimeFormat dateTimeFormat = new MyDateTimeFormat();
 
     public MyDateBox() {
         datePicker = new CustomDatePicker();
@@ -57,13 +65,16 @@ public class MyDateBox extends Composite implements HasText, HasValue<String> {
         textBox.addKeyDownHandler(handler);
         textBox.setDirectionEstimator(false);
         popup.addCloseHandler(handler);
+    }
 
-//      datePicker.addValueChangeHandler(new ValueChangeHandler<Date>() {
-//          @Override
-//          public void onValueChange(ValueChangeEvent<Date> event) {
-//
-//          }
-//      });
+    @Override
+    public Long getMilliseconds() {
+        return ClientDateUtil.fromISOString(getValue());
+    }
+
+    @Override
+    public void setMilliseconds(final Long milliseconds) {
+        setValue(ClientDateUtil.toISOString(milliseconds));
     }
 
     @Override
@@ -77,16 +88,6 @@ public class MyDateBox extends Composite implements HasText, HasValue<String> {
 
     public void setValue(final String value, final boolean fireEvents) {
         textBox.setValue(value, fireEvents);
-    }
-
-    @Override
-    public String getText() {
-        return textBox.getText();
-    }
-
-    @Override
-    public void setText(final String text) {
-        textBox.setText(text);
     }
 
     public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
@@ -107,12 +108,15 @@ public class MyDateBox extends Composite implements HasText, HasValue<String> {
     }
 
     public void showDatePicker() {
-        Date current = parseDate();
-        if (current == null) {
-            current = new Date();
+        if (!popup.isShowing()) {
+            Date current = parseDate();
+            if (current == null) {
+                current = new Date();
+            }
+            datePicker.setCurrentMonth(current);
+            datePicker.setValue(current, false);
+            popup.showRelativeTo(this);
         }
-        datePicker.setCurrentMonth(current);
-        popup.showRelativeTo(this);
     }
 
     private Date parseDate() {
@@ -120,10 +124,13 @@ public class MyDateBox extends Composite implements HasText, HasValue<String> {
             String text = textBox.getText().trim();
             int index = text.indexOf('T');
             if (index != -1) {
-                text = text.substring(0, index);
+                text = text.substring(0, index) + "T12:00:00.000Z";
             }
 
-            return dateTimeFormat.parse(text);
+            final Long millis = ClientDateUtil.fromISOString(text);
+            if (millis != null) {
+                return new Date(millis);
+            }
         } catch (final Exception e) {
             // Ignore if we couldn't parse.
         }
@@ -132,40 +139,19 @@ public class MyDateBox extends Composite implements HasText, HasValue<String> {
     }
 
     public void hideDatePicker() {
-        popup.hide();
+        if (popup.isShowing()) {
+            popup.hide();
+        }
     }
-
-//    private void setValue(Date oldDate, Date date, boolean fireEvents, boolean updateText) {
-//        if (date != null) {
-//            datePicker.setCurrentMonth(date);
-//        }
-//        datePicker.setValue(date, false);
-//
-//        if (updateText) {
-//            format.reset(this, false);
-//            textBox.setText(getFormat().format(this, date));
-//        }
-//
-//        if (fireEvents) {
-//            DateChangeEvent.fireIfNotEqualDates(this, oldDate, date);
-//        }
-//    }
-//
-//    private void updateDateFromTextBox() {
-//        Date parsedDate = parseDate(true);
-//        if (fireNullValues || (parsedDate != null)) {
-//            setValue(picker.getValue(), parsedDate, true, false);
-//        }
-//    }
 
     private class DateBoxHandler implements ValueChangeHandler<Date>,
             FocusHandler, BlurHandler, ClickHandler, KeyDownHandler,
             CloseHandler<PopupPanel> {
 
         public void onValueChange(ValueChangeEvent<Date> event) {
-            //setValue(parseDate(false), normalize(event.getValue()), true, true);
+            // Trim down the date to be just the date part.
+            String date = ClientDateUtil.toDateString(event.getValue().getTime());
 
-            String date = dateTimeFormat.format(event.getValue());
             String time = DEFAULT_TIME;
             String expression = "";
 
@@ -192,6 +178,8 @@ public class MyDateBox extends Composite implements HasText, HasValue<String> {
             if (tIndex != -1) {
                 textBox.setCursorPos(tIndex);
             }
+
+            hideDatePicker();
         }
 
         public void onBlur(BlurEvent event) {
@@ -232,37 +220,6 @@ public class MyDateBox extends Composite implements HasText, HasValue<String> {
                     showDatePicker();
                     break;
             }
-        }
-    }
-
-    public class MyDateTimeFormat extends DateTimeFormat {
-        private static final String PATTERN = "yyyy-MM-dd";
-        private static final String INNER_PATTERN = "yyyy-MM-dd";
-        private DateTimeFormat inner = DateTimeFormat.getFormat(INNER_PATTERN);
-        private TimeZone timeZone = TimeZone.createTimeZone(0);
-
-        public MyDateTimeFormat() {
-            super(PATTERN, new DateTimeFormatInfoImpl_en_GB());
-        }
-
-        @Override
-        public Date parse(final String text) throws IllegalArgumentException {
-            return inner.parse(text);
-        }
-
-        @Override
-        public Date parseStrict(final String text) throws IllegalArgumentException {
-            return inner.parseStrict(text);
-        }
-
-        @Override
-        public int parseStrict(final String text, final int start, final Date date) {
-            return inner.parseStrict(text, start, date);
-        }
-
-        @Override
-        public String format(final Date date) {
-            return super.format(date, timeZone);
         }
     }
 }

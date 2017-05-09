@@ -16,20 +16,23 @@
 
 package stroom.statistics.server.common.rollup;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import stroom.security.Insecure;
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
+import stroom.security.Insecure;
 import stroom.statistics.common.rollup.RollUpBitMask;
 import stroom.statistics.shared.CustomRollUpMask;
 import stroom.statistics.shared.RollUpBitMaskPermGenerationAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @TaskHandlerBean(task = RollUpBitMaskPermGenerationAction.class)
+@Scope(value = StroomScope.TASK)
 @Insecure
 public class RollUpBitMaskPermGenerationHandler
         extends AbstractTaskHandler<RollUpBitMaskPermGenerationAction, ResultList<CustomRollUpMask>> {

@@ -16,13 +16,13 @@
 
 package stroom.jobsystem.server;
 
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.jobsystem.shared.FindJobNodeCriteria;
 import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNodeService;
 import stroom.util.spring.StroomSpringProfiles;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component

@@ -17,7 +17,6 @@
 package stroom.statistics.server.common;
 
 import org.springframework.stereotype.Component;
-
 import stroom.entity.server.EntityMarshaller;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticsDataSourceData;

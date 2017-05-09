@@ -16,21 +16,19 @@
 
 package stroom.resource;
 
-import java.io.IOException;
+import org.springframework.stereotype.Component;
+import stroom.entity.shared.BaseResultList;
+import stroom.pipeline.shared.FindXSLTCriteria;
+import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.XSLTService;
+import stroom.util.io.StreamUtil;
 
 import javax.annotation.Resource;
 import javax.xml.transform.Source;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.URIResolver;
 import javax.xml.transform.stream.StreamSource;
-
-import org.springframework.stereotype.Component;
-
-import stroom.entity.shared.BaseResultList;
-import stroom.pipeline.shared.FindXSLTCriteria;
-import stroom.pipeline.shared.XSLT;
-import stroom.pipeline.shared.XSLTService;
-import stroom.util.io.StreamUtil;
+import java.io.IOException;
 
 /**
  * <p>

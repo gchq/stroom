@@ -18,6 +18,7 @@ package stroom.cluster.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.EntityServiceException;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
@@ -25,7 +26,6 @@ import stroom.security.Insecure;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.thread.ThreadScopeContextHolder;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.lang.reflect.Method;

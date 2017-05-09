@@ -18,7 +18,6 @@ package stroom.statistics.common;
 
 import org.junit.Ignore;
 import org.junit.Test;
-
 import stroom.util.date.DateUtil;
 
 /**

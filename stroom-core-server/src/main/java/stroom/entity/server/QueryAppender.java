@@ -16,11 +16,11 @@
 
 package stroom.entity.server;
 
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.SQLUtil;
-import stroom.entity.shared.Entity;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria;
+import stroom.entity.shared.Entity;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.FindNamedEntityCriteria;

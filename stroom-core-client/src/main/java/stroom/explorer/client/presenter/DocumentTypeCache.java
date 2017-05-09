@@ -16,12 +16,13 @@
 
 package stroom.explorer.client.presenter;
 
-import javax.inject.Inject;
-
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.FetchDocumentTypesAction;
+import stroom.widget.util.client.Future;
+import stroom.widget.util.client.FutureImpl;
+
+import javax.inject.Inject;
 
 public class DocumentTypeCache {
     private final ClientDispatchAsync dispatcher;
@@ -37,19 +38,20 @@ public class DocumentTypeCache {
         documentTypes = null;
     }
 
-    public void fetch(final AsyncCallbackAdaptor<DocumentTypes> callback) {
+    public Future<DocumentTypes> fetch() {
+        final FutureImpl<DocumentTypes> future = new FutureImpl<>();
+
         // Get the document types if they are null.
         if (documentTypes == null) {
             final FetchDocumentTypesAction fetchDocumentTypesAction = new FetchDocumentTypesAction();
-            dispatcher.execute(fetchDocumentTypesAction, new AsyncCallbackAdaptor<DocumentTypes>() {
-                @Override
-                public void onSuccess(final DocumentTypes result) {
-                    documentTypes = result;
-                    callback.onSuccess(result);
-                }
+            dispatcher.exec(fetchDocumentTypesAction).onSuccess(result -> {
+                documentTypes = result;
+                future.setResult(result);
             });
         } else {
-            callback.onSuccess(documentTypes);
+            future.setResult(documentTypes);
         }
+
+        return future;
     }
 }

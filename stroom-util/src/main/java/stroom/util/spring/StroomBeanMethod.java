@@ -16,10 +16,10 @@
 
 package stroom.util.spring;
 
-import java.lang.reflect.Method;
-
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
+
+import java.lang.reflect.Method;
 
 public class StroomBeanMethod {
     private String beanName;

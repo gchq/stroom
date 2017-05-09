@@ -16,10 +16,6 @@
 
 package stroom.pipeline.server.writer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.util.io.FileUtil;
-import stroom.util.test.StroomUnitTest;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileSystem;
@@ -31,6 +27,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.util.io.FileUtil;
+import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.io.OutputStream;

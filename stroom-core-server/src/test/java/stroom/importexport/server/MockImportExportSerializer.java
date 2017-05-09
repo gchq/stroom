@@ -16,26 +16,25 @@
 
 package stroom.importexport.server;
 
-import java.io.File;
-import java.util.List;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
-import stroom.entity.shared.EntityActionConfirmation;
-import stroom.entity.shared.FindFolderCriteria;
+import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.ImportState;
+import stroom.entity.shared.ImportState.ImportMode;
+import stroom.util.shared.Message;
 import stroom.util.spring.StroomSpringProfiles;
+
+import java.nio.file.Path;
+import java.util.List;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component
 public class MockImportExportSerializer implements ImportExportSerializer {
     @Override
-    public void read(final File dir, final List<EntityActionConfirmation> entityActionConfirmationList,
-            final ImportMode importMode) {
+    public void read(final Path dir, final List<ImportState> importStateList, final ImportMode importMode) {
     }
 
     @Override
-    public void write(final File dir, final FindFolderCriteria findFolderCriteria, final boolean omitAuditFields,
-            final boolean ignoreErrors, final List<String> messageList) {
+    public void write(final Path dir, final DocRefs docRefs, final boolean omitAuditFields, final List<Message> messageList) {
     }
 }

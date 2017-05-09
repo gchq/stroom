@@ -16,9 +16,9 @@
 
 package stroom.jobsystem.server;
 
-import java.io.Serializable;
-
 import stroom.jobsystem.shared.JobNode;
+
+import java.io.Serializable;
 
 public class DistributedRequiredTask implements Serializable {
     private static final long serialVersionUID = 2651416970893054545L;

@@ -16,9 +16,9 @@
 
 package stroom.statistics.sql;
 
-import java.io.Serializable;
-
 import stroom.statistics.shared.StatisticType;
+
+import java.io.Serializable;
 
 public class SQLStatisticValueSourceDO implements Serializable {
     private static final long serialVersionUID = -4956231944878929284L;

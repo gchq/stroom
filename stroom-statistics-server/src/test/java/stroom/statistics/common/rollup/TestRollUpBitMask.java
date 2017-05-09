@@ -16,6 +16,12 @@
 
 package stroom.statistics.common.rollup;
 
+import org.junit.Assert;
+import org.junit.Test;
+import stroom.statistics.hbase.util.bytes.ByteArrayUtils;
+import stroom.util.test.StroomUnitTest;
+
+import javax.xml.bind.DatatypeConverter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,14 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-
-import javax.xml.bind.DatatypeConverter;
-
-import org.junit.Assert;
-import org.junit.Test;
-
-import stroom.statistics.hbase.util.bytes.ByteArrayUtils;
-import stroom.util.test.StroomUnitTest;
 
 public class TestRollUpBitMask extends StroomUnitTest {
     @Test

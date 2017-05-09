@@ -16,12 +16,11 @@
 
 package stroom.task.server;
 
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.util.shared.Monitor;
 import stroom.util.shared.TerminateHandler;
+import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 @Component("taskMonitor")

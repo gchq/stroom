@@ -16,24 +16,22 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.dictionary.shared.DictionaryService;
-import stroom.dictionary.shared.FindDictionaryCriteria;
-import stroom.entity.shared.BaseResultList;
-import stroom.util.shared.Severity;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.shared.FindDictionaryCriteria;
+import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.Severity;
+import stroom.util.spring.StroomScope;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 @Scope(value = StroomScope.TASK)

@@ -16,16 +16,14 @@
 
 package stroom.index;
 
-import java.io.IOException;
-
-import javax.annotation.Resource;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.junit.Assert;
 import org.junit.Test;
-
+import stroom.AbstractCoreIntegrationTest;
+import stroom.CommonTestControl;
+import stroom.CommonTestScenarioCreator;
 import stroom.index.server.FieldTypeFactory;
 import stroom.index.server.IndexShardKeyUtil;
 import stroom.index.server.IndexShardWriter;
@@ -34,9 +32,9 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestControl;
-import stroom.CommonTestScenarioCreator;
+
+import javax.annotation.Resource;
+import java.io.IOException;
 
 public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     @Resource

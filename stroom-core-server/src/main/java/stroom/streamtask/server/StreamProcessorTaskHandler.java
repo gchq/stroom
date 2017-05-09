@@ -18,6 +18,7 @@ package stroom.streamtask.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.server.StreamSource;
@@ -36,7 +37,6 @@ import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
-import org.springframework.context.annotation.Scope;
 
 import javax.annotation.Resource;
 import java.util.Arrays;

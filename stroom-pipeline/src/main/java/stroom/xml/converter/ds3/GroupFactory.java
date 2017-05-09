@@ -16,12 +16,12 @@
 
 package stroom.xml.converter.ds3;
 
-import java.util.Set;
-
 import stroom.xml.converter.ds3.ref.RefParser;
 import stroom.xml.converter.ds3.ref.RefResolver;
 import stroom.xml.converter.ds3.ref.VarFactoryMap;
 import stroom.xml.converter.ds3.ref.VarMap;
+
+import java.util.Set;
 
 public class GroupFactory extends StoreFactory {
     public enum MatchOrder {

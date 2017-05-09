@@ -16,13 +16,13 @@
 
 package stroom.widget.customdatebox.client;
 
-import java.util.Date;
-
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.user.datepicker.client.CalendarModel;
 import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.google.gwt.user.datepicker.client.DatePicker;
+
+import java.util.Date;
 
 /**
  * Model used to get calendar information for {@link DatePicker} and its

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 
 package stroom.util.zip;
 
-import java.io.IOException;
-import java.util.zip.ZipException;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.util.test.StroomJUnit4ClassRunner;
+
+import java.io.IOException;
+import java.util.zip.ZipException;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestStroomStreamExcpetion {

@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.Query;
+import stroom.query.api.SearchRequest;
 import stroom.statistics.common.FindEventCriteria;
 import stroom.statistics.common.RolledUpStatisticEvent;
 import stroom.statistics.common.StatisticDataPoint;
@@ -45,6 +46,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -59,9 +61,17 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class SQLStatisticEventStore extends AbstractStatistics {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticEventStore.class);
+    public static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticEventStore.class);
+
+    static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.statistics.sql.search.maxResults";
+
     public static final String ENGINE_NAME = "sql";
-    static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.stats.sql.search.maxResults";
+
+    private final SQLStatisticCache statisticCache;
+
+    private final DataSource statisticsDataSource;
+    private final StroomPropertyService propertyService;
+
     private static final int DEFAULT_POOL_SIZE = 10;
     private static final long DEFAULT_SIZE_THRESHOLD = 1000000L;
     private static final Set<String> BLACK_LISTED_INDEX_FIELDS = new HashSet<>(
@@ -79,9 +89,6 @@ public class SQLStatisticEventStore extends AbstractStatistics {
             + SQLStatisticNames.SQL_STATISTIC_KEY_FOREIGN_KEY + ") " + "WHERE K." + SQLStatisticNames.NAME + " LIKE ? "
             + "AND K." + SQLStatisticNames.NAME + " REGEXP ? " + "AND V." + SQLStatisticNames.TIME_MS + " >= ? "
             + "AND V." + SQLStatisticNames.TIME_MS + " < ?";
-    private final SQLStatisticCache statisticCache;
-    private final DataSource cachedSqlDataSource;
-    private final StroomPropertyService propertyService;
 
     // @formatter:on
     /**
@@ -108,12 +115,12 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     private GenericObjectPool<SQLStatisticAggregateMap> objectPool;
 
     @Inject
-    public SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
-                                  final StatisticStoreCache statisticsDataSourceCache, final SQLStatisticCache statisticCache,
-                                  final DataSource cachedSqlDataSource, final StroomPropertyService propertyService) {
+    SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
+                           final StatisticStoreCache statisticsDataSourceCache, final SQLStatisticCache statisticCache,
+                           @Named("statisticsDataSource") final DataSource statisticsDataSource, final StroomPropertyService propertyService) {
         super(statisticsDataSourceValidator, statisticsDataSourceCache, propertyService);
         this.statisticCache = statisticCache;
-        this.cachedSqlDataSource = cachedSqlDataSource;
+        this.statisticsDataSource = statisticsDataSource;
         this.propertyService = propertyService;
 
         initPool(getObjectPoolConfig());
@@ -122,10 +129,10 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     public SQLStatisticEventStore(final int poolSize, final long aggregatorSizeThreshold, final long poolAgeMsThreshold,
                                   final StatisticStoreValidator statisticsDataSourceValidator,
                                   final StatisticStoreCache statisticsDataSourceCache, final SQLStatisticCache statisticCache,
-                                  final DataSource cachedSqlDataSource, final StroomPropertyService propertyService) {
+                                  final DataSource statisticsDataSource, final StroomPropertyService propertyService) {
         super(statisticsDataSourceValidator, statisticsDataSourceCache, propertyService);
         this.statisticCache = statisticCache;
-        this.cachedSqlDataSource = cachedSqlDataSource;
+        this.statisticsDataSource = statisticsDataSource;
 
         this.aggregatorSizeThreshold = aggregatorSizeThreshold;
         this.poolAgeMsThreshold = poolAgeMsThreshold;
@@ -292,8 +299,8 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         return true;
     }
 
-    public StatisticDataSet searchStatisticsData(final Query query, final StatisticStoreEntity dataSource) {
-        final FindEventCriteria criteria = buildCriteria(query, dataSource);
+    public StatisticDataSet searchStatisticsData(final SearchRequest searchRequest, final StatisticStoreEntity dataSource) {
+        final FindEventCriteria criteria = buildCriteria(searchRequest, dataSource);
         return performStatisticQuery(dataSource, criteria);
     }
 
@@ -333,7 +340,7 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         final StatisticDataSet statisticDataSet = new StatisticDataSet(dataSource.getName(),
                 dataSource.getStatisticType(), 1000L, dataPoints);
 
-        try (Connection connection = cachedSqlDataSource.getConnection()) {
+        try (Connection connection = statisticsDataSource.getConnection()) {
             try (PreparedStatement ps = buildSearchPreparedStatement(dataSource, criteria, connection)) {
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {

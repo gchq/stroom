@@ -17,6 +17,9 @@
 package stroom.streamstore.client.gin;
 
 import stroom.core.client.gin.PluginModule;
+import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.presenter.EditorView;
+import stroom.editor.client.view.EditorViewImpl;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.streamstore.client.presenter.DataPresenter;
@@ -69,6 +72,7 @@ public class StreamStoreModule extends PluginModule {
         bindPresenterWidget(ClassificationWrapperPresenter.class, ClassificationWrapperView.class,
                 ClassificationWrapperViewImpl.class);
         bindPresenterWidget(StreamPresenter.class, StreamView.class, StreamViewImpl.class);
+        bindPresenterWidget(EditorPresenter.class, EditorView.class, EditorViewImpl.class);
         bindPresenterWidget(DataPresenter.class, DataView.class, DataViewImpl.class);
         bindPresenterWidget(TextPresenter.class, TextView.class, TextViewImpl.class);
         bindPresenterWidget(StreamTaskPresenter.class, StreamTaskView.class, StreamTaskViewImpl.class);

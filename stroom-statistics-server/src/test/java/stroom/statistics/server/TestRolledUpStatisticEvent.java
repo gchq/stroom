@@ -16,20 +16,19 @@
 
 package stroom.statistics.server;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import stroom.util.test.StroomUnitTest;
 import org.junit.Test;
-
 import stroom.statistics.common.RolledUpStatisticEvent;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.TimeAgnosticStatisticEvent;
 import stroom.statistics.shared.StatisticType;
+import stroom.util.test.StroomUnitTest;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestRolledUpStatisticEvent extends StroomUnitTest {
     private static final double JUNIT_DOUBLE_EQUALITY_DELTA = 0.001;
@@ -67,11 +66,11 @@ public class TestRolledUpStatisticEvent extends StroomUnitTest {
         tags.add(new StatisticTag("Tag2", "Tag2Val"));
         tags.add(new StatisticTag("Tag3", "Tag3Val"));
 
-        event = new StatisticEvent(1234L, "MtStat", tags, 1000L);
+        event = StatisticEvent.createCount(1234L, "MtStat", tags, 1000L);
     }
 
     private void compareEvents(final StatisticEvent statisticEvent,
-            final RolledUpStatisticEvent rolledUpStatisticEvent) {
+                               final RolledUpStatisticEvent rolledUpStatisticEvent) {
         assertEquals(statisticEvent.getTimeMs(), rolledUpStatisticEvent.getTimeMs());
         assertEquals(statisticEvent.getName(), rolledUpStatisticEvent.getName());
         assertEquals(statisticEvent.getType(), rolledUpStatisticEvent.getType());

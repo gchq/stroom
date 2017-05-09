@@ -16,17 +16,15 @@
 
 package stroom.streamstore.client.presenter;
 
-import java.util.List;
-
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.util.shared.Highlight;
-import stroom.util.shared.Indicators;
-import stroom.xmleditor.client.presenter.ReadOnlyXMLEditorPresenter;
+
+import java.util.List;
 
 public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
@@ -35,10 +33,10 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         void setPlayVisible(boolean visible);
     }
 
-    private final ReadOnlyXMLEditorPresenter textPresenter;
+    private final EditorPresenter textPresenter;
 
     @Inject
-    public TextPresenter(final EventBus eventBus, final TextView view, final ReadOnlyXMLEditorPresenter textPresenter) {
+    public TextPresenter(final EventBus eventBus, final TextView view, final EditorPresenter textPresenter) {
         super(eventBus, view);
         this.textPresenter = textPresenter;
 
@@ -46,6 +44,8 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         textPresenter.getIndicatorsOption().setOn(false);
         textPresenter.getLineNumbersOption().setAvailable(true);
         textPresenter.getLineNumbersOption().setOn(true);
+        textPresenter.getLineWrapOption().setAvailable(true);
+        textPresenter.setReadOnly(true);
 
         view.setTextView(textPresenter.getView());
     }
@@ -54,9 +54,24 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         getView().setUiHandlers(uiHandlers);
     }
 
-    public void setText(final String content, final int startLineNo, final boolean format,
-            final List<Highlight> highlights, final Indicators indicators, final boolean controlsVisible) {
+    public void setText(final String text) {
+        textPresenter.setText(text);
+    }
+
+    public void format() {
+        textPresenter.format();
+    }
+
+    public void setFirstLineNumber(final int firstLineNumber) {
+        textPresenter.setFirstLineNumber(firstLineNumber);
+    }
+
+    public void setHighlights(final List<Highlight> highlights) {
+        textPresenter.setHighlights(highlights);
+    }
+
+    public void setControlsVisible(final boolean controlsVisible) {
         getView().setPlayVisible(controlsVisible);
-        textPresenter.setText(content, startLineNo, format, highlights, indicators, controlsVisible);
+        textPresenter.setControlsVisible(controlsVisible);
     }
 }

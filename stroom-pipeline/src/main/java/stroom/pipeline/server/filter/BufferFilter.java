@@ -19,7 +19,6 @@ package stroom.pipeline.server.filter;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
 import stroom.xml.event.simple.SimpleEventList;
 import stroom.xml.event.simple.SimpleEventListBuilder;
 

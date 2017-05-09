@@ -17,7 +17,6 @@
 package stroom.menubar.client.view;
 
 import com.google.gwt.user.client.ui.Widget;
-
 import stroom.item.client.view.ListViewImpl;
 import stroom.menubar.client.presenter.MenubarPresenter.MenubarView;
 

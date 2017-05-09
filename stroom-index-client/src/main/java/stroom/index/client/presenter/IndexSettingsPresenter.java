@@ -61,12 +61,7 @@ public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPrese
                 setDirty(true);
             }
         };
-        final DirtyHandler dirtyHandler = new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                setDirty(true);
-            }
-        };
+        final DirtyHandler dirtyHandler = event -> setDirty(true);
 
         registerHandler(getView().getDescription().addKeyDownHandler(keyDownHander));
         registerHandler(indexVolumeListPresenter.addDirtyHandler(dirtyHandler));

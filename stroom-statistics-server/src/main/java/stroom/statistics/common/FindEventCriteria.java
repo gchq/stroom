@@ -16,11 +16,11 @@
 
 package stroom.statistics.common;
 
-import java.util.Collections;
-import java.util.Set;
-
 import stroom.entity.shared.Period;
 import stroom.util.shared.SharedObject;
+
+import java.util.Collections;
+import java.util.Set;
 
 public class FindEventCriteria implements SharedObject {
     private static final long serialVersionUID = -3542902750151448776L;

@@ -16,13 +16,12 @@
 
 package stroom.util.io;
 
-import java.io.IOException;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.util.test.StroomJUnit4ClassRunner;
+
+import java.io.IOException;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestInitialByteArrayOutputStream {

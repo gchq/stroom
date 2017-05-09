@@ -30,6 +30,7 @@ import stroom.task.server.TaskHandlerBeanRegistry;
 import stroom.task.server.TaskManager;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
+import stroom.util.shared.UserTokenUtil;
 import stroom.util.task.TaskIdFactory;
 
 import javax.inject.Inject;
@@ -47,7 +48,7 @@ public class DispatchServiceImpl implements DispatchService {
 
     @Inject
     public DispatchServiceImpl(final TaskHandlerBeanRegistry taskHandlerBeanRegistry, final TaskManager taskManager,
-            final SecurityContext securityContext, final HttpServletRequestHolder httpServletRequestHolder) {
+                               final SecurityContext securityContext, final HttpServletRequestHolder httpServletRequestHolder) {
         this.taskHandlerBeanRegistry = taskHandlerBeanRegistry;
         this.taskManager = taskManager;
         this.securityContext = securityContext;
@@ -68,8 +69,7 @@ public class DispatchServiceImpl implements DispatchService {
         final String userName = securityContext.getUserId();
         // Set the id before we can execute this action.
         action.setId(TaskIdFactory.create());
-        action.setUserId(userName);
-        action.setSessionId(httpServletRequestHolder.getSessionId());
+        action.setUserToken(UserTokenUtil.create(userName, httpServletRequestHolder.getSessionId()));
 
         try {
             final R r = taskManager.exec(action);

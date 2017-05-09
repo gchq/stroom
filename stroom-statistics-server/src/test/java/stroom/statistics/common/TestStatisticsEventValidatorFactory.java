@@ -18,7 +18,6 @@ package stroom.statistics.common;
 
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.statistics.sql.SQLStatisticsEventValidator;
 
 public class TestStatisticsEventValidatorFactory {

@@ -16,9 +16,7 @@
 
 package stroom.statistics.server.common.rollup;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import org.springframework.context.annotation.Scope;
 import stroom.security.Insecure;
 import stroom.statistics.common.rollup.RollUpBitMask;
 import stroom.statistics.shared.CustomRollUpMask;
@@ -27,8 +25,13 @@ import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.StatisticsDataSourceFieldChangeAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @TaskHandlerBean(task = StatisticsDataSourceFieldChangeAction.class)
+@Scope(value = StroomScope.TASK)
 @Insecure
 public class StatisticsDataSourceFieldChangeHandler
         extends AbstractTaskHandler<StatisticsDataSourceFieldChangeAction, StatisticsDataSourceData> {

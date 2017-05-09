@@ -16,15 +16,8 @@
 
 package stroom.statistics.sql;
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map.Entry;
-
 import org.apache.commons.lang.mutable.MutableLong;
 import org.junit.Test;
-
 import stroom.statistics.common.RolledUpStatisticEvent;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
@@ -36,6 +29,12 @@ import stroom.statistics.shared.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.util.test.StroomUnitTest;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
+
+import static org.junit.Assert.assertEquals;
 
 public class TestSQLStatisticAggregateMap extends StroomUnitTest {
     private static final long timeMs = 101_000L;
@@ -423,9 +422,9 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         StatisticEvent event;
 
         if (value instanceof Long) {
-            event = new StatisticEvent(timeMs, statName, buildTagList(valueSuffix), (Long) value);
+            event = StatisticEvent.createCount(timeMs, statName, buildTagList(valueSuffix), (Long) value);
         } else {
-            event = new StatisticEvent(timeMs, statName, buildTagList(valueSuffix), (Double) value);
+            event = StatisticEvent.createValue(timeMs, statName, buildTagList(valueSuffix), (Double) value);
         }
 
         return AbstractStatistics.generateTagRollUps(event, buildStatisticDataSource(StatisticRollUpType.ALL));

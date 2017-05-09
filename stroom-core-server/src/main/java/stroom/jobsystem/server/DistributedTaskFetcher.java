@@ -16,19 +16,6 @@
 
 package stroom.jobsystem.server;
 
-import java.net.ConnectException;
-import java.net.MalformedURLException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.annotation.Resource;
-
 import com.caucho.hessian.client.HessianRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +23,6 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.stereotype.Component;
-
 import stroom.jobsystem.server.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
@@ -56,6 +42,18 @@ import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.thread.ThreadUtil;
+
+import javax.annotation.Resource;
+import java.net.ConnectException;
+import java.net.MalformedURLException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class executes all tasks that are currently queued for execution. This
@@ -129,8 +127,7 @@ public class DistributedTaskFetcher implements BeanFactoryAware {
                 // Only allow one set of tasks to be fetched at any one time.
                 if (fetchingTasks.compareAndSet(false, true)) {
                     if (!stopping.get()) {
-                        final GenericServerTask genericServerTask = new GenericServerTask(null, null, null,
-                                "Fetch Tasks", "fetching tasks");
+                        final GenericServerTask genericServerTask = GenericServerTask.create("Fetch Tasks", "fetching tasks");
                         genericServerTask.setRunnable(() -> {
                             try {
                                 LOGGER.trace("Trying to fetch tasks");
@@ -249,9 +246,9 @@ public class DistributedTaskFetcher implements BeanFactoryAware {
         }
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private void handleResult(final DistributedTaskRequestClusterTask request,
-            final DistributedTaskRequestResult response) {
+                              final DistributedTaskRequestResult response) {
         try {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Task response: node=\"" + request.getNode().getName() + "\"");

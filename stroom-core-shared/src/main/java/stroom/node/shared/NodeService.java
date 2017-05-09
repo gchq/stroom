@@ -19,13 +19,10 @@ package stroom.node.shared;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.NamedEntityService;
 
-import java.util.List;
-
 /**
  * <p>
  * Class to manage nodes.
  * </p>
  */
 public interface NodeService extends NamedEntityService<Node>, FindService<Node, FindNodeCriteria> {
-    List<SystemTableStatus> findSystemTableStatus();
 }

@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <!-- UK Crown Copyright © 2016 -->
-<xsl:stylesheet xpath-default-namespace="records:2" xmlns="event-logging:3" xmlns:j="http://www.w3.org/2013/XSL/json" xmlns:stroom="stroom" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="3.0">
+<xsl:stylesheet xpath-default-namespace="records:2" xmlns="event-logging:3" xmlns:stroom="stroom"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                version="3.0">
   <xsl:template match="records">
     <Events xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd" Version="3.0.0">
       <xsl:apply-templates />

@@ -16,10 +16,10 @@
 
 package stroom.util.io;
 
+import stroom.util.task.TaskMonitor;
+
 import java.io.IOException;
 import java.io.InputStream;
-
-import stroom.util.task.TaskMonitor;
 
 public class FilterInputStreamProgressMonitor extends WrappedInputStream {
     private final StreamProgressMonitor streamProgressMonitor;

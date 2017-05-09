@@ -16,30 +16,28 @@
 
 package stroom.pipeline.server.filter;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.List;
-
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import javax.xml.xpath.XPathConstants;
-
-import stroom.test.StroomProcessTestFileUtil;
-import stroom.util.test.StroomUnitTest;
-import stroom.util.xml.SAXParserFactoryFactory;
+import net.sf.saxon.Configuration;
+import net.sf.saxon.om.NodeInfo;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
-
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.MatchType;
+import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
-import net.sf.saxon.Configuration;
-import net.sf.saxon.om.NodeInfo;
+import stroom.util.test.StroomUnitTest;
+import stroom.util.xml.SAXParserFactoryFactory;
+
+import javax.xml.namespace.NamespaceContext;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.xpath.XPathConstants;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.List;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestXPathFilter extends StroomUnitTest {

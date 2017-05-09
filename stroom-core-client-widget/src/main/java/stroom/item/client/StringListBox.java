@@ -16,9 +16,9 @@
 
 package stroom.item.client;
 
-import java.util.List;
-
 import com.google.gwt.user.client.ui.ListBox;
+
+import java.util.List;
 
 public class StringListBox extends ListBox {
     public String getSelected() {

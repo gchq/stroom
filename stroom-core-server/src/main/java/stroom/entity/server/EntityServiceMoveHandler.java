@@ -16,6 +16,7 @@
 
 package stroom.entity.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceException;
@@ -23,10 +24,12 @@ import stroom.entity.shared.EntityServiceMoveAction;
 import stroom.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = EntityServiceMoveAction.class)
+@Scope(value = StroomScope.TASK)
 class EntityServiceMoveHandler
         extends AbstractTaskHandler<EntityServiceMoveAction<DocumentEntity>, DocumentEntity> {
     private final EntityServiceBeanRegistry beanRegistry;

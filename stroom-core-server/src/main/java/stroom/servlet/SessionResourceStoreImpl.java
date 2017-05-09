@@ -21,7 +21,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
 import stroom.resource.server.ResourceStore;
-import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceKey;
 import stroom.util.spring.StroomScope;
 
@@ -30,9 +29,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -72,7 +71,7 @@ public class SessionResourceStoreImpl extends HttpServlet implements SessionReso
     }
 
     @Override
-    public synchronized File getTempFile(final ResourceKey key) {
+    public synchronized Path getTempFile(final ResourceKey key) {
         final ResourceKey realKey = sessionResourceMap.get(key);
         if (realKey == null) {
             return null;
@@ -88,14 +87,14 @@ public class SessionResourceStoreImpl extends HttpServlet implements SessionReso
         if (uuid != null) {
             final ResourceKey resourceKey = new ResourceKey(null, uuid);
             try {
-                final File file = getTempFile(resourceKey);
-                if (file != null && file.isFile()) {
-                    if (file.getAbsolutePath().toLowerCase().endsWith(".zip")) {
+                final Path file = getTempFile(resourceKey);
+                if (file != null && Files.isRegularFile(file)) {
+                    if (file.toAbsolutePath().toString().toLowerCase().endsWith(".zip")) {
                         resp.setContentType("application/zip");
                     } else {
                         resp.setContentType("application/octet-stream");
                     }
-                    StreamUtil.streamToStream(new FileInputStream(file), resp.getOutputStream(), true);
+                    resp.getOutputStream().write(Files.readAllBytes(file));
                     found = true;
                 }
             } finally {

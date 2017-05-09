@@ -138,9 +138,9 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 xsltName = xslt.getName();
             }
 
-            if (xsltNamePattern != null) {
+            if (xsltNamePattern != null && xsltNamePattern.trim().length() > 0) {
                 // Resolve replacement variables.
-                final String resolvedName = pathCreator.replaceContextVars(xsltNamePattern);
+                final String resolvedName = pathCreator.replaceContextVars(xsltNamePattern.trim());
                 // Make sure there are no replacement vars left.
                 final String[] vars = PathCreator.findVars(resolvedName);
                 if (vars.length > 0) {

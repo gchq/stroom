@@ -16,7 +16,6 @@
 
 package stroom.cache.client;
 
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -41,12 +40,7 @@ public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(CacheRow.MANAGE_CACHE_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
-                    new IconMenuItem(12, GlyphIcons.MONITORING, GlyphIcons.MONITORING, "Caches", null, true, new Command() {
-                        @Override
-                        public void execute() {
-                            open();
-                        }
-                    }));
+                    new IconMenuItem(12, GlyphIcons.MONITORING, GlyphIcons.MONITORING, "Caches", null, true, () -> open()));
         }
     }
 }

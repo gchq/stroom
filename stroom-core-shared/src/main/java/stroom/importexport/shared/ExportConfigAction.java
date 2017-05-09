@@ -17,38 +17,24 @@
 package stroom.importexport.shared;
 
 import stroom.entity.shared.Action;
-import stroom.entity.shared.FindFolderCriteria;
+import stroom.entity.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
 
 public class ExportConfigAction extends Action<ResourceGeneration> {
     private static final long serialVersionUID = -3560107233301674555L;
 
-    private FindFolderCriteria criteria;
-    private boolean ignoreErrors;
+    private DocRefs docRefs;
 
     public ExportConfigAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ExportConfigAction(final FindFolderCriteria criteria, final boolean ignoreErrors) {
-        this.criteria = criteria;
-        this.ignoreErrors = ignoreErrors;
+    public ExportConfigAction(final DocRefs docRefs) {
+        this.docRefs = docRefs;
     }
 
-    public FindFolderCriteria getCriteria() {
-        return criteria;
-    }
-
-    public void setCriteria(final FindFolderCriteria criteria) {
-        this.criteria = criteria;
-    }
-
-    public boolean isIgnoreErrors() {
-        return ignoreErrors;
-    }
-
-    public void setIgnoreErrors(final boolean ignoreErrors) {
-        this.ignoreErrors = ignoreErrors;
+    public DocRefs getDocRefs() {
+        return docRefs;
     }
 
     @Override

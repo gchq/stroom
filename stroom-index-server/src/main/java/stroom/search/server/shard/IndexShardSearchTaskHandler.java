@@ -25,6 +25,13 @@ import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.util.Version;
+import org.springframework.context.annotation.Scope;
 import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
 import stroom.node.server.StroomPropertyService;
@@ -145,8 +152,7 @@ public class IndexShardSearchTaskHandler extends AbstractTaskHandler<IndexShardS
             final IndexSearcher searcher = new IndexSearcher(reader);
 
             try {
-                final GenericServerTask searchingTask = new GenericServerTask(task, task.getSessionId(),
-                        task.getUserId(), "Index Searcher", "");
+                final GenericServerTask searchingTask = GenericServerTask.create(task, "Index Searcher", "");
                 searchingTask.setRunnable(() -> {
                     try {
                         searcher.search(query, collector);

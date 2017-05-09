@@ -34,8 +34,8 @@ public class DictionaryExplorerDataProvider extends AbstractExplorerDataProvider
     private final DictionaryService dictionaryService;
 
     @Inject
-    DictionaryExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService, final DictionaryService dictionaryService) {
-        super(folderService);
+    DictionaryExplorerDataProvider(@Named("cachedFolderService") final FolderService cachedFolderService, final DictionaryService dictionaryService) {
+        super(cachedFolderService);
         this.dictionaryService = dictionaryService;
     }
 

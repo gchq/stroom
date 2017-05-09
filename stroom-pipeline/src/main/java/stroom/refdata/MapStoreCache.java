@@ -16,16 +16,14 @@
 
 package stroom.refdata;
 
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
-
+import net.sf.ehcache.CacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
 import stroom.cache.AbstractCacheBean;
-import net.sf.ehcache.CacheManager;
+
+import javax.inject.Inject;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>

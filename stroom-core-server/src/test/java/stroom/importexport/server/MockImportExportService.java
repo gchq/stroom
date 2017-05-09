@@ -16,35 +16,34 @@
 
 package stroom.importexport.server;
 
-import java.io.File;
-import java.util.List;
-
-import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
-import stroom.entity.shared.EntityActionConfirmation;
-import stroom.entity.shared.FindFolderCriteria;
+import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.ImportState;
+import stroom.util.shared.Message;
 import stroom.util.shared.SharedList;
+import stroom.util.spring.StroomSpringProfiles;
+
+import java.nio.file.Path;
+import java.util.List;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component
 public class MockImportExportService implements ImportExportService {
     @Override
-    public SharedList<EntityActionConfirmation> createImportConfirmationList(final File data) {
+    public SharedList<ImportState> createImportConfirmationList(final Path data) {
         return null;
     }
 
     @Override
-    public void performImportWithConfirmation(final File data, final List<EntityActionConfirmation> confirmList) {
+    public void performImportWithConfirmation(final Path data, final List<ImportState> confirmList) {
     }
 
     @Override
-    public void performImportWithoutConfirmation(final File data) {
+    public void performImportWithoutConfirmation(final Path data) {
     }
 
     @Override
-    public void exportConfig(final FindFolderCriteria criteria, final File zipFile, final boolean ignoreErrors,
-            final List<String> messageList) {
+    public void exportConfig(final DocRefs criteria, final Path data, final List<Message> messageList) {
     }
 }

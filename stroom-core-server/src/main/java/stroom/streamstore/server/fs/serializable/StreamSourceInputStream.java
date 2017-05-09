@@ -16,9 +16,9 @@
 
 package stroom.streamstore.server.fs.serializable;
 
-import java.io.InputStream;
-
 import stroom.util.io.IgnoreCloseInputStream;
+
+import java.io.InputStream;
 
 public class StreamSourceInputStream extends IgnoreCloseInputStream {
     private final long size;

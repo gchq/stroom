@@ -16,9 +16,9 @@
 
 package stroom.util;
 
-import java.util.Set;
-
 import stroom.util.spring.PropertyProvider;
+
+import java.util.Set;
 
 public final class SystemPropertyUtil {
     private static class SystemPropertyProvider implements PropertyProvider {

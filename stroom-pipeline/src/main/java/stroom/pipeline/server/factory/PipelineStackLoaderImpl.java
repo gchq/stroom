@@ -16,10 +16,9 @@
 
 package stroom.pipeline.server.factory;
 
-import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.query.api.DocRef;
+import org.springframework.stereotype.Component;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.query.api.DocRef;

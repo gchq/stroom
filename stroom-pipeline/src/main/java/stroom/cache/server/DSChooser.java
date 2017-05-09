@@ -16,17 +16,15 @@
 
 package stroom.cache.server;
 
-import java.io.StringReader;
-
-import javax.annotation.Resource;
-
 import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
-
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.util.spring.StroomBeanStore;
 import stroom.xml.converter.ParserFactory;
 import stroom.xml.converter.ds3.DS3ParserFactory;
+
+import javax.annotation.Resource;
+import java.io.StringReader;
 
 @Component
 public class DSChooser {

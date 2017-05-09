@@ -16,6 +16,13 @@
 
 package stroom.streamstore.server.fs.serializable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.io.SeekableInputStream;
+import stroom.streamstore.server.StreamSource;
+import stroom.streamstore.shared.StreamType;
+import stroom.util.io.StreamUtil;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -23,13 +30,6 @@ import java.nio.LongBuffer;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.io.SeekableInputStream;
-import stroom.streamstore.server.StreamSource;
-import stroom.streamstore.shared.StreamType;
-import stroom.util.io.StreamUtil;
 
 /**
  * This is an implementation of <code>SegmentInputStream</code> that uses random

@@ -22,37 +22,35 @@ import stroom.util.shared.SimpleThreadPool;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
+import stroom.util.shared.UserTokenUtil;
 
 public abstract class ServerTask<R> implements Task<R>, HasMonitor {
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(2);
 
-    public static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
+    public static final String INTERNAL_PROCESSING_USER_TOKEN = UserTokenUtil.createInternal();
 
     private final TaskId id;
-    private final String sessionId;
-    private final String userId;
+    private final String userToken;
     private final MonitorImpl monitor;
     private volatile String taskName;
 
     public ServerTask() {
         this.id = TaskIdFactory.create();
-        this.sessionId = null;
-        this.userId = INTERNAL_PROCESSING_USER;
+        this.userToken = INTERNAL_PROCESSING_USER_TOKEN;
         this.monitor = new MonitorImpl();
     }
 
     public ServerTask(final Task<?> parentTask) {
-        this(parentTask, parentTask.getSessionId(), parentTask.getUserId());
+        this(parentTask, parentTask.getUserToken());
     }
 
-    public ServerTask(final Task<?> parentTask, final String sessionId, final String userId) {
+    public ServerTask(final Task<?> parentTask, final String userToken) {
         if (parentTask == null) {
             this.id = TaskIdFactory.create();
         } else {
             this.id = TaskIdFactory.create(parentTask.getId());
         }
-        this.sessionId = sessionId;
-        this.userId = userId;
+        this.userToken = userToken;
 
         // Rather than remember the parent task I just grab the parent monitor.
         // This avoids some Hessian serialisation issues that can occur
@@ -104,13 +102,8 @@ public abstract class ServerTask<R> implements Task<R>, HasMonitor {
     }
 
     @Override
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    @Override
-    public String getUserId() {
-        return userId;
+    public String getUserToken() {
+        return userToken;
     }
 
     @Override

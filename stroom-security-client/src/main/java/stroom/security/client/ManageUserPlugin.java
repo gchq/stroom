@@ -18,10 +18,10 @@ package stroom.security.client;
 
 import com.google.gwt.inject.client.AsyncProvider;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.MenuKeys;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.entity.client.event.ShowPermissionsEntityDialogEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
@@ -42,17 +42,16 @@ public class ManageUserPlugin extends NodeToolsPlugin {
         super(eventBus, securityContext);
         this.usersAndGroupsPresenterProvider = usersAndGroupsPresenterProvider;
 
-        eventBus.addHandler(ShowPermissionsEntityDialogEvent.getType(), new ShowPermissionsEntityDialogEvent.Handler() {
+        eventBus.addHandler(ShowPermissionsEntityDialogEvent.getType(), event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentPermissionsPresenter>() {
             @Override
-            public void onPermissions(final ShowPermissionsEntityDialogEvent event) {
-                documentPermissionsPresenterProvider.get(new AsyncCallbackAdaptor<DocumentPermissionsPresenter>() {
-                    @Override
-                    public void onSuccess(final DocumentPermissionsPresenter presenter) {
-                        presenter.show(event.getExplorerData());
-                    }
-                });
+            public void onSuccess(final DocumentPermissionsPresenter presenter) {
+                presenter.show(event.getExplorerData());
             }
-        });
+
+            @Override
+            public void onFailure(final Throwable caught) {
+            }
+        }));
     }
 
     @Override
@@ -62,12 +61,16 @@ public class ManageUserPlugin extends NodeToolsPlugin {
                     new IconMenuItem(1, GlyphIcons.USER, GlyphIcons.USER, "Users And Groups", null, true, new Command() {
                         @Override
                         public void execute() {
-                            usersAndGroupsPresenterProvider.get(new AsyncCallbackAdaptor<UsersAndGroupsPresenter>() {
+                            usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
                                 @Override
                                 public void onSuccess(final UsersAndGroupsPresenter presenter) {
                                     final PopupSize popupSize = new PopupSize(800, 600, true);
                                     ShowPopupEvent.fire(ManageUserPlugin.this, presenter,
                                             PopupType.CLOSE_DIALOG, null, popupSize, "Users And Groups", null, null);
+                                }
+
+                                @Override
+                                public void onFailure(final Throwable caught) {
                                 }
                             });
                         }

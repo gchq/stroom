@@ -1,0 +1,14 @@
+<?xml version="1.1" encoding="UTF-8"?> 
+<test xmlns="mynamespace" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="mynamespace file://mynamespace.xsd" version="1.0"> 
+  <element  
+    attribute1="This is a long attribute"
+      attribute2="This is an equality 5 = 54"
+   
+   attribute3="This is a greater  than 6 < 54"
+    attribute4="This is a less  than 6 > 54"
+    
+  attribute5="This is a multi-line
+ attribute value 123 <> 123"    
+      > 
+  </element>
+</test>

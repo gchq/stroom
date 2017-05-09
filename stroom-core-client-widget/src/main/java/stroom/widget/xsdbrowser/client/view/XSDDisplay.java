@@ -16,10 +16,6 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.resources.client.ClientBundle;
@@ -39,9 +35,12 @@ import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-
 import stroom.widget.xsdbrowser.client.view.XSDNode.XSDAttribute;
 import stroom.widget.xsdbrowser.client.view.XSDNode.XSDType;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class XSDDisplay extends Composite {
     private final FlowPanel contentPanel = new FlowPanel();

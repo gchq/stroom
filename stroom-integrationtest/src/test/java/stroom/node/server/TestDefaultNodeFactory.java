@@ -16,12 +16,11 @@
 
 package stroom.node.server;
 
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
+
+import javax.annotation.Resource;
 
 public class TestDefaultNodeFactory extends AbstractCoreIntegrationTest {
     @Resource

@@ -16,12 +16,12 @@
 
 package stroom.streamstore.server.fs;
 
+import stroom.io.StreamCloser;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-
-import stroom.io.StreamCloser;
 
 /**
  * @see BlockGZIPConstants

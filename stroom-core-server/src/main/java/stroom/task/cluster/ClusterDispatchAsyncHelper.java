@@ -16,23 +16,21 @@
 
 package stroom.task.cluster;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.Node;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @Scope(value = StroomScope.TASK)
 @Component

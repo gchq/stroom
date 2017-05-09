@@ -16,8 +16,12 @@
 
 package stroom.cluster.server;
 
+import com.caucho.hessian.client.HessianProxyFactory;
+import com.caucho.hessian.client.HessianRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.remote.StroomHessianProxyFactory;
@@ -25,12 +29,10 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.thread.ThreadScopeContextHolder;
-import com.caucho.hessian.client.HessianProxyFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.lang.reflect.Method;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -136,6 +138,13 @@ class ClusterCallServiceRemote implements ClusterCallService {
 
             try {
                 result = api.call(sourceNode, targetNode, beanName, methodName, parameterTypes, args);
+            } catch (final HessianRuntimeException t) {
+                if (t.getCause() != null && t.getCause() instanceof ConnectException) {
+                    LOGGER.error("Unable to connect to '" + targetNode.getClusterURL() + "' " + t.getCause().getMessage());
+                } else {
+                    LOGGER.error(t.getMessage(), t);
+                }
+                throw t;
             } catch (final Throwable t) {
                 LOGGER.error(t.getMessage(), t);
                 throw t;

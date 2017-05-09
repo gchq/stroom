@@ -16,6 +16,8 @@
 
 package stroom.statistics.server;
 
+import org.junit.Ignore;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.CommonTestControl;
@@ -23,8 +25,6 @@ import stroom.CommonTranslationTest;
 import stroom.streamstore.server.tools.StoreCreationTool;
 import stroom.streamtask.server.StreamTaskCreator;
 import stroom.task.server.TaskManager;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 

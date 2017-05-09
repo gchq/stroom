@@ -19,7 +19,6 @@ package stroom.entity.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-
 import stroom.entity.client.EntityTabData;
 
 public class SaveEntityEvent extends GwtEvent<SaveEntityEvent.Handler> {

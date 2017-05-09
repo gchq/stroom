@@ -16,8 +16,6 @@
 
 package stroom.task.server;
 
-import java.util.concurrent.locks.ReentrantLock;
-
 import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
 import stroom.util.task.HasMonitor;

@@ -18,7 +18,6 @@ package stroom.entity.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
 import com.google.gwt.inject.client.Ginjector;
-
 import stroom.entity.client.presenter.CopyEntityPresenter;
 import stroom.entity.client.presenter.CreateEntityPresenter;
 import stroom.entity.client.presenter.MoveEntityPresenter;

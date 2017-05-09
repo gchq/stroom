@@ -16,10 +16,10 @@
 
 package stroom.util.task;
 
+import stroom.util.shared.Task;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import stroom.util.shared.Task;
 
 /**
  * Class to hold the spring task bound variables.

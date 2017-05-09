@@ -16,10 +16,9 @@
 
 package stroom.db.migration;
 
-import stroom.db.migration.EntityReferenceReplacer;
-import stroom.util.io.StreamUtil;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.util.io.StreamUtil;
 
 import java.io.InputStream;
 import java.sql.Connection;

@@ -16,6 +16,9 @@
 
 package stroom.statistics.common;
 
+import stroom.statistics.shared.StatisticType;
+import stroom.util.date.DateUtil;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -23,9 +26,6 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-
-import stroom.statistics.shared.StatisticType;
-import stroom.util.date.DateUtil;
 
 public class GenerateSampleStatisticsDataForBulk {
     private static final String START_DATE = "2015-05-01T00:00:00.000Z";

@@ -20,6 +20,8 @@ import stroom.statistics.shared.StatisticType;
 
 import java.util.List;
 
+import java.util.List;
+
 /**
  * Class to hold a statistic event, ie. the count or value of something in a
  * given time window
@@ -27,6 +29,11 @@ import java.util.List;
 public class StatisticEvent {
     private final long timeMs;
     private final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent;
+
+    private StatisticEvent(final long timeMs, final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent) {
+        this.timeMs = timeMs;
+        this.timeAgnosticStatisticEvent = timeAgnosticStatisticEvent;
+    }
 
     /**
      * Constructor for value type events with floating point values
@@ -37,11 +44,8 @@ public class StatisticEvent {
      *                ordered by tag name. Can be null.
      * @param count   the count of the event, e.g. the number of desktop logons
      */
-    public StatisticEvent(final long timeMs, final String name, final List<StatisticTag> tagList, final long count) {
-        this.timeMs = timeMs;
-
-        this.timeAgnosticStatisticEvent = new TimeAgnosticStatisticEvent(name, tagList, count);
-
+    public static StatisticEvent createCount(final long timeMs, final String name, final List<StatisticTag> tagList, final long count) {
+        return new StatisticEvent(timeMs, TimeAgnosticStatisticEvent.createCount(name, tagList, count));
     }
 
     /**
@@ -54,11 +58,8 @@ public class StatisticEvent {
      * @param value   the value of the event, e.g. the heap size in MB, bytes read,
      *                etc.
      */
-    public StatisticEvent(final long timeMs, final String name, final List<StatisticTag> tagList, final double value) {
-        this.timeMs = timeMs;
-
-        this.timeAgnosticStatisticEvent = new TimeAgnosticStatisticEvent(name, tagList, value);
-
+    public static StatisticEvent createValue(final long timeMs, final String name, final List<StatisticTag> tagList, final double value) {
+        return new StatisticEvent(timeMs, TimeAgnosticStatisticEvent.createValue(name, tagList, value));
     }
 
     /**
@@ -106,15 +107,15 @@ public class StatisticEvent {
                 + timeAgnosticStatisticEvent + "]";
     }
 
-    public StatisticEvent duplicateWithNewTagList(final List<StatisticTag> newTagList) {
-        if (timeAgnosticStatisticEvent.getStatisticType().equals(StatisticType.COUNT)) {
-            return new StatisticEvent(timeMs, timeAgnosticStatisticEvent.getName(), newTagList,
-                    timeAgnosticStatisticEvent.getCount());
-        } else {
-            return new StatisticEvent(timeMs, timeAgnosticStatisticEvent.getName(), newTagList,
-                    timeAgnosticStatisticEvent.getValue());
-        }
-    }
+//    public StatisticEvent duplicateWithNewTagList(final List<StatisticTag> newTagList) {
+//        if (timeAgnosticStatisticEvent.getStatisticType().equals(StatisticType.COUNT)) {
+//            return new StatisticEvent(timeMs, TimeAgnosticStatisticEvent.createCount(timeAgnosticStatisticEvent.getName(), newTagList,
+//                    timeAgnosticStatisticEvent.getCount()));
+//        } else {
+//            return new StatisticEvent(timeMs, TimeAgnosticStatisticEvent.createValue(timeAgnosticStatisticEvent.getName(), newTagList,
+//                    timeAgnosticStatisticEvent.getValue()));
+//        }
+//    }
 
     @Override
     public int hashCode() {

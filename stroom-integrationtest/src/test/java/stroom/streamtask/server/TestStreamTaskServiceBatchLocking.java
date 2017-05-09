@@ -16,15 +16,14 @@
 
 package stroom.streamtask.server;
 
-import javax.annotation.Resource;
-
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.node.server.NodeCache;
 import stroom.streamtask.shared.StreamTaskService;
+
+import javax.annotation.Resource;
 
 public class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTest {
     @Resource

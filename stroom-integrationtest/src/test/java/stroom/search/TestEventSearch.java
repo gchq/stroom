@@ -35,6 +35,7 @@ import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
+import stroom.query.api.ResultRequest.ResultStyle;
 import stroom.query.api.Row;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchResponse;
@@ -42,7 +43,6 @@ import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.ParamUtil;
-import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
 import java.time.ZoneOffset;
@@ -99,7 +99,7 @@ public class TestEventSearch extends AbstractSearchTest {
         for (final String componentId : componentIds) {
             final TableSettings tableSettings = createTableSettings(index, extractValues);
 
-            final ResultRequest tableResultRequest = new ResultRequest(componentId, tableSettings);
+            final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultStyle.TABLE, true);
             resultRequests.add(tableResultRequest);
         }
 

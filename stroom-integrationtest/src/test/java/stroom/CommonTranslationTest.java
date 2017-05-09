@@ -16,19 +16,8 @@
 
 package stroom;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.annotation.Resource;
-
-import stroom.test.StroomProcessTestFileUtil;
 import org.junit.Assert;
 import org.springframework.stereotype.Component;
-
 import stroom.feed.shared.Feed;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
@@ -40,6 +29,15 @@ import stroom.streamtask.server.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
+import stroom.test.StroomProcessTestFileUtil;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Component
 public class CommonTranslationTest {

@@ -16,13 +16,12 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.File;
-import java.io.OutputStream;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.util.test.StroomUnitTest;
+
+import java.io.File;
+import java.io.OutputStream;
 
 public class TestRandomOutputStreamProvider extends StroomUnitTest {
     @Test

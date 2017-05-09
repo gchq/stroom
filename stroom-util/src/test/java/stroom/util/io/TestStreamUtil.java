@@ -16,10 +16,10 @@
 
 package stroom.util.io;
 
-import stroom.util.test.StroomJUnit4ClassRunner;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.io.IOException;
 import java.io.InputStream;

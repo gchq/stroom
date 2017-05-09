@@ -16,13 +16,17 @@
 
 package stroom.util;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.HashSet;
-import java.util.Set;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import stroom.entity.server.util.XMLUtil;
+import stroom.pipeline.server.DefaultLocationFactory;
+import stroom.pipeline.server.LocationFactory;
+import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
+import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
+import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.util.xml.SAXParserFactoryFactory;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -30,19 +34,13 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
-
-import stroom.util.xml.SAXParserFactoryFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-
-import stroom.entity.server.util.XMLUtil;
-import stroom.pipeline.server.DefaultLocationFactory;
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
-import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
-import stroom.pipeline.server.errorhandler.ProcessException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashSet;
+import java.util.Set;
 
 public class UniqueXMLEvents {
     private static final SAXParserFactory PARSER_FACTORY;

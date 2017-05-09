@@ -18,7 +18,6 @@ package stroom.widget.button.client;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
-import com.google.gwt.resources.client.ImageResource;
 
 public interface GlyphButtonView extends HasClickHandlers, HasMouseDownHandlers {
     void setIcon(String icon);

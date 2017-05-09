@@ -2,8 +2,6 @@
 <feed>
    <classification/>
    <contextEncoding/>
-   <createTime>2015-04-27T16:31:42.000Z</createTime>
-   <createUser>admin</createUser>
    <description/>
    <encoding/>
    <name>VALUE_FEED</name>
@@ -11,6 +9,5 @@
    <retentionDayAge/>
    <status>RECEIVE</status>
    <streamType>Raw Events</streamType>
-   <updateTime>2015-04-27T16:31:42.000Z</updateTime>
-   <updateUser>admin</updateUser>
+   <uuid>28175ad7-d86d-407d-bba8-4417ff19592a</uuid>
 </feed>

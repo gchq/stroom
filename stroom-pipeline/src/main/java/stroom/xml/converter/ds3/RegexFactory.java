@@ -16,10 +16,10 @@
 
 package stroom.xml.converter.ds3;
 
+import stroom.xml.converter.ds3.ref.VarMap;
+
 import java.util.Set;
 import java.util.regex.Pattern;
-
-import stroom.xml.converter.ds3.ref.VarMap;
 
 public class RegexFactory extends ExpressionFactory {
     private final Pattern pattern;

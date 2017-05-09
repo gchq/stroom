@@ -17,14 +17,6 @@
 package stroom.pipeline.structure.client.presenter;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -33,15 +25,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityReferenceFindAction;
-import stroom.entity.shared.ResultList;
-import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.explorer.shared.ExplorerData;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.data.PipelineProperty;
@@ -53,7 +39,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType.Purpose;
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.valuespinner.client.SpinnerEvent;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter.NewPropertyView> {
@@ -95,15 +80,12 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(getView().getSource().addSelectionHandler(new SelectionHandler<PropertyListPresenter.Source>() {
-            @Override
-            public void onSelection(final SelectionEvent<Source> event) {
-                final Source selected = event.getSelectedItem();
-                if (!source.equals(selected)) {
-                    NewPropertyPresenter.this.source = selected;
-                    setDirty(true, false);
-                    startEdit(selected);
-                }
+        registerHandler(getView().getSource().addSelectionHandler(event -> {
+            final Source selected = event.getSelectedItem();
+            if (!source.equals(selected)) {
+                NewPropertyPresenter.this.source = selected;
+                setDirty(true, false);
+                startEdit(selected);
             }
         }));
 
@@ -195,13 +177,10 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             listBox.addItem("true");
             listBox.addItem("false");
 
-            listBox.addChangeHandler(new ChangeHandler() {
-                @Override
-                public void onChange(final ChangeEvent event) {
-                    final Boolean selected = getBoolean(listBox.getSelectedIndex());
-                    if (!EqualsUtil.isEquals(selected, currentBoolean)) {
-                        setDirty(true);
-                    }
+            listBox.addChangeHandler(event -> {
+                final Boolean selected = getBoolean(listBox.getSelectedIndex());
+                if (!EqualsUtil.isEquals(selected, currentBoolean)) {
+                    setDirty(true);
                 }
             });
 
@@ -260,18 +239,8 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             valueSpinner.setMin(0);
             valueSpinner.setMax(10000);
 
-            registerHandler(valueSpinner.getTextBox().addKeyDownHandler(new KeyDownHandler() {
-                @Override
-                public void onKeyDown(final KeyDownEvent event) {
-                    setDirty(true);
-                }
-            }));
-            registerHandler(valueSpinner.getSpinner().addSpinnerHandler(new SpinnerEvent.Handler() {
-                @Override
-                public void onChange(final SpinnerEvent event) {
-                    setDirty(true);
-                }
-            }));
+            registerHandler(valueSpinner.getTextBox().addKeyDownHandler(event -> setDirty(true)));
+            registerHandler(valueSpinner.getSpinner().addSpinnerHandler(event -> setDirty(true)));
 
             valueSpinner.getElement().getStyle().setWidth(100, Unit.PCT);
             valueSpinner.getElement().getStyle().setMarginBottom(0, Unit.PX);
@@ -288,12 +257,9 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
         if (!textBoxInitialised) {
             textBox = new TextBox();
 
-            textBox.addKeyUpHandler(new KeyUpHandler() {
-                @Override
-                public void onKeyUp(final KeyUpEvent event) {
-                    if (!EqualsUtil.isEquals(textBox.getText(), currentText)) {
-                        setDirty(true);
-                    }
+            textBox.addKeyUpHandler(event -> {
+                if (!EqualsUtil.isEquals(textBox.getText(), currentText)) {
+                    setDirty(true);
                 }
             });
 
@@ -319,24 +285,17 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             // Load stream types.
             final FindStreamTypeCriteria findStreamTypeCriteria = new FindStreamTypeCriteria();
             findStreamTypeCriteria.obtainPurpose().add(Purpose.PROCESSED);
-            dispatcher.execute(new EntityReferenceFindAction<>(findStreamTypeCriteria),
-                    new AsyncCallbackAdaptor<ResultList<SharedDocRef>>() {
-                        @Override
-                        public void onSuccess(final ResultList<SharedDocRef> result) {
-                            for (final SharedDocRef streamType : result) {
-                                streamTypesWidget.addItem(streamType.getName());
-                            }
-                            streamTypesWidget.setSelected(currentStreamType);
-                        }
-                    });
+            dispatcher.exec(new EntityReferenceFindAction<>(findStreamTypeCriteria)).onSuccess(result -> {
+                for (final DocRef streamType : result) {
+                    streamTypesWidget.addItem(streamType.getName());
+                }
+                streamTypesWidget.setSelected(currentStreamType);
+            });
 
-            streamTypesWidget.addChangeHandler(new ChangeHandler() {
-                @Override
-                public void onChange(final ChangeEvent event) {
-                    final String streamType = streamTypesWidget.getSelected();
-                    if (!EqualsUtil.isEquals(currentStreamType, streamType)) {
-                        setDirty(true);
-                    }
+            streamTypesWidget.addChangeHandler(event -> {
+                final String streamType = streamTypesWidget.getSelected();
+                if (!EqualsUtil.isEquals(currentStreamType, streamType)) {
+                    setDirty(true);
                 }
             });
 
@@ -358,13 +317,10 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
     private void enterEntityMode(final PipelineProperty property) {
         if (!entityPresenterInitialised) {
-            entityDropDownPresenter.addDataSelectionHandler(new DataSelectionHandler<ExplorerData>() {
-                @Override
-                public void onSelection(final DataSelectionEvent<ExplorerData> event) {
-                    final DocRef selection = entityDropDownPresenter.getSelectedEntityReference();
-                    if (!EqualsUtil.isEquals(currentEntity, selection)) {
-                        setDirty(true);
-                    }
+            entityDropDownPresenter.addDataSelectionHandler(event -> {
+                final DocRef selection = entityDropDownPresenter.getSelectedEntityReference();
+                if (!EqualsUtil.isEquals(currentEntity, selection)) {
+                    setDirty(true);
                 }
             });
 

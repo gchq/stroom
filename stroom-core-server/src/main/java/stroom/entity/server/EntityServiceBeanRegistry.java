@@ -18,17 +18,17 @@ package stroom.entity.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.server.util.EntityServiceExceptionUtil;
-import stroom.entity.shared.Entity;
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.EntityService;
-import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.FindService;
-import stroom.util.spring.StroomBeanStore;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.stereotype.Component;
+import stroom.entity.server.util.EntityServiceExceptionUtil;
+import stroom.entity.shared.BaseCriteria;
+import stroom.entity.shared.Entity;
+import stroom.entity.shared.EntityService;
+import stroom.entity.shared.EntityServiceException;
+import stroom.entity.shared.FindService;
+import stroom.util.spring.StroomBeanStore;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Method;
@@ -125,7 +125,7 @@ public class EntityServiceBeanRegistry implements BeanPostProcessor {
     }
 
     protected Method getMethod(final String beanName, final Class<?> beanClazz, final String methodName,
-            final Class<?>... argTypes) {
+                               final Class<?>... argTypes) {
         final List<Object> signature = new ArrayList<>();
         signature.add(methodName);
         for (final Class<?> argType : argTypes) {
@@ -229,26 +229,43 @@ public class EntityServiceBeanRegistry implements BeanPostProcessor {
 
     @Override
     public Object postProcessBeforeInitialization(final Object bean, final String beanName) throws BeansException {
-        if (bean instanceof EntityService<?>) {
-            final Class<?> entityType = findParameterizedType(bean.getClass(), Entity.class);
-            final Class<?> findType = findParameterizedType(bean.getClass(), BaseCriteria.class);
+        if (!beanName.toLowerCase().startsWith("cached")) {
+            if (bean instanceof EntityService<?>) {
+                final Class<?> entityType = findParameterizedType(bean.getClass(), Entity.class);
+                if (entityType != null && Entity.class.isAssignableFrom(entityType)) {
+                    try {
+                        final Entity entity = (Entity) entityType.newInstance();
+                        final String existing = entityServiceTypeMap.put(entity.getType(), beanName);
+                        if (existing != null) {
+                            LOGGER.error("Existing bean found for entity type '" + existing + "'");
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
 
-            if (Entity.class.isAssignableFrom(entityType)) {
-                try {
-                    final Entity entity = (Entity) entityType.newInstance();
-                    entityServiceTypeMap.put(entity.getType(), beanName);
-                } catch (final Exception e) {
-                    LOGGER.error("Unable to create new entity!", e);
+                    final String existing = entityServiceClassMap.put(entityType, beanName);
+                    if (existing != null) {
+                        LOGGER.error("Existing bean found for entity type class '" + existing + "'");
+                    }
+                }
+
+                final Class<?> findType = findParameterizedType(bean.getClass(), BaseCriteria.class);
+                if (findType != null) {
+                    final String existing = entityServiceClassMap.put(findType, beanName);
+                    if (existing != null) {
+                        LOGGER.error("Existing bean found for entity find type class '" + existing + "'");
+                    }
+                }
+
+            } else if (bean instanceof FindService<?, ?>) {
+                final Class<?> findType = findParameterizedType(bean.getClass(), BaseCriteria.class);
+                if (findType != null) {
+                    final String existing = entityServiceClassMap.put(findType, beanName);
+                    if (existing != null) {
+                        LOGGER.error("Existing bean found for entity find type class '" + existing + "'");
+                    }
                 }
             }
-
-            entityServiceClassMap.put(entityType, beanName);
-            entityServiceClassMap.put(findType, beanName);
-
-        } else if (bean instanceof FindService<?, ?>) {
-            final Class<?> findType = findParameterizedType(bean.getClass(), BaseCriteria.class);
-            entityServiceClassMap.put(findType, beanName);
-
         }
 
         return bean;

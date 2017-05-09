@@ -32,9 +32,6 @@
 
 package stroom.xml.event.np;
 
-import java.io.Serializable;
-import java.util.HashMap;
-
 import net.sf.saxon.lib.NamespaceConstant;
 import net.sf.saxon.om.NameChecker;
 import net.sf.saxon.om.NamespaceResolver;
@@ -43,6 +40,9 @@ import net.sf.saxon.om.StandardNames;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.util.FastStringBuffer;
 import net.sf.saxon.value.Whitespace;
+
+import java.io.Serializable;
+import java.util.HashMap;
 
 /**
  * A NamePool holds a collection of expanded names, each containing a namespace

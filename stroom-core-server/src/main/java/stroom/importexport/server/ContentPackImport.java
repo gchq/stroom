@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
-import stroom.node.shared.GlobalPropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomStartup;
 
@@ -32,6 +31,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 @Component
@@ -46,14 +46,12 @@ public class ContentPackImport {
 
     private ImportExportService importExportService;
     private StroomPropertyService stroomPropertyService;
-    private GlobalPropertyService globalPropertyService;
 
     @SuppressWarnings("unused")
     @Inject
-    ContentPackImport(ImportExportService importExportService, StroomPropertyService stroomPropertyService, GlobalPropertyService globalPropertyService) {
+    ContentPackImport(ImportExportService importExportService, StroomPropertyService stroomPropertyService) {
         this.importExportService = importExportService;
         this.stroomPropertyService = stroomPropertyService;
-        this.globalPropertyService = globalPropertyService;
     }
 
     //Startup with very low priority to ensure it starts after everything else
@@ -88,31 +86,31 @@ public class ContentPackImport {
                 AtomicInteger successCounter = new AtomicInteger();
                 AtomicInteger failedCounter = new AtomicInteger();
 
-                Files.list(contentPacksDir)
-                        .filter(path -> path.toString().endsWith("zip"))
-                        .sorted()
-                        .forEachOrdered((contentPackPath) -> {
-                            boolean result = importContentPack(contentPacksDir, contentPackPath);
-                            if (result) {
-                                successCounter.incrementAndGet();
-                            } else {
-                                failedCounter.incrementAndGet();
-                            }
-                            Path destDir = result ? importedDir : failedDir;
-                            Path filename = contentPackPath.getFileName();
-                            Path destPath = destDir.resolve(filename);
-                            try {
-                                Files.move(contentPackPath, destPath, StandardCopyOption.REPLACE_EXISTING);
-                            } catch (IOException e) {
-                                throw new RuntimeException(String.format("Error moving file from %s to %s",
-                                        contentPackPath.toAbsolutePath(), destPath.toAbsolutePath()));
-                            }
-                        });
+                try (final Stream<Path> stream = Files.list(contentPacksDir)) {
+                    stream.filter(path -> path.toString().endsWith("zip"))
+                            .sorted()
+                            .forEachOrdered((contentPackPath) -> {
+                                boolean result = importContentPack(contentPacksDir, contentPackPath);
+                                if (result) {
+                                    successCounter.incrementAndGet();
+                                } else {
+                                    failedCounter.incrementAndGet();
+                                }
+                                Path destDir = result ? importedDir : failedDir;
+                                Path filename = contentPackPath.getFileName();
+                                Path destPath = destDir.resolve(filename);
+                                try {
+                                    Files.move(contentPackPath, destPath, StandardCopyOption.REPLACE_EXISTING);
+                                } catch (IOException e) {
+                                    throw new RuntimeException(String.format("Error moving file from %s to %s",
+                                            contentPackPath.toAbsolutePath(), destPath.toAbsolutePath()));
+                                }
+                            });
 
-                LOGGER.info("Content pack import counts - success: {}, failed: {}",
-                        successCounter.get(),
-                        failedCounter.get());
-
+                    LOGGER.info("Content pack import counts - success: {}, failed: {}",
+                            successCounter.get(),
+                            failedCounter.get());
+                }
             } catch (IOException e) {
                 LOGGER.error("Unable to read content pack files from {}", contentPacksDir.toAbsolutePath(), e);
             }
@@ -130,7 +128,7 @@ public class ContentPackImport {
             //It is possible to import a content pack (or packs) with missing dependencies
             //so the onus is on the person putting the file in the import directory to
             //ensure the packs they import are complete
-            importExportService.performImportWithoutConfirmation(contentPack.toFile());
+            importExportService.performImportWithoutConfirmation(contentPack);
 
             LOGGER.info("Completed import of content pack {}", contentPack.toAbsolutePath());
 

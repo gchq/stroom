@@ -16,12 +16,10 @@
 
 package stroom.pipeline.structure.client.view;
 
-import stroom.util.client.ImageUtil;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Image;
-
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.util.client.ImageUtil;
 
 public class PipelineImageUtil {
     public static Image getImage(final PipelineElementType pipelineElementType) {

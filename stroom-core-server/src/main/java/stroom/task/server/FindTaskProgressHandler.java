@@ -18,6 +18,7 @@ package stroom.task.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.ResultList;
+import stroom.security.Secured;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.shared.FindTaskProgressAction;
 import stroom.task.shared.TaskProgress;
@@ -27,6 +28,7 @@ import javax.inject.Inject;
 
 @TaskHandlerBean(task = FindTaskProgressAction.class)
 @Scope(StroomScope.TASK)
+@Secured(FindTaskProgressAction.MANAGE_TASKS_PERMISSION)
 class FindTaskProgressHandler
         extends FindTaskProgressHandlerBase<FindTaskProgressAction, ResultList<TaskProgress>> {
     @Inject

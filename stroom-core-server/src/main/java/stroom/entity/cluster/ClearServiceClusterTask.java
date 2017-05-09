@@ -27,7 +27,7 @@ public class ClearServiceClusterTask extends ClusterTask<VoidResult> {
 
     public ClearServiceClusterTask(final Task<?> parentTask,
                                    final Class<?> beanClass) {
-        super(parentTask, "ClearServiceClusterTask");
+        super(parentTask.getUserToken(), "ClearServiceClusterTask");
         this.beanClass = beanClass;
     }
 

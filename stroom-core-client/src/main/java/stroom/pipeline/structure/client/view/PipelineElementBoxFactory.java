@@ -19,7 +19,6 @@ package stroom.pipeline.structure.client.view;
 import com.google.gwt.user.client.ui.Image;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import stroom.pipeline.shared.data.PipelineElement;
 
 @Singleton

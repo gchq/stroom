@@ -16,18 +16,6 @@
 
 package stroom.util.spring;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.Advised;
@@ -39,6 +27,18 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 public class StroomBeanStore implements InitializingBean, BeanFactoryAware, ApplicationContextAware {
@@ -201,7 +201,12 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
                 }
 
                 if (beanClass.getName().contains("$")) {
-                    LOGGER.error("init() - UNABLE TO RESOVE BEAN CLASS ?? MAYBE SPRING IS NOLONGER USING CGLIB .... {}",
+                    LOGGER.error("init() - UNABLE TO RESOLVE BEAN CLASS ?? MAYBE SPRING IS NO LONGER USING CGLIB .... {}",
+                            beanClass.getName());
+                }
+
+                if (beanClass.isInterface()) {
+                    LOGGER.error("init() - EXPECTED CLASS BUT RECEIVED INTERFACE .... %s",
                             beanClass.getName());
                 }
 
@@ -232,13 +237,7 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
                 for (final Annotation annotation : allAnnotation) {
                     final Class<?> annotationType = annotation.annotationType();
                     if (annotationType.getName().contains(STROOM_CLASSES)) {
-                        List<StroomBeanMethod> list = stroomBeanMethodMap.get(annotationType);
-                        if (list == null) {
-                            list = new ArrayList<>();
-                            stroomBeanMethodMap.put(annotationType, list);
-                        }
-
-                        list.add(new StroomBeanMethod(beanName, method));
+                        stroomBeanMethodMap.computeIfAbsent(annotationType, k -> new ArrayList<>()).add(new StroomBeanMethod(beanName, method));
                     }
                 }
             }

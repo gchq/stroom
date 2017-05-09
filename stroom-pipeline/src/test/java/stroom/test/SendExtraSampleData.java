@@ -16,15 +16,14 @@
 
 package stroom.test;
 
+import stroom.util.io.StreamUtil;
+import stroom.util.thread.ThreadUtil;
+
+import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
-import javax.net.ssl.HttpsURLConnection;
-
-import stroom.util.io.StreamUtil;
-import stroom.util.thread.ThreadUtil;
 
 public class SendExtraSampleData {
     private SendExtraSampleData() {

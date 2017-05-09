@@ -16,9 +16,9 @@
 
 package stroom.explorer.shared;
 
-import java.util.List;
-
 import stroom.util.shared.SharedObject;
+
+import java.util.List;
 
 public class DocumentTypes implements SharedObject {
     private static final long serialVersionUID = -8432367046243288634L;

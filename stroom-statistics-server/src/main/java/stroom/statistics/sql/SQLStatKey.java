@@ -16,13 +16,13 @@
 
 package stroom.statistics.sql;
 
-import java.util.List;
-
 import stroom.statistics.common.RollUpBitMaskUtil;
 import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.StatisticsEventValidatorFactory;
 import stroom.statistics.common.rollup.RollUpBitMask;
 import stroom.util.shared.EqualsBuilder;
+
+import java.util.List;
 
 public class SQLStatKey {
     private final long ms;

@@ -16,37 +16,48 @@
 
 package stroom.xmlschema.server;
 
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
-import stroom.importexport.server.ImportExportSerializer.ImportMode;
+import stroom.entity.shared.ImportState.ImportMode;
+import stroom.importexport.server.EntityPathResolver;
 import stroom.importexport.server.ImportExportSerializerImpl;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 import stroom.xmlschema.shared.XMLSchemaService;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.HashMap;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component
 public class MockXMLSchemaService extends MockDocumentEntityService<XMLSchema, FindXMLSchemaCriteria>
         implements XMLSchemaService {
-    private final File xsdDir;
-    @Resource
-    private FolderService folderService;
-    @Resource
-    private ImportExportSerializerImpl importExportSerializer;
+    private final Path xsdDir;
+    private final FolderService folderService;
+    private final ImportExportSerializerImpl importExportSerializer;
     private boolean loaded;
 
     public MockXMLSchemaService() {
-        xsdDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "samples/config/XML Schemas");
+        this.folderService = null;
+        this.importExportSerializer = null;
+        xsdDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "samples/config/XML Schemas").toPath();
+    }
+
+    @Inject
+    public MockXMLSchemaService(final GenericEntityService genericEntityService, final EntityPathResolver entityPathResolver, final FolderService folderService, final ImportExportSerializerImpl importExportSerializer) {
+        super(genericEntityService, entityPathResolver);
+        this.folderService = folderService;
+        this.importExportSerializer = importExportSerializer;
+        xsdDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "samples/config/XML Schemas").toPath();
     }
 
     @Override
@@ -70,9 +81,9 @@ public class MockXMLSchemaService extends MockDocumentEntityService<XMLSchema, F
     public BaseResultList<XMLSchema> find(final FindXMLSchemaCriteria criteria) {
         if (!loaded && xsdDir != null && folderService != null) {
             loaded = true;
-            importExportSerializer.performImport(xsdDir, Folder.class, Folder.ENTITY_TYPE, new HashMap<>(),
+            importExportSerializer.performImport(xsdDir, Folder.ENTITY_TYPE, new HashMap<>(),
                     ImportMode.IGNORE_CONFIRMATION);
-            importExportSerializer.performImport(xsdDir, XMLSchema.class, XMLSchema.ENTITY_TYPE, new HashMap<>(),
+            importExportSerializer.performImport(xsdDir, XMLSchema.ENTITY_TYPE, new HashMap<>(),
                     ImportMode.IGNORE_CONFIRMATION);
         }
 

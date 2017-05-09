@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,5 +20,4 @@ import java.io.IOException;
 
 public interface StroomHeaderStreamHandler {
     void handleHeader(HeaderMap headerMap) throws IOException;
-
 }

@@ -17,21 +17,14 @@
 package stroom.dashboard.client.main;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.client.table.JsonUtil;
 import stroom.dashboard.shared.DashboardQueryKey;
-import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchBusPollAction;
-import stroom.dashboard.shared.SearchBusPollResult;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.RestService;
 import stroom.security.client.event.LogoutEvent;
@@ -107,10 +100,8 @@ public class SearchBus {
             final DashboardQueryKey queryKey = entry.getKey();
 
 
-
 //            final String json = JsonUtil.encode(queryKey);
 //            final DashboardQueryKey test = JsonUtil.decode(json);
-
 
 
             final SearchModel searchModel = entry.getValue();
@@ -119,34 +110,31 @@ public class SearchBus {
         }
 
         final SearchBusPollAction action = new SearchBusPollAction(searchActionMap);
-        dispatcher.execute(action, false, new AsyncCallbackAdaptor<SearchBusPollResult>() {
-            @Override
-            public void onSuccess(final SearchBusPollResult result) {
-                try {
-                    final Map<DashboardQueryKey, SearchResponse> searchResultMap = result.getSearchResultMap();
-                    for (final Entry<DashboardQueryKey, SearchResponse> entry : searchResultMap.entrySet()) {
-                        final DashboardQueryKey queryKey = entry.getKey();
-                        final SearchResponse searchResponse = entry.getValue();
-                        final SearchModel searchModel = activeSearchMap.get(queryKey);
-                        if (searchModel != null) {
-                            searchModel.update(searchResponse);
-                        }
+        dispatcher.exec(action, false).onSuccess(result -> {
+            try {
+                final Map<DashboardQueryKey, SearchResponse> searchResultMap = result.getSearchResultMap();
+                for (final Entry<DashboardQueryKey, SearchResponse> entry : searchResultMap.entrySet()) {
+                    final DashboardQueryKey queryKey = entry.getKey();
+                    final SearchResponse searchResult = entry.getValue();
+                    final SearchModel searchModel = activeSearchMap.get(queryKey);
+                    if (searchModel != null) {
+                        searchModel.update(searchResult);
                     }
-
-                    polling = false;
-
-                    // Remember and reset delay.
-                    final int delay = delayMillis;
-                    delayMillis = DEFAULT_POLL_INTERVAL;
-
-                    if (forcePoll || activeSearchMap.size() > 0) {
-                        // Reset force.
-                        forcePoll = false;
-                        poll(delay);
-                    }
-                } catch (final Exception e) {
-                    GWT.log(e.getMessage());
                 }
+
+                polling = false;
+
+                // Remember and reset delay.
+                final int delay = delayMillis;
+                delayMillis = DEFAULT_POLL_INTERVAL;
+
+                if (forcePoll || activeSearchMap.size() > 0) {
+                    // Reset force.
+                    forcePoll = false;
+                    poll(delay);
+                }
+            } catch (final Exception e) {
+                GWT.log(e.getMessage());
             }
         });
     }

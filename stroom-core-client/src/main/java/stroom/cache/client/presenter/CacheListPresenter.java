@@ -17,7 +17,6 @@
 package stroom.cache.client.presenter;
 
 import com.google.gwt.cell.client.ButtonCell;
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
@@ -58,12 +57,7 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheRow>
                 return "Clear";
             }
         };
-        clearColumn.setFieldUpdater(new FieldUpdater<CacheRow, String>() {
-            @Override
-            public void update(final int index, final CacheRow row, final String value) {
-                dispatcher.execute(new CacheClearAction(row.getCacheName(), null), null);
-            }
-        });
+        clearColumn.setFieldUpdater((index, row, value) -> dispatcher.exec(new CacheClearAction(row.getCacheName(), null)));
         getView().addColumn(clearColumn, "</br>", 50);
 
         getView().addEndColumn(new EndColumn<CacheRow>());

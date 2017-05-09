@@ -16,15 +16,9 @@
 
 package stroom.xml.converter.datasplitter;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-
 import stroom.AbstractProcessIntegrationTest;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
@@ -33,6 +27,10 @@ import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskScopeContextHolder;
 import stroom.xml.F2XTestUtil;
 import stroom.xml.XMLValidator;
+
+import javax.annotation.Resource;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 // TODO : Add test data
 @Ignore("Add test data")

@@ -16,15 +16,14 @@
 
 package stroom.node.server;
 
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.MockNamedEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeService;
-import stroom.node.shared.SystemTableStatus;
 import stroom.util.spring.StroomSpringProfiles;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,12 +51,6 @@ public class MockNodeService extends MockNamedEntityService<Node, FindNodeCriter
             node.setName("MockNode");
         }
         return node;
-    }
-
-    @Override
-    public List<SystemTableStatus> findSystemTableStatus() {
-        // NA for mock
-        return null;
     }
 
     @Override

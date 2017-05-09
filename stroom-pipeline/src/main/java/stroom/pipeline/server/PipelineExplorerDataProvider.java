@@ -38,8 +38,8 @@ public class PipelineExplorerDataProvider
     private final PipelineEntityService pipelineEntityService;
 
     @Inject
-    PipelineExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService, final PipelineEntityService pipelineEntityService) {
-        super(folderService);
+    PipelineExplorerDataProvider(@Named("cachedFolderService") final FolderService cachedFolderService, final PipelineEntityService pipelineEntityService) {
+        super(cachedFolderService);
         this.pipelineEntityService = pipelineEntityService;
     }
 

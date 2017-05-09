@@ -8,7 +8,11 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.shared.*;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.view.client.SelectionModel;
 import stroom.cell.tickbox.client.TickBoxCell;
@@ -82,7 +86,7 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerData> {
         this.selectionModel = selectionModel;
 
         if (selectionModel != null && selectionModel instanceof TickBoxSelectionModel) {
-            tickBoxCell = new TickBoxCell(true, false);
+            tickBoxCell = TickBoxCell.create(true, false);
         }
 
         if (template == null) {

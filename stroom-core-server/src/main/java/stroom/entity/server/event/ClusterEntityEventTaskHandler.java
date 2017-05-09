@@ -16,17 +16,16 @@
 
 package stroom.entity.server.event;
 
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
-
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
+
+import javax.annotation.Resource;
 
 @TaskHandlerBean(task = ClusterEntityEventTask.class)
 @Scope(StroomScope.TASK)

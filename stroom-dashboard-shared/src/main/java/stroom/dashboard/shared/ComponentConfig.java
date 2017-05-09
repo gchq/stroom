@@ -26,7 +26,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "component", propOrder = { "type", "id", "name", "settings" })
+@XmlType(name = "component", propOrder = {"type", "id", "name", "settings"})
 @XmlRootElement(name = "component")
 public class ComponentConfig implements SharedObject {
     private static final long serialVersionUID = -2530827581046882396L;

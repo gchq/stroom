@@ -16,16 +16,16 @@
 
 package stroom.refdata;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import stroom.entity.shared.Range;
 import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.xml.event.EventList;
+
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class MapStoreImpl implements MapStore {
     public static class RangeStore {

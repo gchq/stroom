@@ -16,14 +16,14 @@
 
 package stroom.statistics.common;
 
+import stroom.statistics.shared.StatisticType;
+import stroom.util.date.DateUtil;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
-
-import stroom.statistics.shared.StatisticType;
-import stroom.util.date.DateUtil;
 
 public class GenerateSampleStatisticsDataForPurge {
     private static final String START_DATE = "2014-01-01T00:00:00.000Z";

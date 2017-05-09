@@ -32,6 +32,8 @@ import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.KeyboardInterceptor;
+import stroom.node.client.ClientPropertyCache;
+import stroom.node.shared.ClientProperties;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.event.OpenTaskManagerEvent;
@@ -47,9 +49,10 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
     public static final Type<RevealContentHandler<?>> CONTENT = new Type<>();
     private final Timer refreshTimer;
     private boolean click;
+
     @Inject
     public MainPresenter(final EventBus eventBus, final MainView view, final MainProxy proxy,
-            final KeyboardInterceptor keyboardInterceptor) {
+                         final KeyboardInterceptor keyboardInterceptor, final ClientPropertyCache clientPropertyCache) {
         super(eventBus, view, proxy);
 
         // Handle key presses.
@@ -74,6 +77,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
                 }
             }
         });
+        registerHandler(clientPropertyCache.addPropertyChangeHandler(event -> getView().setBanner(event.getProperties().get(ClientProperties.MAINTENANCE_MESSAGE))));
 
         registerHandler(view.getSpinner().addClickHandler(event -> {
             if (click) {
@@ -132,6 +136,8 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
         SpinnerDisplay getSpinner();
 
         void maximise(View view);
+
+        void setBanner(String text);
     }
 
     public interface SpinnerDisplay extends HasClickHandlers, HasDoubleClickHandlers {

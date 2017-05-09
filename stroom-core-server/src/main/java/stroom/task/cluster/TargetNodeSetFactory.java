@@ -16,13 +16,13 @@
 
 package stroom.task.cluster;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.cluster.server.ClusterNodeManager;
 import stroom.cluster.server.ClusterState;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.Collections;

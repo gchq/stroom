@@ -16,23 +16,19 @@
 
 package stroom.streamstore.client.presenter;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.shared.EntityServiceFindAction;
+import stroom.security.client.event.CurrentUserChangedEvent;
+import stroom.streamstore.shared.FindStreamTypeCriteria;
+import stroom.streamstore.shared.StreamType;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.event.CurrentUserChangedEvent;
-import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityServiceFindAction;
-import stroom.entity.shared.ResultList;
-import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamType;
 
 public class StreamTypeUiManager {
     private List<StreamType> streamTypeList = new ArrayList<StreamType>();
@@ -42,19 +38,9 @@ public class StreamTypeUiManager {
         updateList(Arrays.asList(StreamType.initialValues()));
 
         // We can only find out the real list when they are logged in
-        eventBus.addHandler(CurrentUserChangedEvent.getType(), new CurrentUserChangedHandler() {
-            @Override
-            public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
-                dispatcher.execute(
-                        new EntityServiceFindAction<FindStreamTypeCriteria, StreamType>(new FindStreamTypeCriteria()),
-                        new AsyncCallbackAdaptor<ResultList<StreamType>>() {
-                    @Override
-                    public void onSuccess(final ResultList<StreamType> result) {
-                        updateList(result);
-                    }
-                });
-            }
-        });
+        eventBus.addHandler(CurrentUserChangedEvent.getType(), event -> dispatcher.exec(
+                new EntityServiceFindAction<FindStreamTypeCriteria, StreamType>(new FindStreamTypeCriteria()))
+                .onSuccess(this::updateList));
 
     }
 

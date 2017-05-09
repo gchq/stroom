@@ -22,7 +22,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.security.client.ClientSecurityContext;
@@ -53,26 +52,20 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
                             final ClientPropertyCache clientPropertyCache, final ClientSecurityContext securityContext) {
         super(eventBus, view);
 
-        clientPropertyCache.get(new AsyncCallbackAdaptor<ClientProperties>() {
-            @Override
-            public void onSuccess(final ClientProperties result) {
-                view.setHTML(result.get(ClientProperties.WELCOME_HTML));
-                view.getBuildVersion().setText("Build Version: " + result.get(ClientProperties.BUILD_VERSION));
-                view.getBuildDate().setText("Build Date: " + result.get(ClientProperties.BUILD_DATE));
-                view.getUpDate().setText("Up Date: " + result.get(ClientProperties.UP_DATE));
-                view.getNodeName().setText("Node Name: " + result.get(ClientProperties.NODE_NAME));
+        clientPropertyCache.get()
+                .onSuccess(result -> {
+                    view.setHTML(result.get(ClientProperties.WELCOME_HTML));
+                    view.getBuildVersion().setText("Build Version: " + result.get(ClientProperties.BUILD_VERSION));
+                    view.getBuildDate().setText("Build Date: " + result.get(ClientProperties.BUILD_DATE));
+                    view.getUpDate().setText("Up Date: " + result.get(ClientProperties.UP_DATE));
+                    view.getNodeName().setText("Node Name: " + result.get(ClientProperties.NODE_NAME));
 
-                // final CurrentUser currentUser = currentUserProvider.get();
-                view.getUserName().setText("User Name: " + securityContext.getUserId());
-                // view.getRoleName().setText("Role Name: " +
-                // currentUser.getUser().toUserGroupDisplayValue());
-            }
-
-            @Override
-            public void onFailure(final Throwable caught) {
-                AlertEvent.fireError(WelcomePresenter.this, caught.getMessage(), null);
-            }
-        });
+                    // final CurrentUser currentUser = currentUserProvider.get();
+                    view.getUserName().setText("User Name: " + securityContext.getUserId());
+                    // view.getRoleName().setText("Role Name: " +
+                    // currentUser.getUser().toUserGroupDisplayValue());
+                })
+                .onFailure(caught -> AlertEvent.fireError(WelcomePresenter.this, caught.getMessage(), null));
     }
 
     @Override

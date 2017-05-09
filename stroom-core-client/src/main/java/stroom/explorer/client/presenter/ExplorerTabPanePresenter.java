@@ -16,22 +16,21 @@
 
 package stroom.explorer.client.presenter;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
-
 import stroom.explorer.client.event.CloseExplorerTabEvent;
 import stroom.explorer.client.event.OpenExplorerTabEvent;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class ExplorerTabPanePresenter extends CurveTabLayoutPresenter<ExplorerTabPanePresenter.ExplorerTabPaneProxy>
         implements OpenExplorerTabEvent.Handler, CloseExplorerTabEvent.Handler {

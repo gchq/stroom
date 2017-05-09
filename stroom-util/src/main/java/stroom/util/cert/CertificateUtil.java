@@ -16,18 +16,17 @@
 
 package stroom.util.cert;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.util.zip.HeaderMap;
+
+import javax.security.auth.x500.X500Principal;
+import javax.servlet.http.HttpServletRequest;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.security.auth.x500.X500Principal;
-import javax.servlet.http.HttpServletRequest;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.util.zip.HeaderMap;
 
 public class CertificateUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(CertificateUtil.class);

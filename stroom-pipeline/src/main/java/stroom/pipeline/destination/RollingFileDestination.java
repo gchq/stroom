@@ -16,6 +16,11 @@
 
 package stroom.pipeline.destination;
 
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.pipeline.server.writer.PathCreator;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -23,12 +28,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import org.apache.commons.lang.StringUtils;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.pipeline.server.writer.PathCreator;
 
 public class RollingFileDestination extends RollingDestination {
     private static final Logger LOGGER = LoggerFactory.getLogger(RollingFileDestination.class);

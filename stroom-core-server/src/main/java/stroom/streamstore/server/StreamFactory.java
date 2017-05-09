@@ -16,10 +16,10 @@
 
 package stroom.streamstore.server;
 
-import java.util.Map;
-
 import stroom.util.date.DateUtil;
 import stroom.util.zip.StroomHeaderArguments;
+
+import java.util.Map;
 
 /**
  * Helper to build meta data classes.

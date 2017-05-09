@@ -19,11 +19,11 @@ package stroom.dashboard.client.text;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.main.SettingsPresenter;
-import stroom.widget.tab.client.presenter.SlideTabLayoutView;
+import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 
 public class TextSettingsPresenter extends SettingsPresenter {
     @Inject
-    public TextSettingsPresenter(final EventBus eventBus, final SlideTabLayoutView view,
+    public TextSettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
             final BasicTextSettingsPresenter basicSettingsPresenter) {
         super(eventBus, view);
         addTab("Basic", basicSettingsPresenter);

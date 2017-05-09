@@ -18,11 +18,11 @@ package stroom.entity.server.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.EntityAction;
 import stroom.task.server.TaskManager;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -58,7 +58,11 @@ public class EntityEventBusImpl implements EntityEventBus {
      */
     public void fireGlobally(final EntityEvent event) {
         // Make sure there are some handlers that care about this event.
-        final boolean handlerExists = handlerExists(event);
+        boolean handlerExists = handlerExists(event, event.getDocRef().getType());
+        if (!handlerExists) {
+            // Look for handlers that cater for all types.
+            handlerExists = handlerExists(event, "*");
+        }
 
         // If there are registered handlers then go ahead and fire the event.
         if (handlerExists) {
@@ -76,17 +80,19 @@ public class EntityEventBusImpl implements EntityEventBus {
     public void fireLocally(final EntityEvent event) {
         // Fire to type specific handlers.
         fireEventByType(event, event.getDocRef().getType());
+        // Fire to any (*) type handlers.
+        fireEventByType(event, "*");
     }
 
     /**
      * Check to see if we can find a handler for this event. If there isn't one
      * then there is no point in firing the event.
      */
-    private boolean handlerExists(final EntityEvent event) {
+    private boolean handlerExists(final EntityEvent event, final String type) {
         List<EntityEvent.Handler> dest = null;
 
         // Make sure there are some handlers that care about this event.
-        final Map<EntityAction, List<EntityEvent.Handler>> map = getHandlers().get(event.getDocRef().getType());
+        final Map<EntityAction, List<EntityEvent.Handler>> map = getHandlers().get(type);
         if (map != null) {
             // Try and get generic handlers for this type.
             dest = map.get(null);

@@ -34,13 +34,18 @@ import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
+import stroom.util.shared.UserTokenUtil;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.task.*;
+import stroom.util.task.ExternalShutdownController;
+import stroom.util.task.HasMonitor;
+import stroom.util.task.MonitorInfoUtil;
+import stroom.util.task.TaskScopeContextHolder;
+import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.ThreadScopeRunnable;
 import stroom.util.thread.ThreadUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -59,22 +64,25 @@ import java.util.concurrent.locks.ReentrantLock;
 @Component("taskManager")
 public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskProgressCriteria> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskManagerImpl.class);
+
+    private final TaskHandlerBeanRegistry taskHandlerBeanRegistry;
+    private final NodeCache nodeCache;
+    private final StroomBeanStore beanStore;
+    private final SecurityContext securityContext;
     private final AtomicInteger currentAsyncTaskCount = new AtomicInteger();
     private final Map<TaskId, TaskThread<?>> currentTasks = new ConcurrentHashMap<>(1024, 0.75F, 1024);
     private final AtomicBoolean stop = new AtomicBoolean();
     // The thread pools that will be used to execute tasks.
     private final ConcurrentHashMap<ThreadPool, ThreadPoolExecutor> threadPoolMap = new ConcurrentHashMap<>();
     private final ReentrantLock poolCreationLock = new ReentrantLock();
-    @Resource
-    private TaskHandlerBeanRegistry taskHandlerBeanRegistry;
-    @Resource
-    private NodeCache nodeCache;
-    @Resource
-    private StroomBeanStore beanStore;
-    @Resource
-    private SecurityContext securityContext;
 
-    public TaskManagerImpl() {
+    @Inject
+    TaskManagerImpl(final TaskHandlerBeanRegistry taskHandlerBeanRegistry, final NodeCache nodeCache, final StroomBeanStore beanStore, final SecurityContext securityContext) {
+        this.taskHandlerBeanRegistry = taskHandlerBeanRegistry;
+        this.nodeCache = nodeCache;
+        this.beanStore = beanStore;
+        this.securityContext = securityContext;
+
         // When we are running unit tests we need to make sure that all Stroom
         // threads complete and are shutdown between tests.
         ExternalShutdownController.addTerminateHandler(TaskManagerImpl.class, () -> shutdown());
@@ -97,7 +105,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
                         // Create the new thread pool for this priority
                         executor = new ThreadPoolExecutor(threadPool.getCorePoolSize(), threadPool.getMaxPoolSize(),
-                                60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), taskThreadFactory);
+                                60L, TimeUnit.SECONDS, new SynchronousQueue<>(), taskThreadFactory);
                         threadPoolMap.put(threadPool, executor);
                     }
                 }
@@ -197,7 +205,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
         try {
             TaskScopeContextHolder.addContext(task);
             try {
-                doExec(task, callback, taskThread);
+                doExec(task, callback);
             } catch (final Throwable t) {
                 try {
                     callback.onFailure(t);
@@ -293,7 +301,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                             throw new TaskTerminatedException(stop.get());
                         }
 
-                        doExec(task, callback, taskThread);
+                        doExec(task, callback);
 
                     } catch (final Throwable t) {
                         try {
@@ -303,10 +311,10 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                         }
 
                         if (t instanceof ThreadDeath || t instanceof TaskTerminatedException) {
-                            LOGGER.warn("exec() - Task killed!");
-                            LOGGER.debug("exec()", t);
+                            LOGGER.warn("exec() - Task killed! (" + task.getClass().getSimpleName() + ")");
+                            LOGGER.debug("exec() (" + task.getClass().getSimpleName() + ")", t);
                         } else {
-                            LOGGER.error(t.getMessage(), t);
+                            LOGGER.error(t.getMessage() + " (" + task.getClass().getSimpleName() + ")", t);
                         }
 
                     } finally {
@@ -337,7 +345,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
                 } catch (final Throwable t) {
                     try {
-                        LOGGER.error(MarkerFactory.getMarker("FATAL"), "exec() - Unexpected Exception", t);
+                        LOGGER.error(MarkerFactory.getMarker("FATAL"), "exec() - Unexpected Exception (" + task.getClass().getSimpleName() + ")", t);
                         throw new RuntimeException(t.getMessage(), t);
 
                     } finally {
@@ -358,22 +366,20 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
         }
     }
 
-    private <R> void doExec(final Task<R> task, final TaskCallback<R> callback, final TaskThread<R> taskThread) {
+    private <R> void doExec(final Task<R> task, final TaskCallback<R> callback) {
         final Thread currentThread = Thread.currentThread();
         final String oldThreadName = currentThread.getName();
 
         currentThread.setName(oldThreadName + " - " + task.getClass().getSimpleName());
         try {
-
-            String userId = task.getUserId();
-            if (userId == null) {
+            String userToken = task.getUserToken();
+            if (userToken == null) {
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Task has null user: " + task.getClass().getSimpleName());
+                    LOGGER.debug("Task has null user token: " + task.getClass().getSimpleName());
                 }
-                userId = ServerTask.INTERNAL_PROCESSING_USER;
             }
 
-            securityContext.pushUser(userId);
+            securityContext.pushUser(userToken);
             try {
 
                 // Create a task monitor bean to be injected inside the handler.
@@ -488,8 +494,8 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
         } else {
             taskProgress.setTaskName(task.getTaskName());
         }
-        taskProgress.setSessionId(task.getSessionId());
-        taskProgress.setUserName(task.getUserId());
+        taskProgress.setSessionId(UserTokenUtil.getSessionId(task.getUserToken()));
+        taskProgress.setUserName(UserTokenUtil.getUserId(task.getUserToken()));
         taskProgress.setThreadName(taskThread.getThreadName());
         taskProgress.setTaskInfo(taskThread.getInfo());
         taskProgress.setSubmitTimeMs(taskThread.getSubmitTimeMs());

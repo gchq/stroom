@@ -16,16 +16,16 @@
 
 package stroom.statistics.sql;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.DatabaseTool;
 import stroom.util.logging.LogExecutionTime;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Utility that can be run as a main method to manually perform aggregation
@@ -46,7 +46,7 @@ public class SQLStatisticValueBatchSaveServiceTestDatabaseTool extends DatabaseT
         try {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-            final SQLStatisticValueBatchSaveService statisticValueBatchSaveService = new SQLStatisticValueBatchSaveService() {
+            final SQLStatisticValueBatchSaveService statisticValueBatchSaveService = new SQLStatisticValueBatchSaveService(null) {
                 @Override
                 protected Connection getConnection() throws SQLException {
                     return doGetConnection();

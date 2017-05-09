@@ -16,13 +16,13 @@
 
 package stroom.xml.converter.ds3;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.xml.converter.ds3.NodeFactory.NodeType;
 import stroom.xml.converter.ds3.ref.VarMap;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Regex extends Expression implements ExecutionProfiler, Match {
     private static final Logger LOGGER = LoggerFactory.getLogger(Regex.class);

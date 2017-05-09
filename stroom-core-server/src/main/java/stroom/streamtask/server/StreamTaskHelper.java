@@ -16,19 +16,18 @@
 
 package stroom.streamtask.server;
 
-import javax.annotation.Resource;
-import javax.persistence.EntityNotFoundException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
 import stroom.node.shared.Node;
 import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.StreamTaskService;
 import stroom.streamtask.shared.TaskStatus;
+
+import javax.annotation.Resource;
+import javax.persistence.EntityNotFoundException;
 
 @Component
 @Transactional(propagation = Propagation.NEVER)

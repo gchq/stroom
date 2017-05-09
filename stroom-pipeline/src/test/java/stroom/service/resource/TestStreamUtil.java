@@ -16,19 +16,18 @@
 
 package stroom.service.resource;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-
-import stroom.test.StroomProcessTestFileUtil;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.resource.server.BOMRemovalInputStream;
+import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomUnitTest;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestStreamUtil extends StroomUnitTest {

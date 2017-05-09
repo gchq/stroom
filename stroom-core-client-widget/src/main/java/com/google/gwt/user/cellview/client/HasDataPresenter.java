@@ -15,13 +15,6 @@
  */
 package com.google.gwt.user.cellview.client;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.Scheduler;
@@ -38,8 +31,14 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.gwt.view.client.RowCountChangeEvent;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -857,12 +856,9 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
         // Set the new selection model.
         this.selectionModel = selectionModel;
         if (selectionModel != null) {
-            selectionHandler = selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-                @Override
-                public void onSelectionChange(final SelectionChangeEvent event) {
-                    // Ensure that we resolve selection.
-                    ensurePendingState();
-                }
+            selectionHandler = selectionModel.addSelectionChangeHandler(event -> {
+                // Ensure that we resolve selection.
+                ensurePendingState();
             });
         }
 

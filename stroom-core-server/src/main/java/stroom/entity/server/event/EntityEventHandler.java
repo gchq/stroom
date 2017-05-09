@@ -16,13 +16,13 @@
 
 package stroom.entity.server.event;
 
+import stroom.entity.shared.EntityAction;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import stroom.entity.shared.EntityAction;
 
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
@@ -30,5 +30,5 @@ import stroom.entity.shared.EntityAction;
 public @interface EntityEventHandler {
     EntityAction[]action() default {};
 
-    String type();
+    String type() default "*";
 }

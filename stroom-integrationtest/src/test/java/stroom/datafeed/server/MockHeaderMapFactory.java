@@ -16,10 +16,10 @@
 
 package stroom.datafeed.server;
 
+import stroom.util.zip.HeaderMapFactory;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-
-import stroom.util.zip.HeaderMapFactory;
 
 public class MockHeaderMapFactory extends HeaderMapFactory {
     @Resource

@@ -16,11 +16,11 @@
 
 package stroom.statistics.common;
 
+import stroom.statistics.shared.StatisticType;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import stroom.statistics.shared.StatisticType;
 
 /**
  * Value object to hold a statistic data point retreived from a statistic store.

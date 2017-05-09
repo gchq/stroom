@@ -16,12 +16,11 @@
 
 package stroom.xml.converter.ds3.ref;
 
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.util.test.StroomUnitTest;
+
+import java.util.List;
 
 public class TestRefParser extends StroomUnitTest {
     @Test

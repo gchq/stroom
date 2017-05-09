@@ -16,12 +16,12 @@
 
 package stroom.streamtask.server;
 
+import stroom.streamstore.server.ScanVolumePathResult;
+import stroom.util.shared.ModelStringUtil;
+
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
-
-import stroom.streamstore.server.ScanVolumePathResult;
-import stroom.util.shared.ModelStringUtil;
 
 public class FileSystemCleanProgress {
     private final AtomicLong scanDirCount = new AtomicLong();

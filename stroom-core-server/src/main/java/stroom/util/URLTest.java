@@ -16,10 +16,9 @@
 
 package stroom.util;
 
+import javax.net.ssl.HttpsURLConnection;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
-import javax.net.ssl.HttpsURLConnection;
 
 public class URLTest {
     public static void main(String[] args) throws Exception {

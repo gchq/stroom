@@ -16,18 +16,10 @@
 
 package stroom.pipeline.server.task;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.annotation.Resource;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -40,6 +32,12 @@ import stroom.util.shared.Location;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 import stroom.xml.converter.ds3.DS3Reader;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Component
 @Scope(value = StroomScope.TASK)

@@ -28,13 +28,14 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates.Template;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-
 import stroom.cell.tickbox.shared.TickBoxState;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A {@link Cell} used to render a checkbox. The value of the checkbox may be
@@ -48,14 +49,10 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         /**
          * Render the button and its contents.
          *
-         * @param cell
-         *            the cell that is being rendered
-         * @param context
-         *            the {@link Context} of the cell
-         * @param value
-         *            the value that generated the content
-         * @param sb
-         *            the {@link SafeHtmlBuilder} to render into
+         * @param cell    the cell that is being rendered
+         * @param context the {@link Context} of the cell
+         * @param value   the value that generated the content
+         * @param sb      the {@link SafeHtmlBuilder} to render into
          */
         void render(TickBoxCell cell, Context context, TickBoxState value, SafeHtmlBuilder sb);
 
@@ -113,7 +110,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
         @Override
         public void render(final TickBoxCell cell, final Context context, final TickBoxState value,
-                final SafeHtmlBuilder sb) {
+                           final SafeHtmlBuilder sb) {
             // Get the view data.
             final Object key = context.getKey();
             TickBoxState viewData = cell.getViewData(key);
@@ -126,15 +123,15 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
                 SafeHtml image = null;
 
                 switch (value) {
-                case TICK:
-                    image = imgTick;
-                    break;
-                case HALF_TICK:
-                    image = imgHalfTick;
-                    break;
-                case UNTICK:
-                    image = imgUntick;
-                    break;
+                    case TICK:
+                        image = imgTick;
+                        break;
+                    case HALF_TICK:
+                        image = imgHalfTick;
+                        break;
+                    case UNTICK:
+                        image = imgUntick;
+                        break;
                 }
 
                 sb.append(template.outerDiv(resources.style().outer(), image));
@@ -207,7 +204,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
         @Override
         public void render(final TickBoxCell cell, final Context context, final TickBoxState value,
-                final SafeHtmlBuilder sb) {
+                           final SafeHtmlBuilder sb) {
             // Get the view data.
             final Object key = context.getKey();
             TickBoxState viewData = cell.getViewData(key);
@@ -220,15 +217,15 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
                 SafeHtml image = null;
 
                 switch (value) {
-                case TICK:
-                    image = imgTick;
-                    break;
-                case HALF_TICK:
-                    image = imgHalfTick;
-                    break;
-                case UNTICK:
-                    image = imgUntick;
-                    break;
+                    case TICK:
+                        image = imgTick;
+                        break;
+                    case HALF_TICK:
+                        image = imgHalfTick;
+                        break;
+                    case UNTICK:
+                        image = imgUntick;
+                        break;
                 }
 
                 sb.append(template.outerDiv(resources.style().outer(), image));
@@ -301,7 +298,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
         @Override
         public void render(final TickBoxCell cell, final Context context, final TickBoxState value,
-                final SafeHtmlBuilder sb) {
+                           final SafeHtmlBuilder sb) {
             // Get the view data.
             final Object key = context.getKey();
             TickBoxState viewData = cell.getViewData(key);
@@ -314,15 +311,15 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
                 SafeHtml image = null;
 
                 switch (value) {
-                case TICK:
-                    image = imgTick;
-                    break;
-                case HALF_TICK:
-                    image = imgHalfTick;
-                    break;
-                case UNTICK:
-                    image = imgUntick;
-                    break;
+                    case TICK:
+                        image = imgTick;
+                        break;
+                    case HALF_TICK:
+                        image = imgHalfTick;
+                        break;
+                    case UNTICK:
+                        image = imgUntick;
+                        break;
                 }
 
                 sb.append(template.outerDiv(resources.style().outer(), image));
@@ -357,29 +354,36 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
     private final boolean handlesSelection;
     private final boolean clickable;
 
-    public TickBoxCell(final boolean dependsOnSelection, final boolean handlesSelection) {
-        this(DEFAULT_APPEARANCE, dependsOnSelection, handlesSelection, true);
+    public static TickBoxCell create(final boolean dependsOnSelection, final boolean handlesSelection) {
+        return create(DEFAULT_APPEARANCE, dependsOnSelection, handlesSelection, true);
     }
 
-    public TickBoxCell(final Appearance appearance, final boolean dependsOnSelection, final boolean handlesSelection) {
-        this(appearance, dependsOnSelection, handlesSelection, true);
+    public static TickBoxCell create(final Appearance appearance, final boolean dependsOnSelection, final boolean handlesSelection) {
+        return create(appearance, dependsOnSelection, handlesSelection, true);
+    }
+
+    public static TickBoxCell create(final Appearance appearance, final boolean dependsOnSelection, final boolean handlesSelection, final boolean clickable) {
+        final Set<String> consumedEvents = new HashSet<>();
+        if (clickable) {
+            consumedEvents.add("click");
+        }
+
+        return new TickBoxCell(appearance, dependsOnSelection, handlesSelection, consumedEvents);
     }
 
     /**
      * Construct a new {@link CheckboxCell} that optionally controls selection.
      *
-     * @param dependsOnSelection
-     *            true if the cell depends on the selection state
-     * @param handlesSelection
-     *            true if the cell modifies the selection state
+     * @param dependsOnSelection true if the cell depends on the selection state
+     * @param handlesSelection   true if the cell modifies the selection state
      */
-    public TickBoxCell(final Appearance appearance, final boolean dependsOnSelection, final boolean handlesSelection,
-            final boolean clickable) {
-        super("click");
+    private TickBoxCell(final Appearance appearance, final boolean dependsOnSelection, final boolean handlesSelection,
+                        final Set<String> consumedEvents) {
+        super(consumedEvents);
         this.appearance = appearance;
         this.dependsOnSelection = dependsOnSelection;
         this.handlesSelection = handlesSelection;
-        this.clickable = clickable;
+        this.clickable = consumedEvents.contains("click");
     }
 
     @Override
@@ -401,12 +405,13 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
     @Override
     public void onBrowserEvent(final Context context, final Element parent, final TickBoxState value,
-            final NativeEvent event, final ValueUpdater<TickBoxState> valueUpdater) {
+                               final NativeEvent event, final ValueUpdater<TickBoxState> valueUpdater) {
         if (value != null) {
             super.onBrowserEvent(context, parent, value, event, valueUpdater);
             final String type = event.getType();
 
-            if (clickable && "click".equals(type) && (event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            final Element target = event.getEventTarget().cast();
+            if ("IMG".equalsIgnoreCase(target.getTagName()) && clickable && "click".equals(type) && (event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 TickBoxState state = value;
                 SafeHtml image = appearance.getTick();
 
@@ -417,18 +422,18 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
                 // determine which keys will trigger a change.
                 if (handlesSelection() || !dependsOnSelection()) {
                     switch (value) {
-                    case TICK:
-                        state = TickBoxState.UNTICK;
-                        image = appearance.getUntick();
-                        break;
-                    case HALF_TICK:
-                        state = TickBoxState.TICK;
-                        image = appearance.getTick();
-                        break;
-                    case UNTICK:
-                        state = TickBoxState.TICK;
-                        image = appearance.getTick();
-                        break;
+                        case TICK:
+                            state = TickBoxState.UNTICK;
+                            image = appearance.getUntick();
+                            break;
+                        case HALF_TICK:
+                            state = TickBoxState.TICK;
+                            image = appearance.getTick();
+                            break;
+                        case UNTICK:
+                            state = TickBoxState.TICK;
+                            image = appearance.getTick();
+                            break;
                     }
 
                     // Update the tick image immediately.

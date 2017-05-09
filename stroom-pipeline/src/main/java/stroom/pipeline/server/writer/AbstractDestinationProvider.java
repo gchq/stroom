@@ -16,12 +16,12 @@
 
 package stroom.pipeline.server.writer;
 
-import java.util.Collections;
-import java.util.List;
-
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.server.factory.AbstractElement;
 import stroom.pipeline.server.factory.Processor;
+
+import java.util.Collections;
+import java.util.List;
 
 public abstract class AbstractDestinationProvider extends AbstractElement implements DestinationProvider {
     @Override

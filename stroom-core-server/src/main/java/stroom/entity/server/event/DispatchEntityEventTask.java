@@ -16,10 +16,10 @@
 
 package stroom.entity.server.event;
 
-import java.io.Serializable;
-
 import stroom.util.shared.VoidResult;
 import stroom.util.task.ServerTask;
+
+import java.io.Serializable;
 
 public class DispatchEntityEventTask extends ServerTask<VoidResult>implements Serializable {
     private static final long serialVersionUID = -1305243739417365803L;
@@ -27,7 +27,6 @@ public class DispatchEntityEventTask extends ServerTask<VoidResult>implements Se
     private final EntityEvent entityEvent;
 
     public DispatchEntityEventTask(final EntityEvent entityEvent) {
-        super(null, null, null);
         this.entityEvent = entityEvent;
     }
 

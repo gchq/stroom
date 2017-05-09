@@ -16,8 +16,6 @@
 
 package stroom.xml.converter.xmlfragment;
 
-import java.io.InputStream;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ErrorHandler;
@@ -25,9 +23,10 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.LocatorImpl;
-
 import stroom.util.io.StreamUtil;
 import stroom.xml.converter.ParserFactory;
+
+import java.io.InputStream;
 
 public class XMLFragmentParserFactory implements ParserFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(XMLFragmentParserFactory.class);

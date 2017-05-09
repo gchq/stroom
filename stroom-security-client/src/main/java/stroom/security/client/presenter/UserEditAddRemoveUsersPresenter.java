@@ -16,16 +16,12 @@
 
 package stroom.security.client.presenter;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
-import stroom.util.shared.VoidResult;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -60,61 +56,45 @@ public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter i
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(addButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                final FindUserCriteria findUserCriteria = new FindUserCriteria();
+        registerHandler(addButton.addClickHandler(event -> {
+            final FindUserCriteria findUserCriteria = new FindUserCriteria();
 
-                // If we are a group then get users and vice versa.
-                findUserCriteria.setGroup(!relatedUser.isGroup());
+            // If we are a group then get users and vice versa.
+            findUserCriteria.setGroup(!relatedUser.isGroup());
 
-                final String type = getRelatedType();
-                final AdvancedUserListPresenter selectUserPresenter = selectUserPresenterProvider.get();
-                selectUserPresenter.setup(findUserCriteria);
+            final String type = getRelatedType();
+            final AdvancedUserListPresenter selectUserPresenter = selectUserPresenterProvider.get();
+            selectUserPresenter.setup(findUserCriteria);
 
-                final PopupSize popupSize = new PopupSize(400, 400, 400, 400, true);
-                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(boolean autoClose, boolean ok) {
-                        HidePopupEvent.fire(UserEditAddRemoveUsersPresenter.this, selectUserPresenter, autoClose, ok);
-                    }
-
-                    @Override
-                    public void onHide(boolean autoClose, boolean ok) {
-                        if (ok) {
-                            final UserRef selected = selectUserPresenter.getSelectionModel().getSelected();
-                            if (selected != null) {
-                                final ChangeUserAction changeUserAction = new ChangeUserAction();
-                                changeUserAction.setUserRef(relatedUser);
-                                changeUserAction.getChangedLinkedUsers().add(selected);
-                                dispatcher.execute(changeUserAction, new AsyncCallbackAdaptor<VoidResult>() {
-                                    @Override
-                                    public void onSuccess(VoidResult result) {
-                                        refresh();
-                                    }
-                                });
-                            }
-                        }
-                    }
-                };
-                ShowPopupEvent.fire(UserEditAddRemoveUsersPresenter.this, selectUserPresenter, PopupView.PopupType.OK_CANCEL_DIALOG, popupSize, "Choose " + type + " To Add", popupUiHandlers);
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                final UserRef selected = getSelectionModel().getSelected();
-                if (selected != null) {
-                    final ChangeUserAction changeUserAction = new ChangeUserAction();
-                    changeUserAction.setUserRef(relatedUser);
-                    changeUserAction.getChangedLinkedUsers().remove(selected);
-                    dispatcher.execute(changeUserAction, new AsyncCallbackAdaptor<VoidResult>() {
-                        @Override
-                        public void onSuccess(VoidResult result) {
-                            refresh();
-                        }
-                    });
+            final PopupSize popupSize = new PopupSize(400, 400, 400, 400, true);
+            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                @Override
+                public void onHideRequest(boolean autoClose, boolean ok) {
+                    HidePopupEvent.fire(UserEditAddRemoveUsersPresenter.this, selectUserPresenter, autoClose, ok);
                 }
+
+                @Override
+                public void onHide(boolean autoClose, boolean ok) {
+                    if (ok) {
+                        final UserRef selected = selectUserPresenter.getSelectionModel().getSelected();
+                        if (selected != null) {
+                            final ChangeUserAction changeUserAction = new ChangeUserAction();
+                            changeUserAction.setUserRef(relatedUser);
+                            changeUserAction.getChangedLinkedUsers().add(selected);
+                            dispatcher.exec(changeUserAction).onSuccess(result -> refresh());
+                        }
+                    }
+                }
+            };
+            ShowPopupEvent.fire(UserEditAddRemoveUsersPresenter.this, selectUserPresenter, PopupView.PopupType.OK_CANCEL_DIALOG, popupSize, "Choose " + type + " To Add", popupUiHandlers);
+        }));
+        registerHandler(removeButton.addClickHandler(event -> {
+            final UserRef selected = getSelectionModel().getSelected();
+            if (selected != null) {
+                final ChangeUserAction changeUserAction = new ChangeUserAction();
+                changeUserAction.setUserRef(relatedUser);
+                changeUserAction.getChangedLinkedUsers().remove(selected);
+                dispatcher.exec(changeUserAction).onSuccess(result -> refresh());
             }
         }));
         registerHandler(getSelectionModel().addSelectionHandler(event -> enableButtons()));

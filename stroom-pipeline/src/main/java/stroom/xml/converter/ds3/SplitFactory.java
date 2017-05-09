@@ -16,11 +16,10 @@
 
 package stroom.xml.converter.ds3;
 
-import java.util.Set;
-
 import org.apache.commons.lang.StringEscapeUtils;
-
 import stroom.xml.converter.ds3.ref.VarMap;
+
+import java.util.Set;
 
 public class SplitFactory extends ExpressionFactory {
     private final char[] delimiter;

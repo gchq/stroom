@@ -20,6 +20,10 @@ import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexService;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShard;
@@ -147,8 +151,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                         final List<Long> shards = entry.getValue();
 
                         if (targetNodes.contains(node)) {
-                            final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task.getSessionId(),
-                                    task.getUserId(), "Cluster Search", query, shards, sourceNode, storedFields,
+                            final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task.getUserToken(), "Cluster Search", query, shards, sourceNode, storedFields,
                                     task.getResultSendFrequency(), task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
                             dispatcher.execAsync(clusterSearchTask, resultCollector, sourceNode,
                                     Collections.singleton(node));
@@ -206,14 +209,12 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         // We have to wrap the cluster termination task in another task or
         // ClusterDispatchAsyncImpl
         // will not execute it if the parent task is terminated.
-        final GenericServerTask outerTask = new GenericServerTask(null, task.getSessionId(),
-                task.getUserId(), "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
+        final GenericServerTask outerTask = GenericServerTask.create(null, task.getUserToken(), "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
         outerTask.setRunnable(() -> {
             taskMonitor.info(task.getSearchName() + " - terminating child tasks");
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
             findTaskCriteria.addAncestorId(task.getId());
-            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(task.getSessionId(),
-                    task.getUserId(), "Terminate: " + task.getTaskName(), findTaskCriteria, false);
+            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(task.getUserToken(), "Terminate: " + task.getTaskName(), findTaskCriteria, false);
 
             // Terminate matching tasks.
             dispatchHelper.execAsync(terminateTask, TargetType.ACTIVE);

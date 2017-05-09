@@ -16,16 +16,16 @@
 
 package stroom.refdata;
 
+import net.sf.ehcache.CacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
 import stroom.entity.shared.Period;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
-import net.sf.ehcache.CacheManager;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.List;

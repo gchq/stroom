@@ -54,9 +54,9 @@ public class StatisticsDataSourceExplorerDataProvider
     private final StroomPropertyService stroomPropertyService;
 
     @Inject
-    StatisticsDataSourceExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService, final StatisticStoreEntityService statisticsDataSourceService,
+    StatisticsDataSourceExplorerDataProvider(@Named("cachedFolderService") final FolderService cachedFolderService, final StatisticStoreEntityService statisticsDataSourceService,
                                              final StroomPropertyService stroomPropertyService) {
-        super(folderService);
+        super(cachedFolderService);
         LOGGER.debug("Initialising: {}", this.getClass().getCanonicalName());
         this.statisticsDataSourceService = statisticsDataSourceService;
         this.stroomPropertyService = stroomPropertyService;

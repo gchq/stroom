@@ -72,7 +72,7 @@ class FetchJobDataHandler extends AbstractTaskHandler<FetchJobDataAction, Result
         }
 
         DefaultClusterResultCollector<SharedMap<JobNode, JobNodeInfo>> collector;
-        collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(), TargetType.ACTIVE);
+        collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(action.getUserToken()), TargetType.ACTIVE);
 
         final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
         criteria.getJobIdSet().add(action.getJob());

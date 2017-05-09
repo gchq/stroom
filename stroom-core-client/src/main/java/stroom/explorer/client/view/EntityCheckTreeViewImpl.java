@@ -24,7 +24,6 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTreeView;
 
 public class EntityCheckTreeViewImpl extends ViewImpl implements EntityCheckTreeView {

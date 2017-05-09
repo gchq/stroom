@@ -16,14 +16,13 @@
 
 package stroom.pipeline.server.error;
 
+import org.junit.Test;
+import stroom.util.shared.Severity;
+import stroom.util.test.StroomUnitTest;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import org.junit.Test;
-
-import stroom.util.shared.Severity;
-import stroom.util.test.StroomUnitTest;
 
 public class TestSortSeverity extends StroomUnitTest {
     @Test

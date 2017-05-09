@@ -20,7 +20,6 @@ import org.junit.Test;
 import stroom.query.api.Field;
 import stroom.query.api.FieldBuilder;
 import stroom.query.api.FlatResult;
-import stroom.query.api.Format;
 import stroom.query.api.Format.Type;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Row;

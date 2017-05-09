@@ -16,10 +16,10 @@
 
 package stroom.util.task;
 
-import java.util.UUID;
-
 import stroom.util.shared.TaskId;
 import stroom.util.shared.TaskIdImpl;
+
+import java.util.UUID;
 
 public class TaskIdFactory {
     public static TaskId create() {

@@ -17,6 +17,7 @@
 package stroom.streamstore.server;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityIdSet;
 import stroom.pipeline.shared.PipelineEntity;
@@ -31,16 +32,17 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.Severity;
 import stroom.util.shared.SharedList;
+import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @TaskHandlerBean(task = ReprocessDataAction.class)
+@Scope(StroomScope.TASK)
 @Secured(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)
 public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, SharedList<ReprocessDataInfo>> {
     public static final int MAX_STREAM_TO_REPROCESS = 1000;
@@ -94,12 +96,7 @@ public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataActio
                 }
 
                 final List<StreamProcessor> list = new ArrayList<StreamProcessor>(streamToProcessorSet.keySet());
-                Collections.sort(list, new Comparator<StreamProcessor>() {
-                    @Override
-                    public int compare(final StreamProcessor o1, final StreamProcessor o2) {
-                        return o1.getPipeline().getName().compareTo(o2.getPipeline().getName());
-                    }
-                });
+                Collections.sort(list, (o1, o2) -> o1.getPipeline().getName().compareTo(o2.getPipeline().getName()));
 
                 for (final StreamProcessor streamProcessor : list) {
                     final EntityIdSet<Stream> streamSet = streamToProcessorSet.get(streamProcessor);

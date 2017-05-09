@@ -16,24 +16,31 @@
 
 package stroom.entity.cluster;
 
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.FindClearService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = FindClearServiceClusterTask.class)
+@Scope(value = StroomScope.TASK)
 public class FindClearServiceClusterHandler extends AbstractTaskHandler<FindClearServiceClusterTask<?>, VoidResult> {
-    private Logger LOGGER = LoggerFactory.getLogger(FindClearServiceClusterHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FindClearServiceClusterHandler.class);
 
-    @Resource
-    private StroomBeanStore stroomBeanStore;
+    private final StroomBeanStore stroomBeanStore;
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Inject
+    FindClearServiceClusterHandler(final StroomBeanStore stroomBeanStore) {
+        this.stroomBeanStore = stroomBeanStore;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public VoidResult exec(final FindClearServiceClusterTask<?> task) {
         try {

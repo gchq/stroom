@@ -27,13 +27,12 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.item.client.ItemListBox;
 import stroom.streamstore.client.presenter.StreamFilterPresenter.StreamFilterView;
 import stroom.streamstore.client.presenter.StreamListFilterTemplate;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.util.shared.HasLongValue;
-import stroom.widget.customdatebox.client.CustomDateBox;
+import stroom.widget.customdatebox.client.DateBoxView;
+import stroom.widget.customdatebox.client.MyDateBox;
 
 public class StreamFilterViewImpl extends ViewImpl implements StreamFilterView {
     public interface Binder extends UiBinder<Widget, StreamFilterViewImpl> {
@@ -57,13 +56,13 @@ public class StreamFilterViewImpl extends ViewImpl implements StreamFilterView {
     @UiField
     SimplePanel streamAttributes;
     @UiField
-    CustomDateBox createFrom;
+    MyDateBox createFrom;
     @UiField
-    CustomDateBox createTo;
+    MyDateBox createTo;
     @UiField
-    CustomDateBox effectiveFrom;
+    MyDateBox effectiveFrom;
     @UiField
-    CustomDateBox effectiveTo;
+    MyDateBox effectiveTo;
     @UiField
     TextBox streamId;
     @UiField
@@ -83,9 +82,9 @@ public class StreamFilterViewImpl extends ViewImpl implements StreamFilterView {
     @UiField(provided = true)
     ItemListBox<StreamStatus> streamStatus;
     @UiField
-    CustomDateBox statusFrom;
+    MyDateBox statusFrom;
     @UiField
-    CustomDateBox statusTo;
+    MyDateBox statusTo;
 
     @Inject
     public StreamFilterViewImpl(final Binder binder) {
@@ -102,22 +101,22 @@ public class StreamFilterViewImpl extends ViewImpl implements StreamFilterView {
     }
 
     @Override
-    public HasLongValue getEffectiveFrom() {
+    public DateBoxView getEffectiveFrom() {
         return effectiveFrom;
     }
 
     @Override
-    public HasLongValue getEffectiveTo() {
+    public DateBoxView getEffectiveTo() {
         return effectiveTo;
     }
 
     @Override
-    public HasLongValue getCreateFrom() {
+    public DateBoxView getCreateFrom() {
         return createFrom;
     }
 
     @Override
-    public HasLongValue getCreateTo() {
+    public DateBoxView getCreateTo() {
         return createTo;
     }
 
@@ -199,19 +198,19 @@ public class StreamFilterViewImpl extends ViewImpl implements StreamFilterView {
     public void setAdvancedVisible(final boolean visible) {
         advancedPanel.setVisible(visible);
         if (visible) {
-            layout.setWidgetSize(southPanel, 269);
+            layout.setWidgetSize(southPanel, 270);
         } else {
             layout.setWidgetSize(southPanel, 193);
         }
     }
 
     @Override
-    public HasLongValue getStatusFrom() {
+    public DateBoxView getStatusFrom() {
         return statusFrom;
     }
 
     @Override
-    public HasLongValue getStatusTo() {
+    public DateBoxView getStatusTo() {
         return statusTo;
     }
 

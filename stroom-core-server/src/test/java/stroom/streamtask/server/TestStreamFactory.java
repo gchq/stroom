@@ -16,14 +16,13 @@
 
 package stroom.streamtask.server;
 
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.streamstore.server.StreamFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 import stroom.util.zip.HeaderMap;
 
 @RunWith(StroomJUnit4ClassRunner.class)

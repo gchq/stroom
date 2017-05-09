@@ -16,11 +16,10 @@
 
 package stroom.util.spring;
 
-import java.io.IOException;
-import java.util.UUID;
-
-import javax.annotation.Resource;
-
+import net.sf.ehcache.CacheException;
+import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.config.Configuration;
+import net.sf.ehcache.config.ConfigurationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -29,13 +28,12 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
-
 import stroom.util.SystemPropertyUtil;
 import stroom.util.io.StreamUtil;
-import net.sf.ehcache.CacheException;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.config.Configuration;
-import net.sf.ehcache.config.ConfigurationFactory;
+
+import javax.annotation.Resource;
+import java.io.IOException;
+import java.util.UUID;
 
 @Component
 public class ConfigurableEhCacheManagerFactoryBean

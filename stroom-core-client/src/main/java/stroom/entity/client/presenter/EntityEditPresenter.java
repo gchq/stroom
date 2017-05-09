@@ -16,8 +16,11 @@
 
 package stroom.entity.client.presenter;
 
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
@@ -29,14 +32,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.HasReadOnly;
 import stroom.util.shared.HasType;
 import stroom.widget.tickbox.client.view.TickBox;
-import stroom.widget.valuespinner.client.SpinnerEvent;
 import stroom.widget.valuespinner.client.ValueSpinner;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 public abstract class EntityEditPresenter<V extends View, E extends NamedEntity> extends MyPresenterWidget<V>
         implements HasRead<E>, HasWrite<E>, HasDirtyHandlers, HasType {
@@ -56,13 +52,9 @@ public abstract class EntityEditPresenter<V extends View, E extends NamedEntity>
     protected void onBind() {
         super.onBind();
 
-        registerHandler(getEventBus().addHandler(ReloadEntityEvent.getType(), new ReloadEntityEvent.Handler() {
-            @SuppressWarnings("unchecked")
-            @Override
-            public void onReload(final ReloadEntityEvent event) {
-                if (entity.equals(event.getEntity())) {
-                    read((E) event.getEntity());
-                }
+        registerHandler(getEventBus().addHandler(ReloadEntityEvent.getType(), event -> {
+            if (entity.equals(event.getEntity())) {
+                read((E) event.getEntity());
             }
         }));
     }
@@ -96,10 +88,14 @@ public abstract class EntityEditPresenter<V extends View, E extends NamedEntity>
             if (entity instanceof Document) {
                 final Document document = (Document) entity;
 
-                securityContext.hasDocumentPermission(document.getType(), document.getUuid(), DocumentPermissionNames.UPDATE, new AsyncCallbackAdaptor<Boolean>() {
+                securityContext.hasDocumentPermission(document.getType(), document.getUuid(), DocumentPermissionNames.UPDATE, new AsyncCallback<Boolean>() {
                     @Override
                     public void onSuccess(final Boolean result) {
                         onPermissionsCheck(!result);
+                    }
+
+                    @Override
+                    public void onFailure(final Throwable caught) {
                     }
                 });
             } else {
@@ -148,21 +144,11 @@ public abstract class EntityEditPresenter<V extends View, E extends NamedEntity>
     protected abstract void onWrite(E entity);
 
     protected HandlerRegistration addDirtyHandler(final TickBox tickBox) {
-        return tickBox.addValueChangeHandler(new ValueChangeHandler<TickBoxState>() {
-            @Override
-            public void onValueChange(final ValueChangeEvent<TickBoxState> event) {
-                setDirty(true);
-            }
-        });
+        return tickBox.addValueChangeHandler(event -> setDirty(true));
     }
 
     protected HandlerRegistration addDirtyHandler(final ValueSpinner spinner) {
-        return spinner.getSpinner().addSpinnerHandler(new SpinnerEvent.Handler() {
-            @Override
-            public void onChange(final SpinnerEvent event) {
-                setDirty(true);
-            }
-        });
+        return spinner.getSpinner().addSpinnerHandler(event -> setDirty(true));
     }
 
     @Override

@@ -16,9 +16,9 @@
 
 package stroom.pipeline.server.writer;
 
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.util.test.StroomUnitTest;
 
 public class TestPathCreator extends StroomUnitTest {
     @Test

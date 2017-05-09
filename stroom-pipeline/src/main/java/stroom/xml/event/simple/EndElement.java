@@ -18,7 +18,6 @@ package stroom.xml.event.simple;
 
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-
 import stroom.xml.event.BaseEvent;
 import stroom.xml.event.Event;
 

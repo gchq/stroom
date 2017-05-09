@@ -16,14 +16,16 @@
 
 package stroom.pipeline.server.errorhandler;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXParseException;
+import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class StoredErrorReceiver implements ErrorReceiver {
     private static final Logger LOGGER = LoggerFactory.getLogger(StoredErrorReceiver.class);
@@ -34,14 +36,46 @@ public class StoredErrorReceiver implements ErrorReceiver {
     @Override
     public void log(final Severity severity, final Location location, final String elementId, final String message,
             final Throwable e) {
-        final String msg = MessageUtil.getMessage(message, e);
+        // Get cause SAXParseException if there is one.
+        final Throwable cause = getCause(e);
+
+        String msg;
+        if (cause != null && (message == null || (e.getMessage() != null && e.getMessage().equals(message)))) {
+            msg = MessageUtil.getMessage(cause.getMessage(), cause);
+        } else {
+            msg = MessageUtil.getMessage(message, e);
+        }
+
+        final Location loc = resolveLocation(location, cause);
 
         totalErrors++;
-        list.add(new StoredError(severity, location, elementId, msg));
+        list.add(new StoredError(severity, loc, elementId, msg));
 
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(msg, e);
         }
+    }
+
+    private Location resolveLocation(final Location location, final Throwable t) {
+        Location loc = location;
+        if (t != null && t instanceof SAXParseException) {
+            final SAXParseException saxParseException = (SAXParseException) t;
+            loc = new DefaultLocation(saxParseException.getLineNumber(), saxParseException.getColumnNumber());
+        }
+        return loc;
+    }
+
+    private Throwable getCause(final Throwable e) {
+        Throwable t = e;
+        while (t != null && !(t instanceof SAXParseException)) {
+            t = t.getCause();
+        }
+
+        if (t != null && t instanceof SAXParseException) {
+            return t;
+        }
+
+        return e;
     }
 
     public void replay(final ErrorReceiver errorReceiver) {
