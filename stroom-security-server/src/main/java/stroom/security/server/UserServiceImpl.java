@@ -192,6 +192,7 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
+    @Insecure
     @Override
     public List<UserRef> findUsersInGroup(final UserRef userGroup) {
         final SQLBuilder sql = new SQLBuilder();
@@ -221,6 +222,7 @@ public class UserServiceImpl implements UserService {
         return toRefList(entityManager.executeNativeQueryResultList(sql, User.class));
     }
 
+    @Insecure
     @Override
     public List<UserRef> findGroupsForUser(final UserRef user) {
         final SQLBuilder sql = new SQLBuilder();

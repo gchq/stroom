@@ -136,7 +136,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final ConcurrentHashMap<Long, Boolean> exhaustedFilterMap = new ConcurrentHashMap<>();
     private volatile StreamTaskCreatorRecentStreamDetails streamTaskCreatorRecentStreamDetails;
     private volatile int totalQueueSize = 1000;
-    private volatile int lastQueueSizeForStats = 0;
+    private volatile int lastQueueSizeForStats = -1;
 
     /**
      * Make sure the task store isn't allowed to be filled until this node has

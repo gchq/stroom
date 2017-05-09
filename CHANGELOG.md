@@ -12,11 +12,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.24] - 2017-05-09
+
+* Issue **#283** : Statistics for the stream task queue are now captured even if the size is zero.
+
+* Issue **#226** : Fixed issue where querying an index failed with "User does not have the required permission (Manage Users)" message.
+
+## [v5.0-beta.23] - 2017-05-06
+
 * Issue **#281** : Made further changes to cope with Files.list() and Files.walk() returning streams that should be closed with 'try with resources' construct.
 
 * Issue **#224** : Removing an element from the pipeline structure now removes all child elements too.
 
-* Issue **#282** : Users can now upload data with just 'Data - View' and 'Data - Import' application permissions, plus update permission on the appropriate feed.
+* Issue **#282** : Users can now upload data with just 'Data - View' and 'Data - Import' application permissions, plus read permission on the appropriate feed.
 
 * Issue **#199** : The explorer now scrolls selected items into view.
 
@@ -378,7 +386,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.22...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.24...HEAD
+[v5.0-beta.24]: https://github.com/gchq/stroom/compare/v5.0-beta.23...v5.0-beta.24
+[v5.0-beta.23]: https://github.com/gchq/stroom/compare/v5.0-beta.22...v5.0-beta.23
 [v5.0-beta.22]: https://github.com/gchq/stroom/compare/v5.0-beta.21...v5.0-beta.22
 [v5.0-beta.21]: https://github.com/gchq/stroom/compare/v5.0-beta.20...v5.0-beta.21
 [v5.0-beta.20]: https://github.com/gchq/stroom/compare/v5.0-beta.19...v5.0-beta.20
