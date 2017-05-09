@@ -30,7 +30,6 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Optional;
@@ -43,7 +42,7 @@ import java.util.Optional;
 @Path("auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Insecure
-public class AuthenticationResource {
+public class AuthenticationResource implements NamedResource {
 
     private AuthenticationService authenticationService;
 

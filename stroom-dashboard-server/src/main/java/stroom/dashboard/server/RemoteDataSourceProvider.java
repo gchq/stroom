@@ -40,7 +40,7 @@ import javax.ws.rs.core.Response;
 public class RemoteDataSourceProvider implements DataSourceProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(RemoteDataSourceProvider.class);
     private final SecurityContext securityContext;
-    private String url = "http://127.0.0.1:8080/api/index";
+    private String url = "http://127.0.0.1:8080/api/lucene";
 
     public RemoteDataSourceProvider(final SecurityContext securityContext) {
         this.securityContext = securityContext;

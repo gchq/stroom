@@ -41,6 +41,5 @@ public class StroomStatsStoreModule extends PluginModule {
                 StroomStatsStoreFieldEditPresenter.class,
                 StroomStatsStoreFieldEditPresenter.StroomStatsStoreFieldEditView.class,
                 StroomStatsStoreFieldEditViewImpl.class);
-
     }
 }
