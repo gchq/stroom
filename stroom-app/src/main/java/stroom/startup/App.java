@@ -69,7 +69,7 @@ public class App extends Application<Config> {
         client.start();
 
         try {
-            LOGGER.info("Setting up instance for '{}' service, running on '{}:{}'...", "stroom", config.getHostNameOrIpAddress(), port);
+            LOGGER.info("Setting up instance for '{}' service, running on '{}'...", "stroom", config.getHostNameOrIpAddress());
             ServiceInstance<String> instance = ServiceInstance.<String>builder()
                     .serviceType(ServiceType.PERMANENT)
                     .name("stroom")

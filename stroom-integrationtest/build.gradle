@@ -10,6 +10,9 @@ dependencies {
     compile project(':stroom-security-server')
     permitUnusedDeclared project(':stroom-security-server')
 
+
+    testCompile urlDependencies.get(versions.stroomQueryApi)
+    testCompile urlDependencies.get(versions.stroomQueryCommon)
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
@@ -17,7 +20,9 @@ dependencies {
     testCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
 
+    testCompile 'org.glassfish:javax.el:3.0.1-b08'
     testCompile 'junit:junit:4.12'
+    testCompile 'ch.qos.logback:logback-classic:1.1.8'
 
     // Use default DB config.
     compile project(':stroom-config')
