@@ -45,7 +45,9 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
     private String topic;
 
     @Inject
-    public KafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory, final StroomKafkaProducer stroomKafkaProducer) {
+    public KafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
+                               final LocationFactoryProxy locationFactory,
+                               final StroomKafkaProducer stroomKafkaProducer) {
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
         this.stroomKafkaProducer = stroomKafkaProducer;

@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.statistics.shared.common;
+package stroom.stats.shared;
 
-import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.SharedObject;
 
@@ -31,12 +30,13 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "customRollUpMask")
 public class CustomRollUpMask implements HasDisplayValue, SharedObject {
-    private static final long serialVersionUID = 5978256629347842695L;
+
+    private static final long serialVersionUID = -7146872949794428854L;
 
     /**
      * Holds a list of the positions of tags that are rolled up, zero based. The
      * position number is based on the alphanumeric sorted list of tag/field
-     * names in the {@link StatisticStoreEntity}. Would use a SortedSet but that
+     * names in the {@link StroomStatsStoreEntity}. Would use a SortedSet but that
      * is not supported by GWT. Must ensure the contents of this are sorted so
      * that when contains is called on lists of these objects it works
      * correctly.

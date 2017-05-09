@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.statistics.shared.common;
+package stroom.stats.shared;
 
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
@@ -22,7 +22,7 @@ import stroom.util.shared.HasDisplayValue;
 
 import java.io.Serializable;
 
-public enum StatisticRollUpType implements HasDisplayValue,HasPrimitiveValue,Serializable {
+public enum StatisticRollUpType implements HasDisplayValue, HasPrimitiveValue, Serializable {
     NONE("None", 1),
     ALL("All", 2),
     CUSTOM("Custom", 3);

@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.statistics.client.common;
+package stroom.stats.client;
 
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
@@ -31,31 +30,31 @@ import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.entity.shared.DocRefUtil;
 import stroom.node.client.ClientPropertyCache;
 import stroom.security.client.ClientSecurityContext;
-import stroom.statistics.client.common.presenter.StatisticsDataSourcePresenter;
-import stroom.statistics.shared.common.CustomRollUpMask;
-import stroom.statistics.shared.common.StatisticField;
-import stroom.statistics.shared.common.StatisticRollUpType;
-import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
+import stroom.stats.client.presenter.StroomStatsStorePresenter;
+import stroom.stats.shared.CustomRollUpMask;
+import stroom.stats.shared.StatisticField;
+import stroom.stats.shared.StatisticRollUpType;
+import stroom.stats.shared.StroomStatsStoreEntity;
 
 import java.util.List;
 import java.util.Set;
 
-public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
-    private final Provider<StatisticsDataSourcePresenter> editorProvider;
+public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity> {
+    private final Provider<StroomStatsStorePresenter> editorProvider;
 
     @Inject
-    public StatisticsPlugin(final EventBus eventBus, final Provider<StatisticsDataSourcePresenter> editorProvider,
-            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager,
-            final ClientPropertyCache clientPropertyCache) {
+    public StroomStatsStorePlugin(final EventBus eventBus, final Provider<StroomStatsStorePresenter> editorProvider,
+                                  final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
+                                  final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager,
+                                  final ClientPropertyCache clientPropertyCache) {
         super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
     }
 
     @Override
     public String getType() {
-        return StatisticStoreEntity.ENTITY_TYPE;
+        return StroomStatsStoreEntity.ENTITY_TYPE;
     }
 
     @Override
@@ -66,26 +65,25 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
     @Override
     public void save(final EntityTabData tabData) {
         if (tabData != null && tabData instanceof EntityEditPresenter<?, ?>) {
-            final EntityEditPresenter<?, StatisticStoreEntity> presenter = (EntityEditPresenter<?, StatisticStoreEntity>) tabData;
+            final EntityEditPresenter<?, StroomStatsStoreEntity> presenter = (EntityEditPresenter<?, StroomStatsStoreEntity>) tabData;
             if (presenter.isDirty()) {
-                final StatisticStoreEntity entity = presenter.getEntity();
+                final StroomStatsStoreEntity entity = presenter.getEntity();
 
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
                 // fields added/removed/changed
-                load(DocRefUtil.create(entity), entityFromDb -> doConfirmSave(presenter, entity, entityFromDb));
-
+                load(DocRefUtil.create(entity), entityFromDb ->
+                        doConfirmSave(presenter, entity, entityFromDb));
             }
         }
     }
 
-    private void doConfirmSave(final EntityEditPresenter<?, StatisticStoreEntity> presenter,
-            final StatisticStoreEntity entity, final StatisticStoreEntity entityFromDb) {
+    private void doConfirmSave(final EntityEditPresenter<?, StroomStatsStoreEntity> presenter,
+            final StroomStatsStoreEntity entity, final StroomStatsStoreEntity entityFromDb) {
         // get the persisted versions of the fields we care about
-        final String prevEngineName = entityFromDb.getEngineName();
         final StatisticType prevType = entityFromDb.getStatisticType();
         final StatisticRollUpType prevRollUpType = entityFromDb.getRollUpType();
-        final Long prevInterval = entityFromDb.getPrecision();
+        final String prevInterval = entityFromDb.getPrecision();
         final List<StatisticField> prevFieldList = entityFromDb.getStatisticFields();
         final Set<CustomRollUpMask> prevMaskSet = entityFromDb.getCustomRollUpMasks();
 
@@ -94,24 +92,22 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
         // if one of a select list of attributes has changed then warn the user
         // only need a null check on the engine name as the rest will never be
         // null
-        if (entityFromDb != null && ((prevEngineName == null && entity.getEngineName() != null)
-                || !prevEngineName.equals(entity.getEngineName()) || !prevType.equals(entity.getStatisticType())
-                || !prevRollUpType.equals(entity.getRollUpType()) || !prevInterval.equals(entity.getPrecision())
-                || !prevFieldList.equals(entity.getStatisticFields())
-                || !prevMaskSet.equals(entity.getCustomRollUpMasks()))) {
+        if (entityFromDb != null && (
+                !prevType.equals(entity.getStatisticType()) ||
+                !prevRollUpType.equals(entity.getRollUpType()) ||
+                !prevInterval.equals(entity.getPrecision()) ||
+                !prevFieldList.equals(entity.getStatisticFields()) ||
+                !prevMaskSet.equals(entity.getCustomRollUpMasks()))) {
             ConfirmEvent.fireWarn(this, SafeHtmlUtils
                     .fromTrustedString("Changes to the following attributes of a statistic data source:<br/><br/>"
                             + "Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>Field list<br/>Custom roll-ups<br/><br/>"
                             + "can potentially cause corruption of the existing statistics data. Please ensure you "
                             + "understand the full consequences of the change.<br/><br/>" + "Do you wish to continue?"),
-                    new ConfirmCallback() {
-                        @Override
-                        public void onResult(final boolean result) {
-                            if (result) {
-                                doSave(presenter, entity);
-                            } else {
-                                // Re-enable popup buttons.
-                            }
+                    result -> {
+                        if (result) {
+                            doSave(presenter, entity);
+                        } else {
+                            // Re-enable popup buttons.
                         }
                     });
         } else {
@@ -121,13 +117,8 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
         }
     }
 
-    private void doSave(final EntityEditPresenter<?, StatisticStoreEntity> presenter,
-            final StatisticStoreEntity entity) {
-        save(entity, new SaveCallback<StatisticStoreEntity>() {
-            @Override
-            public void onSave(final StatisticStoreEntity entity) {
-                presenter.read(entity);
-            }
-        });
+    private void doSave(final EntityEditPresenter<?, StroomStatsStoreEntity> presenter,
+            final StroomStatsStoreEntity entity) {
+        save(entity, entity1 -> presenter.read(entity1));
     }
 }

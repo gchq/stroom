@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.statistics.shared.hbase;
+package stroom.stats.shared;
 
-import stroom.statistics.shared.common.CustomRollUpMask;
-import stroom.statistics.shared.common.StatisticField;
 import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;

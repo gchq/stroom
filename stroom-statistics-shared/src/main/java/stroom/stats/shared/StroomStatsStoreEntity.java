@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.statistics.shared.hbase;
+package stroom.stats.shared;
 
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.statistics.shared.common.CustomRollUpMask;
-import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
-import stroom.statistics.shared.common.StatisticField;
-import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticType;
-import stroom.statistics.shared.StatisticsDataSourceData;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Lob;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,7 +65,7 @@ public class StroomStatsStoreEntity extends DocumentEntity implements StatisticS
     private boolean enabled = false;
 
     private String data;
-    private StatisticsDataSourceData statisticsDataSourceDataObject;
+    private StroomStatsStoreEntityData stroomStatsStoreDataObject;
 
     public StroomStatsStoreEntity() {
         setDefaults();
@@ -134,8 +134,17 @@ public class StroomStatsStoreEntity extends DocumentEntity implements StatisticS
         return precision;
     }
 
+    public EventStoreTimeIntervalEnum getPrecisionAsInterval() {
+        return EventStoreTimeIntervalEnum.valueOf(precision);
+    }
+
     public void setPrecision(final String precision) {
         this.precision = precision;
+    }
+
+    @Transient
+    public void setPrecision(final EventStoreTimeIntervalEnum interval) {
+        this.precision = interval.toString();
     }
 
     @Column(name = SQLNameConstants.ENABLED, nullable = false)
@@ -160,24 +169,24 @@ public class StroomStatsStoreEntity extends DocumentEntity implements StatisticS
 
     @Transient
     @XmlTransient
-    public StatisticsDataSourceData getStatisticDataSourceDataObject() {
-        return statisticsDataSourceDataObject;
+    public StroomStatsStoreEntityData getDataObject() {
+        return stroomStatsStoreDataObject;
     }
 
-    public void setStatisticDataSourceDataObject(final StatisticsDataSourceData statisticDataSourceDataObject) {
-        this.statisticsDataSourceDataObject = statisticDataSourceDataObject;
+    public void setDataObject(final StroomStatsStoreEntityData statisticDataSourceDataObject) {
+        this.stroomStatsStoreDataObject = statisticDataSourceDataObject;
     }
 
     @Transient
     public boolean isValidField(final String fieldName) {
-        if (statisticsDataSourceDataObject == null) {
+        if (stroomStatsStoreDataObject == null) {
             return false;
-        } else if (statisticsDataSourceDataObject.getStatisticFields() == null) {
+        } else if (stroomStatsStoreDataObject.getStatisticFields() == null) {
             return false;
-        } else if (statisticsDataSourceDataObject.getStatisticFields().size() == 0) {
+        } else if (stroomStatsStoreDataObject.getStatisticFields().size() == 0) {
             return false;
         } else {
-            return statisticsDataSourceDataObject.getStatisticFields().contains(new StatisticField(fieldName));
+            return stroomStatsStoreDataObject.getStatisticFields().contains(new StatisticField(fieldName));
         }
     }
 
@@ -197,24 +206,24 @@ public class StroomStatsStoreEntity extends DocumentEntity implements StatisticS
 
         // rolledUpFieldNames not empty if we get here
 
-        if (statisticsDataSourceDataObject == null) {
+        if (stroomStatsStoreDataObject == null) {
             throw new RuntimeException(
                     "isRollUpCombinationSupported called with non-empty list but data source has no statistic fields or custom roll up masks");
         }
 
-        return statisticsDataSourceDataObject.isRollUpCombinationSupported(rolledUpFieldNames);
+        return stroomStatsStoreDataObject.isRollUpCombinationSupported(rolledUpFieldNames);
     }
 
     @Transient
     public Integer getPositionInFieldList(final String fieldName) {
-        return statisticsDataSourceDataObject.getFieldPositionInList(fieldName);
+        return stroomStatsStoreDataObject.getFieldPositionInList(fieldName);
     }
 
     @Transient
     public List<String> getFieldNames() {
-        if (statisticsDataSourceDataObject != null) {
+        if (stroomStatsStoreDataObject != null) {
             final List<String> fieldNames = new ArrayList<String>();
-            for (final StatisticField statisticField : statisticsDataSourceDataObject.getStatisticFields()) {
+            for (final StatisticField statisticField : stroomStatsStoreDataObject.getStatisticFields()) {
                 fieldNames.add(statisticField.getFieldName());
             }
             return fieldNames;
@@ -225,13 +234,13 @@ public class StroomStatsStoreEntity extends DocumentEntity implements StatisticS
 
     @Transient
     public int getStatisticFieldCount() {
-        return statisticsDataSourceDataObject == null ? 0 : statisticsDataSourceDataObject.getStatisticFields().size();
+        return stroomStatsStoreDataObject == null ? 0 : stroomStatsStoreDataObject.getStatisticFields().size();
     }
 
     @Transient
     public List<StatisticField> getStatisticFields() {
-        if (statisticsDataSourceDataObject != null) {
-            return statisticsDataSourceDataObject.getStatisticFields();
+        if (stroomStatsStoreDataObject != null) {
+            return stroomStatsStoreDataObject.getStatisticFields();
         } else {
             return Collections.emptyList();
         }
@@ -239,8 +248,8 @@ public class StroomStatsStoreEntity extends DocumentEntity implements StatisticS
 
     @Transient
     public Set<CustomRollUpMask> getCustomRollUpMasks() {
-        if (statisticsDataSourceDataObject != null) {
-            return statisticsDataSourceDataObject.getCustomRollUpMasks();
+        if (stroomStatsStoreDataObject != null) {
+            return stroomStatsStoreDataObject.getCustomRollUpMasks();
         } else {
             return Collections.emptySet();
         }
