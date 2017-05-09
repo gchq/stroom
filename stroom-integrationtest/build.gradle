@@ -20,9 +20,10 @@ dependencies {
     testCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
 
-    testCompile 'org.glassfish:javax.el:3.0.1-b08'
+    testRuntime 'org.slf4j:slf4j-api:1.7.21'
+    testRuntime 'org.glassfish:javax.el:3.0.1-b08'
     testCompile 'junit:junit:4.12'
-    testCompile 'ch.qos.logback:logback-classic:1.1.8'
+    testRuntime 'ch.qos.logback:logback-classic:1.1.8'
 
     // Use default DB config.
     compile project(':stroom-config')

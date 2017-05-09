@@ -120,13 +120,9 @@ urlDependencies {
     compile(versions.stroomQueryApi,
         'https://github.com/gchq/stroom-query/releases/download/v0.1.1/stroom-query-api-v0.1.1.jar')
     compile(versions.stroomQueryApiSources,
-<<<<<<< HEAD
-        'https://github.com/gchq/stroom-query/releases/download/v0.1.0/stroom-query-api-v0.1.0-sources.jar')
-=======
         'https://github.com/gchq/stroom-query/releases/download/v0.1.1/stroom-query-api-v0.1.1-sources.jar')
     compile(versions.eventLogging,
         'https://github.com/gchq/event-logging/releases/download/v3.1.0/event-logging-v3.1.0.jar')
->>>>>>> dev
     compile(versions.stroomQueryCommon,
         'https://github.com/gchq/stroom-query/releases/download/v0.1.1/stroom-query-common-v0.1.1.jar')
     compile(versions.stroomExpression,

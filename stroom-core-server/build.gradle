@@ -10,7 +10,7 @@ dependencies {
     compile urlDependencies.get(versions.eventLogging)
 
     compile 'org.aspectj:aspectjweaver:1.6.2'
-    compile 'aopalliance:aopalliance:1.0'
+    runtime 'aopalliance:aopalliance:1.0'
     compile 'commons-lang:commons-lang:2.6'
     compile 'org.apache.commons:commons-pool2:2.4.2'
     compile 'org.springframework:spring-core:4.3.4.RELEASE'
@@ -23,7 +23,7 @@ dependencies {
     compile 'javax.inject:javax.inject:1'
     compile 'javax.servlet:javax.servlet-api:3.1.0'
     compile 'net.sf.ehcache:ehcache-core:2.6.11'
-    compile 'org.aspectj:aspectjrt:1.8.9'
+    runtime 'org.aspectj:aspectjrt:1.8.9'
     compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
     compile 'org.javassist:javassist:3.18.1-GA'
     compile 'org.slf4j:slf4j-api:1.6.2'
