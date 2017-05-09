@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#283** : Statistics for the stream task queue are now captured even if the size is zero.
+
 ## [v5.0-beta.23] - 2017-05-06
 
 * Issue **#281** : Made further changes to cope with Files.list() and Files.walk() returning streams that should be closed with 'try with resources' construct.
