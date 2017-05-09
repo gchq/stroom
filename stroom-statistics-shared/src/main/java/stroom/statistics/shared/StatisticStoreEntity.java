@@ -19,6 +19,10 @@ package stroom.statistics.shared;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
+import stroom.statistics.shared.common.StatisticField;
+import stroom.statistics.shared.common.StatisticRollUpType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

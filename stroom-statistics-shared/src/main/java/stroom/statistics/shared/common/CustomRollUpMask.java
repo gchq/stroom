@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.statistics.shared;
+package stroom.statistics.shared.common;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +25,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
+import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.SharedObject;
 

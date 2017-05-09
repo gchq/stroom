@@ -27,7 +27,7 @@ import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
-import stroom.statistics.shared.StatisticField;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;

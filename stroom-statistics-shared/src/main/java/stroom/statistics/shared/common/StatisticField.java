@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.statistics.shared;
+package stroom.statistics.shared.common;
+
+import stroom.util.shared.HasDisplayValue;
+import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-
-import stroom.util.shared.HasDisplayValue;
-import stroom.util.shared.SharedObject;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "statisticField", propOrder = { "fieldName" })

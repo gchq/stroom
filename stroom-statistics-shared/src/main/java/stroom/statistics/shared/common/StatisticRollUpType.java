@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.statistics.shared;
+package stroom.statistics.shared.common;
 
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;

@@ -21,8 +21,8 @@ import java.util.Map;
 
 import stroom.security.Insecure;
 import stroom.statistics.common.rollup.RollUpBitMask;
-import stroom.statistics.shared.CustomRollUpMask;
-import stroom.statistics.shared.StatisticField;
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.StatisticsDataSourceFieldChangeAction;
 import stroom.task.server.AbstractTaskHandler;

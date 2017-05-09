@@ -38,7 +38,7 @@ import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsEventValidatorFactory;
 import stroom.statistics.common.StatisticsFactory;
-import stroom.statistics.shared.StatisticField;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.date.DateUtil;

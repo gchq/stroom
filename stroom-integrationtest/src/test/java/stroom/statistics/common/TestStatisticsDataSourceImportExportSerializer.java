@@ -28,7 +28,7 @@ import stroom.importexport.server.ImportExportSerializer;
 import stroom.importexport.server.ImportExportSerializer.ImportMode;
 import stroom.query.api.DocRef;
 import stroom.statistics.server.common.StatisticsDataSourceProvider;
-import stroom.statistics.shared.StatisticField;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;

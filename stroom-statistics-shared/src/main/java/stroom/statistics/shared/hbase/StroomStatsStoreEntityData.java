@@ -14,8 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.statistics.shared;
+package stroom.statistics.shared.hbase;
 
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.StatisticField;
+import stroom.util.shared.SharedObject;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,21 +33,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-
-import stroom.statistics.shared.common.CustomRollUpMask;
-import stroom.statistics.shared.common.StatisticField;
-import stroom.util.shared.SharedObject;
-
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "data")
-public class StatisticsDataSourceData implements SharedObject {
-    private static final long serialVersionUID = -9071682094300037627L;
+public class StroomStatsStoreEntityData implements SharedObject {
 
+    private static final long serialVersionUID = -2754817144611481958L;
     /**
      * Should be a SortedSet but GWT doesn't support that. Contents should be
      * sorted and not contain duplicates
@@ -59,18 +58,18 @@ public class StatisticsDataSourceData implements SharedObject {
 
     // cache the positions of the
     @XmlTransient
-    private Map<String, Integer> fieldPositionMap = new HashMap<String, Integer>();
+    private Map<String, Integer> fieldPositionMap = new HashMap<>();
 
-    public StatisticsDataSourceData() {
-        this(new ArrayList<StatisticField>(), new HashSet<CustomRollUpMask>());
+    public StroomStatsStoreEntityData() {
+        this(new ArrayList<>(), new HashSet<>());
     }
 
-    public StatisticsDataSourceData(final List<StatisticField> statisticFields) {
-        this(new ArrayList<StatisticField>(statisticFields), new HashSet<CustomRollUpMask>());
+    public StroomStatsStoreEntityData(final List<StatisticField> statisticFields) {
+        this(new ArrayList<>(statisticFields), new HashSet<>());
     }
 
-    public StatisticsDataSourceData(final List<StatisticField> statisticFields,
-            final Set<CustomRollUpMask> customRollUpMasks) {
+    public StroomStatsStoreEntityData(final List<StatisticField> statisticFields,
+                                      final Set<CustomRollUpMask> customRollUpMasks) {
         this.statisticFields = statisticFields;
         this.customRollUpMasks = customRollUpMasks;
 
@@ -100,7 +99,7 @@ public class StatisticsDataSourceData implements SharedObject {
 
     public void addStatisticField(final StatisticField statisticField) {
         if (statisticFields == null) {
-            statisticFields = new ArrayList<StatisticField>();
+            statisticFields = new ArrayList<>();
         }
         // prevent duplicates
         if (!statisticFields.contains(statisticField)) {
@@ -131,7 +130,7 @@ public class StatisticsDataSourceData implements SharedObject {
 
     public void addCustomRollUpMask(final CustomRollUpMask customRollUpMask) {
         if (customRollUpMasks == null) {
-            customRollUpMasks = new HashSet<CustomRollUpMask>();
+            customRollUpMasks = new HashSet<>();
         }
 
         customRollUpMasks.add(customRollUpMask);
@@ -201,7 +200,7 @@ public class StatisticsDataSourceData implements SharedObject {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        final StatisticsDataSourceData other = (StatisticsDataSourceData) obj;
+        final StroomStatsStoreEntityData other = (StroomStatsStoreEntityData) obj;
         if (statisticFields == null) {
             if (other.statisticFields != null)
                 return false;
@@ -217,7 +216,7 @@ public class StatisticsDataSourceData implements SharedObject {
 
     private void sortFieldListAndCachePositions() {
         // de-dup the list
-        Set<StatisticField> tempSet = new HashSet<StatisticField>(statisticFields);
+        Set<StatisticField> tempSet = new HashSet<>(statisticFields);
         statisticFields.clear();
         statisticFields.addAll(tempSet);
         tempSet = null;
@@ -231,20 +230,20 @@ public class StatisticsDataSourceData implements SharedObject {
         }
     }
 
-    public StatisticsDataSourceData deepCopy() {
-        final List<StatisticField> newFieldList = new ArrayList<StatisticField>();
+    public StroomStatsStoreEntityData deepCopy() {
+        final List<StatisticField> newFieldList = new ArrayList<>();
 
         for (final StatisticField statisticField : statisticFields) {
             newFieldList.add(statisticField.deepCopy());
         }
 
-        final Set<CustomRollUpMask> newMaskList = new HashSet<CustomRollUpMask>();
+        final Set<CustomRollUpMask> newMaskList = new HashSet<>();
 
         for (final CustomRollUpMask customRollUpMask : customRollUpMasks) {
             newMaskList.add(customRollUpMask.deepCopy());
         }
 
-        return new StatisticsDataSourceData(newFieldList, newMaskList);
+        return new StroomStatsStoreEntityData(newFieldList, newMaskList);
     }
 
     /**

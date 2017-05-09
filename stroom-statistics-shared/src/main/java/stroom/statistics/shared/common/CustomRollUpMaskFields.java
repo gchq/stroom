@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.statistics.shared;
+package stroom.statistics.shared.common;
 
 import java.util.Set;
 
