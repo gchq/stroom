@@ -16,7 +16,6 @@
 
 package stroom.statistics.sql;
 
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -24,8 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.sql.SQLSafe;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
