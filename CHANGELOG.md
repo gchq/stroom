@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#224** : Removing an element from the pipeline structure now removes all child elements too.
 
-* Issue **#282** : Users can now upload data with just 'Data - View' and 'Data - Import' application permissions, plus update permission on the appropriate feed.
+* Issue **#282** : Users can now upload data with just 'Data - View' and 'Data - Import' application permissions, plus read permission on the appropriate feed.
 
 * Issue **#199** : The explorer now scrolls selected items into view.
 
