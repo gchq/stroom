@@ -1,9 +1,11 @@
 dependencies {
     compile project(':stroom-entity-shared')
     compile project(':stroom-security-api')
+    compile project(':stroom-util-shared')
 
+    compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
+    compile 'javax.validation:validation-api:1.0.0.GA'
     compile 'org.hibernate:hibernate-annotations:3.5.6-Final' /* LATEST 5.2.5.Final */
 
     testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.0.2-beta'
 }

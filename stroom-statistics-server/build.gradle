@@ -17,6 +17,13 @@
 dependencies {
     compile project(':stroom-statistics-shared')
     compile project(':stroom-pipeline')
+    compile project(':stroom-statistics-api')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-core-server')
+    compile project(':stroom-util')
+    compile project(':stroom-security-api')
+    compile project(':stroom-core-shared')
 
     //hbase-common is currently only used for its Bytes class, so exclude all its deps
     compile('org.apache.hbase:hbase-common:1.2.1') {
@@ -24,9 +31,20 @@ dependencies {
     }
 
     compile urlDependencies.get(versions.stroomQueryCommon)
-    compile urlDependencies.get(versions.hadoopCommonShaded) 
+    compile urlDependencies.get(versions.hadoopCommonShaded)
+    compile 'org.springframework:spring-beans:4.3.4.RELEASE'
+    compile 'org.springframework:spring-core:4.3.4.RELEASE'
+    compile 'org.springframework:spring-context:4.3.4.RELEASE'
+    compile 'commons-lang:commons-lang:2.6'
+    compile 'net.sf.ehcache:ehcache-core:2.6.11'
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile 'com.google.guava:guava:20.0'
+    compile 'javax.inject:javax.inject:1'
+    compile 'org.apache.commons:commons-pool2:2.4.2'
+    compile 'xml-apis:xml-apis:1.0.b2'
+    compile 'org.springframework:spring-tx:4.3.4.RELEASE'
+    compile 'javax.annotation:javax.annotation-api:1.2'
 
-    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testCompile 'junit:junit:4.12'

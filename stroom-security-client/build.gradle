@@ -1,7 +1,18 @@
 dependencies {
     compile project(':stroom-security-shared')
     compile project(':stroom-core-client')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-security-api')
+    compile project(':stroom-security-client-api')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-core-client-widget')
+
+    compile 'com.google.gwt:gwt-user:2.8.0'
+    compile 'com.google.gwt.inject:gin:2.1.2'
+    compile 'com.google.inject:guice:3.0'
+    compile 'javax.inject:javax.inject:1'
+    compile 'com.gwtplatform:gwtp-mvp-client:0.7'
 
     testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.0.2-beta'
 }
