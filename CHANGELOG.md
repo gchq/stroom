@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#283** : Statistics for the stream task queue are now captured even if the size is zero.
 
+* Issue **#226** : Fixed issue where querying an index failed with "User does not have the required permission (Manage Users)" message.
+
 ## [v5.0-beta.23] - 2017-05-06
 
 * Issue **#281** : Made further changes to cope with Files.list() and Files.walk() returning streams that should be closed with 'try with resources' construct.
