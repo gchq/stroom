@@ -49,7 +49,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
         this.dispatchService = dispatchService;
         this.applicationInstanceId = RandomId.createDiscrimiator();
 
-        final String endPointName = GWT.getModuleBaseURL() + "dispatch.rpc";
+        final String endPointName = "/dispatch.rpc";
         final ServiceDefTarget target = (ServiceDefTarget) dispatchService;
         target.setServiceEntryPoint(endPointName);
     }

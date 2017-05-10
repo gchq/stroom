@@ -50,7 +50,7 @@ public class App extends Application<Config> {
     @Override
     public void run(Config configuration, io.dropwizard.setup.Environment environment) throws Exception {
         // The order in which the following are run is important.
-        Environment.configure(configuration, environment);
+        Environment.configure(environment);
         SpringContexts springContexts = new SpringContexts();
         Servlets servlets = new Servlets(environment.getApplicationContext());
         Filters filters = new Filters(environment.getApplicationContext());
