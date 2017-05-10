@@ -44,6 +44,9 @@ dependencies {
     compile 'xml-apis:xml-apis:1.0.b2'
     compile 'org.springframework:spring-tx:4.3.4.RELEASE'
     compile 'javax.annotation:javax.annotation-api:1.2'
+    compile 'org.flywaydb:flyway-core:4.0.3'
+    compile 'com.mchange:c3p0:0.9.5.2'
+
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')

@@ -28,7 +28,6 @@ dependencies {
 
     compile 'commons-lang:commons-lang:2.6'
     compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
-    compile 'org.springframework:spring-core:4.3.4.RELEASE'
     compile 'org.springframework:spring-context:4.3.4.RELEASE'
     compile 'org.springframework:spring-beans:4.3.4.RELEASE'
     compile 'org.slf4j:slf4j-api:1.7.21'
