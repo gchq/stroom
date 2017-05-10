@@ -16,6 +16,10 @@
 
 package stroom.statistics.common.pipeline.filter;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -27,18 +31,14 @@ import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
-import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.StatisticsDataSourceData;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -65,7 +65,7 @@ public class TestStatisticsFilter implements Statistics {
     }
 
     @Override
-    public boolean putEvents(final List<StatisticEvent> statisticEvents, final StatisticStore statisticsDataSource) {
+    public boolean putEvents(final List<StatisticEvent> statisticEvents, final StatisticStore statisticStore) {
         testEvents.addAll(statisticEvents);
         return true;
     }

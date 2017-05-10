@@ -20,14 +20,15 @@ import org.springframework.stereotype.Component;
 import stroom.datasource.api.DataSource;
 import stroom.datasource.api.DataSourceField;
 import stroom.datasource.api.DataSourceField.DataSourceFieldType;
+import stroom.query.api.DocRef;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.statistics.common.StatisticStoreEntityService;
+import stroom.statistics.common.StatisticStoreCache;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
-import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
+import stroom.statistics.shared.common.StatisticField;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -36,18 +37,20 @@ import java.util.List;
 
 @Component
 public class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
-    private final StatisticStoreEntityService statisticStoreEntityService;
+    private final StatisticStoreCache statisticStoreCache;
     private final StatisticsFactory statisticsFactory;
 
     @Inject
-    StatisticsDataSourceProviderImpl(final StatisticStoreEntityService statisticStoreEntityService, final StatisticsFactory statisticsFactory) {
-        this.statisticStoreEntityService = statisticStoreEntityService;
+    StatisticsDataSourceProviderImpl(final StatisticStoreCache statisticStoreCache,
+                                     final StatisticsFactory statisticsFactory) {
+
+        this.statisticStoreCache = statisticStoreCache;
         this.statisticsFactory = statisticsFactory;
     }
 
     @Override
-    public DataSource getDataSource(final String uuid) {
-        final StatisticStoreEntity entity = statisticStoreEntityService.loadByUuid(uuid);
+    public DataSource getDataSource(final DocRef docRef) {
+        final StatisticStoreEntity entity = statisticStoreCache.getStatisticsDataSource(docRef);
         if (entity == null) {
             return null;
         }
@@ -56,11 +59,6 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
 
         return new DataSource(fields);
     }
-
-//    @Override
-//    public String getType() {
-//        return StatisticStoreEntity.ENTITY_TYPE;
-//    }
 
     /**
      * Turn the {@link StatisticStoreEntity} into an {@link List<DataSourceField>} object

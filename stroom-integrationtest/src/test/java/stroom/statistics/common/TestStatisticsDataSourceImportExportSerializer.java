@@ -136,7 +136,9 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
         // statisticsDataSource3).getStatisticDataSourceData());
         Assert.assertNotNull(statisticsDataSource3.getStatisticDataSourceDataObject());
 
-        final DataSource statisticsDataSource4 = statisticsDataSourceProvider.getDataSource(uuid);
+        DocRef statisticDataSource2DocRef = DocRefUtil.create(statisticsDataSource2);
+
+        final DataSource statisticsDataSource4 = statisticsDataSourceProvider.getDataSource(statisticDataSource2DocRef);
 
         Assert.assertNotNull(statisticsDataSource4.getFields());
     }

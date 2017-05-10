@@ -16,11 +16,12 @@
 
 package stroom.statistics.common;
 
+import stroom.statistics.shared.StatisticType;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-
-import stroom.statistics.shared.StatisticType;
+import java.util.stream.Stream;
 
 public class StatisticDataSet implements Iterable<StatisticDataPoint> {
     private final String statisticName;
@@ -81,9 +82,17 @@ public class StatisticDataSet implements Iterable<StatisticDataPoint> {
         return statisticDataPoints.size();
     }
 
+    public boolean isEmpty() {
+        return statisticDataPoints.isEmpty();
+    }
+
     @Override
     public Iterator<StatisticDataPoint> iterator() {
         return statisticDataPoints.iterator();
+    }
+
+    public Stream<StatisticDataPoint> stream() {
+        return statisticDataPoints.stream();
     }
 
     @Override

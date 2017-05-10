@@ -40,7 +40,8 @@ public class Resources {
     private final AuthenticationResource authenticationResource;
     private final List<NamedResource> resources = new ArrayList<>();
 
-    public Resources(JerseyEnvironment jersey, ServletHolder upgradeDispatcherServlerHolder){
+    public Resources(JerseyEnvironment jersey, ServletHolder upgradeDispatcherServletHolder){
+
         luceneQueryResource = new LuceneQueryResource();
         jersey.register(luceneQueryResource);
         resources.add(luceneQueryResource);
@@ -53,7 +54,7 @@ public class Resources {
         jersey.register(authenticationResource);
         resources.add(authenticationResource);
 
-        new Thread(() -> register(upgradeDispatcherServlerHolder)).start();
+        new Thread(() -> register(upgradeDispatcherServletHolder)).start();
     }
 
     public void register(ServletHolder upgradeDispatcherServletHolder) {
