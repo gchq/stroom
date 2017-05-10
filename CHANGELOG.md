@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#285** : Attempted fix for GWT RPC serialisation issue.
+
 ## [v5.0-beta.24] - 2017-05-09
 
 * Issue **#283** : Statistics for the stream task queue are now captured even if the size is zero.
