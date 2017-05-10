@@ -210,9 +210,7 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
     protected void destroy(final K key, final V value) {
         if (value != null && value instanceof Destroyable) {
             final Destroyable destroyable = (Destroyable) value;
-            if (destroyable != null) {
-                destroyable.destroy();
-            }
+            destroyable.destroy();
         }
     }
 }

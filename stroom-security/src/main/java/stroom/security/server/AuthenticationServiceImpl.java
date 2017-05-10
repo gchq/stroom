@@ -130,7 +130,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user = handleLogin(request, user, userName);
 
                 // Audit the successful logon
-                eventLog.logon(user.getName());
+                if (user != null) {
+                    eventLog.logon(user.getName());
+                }
 
             } catch (final RuntimeException e) {
                 loginFailure(userName, e);

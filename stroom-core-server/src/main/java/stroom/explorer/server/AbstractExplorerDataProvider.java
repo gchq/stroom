@@ -44,7 +44,7 @@ public abstract class AbstractExplorerDataProvider<E extends DocumentEntity, C e
 
     public void addItems(final FindService<E, C> findService,
                          final TreeModel treeModel, final C criteria) {
-        if (criteria instanceof FindNamedEntityCriteria) {
+        if (criteria != null) {
             criteria.setOrderBy(FindNamedEntityCriteria.ORDER_BY_NAME);
         }
 

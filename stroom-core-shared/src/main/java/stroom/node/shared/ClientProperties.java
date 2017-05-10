@@ -21,7 +21,7 @@ import stroom.util.shared.SharedObject;
 import java.util.HashMap;
 
 public class ClientProperties implements SharedObject {
-    private static final long serialVersionUID = 7539088363912869822L;
+    private static final long serialVersionUID = 8717922468620533698L;
 
     public static final String LOGIN_HTML = "stroom.loginHTML";
     public static final String WELCOME_HTML = "stroom.welcomeHTML";
@@ -41,10 +41,10 @@ public class ClientProperties implements SharedObject {
     public static final String LABEL_COLOURS = "stroom.theme.labelColours";
     public static final String HELP_URL = "stroom.helpUrl";
 
-    private HashMap<String, String> map = new HashMap<String, String>();
+    private HashMap<String, String> map;
 
     public ClientProperties() {
-        // Default constructor necessary for GWT serialisation.
+        map = new HashMap<>();
     }
 
     public void put(final String key, final String value) {

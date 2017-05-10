@@ -32,7 +32,7 @@ public class MetaData {
     }
 
     public void putAll(final HeaderMap headerMap) {
-        headerMap.putAll(headerMap);
+        this.headerMap.putAll(headerMap);
     }
 
     public HeaderMap getHeaderMap() {
