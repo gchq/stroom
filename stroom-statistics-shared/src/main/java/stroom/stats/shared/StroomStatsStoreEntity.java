@@ -134,6 +134,7 @@ public class StroomStatsStoreEntity extends DocumentEntity implements StatisticS
         return precision;
     }
 
+    @Transient
     public EventStoreTimeIntervalEnum getPrecisionAsInterval() {
         return EventStoreTimeIntervalEnum.valueOf(precision);
     }
