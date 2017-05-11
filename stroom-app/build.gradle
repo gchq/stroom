@@ -2,6 +2,9 @@ plugins {
   id 'com.github.johnrengelman.shadow' version '1.2.4'
 }
 
+apply plugin: 'application'
+mainClassName = 'stroom.startup.App'
+
 jar {
     manifest {
         attributes(
@@ -131,4 +134,8 @@ task integrationTest(type: Test) {
 // This means the reports from our integration tests won't over-write the reports from our unit tests.
 tasks.withType(Test) {
     reports.html.destination = file("${reporting.baseDir}/${name}")
+}
+
+run {
+    args 'server', './dev.yml'
 }
