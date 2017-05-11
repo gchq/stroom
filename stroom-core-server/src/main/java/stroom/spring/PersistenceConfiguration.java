@@ -108,6 +108,7 @@ public class PersistenceConfiguration {
                             }
 
                             version = new Version(maj, min, pat);
+                            LOGGER.info("Found schema_version.version " + ver);
                         }
                     }
                 }
@@ -124,6 +125,7 @@ public class PersistenceConfiguration {
                         try (final ResultSet resultSet = statement.executeQuery("SELECT VER_MAJ, VER_MIN, VER_PAT FROM STROOM_VER ORDER BY VER_MAJ DESC, VER_MIN DESC, VER_PAT DESC LIMIT 1")) {
                             if (resultSet.next()) {
                                 version = new Version(resultSet.getInt(1), resultSet.getInt(2), resultSet.getInt(3));
+                                LOGGER.info("Found STROOM_VER.VER_MAJ/VER_MIN/VER_PAT " + version);
                             }
                         }
                     }
