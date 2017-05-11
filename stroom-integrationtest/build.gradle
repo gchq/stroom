@@ -5,11 +5,9 @@ dependencies {
     compile project(':stroom-dashboard-server')
     compile project(':stroom-security-server')
 
-    // javax.el not provided as no app container in tests.
-    //compile 'javax.el:javax.el-api:3.0.0'
-    //3.0.1-b08 recomended version from http://hibernate.org/validator/documentation/getting-started/
-    //compile 'org.glassfish:javax.el:3.0.1-b08'
-    //compile 'org.glassfish.web:javax.el:2.2.6'
+    //required as these tests are running without dropwizard which would otherwise provide
+    testCompile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
+    testCompile group: 'org.glassfish', name: 'javax.el', version: '3.0.1-b08'
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

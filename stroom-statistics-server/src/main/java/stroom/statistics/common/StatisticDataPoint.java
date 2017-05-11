@@ -18,6 +18,7 @@ package stroom.statistics.common;
 
 import stroom.statistics.shared.StatisticType;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,14 +95,14 @@ public class StatisticDataPoint {
             StatisticType statisticType) {
         this.timeMs = timeMs;
         this.precisionMs = precisionMs;
-        this.tags = tags;
+        this.tags = tags == null ? Collections.emptyList() : tags;
         this.count = count;
         this.value = value;
         this.minValue = minValue;
         this.maxValue = maxValue;
         this.statisticType = statisticType;
-        this.tagToValueMap = tags.stream()
-                .collect(Collectors.toMap(StatisticTag::getTag, StatisticTag::getValue));
+        this.tagToValueMap = new HashMap<>();
+            this.tags.forEach(statisticTag -> tagToValueMap.put(statisticTag.getTag(), statisticTag.getValue()));
     }
 
     public long getTimeMs() {
