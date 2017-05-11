@@ -56,6 +56,8 @@ import stroom.security.server.Permission;
 import stroom.security.server.UserGroupUser;
 import stroom.security.shared.User;
 import stroom.statistics.shared.StatisticStore;
+import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.Stream;
@@ -140,7 +142,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         deleteEntity(Script.class);
         deleteEntity(Res.class);
         deleteEntity(Dictionary.class);
-        deleteEntity(StatisticStore.class);
+        deleteEntity(StatisticStoreEntity.class);
+        deleteEntity(StroomStatsStoreEntity.class);
 
         // Make sure we are no longer creating tasks.
         streamTaskCreator.shutdown();
