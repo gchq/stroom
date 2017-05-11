@@ -21,27 +21,40 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.context.ApplicationContext;
 import stroom.index.shared.IndexService;
 import stroom.resources.AuthenticationResource;
-import stroom.resources.SearchResource;
+import stroom.resources.LuceneQueryResource;
+import stroom.resources.NamedResource;
+import stroom.resources.SqlStatisticsQueryResource;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.security.server.AuthenticationService;
+import stroom.statistics.common.StatisticsQueryService;
 import stroom.util.upgrade.UpgradeDispatcherServlet;
 
 import javax.servlet.ServletException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Resources {
 
-    private final SearchResource searchResource;
+    private final LuceneQueryResource luceneQueryResource;
+    private final SqlStatisticsQueryResource sqlStatisticsQueryResource;
     private final AuthenticationResource authenticationResource;
+    private final List<NamedResource> resources = new ArrayList<>();
 
-    public Resources(JerseyEnvironment jersey, ServletHolder upgradeDispatcherServlerHolder){
-        searchResource = new SearchResource();
-        jersey.register(searchResource);
+    public Resources(JerseyEnvironment jersey, ServletHolder upgradeDispatcherServletHolder){
+
+        luceneQueryResource = new LuceneQueryResource();
+        jersey.register(luceneQueryResource);
+        resources.add(luceneQueryResource);
+
+        sqlStatisticsQueryResource = new SqlStatisticsQueryResource();
+        jersey.register(sqlStatisticsQueryResource);
+        resources.add(sqlStatisticsQueryResource);
 
         authenticationResource = new AuthenticationResource();
         jersey.register(authenticationResource);
+        resources.add(authenticationResource);
 
-        new Thread(() -> register(upgradeDispatcherServlerHolder)).start();
-
+        new Thread(() -> register(upgradeDispatcherServletHolder)).start();
     }
 
     public void register(ServletHolder upgradeDispatcherServletHolder) {
@@ -59,7 +72,8 @@ public class Resources {
                 ApplicationContext applicationContext = servlet.getWebApplicationContext();
 
                 if (applicationContext != null) {
-                    configureSearchResource(applicationContext);
+                    configureLuceneQueryResource(applicationContext);
+                    configureSqlStatisticsQueryResource(applicationContext);
                     configureAuthenticationResource(applicationContext);
                     apisAreNotYetConfigured = false;
                 }
@@ -70,15 +84,20 @@ public class Resources {
         }
     }
 
-    public SearchResource getSearchResource(){
-        return searchResource;
+    public List<NamedResource> getResources(){
+        return resources;
     }
 
-    private void configureSearchResource(ApplicationContext applicationContext){
+    private void configureLuceneQueryResource(ApplicationContext applicationContext){
         SearchResultCreatorManager searchResultCreatorManager = applicationContext.getBean(SearchResultCreatorManager.class);
         IndexService indexService = applicationContext.getBean(IndexService.class);
-        searchResource.setIndexService(indexService);
-        searchResource.setSearchResultCreatorManager(searchResultCreatorManager);
+        luceneQueryResource.setIndexService(indexService);
+        luceneQueryResource.setSearchResultCreatorManager(searchResultCreatorManager);
+    }
+
+    private void configureSqlStatisticsQueryResource(ApplicationContext applicationContext){
+        StatisticsQueryService statisticsQueryService = applicationContext.getBean(StatisticsQueryService.class);
+        sqlStatisticsQueryResource.setStatisticsQueryService(statisticsQueryService);
     }
 
     private void configureAuthenticationResource(ApplicationContext applicationContext){

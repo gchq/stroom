@@ -16,11 +16,12 @@
 
 package stroom.statistics.common;
 
+import stroom.statistics.shared.StatisticType;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import stroom.statistics.shared.StatisticType;
+import java.util.stream.Collectors;
 
 /**
  * Value object to hold a statistic data point retreived from a statistic store.
@@ -36,6 +37,7 @@ public class StatisticDataPoint {
     private final double minValue;
     private final double maxValue;
     private final StatisticType statisticType;
+    private final Map<String, String> tagToValueMap;
 
     /**
      * Constructor for a value type statistic data point
@@ -98,6 +100,8 @@ public class StatisticDataPoint {
         this.minValue = minValue;
         this.maxValue = maxValue;
         this.statisticType = statisticType;
+        this.tagToValueMap = tags.stream()
+                .collect(Collectors.toMap(StatisticTag::getTag, StatisticTag::getValue));
     }
 
     public long getTimeMs() {
@@ -129,6 +133,10 @@ public class StatisticDataPoint {
             throw new UnsupportedOperationException("Method only support for value type statistics");
 
         return value;
+    }
+
+    public String getTagValue(final String tagName) {
+        return tagToValueMap.get(tagName);
     }
 
     public double getMinValue() {

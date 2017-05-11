@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.statistics.shared;
-
-import java.util.Arrays;
+package stroom.statistics.shared.common;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Arrays;
 
 public class TestCustomRollUpMask {
     @Test

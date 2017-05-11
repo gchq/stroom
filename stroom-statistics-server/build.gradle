@@ -24,6 +24,7 @@ dependencies {
     }
 
     compile urlDependencies.get(versions.stroomQueryCommon)
+    compile urlDependencies.get(versions.stroomExpression)
     compile urlDependencies.get(versions.hadoopCommonShaded) 
     //compile urlDependencies.get(versions.hbaseCommonShaded)
 

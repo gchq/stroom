@@ -34,7 +34,7 @@ import stroom.statistics.common.StatisticDataSet;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.exception.StatisticsEventValidationException;
-import stroom.statistics.shared.StatisticRollUpType;
+import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.TerminateHandler;

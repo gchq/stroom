@@ -28,7 +28,7 @@ import stroom.importexport.server.ImportExportSerializer;
 import stroom.importexport.server.ImportExportSerializer.ImportMode;
 import stroom.query.api.DocRef;
 import stroom.statistics.server.common.StatisticsDataSourceProvider;
-import stroom.statistics.shared.StatisticField;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
@@ -136,7 +136,9 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
         // statisticsDataSource3).getStatisticDataSourceData());
         Assert.assertNotNull(statisticsDataSource3.getStatisticDataSourceDataObject());
 
-        final DataSource statisticsDataSource4 = statisticsDataSourceProvider.getDataSource(uuid);
+        DocRef statisticDataSource2DocRef = DocRefUtil.create(statisticsDataSource2);
+
+        final DataSource statisticsDataSource4 = statisticsDataSourceProvider.getDataSource(statisticDataSource2DocRef);
 
         Assert.assertNotNull(statisticsDataSource4.getFields());
     }

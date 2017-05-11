@@ -19,6 +19,10 @@ package stroom.statistics.shared;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
+import stroom.statistics.shared.common.StatisticField;
+import stroom.statistics.shared.common.StatisticRollUpType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -28,8 +32,11 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Entity
@@ -45,6 +52,29 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
     public static final String FIELD_NAME_MAX_VALUE = "Max Statistic Value";
     public static final String FIELD_NAME_PRECISION = "Precision";
     public static final String FIELD_NAME_PRECISION_MS = "Precision ms";
+
+
+    public static final Map<StatisticType, List<String>> STATIC_FIELDS_MAP = new HashMap<>();
+
+    static {
+        STATIC_FIELDS_MAP.put(StatisticType.COUNT, Arrays.asList(
+                FIELD_NAME_DATE_TIME,
+                FIELD_NAME_COUNT,
+                FIELD_NAME_PRECISION,
+                FIELD_NAME_PRECISION_MS
+        ));
+        STATIC_FIELDS_MAP.put(StatisticType.VALUE, Arrays.asList(
+                FIELD_NAME_DATE_TIME,
+                FIELD_NAME_VALUE,
+                FIELD_NAME_COUNT,
+                FIELD_NAME_MIN_VALUE,
+                FIELD_NAME_MAX_VALUE,
+                FIELD_NAME_PRECISION,
+                FIELD_NAME_PRECISION_MS
+        ));
+    }
+
+
     // Hibernate table/column names
     public static final String TABLE_NAME = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.DATA + SEP
             + SQLNameConstants.SOURCE;
@@ -233,6 +263,13 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
         } else {
             return Collections.emptyList();
         }
+    }
+
+    @Transient
+    public List<String> getAllFieldNames() {
+        List<String> allFieldNames = new ArrayList<>(STATIC_FIELDS_MAP.get(getStatisticType()));
+        allFieldNames.addAll(getFieldNames());
+        return allFieldNames;
     }
 
     @Transient

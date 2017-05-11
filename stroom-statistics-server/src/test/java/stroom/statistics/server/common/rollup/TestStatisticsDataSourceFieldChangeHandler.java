@@ -26,8 +26,8 @@ import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
 
-import stroom.statistics.shared.CustomRollUpMask;
-import stroom.statistics.shared.StatisticField;
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.StatisticsDataSourceFieldChangeAction;
 

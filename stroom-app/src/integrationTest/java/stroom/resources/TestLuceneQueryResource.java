@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * This is not currently a test. It is a way of exercising the query api, i.e. it is support for manual testing.
  */
-public class TestSearchResource {
+public class TestLuceneQueryResource {
 
     private String jwtToken;
 
@@ -55,7 +55,7 @@ public class TestSearchResource {
 
         // When
         Response response = client
-                .target("http://localhost:8080/api/index/search")
+                .target("http://localhost:8080/api/lucene/search")
                 .request()
                 .header("Authorization", "Bearer " + jwtToken)
                 .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
@@ -78,7 +78,7 @@ public class TestSearchResource {
         // When
         Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
         Response response = client
-                .target("http://localhost:8080/api/index/search")
+                .target("http://localhost:8080/api/lucene/search")
                 .request()
                 .header("Authorization", "Bearer " + jwtToken)
                 .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)

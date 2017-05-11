@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.statistics.shared;
-
-import java.util.Set;
+package stroom.stats.shared;
 
 import stroom.util.shared.SharedObject;
 
+import java.util.Set;
+
 public class CustomRollUpMaskFields implements SharedObject, Comparable<CustomRollUpMaskFields> {
-    private static final long serialVersionUID = 5490835313079322510L;
+
+    private static final long serialVersionUID = 8434581070070953139L;
 
     private int id;
     private short maskValue;

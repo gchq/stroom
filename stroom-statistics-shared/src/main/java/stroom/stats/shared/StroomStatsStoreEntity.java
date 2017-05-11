@@ -14,13 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.statistics.shared;
+package stroom.stats.shared;
 
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.statistics.shared.StatisticStore;
+import stroom.statistics.shared.StatisticType;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Lob;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,10 +35,11 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "HBASE_STAT_DAT_SRC", uniqueConstraints = @UniqueConstraint(columnNames = { "NAME", "ENGINE_NAME" }) )
-public class HBaseStatisticStoreEntity extends DocumentEntity implements StatisticStore {
-    public static final String ENTITY_TYPE = "StatisticStore";
-    public static final String ENTITY_TYPE_FOR_DISPLAY = "Statistic Store";
+@Table(name = "STROOM_STATS_STORE", uniqueConstraints = @UniqueConstraint(columnNames = { "NAME" }) )
+public class StroomStatsStoreEntity extends DocumentEntity implements StatisticStore {
+    public static final String ENTITY_TYPE = "StroomStatsStore";
+    public static final String ENTITY_TYPE_FOR_DISPLAY = "Stroom-Stats Store";
+
     // IndexFields names
     public static final String FIELD_NAME_DATE_TIME = "Date Time";
     public static final String FIELD_NAME_VALUE = "Statistic Value";
@@ -39,39 +47,33 @@ public class HBaseStatisticStoreEntity extends DocumentEntity implements Statist
     public static final String FIELD_NAME_MIN_VALUE = "Min Statistic Value";
     public static final String FIELD_NAME_MAX_VALUE = "Max Statistic Value";
     public static final String FIELD_NAME_PRECISION = "Precision";
-    public static final String FIELD_NAME_PRECISION_MS = "Precision ms";
+
     // Hibernate table/column names
-    public static final String TABLE_NAME = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.DATA + SEP
-            + SQLNameConstants.SOURCE;
-    public static final String ENGINE_NAME = SQLNameConstants.ENGINE + SEP + SQLNameConstants.NAME;
+    public static final String TABLE_NAME = "STROOM_STATS_STORE";
     public static final String STATISTIC_TYPE = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.TYPE;
     public static final String PRECISION = SQLNameConstants.PRECISION;
     public static final String ROLLUP_TYPE = SQLNameConstants.ROLLUP + SEP + SQLNameConstants.TYPE;
-    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String NOT_SET = "NOT SET";
-    public static final Long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
+    public static final String DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.longName();
     public static final String DEFAULT_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
 
-    private static final long serialVersionUID = -649286188919707915L;
+    private static final long serialVersionUID = -1667372785365881297L;
 
     private String description;
-    private String engineName;
     private byte pStatisticType;
     private byte pRollUpType;
-    private Long precision;
+    private String precision;
     private boolean enabled = false;
 
     private String data;
-    private StatisticsDataSourceData statisticsDataSourceDataObject;
+    private StroomStatsStoreEntityData stroomStatsStoreDataObject;
 
-    public HBaseStatisticStoreEntity() {
+    public StroomStatsStoreEntity() {
         setDefaults();
     }
 
     private void setDefaults() {
         this.pStatisticType = StatisticType.COUNT.getPrimitiveValue();
         this.pRollUpType = StatisticRollUpType.NONE.getPrimitiveValue();
-        this.engineName = NOT_SET;
         this.precision = DEFAULT_PRECISION;
     }
 
@@ -89,15 +91,6 @@ public class HBaseStatisticStoreEntity extends DocumentEntity implements Statist
     @Transient
     public String getType() {
         return ENTITY_TYPE;
-    }
-
-    @Column(name = ENGINE_NAME, nullable = false)
-    public String getEngineName() {
-        return engineName;
-    }
-
-    public void setEngineName(final String engineName) {
-        this.engineName = engineName;
     }
 
     @Column(name = STATISTIC_TYPE, nullable = false)
@@ -137,12 +130,21 @@ public class HBaseStatisticStoreEntity extends DocumentEntity implements Statist
     }
 
     @Column(name = PRECISION, nullable = false)
-    public Long getPrecision() {
+    public String getPrecision() {
         return precision;
     }
 
-    public void setPrecision(final Long precision) {
+    public EventStoreTimeIntervalEnum getPrecisionAsInterval() {
+        return EventStoreTimeIntervalEnum.valueOf(precision);
+    }
+
+    public void setPrecision(final String precision) {
         this.precision = precision;
+    }
+
+    @Transient
+    public void setPrecision(final EventStoreTimeIntervalEnum interval) {
+        this.precision = interval.toString();
     }
 
     @Column(name = SQLNameConstants.ENABLED, nullable = false)
@@ -167,24 +169,24 @@ public class HBaseStatisticStoreEntity extends DocumentEntity implements Statist
 
     @Transient
     @XmlTransient
-    public StatisticsDataSourceData getStatisticDataSourceDataObject() {
-        return statisticsDataSourceDataObject;
+    public StroomStatsStoreEntityData getDataObject() {
+        return stroomStatsStoreDataObject;
     }
 
-    public void setStatisticDataSourceDataObject(final StatisticsDataSourceData statisticDataSourceDataObject) {
-        this.statisticsDataSourceDataObject = statisticDataSourceDataObject;
+    public void setDataObject(final StroomStatsStoreEntityData statisticDataSourceDataObject) {
+        this.stroomStatsStoreDataObject = statisticDataSourceDataObject;
     }
 
     @Transient
     public boolean isValidField(final String fieldName) {
-        if (statisticsDataSourceDataObject == null) {
+        if (stroomStatsStoreDataObject == null) {
             return false;
-        } else if (statisticsDataSourceDataObject.getStatisticFields() == null) {
+        } else if (stroomStatsStoreDataObject.getStatisticFields() == null) {
             return false;
-        } else if (statisticsDataSourceDataObject.getStatisticFields().size() == 0) {
+        } else if (stroomStatsStoreDataObject.getStatisticFields().size() == 0) {
             return false;
         } else {
-            return statisticsDataSourceDataObject.getStatisticFields().contains(new StatisticField(fieldName));
+            return stroomStatsStoreDataObject.getStatisticFields().contains(new StatisticField(fieldName));
         }
     }
 
@@ -204,24 +206,24 @@ public class HBaseStatisticStoreEntity extends DocumentEntity implements Statist
 
         // rolledUpFieldNames not empty if we get here
 
-        if (statisticsDataSourceDataObject == null) {
+        if (stroomStatsStoreDataObject == null) {
             throw new RuntimeException(
                     "isRollUpCombinationSupported called with non-empty list but data source has no statistic fields or custom roll up masks");
         }
 
-        return statisticsDataSourceDataObject.isRollUpCombinationSupported(rolledUpFieldNames);
+        return stroomStatsStoreDataObject.isRollUpCombinationSupported(rolledUpFieldNames);
     }
 
     @Transient
     public Integer getPositionInFieldList(final String fieldName) {
-        return statisticsDataSourceDataObject.getFieldPositionInList(fieldName);
+        return stroomStatsStoreDataObject.getFieldPositionInList(fieldName);
     }
 
     @Transient
     public List<String> getFieldNames() {
-        if (statisticsDataSourceDataObject != null) {
+        if (stroomStatsStoreDataObject != null) {
             final List<String> fieldNames = new ArrayList<String>();
-            for (final StatisticField statisticField : statisticsDataSourceDataObject.getStatisticFields()) {
+            for (final StatisticField statisticField : stroomStatsStoreDataObject.getStatisticFields()) {
                 fieldNames.add(statisticField.getFieldName());
             }
             return fieldNames;
@@ -232,13 +234,13 @@ public class HBaseStatisticStoreEntity extends DocumentEntity implements Statist
 
     @Transient
     public int getStatisticFieldCount() {
-        return statisticsDataSourceDataObject == null ? 0 : statisticsDataSourceDataObject.getStatisticFields().size();
+        return stroomStatsStoreDataObject == null ? 0 : stroomStatsStoreDataObject.getStatisticFields().size();
     }
 
     @Transient
     public List<StatisticField> getStatisticFields() {
-        if (statisticsDataSourceDataObject != null) {
-            return statisticsDataSourceDataObject.getStatisticFields();
+        if (stroomStatsStoreDataObject != null) {
+            return stroomStatsStoreDataObject.getStatisticFields();
         } else {
             return Collections.emptyList();
         }
@@ -246,8 +248,8 @@ public class HBaseStatisticStoreEntity extends DocumentEntity implements Statist
 
     @Transient
     public Set<CustomRollUpMask> getCustomRollUpMasks() {
-        if (statisticsDataSourceDataObject != null) {
-            return statisticsDataSourceDataObject.getCustomRollUpMasks();
+        if (stroomStatsStoreDataObject != null) {
+            return stroomStatsStoreDataObject.getCustomRollUpMasks();
         } else {
             return Collections.emptySet();
         }

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.statistics.shared;
+package stroom.statistics.shared.common;
+
+import stroom.util.shared.HasDisplayValue;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import stroom.util.shared.HasDisplayValue;
 
 /**
  * Enum used to hold the intervals used in storing the event stats. The time of
@@ -68,9 +68,6 @@ public enum EventStoreTimeIntervalEnum implements HasDisplayValue {
      *            The Human readable name for the interval
      * @param shortName
      *            The short name for the interval, used in the hbase table name
-     * @param retentionPeriod
-     *            The time in milliseconds to keep the data in the event store
-     *            for
      */
     EventStoreTimeIntervalEnum(final long rowKeyInterval, final long columnInterval, final String longName,
             final String shortName) {

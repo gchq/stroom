@@ -25,8 +25,8 @@ import stroom.security.Insecure;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.statistics.common.rollup.RollUpBitMask;
-import stroom.statistics.shared.CustomRollUpMaskFields;
-import stroom.statistics.shared.RollUpBitMaskConversionAction;
+import stroom.statistics.shared.common.CustomRollUpMaskFields;
+import stroom.statistics.shared.common.RollUpBitMaskConversionAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 

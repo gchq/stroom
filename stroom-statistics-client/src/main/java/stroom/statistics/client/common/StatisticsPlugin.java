@@ -32,9 +32,9 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.node.client.ClientPropertyCache;
 import stroom.security.client.ClientSecurityContext;
 import stroom.statistics.client.common.presenter.StatisticsDataSourcePresenter;
-import stroom.statistics.shared.CustomRollUpMask;
-import stroom.statistics.shared.StatisticField;
-import stroom.statistics.shared.StatisticRollUpType;
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.StatisticField;
+import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 
@@ -73,12 +73,7 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
                 // fields added/removed/changed
-                load(DocRefUtil.create(entity), new LoadCallback<StatisticStoreEntity>() {
-                    @Override
-                    public void onLoad(final StatisticStoreEntity entityFromDb) {
-                        doConfirmSave(presenter, entity, entityFromDb);
-                    }
-                });
+                load(DocRefUtil.create(entity), entityFromDb -> doConfirmSave(presenter, entity, entityFromDb));
 
             }
         }
