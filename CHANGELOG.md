@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#289** : Changed Log4J configuration to suppress logging from Hibernate SqlExceptionHandler for expected exceptions like constraint violations.
 
+* Issue **#220** : Changed 'Expected a new writer...' fatal error to warning as the condition in question might be acceptable.
+
 ## [v5.0-beta.25] - 2017-05-10
 
 * Issue **#285** : Attempted fix for GWT RPC serialisation issue.
