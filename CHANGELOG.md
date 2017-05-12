@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#287** : XSLT not found warnings property description now defaults to false.
+
 ## [v5.0-beta.25] - 2017-05-10
 
 * Issue **#285** : Attempted fix for GWT RPC serialisation issue.
