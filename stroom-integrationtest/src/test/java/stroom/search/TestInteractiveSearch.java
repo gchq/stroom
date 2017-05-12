@@ -50,12 +50,12 @@ import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.ParamUtil;
-import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -392,7 +392,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         for (final String componentId : componentIds) {
             final TableSettings tableSettings = createTableSettings(index, extractValues);
 
-            final ResultRequest tableResultRequest = new ResultRequest(componentId, tableSettings);
+            final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, true);
             resultRequests.add(tableResultRequest);
         }
 
