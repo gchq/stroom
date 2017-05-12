@@ -55,7 +55,6 @@ public class SqlStatisticsStore implements Store {
             }
         });
 
-
         return new Data(childMap, queue.size(), queue.size());
     }
 
