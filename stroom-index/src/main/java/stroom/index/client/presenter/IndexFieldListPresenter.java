@@ -328,7 +328,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
 
     public void refresh() {
         if (indexFields == null) {
-            indexFields = new IndexFields(new ArrayList<IndexField>());
+            indexFields = new IndexFields(new ArrayList<>());
         }
 
         getView().setRowData(0, indexFields.getIndexFields());

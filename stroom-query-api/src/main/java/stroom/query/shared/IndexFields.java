@@ -16,16 +16,15 @@
 
 package stroom.query.shared;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
-
-import stroom.util.shared.SharedObject;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @XmlRootElement(name = "fields")
 public class IndexFields implements SharedObject {
@@ -34,7 +33,7 @@ public class IndexFields implements SharedObject {
     private List<IndexField> indexFields;
 
     public static IndexFields createStreamIndexFields() {
-        final List<IndexField> indexFields = new ArrayList<IndexField>();
+        final List<IndexField> indexFields = new ArrayList<>();
         // Always add standard id fields for now.
         indexFields.add(IndexField.createIdField(IndexConstants.STREAM_ID));
         indexFields.add(IndexField.createIdField(IndexConstants.EVENT_ID));
@@ -49,48 +48,27 @@ public class IndexFields implements SharedObject {
         this.indexFields = indexFields;
     }
 
-    public void addIndexField(final IndexField indexField) {
-        if (indexFields == null) {
-            indexFields = new ArrayList<>();
-        }
-        indexFields.add(indexField);
-    }
-
-    public void setIndexFields(final List<IndexField> indexFields) {
-        this.indexFields = indexFields;
-    }
-
-    @XmlElements({ @XmlElement(name = "field", type = IndexField.class) })
+    @XmlElements({@XmlElement(name = "field", type = IndexField.class)})
     public List<IndexField> getIndexFields() {
         return indexFields;
     }
 
     public void add(final IndexField indexField) {
-        if (indexFields == null) {
-            indexFields = new ArrayList<>();
-        }
         indexFields.add(indexField);
     }
 
     public void remove(final IndexField indexField) {
-        if (indexFields != null) {
-            indexFields.remove(indexField);
-        }
+        indexFields.remove(indexField);
     }
 
     public boolean contains(final IndexField indexField) {
-        if (indexFields != null) {
-            return indexFields.contains(indexField);
-        }
-        return false;
+        return indexFields != null && indexFields.contains(indexField);
     }
 
     public Set<String> getFieldNames() {
         final Set<String> set = new HashSet<>();
-        if (indexFields != null) {
-            for (final IndexField field : indexFields) {
-                set.add(field.getFieldName());
-            }
+        for (final IndexField field : indexFields) {
+            set.add(field.getFieldName());
         }
         return set;
     }

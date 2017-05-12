@@ -20,10 +20,15 @@ import stroom.app.client.gin.PluginModule;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
+import stroom.streamstore.client.DataRetentionPolicyPlugin;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.streamstore.client.presenter.DataPresenter;
 import stroom.streamstore.client.presenter.DataPresenter.DataView;
+import stroom.streamstore.client.presenter.DataRetentionPolicyPresenter;
+import stroom.streamstore.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
+import stroom.streamstore.client.presenter.EditExpressionPresenter;
+import stroom.streamstore.client.presenter.EditExpressionPresenter.EditExpressionView;
 import stroom.streamstore.client.presenter.EntityChoicePresenter;
 import stroom.streamstore.client.presenter.EntityChoicePresenter.EntityChoiceView;
 import stroom.streamstore.client.presenter.EntityIdSetPresenter;
@@ -48,7 +53,9 @@ import stroom.streamstore.client.presenter.StreamTypeUiManager;
 import stroom.streamstore.client.presenter.TextPresenter;
 import stroom.streamstore.client.presenter.TextPresenter.TextView;
 import stroom.streamstore.client.view.ClassificationWrapperViewImpl;
+import stroom.streamstore.client.view.DataRetentionPolicyViewImpl;
 import stroom.streamstore.client.view.DataViewImpl;
+import stroom.streamstore.client.view.EditExpressionViewImpl;
 import stroom.streamstore.client.view.EntityChoiceViewImpl;
 import stroom.streamstore.client.view.EntityIdSetViewImpl;
 import stroom.streamstore.client.view.IncludeExcludeEntityIdSetPopupViewImpl;
@@ -92,5 +99,9 @@ public class StreamStoreModule extends PluginModule {
 
         bindSharedView(DropDrownView.class, DropDownViewImpl.class);
         bindSharedView(DropDownTreeView.class, DropDownTreeViewImpl.class);
+
+        bindPlugin(DataRetentionPolicyPlugin.class);
+        bindPresenterWidget(EditExpressionPresenter.class, EditExpressionView.class, EditExpressionViewImpl.class);
+        bindPresenterWidget(DataRetentionPolicyPresenter.class, DataRetentionPolicyView.class, DataRetentionPolicyViewImpl.class);
     }
 }

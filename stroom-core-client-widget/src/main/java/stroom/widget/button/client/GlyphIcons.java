@@ -38,6 +38,7 @@ public final class GlyphIcons {
     public static final GlyphIcon ERROR = new GlyphIcon("fa fa-times-circle", RED, "Error", true);
     public static final GlyphIcon FILTER = new GlyphIcon("fa fa-filter", BLUE, "Filter", true);
     public static final GlyphIcon HELP = new GlyphIcon("fa fa-question-circle", BLUE, "Help", true);
+    public static final GlyphIcon HISTORY = new GlyphIcon("fa fa-clock-o", BLUE, "History", false);
     public static final GlyphIcon INFO = new GlyphIcon("fa fa-info-circle", BLUE, "Info", true);
     public static final GlyphIcon JOBS = new GlyphIcon("fa fa-tasks", GREY, "Jobs", true);
     public static final GlyphIcon LOGOUT = new GlyphIcon("fa fa-sign-out", BLUE, "Logout", true);
