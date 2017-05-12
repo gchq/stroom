@@ -71,7 +71,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = '1G'
-    maxHeapSize = '4G'
+    maxHeapSize = '2G'
 }
 
 task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
