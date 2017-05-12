@@ -102,7 +102,13 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     }
 
     public void bind() {
-        handlerRegistrations.add(tabBar.addSelectionHandler(event -> selectTab(event.getSelectedItem())));
+        handlerRegistrations.add(tabBar.addSelectionHandler(event -> {
+            final TabData selected = event.getSelectedItem();
+            selectTab(selected);
+            final int index = tabBar.getTabs().indexOf(selected);
+            getTabLayoutData().setSelected(index);
+            changeHandler.onDirty();
+        }));
 
         handlerRegistrations.add(settings.addDomHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
