@@ -13,9 +13,9 @@ apply plugin: 'gchq.urldependencies'
 ext.versions = [
         stroom: '6.0-beta.1-SNAPSHOT',
         eventLogging: 'event-logging-v3.1.0',
-        stroomQueryApi: 'stroom-query-api-v0.1.0',
+        stroomQueryApi: 'stroom-query-api-v0.1.1',
         stroomQueryApiSources: 'stroom-query-api-v0.1.0-sources',
-        stroomQueryCommon: 'stroom-query-common-v0.1.0',
+        stroomQueryCommon: 'stroom-query-common-v0.1.1',
         stroomExpression: 'stroom-expression-v0.1.0',
         //hbaseCommonShaded: 'hbase-common-shaded-v1.2.1-2-all',
         hadoopHdfsShaded: 'hadoop-hdfs-shaded-v2.6.4-2-all',
