@@ -125,6 +125,7 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
 
         StatisticStoreEntity statisticsDataSource2 = statisticsDataSourceService
                 .find(FindStatisticsEntityCriteria.instance()).getFirst();
+        Assert.assertNotNull(statisticsDataSource2);
 
         final String uuid = statisticsDataSource2.getUuid();
 
@@ -134,12 +135,13 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
 
         // Assert.assertNotNull(((StatisticsDataSource)
         // statisticsDataSource3).getStatisticDataSourceData());
+        Assert.assertNotNull(statisticsDataSource3);
         Assert.assertNotNull(statisticsDataSource3.getStatisticDataSourceDataObject());
 
-        DocRef statisticDataSource2DocRef = DocRefUtil.create(statisticsDataSource2);
+        DocRef statisticDataSource3DocRef = DocRefUtil.create(statisticsDataSource3);
 
-        final DataSource statisticsDataSource4 = statisticsDataSourceProvider.getDataSource(statisticDataSource2DocRef);
+        final DataSource dataSource = statisticsDataSourceProvider.getDataSource(statisticDataSource3DocRef);
 
-        Assert.assertNotNull(statisticsDataSource4.getFields());
+        Assert.assertNotNull(dataSource.getFields());
     }
 }
