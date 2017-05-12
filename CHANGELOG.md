@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.26] - 2017-05-12
+
 * Issue **#287** : XSLT not found warnings property description now defaults to false.
 
 * Issue **#261** : The save button is now only enabled when a dashboard or other item is made dirty and it is not read only.
@@ -397,7 +399,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.25...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.26...HEAD
+[v5.0-beta.26]: https://github.com/gchq/stroom/compare/v5.0-beta.25...v5.0-beta.26
 [v5.0-beta.25]: https://github.com/gchq/stroom/compare/v5.0-beta.24...v5.0-beta.25
 [v5.0-beta.24]: https://github.com/gchq/stroom/compare/v5.0-beta.23...v5.0-beta.24
 [v5.0-beta.23]: https://github.com/gchq/stroom/compare/v5.0-beta.22...v5.0-beta.23
