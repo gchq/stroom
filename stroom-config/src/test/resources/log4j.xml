@@ -7,6 +7,10 @@
       <param name="ConversionPattern" value="%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}{GMT+0} %-5p [%t] (%F:%L) - %m%n" />
     </layout>
   </appender>
+
+  <logger name="org.hibernate">
+    <level value="fatal"/>
+  </logger>
  
   <logger name="stroom">
     <level value="info" />
