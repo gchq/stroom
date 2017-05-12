@@ -293,7 +293,7 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
     protected void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
 
-        saveButton.setEnabled(!readOnly);
+        saveButton.setEnabled(isDirty() && !readOnly);
         saveAsButton.setEnabled(true);
 
         addButton.setEnabled(!readOnly);
@@ -378,8 +378,9 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
             if (lastLabel == null || !lastLabel.equals(getLabel())) {
                 lastLabel = getLabel();
                 RefreshContentTabEvent.fire(this, this);
-                saveButton.setEnabled(dirty);
             }
+
+            saveButton.setEnabled(dirty);
         }
     }
 

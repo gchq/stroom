@@ -191,8 +191,7 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
     @Override
     protected void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
-
-        saveButton.setEnabled(!readOnly);
+        saveButton.setEnabled(isDirty() && !readOnly);
         saveAsButton.setEnabled(true);
     }
 
@@ -203,8 +202,9 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
             if (lastLabel == null || !lastLabel.equals(getLabel())) {
                 lastLabel = getLabel();
                 RefreshContentTabEvent.fire(this, this);
-                saveButton.setEnabled(dirty);
             }
+
+            saveButton.setEnabled(dirty);
         }
     }
 }
