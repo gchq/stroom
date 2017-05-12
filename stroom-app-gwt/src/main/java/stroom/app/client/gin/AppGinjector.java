@@ -62,6 +62,8 @@ import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
 import stroom.statistics.client.common.gin.StatisticsGinjector;
 import stroom.statistics.client.common.gin.StatisticsModule;
+import stroom.stats.client.gin.StroomStatsStoreGinjector;
+import stroom.stats.client.gin.StroomStatsStoreModule;
 import stroom.streamstore.client.gin.StreamStoreGinjector;
 import stroom.streamstore.client.gin.StreamStoreModule;
 import stroom.task.client.gin.TaskGinjector;
@@ -75,17 +77,60 @@ import stroom.widget.popup.client.gin.PopupModule;
 import stroom.xmlschema.client.gin.XMLSchemaGinjector;
 import stroom.xmlschema.client.gin.XMLSchemaModule;
 
-@GinModules({ClientDispatchModule.class, AppModule.class, PopupModule.class, AlertModule.class, WelcomeModule.class,
-        SecurityModule.class, EntityModule.class, PluginsModule.class, FolderModule.class, TaskModule.class,
-        QueryModule.class, StreamStoreModule.class, FeedModule.class, PipelineModule.class, DictionaryModule.class,
-        XMLSchemaModule.class, MonitoringModule.class, CacheModule.class, IndexModule.class,
-        StatisticsModule.class, DashboardModule.class, VisModule.class, ScriptModule.class, VisualisationModule.class,
-        ImportExportConfigModule.class})
-public interface AppGinjector
-        extends Ginjector, PopupGinjector, AlertGinjector, WelcomeGinjector, SecurityGinjector, EntityGinjector,
-        PluginsGinjector, FolderGinjector, TaskGinjector, StreamStoreGinjector, FeedGinjector, PipelineGinjector,
-        DictionaryGinjector, XMLSchemaGinjector, MonitoringGinjector, CacheGinjector, IndexGinjector,
-        StatisticsGinjector, DashboardGinjector, VisGinjector, ScriptGinjector, VisualisationGinjector, ImportExportConfigGinjector {
+@GinModules({
+        AlertModule.class,
+        AppModule.class,
+        CacheModule.class,
+        ClientDispatchModule.class,
+        DashboardModule.class,
+        DictionaryModule.class,
+        EntityModule.class,
+        FeedModule.class,
+        FolderModule.class,
+        ImportExportConfigModule.class,
+        IndexModule.class,
+        MonitoringModule.class,
+        PipelineModule.class,
+        PluginsModule.class,
+        PopupModule.class,
+        QueryModule.class,
+        ScriptModule.class,
+        SecurityModule.class,
+        StatisticsModule.class,
+        StreamStoreModule.class,
+        StroomStatsStoreModule.class,
+        TaskModule.class,
+        VisModule.class,
+        VisualisationModule.class,
+        WelcomeModule.class,
+        XMLSchemaModule.class
+})
+public interface AppGinjector extends
+        AlertGinjector,
+        CacheGinjector,
+        DashboardGinjector,
+        DictionaryGinjector,
+        EntityGinjector,
+        FeedGinjector,
+        FolderGinjector,
+        Ginjector,
+        ImportExportConfigGinjector,
+        IndexGinjector,
+        MonitoringGinjector,
+        PipelineGinjector,
+        PluginsGinjector,
+        PopupGinjector,
+        ScriptGinjector,
+        SecurityGinjector,
+        StatisticsGinjector,
+        StreamStoreGinjector,
+        StroomStatsStoreGinjector,
+        TaskGinjector,
+        VisGinjector,
+        VisualisationGinjector,
+        WelcomeGinjector,
+        XMLSchemaGinjector
+{
     // Default implementation of standard resources
     EventBus getEventBus();
 
