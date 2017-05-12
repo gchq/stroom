@@ -19,52 +19,46 @@ package stroom.stats.client.presenter;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.security.client.ClientSecurityContext;
-import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.shared.StatisticsDataSourceData;
+import stroom.stats.shared.StroomStatsStoreEntity;
+import stroom.stats.shared.StroomStatsStoreEntityData;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
-public class StroomStatsStorePresenter extends EntityEditTabPresenter<LinkTabPanelView, StatisticStoreEntity> {
+public class StroomStatsStorePresenter extends EntityEditTabPresenter<LinkTabPanelView, StroomStatsStoreEntity> {
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData CUSTOM_ROLLUPS = new TabDataImpl("Custom Roll-ups");
 
-    private final TabContentProvider<StatisticStoreEntity> tabContentProvider = new TabContentProvider<StatisticStoreEntity>();
+    private final TabContentProvider<StroomStatsStoreEntity> tabContentProvider = new TabContentProvider<StroomStatsStoreEntity>();
 
     @Inject
     public StroomStatsStorePresenter(final EventBus eventBus, final LinkTabPanelView view,
-                                     final Provider<StroomStatsStoreSettingsPresenter> statisticsDataSourceSettingsPresenter,
-                                     final Provider<StroomStatsStoreFieldListPresenter> statisticsFieldListPresenter,
-                                     final Provider<StroomStatsStoreCustomMaskListPresenter> statisticsCustomMaskListPresenter,
+                                     final Provider<StroomStatsStoreSettingsPresenter> stroomStatsStoreSettingsPresenter,
+                                     final Provider<StroomStatsStoreFieldListPresenter> stroomStatsStoreFieldListPresenter,
+                                     final Provider<StroomStatsStoreCustomMaskListPresenter> stroomStatsStoreCustomMaskListPresenter,
                                      final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
 
-        tabContentProvider.setDirtyHandler(new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                if (event.isDirty()) {
-                    setDirty(true);
-                }
+        tabContentProvider.setDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
             }
         });
 
-        tabContentProvider.add(SETTINGS, statisticsDataSourceSettingsPresenter);
-        tabContentProvider.add(FIELDS, statisticsFieldListPresenter);
-        tabContentProvider.add(CUSTOM_ROLLUPS, statisticsCustomMaskListPresenter);
+        tabContentProvider.add(SETTINGS, stroomStatsStoreSettingsPresenter);
+        tabContentProvider.add(FIELDS, stroomStatsStoreFieldListPresenter);
+        tabContentProvider.add(CUSTOM_ROLLUPS, stroomStatsStoreCustomMaskListPresenter);
 
         addTab(SETTINGS);
         addTab(FIELDS);
         addTab(CUSTOM_ROLLUPS);
 
         selectTab(SETTINGS);
-
     }
 
     @Override
@@ -73,14 +67,14 @@ public class StroomStatsStorePresenter extends EntityEditTabPresenter<LinkTabPan
     }
 
     @Override
-    public void onRead(final StatisticStoreEntity statisticsDataSource) {
-        if (statisticsDataSource != null) {
-            if (statisticsDataSource.getStatisticDataSourceDataObject() == null) {
-                statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData());
+    public void onRead(final StroomStatsStoreEntity stroomStatsStoreEntity) {
+        if (stroomStatsStoreEntity != null) {
+            if (stroomStatsStoreEntity.getDataObject() == null) {
+                stroomStatsStoreEntity.setDataObject(new StroomStatsStoreEntityData());
             }
         }
 
-        tabContentProvider.read(statisticsDataSource);
+        tabContentProvider.read(stroomStatsStoreEntity);
 
         // the field and rollup presenters need to know about each other as
         // changes in one affect the other
@@ -89,12 +83,12 @@ public class StroomStatsStorePresenter extends EntityEditTabPresenter<LinkTabPan
     }
 
     @Override
-    protected void onWrite(final StatisticStoreEntity statisticsDataSource) {
-        tabContentProvider.write(statisticsDataSource);
+    protected void onWrite(final StroomStatsStoreEntity stroomStatsStoreEntity) {
+        tabContentProvider.write(stroomStatsStoreEntity);
     }
 
     @Override
     public String getType() {
-        return StatisticStoreEntity.ENTITY_TYPE;
+        return StroomStatsStoreEntity.ENTITY_TYPE;
     }
 }
