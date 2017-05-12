@@ -35,10 +35,10 @@ import java.util.Set;
 
 @ProvidesExplorerData
 @Component
-public class StroomStatsDataSourceExplorerDataProvider
+public class StroomStatsStoreExplorerDataProvider
         extends AbstractExplorerDataProvider<StroomStatsStoreEntity, FindStroomStatsStoreEntityCriteria> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsDataSourceExplorerDataProvider.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsStoreExplorerDataProvider.class);
 
     private static final Set<String> tags = new HashSet<>();
 
@@ -49,8 +49,8 @@ public class StroomStatsDataSourceExplorerDataProvider
     private final StroomStatsStoreEntityService stroomStatsStoreEntityService;
 
     @Inject
-    StroomStatsDataSourceExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService,
-                                              final StroomStatsStoreEntityService stroomStatsStoreEntityService) {
+    StroomStatsStoreExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService,
+                                         final StroomStatsStoreEntityService stroomStatsStoreEntityService) {
         super(folderService);
         LOGGER.debug("Initialising: {}", this.getClass().getCanonicalName());
         this.stroomStatsStoreEntityService = stroomStatsStoreEntityService;
