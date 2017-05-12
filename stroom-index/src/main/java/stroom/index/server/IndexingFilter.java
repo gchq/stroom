@@ -217,8 +217,8 @@ public class IndexingFilter extends AbstractXMLFilter {
                                 // Ask the pool for another one and try again
                                 final IndexShardWriter newWriter = getIndexShardWriter();
                                 if (newWriter == indexShardWriter) {
-                                    LOGGER.fatal("Expected a new writer but got the same one back!!!");
-                                    throw new IndexException("Expected a new writer but got the same one back!!!");
+                                    LOGGER.warn("Expected a new writer but got the same one back!!!");
+//                                    throw new IndexException("Expected a new writer but got the same one back!!!");
                                 }
 
                                 indexShardWriter = newWriter;
