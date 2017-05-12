@@ -19,32 +19,26 @@ package stroom.stats.shared;
 import stroom.entity.shared.Action;
 import stroom.entity.shared.ResultList;
 
-import java.util.List;
+public class StroomStatsRollUpBitMaskPermGenerationAction extends Action<ResultList<CustomRollUpMask>> {
 
-public class RollUpBitMaskConversionAction extends Action<ResultList<CustomRollUpMaskFields>> {
+    private static final long serialVersionUID = -6717177709897089356L;
 
-    private static final long serialVersionUID = -976944008252083206L;
+    private int fieldCount;
 
-    private List<Short> maskValues;
-
-    public RollUpBitMaskConversionAction() {
+    public StroomStatsRollUpBitMaskPermGenerationAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public RollUpBitMaskConversionAction(final List<Short> maskValues) {
-        this.maskValues = maskValues;
+    public StroomStatsRollUpBitMaskPermGenerationAction(final int fieldCount) {
+        this.fieldCount = fieldCount;
     }
 
-    public List<Short> getMaskValues() {
-        return maskValues;
-    }
-
-    public void setMaskValues(final List<Short> maskValues) {
-        this.maskValues = maskValues;
+    public int getFieldCount() {
+        return fieldCount;
     }
 
     @Override
     public String getTaskName() {
-        return "Roll up bit mask conversion";
+        return "Roll up bit mask perm generation";
     }
 }

@@ -53,7 +53,7 @@ public class StroomStatsStoreEntity extends DocumentEntity implements StatisticS
     public static final String STATISTIC_TYPE = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.TYPE;
     public static final String PRECISION = SQLNameConstants.PRECISION;
     public static final String ROLLUP_TYPE = SQLNameConstants.ROLLUP + SEP + SQLNameConstants.TYPE;
-    public static final String DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.longName();
+    public static final EventStoreTimeIntervalEnum DEFAULT_PRECISION_INTERVAL = EventStoreTimeIntervalEnum.HOUR;
     public static final String DEFAULT_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
 
     private static final long serialVersionUID = -1667372785365881297L;
@@ -74,7 +74,7 @@ public class StroomStatsStoreEntity extends DocumentEntity implements StatisticS
     private void setDefaults() {
         this.pStatisticType = StatisticType.COUNT.getPrimitiveValue();
         this.pRollUpType = StatisticRollUpType.NONE.getPrimitiveValue();
-        this.precision = DEFAULT_PRECISION;
+        setPrecision(DEFAULT_PRECISION_INTERVAL);
     }
 
     @Column(name = SQLNameConstants.DESCRIPTION)

@@ -17,7 +17,6 @@
 package stroom.stats.client.presenter;
 
 import com.google.gwt.cell.client.CheckboxCell;
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.resources.client.ClientBundle;
@@ -28,7 +27,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
@@ -41,8 +39,8 @@ import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.shared.ResultList;
 import stroom.stats.shared.CustomRollUpMask;
-import stroom.stats.shared.RollUpBitMaskPermGenerationAction;
 import stroom.stats.shared.StatisticField;
+import stroom.stats.shared.StroomStatsRollUpBitMaskPermGenerationAction;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntityData;
 import stroom.stats.shared.StroomStatsStoreFieldChangeAction;
@@ -168,13 +166,10 @@ public class StroomStatsStoreCustomMaskListPresenter
             }
         };
 
-        rolledUpColumn.setFieldUpdater(new FieldUpdater<MaskHolder, Boolean>() {
-            @Override
-            public void update(final int index, final MaskHolder row, final Boolean value) {
-                row.getMask().setRollUpState(fieldPositionNumber, value);
+        rolledUpColumn.setFieldUpdater((index, row, value) -> {
+            row.getMask().setRollUpState(fieldPositionNumber, value);
 
-                DirtyEvent.fire(StroomStatsStoreCustomMaskListPresenter.this, true);
-            }
+            DirtyEvent.fire(StroomStatsStoreCustomMaskListPresenter.this, true);
         });
 
         getView().addResizableColumn(rolledUpColumn, fieldname, 100);
@@ -194,22 +189,19 @@ public class StroomStatsStoreCustomMaskListPresenter
 
         ConfirmEvent.fire(this,
                 "Are you sure you want to clear the existing roll-ups and generate all possible permutations for the field list?",
-                new ConfirmCallback() {
-                    @Override
-                    public void onResult(final boolean result) {
-                        if (result) {
-                            dispatcher.execute(
-                                    new RollUpBitMaskPermGenerationAction(
-                                            stroomStatsStoreEntity.getStatisticFieldCount()),
-                                    new AsyncCallbackAdaptor<ResultList<CustomRollUpMask>>() {
-                                        @Override
-                                        public void onSuccess(final ResultList<CustomRollUpMask> result) {
-                                            updateState(new HashSet<>(result.getValues()));
-                                            DirtyEvent.fire(thisInstance, true);
-                                        }
+                result -> {
+                    if (result) {
+                        dispatcher.execute(
+                                new StroomStatsRollUpBitMaskPermGenerationAction(
+                                        stroomStatsStoreEntity.getStatisticFieldCount()),
+                                new AsyncCallbackAdaptor<ResultList<CustomRollUpMask>>() {
+                                    @Override
+                                    public void onSuccess(final ResultList<CustomRollUpMask> result) {
+                                        updateState(new HashSet<>(result.getValues()));
+                                        DirtyEvent.fire(thisInstance, true);
+                                    }
 
-                                    });
-                        }
+                                });
                     }
                 });
     }
@@ -240,7 +232,7 @@ public class StroomStatsStoreCustomMaskListPresenter
         // add a line with no rollups as a starting point
         if (stroomStatsStoreEntity.getCustomRollUpMasks().size() == 0
                 && stroomStatsStoreEntity.getStatisticFieldCount() > 0) {
-            maskList.addMask(new CustomRollUpMask(Collections.<Integer>emptyList()));
+            maskList.addMask(new CustomRollUpMask(Collections.emptyList()));
         }
     }
 
