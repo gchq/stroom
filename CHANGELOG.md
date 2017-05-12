@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#261** : The save button is now only enabled when a dashboard or other item is made dirty and it is not read only.
 
+* Issue **#286** : Dashboards now correctly save the selected tab when a tab is selected via the popup tab selector (visible when tabs are collapsed).
+
 ## [v5.0-beta.25] - 2017-05-10
 
 * Issue **#285** : Attempted fix for GWT RPC serialisation issue.
