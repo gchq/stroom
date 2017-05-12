@@ -26,7 +26,6 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
 import stroom.statistics.shared.StatisticType;
 import stroom.stats.client.presenter.StroomStatsStoreSettingsPresenter;
 import stroom.stats.client.presenter.StroomStatsStoreSettingsUiHandlers;
@@ -43,8 +42,6 @@ public class StroomStatsStoreSettingsViewImpl extends ViewWithUiHandlers<StroomS
 
     @UiField
     TextArea description;
-    @UiField
-    StringListBox engineName;
 
     @UiField(provided = true)
     ItemListBox<StatisticType> statisticType;
@@ -106,12 +103,6 @@ public class StroomStatsStoreSettingsViewImpl extends ViewWithUiHandlers<StroomS
         });
 
         precision.addSelectionHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
-
-        engineName.addChangeHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onChange();
             }
