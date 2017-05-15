@@ -29,6 +29,7 @@ import stroom.security.server.JWTUtils;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
@@ -83,13 +84,15 @@ public class AuthResource {
         }
     }
 
-    @GET
-    @Path("authorise")
+    @POST
+    @Path("isAuthorised")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
-    @Insecure
-    public Response authoriseForStatistic(AuthorisationRequest authorisationRequest) {
+    /**
+     * Authenticates using JWT
+     */
+    public Response isAuthorisedForStatistic(AuthorisationRequest authorisationRequest) {
         boolean result = authorisationService.hasDocumentPermission(
                 authorisationRequest.getDocRef().getType(),
                 authorisationRequest.getDocRef().getUuid(),
