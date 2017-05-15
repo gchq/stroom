@@ -51,6 +51,7 @@ dependencies {
     compile project(':stroom-statistics-server')
     compile project(':stroom-dashboard-server')
     compile project(':stroom-security-server')
+
     compile ("io.dropwizard:dropwizard-core:1.1.0" ) {
         exclude ( group: "org.glassfish.web", module: "javax.el" )
     }
@@ -66,6 +67,12 @@ dependencies {
     compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
     //compile group: 'org.glassfish.web', name: 'javax.el', version: '2.2.6'
 
+    compile ("io.dropwizard:dropwizard-core:1.1.0" ) {
+        exclude ( group: "org.glassfish.web", module: "javax.el" )
+    }
+    compile ("io.dropwizard:dropwizard-assets:1.1.0" ) {
+        exclude ( group: "org.glassfish.web", module: "javax.el" )
+    }
 
     compile 'org.springframework.security:spring-security-web:4.2.1.RELEASE'
     compile "org.springframework.security:spring-security-web:4.2.1.RELEASE"

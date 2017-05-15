@@ -20,7 +20,6 @@ import stroom.node.shared.Node;
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class ClusterState {
     private transient Set<Node> allNodes = Collections.emptySet();

@@ -16,6 +16,12 @@
 
 package stroom.util.zip;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.util.io.CloseableUtil;
+import stroom.util.io.FileUtil;
+import stroom.util.io.StreamUtil;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -23,6 +29,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -35,17 +44,16 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.util.io.CloseableUtil;
-import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
-
 public final class ZipUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(ZipUtil.class);
 
     private ZipUtil() {
         // Utility class.
+    }
+
+    public static Path workingZipDir(final Path zipFile) {
+        final String name = zipFile.getFileName().toString();
+        return zipFile.resolveSibling(name.substring(0, name.length() - ".zip".length()));
     }
 
     /**
@@ -140,8 +148,35 @@ public final class ZipUtil {
         zip.close();
     }
 
+    public static void unzip(final Path zipFile, final Path dir) throws IOException {
+        try (final ZipInputStream zip = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
+            ZipEntry zipEntry;
+            while ((zipEntry = zip.getNextEntry()) != null) {
+                try {
+                    // Get output file.
+                    final Path file = dir.resolve(zipEntry.getName());
+
+                    if (zipEntry.isDirectory()) {
+                        // Make sure output directories exist.
+                        Files.createDirectories(file);
+                    } else {
+                        // Make sure output directories exist.
+                        Files.createDirectories(file.getParent());
+
+                        // Write file.
+                        try (final OutputStream outputStream = Files.newOutputStream(file)) {
+                            StreamUtil.streamToStream(zip, outputStream, false);
+                        }
+                    }
+                } finally {
+                    zip.closeEntry();
+                }
+            }
+        }
+    }
+
     public static List<String> pathList(final File zipFile) throws IOException {
-        final List<String> pathList = new ArrayList<String>();
+        final List<String> pathList = new ArrayList<>();
         ZipFile zipFile2 = null;
         try {
             zipFile2 = new ZipFile(zipFile);

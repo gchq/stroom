@@ -28,17 +28,14 @@ public class PendingOperation {
         if (!pending) {
             pending = true;
 
-            Scheduler.get().scheduleFinally(new ScheduledCommand() {
-                @Override
-                public void execute() {
-                    final ScheduledCommand c = pendingCommand;
-                    pendingCommand = null;
-                    c.execute();
-                    pending = false;
+            Scheduler.get().scheduleFinally(() -> {
+                final ScheduledCommand c = pendingCommand;
+                pendingCommand = null;
+                c.execute();
+                pending = false;
 
-                    if (pendingCommand != null) {
-                        scheduleOperation(pendingCommand);
-                    }
+                if (pendingCommand != null) {
+                    scheduleOperation(pendingCommand);
                 }
             });
         }

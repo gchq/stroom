@@ -122,7 +122,7 @@ public class PipelineImpl implements Pipeline {
                     // all threads when a step is detected and before IO is captured or
                     // cleaned. This will be difficult to fix so leaving for now.
                     throw new ProcessException(
-                            "Stepping mode is not curently supported on forked pipelines that require piped IO to process them");
+                            "Stepping mode is not currently supported on forked pipelines that require piped IO to process them");
                 }
 
                 processor.process();

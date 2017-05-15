@@ -18,12 +18,12 @@ package stroom.servlet;
 
 import stroom.util.shared.ResourceKey;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public interface SessionResourceStore {
     ResourceKey createTempFile(final String name);
 
     void deleteTempFile(ResourceKey key);
 
-    File getTempFile(ResourceKey key);
+    Path getTempFile(ResourceKey key);
 }

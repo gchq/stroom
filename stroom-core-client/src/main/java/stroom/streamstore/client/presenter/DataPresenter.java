@@ -16,7 +16,19 @@
 
 package stroom.streamstore.client.presenter;
 
-import stroom.dispatch.client.AsyncCallbackAdaptor;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.SimpleEventBus;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.view.client.HasRows;
+import com.google.gwt.view.client.Range;
+import com.google.gwt.view.client.RangeChangeEvent;
+import com.google.gwt.view.client.RangeChangeEvent.Handler;
+import com.google.gwt.view.client.RowCountChangeEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataAction;
@@ -38,21 +50,6 @@ import stroom.widget.tab.client.presenter.LayerContainer;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.view.client.HasRows;
-import com.google.gwt.view.client.Range;
-import com.google.gwt.view.client.RangeChangeEvent;
-import com.google.gwt.view.client.RangeChangeEvent.Handler;
-import com.google.gwt.view.client.RowCountChangeEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -95,8 +92,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     @Inject
     public DataPresenter(final EventBus eventBus, final DataView view, final TextPresenter textPresenter,
-            final MarkerListPresenter markerListPresenter, final ClientSecurityContext securityContext,
-            final ClientDispatchAsync dispatcher) {
+                         final MarkerListPresenter markerListPresenter, final ClientSecurityContext securityContext,
+                         final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.textPresenter = textPresenter;
         this.markerListPresenter = markerListPresenter;
@@ -135,12 +132,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     protected void onBind() {
         super.onBind();
 
-        registerHandler(getView().getTabBar().addSelectionHandler(new SelectionHandler<TabData>() {
-            @Override
-            public void onSelection(final SelectionEvent<TabData> event) {
-                selectTab(event.getSelectedItem());
-            }
-        }));
+        registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
     }
 
     private void selectTab(final TabData tab) {
@@ -254,7 +246,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private void ensureActionQueue() {
         if (actionQueue == null) {
-            actionQueue = new ArrayList<FetchDataAction>();
+            actionQueue = new ArrayList<>();
             delayedFetchDataTimer = new Timer() {
                 @Override
                 public void run() {
@@ -262,23 +254,16 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                         final FetchDataAction action = actionQueue.get(actionQueue.size() - 1);
                         actionQueue.clear();
 
-                        dispatcher.execute(action, new AsyncCallbackAdaptor<AbstractFetchDataResult>() {
-                            @Override
-                            public void onSuccess(final AbstractFetchDataResult result) {
-                                // If we are queueing more actions then don't
-                                // update the text.
-                                if (actionQueue.size() == 0) {
-                                    setPageResponse(result, action.isFireEvents());
-                                    getView().setRefreshing(false);
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(final Throwable caught) {
-                                super.onFailure(caught);
-                                getView().setRefreshing(false);
-                            }
-                        });
+                        dispatcher.exec(action)
+                                .onSuccess(result -> {
+                                    // If we are queueing more actions then don't
+                                    // update the text.
+                                    if (actionQueue.size() == 0) {
+                                        setPageResponse(result, action.isFireEvents());
+                                        getView().setRefreshing(false);
+                                    }
+                                })
+                                .onFailure(caught -> getView().setRefreshing(false));
                     }
                 }
             };
@@ -294,18 +279,17 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             playButtonVisible = beginSteppingHandler != null && userHasPipelineSteppingPermission;
         }
 
+        data = "";
+        markers = null;
+        startLineNo = 1;
+
         if (result != null) {
             if (result instanceof FetchMarkerResult) {
                 final FetchMarkerResult fetchMarkerResult = (FetchMarkerResult) result;
-                // showMarkerPresenter();
-                data = "";
                 markers = fetchMarkerResult.getMarkers();
-
             } else if (result instanceof FetchDataResult) {
                 final FetchDataResult fetchDataResult = (FetchDataResult) result;
-                // showTextPresenter();
                 data = fetchDataResult.getData();
-                markers = null;
             }
 
             startLineNo = result.getPageRange().getOffset().intValue() + 1;
@@ -321,9 +305,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             updateTabs(result.getStreamType(), result.getAvailableChildStreamTypes());
 
         } else {
-            data = "";
-            startLineNo = 1;
-
             getView().showSegmentPager(false);
             // Clear the classification.
             classificationUiHandlers.setClassification("");
@@ -420,6 +401,22 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         pageRows.updateRowData(pageOffset, pageLength);
         pageRows.updateRowCount(pageCount, pageCountExact);
 
+        textPresenter.setText(data);
+        textPresenter.format();
+        textPresenter.setFirstLineNumber(startLineNo);
+        textPresenter.setControlsVisible(playButtonVisible);
+
+        refreshHighlights(result);
+        refreshMarkers(result);
+    }
+
+    private void refreshHighlights(final AbstractFetchDataResult result) {
+        int streamOffset = 0;
+
+        if (result != null) {
+            streamOffset = result.getStreamRange().getOffset().intValue();
+        }
+
         // Make sure we have a highlight section to add and that the stream id
         // matches that of the current page, and that the stream number matches
         // the stream number of the current page.
@@ -428,17 +425,28 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 && EqualsUtil.isEquals(currentChildStreamType, highlightChildStreamType)) {
             // Set the content to be displayed in the source view with a
             // highlight.
-            textPresenter.setText(data, startLineNo, false, highlights, null, playButtonVisible);
+            textPresenter.setHighlights(highlights);
         } else {
             // Set the content to be displayed in the source view without a
             // highlight.
-            textPresenter.setText(data, startLineNo, false, null, null, playButtonVisible);
+            textPresenter.setHighlights(null);
         }
+    }
+
+    private void refreshMarkers(final AbstractFetchDataResult result) {
+        int pageOffset = 0;
+        int pageCount = 0;
+
+        if (result != null) {
+            pageOffset = result.getPageRange().getOffset().intValue();
+            pageCount = result.getPageRowCount().getCount().intValue();
+        }
+
         markerListPresenter.setData(markers, pageOffset, pageCount);
     }
 
     public void showStepSource(final Integer taskOffset, final StepLocation stepLocation,
-            final StreamType childStreamType, final List<Highlight> highlights) {
+                               final StreamType childStreamType, final List<Highlight> highlights) {
         this.highlights = highlights;
         this.highlightStreamId = stepLocation.getStreamId();
         this.highlightStreamNo = stepLocation.getStreamNo() - 1;
@@ -479,7 +487,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
             fetchData(false, highlightStreamId, highlightChildStreamType);
         } else {
-            refresh(lastResult);
+            refreshHighlights(lastResult);
+            refreshMarkers(lastResult);
         }
     }
 

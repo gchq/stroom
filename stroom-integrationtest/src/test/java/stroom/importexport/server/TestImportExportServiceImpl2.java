@@ -16,24 +16,22 @@
 
 package stroom.importexport.server;
 
-import java.io.File;
-import java.util.List;
-import java.util.UUID;
-import java.util.regex.Pattern;
-
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
-import stroom.entity.shared.EntityActionConfirmation;
 import stroom.entity.shared.FolderService;
+import stroom.entity.shared.ImportState;
 import stroom.feed.shared.FeedService;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.resource.server.ResourceStore;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.zip.ZipUtil;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.util.List;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
     @Resource
@@ -59,9 +57,9 @@ public class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
         Assert.assertTrue(zipFile.isFile());
         Assert.assertTrue(importDir.isDirectory());
 
-        final List<EntityActionConfirmation> confirmList = importExportService.createImportConfirmationList(zipFile);
+        final List<ImportState> confirmList = importExportService.createImportConfirmationList(zipFile.toPath());
         Assert.assertNotNull(confirmList);
 
-        importExportService.performImportWithoutConfirmation(zipFile);
+        importExportService.performImportWithoutConfirmation(zipFile.toPath());
     }
 }

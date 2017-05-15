@@ -36,6 +36,7 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest;
+import stroom.query.api.ResultRequest.ResultStyle;
 import stroom.query.api.Row;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchResponse;

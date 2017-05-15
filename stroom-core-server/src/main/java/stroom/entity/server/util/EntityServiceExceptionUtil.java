@@ -16,12 +16,12 @@
 
 package stroom.entity.server.util;
 
+import com.caucho.hessian.HessianException;
+import org.hibernate.PropertyValueException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.EntityServiceException;
 import stroom.util.io.StreamUtil;
-import com.caucho.hessian.HessianException;
-import org.hibernate.PropertyValueException;
 
 import javax.persistence.EntityExistsException;
 import javax.persistence.OptimisticLockException;
@@ -59,9 +59,7 @@ public class EntityServiceExceptionUtil {
             return "Unable to create record as it matches an existing record";
         }
         if (e instanceof OptimisticLockException) {
-            final StringBuilder msg = new StringBuilder();
-            msg.append("Unable to save record state as it has been updated by another transaction.");
-            return msg.toString();
+            return "Unable to save record state as it has been updated by another transaction.";
         }
         if (e instanceof PersistenceException) {
             final PersistenceException psEx = (PersistenceException) e;
@@ -98,10 +96,7 @@ public class EntityServiceExceptionUtil {
             return msg.toString();
         }
         if (e instanceof java.sql.SQLException) {
-            final StringBuilder msg = new StringBuilder();
-            msg.append("Unable to save record state.  ");
-            msg.append(e.getMessage());
-            return msg.toString();
+            return "Unable to save record state: " + e.getMessage();
         }
         if (e instanceof EntityServiceException) {
             return e.getMessage();
@@ -135,11 +130,11 @@ public class EntityServiceExceptionUtil {
         return msg;
     }
 
-    public static final EntityServiceException unwrap(final Throwable th) {
+    private static EntityServiceException unwrap(final Throwable th) {
         return unwrap(th, th, 10);
     }
 
-    private static final EntityServiceException unwrap(final Throwable rootEx, final Throwable thEx, final int depth) {
+    private static EntityServiceException unwrap(final Throwable rootEx, final Throwable thEx, final int depth) {
         if (thEx instanceof EntityServiceException) {
             return (EntityServiceException) thEx;
         }

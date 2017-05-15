@@ -16,19 +16,17 @@
 
 package stroom.streamstore.server;
 
-import java.io.IOException;
-
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamType.Purpose;
 import stroom.streamstore.shared.StreamTypeService;
 import stroom.util.test.FileSystemTestUtil;
+
+import javax.annotation.Resource;
+import java.io.IOException;
 
 public class TestStreamTypeServiceImpl extends AbstractCoreIntegrationTest {
     @Resource

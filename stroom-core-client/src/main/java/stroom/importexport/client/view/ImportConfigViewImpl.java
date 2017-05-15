@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.importexport.client.presenter.ImportConfigPresenter.ImportConfigView;
 
 public class ImportConfigViewImpl extends ViewImpl implements ImportConfigView {

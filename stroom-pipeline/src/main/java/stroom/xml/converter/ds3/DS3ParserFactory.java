@@ -16,27 +16,25 @@
 
 package stroom.xml.converter.ds3;
 
-import java.io.IOException;
-import java.io.Reader;
-
-import javax.annotation.Resource;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParserFactory;
-
-import stroom.util.xml.SAXParserFactoryFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.filter.SchemaFilter;
 import stroom.util.spring.StroomScope;
+import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.xml.converter.ParserFactory;
 import stroom.xml.converter.ds3.ref.VarMap;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+
+import javax.annotation.Resource;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParserFactory;
+import java.io.IOException;
+import java.io.Reader;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)

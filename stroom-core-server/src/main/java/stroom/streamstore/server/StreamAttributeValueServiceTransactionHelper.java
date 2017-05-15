@@ -16,16 +16,16 @@
 
 package stroom.streamstore.server;
 
+import org.hsqldb.types.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.entity.server.util.ConnectionUtil;
-import stroom.streamstore.shared.StreamAttributeValue;
-import stroom.util.logging.LogExecutionTime;
-import org.hsqldb.types.Types;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.entity.server.util.ConnectionUtil;
+import stroom.entity.server.util.StroomDatabaseInfo;
+import stroom.streamstore.shared.StreamAttributeValue;
+import stroom.util.logging.LogExecutionTime;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;

@@ -16,8 +16,6 @@
 
 package stroom.pipeline.structure.client.view;
 
-import java.util.List;
-
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
@@ -25,12 +23,12 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-
 import stroom.data.grid.client.MouseHelper;
-import stroom.pipeline.structure.client.view.TreePanel.RefreshCallback;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+
+import java.util.List;
 
 public abstract class DraggableTreePanel<E> extends Composite implements HasContextMenuHandlers {
     private static final int DRAGGING_THRESHOLD = 20;
@@ -185,12 +183,7 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
                 targetBox = treePanel.getBox(parent);
                 targetBox.showHotspot(true);
                 treePanel.getTree().removeChild(child);
-                treePanel.refresh(new RefreshCallback() {
-                    @Override
-                    public void onRefresh() {
-                        updateHotspot(treePanel.getBox(parent));
-                    }
-                });
+                treePanel.refresh(() -> updateHotspot(treePanel.getBox(parent)));
                 updateHotspot(treePanel.getTargetBox(event, true));
 
                 subTreePanel.getElement().getStyle().setZIndex(2);

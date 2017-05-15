@@ -43,8 +43,8 @@ public class IndexExplorerDataProvider extends AbstractExplorerDataProvider<Inde
     private final IndexService indexService;
 
     @Inject
-    IndexExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService, final IndexService indexService) {
-        super(folderService);
+    IndexExplorerDataProvider(@Named("cachedFolderService") final FolderService cachedFolderService, final IndexService indexService) {
+        super(cachedFolderService);
         this.indexService = indexService;
     }
 

@@ -16,13 +16,13 @@
 
 package stroom.statistics.sql;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
-
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.StatisticsEventValidator;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
 
 public class SQLStatisticsEventValidator implements StatisticsEventValidator {
     private static final Pattern DIRTY_CHARACTER_PATTERN = Pattern.compile(SQLStatisticConstants.NAME_SEPARATOR);

@@ -16,11 +16,11 @@
 
 package stroom.statistics.common;
 
+import stroom.statistics.shared.StatisticType;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import stroom.statistics.shared.StatisticType;
 
 /**
  * Wrapper for a {@link StatisticEvent} that adds a list of {@link StatisticTag}
@@ -98,10 +98,10 @@ public class RolledUpStatisticEvent implements Iterable<TimeAgnosticStatisticEve
                 // ignored as it will be contained within the
                 // tagListPermutations
                 if (originalStatisticEvent.getType().equals(StatisticType.COUNT)) {
-                    return new TimeAgnosticStatisticEvent(originalStatisticEvent.getName(),
+                    return TimeAgnosticStatisticEvent.createCount(originalStatisticEvent.getName(),
                             tagListPermutations.get(nextElement++), originalStatisticEvent.getCount());
                 } else {
-                    return new TimeAgnosticStatisticEvent(originalStatisticEvent.getName(),
+                    return TimeAgnosticStatisticEvent.createValue(originalStatisticEvent.getName(),
                             tagListPermutations.get(nextElement++), originalStatisticEvent.getValue());
                 }
             }

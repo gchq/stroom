@@ -17,10 +17,6 @@
 package stroom.widget.xsdbrowser.client.view;
 
 import com.google.gwt.dom.client.Style.Cursor;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.DoubleClickEvent;
-import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
@@ -28,7 +24,6 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
-
 import stroom.widget.util.client.DoubleSelectTest;
 
 public class XSDDisplayBoxTitle extends Composite {
@@ -55,19 +50,11 @@ public class XSDDisplayBoxTitle extends Composite {
 
         if (node != null) {
             setSelectable(true);
-            layout.addClickHandler(new ClickHandler() {
-                @Override
-                public void onClick(final ClickEvent event) {
-                    final boolean doubleClick = doubleClickTest.test(node);
-                    model.setSelectedItem(node, doubleClick);
-                }
+            layout.addClickHandler(event -> {
+                final boolean doubleClick = doubleClickTest.test(node);
+                model.setSelectedItem(node, doubleClick);
             });
-            layout.addDoubleClickHandler(new DoubleClickHandler() {
-                @Override
-                public void onDoubleClick(final DoubleClickEvent event) {
-                    model.setSelectedItem(node, true);
-                }
-            });
+            layout.addDoubleClickHandler(event -> model.setSelectedItem(node, true));
         }
 
         initWidget(layout);

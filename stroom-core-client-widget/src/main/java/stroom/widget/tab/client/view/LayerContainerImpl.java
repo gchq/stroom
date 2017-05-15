@@ -16,10 +16,6 @@
 
 package stroom.widget.tab.client.view;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -30,9 +26,12 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
-
 import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.LayerContainer;
+
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 public class LayerContainerImpl extends Composite implements LayerContainer, RequiresResize, ProvidesResize {
     public interface Style extends CssResource {

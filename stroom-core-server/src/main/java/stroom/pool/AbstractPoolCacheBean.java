@@ -20,13 +20,18 @@ import net.sf.ehcache.CacheManager;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.AbandonedConfig;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.cache.AbstractCacheBean;
 
 public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, ObjectPool<PoolItem<K, V>>>
         implements PoolBean<K, V> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPoolCacheBean.class);
+
     private static final int MAX_CACHE_ENTRIES = 1000000;
 
     public AbstractPoolCacheBean(final CacheManager cacheManager, final String name) {
@@ -40,7 +45,10 @@ public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, O
         config.setMaxIdle(1000);
         config.setBlockWhenExhausted(false);
 
-        return new GenericObjectPool<>(new ObjectFactory<>(this, key), config);
+        final GenericObjectPool pool = new GenericObjectPool<>(new ObjectFactory<>(this, key), config);
+        pool.setAbandonedConfig(new AbandonedConfig());
+
+        return pool;
     }
 
     protected abstract V createValue(K key);
@@ -55,6 +63,7 @@ public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, O
             final ObjectPool<PoolItem<K, V>> pool = get(key);
             return pool.borrowObject();
         } catch (final Exception e) {
+            LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -69,6 +78,7 @@ public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, O
                     pool.returnObject(poolItem);
                 }
             } catch (final Exception e) {
+                LOGGER.debug(e.getMessage(), e);
                 throw new RuntimeException(e.getMessage(), e);
             }
         }

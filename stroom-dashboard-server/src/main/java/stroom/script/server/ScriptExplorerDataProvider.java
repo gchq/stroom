@@ -34,8 +34,8 @@ public class ScriptExplorerDataProvider extends AbstractExplorerDataProvider<Scr
     private final ScriptService scriptService;
 
     @Inject
-    ScriptExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService, final ScriptService scriptService) {
-        super(folderService);
+    ScriptExplorerDataProvider(@Named("cachedFolderService") final FolderService cachedFolderService, final ScriptService scriptService) {
+        super(cachedFolderService);
         this.scriptService = scriptService;
     }
 

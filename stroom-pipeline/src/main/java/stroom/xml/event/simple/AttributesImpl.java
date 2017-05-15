@@ -16,9 +16,9 @@
 
 package stroom.xml.event.simple;
 
-import java.io.Serializable;
-
 import org.xml.sax.Attributes;
+
+import java.io.Serializable;
 
 public class AttributesImpl implements Attributes, Serializable {
     private static final long serialVersionUID = 8341093893787192467L;

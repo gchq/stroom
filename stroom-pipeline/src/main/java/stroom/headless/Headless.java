@@ -16,25 +16,10 @@
 
 package stroom.headless;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.zip.StroomZipFile;
-import stroom.util.zip.StroomZipFileType;
-import stroom.util.zip.StroomZipNameSet;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-
 import stroom.entity.server.util.XMLUtil;
 import stroom.importexport.server.ImportExportService;
 import stroom.node.server.NodeCache;
@@ -43,7 +28,6 @@ import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.VolumeService;
 import stroom.pipeline.server.filter.SafeXMLFilter;
 import stroom.pipeline.spring.PipelineConfiguration;
-import stroom.spring.CachedServiceConfiguration;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ServerComponentScanConfiguration;
@@ -60,7 +44,20 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.ThreadScopeRunnable;
+import stroom.util.zip.StroomZipFile;
+import stroom.util.zip.StroomZipFileType;
+import stroom.util.zip.StroomZipNameSet;
 import stroom.util.zip.StroomZipRepository;
+
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 
 /**
  * Command line tool to process some files from a proxy stroom.
@@ -144,7 +141,7 @@ public class Headless extends AbstractCommandLineTool {
 
     @Override
     public void run() {
-        new TaskScopeRunnable(new GenericServerTask(null, null, null, "Headless Stroom", null)) {
+        new TaskScopeRunnable(GenericServerTask.create("Headless Stroom", null)) {
             @Override
             protected void exec() {
                 new ThreadScopeRunnable() {
@@ -247,7 +244,7 @@ public class Headless extends AbstractCommandLineTool {
         LOGGER.info("Reading configuration from: " + configFile.getAbsolutePath());
 
         final ImportExportService importExportService = getAppContext().getBean(ImportExportService.class);
-        importExportService.performImportWithoutConfirmation(configFile);
+        importExportService.performImportWithoutConfirmation(configFile.toPath());
 
         final NodeCache nodeCache = getAppContext().getBean(NodeCache.class);
         final VolumeService volumeService = getAppContext().getBean(VolumeService.class);
@@ -266,7 +263,7 @@ public class Headless extends AbstractCommandLineTool {
         System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD);
         final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ScopeConfiguration.class, PersistenceConfiguration.class, ServerComponentScanConfiguration.class,
-                ServerConfiguration.class, CachedServiceConfiguration.class, PipelineConfiguration.class);
+                ServerConfiguration.class, PipelineConfiguration.class);
         return context;
     }
 

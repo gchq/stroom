@@ -16,10 +16,10 @@
 
 package stroom.xml;
 
-import java.util.List;
-
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
+
+import java.util.List;
 
 /**
  * <p>

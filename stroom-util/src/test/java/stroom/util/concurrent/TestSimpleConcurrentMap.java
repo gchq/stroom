@@ -16,13 +16,12 @@
 
 package stroom.util.concurrent;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.util.test.StroomJUnit4ClassRunner;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestSimpleConcurrentMap {

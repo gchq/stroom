@@ -21,15 +21,22 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Utility class for handling byte size units such as Mb, Gb, Tb etc.
+ * Utility class for handling byte size units such as MiB, GiB, TiB etc.
  */
 public enum ByteSizeUnit {
     BYTE(1, "B", "bytes"),
-    KILOBYTE(1024, "KB", "Kilobytes"),
-    MEGABYTE(1024 * 1024, "MB", "Megabytes"),
-    GIGABYTE(1024 * 1024 * 1024, "GB", "Gigabytes"),
-    TERABYTE(1024 * 1024 * 1024 * 1024, "TB", "Terabytes"),
-    PETABYTE(1024 * 1024 * 1024 * 1024 * 1024, "PB", "Petabytes");
+
+    KIBIBYTE(1024, "KiB", "Kibibytes"),
+    MEBIBYTE(1024 * 1024, "MiB", "Mebibytes"),
+    GIBIBYTE(1024 * 1024 * 1024, "GiB", "Gibibytes"),
+    TEBIBYTE(1024 * 1024 * 1024 * 1024, "TiB", "Tebibytes"),
+    PEBIBYTE(1024 * 1024 * 1024 * 1024 * 1024, "PiB", "Pebibytes"),
+
+    KILOBYTE(1000, "kB", "Kilobytes"),
+    MEGABYTE(1000 * 1000, "MB", "Megabytes"),
+    GIGABYTE(1000 * 1000 * 1000, "GB", "Gigabytes"),
+    TERABYTE(1000 * 1000 * 1000 * 1000, "TB", "Terabytes"),
+    PETABYTE(1000 * 1000 * 1000 * 1000 * 1000, "PB", "Petabytes");
 
     private final int bytes;
     private final String shortName;
@@ -94,14 +101,14 @@ public enum ByteSizeUnit {
     }
 
     /**
-     * @return The abbreviated form, e.g. MB or KB
+     * @return The abbreviated form, e.g. MiB or KiB
      */
     public String getShortName() {
         return shortName;
     }
 
     /**
-     * @return The long name, e.g. Megabytes
+     * @return The long name, e.g. Mebibytes
      */
     public String getLongName() {
         return longName;
@@ -133,7 +140,7 @@ public enum ByteSizeUnit {
     }
 
     /**
-     * Converts a value from one byte size unit into another, e.g. MB into KB
+     * Converts a value from one byte size unit into another, e.g. MiB into KiB
      */
     public double convert(double fromValue, final ByteSizeUnit toUnits) {
         return (fromValue * this.bytes) / toUnits.bytes;

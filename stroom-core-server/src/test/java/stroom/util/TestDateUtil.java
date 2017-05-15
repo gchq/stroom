@@ -16,16 +16,15 @@
 
 package stroom.util;
 
-import java.text.ParseException;
-
-import stroom.util.test.StroomExpectedException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomUnitTest;
+import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.text.ParseException;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestDateUtil extends StroomUnitTest {

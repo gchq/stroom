@@ -96,20 +96,9 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
                 + "ap." + AppPermission.PERMISSION + " = p." + Permission.ID
                 + ")"
 
-                + " LEFT OUTER JOIN "
-                + UserGroupUser.TABLE_NAME
-                + " AS "
-                + "userGroupUser"
-                + " ON ("
-                + "userGroupUser." + UserGroupUser.GROUP_UUID + " = ap." + AppPermission.USER_UUID
-                + ")"
-
                 + " WHERE"
                 + " ap."
                 + AppPermission.USER_UUID
-                + " = ?"
-                + " OR userGroupUser."
-                + UserGroupUser.USER_UUID
                 + " = ?"
 
                 + " GROUP BY"
@@ -122,7 +111,7 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
     private final AtomicBoolean doneInit = new AtomicBoolean();
     private final StroomEntityManager entityManager;
 
-    private final Set<String> featureSet = new HashSet<>();
+    private final Set<String> allPermissions = new HashSet<>();
     private final Map<String, Long> permissionIdMap = new HashMap<>();
 
     @Inject
@@ -172,7 +161,7 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
 
         // Add all the missing ones
         for (final String requiredPermission : requiredSet) {
-            featureSet.add(requiredPermission);
+            allPermissions.add(requiredPermission);
 
             final Permission existingPermission = existingPermissionMap.remove(requiredPermission);
             if (existingPermission == null) {
@@ -215,12 +204,12 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
     @Override
     public UserAppPermissions getPermissionsForUser(final UserRef userRef) {
         final Set<String> userPermissions = getPermissionSetForUser(userRef);
-        return new UserAppPermissions(userRef, featureSet, userPermissions);
+        return new UserAppPermissions(userRef, allPermissions, userPermissions);
     }
 
     private Set<String> getPermissionSetForUser(final UserRef userRef) {
         try {
-            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_GET_PERMISSION_KEYSET_FOR_USER, userRef.getUuid(), userRef.getUuid());
+            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_GET_PERMISSION_KEYSET_FOR_USER, userRef.getUuid());
             return new HashSet<>(entityManager.executeNativeQueryResultList(sqlBuilder));
 
         } catch (final RuntimeException e) {

@@ -16,6 +16,11 @@
 
 package stroom.streamstore.client.presenter;
 
+import com.google.gwt.user.client.ui.HasText;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.Folder;
@@ -29,14 +34,7 @@ import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.shared.HasLongValue;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
+import stroom.widget.customdatebox.client.DateBoxView;
 
 public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresenter.StreamFilterView> {
     private final EntityIdSetPresenter folderPresenter;
@@ -46,13 +44,14 @@ public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresent
     private final ClientSecurityContext securityContext;
     private final StreamAttributeListPresenter streamAttributeListPresenter;
     private FindStreamAttributeMapCriteria criteria;
+
     @Inject
     public StreamFilterPresenter(final EventBus eventBus, final ClientSecurityContext securityContext,
-            final EntityIdSetPresenter folderPresenter, final IncludeExcludeEntityIdSetPresenter<Feed> feedPresenter,
-            final EntityIdSetPresenter pipelinePresenter, final EntityIdSetPresenter streamTypePresenter,
-            final StreamAttributeListPresenter streamAttributeListPresenter,
-            final StreamTypeUiManager streamTypeUiManager, final StreamFilterView view,
-            final ClientDispatchAsync dispatcher) {
+                                 final EntityIdSetPresenter folderPresenter, final IncludeExcludeEntityIdSetPresenter<Feed> feedPresenter,
+                                 final EntityIdSetPresenter pipelinePresenter, final EntityIdSetPresenter streamTypePresenter,
+                                 final StreamAttributeListPresenter streamAttributeListPresenter,
+                                 final StreamTypeUiManager streamTypeUiManager, final StreamFilterView view,
+                                 final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.securityContext = securityContext;
         this.folderPresenter = folderPresenter;
@@ -69,22 +68,19 @@ public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresent
 
         view.getStreamStatus().addItems(StreamStatus.values());
 
-        view.getStreamListFilterTemplate().addSelectionHandler(new SelectionHandler<StreamListFilterTemplate>() {
-            @Override
-            public void onSelection(final SelectionEvent<StreamListFilterTemplate> event) {
-                final StreamListFilterTemplate template = event.getSelectedItem();
-                if (template != null) {
-                    final Period period = new Period();
-                    period.setFromMs(System.currentTimeMillis() - template.getHourPeriod() * 60 * 60 * 1000);
-                    criteria.obtainFindStreamCriteria().setCreatePeriod(period);
-                    criteria.obtainFindStreamCriteria().obtainStreamTypeIdSet().clear();
+        view.getStreamListFilterTemplate().addSelectionHandler(event -> {
+            final StreamListFilterTemplate template = event.getSelectedItem();
+            if (template != null) {
+                final Period period = new Period();
+                period.setFromMs(System.currentTimeMillis() - template.getHourPeriod() * 60 * 60 * 1000);
+                criteria.obtainFindStreamCriteria().setCreatePeriod(period);
+                criteria.obtainFindStreamCriteria().obtainStreamTypeIdSet().clear();
 
-                    criteria.obtainFindStreamCriteria().obtainStreamTypeIdSet()
-                            .addAllEntities(template.getStreamType(streamTypeUiManager));
-                    read();
-                }
-
+                criteria.obtainFindStreamCriteria().obtainStreamTypeIdSet()
+                        .addAllEntities(template.getStreamType(streamTypeUiManager));
+                read();
             }
+
         });
 
     }
@@ -123,24 +119,24 @@ public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresent
     }
 
     public void setCriteria(final FindStreamAttributeMapCriteria criteria, final boolean folderEnabled,
-            final boolean feedEnabled, final boolean pipelineEnabled, final boolean attributesEnabled,
-            final boolean advancedVisable) {
+                            final boolean feedEnabled, final boolean pipelineEnabled, final boolean attributesEnabled,
+                            final boolean advancedVisable) {
         this.criteria = new FindStreamAttributeMapCriteria();
         this.criteria.copyFrom(criteria);
 
         folderPresenter.setEnabled(folderEnabled);
 
         //if (securityContext.hasAppPermission(Feed.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            feedPresenter.setEnabled(feedEnabled);
-            getView().setFeedVisible(true);
+        feedPresenter.setEnabled(feedEnabled);
+        getView().setFeedVisible(true);
 //        } else {
 //            feedPresenter.setEnabled(false);
 //            getView().setFeedVisible(false);
 //        }
 
         //if (securityContext.hasAppPermission(PipelineEntity.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            pipelinePresenter.setEnabled(pipelineEnabled);
-            getView().setPipelineVisible(true);
+        pipelinePresenter.setEnabled(pipelineEnabled);
+        getView().setPipelineVisible(true);
 //        } else {
 //            pipelinePresenter.setEnabled(false);
 //            getView().setPipelineVisible(false);
@@ -165,17 +161,17 @@ public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresent
         final EntityIdSet<StreamType> streamTypeIdSet = findStreamCriteria.obtainStreamTypeIdSet();
         streamTypePresenter.read(StreamType.ENTITY_TYPE, false, streamTypeIdSet);
 
-        getView().getCreateFrom().setLongValue(findStreamCriteria.obtainCreatePeriod().getFrom());
-        getView().getCreateTo().setLongValue(findStreamCriteria.obtainCreatePeriod().getTo());
-        getView().getEffectiveFrom().setLongValue(findStreamCriteria.obtainEffectivePeriod().getFrom());
-        getView().getEffectiveTo().setLongValue(findStreamCriteria.obtainEffectivePeriod().getTo());
+        getView().getCreateFrom().setMilliseconds(findStreamCriteria.obtainCreatePeriod().getFrom());
+        getView().getCreateTo().setMilliseconds(findStreamCriteria.obtainCreatePeriod().getTo());
+        getView().getEffectiveFrom().setMilliseconds(findStreamCriteria.obtainEffectivePeriod().getFrom());
+        getView().getEffectiveTo().setMilliseconds(findStreamCriteria.obtainEffectivePeriod().getTo());
 
         getView().getStreamId().setText(idSetToString(findStreamCriteria.obtainStreamIdSet()));
         getView().getParentStreamId().setText(idSetToString(findStreamCriteria.obtainParentStreamIdSet()));
 
         getView().getStreamStatus().setSelectedItem(findStreamCriteria.obtainStatusSet().getSingleItem());
-        getView().getStatusFrom().setLongValue(findStreamCriteria.obtainStatusPeriod().getFrom());
-        getView().getStatusTo().setLongValue(findStreamCriteria.obtainStatusPeriod().getTo());
+        getView().getStatusFrom().setMilliseconds(findStreamCriteria.obtainStatusPeriod().getFrom());
+        getView().getStatusTo().setMilliseconds(findStreamCriteria.obtainStatusPeriod().getTo());
 
         streamAttributeListPresenter.read(findStreamCriteria.obtainAttributeConditionList());
     }
@@ -203,9 +199,9 @@ public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresent
         streamTypePresenter.write(streamTypeIdSet);
 
         findStreamCriteria.setCreatePeriod(
-                new Period(getView().getCreateFrom().getLongValue(), getView().getCreateTo().getLongValue()));
+                new Period(getView().getCreateFrom().getMilliseconds(), getView().getCreateTo().getMilliseconds()));
         findStreamCriteria.setEffectivePeriod(
-                new Period(getView().getEffectiveFrom().getLongValue(), getView().getEffectiveTo().getLongValue()));
+                new Period(getView().getEffectiveFrom().getMilliseconds(), getView().getEffectiveTo().getMilliseconds()));
 
         stringToIdSet(getView().getStreamId().getText(), findStreamCriteria.obtainStreamIdSet());
         stringToIdSet(getView().getParentStreamId().getText(), findStreamCriteria.obtainParentStreamIdSet());
@@ -213,7 +209,7 @@ public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresent
         if (getView().isAdvancedVisible()) {
             findStreamCriteria.obtainStatusSet().setSingleItem(getView().getStreamStatus().getSelectedItem());
             findStreamCriteria.setStatusPeriod(
-                    new Period(getView().getStatusFrom().getLongValue(), getView().getStatusTo().getLongValue()));
+                    new Period(getView().getStatusFrom().getMilliseconds(), getView().getStatusTo().getMilliseconds()));
         } else {
             findStreamCriteria.obtainStatusSet().setSingleItem(StreamStatus.UNLOCKED);
             findStreamCriteria.setStatusPeriod(null);
@@ -244,13 +240,13 @@ public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresent
 
         void setStreamAttributeListVisible(boolean visible);
 
-        HasLongValue getCreateFrom();
+        DateBoxView getCreateFrom();
 
-        HasLongValue getCreateTo();
+        DateBoxView getCreateTo();
 
-        HasLongValue getEffectiveFrom();
+        DateBoxView getEffectiveFrom();
 
-        HasLongValue getEffectiveTo();
+        DateBoxView getEffectiveTo();
 
         HasText getStreamId();
 
@@ -262,9 +258,8 @@ public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresent
 
         ItemListBox<StreamStatus> getStreamStatus();
 
-        HasLongValue getStatusFrom();
+        DateBoxView getStatusFrom();
 
-        HasLongValue getStatusTo();
-
+        DateBoxView getStatusTo();
     }
 }

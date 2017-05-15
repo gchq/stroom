@@ -16,11 +16,10 @@
 
 package stroom.refdata;
 
-import javax.annotation.Resource;
-
 import org.springframework.stereotype.Component;
-
 import stroom.task.server.TaskManager;
+
+import javax.annotation.Resource;
 
 @Component
 public class ReferenceDataLoaderImpl implements ReferenceDataLoader {

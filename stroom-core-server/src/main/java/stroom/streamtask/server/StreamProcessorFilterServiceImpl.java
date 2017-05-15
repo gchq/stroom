@@ -16,14 +16,17 @@
 
 package stroom.streamtask.server;
 
+import event.logging.BaseAdvancedQueryItem;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
 import stroom.entity.server.UserManagerQueryUtil;
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.Secured;
@@ -35,9 +38,6 @@ import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamProcessorService;
-import event.logging.BaseAdvancedQueryItem;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -135,7 +135,6 @@ public class StreamProcessorFilterServiceImpl
         return Boolean.FALSE;
     }
 
-    @Secured(StreamProcessor.VIEW_PROCESSORS_PERMISSION)
     @Override
     public BaseResultList<StreamProcessorFilter> find(final FindStreamProcessorFilterCriteria criteria) throws RuntimeException {
         return super.find(criteria);

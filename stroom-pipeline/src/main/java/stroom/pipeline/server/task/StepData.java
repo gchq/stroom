@@ -16,14 +16,14 @@
 
 package stroom.pipeline.server.task;
 
+import stroom.pipeline.shared.SharedElementData;
+import stroom.pipeline.shared.SharedStepData;
+import stroom.util.shared.Highlight;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import stroom.pipeline.shared.SharedElementData;
-import stroom.pipeline.shared.SharedStepData;
-import stroom.util.shared.Highlight;
 
 public class StepData {
     private List<Highlight> sourceHighlights;

@@ -31,9 +31,9 @@ import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.pipeline.shared.AbstractFetchDataResult;
+import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
@@ -43,7 +43,6 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.Stream;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Highlight;
-import stroom.xmleditor.client.presenter.ReadOnlyXMLEditorPresenter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,7 +51,8 @@ import java.util.Set;
 
 public class TextPresenter extends AbstractComponentPresenter<TextPresenter.TextView> implements TextUiHandlers {
     public static final ComponentType TYPE = new ComponentType(2, "text", "Text");
-    private final ReadOnlyXMLEditorPresenter xmlPresenter;
+    private final Provider<EditorPresenter> rawPresenterProvider;
+    private final Provider<HtmlPresenter> htmlPresenterProvider;
     private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
     private TextComponentSettings textSettings;
@@ -65,47 +65,62 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     private TablePresenter currentTablePresenter;
 
+    private EditorPresenter rawPresenter;
+    private HtmlPresenter htmlPresenter;
+
+    private boolean isHtml;
+
     @Inject
     public TextPresenter(final EventBus eventBus, final TextView view,
                          final Provider<TextSettingsPresenter> settingsPresenterProvider,
-                         final ReadOnlyXMLEditorPresenter xmlPresenter, final ClientDispatchAsync dispatcher,
+                         final Provider<EditorPresenter> rawPresenterProvider, final Provider<HtmlPresenter> htmlPresenterProvider, final ClientDispatchAsync dispatcher,
                          final ClientSecurityContext securityContext) {
         super(eventBus, view, settingsPresenterProvider);
-        this.xmlPresenter = xmlPresenter;
+        this.rawPresenterProvider = rawPresenterProvider;
+        this.htmlPresenterProvider = htmlPresenterProvider;
         this.dispatcher = dispatcher;
         this.securityContext = securityContext;
-
-        view.setContent(xmlPresenter.getView());
 
         view.setUiHandlers(this);
     }
 
     private void showData(final String data, final String classification, final Set<String> highlightStrings,
                           final boolean isHtml) {
-        if (data != null) {
-            final List<Highlight> highlights = getHighlights(data, highlightStrings);
+        final List<Highlight> highlights = getHighlights(data, highlightStrings);
 
-            // Defer showing data to be sure that the data display has been made
-            // visible first.
-            Scheduler.get().scheduleDeferred(() -> {
-                // Determine if we should show tha play button.
-                playButtonVisible = !isHtml
-                        && securityContext.hasAppPermission(PipelineEntity.STEPPING_PERMISSION);
+        // Defer showing data to be sure that the data display has been made
+        // visible first.
+        Scheduler.get().scheduleDeferred(() -> {
+            // Determine if we should show tha play button.
+            playButtonVisible = !isHtml
+                    && securityContext.hasAppPermission(PipelineEntity.STEPPING_PERMISSION);
 
-                // Show the play button if we have fetched input data.
-                getView().setPlayVisible(playButtonVisible);
+            // Show the play button if we have fetched input data.
+            getView().setPlayVisible(playButtonVisible);
 
-                getView().setClassification(classification);
-                if (isHtml) {
-                    xmlPresenter.setHTML(data, highlights, playButtonVisible);
-                } else {
-                    xmlPresenter.setText(data, 1, true, highlights, null, playButtonVisible);
+            getView().setClassification(classification);
+            if (isHtml) {
+                if (htmlPresenter == null) {
+                    htmlPresenter = htmlPresenterProvider.get();
                 }
-            });
-        } else {
-            getView().setClassification(null);
-            xmlPresenter.setText("", 1, true, null, null, true);
-        }
+
+                getView().setContent(htmlPresenter.getView());
+                htmlPresenter.setHtml(data);
+            } else {
+                if (rawPresenter == null) {
+                    rawPresenter = rawPresenterProvider.get();
+                    rawPresenter.setReadOnly(true);
+                    rawPresenter.getLineNumbersOption().setOn(false);
+                }
+
+                getView().setContent(rawPresenter.getView());
+
+                rawPresenter.setText(data);
+                rawPresenter.format();
+                rawPresenter.setHighlights(highlights);
+                rawPresenter.setControlsVisible(playButtonVisible);
+            }
+        });
     }
 
     private List<Highlight> getHighlights(final String input, final Set<String> highlightStrings) {
@@ -202,10 +217,11 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     private void update(final TablePresenter tablePresenter) {
-        showData(null, null, null, false);
         currentStreamId = null;
         currentEventId = null;
         currentHighlightStrings = null;
+
+        boolean updating = false;
 
         if (tablePresenter != null) {
             final String streamId = tablePresenter.getSelectedStreamId();
@@ -216,13 +232,12 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                 currentEventId = getLong(eventId);
                 currentHighlightStrings = tablePresenter.getHighlights();
 
-                if (currentStreamId == null || currentEventId == null) {
-                    showData(null, null, null, false);
-
-                } else {
+                if (currentStreamId != null && currentEventId != null) {
                     final String permissionCheck = checkPermissions();
                     if (permissionCheck != null) {
-                        showData(permissionCheck, null, null, false);
+                        isHtml = false;
+                        showData(permissionCheck, null, null, isHtml);
+                        updating = true;
 
                     } else {
                         FetchDataAction fetchDataAction;
@@ -238,9 +253,15 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                         fetchDataQueue.add(fetchDataAction);
                         delayedFetchDataTimer.cancel();
                         delayedFetchDataTimer.schedule(250);
+                        updating = true;
                     }
                 }
             }
+        }
+
+        // If we aren't updating the data display then clear it.
+        if (!updating) {
+            showData("", null, null, isHtml);
         }
     }
 
@@ -277,30 +298,28 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     final FetchDataAction action = fetchDataQueue.get(fetchDataQueue.size() - 1);
                     fetchDataQueue.clear();
 
-                    dispatcher.execute(action, new AsyncCallbackAdaptor<AbstractFetchDataResult>() {
-                        @Override
-                        public void onSuccess(final AbstractFetchDataResult result) {
-                            // If we are queueing more actions then don't update
-                            // the text.
-                            if (fetchDataQueue.size() == 0) {
-                                String data = "The data has been deleted or reprocessed since this index was built";
-                                String classification = null;
-                                boolean isHtml = false;
-                                if (result != null) {
-                                    if (result instanceof FetchDataResult) {
-                                        final FetchDataResult fetchDataResult = (FetchDataResult) result;
-                                        data = fetchDataResult.getData();
-                                        classification = result.getClassification();
-                                        isHtml = fetchDataResult.isHtml();
-                                    } else {
-                                        data = "";
-                                        classification = null;
-                                        isHtml = false;
-                                    }
+                    dispatcher.exec(action).onSuccess(result -> {
+                        // If we are queueing more actions then don't update
+                        // the text.
+                        if (fetchDataQueue.size() == 0) {
+                            String data = "The data has been deleted or reprocessed since this index was built";
+                            String classification = null;
+                            boolean isHtml = false;
+                            if (result != null) {
+                                if (result instanceof FetchDataResult) {
+                                    final FetchDataResult fetchDataResult = (FetchDataResult) result;
+                                    data = fetchDataResult.getData();
+                                    classification = result.getClassification();
+                                    isHtml = fetchDataResult.isHtml();
+                                } else {
+                                    data = "";
+                                    classification = null;
+                                    isHtml = false;
                                 }
-
-                                showData(data, classification, currentHighlightStrings, isHtml);
                             }
+
+                            TextPresenter.this.isHtml = isHtml;
+                            showData(data, classification, currentHighlightStrings, isHtml);
                         }
                     });
                 }

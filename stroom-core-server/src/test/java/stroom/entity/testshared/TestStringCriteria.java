@@ -16,12 +16,11 @@
 
 package stroom.entity.testshared;
 
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.entity.shared.StringCriteria;
 import stroom.entity.shared.StringCriteria.MatchStyle;
+import stroom.util.test.StroomUnitTest;
 
 public class TestStringCriteria extends StroomUnitTest {
     @Test

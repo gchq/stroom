@@ -16,13 +16,12 @@
 
 package stroom.streamstore.server.fs.serializable;
 
-import java.io.IOException;
-import java.io.InputStream;
-
-import javax.xml.parsers.SAXParserFactory;
-
 import stroom.util.io.StreamUtil;
 import stroom.util.xml.SAXParserFactoryFactory;
+
+import javax.xml.parsers.SAXParserFactory;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * This class takes an input stream for raw data and ensures it is written to

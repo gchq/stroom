@@ -17,7 +17,6 @@
 package stroom.streamtask.server;
 
 import org.springframework.stereotype.Component;
-
 import stroom.entity.server.EntityMarshaller;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamtask.shared.StreamProcessorFilter;

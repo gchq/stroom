@@ -23,12 +23,11 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import stroom.core.client.event.DirtyKeyDownHander;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.EntitySettingsPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.explorer.shared.ExplorerData;
 import stroom.script.shared.Script;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -38,12 +37,14 @@ import stroom.visualisation.shared.Visualisation;
 public class VisualisationSettingsPresenter
         extends EntitySettingsPresenter<VisualisationSettingsPresenter.VisualisationSettingsView, Visualisation> {
     private final EntityDropDownPresenter scriptPresenter;
+    private final EditorPresenter editorPresenter;
 
     @Inject
     public VisualisationSettingsPresenter(final EventBus eventBus, final VisualisationSettingsView view,
-                                          final EntityDropDownPresenter scriptPresenter, final ClientSecurityContext securityContext) {
+                                          final EntityDropDownPresenter scriptPresenter, final EditorPresenter editorPresenter, final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
         this.scriptPresenter = scriptPresenter;
+        this.editorPresenter = editorPresenter;
 
         // Add listeners for dirty events.
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
@@ -58,8 +59,12 @@ public class VisualisationSettingsPresenter
 
         registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
         registerHandler(view.getFunctionName().addKeyDownHandler(keyDownHander));
-        registerHandler(view.getSettings().addKeyDownHandler(keyDownHander));
+        registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
         view.setScriptView(scriptPresenter.getView());
+        view.setSettingsView(editorPresenter.getView());
+
+        editorPresenter.setMode(AceEditorMode.JSON);
+        registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
     }
 
     @Override
@@ -69,13 +74,10 @@ public class VisualisationSettingsPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(scriptPresenter.addDataSelectionHandler(new DataSelectionHandler<ExplorerData>() {
-            @Override
-            public void onSelection(final DataSelectionEvent<ExplorerData> event) {
-                if (!EqualsUtil.isEquals(scriptPresenter.getSelectedEntityReference(),
-                        getEntity().getScriptRef())) {
-                    setDirty(true);
-                }
+        registerHandler(scriptPresenter.addDataSelectionHandler(event -> {
+            if (!EqualsUtil.isEquals(scriptPresenter.getSelectedEntityReference(),
+                    getEntity().getScriptRef())) {
+                setDirty(true);
             }
         }));
     }
@@ -84,16 +86,23 @@ public class VisualisationSettingsPresenter
     protected void onRead(final Visualisation visualisation) {
         getView().getDescription().setText(visualisation.getDescription());
         getView().getFunctionName().setText(visualisation.getFunctionName());
-        getView().getSettings().setText(visualisation.getSettings());
         scriptPresenter.setSelectedEntityReference(visualisation.getScriptRef());
+        editorPresenter.setText(visualisation.getSettings());
+    }
+
+    @Override
+    protected void onPermissionsCheck(final boolean readOnly) {
+        super.onPermissionsCheck(readOnly);
+        editorPresenter.setReadOnly(readOnly);
+        editorPresenter.getContextMenu().setShowFormatOption(!readOnly);
     }
 
     @Override
     protected void onWrite(final Visualisation visualisation) {
         visualisation.setDescription(getView().getDescription().getText().trim());
         visualisation.setFunctionName(getView().getFunctionName().getText().trim());
-        visualisation.setSettings(getView().getSettings().getText().trim());
         visualisation.setScriptRef(scriptPresenter.getSelectedEntityReference());
+        visualisation.setSettings(editorPresenter.getText().trim());
     }
 
     public interface VisualisationSettingsView extends View {
@@ -103,6 +112,6 @@ public class VisualisationSettingsPresenter
 
         void setScriptView(View view);
 
-        TextArea getSettings();
+        void setSettingsView(View view);
     }
 }

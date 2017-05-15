@@ -16,9 +16,9 @@
 
 package stroom.jobsystem.server;
 
-import java.util.Queue;
-
 import stroom.util.shared.Task;
+
+import java.util.Queue;
 
 public interface TaskDestructionHandler {
     void onDestroy(Queue<Task<?>> queue);

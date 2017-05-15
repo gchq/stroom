@@ -16,15 +16,14 @@
 
 package stroom.entity.client.presenter;
 
-import java.util.List;
-
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.Column;
-
 import stroom.data.grid.client.DataGridView;
 import stroom.dispatch.shared.TreeAction;
 import stroom.util.shared.Expander;
 import stroom.util.shared.TreeRow;
+
+import java.util.List;
 
 public class TreeRowHandler<R> {
     private final TreeAction<R> action;

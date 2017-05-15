@@ -17,7 +17,6 @@
 package stroom.xml.converter.ds3;
 
 import org.xml.sax.SAXException;
-
 import stroom.xml.converter.ds3.ref.VarMap;
 
 public abstract class StoreNode extends Node {

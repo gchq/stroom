@@ -23,9 +23,13 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.ReloadEntityEvent;
 import stroom.entity.shared.EntityServiceSaveAction;
@@ -34,7 +38,6 @@ import stroom.security.shared.CanEmailPasswordResetAction;
 import stroom.security.shared.EmailPasswordResetForUserAction;
 import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
-import stroom.util.shared.SharedBoolean;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -66,26 +69,17 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditPresenter.UserE
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(getView().getLoginNeverExpires().addValueChangeHandler(new ValueChangeHandler<TickBoxState>() {
-            @Override
-            public void onValueChange(ValueChangeEvent<TickBoxState> event) {
-                user.setLoginExpiry(!getView().getLoginNeverExpires().getBooleanValue());
-                save();
-            }
+        registerHandler(getView().getLoginNeverExpires().addValueChangeHandler(event -> {
+            user.setLoginExpiry(!getView().getLoginNeverExpires().getBooleanValue());
+            save();
         }));
-        registerHandler(getView().getStatusNotEnabled().addValueChangeHandler(new ValueChangeHandler<TickBoxState>() {
-            @Override
-            public void onValueChange(ValueChangeEvent<TickBoxState> event) {
-                user.setStatusEnabled(!getView().getStatusNotEnabled().getBooleanValue());
-                save();
-            }
+        registerHandler(getView().getStatusNotEnabled().addValueChangeHandler(event -> {
+            user.setStatusEnabled(!getView().getStatusNotEnabled().getBooleanValue());
+            save();
         }));
-        registerHandler(getEventBus().addHandler(ReloadEntityEvent.getType(), new ReloadEntityEvent.Handler() {
-            @Override
-            public void onReload(ReloadEntityEvent event) {
-                if (event.getEntity().equals(user)) {
-                    read((User) event.getEntity());
-                }
+        registerHandler(getEventBus().addHandler(ReloadEntityEvent.getType(), event -> {
+            if (event.getEntity().equals(user)) {
+                read((User) event.getEntity());
             }
         }));
     }
@@ -128,12 +122,7 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditPresenter.UserE
     }
 
     private void save() {
-        dispatcher.execute(new EntityServiceSaveAction<>(user), new AsyncCallbackAdaptor<User>() {
-            @Override
-            public void onSuccess(final User result) {
-                read(result);
-            }
-        });
+        dispatcher.exec(new EntityServiceSaveAction<>(user)).onSuccess(this::read);
     }
 
     @Override
@@ -148,23 +137,17 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditPresenter.UserE
 
     private void doResetPassword(final boolean email) {
         if (email) {
-            dispatcher.execute(new CanEmailPasswordResetAction(), new AsyncCallbackAdaptor<SharedBoolean>() {
-                @Override
-                public void onSuccess(final SharedBoolean result) {
-                    if (result.getBoolean()) {
-                        dispatcher.execute(new EmailPasswordResetForUserAction(user), new AsyncCallbackAdaptor<User>() {
-                            @Override
-                            public void onSuccess(final User user) {
-                                read(user);
-                                AlertEvent.fireInfo(UserEditPresenter.this,
-                                        "The password has been reset. An email with the new password has been sent to the users email account.",
-                                        null);
-                            }
-                        });
-                    } else {
-                        AlertEvent.fireError(UserEditPresenter.this, "System is not set up to email passwords!",
+            dispatcher.exec(new CanEmailPasswordResetAction()).onSuccess(result -> {
+                if (result.getBoolean()) {
+                    dispatcher.exec(new EmailPasswordResetForUserAction(user)).onSuccess(user -> {
+                        read(user);
+                        AlertEvent.fireInfo(UserEditPresenter.this,
+                                "The password has been reset. An email with the new password has been sent to the users email account.",
                                 null);
-                    }
+                    });
+                } else {
+                    AlertEvent.fireError(UserEditPresenter.this, "System is not set up to email passwords!",
+                            null);
                 }
             });
         } else {

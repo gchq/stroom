@@ -16,17 +16,10 @@
 
 package stroom.streamstore.client.presenter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.ClientSecurityContext;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
@@ -35,6 +28,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
@@ -44,6 +38,11 @@ import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.Expander;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class StreamRelationListPresenter extends AbstractStreamListPresenter {
     private final Map<Long, StreamAttributeMap> streamMap = new HashMap<Long, StreamAttributeMap>();
@@ -161,19 +160,19 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
 
         addInfoColumn();
 
+        addCreatedColumn();
         addStreamTypeColumn();
         addFeedColumn();
         addPipelineColumn();
 
-        addAttributeColumn(StreamAttributeConstants.REC_READ, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_WRITE, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_INFO, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_WARN, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_ERROR, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_FATAL, ColumnSizeConstants.MEDIUM_COL);
-
-        addAttributeColumn(StreamAttributeConstants.STREAM_SIZE, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.FILE_SIZE, ColumnSizeConstants.MEDIUM_COL);
+        addAttributeColumn("Raw", StreamAttributeConstants.STREAM_SIZE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Disk", StreamAttributeConstants.FILE_SIZE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Read", StreamAttributeConstants.REC_READ, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Write", StreamAttributeConstants.REC_WRITE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Fatal", StreamAttributeConstants.REC_FATAL, 40);
+        addAttributeColumn("Error", StreamAttributeConstants.REC_ERROR, 40);
+        addAttributeColumn("Warn", StreamAttributeConstants.REC_WARN, 40);
+        addAttributeColumn("Info", StreamAttributeConstants.REC_INFO, 40);
 
         getView().addEndColumn(new EndColumn<StreamAttributeMap>());
     }

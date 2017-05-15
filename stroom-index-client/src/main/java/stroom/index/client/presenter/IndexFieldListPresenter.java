@@ -18,8 +18,6 @@ package stroom.index.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -81,44 +79,29 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     protected void onBind() {
         super.onBind();
 
-        registerHandler(newButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onAdd();
-                }
+        registerHandler(newButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onAdd();
             }
         }));
-        registerHandler(editButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onEdit();
-                }
+        registerHandler(editButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onEdit();
             }
         }));
-        registerHandler(removeButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onRemove();
-                }
+        registerHandler(removeButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onRemove();
             }
         }));
-        registerHandler(upButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    moveSelectedFieldUp();
-                }
+        registerHandler(upButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                moveSelectedFieldUp();
             }
         }));
-        registerHandler(downButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    moveSelectedFieldDown();
-                }
+        registerHandler(downButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                moveSelectedFieldDown();
             }
         }));
         registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {

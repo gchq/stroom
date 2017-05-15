@@ -17,6 +17,18 @@
 dependencies {
     compile project(':stroom-statistics-shared')
     compile project(':stroom-pipeline')
+    compile project(':stroom-statistics-api')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-core-server')
+    compile project(':stroom-util')
+    compile project(':stroom-security-api')
+    compile project(':stroom-core-shared')
+
+    //hbase-common is currently only used for its Bytes class, so exclude all its deps
+    compile('org.apache.hbase:hbase-common:1.2.1') {
+        transitive = false
+    }
 
     //hbase-common is currently only used for its Bytes class, so exclude all its deps
     compile('org.apache.hbase:hbase-common:1.2.1') {
@@ -26,7 +38,6 @@ dependencies {
     compile urlDependencies.get(versions.stroomQueryCommon)
     compile urlDependencies.get(versions.stroomExpression)
     compile urlDependencies.get(versions.hadoopCommonShaded) 
-    //compile urlDependencies.get(versions.hbaseCommonShaded)
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

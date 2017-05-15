@@ -16,21 +16,19 @@
 
 package stroom.pipeline.server.errorhandler;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
-import javax.annotation.Resource;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.pipeline.server.ErrorWriterProxy;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.util.spring.StroomScope;
+
+import javax.annotation.Resource;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 /**
  * Flags records that contain errors so that the RecordOutputFilter can exclude

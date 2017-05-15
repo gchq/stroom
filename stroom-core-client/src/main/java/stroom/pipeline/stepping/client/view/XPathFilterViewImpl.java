@@ -16,8 +16,6 @@
 
 package stroom.pipeline.stepping.client.view;
 
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Grid;
@@ -25,7 +23,6 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
@@ -53,12 +50,7 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
         matchType.addItems(MatchType.values());
         matchType.setSelectedItem(MatchType.EQUALS);
 
-        matchType.addSelectionHandler(new SelectionHandler<MatchType>() {
-            @Override
-            public void onSelection(final SelectionEvent<MatchType> event) {
-                changeVisibility(event.getSelectedItem());
-            }
-        });
+        matchType.addSelectionHandler(event -> changeVisibility(event.getSelectedItem()));
     }
 
     @Override

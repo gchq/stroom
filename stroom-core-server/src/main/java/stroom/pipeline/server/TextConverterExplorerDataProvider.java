@@ -35,8 +35,8 @@ public class TextConverterExplorerDataProvider
     private final TextConverterService textConverterService;
 
     @Inject
-    TextConverterExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService, final TextConverterService textConverterService) {
-        super(folderService);
+    TextConverterExplorerDataProvider(@Named("cachedFolderService") final FolderService cachedFolderService, final TextConverterService textConverterService) {
+        super(cachedFolderService);
         this.textConverterService = textConverterService;
     }
 

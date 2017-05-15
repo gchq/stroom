@@ -16,13 +16,9 @@
 
 package stroom.streamtask.server;
 
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
-
 import stroom.streamstore.server.ScanVolumePathResult;
 import stroom.streamstore.server.StreamMaintenanceService;
 import stroom.task.server.AbstractTaskHandler;
@@ -30,7 +26,10 @@ import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
+import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
+
+import javax.annotation.Resource;
 
 /**
  * Task to clean the stream store.

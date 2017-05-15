@@ -64,9 +64,9 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
         INHERITED, ADDED, REMOVED
     }
 
-    private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:bold\">");
+    private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:500\">");
     private static final SafeHtml REMOVED = SafeHtmlUtils
-            .fromSafeConstant("<div style=\"font-weight:bold;text-decoration:line-through\">");
+            .fromSafeConstant("<div style=\"font-weight:500;text-decoration:line-through\">");
     private static final SafeHtml INHERITED = SafeHtmlUtils.fromSafeConstant("<div style=\"color:black\">");
     private static final SafeHtml END = SafeHtmlUtils.fromSafeConstant("</div>");
 

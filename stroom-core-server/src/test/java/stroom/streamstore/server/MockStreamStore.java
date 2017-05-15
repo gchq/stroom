@@ -16,6 +16,9 @@
 
 package stroom.streamstore.server;
 
+import event.logging.BaseAdvancedQueryItem;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Period;
@@ -26,9 +29,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.util.collections.TypedMap;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.zip.HeaderMap;
-import event.logging.BaseAdvancedQueryItem;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

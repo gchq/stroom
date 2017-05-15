@@ -16,11 +16,11 @@
 
 package stroom.jobsystem.server;
 
-import java.util.Collections;
-import java.util.List;
-
 import stroom.node.shared.Node;
 import stroom.util.shared.VoidResult;
+
+import java.util.Collections;
+import java.util.List;
 
 public class MockTaskFactory implements DistributedTaskFactory<MockTask, VoidResult> {
     private int taskCount;

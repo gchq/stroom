@@ -16,10 +16,10 @@
 
 package stroom.entity.client.event;
 
-import stroom.entity.shared.Entity;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import stroom.entity.shared.Entity;
 
 public class ReloadEntityEvent extends GwtEvent<ReloadEntityEvent.Handler> {
     public interface Handler extends EventHandler {

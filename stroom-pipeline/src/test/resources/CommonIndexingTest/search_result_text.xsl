@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <xsl:stylesheet xpath-default-namespace="event-logging:3"
-	xmlns="records:2" xmlns:stroom="stroom"
-	xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	version="2.0">
+                xmlns="records:2"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                version="2.0">
 	<xsl:template match="/Events">
 		<records xsi:schemaLocation="records:2 file://records-v2.0.xsd"
 			version="2.0">

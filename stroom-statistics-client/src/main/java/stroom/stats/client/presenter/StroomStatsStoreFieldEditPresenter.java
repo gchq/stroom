@@ -21,7 +21,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.stats.shared.StatisticField;
@@ -55,23 +54,17 @@ public class StroomStatsStoreFieldEditPresenter
 
         final StroomStatsStoreFieldEditPresenter thisPresenter = this;
 
-        clientPropertyCache.get(new AsyncCallbackAdaptor<ClientProperties>() {
-            @Override
-            public void onSuccess(final ClientProperties result) {
-                String fieldNamePattern = result.get(ClientProperties.NAME_PATTERN);
+        clientPropertyCache.get()
+                .onSuccess(result -> {
+                    String fieldNamePattern = result.get(ClientProperties.NAME_PATTERN);
 
-                if (fieldNamePattern == null || fieldNamePattern.isEmpty()) {
-                    fieldNamePattern = StroomStatsStoreEntity.DEFAULT_NAME_PATTERN_VALUE;
-                }
+                    if (fieldNamePattern == null || fieldNamePattern.isEmpty()) {
+                        fieldNamePattern = StroomStatsStoreEntity.DEFAULT_NAME_PATTERN_VALUE;
+                    }
 
-                thisPresenter.setFieldNamePattern(fieldNamePattern);
-            }
-
-            @Override
-            public void onFailure(final Throwable caught) {
-                AlertEvent.fireError(StroomStatsStoreFieldEditPresenter.this, caught.getMessage(), null);
-            }
-        });
+                    thisPresenter.setFieldNamePattern(fieldNamePattern);
+                })
+                .onFailure(caught -> AlertEvent.fireError(StroomStatsStoreFieldEditPresenter.this, caught.getMessage(), null));
     }
 
     public void read(final StatisticField field, final List<StatisticField> otherFields) {

@@ -16,6 +16,7 @@
 
 package stroom.entity.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
@@ -26,15 +27,21 @@ import stroom.entity.shared.SharedDocRef;
 import stroom.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = EntityServiceCreateAction.class)
+@Scope(value = StroomScope.TASK)
 class EntityServiceCreateHandler extends AbstractTaskHandler<EntityServiceCreateAction, SharedDocRef> {
-    @Resource
-    private EntityServiceBeanRegistry beanRegistry;
-    @Resource
-    private EntityEventLog entityEventLog;
+    private final EntityServiceBeanRegistry beanRegistry;
+    private final EntityEventLog entityEventLog;
+
+    @Inject
+    EntityServiceCreateHandler(final EntityServiceBeanRegistry beanRegistry, final EntityEventLog entityEventLog) {
+        this.beanRegistry = beanRegistry;
+        this.entityEventLog = entityEventLog;
+    }
 
     @SuppressWarnings("unchecked")
     @Override

@@ -16,15 +16,7 @@
 
 package stroom.util.upgrade;
 
-import stroom.util.date.DateUtil;
-
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Enumeration;
-import java.util.List;
 
 public class UpgradeRequestUtil {
     public static final String UPGRADE_HASH = "upgradeHash";

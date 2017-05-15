@@ -5,19 +5,19 @@
     <g:row>
       <g:cell>Attribute Key:</g:cell>
       <g:customCell>
-        <i:ItemListBox ui:field="streamAttributeKey" />
+        <i:ItemListBox ui:field="key" />
       </g:customCell>
     </g:row>
     <g:row>
       <g:cell>Condition:</g:cell>
       <g:customCell>
-        <i:ItemListBox ui:field="streamAttributeCondition" />
+        <i:ItemListBox ui:field="condition" />
       </g:customCell>
     </g:row>
     <g:row>
       <g:cell>Value:</g:cell>
       <g:customCell>
-        <g:TextBox ui:field="streamAttributeValue" />
+        <g:TextBox ui:field="value" />
       </g:customCell>
     </g:row>
   </g:Grid>

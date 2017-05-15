@@ -22,8 +22,6 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.ManageNewEntityPresenter;
 import stroom.entity.shared.EntityServiceDeleteAction;
@@ -127,37 +125,23 @@ public class UsersAndGroupsTabPresenter extends
     @SuppressWarnings("unchecked")
     public void onEdit(final DocRef userRef) {
         if (userRef != null) {
-            dispatcher.execute(new EntityServiceLoadAction<User>(userRef, null), new AsyncCallbackAdaptor<User>() {
-                @Override
-                public void onSuccess(User loadedUser) {
-                    edit(loadedUser);
-                }
-            });
+            dispatcher.exec(new EntityServiceLoadAction<User>(userRef, null)).onSuccess(loadedUser -> edit(loadedUser));
         }
     }
 
     private void onDelete() {
         final DocRef userRef = listPresenter.getSelectionModel().getSelected();
         if (userRef != null) {
-            dispatcher.execute(new EntityServiceLoadAction<User>(userRef, null), new AsyncCallbackAdaptor<User>() {
-                @Override
-                public void onSuccess(final User loadedUser) {
-                    ConfirmEvent.fire(UsersAndGroupsTabPresenter.this, "Are you sure you want to delete the selected " + getTypeName() + "?",
-                            new ConfirmCallback() {
-                                @Override
-                                public void onResult(final boolean ok) {
-                                    if (ok) {
-                                        dispatcher.execute(new EntityServiceDeleteAction<User>(loadedUser), new AsyncCallbackAdaptor<User>() {
-                                            @Override
-                                            public void onSuccess(final User result) {
-                                                listPresenter.refresh();
-                                                listPresenter.getSelectionModel().clear();
-                                            }
-                                        });
-                                    }
-                                }
-                            });
-                }
+            dispatcher.exec(new EntityServiceLoadAction<User>(userRef, null)).onSuccess(loadedUser -> {
+                ConfirmEvent.fire(UsersAndGroupsTabPresenter.this, "Are you sure you want to delete the selected " + getTypeName() + "?",
+                        ok -> {
+                            if (ok) {
+                                dispatcher.exec(new EntityServiceDeleteAction<User>(loadedUser)).onSuccess(result -> {
+                                    listPresenter.refresh();
+                                    listPresenter.getSelectionModel().clear();
+                                });
+                            }
+                        });
             });
         }
     }
@@ -170,12 +154,9 @@ public class UsersAndGroupsTabPresenter extends
                     final User user = new User();
                     user.setName(newPresenter.getName());
                     user.setGroup(criteria.getGroup());
-                    dispatcher.execute(new EntityServiceSaveAction<User>(user), new AsyncCallbackAdaptor<User>() {
-                        @Override
-                        public void onSuccess(User result) {
-                            newPresenter.hide();
-                            edit(result);
-                        }
+                    dispatcher.exec(new EntityServiceSaveAction<User>(user)).onSuccess(result -> {
+                        newPresenter.hide();
+                        edit(result);
                     });
                 } else {
                     newPresenter.hide();

@@ -16,15 +16,14 @@
 
 package stroom.util.config;
 
-import java.io.File;
-
-import stroom.util.test.StroomUnitTest;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.io.File;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestConfigure extends StroomUnitTest {

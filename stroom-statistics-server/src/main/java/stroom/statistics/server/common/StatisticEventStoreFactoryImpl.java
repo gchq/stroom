@@ -16,19 +16,9 @@
 
 package stroom.statistics.server.common;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.annotation.Resource;
-
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
 import stroom.node.server.StroomPropertyService;
 import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.StatisticEvent;
@@ -37,6 +27,14 @@ import stroom.statistics.common.StatisticsFactory;
 import stroom.statistics.shared.StatisticStore;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 public class StatisticEventStoreFactoryImpl implements StatisticsFactory, InitializingBean {

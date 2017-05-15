@@ -16,10 +16,10 @@
 
 package stroom.io;
 
+import stroom.util.io.WrappedWriter;
+
 import java.io.IOException;
 import java.io.Writer;
-
-import stroom.util.io.WrappedWriter;
 
 public class IgnoreCloseWriter extends WrappedWriter {
     public IgnoreCloseWriter(final Writer writer) {

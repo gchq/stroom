@@ -28,8 +28,13 @@ import stroom.streamstore.server.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.CloseableUtil;
-import stroom.util.zip.*;
+import stroom.util.zip.HeaderMap;
+import stroom.util.zip.StroomHeaderArguments;
+import stroom.util.zip.StroomHeaderStreamHandler;
+import stroom.util.zip.StroomStreamHandler;
 import stroom.util.zip.StroomZipEntry;
+import stroom.util.zip.StroomZipFileType;
+import stroom.util.zip.StroomZipNameSet;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;

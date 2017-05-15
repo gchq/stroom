@@ -17,7 +17,6 @@
 package stroom.widget.dropdowntree.client.view;
 
 import com.google.gwt.core.shared.GWT;
-import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -28,7 +27,6 @@ import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
-import com.google.gwt.resources.css.ast.CssProperty;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
@@ -78,39 +76,16 @@ public class QuickFilter extends FlowPanel
         add(label);
         add(clearButton);
 
-        label.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                label.setVisible(false);
-                textBox.setFocus(true);
-            }
+        label.addClickHandler(event -> {
+            label.setVisible(false);
+            textBox.setFocus(true);
         });
 
-        textBox.addFocusHandler(new FocusHandler() {
-            @Override
-            public void onFocus(final FocusEvent event) {
-                label.setVisible(false);
-            }
-        });
-        textBox.addBlurHandler(new BlurHandler() {
-            @Override
-            public void onBlur(final BlurEvent event) {
-                reset();
-            }
-        });
-        textBox.addKeyUpHandler(new KeyUpHandler() {
-            @Override
-            public void onKeyUp(final KeyUpEvent event) {
-                onChange();
-            }
-        });
+        textBox.addFocusHandler(event -> label.setVisible(false));
+        textBox.addBlurHandler(event -> reset());
+        textBox.addKeyUpHandler(event -> onChange());
 
-        clearButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                clear();
-            }
-        });
+        clearButton.addClickHandler(event -> clear());
 
         onChange();
     }

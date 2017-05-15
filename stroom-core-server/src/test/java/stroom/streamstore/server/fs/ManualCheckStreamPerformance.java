@@ -16,6 +16,12 @@
 
 package stroom.streamstore.server.fs;
 
+import org.apache.commons.lang.StringUtils;
+import stroom.util.io.FileUtil;
+import stroom.util.io.StreamUtil;
+import stroom.util.thread.ThreadUtil;
+import stroom.util.zip.HeaderMap;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -29,13 +35,6 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-
-import org.apache.commons.lang.StringUtils;
-
-import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
-import stroom.util.thread.ThreadUtil;
-import stroom.util.zip.HeaderMap;
 
 public abstract class ManualCheckStreamPerformance {
     static int testThreadCount = 10;

@@ -22,7 +22,6 @@ import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityService;
-import stroom.entity.shared.FindService;
 import stroom.query.api.DocRef;
 
 import java.util.Collection;
@@ -61,12 +60,12 @@ public interface GenericEntityService {
     <E extends Entity> Boolean delete(E entity);
 
     Collection<DocumentEntityService<?>> findAll();
-
-    <E extends DocumentEntity> E importEntity(E entity, DocRef folder);
-
-    <E extends DocumentEntity> E exportEntity(E entity);
+//
+//    <E extends DocumentEntity> E importEntity(E entity, DocRef folder);
+//
+//    <E extends DocumentEntity> E exportEntity(E entity);
 
     <E extends Entity> EntityService<E> getEntityService(String entityType);
-
-    <E extends Entity, C extends BaseCriteria> FindService<E, C> getFindService(String entityType);
+//
+//    <E extends Entity, C extends BaseCriteria> FindService<E, C> getFindService(String entityType);
 }

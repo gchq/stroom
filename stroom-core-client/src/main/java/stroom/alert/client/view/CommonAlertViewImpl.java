@@ -22,9 +22,6 @@ import com.google.gwt.dom.client.IFrameElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.InitializeEvent;
-import com.google.gwt.event.logical.shared.InitializeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
@@ -40,7 +37,6 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
 
 public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
@@ -101,26 +97,20 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
         showHideDetail.addStyleName(resources.style().showHide());
         detail.addStyleName(resources.style().detail());
 
-        detail.addInitializeHandler(new InitializeHandler() {
-            @Override
-            public void onInitialize(final InitializeEvent event) {
-                final Element e = detail.getElement();
-                final IFrameElement ife = IFrameElement.as(e);
-                final Document doc = ife.getContentDocument();
-                doc.getBody().getStyle().setPadding(3, Unit.PX);
-                doc.getBody().getStyle().setMargin(0, Unit.PX);
-            }
+        detail.addInitializeHandler(event -> {
+            final Element e = detail.getElement();
+            final IFrameElement ife = IFrameElement.as(e);
+            final Document doc = ife.getContentDocument();
+            doc.getBody().getStyle().setPadding(3, Unit.PX);
+            doc.getBody().getStyle().setMargin(0, Unit.PX);
         });
 
         showHideDetail.setVisible(false);
         setDetailVisible(false);
 
-        showHideDetail.addHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    showDetail(!detailVisible);
-                }
+        showHideDetail.addHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                showDetail(!detailVisible);
             }
         }, ClickEvent.getType());
     }

@@ -19,8 +19,6 @@ package stroom.pipeline.client.presenter;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -43,7 +41,11 @@ public class PipelinePresenter extends EntityEditTabPresenter<LinkTabPanelView, 
     public static final TabData PROCESSORS = new TabDataImpl("Processors");
     public static final TabData TASKS = new TabDataImpl("Active Tasks");
 
-    private final TabContentProvider<PipelineEntity> tabContentProvider = new TabContentProvider<PipelineEntity>();
+    private final TabContentProvider<PipelineEntity> tabContentProvider = new TabContentProvider<>();
+    private ProcessorPresenter processorPresenter;
+
+    private boolean hasManageProcessorsPermission;
+    private Boolean allowProcessorUpdates;
 
     @Inject
     public PipelinePresenter(final EventBus eventBus, final LinkTabPanelView view,
@@ -55,12 +57,9 @@ public class PipelinePresenter extends EntityEditTabPresenter<LinkTabPanelView, 
                              final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
 
-        tabContentProvider.setDirtyHandler(new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                if (event.isDirty()) {
-                    setDirty(true);
-                }
+        tabContentProvider.setDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
             }
         });
 
@@ -76,6 +75,8 @@ public class PipelinePresenter extends EntityEditTabPresenter<LinkTabPanelView, 
         addTab(STRUCTURE);
 
         if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
+            hasManageProcessorsPermission = true;
+
             tabContentProvider.add(PROCESSORS, processorPresenter);
             addTab(PROCESSORS);
             tabContentProvider.add(TASKS, streamTaskPresenterProvider);
@@ -87,6 +88,11 @@ public class PipelinePresenter extends EntityEditTabPresenter<LinkTabPanelView, 
 
     @Override
     public void getContent(final TabData tab, final ContentCallback callback) {
+        if (PROCESSORS.equals(tab) && this.processorPresenter == null) {
+            this.processorPresenter = (ProcessorPresenter) tabContentProvider.getPresenter(tab);
+            updatePermissions();
+        }
+
         callback.onReady(tabContentProvider.getPresenter(tab));
     }
 
@@ -101,11 +107,21 @@ public class PipelinePresenter extends EntityEditTabPresenter<LinkTabPanelView, 
     }
 
     @Override
-    public String getType() {
-        return PipelineEntity.ENTITY_TYPE;
+    protected void onPermissionsCheck(final boolean readOnly) {
+        super.onPermissionsCheck(readOnly);
+        allowProcessorUpdates = hasManageProcessorsPermission && !readOnly;
+        updatePermissions();
     }
 
-    public interface HasVisible {
-        void setVisible(boolean visible);
+    private void updatePermissions() {
+        if (this.processorPresenter != null && allowProcessorUpdates != null) {
+            this.processorPresenter.setAllowUpdate(allowProcessorUpdates);
+            allowProcessorUpdates = null;
+        }
+    }
+
+    @Override
+    public String getType() {
+        return PipelineEntity.ENTITY_TYPE;
     }
 }

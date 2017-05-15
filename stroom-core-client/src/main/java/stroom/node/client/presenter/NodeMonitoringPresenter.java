@@ -16,7 +16,6 @@
 
 package stroom.node.client.presenter;
 
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
@@ -33,7 +32,6 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntitySaveTask;
 import stroom.entity.client.SaveQueue;
@@ -85,7 +83,12 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
     @Override
     protected void onBind() {
-        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> enableButtons()));
+        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
+                onEdit(getView().getSelectionModel().getSelected());
+            }
+            enableButtons();
+        }));
         registerHandler(editButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 onEdit(getView().getSelectionModel().getSelected());
@@ -101,77 +104,68 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         final InfoColumn<NodeInfoResult> infoColumn = new InfoColumn<NodeInfoResult>() {
             @Override
             protected void showInfo(final NodeInfoResult row, final int x, final int y) {
-                dispatcher.execute(new ClusterNodeInfoAction(row.getEntity().getId()),
-                        new AsyncCallbackAdaptor<ClusterNodeInfo>() {
-                            @Override
-                            public void onSuccess(final ClusterNodeInfo result) {
-                                String html = "";
+                dispatcher.exec(new ClusterNodeInfoAction(row.getEntity().getId()))
+                        .onSuccess(result -> {
+                            String html = "";
 
-                                if (result == null) {
-                                    if (row != null) {
-                                        final StringBuilder builder = new StringBuilder();
-                                        builder.append("<b>Node Details</b><br/>");
-                                        builder.append("Node Name: ");
-                                        builder.append(row.getEntity().getName());
-                                        builder.append("<br/>Cluster URL: ");
-                                        builder.append(row.getEntity().getClusterURL());
-                                        builder.append("<br/>Ping: ");
-                                        builder.append(row.getPing());
-
-                                        html = builder.toString();
-                                    }
-
-                                } else {
+                            if (result == null) {
+                                if (row != null) {
                                     final StringBuilder builder = new StringBuilder();
                                     builder.append("<b>Node Details</b><br/>");
                                     builder.append("Node Name: ");
-                                    builder.append(result.getNodeName());
-                                    builder.append("<br/>Build Version: ");
-                                    builder.append(result.getBuildVersion());
-                                    builder.append("<br/>Build Date: ");
-                                    builder.append(result.getBuildDate());
-                                    builder.append("<br/>Up Date: ");
-                                    builder.append(result.getUpDate());
-                                    builder.append("<br/>Discover Time: ");
-                                    builder.append(result.getDiscoverTime());
+                                    builder.append(row.getEntity().getName());
                                     builder.append("<br/>Cluster URL: ");
-                                    builder.append(result.getClusterURL());
-                                    builder.append("<br/>");
-                                    builder.append("<br/><b>Node List</b><br/>");
-
-                                    for (final ClusterNodeInfo.ClusterNodeInfoItem info : result.getItemList()) {
-                                        builder.append(info.getNode().getName());
-                                        if (!info.isActive()) {
-                                            builder.append(" (Unknown)");
-                                        }
-                                        if (info.isMaster()) {
-                                            builder.append(" (Master)");
-                                        }
-                                        builder.append("<br/>");
-                                    }
+                                    builder.append(row.getEntity().getClusterURL());
+                                    builder.append("<br/>Ping: ");
+                                    builder.append(row.getPing());
 
                                     html = builder.toString();
                                 }
 
-                                tooltipPresenter.setHTML(html);
-                                final PopupPosition popupPosition = new PopupPosition(x, y);
-                                ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
-                                        popupPosition, null);
+                            } else {
+                                final StringBuilder builder = new StringBuilder();
+                                builder.append("<b>Node Details</b><br/>");
+                                builder.append("Node Name: ");
+                                builder.append(result.getNodeName());
+                                builder.append("<br/>Build Version: ");
+                                builder.append(result.getBuildVersion());
+                                builder.append("<br/>Build Date: ");
+                                builder.append(result.getBuildDate());
+                                builder.append("<br/>Up Date: ");
+                                builder.append(result.getUpDate());
+                                builder.append("<br/>Discover Time: ");
+                                builder.append(result.getDiscoverTime());
+                                builder.append("<br/>Cluster URL: ");
+                                builder.append(result.getClusterURL());
+                                builder.append("<br/>");
+                                builder.append("<br/><b>Node List</b><br/>");
+
+                                for (final ClusterNodeInfo.ClusterNodeInfoItem info : result.getItemList()) {
+                                    builder.append(info.getNode().getName());
+                                    if (!info.isActive()) {
+                                        builder.append(" (Unknown)");
+                                    }
+                                    if (info.isMaster()) {
+                                        builder.append(" (Master)");
+                                    }
+                                    builder.append("<br/>");
+                                }
+
+                                html = builder.toString();
                             }
 
-                            @Override
-                            public void onFailure(final Throwable caught) {
-                                tooltipPresenter.setHTML(caught.getMessage());
-                                final PopupPosition popupPosition = new PopupPosition(x, y);
-                                ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
-                                        popupPosition, null);
-                            }
-
-                            @Override
-                            public boolean handlesFailure() {
-                                return true;
-                            }
-                        });
+                            tooltipPresenter.setHTML(html);
+                            final PopupPosition popupPosition = new PopupPosition(x, y);
+                            ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
+                                    popupPosition, null);
+                        })
+                        .onFailure(caught -> {
+                                    tooltipPresenter.setHTML(caught.getMessage());
+                                    final PopupPosition popupPosition = new PopupPosition(x, y);
+                                    ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
+                                            popupPosition, null);
+                                }
+                        );
             }
         };
         getView().addColumn(infoColumn, "<br/>", 20);
@@ -214,7 +208,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
         // Master.
         final Column<NodeInfoResult, TickBoxState> masterColumn = new Column<NodeInfoResult, TickBoxState>(
-                new TickBoxCell(new TickBoxCell.NoBorderAppearance(), false, false, false)) {
+                TickBoxCell.create(new TickBoxCell.NoBorderAppearance(), false, false, false)) {
             @Override
             public TickBoxState getValue(final NodeInfoResult row) {
                 if (row == null) {
@@ -236,22 +230,17 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 return new EditableInteger(row.getEntity().getPriority());
             }
         };
-        priorityColumn.setFieldUpdater(new FieldUpdater<NodeInfoResult, Number>() {
+        priorityColumn.setFieldUpdater((index, row, value) -> saveQueue.save(new EntitySaveTask<Node>(row) {
             @Override
-            public void update(final int index, final NodeInfoResult row, final Number value) {
-                saveQueue.save(new EntitySaveTask<Node>(row) {
-                    @Override
-                    protected void setValue(final Node entity) {
-                        entity.setPriority(value.intValue());
-                    }
-                });
+            protected void setValue(final Node entity) {
+                entity.setPriority(value.intValue());
             }
-        });
+        }));
         getView().addColumn(priorityColumn, "Priority", 55);
 
         // Enabled
         final Column<NodeInfoResult, TickBoxState> enabledColumn = new Column<NodeInfoResult, TickBoxState>(
-                new TickBoxCell(false, false)) {
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final NodeInfoResult row) {
                 if (row == null) {
@@ -260,18 +249,12 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 return TickBoxState.fromBoolean(row.getEntity().isEnabled());
             }
         };
-        enabledColumn.setFieldUpdater(new FieldUpdater<NodeInfoResult, TickBoxState>() {
+        enabledColumn.setFieldUpdater((index, row, value) -> saveQueue.save(new EntitySaveTask<Node>(row) {
             @Override
-            public void update(final int index, final NodeInfoResult row, final TickBoxState value) {
-                saveQueue.save(new EntitySaveTask<Node>(row) {
-                    @Override
-                    protected void setValue(final Node entity) {
-                        entity.setEnabled(value.toBoolean());
-                    }
-                });
-
+            protected void setValue(final Node entity) {
+                entity.setEnabled(value.toBoolean());
             }
-        });
+        }));
 
         getView().addColumn(enabledColumn, "Enabled", 60);
 
@@ -290,13 +273,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 if (ok) {
                     if (node.getClusterURL() == null || !node.getClusterURL().equals(editor.getClusterUrl())) {
                         node.setClusterURL(editor.getClusterUrl());
-                        final EntityServiceSaveAction<Node> saveAction = new EntityServiceSaveAction<Node>(node);
-                        dispatcher.execute(saveAction, new AsyncCallbackAdaptor<Node>() {
-                            @Override
-                            public void onSuccess(final Node result) {
-                                refresh();
-                            }
-                        });
+                        dispatcher.exec(new EntityServiceSaveAction<>(node)).onSuccess(result -> refresh());
                     }
                 }
 

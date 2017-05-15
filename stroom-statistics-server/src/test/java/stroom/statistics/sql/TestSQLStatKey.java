@@ -16,21 +16,17 @@
 
 package stroom.statistics.sql;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
-
 import stroom.statistics.common.RollUpBitMaskUtil;
 import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.rollup.RollUpBitMask;
 import stroom.util.test.StroomUnitTest;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 public class TestSQLStatKey extends StroomUnitTest {
     long time = 1234L;

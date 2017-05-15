@@ -18,7 +18,6 @@ package stroom;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import stroom.feed.shared.Feed;
 import stroom.node.server.NodeCache;
 import stroom.streamstore.server.StreamStore;

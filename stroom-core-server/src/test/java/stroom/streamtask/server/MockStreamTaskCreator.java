@@ -16,16 +16,8 @@
 
 package stroom.streamtask.server;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
 import stroom.entity.server.util.BaseEntityUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
@@ -38,7 +30,13 @@ import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
+import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.TaskMonitor;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component

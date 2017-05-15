@@ -16,6 +16,11 @@
 
 package stroom.task.cluster;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.node.shared.Node;
+import stroom.util.shared.SharedObject;
+
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -23,11 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.node.shared.Node;
-import stroom.util.shared.SharedObject;
 
 public class DefaultClusterResultCollector<R extends SharedObject> implements ClusterResultCollector<R> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClusterResultCollector.class);

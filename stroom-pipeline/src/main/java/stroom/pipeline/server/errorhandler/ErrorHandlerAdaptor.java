@@ -22,7 +22,6 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-
 import stroom.pipeline.server.LocationFactory;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;

@@ -18,12 +18,15 @@ package stroom.lifecycle;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.VoidResult;
+import stroom.util.spring.StroomScope;
 
 @TaskHandlerBean(task = LifecycleTask.class)
+@Scope(value = StroomScope.TASK)
 public class LifecycleTaskHandler extends AbstractTaskHandler<LifecycleTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleTaskHandler.class);
 

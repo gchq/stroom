@@ -16,23 +16,12 @@
 
 package stroom.datafeed.server;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.zip.GZIPOutputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-
-import stroom.util.spring.StroomSpringProfiles;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-
 import stroom.StroomIntegrationTest;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
@@ -44,7 +33,16 @@ import stroom.spring.ServerConfiguration;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.zip.StroomHeaderArguments;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * The combination of mock and prod classes means this test needs its own

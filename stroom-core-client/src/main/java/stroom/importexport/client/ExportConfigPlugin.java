@@ -16,7 +16,6 @@
 
 package stroom.importexport.client;
 
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.MenuKeys;
@@ -50,11 +49,6 @@ public class ExportConfigPlugin extends Plugin {
     }
 
     private MenuItem createExportMenuItem() {
-        return new IconMenuItem(10, GlyphIcons.DOWNLOAD, GlyphIcons.DOWNLOAD, "Export", null, true, new Command() {
-            @Override
-            public void execute() {
-                ExportConfigEvent.fire(ExportConfigPlugin.this);
-            }
-        });
+        return new IconMenuItem(10, GlyphIcons.DOWNLOAD, GlyphIcons.DOWNLOAD, "Export", null, true, () -> ExportConfigEvent.fire(ExportConfigPlugin.this));
     }
 }

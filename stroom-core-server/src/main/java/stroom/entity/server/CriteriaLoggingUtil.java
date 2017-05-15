@@ -16,20 +16,20 @@
 
 package stroom.entity.server;
 
-import java.util.List;
-
-import stroom.entity.shared.CriteriaSet;
-import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.IncludeExcludeEntityIdSet;
-import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.Range;
-import stroom.util.date.DateUtil;
 import event.logging.BaseAdvancedQueryItem;
 import event.logging.BaseAdvancedQueryOperator.Not;
 import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.Term;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
+import stroom.entity.shared.CriteriaSet;
+import stroom.entity.shared.EntityIdSet;
+import stroom.entity.shared.IncludeExcludeEntityIdSet;
+import stroom.entity.shared.PageRequest;
+import stroom.entity.shared.Range;
+import stroom.util.date.DateUtil;
+
+import java.util.List;
 
 public final class CriteriaLoggingUtil {
     private CriteriaLoggingUtil() {

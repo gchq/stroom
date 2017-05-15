@@ -72,8 +72,7 @@ public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity>
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
                 // fields added/removed/changed
-                load(DocRefUtil.create(entity), entityFromDb ->
-                        doConfirmSave(presenter, entity, entityFromDb));
+                load(DocRefUtil.create(entity)).onSuccess(entityFromDb -> doConfirmSave(presenter, entity, entityFromDb));
             }
         }
     }
@@ -119,6 +118,6 @@ public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity>
 
     private void doSave(final EntityEditPresenter<?, StroomStatsStoreEntity> presenter,
             final StroomStatsStoreEntity entity) {
-        save(entity, entity1 -> presenter.read(entity1));
+        save(entity).onSuccess(presenter::read);
     }
 }

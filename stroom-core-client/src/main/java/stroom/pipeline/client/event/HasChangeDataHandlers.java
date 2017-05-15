@@ -18,7 +18,6 @@ package stroom.pipeline.client.event;
 
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 
 public interface HasChangeDataHandlers<T> extends HasHandlers {

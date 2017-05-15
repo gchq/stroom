@@ -16,16 +16,15 @@
 
 package stroom.pipeline.server.task;
 
-import javax.annotation.Resource;
-
 import org.junit.Ignore;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.tools.StoreCreationTool;
 import stroom.task.server.TaskManager;
+
+import javax.annotation.Resource;
 
 @Ignore("TODO: uncomment and update tests or delete")
 public class TestTranslationStepping extends AbstractCoreIntegrationTest {

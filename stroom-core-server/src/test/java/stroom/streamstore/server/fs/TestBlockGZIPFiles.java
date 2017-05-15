@@ -16,21 +16,20 @@
 
 package stroom.streamstore.server.fs;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import stroom.util.io.FileUtil;
+import stroom.util.io.StreamUtil;
+import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import stroom.util.test.StroomUnitTest;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestBlockGZIPFiles extends StroomUnitTest {

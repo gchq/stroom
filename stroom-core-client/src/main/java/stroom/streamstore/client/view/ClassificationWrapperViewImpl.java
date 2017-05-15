@@ -21,7 +21,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 

@@ -17,7 +17,6 @@
 package stroom.feed.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-
 import stroom.feed.client.FeedPlugin;
 import stroom.feed.client.presenter.FeedPresenter;
 

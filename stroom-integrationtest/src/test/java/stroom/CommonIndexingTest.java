@@ -16,22 +16,20 @@
 
 package stroom;
 
-import java.io.File;
-import java.util.List;
-
-import javax.annotation.Resource;
-
-import stroom.test.StroomProcessTestFileUtil;
 import org.junit.Assert;
 import org.springframework.stereotype.Component;
-
 import stroom.index.server.IndexShardWriterCache;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.pipeline.server.task.PipelineStreamProcessor;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.server.tools.StoreCreationTool;
 import stroom.streamtask.server.StreamProcessorTaskExecutor;
+import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.shared.Severity;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.util.List;
 
 /**
  * Class to create test data for use in all search tests.

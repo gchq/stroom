@@ -18,7 +18,6 @@ package stroom.node.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.node.server.NodeStatusServiceUtil.CPUStats;
 
 public class TestNodeStatusServiceUtil {
@@ -62,7 +61,7 @@ public class TestNodeStatusServiceUtil {
 
     @Test
     public void testCreateLinuxStats() {
-        final NodeStatusServiceUtil nodeStatusServiceUtil = new NodeStatusServiceUtil();
+        final NodeStatusServiceUtil nodeStatusServiceUtil = new NodeStatusServiceUtil(null, null);
         final CPUStats cpuStats = nodeStatusServiceUtil.createLinuxStats(output);
 
         Assert.assertEquals(4723476392L, cpuStats.user.longValue());
@@ -72,7 +71,5 @@ public class TestNodeStatusServiceUtil {
         Assert.assertEquals(57132415L, cpuStats.ioWait.longValue());
         Assert.assertEquals(3363L, cpuStats.irq.longValue());
         Assert.assertEquals(1832867L, cpuStats.softirq.longValue());
-
     }
-
 }

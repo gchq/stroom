@@ -16,18 +16,27 @@
 
 package stroom.dictionary;
 
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.dictionary.shared.FindDictionaryCriteria;
+import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
+import stroom.importexport.server.EntityPathResolver;
 import stroom.util.spring.StroomSpringProfiles;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component
 public class MockDictionaryService extends MockDocumentEntityService<Dictionary, FindDictionaryCriteria>
         implements DictionaryService {
+    @Inject
+    public MockDictionaryService(final GenericEntityService genericEntityService, final EntityPathResolver entityPathResolver) {
+        super(genericEntityService, entityPathResolver);
+    }
+
     @Override
     public Class<Dictionary> getEntityClass() {
         return Dictionary.class;

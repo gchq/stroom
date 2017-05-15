@@ -18,6 +18,9 @@ package stroom.upgrade;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
@@ -33,9 +36,6 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomScope;
 import stroom.util.zip.HeaderMap;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;

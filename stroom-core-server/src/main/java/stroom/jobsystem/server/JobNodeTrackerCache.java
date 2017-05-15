@@ -16,18 +16,9 @@
 
 package stroom.jobsystem.server;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
 import stroom.jobsystem.shared.FindJobNodeCriteria;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
@@ -38,6 +29,13 @@ import stroom.node.shared.Node;
 import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
+
+import javax.annotation.Resource;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 public class JobNodeTrackerCache {

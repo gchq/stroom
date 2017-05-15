@@ -17,11 +17,7 @@
 package stroom.pipeline.stepping.client.presenter;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -30,7 +26,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
@@ -48,7 +43,6 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
-import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
 import stroom.query.api.DocRef;
@@ -60,7 +54,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.Indicators;
-import stroom.util.shared.SharedList;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;
@@ -78,11 +71,11 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final PipelineStepAction action;
     private final PipelineTreePresenter pipelineTreePresenter;
     private final DataPresenter sourcePresenter;
-    private final Provider<EditorPresenter> editorProvider;
+    private final Provider<ElementPresenter> editorProvider;
     private final StepLocationPresenter stepLocationPresenter;
     private final StepControlPresenter stepControlPresenter;
     private final ClientDispatchAsync dispatcher;
-    private final Map<String, EditorPresenter> editorMap = new HashMap<String, EditorPresenter>();
+    private final Map<String, ElementPresenter> editorMap = new HashMap<String, ElementPresenter>();
     private final PipelineModel pipelineModel;
     private final GlyphButtonView saveButton;
     private boolean foundRecord;
@@ -98,7 +91,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     public SteppingPresenter(final EventBus eventBus, final SteppingView view,
                              final PipelineTreePresenter pipelineTreePresenter,
                              final ClientDispatchAsync dispatcher, final DataPresenter sourcePresenter,
-                             final Provider<EditorPresenter> editorProvider, final StepLocationPresenter stepLocationPresenter,
+                             final Provider<ElementPresenter> editorProvider, final StepLocationPresenter stepLocationPresenter,
                              final StepControlPresenter stepControlPresenter) {
         super(eventBus, view);
         this.dispatcher = dispatcher;
@@ -155,32 +148,14 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     @Override
     protected void onBind() {
         registerHandler(
-                pipelineTreePresenter.getSelectionModel().addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-                    @Override
-                    public void onSelectionChange(final SelectionChangeEvent event) {
-                        final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel()
-                                .getSelectedObject();
-                        onSelect(selectedElement);
-                    }
+                pipelineTreePresenter.getSelectionModel().addSelectionChangeHandler(event -> {
+                    final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel()
+                            .getSelectedObject();
+                    onSelect(selectedElement);
                 }));
-        registerHandler(stepLocationPresenter.addStepControlHandler(new StepControlHandler() {
-            @Override
-            public void onSelection(final StepControlEvent event) {
-                step(event.getStepType(), event.getStepLocation());
-            }
-        }));
-        registerHandler(stepControlPresenter.addStepControlHandler(new StepControlHandler() {
-            @Override
-            public void onSelection(final StepControlEvent event) {
-                step(event.getStepType(), event.getStepLocation());
-            }
-        }));
-        registerHandler(saveButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                save();
-            }
-        }));
+        registerHandler(stepLocationPresenter.addStepControlHandler(event -> step(event.getStepType(), event.getStepLocation())));
+        registerHandler(stepControlPresenter.addStepControlHandler(event -> step(event.getStepType(), event.getStepLocation())));
+        registerHandler(saveButton.addClickHandler(event -> save()));
     }
 
     private GlyphButtonView addButtonLeft(final GlyphIcon preset) {
@@ -189,8 +164,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             getView().addWidgetLeft(leftButtons);
         }
 
-        final GlyphButtonView button = leftButtons.add(preset);
-        return button;
+        return leftButtons.add(preset);
     }
 
     private PresenterWidget<?> getContent(final PipelineElement element) {
@@ -223,7 +197,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             }
 
             final String elementId = element.getId();
-            EditorPresenter editorPresenter = editorMap.get(elementId);
+            ElementPresenter editorPresenter = editorMap.get(elementId);
 
             if (editorPresenter == null) {
                 final DirtyHandler dirtyEditorHandler = event -> {
@@ -231,7 +205,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     saveButton.setEnabled(true);
                 };
 
-                final EditorPresenter presenter = editorProvider.get();
+                final ElementPresenter presenter = editorProvider.get();
 
                 presenter.setElementId(element.getId());
                 presenter.setElementType(element.getElementType());
@@ -250,25 +224,21 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }
     }
 
-    private void refreshEditor(final EditorPresenter editorPresenter, final String elementId) {
-        refreshEditorCode(editorPresenter);
+    private void refreshEditor(final ElementPresenter editorPresenter, final String elementId) {
+        editorPresenter.load().onSuccess(result -> {
+            if (editorPresenter.isRefreshRequired()) {
+                editorPresenter.setRefreshRequired(false);
 
-        if (editorPresenter.isRefreshRequired()) {
-            editorPresenter.setRefreshRequired(false);
+                // Update code pane.
+                refreshEditorCodeIndicators(editorPresenter, elementId);
 
-            // Update code pane.
-            refreshEditorCodeIndicators(editorPresenter, elementId);
-
-            // Update IO data.
-            refreshEditorIO(editorPresenter, elementId);
-        }
+                // Update IO data.
+                refreshEditorIO(editorPresenter, elementId);
+            }
+        });
     }
 
-    private void refreshEditorCode(final EditorPresenter editorPresenter) {
-        editorPresenter.load();
-    }
-
-    private void refreshEditorCodeIndicators(final EditorPresenter editorPresenter, final String elementId) {
+    private void refreshEditorCodeIndicators(final ElementPresenter editorPresenter, final String elementId) {
         // Only update the code indicators if we have a current result.
         if (currentResult != null && currentResult.getStepData() != null) {
             final SharedElementData elementData = currentResult.getStepData().getElementData(elementId);
@@ -281,7 +251,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }
     }
 
-    private void refreshEditorIO(final EditorPresenter editorPresenter, final String elementId) {
+    private void refreshEditorIO(final ElementPresenter editorPresenter, final String elementId) {
         // Only update the input/output if we found a record.
         if (lastFoundResult != null) {
             final SharedElementData elementData = lastFoundResult.getStepData().getElementData(elementId);
@@ -331,37 +301,36 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         // Load the pipeline.
         final FetchPipelineDataAction fetchPipelineDataAction = new FetchPipelineDataAction(pipeline);
-        dispatcher.execute(fetchPipelineDataAction, new AsyncCallbackAdaptor<SharedList<PipelineData>>() {
-            @Override
-            public void onSuccess(final SharedList<PipelineData> result) {
-                final PipelineData pipelineData = result.get(result.size() - 1);
-                final List<PipelineData> baseStack = new ArrayList<PipelineData>(result.size() - 1);
+        dispatcher.exec(fetchPipelineDataAction).onSuccess(result -> {
+            final PipelineData pipelineData = result.get(result.size() - 1);
+            final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
 
-                // If there is a stack of pipeline data then we need
-                // to make sure changes are reflected appropriately.
-                for (int i = 0; i < result.size() - 1; i++) {
-                    baseStack.add(result.get(i));
-                }
+            // If there is a stack of pipeline data then we need
+            // to make sure changes are reflected appropriately.
+            for (int i = 0; i < result.size() - 1; i++) {
+                baseStack.add(result.get(i));
+            }
 
-                try {
-                    pipelineModel.setPipelineData(pipelineData);
-                    pipelineModel.setBaseStack(baseStack);
-                    pipelineModel.build();
-                    pipelineTreePresenter.getSelectionModel().setSelected(PipelineModel.SOURCE_ELEMENT, true);
-                } catch (final PipelineModelException e) {
-                    AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
-                }
+            try {
+                pipelineModel.setPipelineData(pipelineData);
+                pipelineModel.setBaseStack(baseStack);
+                pipelineModel.build();
+                pipelineTreePresenter.getSelectionModel().setSelected(PipelineModel.SOURCE_ELEMENT, true);
 
-                if (eventId > 0) {
-                    step(StepType.REFRESH, new StepLocation(stream.getId(), 1L, eventId));
-                }
+                Scheduler.get().scheduleDeferred(() -> getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 3));
+            } catch (final PipelineModelException e) {
+                AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
+            }
+
+            if (eventId > 0) {
+                step(StepType.REFRESH, new StepLocation(stream.getId(), 1L, eventId));
             }
         });
     }
 
     private void save() {
         // Tell all editors to save.
-        for (final Entry<String, EditorPresenter> entry : editorMap.entrySet()) {
+        for (final Entry<String, ElementPresenter> entry : editorMap.entrySet()) {
             entry.getValue().save();
         }
         DirtyEvent.fire(this, false);
@@ -384,8 +353,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             }
 
             // Set dirty code on action.
-            final Map<String, String> codeMap = new HashMap<String, String>();
-            for (final EditorPresenter editorPresenter : editorMap.values()) {
+            final Map<String, String> codeMap = new HashMap<>();
+            for (final ElementPresenter editorPresenter : editorMap.values()) {
                 if (editorPresenter.isDirtyCode()) {
                     final String elementId = editorPresenter.getElementId();
                     final String code = editorPresenter.getCode();
@@ -396,17 +365,9 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
             action.setStepType(stepType);
 
-            dispatcher.execute(action, new AsyncCallbackAdaptor<SteppingResult>() {
-                @Override
-                public void onSuccess(final SteppingResult result) {
-                    readResult(result);
-                }
-
-                @Override
-                public void onFailure(final Throwable caught) {
-                    busyTranslating = false;
-                }
-            });
+            dispatcher.exec(action)
+                    .onSuccess(this::readResult)
+                    .onFailure(caught -> busyTranslating = false);
         }
     }
 
@@ -420,7 +381,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             }
 
             // Tell all editors that a refresh is required.
-            for (final Entry<String, EditorPresenter> entry : editorMap.entrySet()) {
+            for (final Entry<String, ElementPresenter> entry : editorMap.entrySet()) {
                 entry.getValue().setRefreshRequired(true);
             }
 
@@ -428,7 +389,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
             if (selectedElement != null) {
                 final String elementId = selectedElement.getId();
-                final EditorPresenter editorPresenter = editorMap.get(elementId);
+                final ElementPresenter editorPresenter = editorMap.get(elementId);
                 if (editorPresenter != null) {
                     refreshEditor(editorPresenter, elementId);
                 }
@@ -487,17 +448,14 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private void onSelect(final PipelineElement element) {
         if (element != null) {
             TaskStartEvent.fire(SteppingPresenter.this);
-            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-                @Override
-                public void execute() {
-                    final PresenterWidget<?> content = getContent(element);
-                    if (content != null) {
-                        // Set the content.
-                        getView().getLayerContainer().show((Layer) content);
-                    }
-
-                    TaskEndEvent.fire(SteppingPresenter.this);
+            Scheduler.get().scheduleDeferred(() -> {
+                final PresenterWidget<?> content = getContent(element);
+                if (content != null) {
+                    // Set the content.
+                    getView().getLayerContainer().show((Layer) content);
                 }
+
+                TaskEndEvent.fire(SteppingPresenter.this);
             });
         }
     }
@@ -512,6 +470,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     }
 
     public interface SteppingView extends View {
+        void setTreeHeight(int height);
+
         void addWidgetLeft(Widget widget);
 
         void addWidgetRight(Widget widget);
@@ -519,9 +479,5 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         void setTreeView(View view);
 
         LayerContainer getLayerContainer();
-    }
-
-    public interface HasVisible {
-        void setVisible(boolean visible);
     }
 }

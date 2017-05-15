@@ -16,10 +16,10 @@
 
 package stroom.streamstore.server.fs;
 
-import java.util.Set;
-
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.StreamVolume;
+
+import java.util.Set;
 
 /**
  * <p>

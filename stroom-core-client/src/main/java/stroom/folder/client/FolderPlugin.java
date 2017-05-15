@@ -43,11 +43,6 @@ public class FolderPlugin extends EntityPlugin<Folder> {
     }
 
     @Override
-    protected boolean allowNullFolder() {
-        return true;
-    }
-
-    @Override
     protected EntityEditPresenter<?, ?> createEditor() {
         if (securityContext.hasAppPermission(Stream.VIEW_DATA_PERMISSION) || securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
             return editorProvider.get();

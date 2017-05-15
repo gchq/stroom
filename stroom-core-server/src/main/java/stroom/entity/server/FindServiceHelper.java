@@ -16,13 +16,13 @@
 
 package stroom.entity.server;
 
-import stroom.entity.server.util.StroomEntityManager;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.SQLUtil;
-import stroom.entity.shared.Entity;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
-import org.springframework.transaction.annotation.Transactional;
+import stroom.entity.shared.Entity;
 
 import java.util.List;
 

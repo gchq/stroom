@@ -16,11 +16,11 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import stroom.xml.NamespaceConstants;
 import net.sf.saxon.lib.ExtensionFunctionCall;
 import net.sf.saxon.lib.ExtensionFunctionDefinition;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.value.SequenceType;
+import stroom.xml.NamespaceConstants;
 
 public class DelegateExtensionFunctionDefinition extends ExtensionFunctionDefinition {
     private transient final StroomXSLTFunctionLibrary library;

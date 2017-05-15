@@ -16,12 +16,9 @@
 
 package stroom.pipeline.client.presenter;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.core.client.event.DirtyKeyDownHander;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -29,47 +26,36 @@ import stroom.pipeline.shared.TextConverter;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
-import stroom.xmleditor.client.event.FormatEvent;
-import stroom.xmleditor.client.event.FormatEvent.FormatHandler;
-import stroom.xmleditor.client.presenter.BaseXMLEditorPresenter;
-import stroom.xmleditor.client.presenter.ReadOnlyXMLEditorPresenter;
-import stroom.xmleditor.client.presenter.XMLEditorPresenter;
-import stroom.xmleditor.client.view.XMLEditorMenuPresenter;
+
+import javax.inject.Provider;
 
 public class TextConverterPresenter extends EntityEditTabPresenter<LinkTabPanelView, TextConverter> {
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData CONVERSION = new TabDataImpl("Conversion");
-//    private static final TabData REFERENCES_TAB = new TabDataImpl("References");
 
     private final TextConverterSettingsPresenter settingsPresenter;
-    private final XMLEditorMenuPresenter editorMenuPresenter;
-//    private final EntityReferenceListPresenter entityReferenceListPresenter;
-    private BaseXMLEditorPresenter codePresenter;
+    private final Provider<EditorPresenter> editorPresenterProvider;
+
+    private EditorPresenter codePresenter;
 
     @Inject
     public TextConverterPresenter(final EventBus eventBus, final LinkTabPanelView view,
                                   final TextConverterSettingsPresenter settingsPresenter,
-                                  final XMLEditorMenuPresenter editorMenuPresenter,
-//                                  final EntityReferenceListPresenter entityReferenceListPresenter,
+                                  final Provider<EditorPresenter> editorPresenterProvider,
                                   final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
-        this.editorMenuPresenter = editorMenuPresenter;
-//        this.entityReferenceListPresenter = entityReferenceListPresenter;
+        this.editorPresenterProvider = editorPresenterProvider;
 
 
-        settingsPresenter.addDirtyHandler(new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                if (event.isDirty()) {
-                    setDirty(true);
-                }
+        settingsPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
             }
         });
 
         addTab(SETTINGS);
         addTab(CONVERSION);
-//        addTab(REFERENCES_TAB);
         selectTab(SETTINGS);
     }
 
@@ -109,24 +95,11 @@ public class TextConverterPresenter extends EntityEditTabPresenter<LinkTabPanelV
     protected void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
 
-        if (!readOnly) {
-            codePresenter = new XMLEditorPresenter(getEventBus(), editorMenuPresenter);
-        } else {
-            codePresenter = new ReadOnlyXMLEditorPresenter(getEventBus(), editorMenuPresenter);
-        }
+        codePresenter = editorPresenterProvider.get();
+        codePresenter.setReadOnly(readOnly);
 
-        registerHandler(codePresenter.addKeyDownHandler(new DirtyKeyDownHander() {
-            @Override
-            public void onDirty(final KeyDownEvent event) {
-                setDirty(true);
-            }
-        }));
-        registerHandler(codePresenter.addFormatHandler(new FormatHandler() {
-            @Override
-            public void onFormat(final FormatEvent event) {
-                setDirty(true);
-            }
-        }));
+        registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
 
         if (getEntity() != null) {
             codePresenter.setText(getEntity().getData());

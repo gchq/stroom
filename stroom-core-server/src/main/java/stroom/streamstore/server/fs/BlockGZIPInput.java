@@ -16,15 +16,15 @@
 
 package stroom.streamstore.server.fs;
 
+import stroom.io.SeekableInputStream;
+import stroom.io.StreamCloser;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.zip.GZIPInputStream;
-
-import stroom.io.SeekableInputStream;
-import stroom.io.StreamCloser;
 
 /**
  * @see BlockGZIPConstants

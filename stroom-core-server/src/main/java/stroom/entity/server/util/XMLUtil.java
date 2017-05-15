@@ -18,10 +18,10 @@ package stroom.entity.server.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.io.StreamUtil;
-import stroom.util.xml.SAXParserFactoryFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
+import stroom.util.io.StreamUtil;
+import stroom.util.xml.SAXParserFactoryFactory;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;

@@ -16,6 +16,7 @@
 
 package stroom.feed.server;
 
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.FolderService;
 import stroom.feed.remote.GetFeedStatusRequest;
 import stroom.feed.remote.GetFeedStatusResponse;
@@ -26,7 +27,6 @@ import stroom.feed.shared.FeedService;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.util.task.ServerTask;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
@@ -42,7 +42,7 @@ public class RemoteFeedServiceImpl implements RemoteFeedService {
     @Override
     @Insecure
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER);
+        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
         try {
             final Feed feed = feedService.loadByName(request.getFeedName());
 

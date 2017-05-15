@@ -16,19 +16,18 @@
 
 package stroom.entity.server.util;
 
-import java.lang.reflect.Proxy;
-import java.util.HashSet;
-
-import stroom.util.test.StroomUnitTest;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.feed.shared.Feed;
 import stroom.streamstore.shared.Stream;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.lang.reflect.Proxy;
+import java.util.HashSet;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {

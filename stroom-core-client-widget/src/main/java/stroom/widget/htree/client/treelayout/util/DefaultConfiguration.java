@@ -29,9 +29,9 @@
  */
 package stroom.widget.htree.client.treelayout.util;
 
-import static stroom.widget.htree.client.treelayout.internal.util.Contract.checkArg;
-
 import stroom.widget.htree.client.treelayout.Configuration;
+
+import static stroom.widget.htree.client.treelayout.internal.util.Contract.checkArg;
 
 /**
  * Specify a {@link Configuration} through configurable parameters, or falling

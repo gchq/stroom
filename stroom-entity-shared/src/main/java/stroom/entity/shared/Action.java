@@ -30,9 +30,8 @@ public abstract class Action<R extends SharedObject> implements Task<R>, Seriali
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(4);
     boolean terminate;
     private TaskId id;
-    private String sessionId;
     private String applicationInstanceId;
-    private String userId;
+    private String userToken;
 
     @Override
     public void terminate() {
@@ -44,15 +43,6 @@ public abstract class Action<R extends SharedObject> implements Task<R>, Seriali
         return terminate;
     }
 
-    @Override
-    public final String getSessionId() {
-        return sessionId;
-    }
-
-    public final void setSessionId(final String sessionId) {
-        this.sessionId = sessionId;
-    }
-
     public String getApplicationInstanceId() {
         return applicationInstanceId;
     }
@@ -62,12 +52,12 @@ public abstract class Action<R extends SharedObject> implements Task<R>, Seriali
     }
 
     @Override
-    public final String getUserId() {
-        return userId;
+    public String getUserToken() {
+        return userToken;
     }
 
-    public final void setUserId(final String userId) {
-        this.userId = userId;
+    public void setUserToken(final String userToken) {
+        this.userToken = userToken;
     }
 
     @Override

@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.client.presenter.PipelineSettingsPresenter.PipelineSettingsView;
 import stroom.pipeline.client.presenter.PipelineSettingsUiHandlers;

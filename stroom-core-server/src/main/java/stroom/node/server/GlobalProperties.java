@@ -18,13 +18,13 @@ package stroom.node.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.node.shared.GlobalProperty;
 import stroom.util.config.StroomProperties;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.stereotype.Component;
 
 import java.sql.Connection;
 import java.sql.ResultSet;

@@ -16,13 +16,8 @@
 
 package stroom.streamtask.server;
 
-import java.util.List;
-
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
@@ -38,6 +33,9 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessorService;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
     @Resource

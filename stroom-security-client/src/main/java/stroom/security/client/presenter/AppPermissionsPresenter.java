@@ -24,7 +24,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.DataGridViewImpl;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.ChangeUserAction;
@@ -32,7 +31,6 @@ import stroom.security.shared.FetchUserAppPermissionsAction;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
-import stroom.util.shared.VoidResult;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,17 +72,14 @@ public class AppPermissionsPresenter extends
             // Fetch permissions and populate table.
             final FetchUserAppPermissionsAction fetchUserAppPermissionsAction = new FetchUserAppPermissionsAction(
                     relatedUser);
-            dispatcher.execute(fetchUserAppPermissionsAction, new AsyncCallbackAdaptor<UserAppPermissions>() {
-                @Override
-                public void onSuccess(final UserAppPermissions userAppPermissions) {
-                    AppPermissionsPresenter.this.userAppPermissions = userAppPermissions;
+            dispatcher.exec(fetchUserAppPermissionsAction).onSuccess(userAppPermissions -> {
+                AppPermissionsPresenter.this.userAppPermissions = userAppPermissions;
 
-                    final List<String> features = new ArrayList<String>(
-                            userAppPermissions.getAllPermissions());
-                    Collections.sort(features);
-                    getView().setRowData(0, features);
-                    getView().setRowCount(features.size(), true);
-                }
+                final List<String> features = new ArrayList<>(
+                        userAppPermissions.getAllPermissions());
+                Collections.sort(features);
+                getView().setRowData(0, features);
+                getView().setRowCount(features.size(), true);
             });
         }
     }
@@ -102,7 +97,7 @@ public class AppPermissionsPresenter extends
 
         // Selection.
         final Column<String, TickBoxState> selectionColumn = new Column<String, TickBoxState>(
-                new TickBoxCell(appearance, true, true, updateable)) {
+                TickBoxCell.create(appearance, true, true, updateable)) {
             @Override
             public TickBoxState getValue(final String permission) {
                 final Set<String> permissions = userAppPermissions.getUserPermissons();
@@ -122,12 +117,7 @@ public class AppPermissionsPresenter extends
                 } else {
                     changeUserAction.getChangedAppPermissions().remove(permission);
                 }
-                dispatcher.execute(changeUserAction, new AsyncCallbackAdaptor<VoidResult>() {
-                    @Override
-                    public void onSuccess(VoidResult result) {
-                        refresh();
-                    }
-                });
+                dispatcher.exec(changeUserAction).onSuccess(result -> refresh());
             });
         }
         getView().addColumn(selectionColumn, "<br/>", 50);

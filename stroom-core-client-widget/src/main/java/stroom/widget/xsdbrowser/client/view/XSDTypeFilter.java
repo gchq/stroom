@@ -16,11 +16,11 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
+import stroom.widget.xsdbrowser.client.view.XSDNode.XSDType;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
-import stroom.widget.xsdbrowser.client.view.XSDNode.XSDType;
 
 public class XSDTypeFilter {
     public static final XSDTypeFilter ATTRIBUTE_FILTER = new XSDTypeFilter(XSDType.ATTRIBUTE);

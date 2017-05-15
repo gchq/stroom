@@ -22,22 +22,22 @@ public class ResourceGeneration implements SharedObject {
     private static final long serialVersionUID = 8354737969578639291L;
 
     private ResourceKey resourceKey;
-    private List<String> messageList;
+    private List<Message> messageList;
 
     public ResourceGeneration() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ResourceGeneration(ResourceKey resourceKey, List<String> messageList) {
+    public ResourceGeneration(ResourceKey resourceKey, List<Message> messageList) {
         this.resourceKey = resourceKey;
         this.messageList = messageList;
     }
 
-    public List<String> getMessageList() {
+    public List<Message> getMessageList() {
         return messageList;
     }
 
-    public void setMessageList(List<String> messageList) {
+    public void setMessageList(List<Message> messageList) {
         this.messageList = messageList;
     }
 

@@ -16,14 +16,13 @@
 
 package stroom.util.task;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.util.shared.Monitor;
 import stroom.util.test.StroomJUnit4ClassRunner;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestMonitorImpl {

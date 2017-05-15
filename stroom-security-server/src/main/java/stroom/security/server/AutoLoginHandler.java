@@ -16,24 +16,29 @@
 
 package stroom.security.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.security.Insecure;
 import stroom.security.shared.AutoLoginAction;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
-import stroom.security.shared.UserRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
-import java.util.Set;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = AutoLoginAction.class)
+@Scope(value = StroomScope.TASK)
 @Insecure
 public class AutoLoginHandler extends AbstractTaskHandler<AutoLoginAction, UserAndPermissions> {
-    @Resource
-    private AuthenticationService authenticationService;
-    @Resource
-    private UserPermissionsCache userPermissionCache;
+    private final AuthenticationService authenticationService;
+    private final UserAndPermissionsHelper userAndPermissionsHelper;
+
+    @Inject
+    AutoLoginHandler(final AuthenticationService authenticationService, final UserAndPermissionsHelper userAndPermissionsHelper) {
+        this.authenticationService = authenticationService;
+        this.userAndPermissionsHelper = userAndPermissionsHelper;
+    }
 
     @Override
     public UserAndPermissions exec(final AutoLoginAction task) {
@@ -42,12 +47,6 @@ public class AutoLoginHandler extends AbstractTaskHandler<AutoLoginAction, UserA
             return null;
         }
 
-        // Get permissions for this user.
-        final UserPermissions userPermissions = userPermissionCache.get(UserRef.create(user));
-        if (userPermissions == null) {
-            return null;
-        }
-        final Set<String> permissions = userPermissions.getAppPermissionSet();
-        return new UserAndPermissions(user, permissions);
+        return userAndPermissionsHelper.get(user);
     }
 }

@@ -16,7 +16,6 @@
 
 package stroom.cell.expander.client;
 
-import stroom.util.shared.Expander;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
@@ -33,6 +32,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import stroom.util.shared.Expander;
 
 import java.util.Arrays;
 import java.util.HashSet;

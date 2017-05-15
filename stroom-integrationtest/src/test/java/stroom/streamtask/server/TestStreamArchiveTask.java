@@ -16,17 +16,8 @@
 
 package stroom.streamtask.server;
 
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.List;
-
-import javax.annotation.Resource;
-
-import stroom.util.config.StroomProperties;
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.CommonTestScenarioCreator;
@@ -48,7 +39,13 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
+import stroom.util.config.StroomProperties;
 import stroom.volume.server.VolumeServiceImpl;
+
+import javax.annotation.Resource;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.List;
 
 /**
  * Test the archiving stuff.

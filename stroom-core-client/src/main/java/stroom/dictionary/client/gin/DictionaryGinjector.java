@@ -17,7 +17,6 @@
 package stroom.dictionary.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-
 import stroom.dictionary.client.DictionaryPlugin;
 import stroom.dictionary.client.presenter.DictionaryPresenter;
 

@@ -16,13 +16,13 @@
 
 package stroom.streamtask.server;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.jobsystem.server.DistributedTask;
 import stroom.node.shared.Node;
 import stroom.streamtask.shared.StreamTask;
+
+import java.util.List;
 
 public class TaskStatusTraceLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskStatusTraceLog.class);

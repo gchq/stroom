@@ -16,10 +16,10 @@
 
 package stroom.entity.server;
 
-import java.util.List;
-
-import stroom.entity.shared.BaseCriteria;
 import event.logging.BaseAdvancedQueryItem;
+import stroom.entity.shared.BaseCriteria;
+
+import java.util.List;
 
 public interface SupportsCriteriaLogging<C extends BaseCriteria> {
     void appendCriteria(List<BaseAdvancedQueryItem> items, C criteria);

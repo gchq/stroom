@@ -21,7 +21,6 @@ import com.google.gwt.canvas.dom.client.Context2d.TextAlign;
 import com.google.gwt.canvas.dom.client.CssColor;
 import com.google.gwt.canvas.dom.client.TextMetrics;
 import com.google.gwt.user.client.ui.HasText;
-
 import stroom.widget.htree.client.ShadowBox.Colors;
 import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.Dimension;

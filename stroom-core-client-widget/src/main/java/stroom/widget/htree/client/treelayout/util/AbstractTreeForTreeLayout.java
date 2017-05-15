@@ -29,11 +29,11 @@
  */
 package stroom.widget.htree.client.treelayout.util;
 
-import java.util.List;
-
 import stroom.widget.htree.client.treelayout.TreeForTreeLayout;
 import stroom.widget.htree.client.treelayout.internal.util.IterableUtil;
 import stroom.widget.htree.client.treelayout.internal.util.ListUtil;
+
+import java.util.List;
 
 /**
  * Provides an easy way to implement the {@link TreeForTreeLayout} interface by

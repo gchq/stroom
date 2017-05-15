@@ -29,7 +29,7 @@ import java.util.Set;
 public class Indicator implements Serializable {
     private static final long serialVersionUID = 257135216859640487L;
 
-    private Map<Severity, Set<StoredError>> errorMap;
+    private Map<Severity, Set<StoredError>> errorMap = new HashMap<>();
 
     public Indicator() {
         // Default constructor necessary for GWT serialisation.
@@ -40,16 +40,12 @@ public class Indicator implements Serializable {
     }
 
     public void addAll(final Indicator indicator) {
-        if (indicator != null && indicator.errorMap != null && indicator.errorMap.size() > 0) {
-            if (errorMap == null) {
-                errorMap = new HashMap<Severity, Set<StoredError>>();
-            }
-
+        if (indicator != null) {
             for (final Entry<Severity, Set<StoredError>> entry : indicator.errorMap.entrySet()) {
                 if (entry.getValue() != null && entry.getValue().size() > 0) {
                     Set<StoredError> messages = errorMap.get(entry.getKey());
                     if (messages == null) {
-                        messages = new HashSet<StoredError>(entry.getValue().size());
+                        messages = new HashSet<>(entry.getValue().size());
                     }
 
                     if (entry.getValue() != null) {
@@ -61,17 +57,11 @@ public class Indicator implements Serializable {
     }
 
     public void add(final Severity severity, final StoredError message) {
-        if (errorMap == null) {
-            errorMap = new HashMap<Severity, Set<StoredError>>();
-        }
+        errorMap.computeIfAbsent(severity, k -> new HashSet<>()).add(message);
+    }
 
-        Set<StoredError> messages = errorMap.get(severity);
-        if (messages == null) {
-            messages = new HashSet<StoredError>();
-            errorMap.put(severity, messages);
-        }
-
-        messages.add(message);
+    public Map<Severity, Set<StoredError>> getErrorMap() {
+        return errorMap;
     }
 
     public Severity getMaxSeverity() {
@@ -82,18 +72,6 @@ public class Indicator implements Serializable {
             }
         }
         return null;
-    }
-
-    /**
-     * Gets some HTML to be used in the indicator popup on request.
-     */
-    public String getHTML() {
-        String html = toString();
-        html = html.replaceAll("&", "&amp;");
-        html = html.replaceAll("<", "&lt;");
-        html = html.replaceAll(">", "&gt;");
-        html = html.replaceAll("\n", "<br/>");
-        return html.trim();
     }
 
     @Override

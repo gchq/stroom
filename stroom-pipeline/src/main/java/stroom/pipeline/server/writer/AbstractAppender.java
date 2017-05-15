@@ -16,15 +16,14 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
-import javax.annotation.Resource;
-
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.streamstore.server.fs.serializable.SegmentOutputStream;
 import stroom.util.shared.Severity;
+
+import javax.annotation.Resource;
+import java.io.IOException;
+import java.io.OutputStream;
 
 public abstract class AbstractAppender extends AbstractDestinationProvider implements Destination {
     @Resource

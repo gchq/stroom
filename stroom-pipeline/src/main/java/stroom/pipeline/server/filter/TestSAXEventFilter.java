@@ -16,17 +16,16 @@
 
 package stroom.pipeline.server.filter;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.regex.Pattern;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
 import stroom.util.CharBuffer;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.regex.Pattern;
 
 /**
  * A filter used to display individual SAX events at any point in the XML

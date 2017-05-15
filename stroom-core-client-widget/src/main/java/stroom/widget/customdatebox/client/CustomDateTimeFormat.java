@@ -16,11 +16,11 @@
 
 package stroom.widget.customdatebox.client;
 
-import java.util.Date;
-
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.i18n.client.impl.cldr.DateTimeFormatInfoImpl_en_GB;
+
+import java.util.Date;
 
 public class CustomDateTimeFormat extends DateTimeFormat {
     private static final String PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";

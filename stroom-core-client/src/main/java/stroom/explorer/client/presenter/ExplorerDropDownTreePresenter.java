@@ -36,6 +36,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         implements HasDataSelectionHandlers<ExplorerData> {
     private final ExtendedExplorerTree explorerTree;
     private boolean allowFolderSelection;
+    private ExplorerData selectedEntityData;
 
     @Inject
     ExplorerDropDownTreePresenter(final EventBus eventBus, final DropDownTreeView view,
@@ -62,6 +63,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
                 DataSelectionEvent.fire(this, selectedItem, false);
             } else if (selectionType.isDoubleSelect()) {
                 DataSelectionEvent.fire(this, selectedItem, true);
+                this.selectedEntityData = selectedItem;
                 HidePopupEvent.fire(this, this, true, true);
             }
         }
@@ -88,12 +90,11 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         explorerTree.changeNameFilter(text);
     }
 
-    public void reset() {
-        explorerTree.getTreeModel().reset();
-    }
-
     @Override
     public void refresh() {
+        explorerTree.setSelectedItem(selectedEntityData);
+        explorerTree.getTreeModel().reset();
+        explorerTree.getTreeModel().setEnsureVisible(selectedEntityData);
         explorerTree.getTreeModel().refresh();
     }
 
@@ -135,10 +136,8 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     }
 
     private void setSelectedEntityData(final EntityData entityData) {
-        explorerTree.setSelectedItem(entityData);
-        explorerTree.getTreeModel().reset();
-        explorerTree.getTreeModel().setEnsureVisible(entityData);
-        explorerTree.getTreeModel().refresh();
+        this.selectedEntityData = entityData;
+        refresh();
     }
 
     public void setAllowFolderSelection(final boolean allowFolderSelection) {
@@ -156,6 +155,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
             final EntityData selected = getSelectedEntityData();
             if (isSelectionAllowed(selected)) {
                 DataSelectionEvent.fire(this, selected, false);
+                this.selectedEntityData = selected;
                 super.onHideRequest(autoClose, ok);
             } else {
                 AlertEvent.fireError(ExplorerDropDownTreePresenter.this,

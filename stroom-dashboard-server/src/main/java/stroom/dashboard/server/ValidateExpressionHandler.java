@@ -16,6 +16,7 @@
 
 package stroom.dashboard.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.dashboard.expression.Expression;
 import stroom.dashboard.expression.ExpressionParser;
 import stroom.dashboard.expression.FieldIndexMap;
@@ -25,10 +26,12 @@ import stroom.dashboard.shared.ValidateExpressionAction;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.spring.StroomScope;
 
 import java.text.ParseException;
 
 @TaskHandlerBean(task = ValidateExpressionAction.class)
+@Scope(value = StroomScope.TASK)
 public class ValidateExpressionHandler extends AbstractTaskHandler<ValidateExpressionAction, ValidateExpressionResult> {
     @Override
     public ValidateExpressionResult exec(final ValidateExpressionAction action) {

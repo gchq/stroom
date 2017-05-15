@@ -26,6 +26,7 @@ public class ExplorerTreeFilterBuilder {
     private Set<String> tags;
     private Set<String> requiredPermissions;
     private String nameFilter;
+    private boolean nameFilterChange;
 
     public void setIncludedTypeSet(final Set<String> types) {
         if (types == null) {
@@ -73,11 +74,15 @@ public class ExplorerTreeFilterBuilder {
         }
 
         this.nameFilter = filter;
+        this.nameFilterChange = true;
 
         return true;
     }
 
     public ExplorerTreeFilter build() {
-        return new ExplorerTreeFilter(SetUtil.copySet(includedTypes), SetUtil.copySet(tags), SetUtil.copySet(requiredPermissions), nameFilter);
+        final boolean nameFilterChange = this.nameFilterChange;
+        this.nameFilterChange = false;
+
+        return new ExplorerTreeFilter(SetUtil.copySet(includedTypes), SetUtil.copySet(tags), SetUtil.copySet(requiredPermissions), nameFilter, nameFilterChange);
     }
 }

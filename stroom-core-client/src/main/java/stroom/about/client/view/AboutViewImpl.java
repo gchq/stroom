@@ -24,7 +24,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.about.client.presenter.AboutPresenter;
 
 public class AboutViewImpl extends ViewImpl implements AboutPresenter.AboutView {

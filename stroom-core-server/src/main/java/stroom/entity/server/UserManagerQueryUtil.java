@@ -16,17 +16,17 @@
 
 package stroom.entity.server;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderIdSet;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Utility to build EJBQL.

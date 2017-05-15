@@ -16,15 +16,14 @@
 
 package stroom.pipeline.server.filter;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.xml.event.simple.StartElement;
 import stroom.xml.event.simple.StartPrefixMapping;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * Merges XML that has been split into separate XML instances.

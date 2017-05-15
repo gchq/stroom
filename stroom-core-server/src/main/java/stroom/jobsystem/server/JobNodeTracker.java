@@ -16,12 +16,12 @@
 
 package stroom.jobsystem.server;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.jobsystem.shared.JobNode;
 import stroom.util.date.DateUtil;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class JobNodeTracker {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTracker.class);

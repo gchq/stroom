@@ -36,8 +36,8 @@ public class FolderExplorerDataProvider extends AbstractExplorerDataProvider<Fol
     private final FolderService folderService;
 
     @Inject
-    FolderExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService) {
-        super(folderService);
+    FolderExplorerDataProvider(@Named("cachedFolderService") final FolderService cachedFolderService, final FolderService folderService) {
+        super(cachedFolderService);
         this.folderService = folderService;
     }
 

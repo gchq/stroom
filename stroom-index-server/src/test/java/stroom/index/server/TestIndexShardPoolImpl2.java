@@ -88,7 +88,7 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
 
         try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
             final IndexShardWriterCacheImpl indexShardPoolImpl = new IndexShardWriterCacheImpl(cacheManager, null, null,
-                    mockIndexShardService, new NodeCache(defaultNode)) {
+                    mockIndexShardService, new NodeCache(defaultNode), null) {
                 @Override
                 protected void destroy(final IndexShardKey key, final IndexShardWriter value) {
                     checkedLimit.decrement();

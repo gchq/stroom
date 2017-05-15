@@ -18,7 +18,6 @@ package stroom.jobsystem.server;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
 import stroom.jobsystem.shared.JobNode.JobType;
 import stroom.jobsystem.shared.ScheduleService;
 import stroom.jobsystem.shared.ScheduledTimes;

@@ -20,6 +20,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
@@ -48,6 +49,7 @@ import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
+import java.util.concurrent.locks.Lock;
 
 /**
  * The index filter... takes the index XML and builds the LUCENE documents
@@ -58,6 +60,8 @@ import javax.annotation.Resource;
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.INDEX)
 public class IndexingFilter extends AbstractXMLFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexingFilter.class);
+
+    private static final StripedLock WRITER_KEY_LOCKS = new StripedLock();
 
     private static final String RECORD = "record";
     private static final String DATA = "data";
@@ -186,17 +190,37 @@ public class IndexingFilter extends AbstractXMLFilter {
         // have indexed some fields.
         if (fieldsIndexed > 0) {
             try {
-                if (indexShardWriter == null) {
-                    indexShardWriter = getIndexShardWriter();
-                }
+                boolean success = false;
+                while (!success) {
+                    success = indexShardWriter != null && indexShardWriter.addDocument(document);
 
-                while (!indexShardWriter.addDocument(document)) {
-                    // Failed to add it so remove this object from the cache and
-                    // try to get another one.
-                    indexShardCache.remove(indexShardKey);
+                    if (!success) {
+                        // If we failed then try under lock to make sure we get a new writer.
+                        final Lock lock = WRITER_KEY_LOCKS.getLockForKey(indexShardKey);
+                        lock.lock();
+                        try {
+                            // Ask the cache for the current one (it might have been changed by another thread) and try again.
+                            indexShardWriter = getIndexShardWriter();
+                            success = indexShardWriter.addDocument(document);
 
-                    // Ask the pool for another one and try again
-                    indexShardWriter = getIndexShardWriter();
+                            if (!success) {
+                                // Failed to add it so remove this object from the cache and try to get another one.
+                                indexShardCache.remove(indexShardKey);
+
+                                // Ask the pool for another one and try again
+                                final IndexShardWriter newWriter = getIndexShardWriter();
+                                if (newWriter == indexShardWriter) {
+                                    LOGGER.error(MarkerFactory.getMarker("FATAL"), "Expected a new writer but got the same one back!!!");
+                                    throw new IndexException("Expected a new writer but got the same one back!!!");
+                                }
+
+                                indexShardWriter = newWriter;
+                            }
+
+                        } finally {
+                            lock.unlock();
+                        }
+                    }
                 }
             } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);

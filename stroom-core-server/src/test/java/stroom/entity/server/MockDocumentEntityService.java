@@ -18,15 +18,25 @@ package stroom.entity.server;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
+import stroom.entity.shared.ImportState;
+import stroom.entity.shared.ImportState.ImportMode;
+import stroom.entity.shared.ImportState.State;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.importexport.server.Config;
+import stroom.importexport.server.EntityPathResolver;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.query.api.DocRef;
+import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,8 +50,17 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     private static final Set<String> BLANK_SET = Collections.emptySet();
     protected final Map<Long, E> map = new ConcurrentHashMap<>();
     private final AtomicLong currentId = new AtomicLong();
+    private final ImportExportHelper importExportHelper;
 
     private String entityType;
+
+    public MockDocumentEntityService(final GenericEntityService genericEntityService, final EntityPathResolver entityPathResolver) {
+        this.importExportHelper = new ImportExportHelper(genericEntityService, entityPathResolver);
+    }
+
+    public MockDocumentEntityService() {
+        this.importExportHelper = null;
+    }
 
     @Override
     public E create(final DocRef folder, final String name) throws RuntimeException {
@@ -240,17 +259,79 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     }
 
     @Override
-    public E importEntity(E entity, DocRef folder) {
-        // We don't want to overwrite any marshaled data so disable marshalling on creation.
-        setFolder(entity, folder);
+    public DocRef importDocument(final Folder folder, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+        if (importExportHelper == null) {
+            throw new RuntimeException("Import not supported for this test");
+        }
 
-        // Save directly so there is no marshalling of objects that would destroy imported data.
-        return doSave(entity);
+//        // We don't want to overwrite any marshaled data so disable marshalling on creation.
+//        setFolder(entity, folder);
+//
+//        // Save directly so there is no marshalling of objects that would destroy imported data.
+//        return doSave(entity);
+//
+//        return null;
+
+
+        E entity = null;
+
+        try {
+            // Get the main config data.
+            String mainConfigPath = null;
+            for (final String key : dataMap.keySet()) {
+                if (key.endsWith(getEntityType() + ".xml")) {
+                    mainConfigPath = key;
+                }
+            }
+
+            if (mainConfigPath == null) {
+                throw new RuntimeException("Unable to find config data");
+            }
+
+            final Config config = new Config();
+            config.read(new StringReader(dataMap.get(mainConfigPath)));
+
+            final String uuid = config.getString("uuid");
+            if (uuid == null) {
+                throw new RuntimeException("Unable to get UUID for item");
+            }
+
+            entity = loadByUuid(uuid, Collections.singleton("all"));
+
+            if (entity == null) {
+                entity = getEntityClass().newInstance();
+                entity.setFolder(folder);
+
+                if (importMode == ImportMode.CREATE_CONFIRMATION) {
+                    importState.setState(State.NEW);
+                }
+            } else {
+                if (importMode == ImportMode.CREATE_CONFIRMATION) {
+                    importState.setState(State.UPDATE);
+                }
+            }
+
+            importExportHelper.performImport(entity, dataMap, mainConfigPath, importState, importMode);
+
+            // We don't want to overwrite any marshaled data so disable marshalling on creation.
+            setFolder(entity, DocRefUtil.create(folder));
+
+            // Save directly so there is no marshalling of objects that would destroy imported data.
+            if (importMode == ImportMode.IGNORE_CONFIRMATION
+                    || (importMode == ImportMode.ACTION_CONFIRMATION && importState.isAction())) {
+                entity = doSave(entity);
+            }
+
+        } catch (final Exception e) {
+            importState.addMessage(Severity.ERROR, e.getMessage());
+        }
+
+        return DocRefUtil.create(entity);
     }
 
     @Override
-    public E exportEntity(final E entity) {
-        return entity;
+    public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+        return null;
     }
 
     @Override

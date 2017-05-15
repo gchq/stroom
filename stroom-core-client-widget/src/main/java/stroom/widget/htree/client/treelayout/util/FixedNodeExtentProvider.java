@@ -29,10 +29,10 @@
  */
 package stroom.widget.htree.client.treelayout.util;
 
-import static stroom.widget.htree.client.treelayout.internal.util.Contract.checkArg;
-
 import stroom.widget.htree.client.treelayout.Dimension;
 import stroom.widget.htree.client.treelayout.NodeExtentProvider;
+
+import static stroom.widget.htree.client.treelayout.internal.util.Contract.checkArg;
 
 /**
  * A {@link NodeExtentProvider} returning the same width and height for each

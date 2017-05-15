@@ -18,7 +18,6 @@ package stroom.widget.htree.client;
 
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.CssColor;
-
 import stroom.widget.htree.client.treelayout.TreeLayout;
 
 public class ArrowConnectorRenderer<T> implements ConnectorRenderer<T> {

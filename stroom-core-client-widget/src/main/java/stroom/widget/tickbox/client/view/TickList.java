@@ -16,16 +16,10 @@
 
 package stroom.widget.tickbox.client.view;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -34,7 +28,9 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import stroom.cell.tickbox.shared.TickBoxState;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TickList<T extends TickBox> extends Composite implements HasSelectionHandlers<Set<T>> {
     public interface Binder extends UiBinder<Widget, TickList<?>> {
@@ -63,12 +59,7 @@ public class TickList<T extends TickBox> extends Composite implements HasSelecti
             item.getElement().getStyle().setDisplay(Display.BLOCK);
             items.add(item);
             list.add(item);
-            item.addValueChangeHandler(new ValueChangeHandler<TickBoxState>() {
-                @Override
-                public void onValueChange(final ValueChangeEvent<TickBoxState> event) {
-                    fireUpdate();
-                }
-            });
+            item.addValueChangeHandler(event -> fireUpdate());
         }
     }
 

@@ -16,9 +16,9 @@
 
 package stroom.entity.server.util;
 
-import java.io.Serializable;
-
 import org.apache.commons.lang.SerializationUtils;
+
+import java.io.Serializable;
 
 public class CloneUtil {
     @SuppressWarnings("unchecked")

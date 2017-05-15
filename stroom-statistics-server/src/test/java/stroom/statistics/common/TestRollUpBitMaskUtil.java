@@ -16,13 +16,12 @@
 
 package stroom.statistics.common;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.statistics.common.rollup.RollUpBitMask;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestRollUpBitMaskUtil {
     @Test

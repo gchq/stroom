@@ -24,8 +24,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.FindNamedEntityCriteria;
@@ -143,22 +141,15 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
     }
 
     private void onDelete() {
-        final E e = listPresenter.getSelectedItem();
-        if (e != null) {
+        final E entity = listPresenter.getSelectedItem();
+        if (entity != null) {
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected " + getEntityDisplayType() + "?",
-                    new ConfirmCallback() {
-                        @Override
-                        public void onResult(final boolean result) {
-                            if (result) {
-                                final EntityServiceDeleteAction<E> action = new EntityServiceDeleteAction<E>(e);
-                                dispatcher.execute(action, new AsyncCallbackAdaptor<E>() {
-                                    @Override
-                                    public void onSuccess(final E result) {
-                                        listPresenter.refresh();
-                                        listPresenter.getView().getSelectionModel().clear();
-                                    }
-                                });
-                            }
+                    result -> {
+                        if (result) {
+                            dispatcher.exec(new EntityServiceDeleteAction<>(entity)).onSuccess(res -> {
+                                listPresenter.refresh();
+                                listPresenter.getView().getSelectionModel().clear();
+                            });
                         }
                     });
         }

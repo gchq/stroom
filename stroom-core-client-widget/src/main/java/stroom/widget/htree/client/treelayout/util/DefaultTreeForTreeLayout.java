@@ -29,14 +29,14 @@
  */
 package stroom.widget.htree.client.treelayout.util;
 
-import static stroom.widget.htree.client.treelayout.internal.util.Contract.checkArg;
+import stroom.widget.htree.client.treelayout.TreeForTreeLayout;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import stroom.widget.htree.client.treelayout.TreeForTreeLayout;
+import static stroom.widget.htree.client.treelayout.internal.util.Contract.checkArg;
 
 /**
  * Provides a generic implementation for the {@link TreeForTreeLayout}

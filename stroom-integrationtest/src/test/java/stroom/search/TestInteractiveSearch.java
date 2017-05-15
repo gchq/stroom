@@ -37,6 +37,7 @@ import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
+import stroom.query.api.ResultRequest.ResultStyle;
 import stroom.query.api.Row;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchResponse;
@@ -50,6 +51,7 @@ import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.ParamUtil;
+import stroom.util.task.ServerTask;
 
 import javax.annotation.Resource;
 import java.time.ZoneOffset;
@@ -466,7 +468,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
 
         final CountDownLatch complete = new CountDownLatch(1);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(null, "test", new FindStreamCriteria(), query,
+        final EventSearchTask eventSearchTask = new EventSearchTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, new FindStreamCriteria(), query,
                 new EventRef(1, 1), new EventRef(Long.MAX_VALUE, Long.MAX_VALUE), 1000, 1000, 1000, 100);
         final AtomicReference<EventRefs> results = new AtomicReference<>();
         taskManager.execAsync(eventSearchTask, new TaskCallback<EventRefs>() {

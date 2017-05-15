@@ -16,22 +16,20 @@
 
 package stroom.statistics.sql;
 
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import org.springframework.stereotype.Component;
-
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomSimpleCronSchedule;
+
+import javax.annotation.Resource;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 public class SQLStatisticCacheImpl implements SQLStatisticCache {

@@ -16,26 +16,8 @@
 
 package stroom.streamtask.server;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-import java.util.zip.ZipOutputStream;
-
-import javax.annotation.Resource;
-
-import stroom.util.test.StroomExpectedException;
-import stroom.util.zip.StroomZipFile;
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
@@ -52,6 +34,21 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.DummyTask;
 import stroom.util.test.FileSystemTestUtil;
+import stroom.util.test.StroomExpectedException;
+import stroom.util.zip.StroomZipFile;
+
+import javax.annotation.Resource;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipOutputStream;
 
 public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Resource

@@ -16,18 +16,12 @@
 
 package stroom.widget.menu.client.presenter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -36,6 +30,9 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MenuListPresenter extends MenuPresenter {
     private MenuListPresenter currentMenu;
@@ -66,14 +63,11 @@ public class MenuListPresenter extends MenuPresenter {
 
     private void execute(final Command command) {
         TaskStartEvent.fire(MenuListPresenter.this);
-        Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-            @Override
-            public void execute() {
-                try {
-                    command.execute();
-                } finally {
-                    TaskEndEvent.fire(MenuListPresenter.this);
-                }
+        Scheduler.get().scheduleDeferred(() -> {
+            try {
+                command.execute();
+            } finally {
+                TaskEndEvent.fire(MenuListPresenter.this);
             }
         });
     }
@@ -97,58 +91,51 @@ public class MenuListPresenter extends MenuPresenter {
             if (menuItem instanceof HasChildren) {
                 final HasChildren hasChildren = (HasChildren) menuItem;
 
-                hasChildren.getChildren(new AsyncCallback<List<Item>>() {
-                    @Override
-                    public void onSuccess(final List<Item> children) {
-                        if (children != null && children.size() > 0) {
-                            final MenuListPresenter presenter = menuListPresenterProvider.get();
-                            presenter.setParent(MenuListPresenter.this);
-                            presenter.setHighlightItems(getHighlightItems());
-                            presenter.setData(children);
+                hasChildren.getChildren().onSuccess(children -> {
+                    if (children != null && children.size() > 0) {
+                        final MenuListPresenter presenter = menuListPresenterProvider.get();
+                        presenter.setParent(MenuListPresenter.this);
+                        presenter.setHighlightItems(getHighlightItems());
+                        presenter.setData(children);
 
-                            // Set the current presenter telling us that the
-                            // popup is showing.
-                            currentItem = menuItem;
-                            currentMenu = presenter;
+                        // Set the current presenter telling us that the
+                        // popup is showing.
+                        currentItem = menuItem;
+                        currentMenu = presenter;
 
-                            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                                @Override
-                                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                    HidePopupEvent.fire(MenuListPresenter.this, presenter);
-                                }
-
-                                @Override
-                                public void onHide(final boolean autoClose, final boolean ok) {
-                                    currentItem = null;
-                                    currentMenu = null;
-                                }
-                            };
-
-                            final List<Element> autoHidePartners = new ArrayList<Element>();
-
-                            // Add parent auto hide partners.
-                            if (MenuListPresenter.this.autoHidePartners != null
-                                    && MenuListPresenter.this.autoHidePartners.size() > 0) {
-                                autoHidePartners.addAll(MenuListPresenter.this.autoHidePartners);
+                        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                            @Override
+                            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                                HidePopupEvent.fire(MenuListPresenter.this, presenter);
                             }
 
-                            // Add this as an auto hide partner
-                            autoHidePartners.add(element);
-                            presenter.setAutoHidePartners(autoHidePartners);
+                            @Override
+                            public void onHide(final boolean autoClose, final boolean ok) {
+                                currentItem = null;
+                                currentMenu = null;
+                            }
+                        };
 
-                            Element[] partners = new Element[autoHidePartners.size()];
-                            partners = autoHidePartners.toArray(partners);
+                        final List<Element> autoHidePartners = new ArrayList<Element>();
 
-                            final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteRight(),
-                                    element.getAbsoluteLeft(), element.getAbsoluteTop(), element.getAbsoluteTop(),
-                                    HorizontalLocation.RIGHT, null);
-                            ShowPopupEvent.fire(MenuListPresenter.this, presenter, PopupType.POPUP, popupPosition,
-                                    popupUiHandlers, partners);
+                        // Add parent auto hide partners.
+                        if (MenuListPresenter.this.autoHidePartners != null
+                                && MenuListPresenter.this.autoHidePartners.size() > 0) {
+                            autoHidePartners.addAll(MenuListPresenter.this.autoHidePartners);
                         }
-                    }
 
-                    @Override
-                    public void onFailure(final Throwable caught) {
+                        // Add this as an auto hide partner
+                        autoHidePartners.add(element);
+                        presenter.setAutoHidePartners(autoHidePartners);
+
+                        Element[] partners = new Element[autoHidePartners.size()];
+                        partners = autoHidePartners.toArray(partners);
+
+                        final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteRight(),
+                                element.getAbsoluteLeft(), element.getAbsoluteTop(), element.getAbsoluteTop(),
+                                HorizontalLocation.RIGHT, null);
+                        ShowPopupEvent.fire(MenuListPresenter.this, presenter, PopupType.POPUP, popupPosition,
+                                popupUiHandlers, partners);
                     }
                 });
             }
@@ -160,19 +147,13 @@ public class MenuListPresenter extends MenuPresenter {
         if (menuItem instanceof HasChildren) {
             final HasChildren hasChildren = (HasChildren) menuItem;
 
-            hasChildren.getChildren(new AsyncCallback<List<Item>>() {
-                @Override
-                public void onSuccess(final List<Item> children) {
-                    if (children == null || children.size() == 0) {
-                        MenuListPresenter.super.onMouseOut(menuItem, element);
-                    }
-                }
-
-                @Override
-                public void onFailure(final Throwable caught) {
-                    MenuListPresenter.super.onMouseOut(menuItem, element);
-                }
-            });
+            hasChildren.getChildren()
+                    .onSuccess(children -> {
+                        if (children == null || children.size() == 0) {
+                            MenuListPresenter.super.onMouseOut(menuItem, element);
+                        }
+                    })
+                    .onFailure(caught -> MenuListPresenter.super.onMouseOut(menuItem, element));
         } else {
             super.onMouseOut(menuItem, element);
         }

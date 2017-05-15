@@ -16,15 +16,14 @@
 
 package stroom.xml.converter.ds3;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import stroom.util.test.StroomUnitTest;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestExecutionProfilerTopN extends StroomUnitTest {

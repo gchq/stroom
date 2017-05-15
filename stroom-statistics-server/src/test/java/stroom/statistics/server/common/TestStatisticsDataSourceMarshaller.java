@@ -16,17 +16,16 @@
 
 package stroom.statistics.server.common;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.util.test.StroomUnitTest;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class TestStatisticsDataSourceMarshaller extends StroomUnitTest {
     @Test

@@ -16,6 +16,10 @@
 
 package stroom.util;
 
+import org.apache.commons.lang.math.RandomUtils;
+import stroom.util.io.StreamUtil;
+
+import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -25,12 +29,6 @@ import java.util.Map.Entry;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import javax.net.ssl.HttpsURLConnection;
-
-import org.apache.commons.lang.math.RandomUtils;
-
-import stroom.util.io.StreamUtil;
 
 /**
  * <p>

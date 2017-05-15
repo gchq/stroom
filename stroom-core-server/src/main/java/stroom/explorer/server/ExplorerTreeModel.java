@@ -109,13 +109,10 @@ public class ExplorerTreeModel implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        final EntityEvent.Handler handler = new EntityEvent.Handler() {
-            @Override
-            public void onChange(final EntityEvent event) {
-                // Remember that we need to rebuild the tree.
-                rebuildRequired = true;
-                treeModel = null;
-            }
+        final EntityEvent.Handler handler = event -> {
+            // Remember that we need to rebuild the tree.
+            rebuildRequired = true;
+            treeModel = null;
         };
 
         for (final String beanName : stroomBeanStore.getStroomBean(ProvidesExplorerData.class)) {
@@ -144,12 +141,7 @@ public class ExplorerTreeModel implements InitializingBean {
         }
 
         // Sort the providers so nodes are ordered.
-        final Comparator<ExplorerDataProvider> comparator = new Comparator<ExplorerDataProvider>() {
-            @Override
-            public int compare(final ExplorerDataProvider o1, final ExplorerDataProvider o2) {
-                return Integer.compare(o1.getPriority(), o2.getPriority());
-            }
-        };
+        final Comparator<ExplorerDataProvider> comparator = (o1, o2) -> Integer.compare(o1.getPriority(), o2.getPriority());
         Collections.sort(providers, comparator);
     }
 

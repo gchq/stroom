@@ -30,14 +30,12 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.shared.ResultList;
 import stroom.stats.shared.CustomRollUpMask;
 import stroom.stats.shared.StatisticField;
 import stroom.stats.shared.StroomStatsRollUpBitMaskPermGenerationAction;
@@ -191,17 +189,11 @@ public class StroomStatsStoreCustomMaskListPresenter
                 "Are you sure you want to clear the existing roll-ups and generate all possible permutations for the field list?",
                 result -> {
                     if (result) {
-                        dispatcher.execute(
-                                new StroomStatsRollUpBitMaskPermGenerationAction(
-                                        stroomStatsStoreEntity.getStatisticFieldCount()),
-                                new AsyncCallbackAdaptor<ResultList<CustomRollUpMask>>() {
-                                    @Override
-                                    public void onSuccess(final ResultList<CustomRollUpMask> result) {
-                                        updateState(new HashSet<>(result.getValues()));
-                                        DirtyEvent.fire(thisInstance, true);
-                                    }
-
-                                });
+                        dispatcher.exec(new StroomStatsRollUpBitMaskPermGenerationAction(
+                                stroomStatsStoreEntity.getStatisticFieldCount())).onSuccess(res -> {
+                            updateState(new HashSet<>(res.getValues()));
+                            DirtyEvent.fire(thisInstance, true);
+                        });
                     }
                 });
     }
@@ -289,16 +281,11 @@ public class StroomStatsStoreCustomMaskListPresenter
         // grab the mask list from this presenter
         oldEntityData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
 
-        dispatcher.execute(
-                new StroomStatsStoreFieldChangeAction(oldEntityData, newEntityData),
-                new AsyncCallbackAdaptor<StroomStatsStoreEntityData>() {
-                    @Override
-                    public void onSuccess(final StroomStatsStoreEntityData result) {
-                        newEntityData.setCustomRollUpMasks(result.getCustomRollUpMasks());
+        dispatcher.exec(new StroomStatsStoreFieldChangeAction(oldEntityData, newEntityData)).onSuccess(result -> {
+            newEntityData.setCustomRollUpMasks(result.getCustomRollUpMasks());
 
-                        updateState(result.getCustomRollUpMasks());
-                    }
-                });
+            updateState(result.getCustomRollUpMasks());
+        });
     }
 
     /**

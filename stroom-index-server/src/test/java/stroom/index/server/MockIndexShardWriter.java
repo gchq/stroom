@@ -58,8 +58,7 @@ public class MockIndexShardWriter implements IndexShardWriter {
     }
 
     @Override
-    public boolean check() {
-        return true;
+    public void check() {
     }
 
     @Override

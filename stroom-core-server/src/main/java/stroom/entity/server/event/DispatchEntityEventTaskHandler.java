@@ -18,6 +18,7 @@ package stroom.entity.server.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
 import stroom.node.shared.Node;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.NodeNotFoundException;
@@ -27,7 +28,6 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 import java.util.Set;

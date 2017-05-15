@@ -16,21 +16,22 @@
 
 package stroom.streamtask.server;
 
+import event.logging.BaseAdvancedQueryItem;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
 import stroom.entity.server.UserManagerQueryUtil;
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
-import event.logging.BaseAdvancedQueryItem;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -44,6 +45,12 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
     @Inject
     StreamProcessorServiceImpl(final StroomEntityManager entityManager) {
         super(entityManager);
+    }
+
+    @Insecure
+    @Override
+    public StreamProcessor loadByIdInsecure(final long id) throws RuntimeException {
+        return loadById(id);
     }
 
     @Override

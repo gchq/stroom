@@ -25,9 +25,9 @@ public abstract class AbstractSearchTask<R> extends ServerTask<R> {
     private final FindStreamCriteria streamFilter;
     private final Query query;
 
-    public AbstractSearchTask(final Task<?> parentTask, final String sessionId, final String userName,
+    public AbstractSearchTask(final Task<?> parentTask, final String userToken,
                               final FindStreamCriteria streamFilter, final Query query) {
-        super(null, sessionId, userName);
+        super(null, userToken);
         this.streamFilter = streamFilter;
         this.query = query;
     }

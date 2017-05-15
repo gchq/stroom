@@ -16,8 +16,6 @@
 
 package stroom.xml.converter;
 
-import java.io.IOException;
-
 import org.xml.sax.ContentHandler;
 import org.xml.sax.DTDHandler;
 import org.xml.sax.EntityResolver;
@@ -27,6 +25,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
+
+import java.io.IOException;
 
 /**
  * Acts as an adapter for the XMLReader interface so that subclasses do not need

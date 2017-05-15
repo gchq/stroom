@@ -18,7 +18,11 @@ package stroom.spring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Scope;
 import stroom.node.shared.Node;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomBeanStore;

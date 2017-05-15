@@ -18,6 +18,7 @@ package stroom.pipeline.client.gin;
 
 import com.google.inject.Singleton;
 import stroom.core.client.gin.PluginModule;
+import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XSLTPlugin;
@@ -34,8 +35,8 @@ import stroom.pipeline.client.view.PipelineSettingsViewImpl;
 import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
 import stroom.pipeline.client.view.XSLTSettingsViewImpl;
 import stroom.pipeline.stepping.client.PipelineSteppingPlugin;
-import stroom.pipeline.stepping.client.presenter.EditorPresenter;
-import stroom.pipeline.stepping.client.presenter.EditorPresenter.EditorView;
+import stroom.pipeline.stepping.client.presenter.ElementPresenter;
+import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
 import stroom.pipeline.stepping.client.presenter.StepLocationPresenter;
@@ -47,7 +48,7 @@ import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
-import stroom.pipeline.stepping.client.view.EditorViewImpl;
+import stroom.pipeline.stepping.client.view.ElementViewImpl;
 import stroom.pipeline.stepping.client.view.StepControlViewImpl;
 import stroom.pipeline.stepping.client.view.StepLocationViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingFilterViewImpl;
@@ -71,7 +72,6 @@ import stroom.pipeline.structure.client.view.PipelineTreeViewImpl;
 import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.process.client.presenter.ProcessorPresenter.ProcessorView;
 import stroom.process.client.view.ProcessorViewImpl;
-import stroom.xmleditor.client.view.XMLEditorMenuPresenter;
 
 public class PipelineModule extends PluginModule {
     @Override
@@ -108,11 +108,11 @@ public class PipelineModule extends PluginModule {
                 SteppingFilterViewImpl.class);
         bindPresenterWidget(XPathFilterPresenter.class, XPathFilterView.class, XPathFilterViewImpl.class);
 
-        bindPresenterWidget(EditorPresenter.class, EditorView.class, EditorViewImpl.class);
+        bindPresenterWidget(ElementPresenter.class, ElementView.class, ElementViewImpl.class);
 
         // Add processor bindings.
         bindPresenterWidget(ProcessorPresenter.class, ProcessorView.class, ProcessorViewImpl.class);
 
-        bind(XMLEditorMenuPresenter.class).in(Singleton.class);
+        bind(EditorMenuPresenter.class).in(Singleton.class);
     }
 }

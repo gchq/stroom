@@ -16,13 +16,13 @@
 
 package stroom.util.thread;
 
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-
-import org.junit.Assert;
-import org.junit.Test;
 
 public class TestCondition {
     @Test

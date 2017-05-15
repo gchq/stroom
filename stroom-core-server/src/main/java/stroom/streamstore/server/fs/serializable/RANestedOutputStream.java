@@ -16,11 +16,11 @@
 
 package stroom.streamstore.server.fs.serializable;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.shared.StreamType;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * Class used to write multiple streams to a single stream separated by segments

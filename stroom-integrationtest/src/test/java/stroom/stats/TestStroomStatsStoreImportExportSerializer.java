@@ -19,12 +19,8 @@ package stroom.stats;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.FindFolderCriteria;
-import stroom.entity.shared.FolderService;
+import stroom.entity.shared.*;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.importexport.server.ImportExportSerializer.ImportMode;
 import stroom.query.api.DocRef;
 import stroom.statistics.server.common.StatisticsDataSourceProvider;
 import stroom.statistics.server.stroomstats.entity.FindStroomStatsStoreEntityCriteria;
@@ -50,11 +46,10 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
     @Resource
     private StatisticsDataSourceProvider statisticsDataSourceProvider;
 
-    private FindFolderCriteria buildFindFolderCriteria() {
-        final FindFolderCriteria criteria = new FindFolderCriteria();
-        criteria.getFolderIdSet().setDeep(true);
-        criteria.getFolderIdSet().setMatchNull(Boolean.TRUE);
-        return criteria;
+    private DocRefs buildFindFolderCriteria() {
+        final DocRefs docRefs = new DocRefs();
+        docRefs.add(new DocRef(Folder.ENTITY_TYPE,"0", "System"));
+        return docRefs;
     }
 
     /**
@@ -81,7 +76,7 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
         FileSystemUtil.deleteDirectory(testDataDir);
         FileSystemUtil.mkdirs(null, testDataDir);
 
-        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, false, null);
+        importExportSerializer.write(testDataDir.toPath(), buildFindFolderCriteria(), true, null);
 
         Assert.assertEquals(2, testDataDir.listFiles().length);
 
@@ -90,7 +85,7 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
 
         Assert.assertEquals(0, stroomStatsStoreEntityService.find(FindStroomStatsStoreEntityCriteria.instance()).size());
 
-        importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(testDataDir.toPath(), null, ImportState.ImportMode.IGNORE_CONFIRMATION);
 
         final BaseResultList<StroomStatsStoreEntity> dataSources = stroomStatsStoreEntityService
                 .find(FindStroomStatsStoreEntityCriteria.instance());

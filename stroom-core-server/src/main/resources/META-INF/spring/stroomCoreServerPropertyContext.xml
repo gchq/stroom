@@ -30,6 +30,8 @@
                       value="Temp folder to write stuff to. Should only be set per node in application property file"/>
             <property name="editable" value="false"/>
         </bean>
+
+        <!-- Stroom Proxy Repository and Aggregation -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.proxyDir"/>
             <property name="value" value="${stroom.temp}/proxy"/>
@@ -43,6 +45,14 @@
             <property name="name" value="stroom.proxyThreads"/>
             <property name="value" value="10"/>
             <property name="description" value="Number of threads used in aggregation"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.proxy.zipFilenameDelimiter"/>
+            <property name="value" value="%"/>
+            <property name="description" value="The char or string to delimit the id part of the zip file name from the templated part (see zipFilenameTemplate) if a template is provided."/>
             <property name="editable" value="true"/>
             <property name="requireRestart" value="false"/>
             <property name="requireUiRestart" value="false"/>
@@ -268,17 +278,30 @@
             <property name="editable" value="false"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.startOnLoad"/>
+            <property name="name" value="stroom.lifecycle.enabled"/>
             <property name="value" value="true"/>
             <property name="description"
                       value="Set this to false for development and testing purposes otherwise the Stroom will try and process files automatically outside of test cases."/>
-            <property name="editable" value="false"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.maintenanceMessage"/>
+            <property name="name" value="stroom.lifecycle.executionInterval"/>
+            <property name="value" value="10s"/>
+            <property name="description" value="How frequently should the lifecycle service attempt execution."/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.maintenance.message"/>
             <property name="value" value=""/>
-            <property name="description"
-                      value="Provide a message to prevent further logins and alert currently logged in users about an outage."/>
+            <property name="description" value="Provide a warning message to users about an outage or other significant event."/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.maintenance.preventLogin"/>
+            <property name="value" value="false"/>
+            <property name="description" value="Prevent new logins to the system. This is useful if the system is scheduled to have an outage."/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
@@ -506,31 +529,43 @@
             <property name="requireRestart" value="true"/>
         </bean>
 
-        <!-- CACHE DATA SOURCE -->
+        <!-- SQL STATISTICS DATA SOURCE -->
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.cache.jdbcDriverClassName"/>
-            <property name="description" value="Optional Cache Values"/>
-            <property name="editable" value="true"/>
-            <property name="requireRestart" value="true"/>
+            <property name="name" value="stroom.statistics.sql.jdbcDriverClassName"/>
+            <property name="value" value="org.hsqldb.jdbcDriver"/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.cache.jdbcDriverUrl"/>
-            <property name="description" value="Optional Cache Values"/>
-            <property name="editable" value="true"/>
-            <property name="requireRestart" value="true"/>
+            <property name="name" value="stroom.statistics.sql.jdbcDriverUrl"/>
+            <property name="value"
+                      value="jdbc:hsqldb:file:${stroom.temp}/STROOMDB/HSQLDB.DAT;shutdown=true"/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.cache.jdbcDriverUsername"/>
-            <property name="description" value="Optional Cache Values"/>
-            <property name="editable" value="true"/>
-            <property name="requireRestart" value="true"/>
+            <property name="name" value="stroom.statistics.sql.jdbcDriverUsername"/>
+            <property name="value" value="sa"/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.cache.jdbcDriverPassword"/>
-            <property name="description" value="Optional Cache Values"/>
-            <property name="editable" value="true"/>
-            <property name="requireRestart" value="true"/>
+            <property name="name" value="stroom.statistics.sql.jdbcDriverPassword"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="Should only be set per node in application property file"/>
+            <property name="editable" value="false"/>
             <property name="password" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.statistics.sql.jdbcMaxPoolSize"/>
+            <property name="value" value="10"/>
+            <property name="description" value="Node Pool Size"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
         </bean>
 
         <!-- Entity Names -->
@@ -753,7 +788,7 @@
 
         <!-- Common statistics store properties -->
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.stats.common.statisticEngines"/>
+            <property name="name" value="stroom.statistics.common.statisticEngines"/>
             <property name="value" value="sql"/>
             <property name="description"
                       value="Comma delimited list of enabled engines that implement Statistic Event Store (currently 'sql')"/>
@@ -763,7 +798,7 @@
 
         <!-- Legacy statistics store properties -->
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.stats.legacy.statisticAggregationBatchSize"/>
+            <property name="name" value="stroom.statistics.legacy.statisticAggregationBatchSize"/>
             <property name="value" value="1000000"/>
             <property name="description"
                       value="Number of STAT_VAL_SRC records to merge into STAT_VAL in one batch"/>
@@ -772,21 +807,21 @@
 
         <!-- SQL statistics store properties -->
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.stats.sql.statisticAggregationBatchSize"/>
+            <property name="name" value="stroom.statistics.sql.statisticAggregationBatchSize"/>
             <property name="value" value="1000000"/>
             <property name="description"
                       value="Number of SQL_STAT_VAL_SRC records to merge into SQL_STAT_VAL in one batch"/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.stats.sql.search.maxResults"/>
+            <property name="name" value="stroom.statistics.sql.search.maxResults"/>
             <property name="value" value="100000"/>
             <property name="description"
                       value="The maximum number of records that can be returned from the statistics DB in a single query prior to aggregation"/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.stats.sql.maxProcessingAge"/>
+            <property name="name" value="stroom.statistics.sql.maxProcessingAge"/>
             <property name="value" value=""/>
             <property name="description"
                       value="The maximum age of statistics to process, i.e. any statistics with an statistic event time older than the current time minus maxProcessingAge will be silently dropped.  Leave blank to process all data."/>

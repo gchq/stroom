@@ -16,11 +16,11 @@
 
 package stroom.pipeline.server.writer;
 
+import stroom.util.io.WrappedOutputStream;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-
-import stroom.util.io.WrappedOutputStream;
 
 public class LockedOutputStream extends WrappedOutputStream {
     private static final String UNABLE_TO_RENAME_FILE = "Unable to rename file \"";

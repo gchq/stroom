@@ -16,24 +16,22 @@
 
 package stroom.node.server;
 
-import java.util.List;
-
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 public class TestVolumeService extends AbstractCoreIntegrationTest {
     @Resource
     private VolumeService volumeService;
 
     @Test
-    public void tesFind() {
+    public void testFind() {
         final FindVolumeCriteria criteria = new FindVolumeCriteria();
         final List<Volume> volumeList = volumeService.find(criteria);
 

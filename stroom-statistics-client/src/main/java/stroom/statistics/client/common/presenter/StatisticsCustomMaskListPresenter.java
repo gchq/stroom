@@ -17,7 +17,6 @@
 package stroom.statistics.client.common.presenter;
 
 import com.google.gwt.cell.client.CheckboxCell;
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.resources.client.ClientBundle;
@@ -28,18 +27,15 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.shared.ResultList;
 import stroom.statistics.client.common.presenter.StatisticsCustomMaskListPresenter.MaskHolder;
 import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.RollUpBitMaskPermGenerationAction;
@@ -167,13 +163,10 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
             }
         };
 
-        rolledUpColumn.setFieldUpdater(new FieldUpdater<MaskHolder, Boolean>() {
-            @Override
-            public void update(final int index, final MaskHolder row, final Boolean value) {
-                row.getMask().setRollUpState(fieldPositionNumber, value);
+        rolledUpColumn.setFieldUpdater((index, row, value) -> {
+            row.getMask().setRollUpState(fieldPositionNumber, value);
 
-                DirtyEvent.fire(StatisticsCustomMaskListPresenter.this, true);
-            }
+            DirtyEvent.fire(StatisticsCustomMaskListPresenter.this, true);
         });
 
         getView().addResizableColumn(rolledUpColumn, fieldname, 100);
@@ -193,22 +186,13 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
 
         ConfirmEvent.fire(this,
                 "Are you sure you want to clear the existing roll-ups and generate all possible permutations for the field list?",
-                new ConfirmCallback() {
-                    @Override
-                    public void onResult(final boolean result) {
-                        if (result) {
-                            dispatcher.execute(
-                                    new RollUpBitMaskPermGenerationAction(
-                                            statisticsDataSource.getStatisticFieldCount()),
-                                    new AsyncCallbackAdaptor<ResultList<CustomRollUpMask>>() {
-                                        @Override
-                                        public void onSuccess(final ResultList<CustomRollUpMask> result) {
-                                            updateState(new HashSet<CustomRollUpMask>(result.getValues()));
-                                            DirtyEvent.fire(thisInstance, true);
-                                        }
-
-                                    });
-                        }
+                result -> {
+                    if (result) {
+                        dispatcher.exec(new RollUpBitMaskPermGenerationAction(
+                                statisticsDataSource.getStatisticFieldCount())).onSuccess(res -> {
+                            updateState(new HashSet<>(res.getValues()));
+                            DirtyEvent.fire(thisInstance, true);
+                        });
                     }
                 });
     }
@@ -265,7 +249,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     @Override
     public void write(final StatisticStoreEntity entity) {
         entity.getStatisticDataSourceDataObject()
-                .setCustomRollUpMasks(new HashSet<CustomRollUpMask>(maskList.getMasks()));
+                .setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
     }
 
     @Override
@@ -294,22 +278,13 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     public void reComputeRollUpBitMask(final StatisticsDataSourceData oldStatisticsDataSourceData,
                                        final StatisticsDataSourceData newStatisticsDataSourceData) {
         // grab the mask list from this presenter
-        oldStatisticsDataSourceData.setCustomRollUpMasks(new HashSet<CustomRollUpMask>(maskList.getMasks()));
+        oldStatisticsDataSourceData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
 
-        dispatcher.execute(
-                new StatisticsDataSourceFieldChangeAction(oldStatisticsDataSourceData, newStatisticsDataSourceData),
-                new AsyncCallbackAdaptor<StatisticsDataSourceData>() {
-                    @Override
-                    public void onSuccess(final StatisticsDataSourceData result) {
-                        newStatisticsDataSourceData.setCustomRollUpMasks(result.getCustomRollUpMasks());
+        dispatcher.exec(new StatisticsDataSourceFieldChangeAction(oldStatisticsDataSourceData, newStatisticsDataSourceData)).onSuccess(result -> {
+            newStatisticsDataSourceData.setCustomRollUpMasks(result.getCustomRollUpMasks());
 
-                        updateState(result.getCustomRollUpMasks());
-
-                    }
-
-                    ;
-                });
-
+            updateState(result.getCustomRollUpMasks());
+        });
     }
 
     /**
@@ -372,7 +347,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
         }
 
         public boolean addMasks(final Collection<CustomRollUpMask> masks) {
-            final List<MaskHolder> list = new ArrayList<MaskHolder>();
+            final List<MaskHolder> list = new ArrayList<>();
 
             for (final CustomRollUpMask mask : masks) {
                 final MaskHolder holder = new MaskHolder(idCounter++, mask);
@@ -382,7 +357,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
         }
 
         public List<CustomRollUpMask> getMasks() {
-            final List<CustomRollUpMask> list = new ArrayList<CustomRollUpMask>();
+            final List<CustomRollUpMask> list = new ArrayList<>();
             for (final MaskHolder holder : this) {
                 list.add(holder.getMask());
             }

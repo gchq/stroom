@@ -16,15 +16,15 @@
 
 package stroom.statistics.sql;
 
-import java.util.EnumMap;
-import java.util.List;
-
 import stroom.statistics.common.FilterOperationMode;
 import stroom.statistics.common.FilterTermsTree;
 import stroom.statistics.common.FilterTermsTree.OperatorNode;
 import stroom.statistics.common.FilterTermsTree.TermNode;
 import stroom.statistics.common.PrintableNode;
 import stroom.util.sql.SQLSafe;
+
+import java.util.EnumMap;
+import java.util.List;
 
 public class SQLTagValueWhereClauseConverter {
     // map to provide a lookup from the FilterOperationMode enum to the SQL

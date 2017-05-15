@@ -16,12 +16,12 @@
 
 package stroom.entity.server;
 
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import org.junit.Assert;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedService;
 
 import javax.annotation.Resource;
 

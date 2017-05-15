@@ -16,10 +16,10 @@
 
 package stroom.io;
 
+import stroom.util.io.WrappedReader;
+
 import java.io.IOException;
 import java.io.Reader;
-
-import stroom.util.io.WrappedReader;
 
 public class IgnoreCloseReader extends WrappedReader {
     public IgnoreCloseReader(final Reader reader) {

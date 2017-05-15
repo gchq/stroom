@@ -79,7 +79,7 @@ public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilt
 
         // Ignore case.
         final Column<XPathFilter, TickBoxState> ignoreCaseColumn = new Column<XPathFilter, TickBoxState>(
-                new TickBoxCell(false, false)) {
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final XPathFilter filter) {
                 return TickBoxState.fromBoolean(filter.isIgnoreCase());

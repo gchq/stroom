@@ -16,13 +16,13 @@
 
 package stroom.xml.converter.ds3.ref;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
 import stroom.xml.converter.ds3.StoreFactory;
 import stroom.xml.converter.ds3.StoreNode;
 import stroom.xml.converter.ds3.VarFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class RefResolver {
     private final String reference;

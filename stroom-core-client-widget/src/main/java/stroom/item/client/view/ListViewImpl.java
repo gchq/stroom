@@ -20,7 +20,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.item.client.presenter.ListPresenter.ListView;
 
 public class ListViewImpl extends ViewImpl implements ListView {

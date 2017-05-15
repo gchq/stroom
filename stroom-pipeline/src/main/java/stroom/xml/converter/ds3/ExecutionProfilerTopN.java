@@ -16,11 +16,11 @@
 
 package stroom.xml.converter.ds3;
 
+import stroom.util.shared.CompareUtil;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import stroom.util.shared.CompareUtil;
 
 public class ExecutionProfilerTopN {
     List<ExecutionProfiler> topN = new ArrayList<ExecutionProfiler>();

@@ -16,19 +16,20 @@
 
 package stroom.feed.server;
 
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.config.StroomProperties;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.persistence.Transient;
@@ -42,8 +43,8 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
     public static final String FEED_NAME_PATTERN_VALUE = "^[A-Z0-9_\\-]{3,}$";
 
     @Inject
-    FeedServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext) {
-        super(entityManager, securityContext);
+    FeedServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
     }
 
     @SuppressWarnings("unchecked")
@@ -58,7 +59,7 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
         sql.arg(name);
 
         // This should just bring back 1
-        final List<Feed> results = getEntityManager().executeQueryResultList(sql);
+        final List<Feed> results = getEntityManager().executeQueryResultList(sql, null, true);
 
         Feed feed = null;
         if (results != null && results.size() > 0) {

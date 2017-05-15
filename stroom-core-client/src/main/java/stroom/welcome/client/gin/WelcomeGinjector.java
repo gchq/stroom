@@ -17,7 +17,6 @@
 package stroom.welcome.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-
 import stroom.welcome.client.WelcomePlugin;
 import stroom.welcome.client.presenter.WelcomePresenter;
 

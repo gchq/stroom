@@ -16,12 +16,12 @@
 
 package stroom.util;
 
+import org.springframework.util.Base64Utils;
+
 import java.io.FileInputStream;
 import java.security.Key;
 import java.security.KeyStore;
 import java.util.HashMap;
-
-import org.springframework.util.Base64Utils;
 
 /**
  * Utility to export a private key and certificate from a key store.

@@ -16,16 +16,15 @@
 
 package stroom.pipeline.server.task;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.pipeline.shared.StepLocation;
+import stroom.util.spring.StroomScope;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.pipeline.shared.StepLocation;
-import stroom.util.spring.StroomScope;
 
 @Component
 @Scope(value = StroomScope.TASK)

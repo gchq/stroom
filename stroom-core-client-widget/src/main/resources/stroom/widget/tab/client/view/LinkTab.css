@@ -25,11 +25,11 @@
 }
 
 .linkTab .background {
-	padding: 0px 5px 0px 5px;
+	padding-left: 5px;
+	padding-right: 5px;
 	cursor: pointer;
 	white-space: nowrap;
-	text-decoration: underline;
-	font-weight: bold;
+	font-weight: 600;
 	opacity: 0;
 }
 
@@ -40,10 +40,35 @@
 	width: 100%;
 	cursor: pointer;
 	white-space: nowrap;
-	text-decoration: underline;
-	text-align: center;
+	padding-left: 5px;
 }
 
 .linkTab.selected .label {
-	font-weight: bold;
+	font-weight: 600;
+}
+
+.linkTab .hotspot {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	top: 0px;
+	bottom: 0px;
+	margin: 0px;
+	padding: 0px;
+	border-width: 1px;
+	border-color: black;
+	border-style: solid;
+	background-color: red;
+	opacity: 0;
+
+	transition: opacity .2s;
+	-webkit-transition: opacity .2s;
+	-moz-transition: opacity .2s;
+	-o-transition: opacity .2s;
+
+	cursor: pointer;
+}
+
+.linkTab .hotspotVisible {
+	opacity: .3 !important;
 }

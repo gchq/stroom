@@ -21,12 +21,11 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
 import stroom.widget.tab.client.presenter.LayerContainer;
-import stroom.widget.tab.client.presenter.SlideTabLayoutView;
+import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabBar;
 
-public class LinkTabViewImpl extends ViewImpl implements SlideTabLayoutView {
+public class LinkTabViewImpl extends ViewImpl implements LinkTabsLayoutView {
     public interface Binder extends UiBinder<Widget, LinkTabViewImpl> {
     }
 

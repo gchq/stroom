@@ -17,5 +17,5 @@
 package stroom.statistics.common;
 
 public interface CommonStatisticConstants {
-    String STROOM_STATISTIC_ENGINES_PROPERTY_NAME = "stroom.stats.common.statisticEngines";
+    String STROOM_STATISTIC_ENGINES_PROPERTY_NAME = "stroom.statistics.common.statisticEngines";
 }

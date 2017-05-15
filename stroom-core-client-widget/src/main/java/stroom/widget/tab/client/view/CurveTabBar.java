@@ -21,7 +21,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.DOM;
-
 import stroom.widget.tab.client.presenter.TabData;
 
 public class CurveTabBar extends AbstractTabBar {

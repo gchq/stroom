@@ -16,12 +16,12 @@
 
 package stroom.db.migration.mysql;
 
+import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.db.migration.EntityReferenceReplacer;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.query.api.DocRef;
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -117,7 +117,12 @@ public class V5_0_0_10__Pipeline implements JdbcMigration {
                     final String name = resultSet.getString(2);
                     final String data = resultSet.getString(3);
 
-                    if (data != null) {
+                    LOGGER.info("Starting pipeline upgrade: " + name);
+
+                    if (data == null) {
+                        LOGGER.info("Incomplete configuration found");
+
+                    } else {
                         String newData = data;
 
                         // Add CombinedParser element if it is missing.
@@ -154,15 +159,19 @@ public class V5_0_0_10__Pipeline implements JdbcMigration {
                         newData = entityReferenceReplacer.replaceEntityReferences(connection, newData);
 
                         if (!newData.equals(data)) {
-                            LOGGER.info("Upgrading pipeline: " + name);
+                            LOGGER.info("Modifying pipeline");
 
                             try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE PIPE SET DAT = ? WHERE ID = ?")) {
                                 preparedStatement.setString(1, newData);
                                 preparedStatement.setLong(2, id);
                                 preparedStatement.executeUpdate();
                             }
+                        } else {
+                            LOGGER.info("No change required");
                         }
                     }
+
+                    LOGGER.info("Finished pipeline upgrade: " + name);
                 }
             }
         }

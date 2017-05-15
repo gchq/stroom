@@ -16,28 +16,71 @@
 
 package stroom.widget.customdatebox.client;
 
-import java.util.Date;
-
-import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.core.client.GWT;
 
 public final class ClientDateUtil {
     private ClientDateUtil() {
         // Utility class.
     }
 
-    public static String createDateTimeString(final Long ms) {
+    public static String toDateString(final Long ms) {
         if (ms == null) {
-            return null;
+            return "";
+        }
+        return nativeToDateString(ms.doubleValue());
+    }
+
+    public static String toISOString(final Long ms) {
+        if (ms == null) {
+            return "";
+        }
+        return nativeToISOString(ms.doubleValue());
+    }
+
+    public static Long fromISOString(final String string) {
+        Long millis = null;
+        if (string != null && string.trim().length() > 0) {
+            try {
+                double res = nativeFromISOString(string.trim());
+                if (res > 0) {
+                    millis = (long) res;
+                }
+            } catch (final Exception e) {
+                GWT.log(e.getMessage());
+            }
         }
 
-        final DateTimeFormat format = new CustomDateTimeFormat();
-        return format.format(new Date(ms));
+        return millis;
     }
 
-    @SuppressWarnings("deprecation")
-    public static Date getInitialDate() {
-        final Date now = new Date();
-        final Date initial = new Date(now.getYear(), now.getMonth(), now.getDate());
-        return initial;
+
+    public static boolean isValid(final String string) {
+        if (string == null || string.trim().length() == 0) {
+            return false;
+        }
+        return nativeIsValid(string);
     }
+
+    private static native String nativeToDateString(final double ms)/*-{
+       var moment = $wnd.moment(ms);
+       return moment.format('YYYY-MM-DD');
+    }-*/;
+
+    private static native String nativeToISOString(final double ms)/*-{
+       var moment = $wnd.moment(ms);
+       return moment.toISOString();
+    }-*/;
+
+    private static native double nativeFromISOString(final String date)/*-{
+        if ($wnd.moment(date).isValid()) {
+           var moment = $wnd.moment(date);
+           var date = moment.toDate();
+           return date.getTime();
+        }
+        return -1;
+    }-*/;
+
+    private static native boolean nativeIsValid(final String date)/*-{
+        return $wnd.moment(date).isValid();
+    }-*/;
 }

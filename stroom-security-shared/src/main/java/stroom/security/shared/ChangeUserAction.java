@@ -23,8 +23,8 @@ public class ChangeUserAction extends Action<VoidResult> {
     private static final long serialVersionUID = 800905016214418723L;
 
     private UserRef userRef;
-    private ChangeSet<UserRef> changedLinkedUsers = new ChangeSet<UserRef>();
-    private ChangeSet<String> changedAppPermissions = new ChangeSet<String>();
+    private ChangeSet<UserRef> changedLinkedUsers = new ChangeSet<>();
+    private ChangeSet<String> changedAppPermissions = new ChangeSet<>();
 
     public ChangeUserAction() {
         // Default constructor necessary for GWT serialisation.
@@ -42,16 +42,8 @@ public class ChangeUserAction extends Action<VoidResult> {
         return changedLinkedUsers;
     }
 
-    public void setChangedLinkedUsers(ChangeSet<UserRef> changedLinkedUsers) {
-        this.changedLinkedUsers = changedLinkedUsers;
-    }
-
     public ChangeSet<String> getChangedAppPermissions() {
         return changedAppPermissions;
-    }
-
-    public void setChangedAppPermissions(ChangeSet<String> changedAppPermissions) {
-        this.changedAppPermissions = changedAppPermissions;
     }
 
     @Override

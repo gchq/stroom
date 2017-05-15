@@ -16,6 +16,11 @@
 
 package stroom.xml.util;
 
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -27,11 +32,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 
 public class XMLWriter implements ContentHandler {
     public enum XMLVersion {

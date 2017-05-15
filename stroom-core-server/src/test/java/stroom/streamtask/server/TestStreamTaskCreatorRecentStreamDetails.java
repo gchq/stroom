@@ -16,15 +16,14 @@
 
 package stroom.streamtask.server;
 
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestStreamTaskCreatorRecentStreamDetails extends StroomUnitTest {

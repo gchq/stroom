@@ -16,9 +16,6 @@
 
 package stroom.pipeline.server.util;
 
-import java.io.InputStream;
-import java.util.List;
-
 import stroom.cache.server.ParserFactoryPool;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -31,6 +28,9 @@ import stroom.pipeline.server.parser.AbstractParser;
 import stroom.pipeline.server.parser.CombinedParser;
 import stroom.pipeline.server.parser.XMLParser;
 import stroom.pipeline.shared.TextConverterService;
+
+import java.io.InputStream;
+import java.util.List;
 
 public class ProcessorUtil {
     public static void processCombined(final InputStream inputStream, final ErrorReceiverProxy errorReceiverProxy,

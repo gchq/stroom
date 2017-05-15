@@ -20,7 +20,6 @@ import com.google.gwt.canvas.dom.client.CanvasGradient;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.CssColor;
 import com.google.gwt.canvas.dom.client.FillStrokeStyle;
-
 import stroom.widget.htree.client.treelayout.Bounds;
 
 public class ShadowBox {

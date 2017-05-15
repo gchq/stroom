@@ -27,6 +27,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.util.shared.HasReadOnly;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class VisualisationSettingsViewImpl extends ViewImpl implements VisualisationSettingsView, HasReadOnly {
     private final Widget widget;
@@ -37,7 +38,7 @@ public class VisualisationSettingsViewImpl extends ViewImpl implements Visualisa
     @UiField
     SimplePanel script;
     @UiField
-    TextArea settings;
+    ResizeSimplePanel settings;
     @Inject
     public VisualisationSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -64,8 +65,8 @@ public class VisualisationSettingsViewImpl extends ViewImpl implements Visualisa
     }
 
     @Override
-    public TextArea getSettings() {
-        return settings;
+    public void setSettingsView(final View view) {
+        settings.setWidget(view.asWidget());
     }
 
     @Override

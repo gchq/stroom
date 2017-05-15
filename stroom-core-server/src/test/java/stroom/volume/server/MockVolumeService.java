@@ -16,17 +16,16 @@
 
 package stroom.volume.server;
 
-import java.util.Set;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
 import stroom.entity.server.MockEntityService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
 import stroom.util.spring.StroomSpringProfiles;
+
+import java.util.Set;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component("volumeService")

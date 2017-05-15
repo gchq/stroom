@@ -29,7 +29,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.query.api.Query;
+import stroom.query.api.SearchRequest;
 import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.FilterTermsTree;
 import stroom.statistics.common.FilterTermsTreeBuilder;
@@ -45,6 +45,7 @@ import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -72,7 +73,7 @@ public abstract class AbstractStatistics implements Statistics {
         this.propertyService = propertyService;
     }
 
-    protected static FindEventCriteria buildCriteria(final Query query, final StatisticStoreEntity dataSource) {
+    protected static FindEventCriteria buildCriteria(final SearchRequest searchRequest, final StatisticStoreEntity dataSource) {
         LOGGER.trace("buildCriteria called for statistic {}", dataSource.getName());
 
         // Get the current time in millis since epoch.
@@ -82,7 +83,7 @@ public abstract class AbstractStatistics implements Statistics {
         // AND
         // Date Time between 2014-10-22T23:00:00.000Z,2014-10-23T23:00:00.000Z
 
-        final ExpressionOperator topLevelExpressionOperator = query.getExpression();
+        final ExpressionOperator topLevelExpressionOperator = searchRequest.getQuery().getExpression();
 
         if (topLevelExpressionOperator == null || topLevelExpressionOperator.getOp() == null) {
             throw new IllegalArgumentException(
@@ -138,14 +139,14 @@ public abstract class AbstractStatistics implements Statistics {
         }
 
         // ensure the value field is not used in the query terms
-        if (contains(query.getExpression(), StatisticStoreEntity.FIELD_NAME_VALUE)) {
+        if (contains(searchRequest.getQuery().getExpression(), StatisticStoreEntity.FIELD_NAME_VALUE)) {
             throw new UnsupportedOperationException("Search queries containing the field '"
                     + StatisticStoreEntity.FIELD_NAME_VALUE + "' are not supported.  Please remove it from the query");
         }
 
         // if we have got here then we have a single BETWEEN date term, so parse
         // it.
-        final Range<Long> range = extractRange(dateTerm, nowEpochMilli);
+        final Range<Long> range = extractRange(dateTerm, searchRequest.getDateTimeLocale(), nowEpochMilli);
 
         final List<ExpressionTerm> termNodesInFilter = new ArrayList<>();
         findAllTermNodes(topLevelExpressionOperator, termNodesInFilter);
@@ -271,25 +272,39 @@ public abstract class AbstractStatistics implements Statistics {
         return rolledUpStatisticEvent;
     }
 
-    private static Range<Long> extractRange(final ExpressionTerm dateTerm, final long nowEpochMilli) {
-
+    private static Range<Long> extractRange(final ExpressionTerm dateTerm, final String timeZoneId, final long nowEpochMilli) {
         final String[] dateArr = dateTerm.getValue().split(",");
 
         if (dateArr.length != 2) {
             throw new RuntimeException("DateTime term is not a valid format, term: " + dateTerm.toString());
         }
 
-        long rangeFrom = DateExpressionParser.parse(dateArr[0], nowEpochMilli)
+        long rangeFrom = DateExpressionParser.parse(dateArr[0], timeZoneId, nowEpochMilli)
                 .map(time -> time.toInstant().toEpochMilli())
                 .orElse(0L);
         // add one to make it exclusive
-        long rangeTo = DateExpressionParser.parse(dateArr[1], nowEpochMilli)
+        long rangeTo = DateExpressionParser.parse(dateArr[1], timeZoneId, nowEpochMilli)
                 .map(time -> time.toInstant().toEpochMilli() + 1)
                 .orElse(Long.MAX_VALUE);
 
         final Range<Long> range = new Range<>(rangeFrom, rangeTo);
 
         return range;
+    }
+
+    private static long parseDateTime(final String type, final String value, final String timeZoneId, final long nowEpochMilli) {
+        final ZonedDateTime dateTime;
+        try {
+            dateTime = DateExpressionParser.parse(value, timeZoneId, nowEpochMilli).get();
+        } catch (final Exception e) {
+            throw new RuntimeException("DateTime term has an invalid '" + type + "' value of '" + value + "'");
+        }
+
+        if (dateTime == null) {
+            throw new RuntimeException("DateTime term has an invalid '" + type + "' value of '" + value + "'");
+        }
+
+        return dateTime.toInstant().toEpochMilli();
     }
 
     private static List<List<StatisticTag>> generateStatisticTagPerms(final List<StatisticTag> eventTags,

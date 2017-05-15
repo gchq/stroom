@@ -16,14 +16,6 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import java.io.StringReader;
-
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.xml.sax.InputSource;
-
-import stroom.util.spring.StroomScope;
-import stroom.xml.converter.json.JSONParser;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -33,6 +25,13 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import org.xml.sax.InputSource;
+import stroom.util.spring.StroomScope;
+import stroom.xml.converter.json.JSONParser;
+
+import java.io.StringReader;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)

@@ -16,6 +16,9 @@
 
 package stroom.util;
 
+import org.apache.commons.lang.StringUtils;
+import stroom.util.zip.HeaderMap;
+
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
@@ -23,10 +26,6 @@ import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.commons.lang.StringUtils;
-
-import stroom.util.zip.HeaderMap;
 
 /**
  * Base class for command line tools that handles setting a load of args on the

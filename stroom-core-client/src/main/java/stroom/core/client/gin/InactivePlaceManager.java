@@ -15,7 +15,6 @@
  */
 
 package stroom.core.client.gin;
-
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.proxy.PlaceManager;

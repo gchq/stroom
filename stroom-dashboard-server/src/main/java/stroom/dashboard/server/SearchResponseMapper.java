@@ -16,19 +16,11 @@
 
 package stroom.dashboard.server;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.TypeConverter;
+import stroom.dashboard.server.VisResult.Store;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.dashboard.server.VisResult.Store;
 import stroom.query.api.Field;
 import stroom.query.api.FlatResult;
 import stroom.query.api.Result;

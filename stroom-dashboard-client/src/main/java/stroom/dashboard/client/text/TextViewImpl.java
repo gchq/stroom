@@ -37,6 +37,7 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers>implements T
     ClassificationLabel classification;
     @UiField
     FabButton playButton;
+
     @Inject
     public TextViewImpl(final Binder binder, final ClassificationLabel classification) {
         this.classification = classification;

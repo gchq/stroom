@@ -16,15 +16,14 @@
 
 package stroom.util.io;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.regex.Pattern;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.util.test.StroomJUnit4ClassRunner;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.regex.Pattern;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestPreviewInputStream {

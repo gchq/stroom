@@ -22,7 +22,6 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Sort;
@@ -283,12 +282,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createExpressionMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(0, ImageIcon.create(resources.expression()), null, "Expression", null, true, new Command() {
-            @Override
-            public void execute() {
-                showExpression(field);
-            }
-        });
+        final Item item = new IconMenuItem(0, ImageIcon.create(resources.expression()), null, "Expression", null, true, () -> showExpression(field));
         if (field.getExpression() != null) {
             String expression = field.getExpression();
             expression = expression.replaceAll("\\$\\{[^\\{\\}]*\\}", "");
@@ -316,12 +310,7 @@ public class FieldsManager implements HeadingListener {
 
     private Item createSortOption(final Field field, final Set<Item> highlights, final int pos,
                                   final ImageResource icon, final String text, final SortDirection sortDirection) {
-        final Item item = new IconMenuItem(pos, ImageIcon.create(icon), null, text, null, true, new Command() {
-            @Override
-            public void execute() {
-                changeSort(field, sortDirection);
-            }
-        });
+        final Item item = new IconMenuItem(pos, ImageIcon.create(icon), null, text, null, true, () -> changeSort(field, sortDirection));
         if (field.getSort() != null && field.getSort().getDirection() == sortDirection) {
             highlights.add(item);
         }
@@ -334,12 +323,7 @@ public class FieldsManager implements HeadingListener {
         for (int i = 0; i < maxGroup; i++) {
             final int group = i;
             final Item item = new IconMenuItem(i, ImageIcon.create(resources.group()), null, "Level " + (i + 1), null, true,
-                    new Command() {
-                        @Override
-                        public void execute() {
-                            setGroup(field, group);
-                        }
-                    });
+                    () -> setGroup(field, group));
             menuItems.add(item);
 
             if (field.getGroup() != null && field.getGroup() == i) {
@@ -351,21 +335,11 @@ public class FieldsManager implements HeadingListener {
         // next group.
         if (addNextGroup(maxGroup, field)) {
             final Item item = new IconMenuItem(maxGroup, ImageIcon.create(resources.group()), null, "Level " + (maxGroup + 1), null,
-                    true, new Command() {
-                @Override
-                public void execute() {
-                    setGroup(field, maxGroup);
-                }
-            });
+                    true, () -> setGroup(field, maxGroup));
             menuItems.add(item);
         }
 
-        final Item item = new IconMenuItem(maxGroup + 1, "Not grouped", null, true, new Command() {
-            @Override
-            public void execute() {
-                setGroup(field, null);
-            }
-        });
+        final Item item = new IconMenuItem(maxGroup + 1, "Not grouped", null, true, () -> setGroup(field, null));
         menuItems.add(item);
 
         final Item parentItem = new SimpleParentMenuItem(2, ImageIcon.create(resources.group()), null, "Group", null, true, menuItems);
@@ -443,12 +417,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createFilterMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(3, GlyphIcons.FILTER, GlyphIcons.FILTER, "Filter", null, true, new Command() {
-            @Override
-            public void execute() {
-                filterField(field);
-            }
-        });
+        final Item item = new IconMenuItem(3, GlyphIcons.FILTER, GlyphIcons.FILTER, "Filter", null, true, () -> filterField(field));
         if (field.getFilter() != null && ((field.getFilter().getIncludes() != null
                 && field.getFilter().getIncludes().trim().length() > 0)
                 || (field.getFilter().getExcludes() != null && field.getFilter().getExcludes().trim().length() > 0))) {
@@ -458,12 +427,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createFormatMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(4, ImageIcon.create(resources.format()), null, "Format", null, true, new Command() {
-            @Override
-            public void execute() {
-                showFormat(field);
-            }
-        });
+        final Item item = new IconMenuItem(4, ImageIcon.create(resources.format()), null, "Format", null, true, () -> showFormat(field));
         if (field.getFormat() != null && field.getFormat().getSettings() != null
                 && !field.getFormat().getSettings().isDefault()) {
             highlights.add(item);
@@ -472,12 +436,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createRemoveMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(5, GlyphIcons.REMOVE, GlyphIcons.REMOVE, "Remove", null, true, new Command() {
-            @Override
-            public void execute() {
-                deleteField(field);
-            }
-        });
+        final Item item = new IconMenuItem(5, GlyphIcons.REMOVE, GlyphIcons.REMOVE, "Remove", null, true, () -> deleteField(field));
         return item;
     }
 

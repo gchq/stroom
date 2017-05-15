@@ -16,10 +16,7 @@
 
 package stroom.jobsystem.server;
 
-import javax.annotation.Resource;
-
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.jobsystem.shared.Job;
@@ -27,6 +24,8 @@ import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNodeService;
 import stroom.jobsystem.shared.JobService;
 import stroom.node.server.NodeCache;
+
+import javax.annotation.Resource;
 
 public class TestJobNodeService extends AbstractCoreIntegrationTest {
     @Resource

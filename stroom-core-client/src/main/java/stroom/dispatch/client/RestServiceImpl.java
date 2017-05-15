@@ -17,7 +17,6 @@
 package stroom.dispatch.client;
 
 import com.google.gwt.core.client.GWT;
-
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.http.client.Request;

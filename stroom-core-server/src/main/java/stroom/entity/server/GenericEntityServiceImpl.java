@@ -204,33 +204,33 @@ public class GenericEntityServiceImpl implements GenericEntityService {
         return getEntityService(entity.getType()).delete(entity);
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public <E extends DocumentEntity> E importEntity(final E entity, final DocRef folder) {
-        if (entity == null) {
-            return null;
-        }
-        final EntityService<E> entityService = getEntityService(entity.getType());
-        if (entityService instanceof DocumentEntityService) {
-            return ((DocumentEntityService<E>) entityService).importEntity(entity, folder);
-        }
-
-        return entity;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <E extends DocumentEntity> E exportEntity(final E entity) {
-        if (entity == null) {
-            return null;
-        }
-        final EntityService<E> entityService = getEntityService(entity.getType());
-        if (entityService instanceof DocumentEntityService) {
-            return ((DocumentEntityService<E>) entityService).exportEntity(entity);
-        }
-
-        return entity;
-    }
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public <E extends DocumentEntity> E importEntity(final E entity, final DocRef folder) {
+//        if (entity == null) {
+//            return null;
+//        }
+//        final EntityService<E> entityService = getEntityService(entity.getType());
+//        if (entityService instanceof DocumentEntityService) {
+//            return ((DocumentEntityService<E>) entityService).importEntity(entity, folder);
+//        }
+//
+//        return entity;
+//    }
+//
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public <E extends DocumentEntity> E exportEntity(final E entity) {
+//        if (entity == null) {
+//            return null;
+//        }
+//        final EntityService<E> entityService = getEntityService(entity.getType());
+//        if (entityService instanceof DocumentEntityService) {
+//            return ((DocumentEntityService<E>) entityService).exportEntity(entity);
+//        }
+//
+//        return entity;
+//    }
 
     @SuppressWarnings("unchecked")
     @Override
@@ -244,14 +244,14 @@ public class GenericEntityServiceImpl implements GenericEntityService {
         return (EntityService<E>) entityService;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public <E extends Entity, C extends BaseCriteria> FindService<E, C> getFindService(String entityType) {
-        final Object entityService = entityServiceBeanRegistry.getEntityService(entityType);
-        if (entityService == null || !(entityService instanceof FindService)) {
-            throw new EntityServiceException("Cannot find 'find' service for " + entityType, null, false);
-        }
-
-        return (FindService<E, C>) entityService;
-    }
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public <E extends Entity, C extends BaseCriteria> FindService<E, C> getFindService(String entityType) {
+//        final Object entityService = entityServiceBeanRegistry.getEntityService(entityType);
+//        if (entityService == null || !(entityService instanceof FindService)) {
+//            throw new EntityServiceException("Cannot find 'find' service for " + entityType, null, false);
+//        }
+//
+//        return (FindService<E, C>) entityService;
+//    }
 }

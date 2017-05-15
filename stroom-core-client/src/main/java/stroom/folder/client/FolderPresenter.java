@@ -19,8 +19,6 @@ package stroom.folder.client;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -28,6 +26,7 @@ import stroom.entity.client.presenter.TabContentProvider;
 import stroom.entity.shared.Folder;
 import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.security.client.ClientSecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
 import stroom.streamstore.client.presenter.StreamTaskPresenter;
 import stroom.streamstore.shared.Stream;
@@ -40,26 +39,28 @@ public class FolderPresenter extends EntityEditTabPresenter<LinkTabPanelView, Fo
     private static final TabData TASKS = new TabDataImpl("Active Tasks");
     private static final TabData PROCESSORS = new TabDataImpl("Processors");
 
-    private final TabContentProvider<Folder> tabContentProvider = new TabContentProvider<Folder>();
+    private final ClientSecurityContext securityContext;
+    private final TabContentProvider<Folder> tabContentProvider = new TabContentProvider<>();
+    private ProcessorPresenter processorPresenter;
 
     @Inject
-    public FolderPresenter(final EventBus eventBus, final ClientSecurityContext securityContext,
+    public FolderPresenter(final EventBus eventBus,
+                           final ClientSecurityContext securityContext,
                            final LinkTabPanelView view,
                            final Provider<ClassificationWrappedStreamPresenter> streamPresenterProvider,
                            final Provider<ProcessorPresenter> processorPresenterProvider,
                            final Provider<StreamTaskPresenter> streamTaskPresenterProvider) {
         super(eventBus, view, securityContext);
+        this.securityContext = securityContext;
 
-        tabContentProvider.setDirtyHandler(new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                setDirty(event.isDirty());
-            }
-        });
+        tabContentProvider.setDirtyHandler(event -> setDirty(event.isDirty()));
+
+        TabData selectedTab = null;
 
         if (securityContext.hasAppPermission(Stream.VIEW_DATA_PERMISSION)) {
             addTab(DATA);
             tabContentProvider.add(DATA, streamPresenterProvider);
+            selectedTab = DATA;
         }
 
         if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
@@ -67,13 +68,22 @@ public class FolderPresenter extends EntityEditTabPresenter<LinkTabPanelView, Fo
             tabContentProvider.add(PROCESSORS, processorPresenterProvider);
             addTab(TASKS);
             tabContentProvider.add(TASKS, streamTaskPresenterProvider);
+
+            if (selectedTab == null) {
+                selectedTab = PROCESSORS;
+            }
         }
 
-        selectTab(DATA);
+        selectTab(selectedTab);
     }
 
     @Override
-    protected void getContent(final TabData tab, final ContentCallback callback) {
+    public void getContent(final TabData tab, final ContentCallback callback) {
+        if (PROCESSORS.equals(tab) && this.processorPresenter == null) {
+            this.processorPresenter = (ProcessorPresenter) tabContentProvider.getPresenter(tab);
+            this.processorPresenter.setAllowUpdate(securityContext.hasAppPermission(PermissionNames.ADMINISTRATOR));
+        }
+
         callback.onReady(tabContentProvider.getPresenter(tab));
     }
 

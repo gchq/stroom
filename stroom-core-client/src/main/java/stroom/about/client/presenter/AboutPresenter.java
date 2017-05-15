@@ -23,9 +23,7 @@ import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -50,23 +48,17 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
 
     @Inject
     public AboutPresenter(final EventBus eventBus, final AboutView view, final AboutProxy proxy,
-            final ClientPropertyCache clientPropertyCache) {
+                          final ClientPropertyCache clientPropertyCache) {
         super(eventBus, view, proxy);
-        clientPropertyCache.get(new AsyncCallbackAdaptor<ClientProperties>() {
-            @Override
-            public void onSuccess(final ClientProperties result) {
-                view.setHTML(result.get(ClientProperties.ABOUT_HTML));
-                view.getBuildVersion().setText("Build Version: " + result.get(ClientProperties.BUILD_VERSION));
-                view.getBuildDate().setText("Build Date: " + result.get(ClientProperties.BUILD_DATE));
-                view.getUpDate().setText("Up Date: " + result.get(ClientProperties.UP_DATE));
-                view.getNodeName().setText("Node Name: " + result.get(ClientProperties.NODE_NAME));
-            }
-
-            @Override
-            public void onFailure(final Throwable caught) {
-                AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null);
-            }
-        });
+        clientPropertyCache.get()
+                .onSuccess(result -> {
+                    view.setHTML(result.get(ClientProperties.ABOUT_HTML));
+                    view.getBuildVersion().setText("Build Version: " + result.get(ClientProperties.BUILD_VERSION));
+                    view.getBuildDate().setText("Build Date: " + result.get(ClientProperties.BUILD_DATE));
+                    view.getUpDate().setText("Up Date: " + result.get(ClientProperties.UP_DATE));
+                    view.getNodeName().setText("Node Name: " + result.get(ClientProperties.NODE_NAME));
+                })
+                .onFailure(caught -> AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null));
     }
 
     @Override

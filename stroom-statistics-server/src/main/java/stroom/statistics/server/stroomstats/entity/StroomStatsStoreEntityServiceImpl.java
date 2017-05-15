@@ -25,6 +25,7 @@ import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.SQLUtil;
 import stroom.entity.server.util.StroomEntityManager;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.stats.shared.StroomStatsStoreEntity;
 
@@ -40,8 +41,10 @@ public class StroomStatsStoreEntityServiceImpl
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsStoreEntityServiceImpl.class);
 
     @Inject
-    StroomStatsStoreEntityServiceImpl(final StroomEntityManager entityManager, final SecurityContext securityContext) {
-        super(entityManager, securityContext);
+    StroomStatsStoreEntityServiceImpl(final StroomEntityManager entityManager,
+                                      final ImportExportHelper importExportHelper,
+                                      final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
         LOGGER.debug("StatisticsDataSourceServiceImpl initialised");
     }
 

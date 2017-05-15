@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -240,6 +240,12 @@ public class HeaderMap implements Serializable, Map<String, String> {
     }
 
     @Override
+    public String getOrDefault(Object key, String defaultVal) {
+        String val = realMap.get(new CIString((String) key));
+        return val == null ? defaultVal : val;
+    }
+
+    @Override
     public boolean isEmpty() {
         return realMap.isEmpty();
     }
@@ -266,8 +272,8 @@ public class HeaderMap implements Serializable, Map<String, String> {
     }
 
     @Override
-    public Set<java.util.Map.Entry<String, String>> entrySet() {
-        final Set<java.util.Map.Entry<String, String>> rtnSet = new HashSet<>();
+    public Set<Entry<String, String>> entrySet() {
+        final Set<Entry<String, String>> rtnSet = new HashSet<>();
         for (final Entry<CIString, String> entry : realMap.entrySet()) {
             rtnSet.add(new CIEntryAdaptor(entry));
         }

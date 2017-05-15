@@ -18,6 +18,7 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
 import stroom.pipeline.server.EncodingSelection;
@@ -37,7 +38,6 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
 
 import javax.annotation.Resource;
 import java.io.IOException;

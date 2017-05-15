@@ -17,7 +17,6 @@
 package stroom.cache.shared;
 
 import org.hibernate.stat.Statistics;
-
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.util.shared.SharedObject;
 

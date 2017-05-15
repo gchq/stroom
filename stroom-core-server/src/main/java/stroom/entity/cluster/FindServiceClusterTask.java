@@ -20,7 +20,6 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.ResultList;
 import stroom.task.cluster.ClusterTask;
 import stroom.util.shared.SharedObject;
-import stroom.util.shared.Task;
 
 public class FindServiceClusterTask<C extends BaseCriteria, E extends SharedObject> extends ClusterTask<ResultList<E>> {
     private static final long serialVersionUID = 3442806159160286110L;
@@ -28,9 +27,9 @@ public class FindServiceClusterTask<C extends BaseCriteria, E extends SharedObje
     private final Class<?> beanClass;
     private final C criteria;
 
-    public FindServiceClusterTask(final String sessionId, final String userName, final String taskName,
+    public FindServiceClusterTask(final String userToken, final String taskName,
                                   final Class<?> beanClass, final C criteria) {
-        super(sessionId, userName, taskName);
+        super(userToken, taskName);
         this.beanClass = beanClass;
         this.criteria = criteria;
     }

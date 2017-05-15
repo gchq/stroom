@@ -16,6 +16,13 @@
 
 package stroom.streamstore.client.presenter;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.Header;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
@@ -25,7 +32,6 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
 import stroom.entity.shared.EntityIdSet;
@@ -43,23 +49,16 @@ import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.button.client.*;
+import stroom.widget.button.client.GlyphButtonView;
+import stroom.widget.button.client.GlyphIcon;
+import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ImageButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
-import com.google.gwt.cell.client.FieldUpdater;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.Header;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
@@ -68,22 +67,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class AbstractStreamListPresenter extends MyPresenterWidget<DataGridView<StreamAttributeMap>>implements HasDataSelectionHandlers<EntityIdSet<Stream>>, Refreshable {
+public abstract class AbstractStreamListPresenter extends MyPresenterWidget<DataGridView<StreamAttributeMap>> implements HasDataSelectionHandlers<EntityIdSet<Stream>>, Refreshable {
     private final TooltipPresenter tooltipPresenter;
     private final ClientSecurityContext securityContext;
 
-//    private final MySingleSelectionModel<StreamAttributeMap> selectionModel = new MySingleSelectionModel<StreamAttributeMap>();
+    //    private final MySingleSelectionModel<StreamAttributeMap> selectionModel = new MySingleSelectionModel<StreamAttributeMap>();
     // private final EntityIdSet<Stream> masterEntityIdSet = new
     // EntityIdSet<Stream>();
     private final EntityIdSet<Stream> entityIdSet = new EntityIdSet<Stream>();
-//    private final InterceptingSelectionChangeHandler interceptingSelectionChangeHandler = new InterceptingSelectionChangeHandler();
     private final ClientDispatchAsync dispatcher;
     protected EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamAttributeMap> dataProvider;
     private ResultList<StreamAttributeMap> resultList = null;
 
     public AbstractStreamListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-            final TooltipPresenter tooltipPresenter, final ClientSecurityContext securityContext,
-            final boolean allowSelectAll) {
+                                       final TooltipPresenter tooltipPresenter, final ClientSecurityContext securityContext,
+                                       final boolean allowSelectAll) {
         super(eventBus, new DataGridViewImpl<StreamAttributeMap>(true));
         this.tooltipPresenter = tooltipPresenter;
         this.dispatcher = dispatcher;
@@ -194,7 +192,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
         // Select Column
         final Column<StreamAttributeMap, TickBoxState> column = new Column<StreamAttributeMap, TickBoxState>(
-                new TickBoxCell(tickBoxAppearance, false, false)) {
+                TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue(final StreamAttributeMap object) {
                 return TickBoxState.fromBoolean(entityIdSet.isMatch(object.getStream()));
@@ -203,7 +201,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         };
         if (allowSelectAll) {
             final Header<TickBoxState> header = new Header<TickBoxState>(
-                    new TickBoxCell(tickBoxAppearance, false, false)) {
+                    TickBoxCell.create(tickBoxAppearance, false, false)) {
                 @Override
                 public TickBoxState getValue() {
                     if (Boolean.TRUE.equals(entityIdSet.getMatchAll())) {
@@ -215,56 +213,50 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                     return TickBoxState.UNTICK;
                 }
             };
-            getView().addColumn(column, header, 15);
+            getView().addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
 
-            header.setUpdater(new ValueUpdater<TickBoxState>() {
-                @Override
-                public void update(final TickBoxState value) {
-                    if (value.equals(TickBoxState.UNTICK)) {
-                        // masterEntityIdSet.clear();
-                        // masterEntityIdSet.setMatchAll(false);
-                        entityIdSet.clear();
-                        entityIdSet.setMatchAll(false);
-                    }
-                    if (value.equals(TickBoxState.TICK)) {
-                        // masterEntityIdSet.clear();
-                        // masterEntityIdSet.setMatchAll(true);
-                        entityIdSet.clear();
-                        entityIdSet.setMatchAll(true);
-                    }
-                    dataProvider.getDataProvider()
-                            .updateRowData(dataProvider.getDataProvider().getRanges()[0].getStart(), resultList);
-                    DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
+            header.setUpdater(value -> {
+                if (value.equals(TickBoxState.UNTICK)) {
+                    // masterEntityIdSet.clear();
+                    // masterEntityIdSet.setMatchAll(false);
+                    entityIdSet.clear();
+                    entityIdSet.setMatchAll(false);
                 }
+                if (value.equals(TickBoxState.TICK)) {
+                    // masterEntityIdSet.clear();
+                    // masterEntityIdSet.setMatchAll(true);
+                    entityIdSet.clear();
+                    entityIdSet.setMatchAll(true);
+                }
+                dataProvider.getDataProvider()
+                        .updateRowData(dataProvider.getDataProvider().getRanges()[0].getStart(), resultList);
+                DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
             });
 
         } else {
-            getView().addColumn(column, "", 15);
+            getView().addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);
         }
 
         // Add Handlers
-        column.setFieldUpdater(new FieldUpdater<StreamAttributeMap, TickBoxState>() {
-            @Override
-            public void update(final int index, final StreamAttributeMap row, final TickBoxState value) {
-                if (value.toBoolean()) {
-                    // masterEntityIdSet.add(row.getStream());
-                    entityIdSet.add(row.getStream());
+        column.setFieldUpdater((index, row, value) -> {
+            if (value.toBoolean()) {
+                // masterEntityIdSet.add(row.getStream());
+                entityIdSet.add(row.getStream());
 
-                } else {
-                    // De-selecting one and currently matching all ?
-                    if (Boolean.TRUE.equals(entityIdSet.getMatchAll())) {
-                        // masterEntityIdSet.setMatchAll(false);
-                        entityIdSet.setMatchAll(false);
+            } else {
+                // De-selecting one and currently matching all ?
+                if (Boolean.TRUE.equals(entityIdSet.getMatchAll())) {
+                    // masterEntityIdSet.setMatchAll(false);
+                    entityIdSet.setMatchAll(false);
 
-                        final Set<Long> resultStreamIdSet = getResultStreamIdSet();
-                        // masterEntityIdSet.addAll(resultStreamIdSet);
-                        entityIdSet.addAll(resultStreamIdSet);
-                    }
-                    // masterEntityIdSet.remove(row.getStream());
-                    entityIdSet.remove(row.getStream());
+                    final Set<Long> resultStreamIdSet = getResultStreamIdSet();
+                    // masterEntityIdSet.addAll(resultStreamIdSet);
+                    entityIdSet.addAll(resultStreamIdSet);
                 }
-                DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
+                // masterEntityIdSet.remove(row.getStream());
+                entityIdSet.remove(row.getStream());
             }
+            DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
         });
     }
 
@@ -307,27 +299,23 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                     streamAttributeMapCriteria.obtainFindStreamCriteria().obtainStreamIdSet().add(row.getStream());
                     populateFetchSet(streamAttributeMapCriteria.getFetchSet(), true);
 
-                    dispatcher.execute(
+                    dispatcher.exec(
                             new EntityServiceFindAction<FindStreamAttributeMapCriteria, StreamAttributeMap>(
-                                    streamAttributeMapCriteria),
-                            new AsyncCallbackAdaptor<ResultList<StreamAttributeMap>>() {
-                        @Override
-                        public void onSuccess(final ResultList<StreamAttributeMap> result) {
-                            final StreamAttributeMap row = result.get(0);
-                            final StringBuilder html = new StringBuilder();
+                                    streamAttributeMapCriteria)).onSuccess(result -> {
+                        final StreamAttributeMap streamAttributeMap = result.get(0);
+                        final StringBuilder html = new StringBuilder();
 
-                            buildTipText(row, html);
+                        buildTipText(streamAttributeMap, html);
 
-                            tooltipPresenter.setHTML(html.toString());
-                            final PopupPosition popupPosition = new PopupPosition(x, y);
-                            ShowPopupEvent.fire(AbstractStreamListPresenter.this, tooltipPresenter, PopupType.POPUP,
-                                    popupPosition, null);
-                        }
+                        tooltipPresenter.setHTML(html.toString());
+                        final PopupPosition popupPosition = new PopupPosition(x, y);
+                        ShowPopupEvent.fire(AbstractStreamListPresenter.this, tooltipPresenter, PopupType.POPUP,
+                                popupPosition, null);
                     });
                 }
             }
         };
-        getView().addColumn(infoColumn, "<br/>", 17);
+        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
     }
 
     public void buildTipText(final StreamAttributeMap row, final StringBuilder html) {
@@ -342,22 +330,22 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         StreamTooltipPresenterUtil.addRowDateString(html, "Effective", row.getStream().getEffectiveMs());
 
         //if (securityContext.hasAppPermission(StreamType.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            StreamTooltipPresenterUtil.addRowNameString(html, "Stream Type", row.getStream().getStreamType());
+        StreamTooltipPresenterUtil.addRowNameString(html, "Stream Type", row.getStream().getStreamType());
         //}
         //if (securityContext.hasAppPermission(Feed.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            StreamTooltipPresenterUtil.addRowNameString(html, "Feed", row.getStream().getFeed());
+        StreamTooltipPresenterUtil.addRowNameString(html, "Feed", row.getStream().getFeed());
         //}
 
         //if (securityContext.hasAppPermission(StreamProcessor.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            if (row.getStream().getStreamProcessor() != null) {
-                TooltipUtil.addRowData(html, "Stream Processor Id", row.getStream().getStreamProcessor().getId());
-                if (row.getStream().getStreamProcessor().getPipeline() != null) {
-                    //if (securityContext.hasAppPermission(PipelineEntity.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-                        StreamTooltipPresenterUtil.addRowNameString(html, "Stream Processor Pipeline",
-                                row.getStream().getStreamProcessor().getPipeline());
-                    //}
-                }
+        if (row.getStream().getStreamProcessor() != null) {
+            TooltipUtil.addRowData(html, "Stream Processor Id", row.getStream().getStreamProcessor().getId());
+            if (row.getStream().getStreamProcessor().getPipeline() != null) {
+                //if (securityContext.hasAppPermission(PipelineEntity.ENTITY_TYPE, DocumentPermissionNames.READ)) {
+                StreamTooltipPresenterUtil.addRowNameString(html, "Stream Processor Pipeline",
+                        row.getStream().getStreamProcessor().getPipeline());
+                //}
             }
+        }
         //}
         TooltipUtil.addBreak(html);
         TooltipUtil.addHeading(html, "Attributes");
@@ -375,13 +363,13 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         }
 
         // if (securityContext.hasAppPermission(Volume.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            if (row.getFileNameList() != null) {
-                TooltipUtil.addBreak(html);
-                TooltipUtil.addHeading(html, "Files");
-                for (final String file : row.getFileNameList()) {
-                    TooltipUtil.addRowData(html, file);
-                }
+        if (row.getFileNameList() != null) {
+            TooltipUtil.addBreak(html);
+            TooltipUtil.addHeading(html, "Files");
+            for (final String file : row.getFileNameList()) {
+                TooltipUtil.addRowData(html, file);
             }
+        }
         // }
     }
 
@@ -390,7 +378,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
             @Override
             public String getValue(final StreamAttributeMap row) {
-                return ClientDateUtil.createDateTimeString(row.getStream().getCreateMs());
+                return ClientDateUtil.toISOString(row.getStream().getCreateMs());
             }
         }, "Created", ColumnSizeConstants.DATE_COL);
     }
@@ -400,49 +388,49 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
             @Override
             public String getValue(final StreamAttributeMap row) {
-                return ClientDateUtil.createDateTimeString(row.getStream().getEffectiveMs());
+                return ClientDateUtil.toISOString(row.getStream().getEffectiveMs());
             }
         }, "Effective", ColumnSizeConstants.DATE_COL);
     }
 
     protected void addFeedColumn() {
         // if (securityContext.hasAppPermission(Feed.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
-                @Override
-                public String getValue(final StreamAttributeMap row) {
-                    return ModelStringUtil.format(row.getStream().getFeed());
-                }
-            }, "Feed", ColumnSizeConstants.BIG_COL);
+        getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
+            @Override
+            public String getValue(final StreamAttributeMap row) {
+                return ModelStringUtil.format(row.getStream().getFeed());
+            }
+        }, "Feed", ColumnSizeConstants.BIG_COL);
         // }
     }
 
     protected void addStreamTypeColumn() {
         // if (securityContext.hasAppPermission(StreamType.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
-                @Override
-                public String getValue(final StreamAttributeMap row) {
-                    return ModelStringUtil.format(row.getStream().getStreamType());
-                }
-            }, "Type", ColumnSizeConstants.MEDIUM_COL);
+        getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
+            @Override
+            public String getValue(final StreamAttributeMap row) {
+                return ModelStringUtil.format(row.getStream().getStreamType());
+            }
+        }, "Type", 80);
         // }
     }
 
     protected void addPipelineColumn() {
         // if (securityContext.hasAppPermission(PipelineEntity.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
-                @Override
-                public String getValue(final StreamAttributeMap row) {
-                    if (row.getStream().getStreamProcessor() != null) {
-                        if (row.getStream().getStreamProcessor().getPipeline() != null) {
-                            return row.getStream().getStreamProcessor().getPipeline().getDisplayValue();
-                        } else {
-                            return "Not visible";
-                        }
+        getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
+            @Override
+            public String getValue(final StreamAttributeMap row) {
+                if (row.getStream().getStreamProcessor() != null) {
+                    if (row.getStream().getStreamProcessor().getPipeline() != null) {
+                        return row.getStream().getStreamProcessor().getPipeline().getDisplayValue();
+                    } else {
+                        return "Not visible";
                     }
-                    return "";
-
                 }
-            }, "Pipeline", ColumnSizeConstants.BIG_COL);
+                return "";
+
+            }
+        }, "Pipeline", ColumnSizeConstants.BIG_COL);
         // }
     }
 
@@ -469,11 +457,11 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         return resultList;
     }
 
-    protected void addAttributeColumn(final String name, final int size) {
+    protected void addAttributeColumn(final String name, final String attribute, final int size) {
         final Column<StreamAttributeMap, String> column = new Column<StreamAttributeMap, String>(new TextCell()) {
             @Override
             public String getValue(final StreamAttributeMap row) {
-                return row.formatAttribute(name);
+                return row.formatAttribute(attribute);
             }
         };
         getView().addResizableColumn(column, name, size);
@@ -486,21 +474,21 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
     private void populateFetchSet(final Set<String> fetchSet, final boolean forInfo) {
         // if (securityContext.hasAppPermission(StreamType.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            fetchSet.add(StreamType.ENTITY_TYPE);
+        fetchSet.add(StreamType.ENTITY_TYPE);
         // }
         // if (securityContext.hasAppPermission(Feed.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            fetchSet.add(Feed.ENTITY_TYPE);
+        fetchSet.add(Feed.ENTITY_TYPE);
         // }
         // if (securityContext.hasAppPermission(StreamProcessor.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            fetchSet.add(StreamProcessor.ENTITY_TYPE);
+        fetchSet.add(StreamProcessor.ENTITY_TYPE);
         // }
         // if (securityContext.hasAppPermission(PipelineEntity.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            fetchSet.add(PipelineEntity.ENTITY_TYPE);
+        fetchSet.add(PipelineEntity.ENTITY_TYPE);
         // }
 
         // For info ? load up the files
         // if (securityContext.hasAppPermission(Volume.ENTITY_TYPE, DocumentPermissionNames.READ)) {
-            fetchSet.add(Volume.ENTITY_TYPE);
+        fetchSet.add(Volume.ENTITY_TYPE);
         //  }
 
     }
@@ -535,7 +523,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     }
 
     public ImageButtonView add(final String title, final ImageResource enabledImage, final ImageResource disabledImage,
-            final boolean enabled) {
+                               final boolean enabled) {
         return getView().addButton(title, enabledImage, disabledImage, enabled);
     }
 

@@ -18,13 +18,14 @@ package stroom.dispatch.client;
 
 import stroom.entity.shared.Action;
 import stroom.util.shared.SharedObject;
+import stroom.widget.util.client.Future;
 
 public interface ClientDispatchAsync {
-    <R extends SharedObject> void execute(Action<R> task, AsyncCallbackAdaptor<R> callback);
+    <R extends SharedObject> Future<R> exec(Action<R> task);
 
-    <R extends SharedObject> void execute(Action<R> task, String message, AsyncCallbackAdaptor<R> callback);
+    <R extends SharedObject> Future<R> exec(Action<R> task, String message);
 
-    <R extends SharedObject> void execute(Action<R> task, boolean showWorking, AsyncCallbackAdaptor<R> callback);
+    <R extends SharedObject> Future<R> exec(Action<R> task, boolean showWorking);
 
     String getImportFileURL();
 }

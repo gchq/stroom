@@ -17,7 +17,6 @@
 package stroom.pipeline.server.filter;
 
 import org.xml.sax.ContentHandler;
-
 import stroom.pipeline.server.factory.Target;
 
 /**

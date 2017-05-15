@@ -80,7 +80,7 @@ public class UserSecurityMethodInterceptor {
 
             // If authentication is not required to call the current method or the current user is an administrator then
             // don't do any security checking.
-            if (securityAnnotation == null || Insecure.class.isAssignableFrom(securityAnnotation.getClass()) || securityContext.isAdmin()) {
+            if (securityAnnotation == null || Insecure.class.isAssignableFrom(securityAnnotation.getClass()) || isAdmin()) {
                 try {
                     // Don't check any further permissions.
                     checkTypeThreadLocal.set(Boolean.FALSE);
@@ -105,7 +105,7 @@ public class UserSecurityMethodInterceptor {
         Object returnObj = null;
         try {
             // We must be logged in to access a secured service.
-            if (!securityContext.isLoggedIn()) {
+            if (!isLoggedIn()) {
                 throw PermissionException.createLoginRequiredException(permission, methodName);
             }
 
@@ -170,8 +170,41 @@ public class UserSecurityMethodInterceptor {
     }
 
     private void checkAppPermission(final String permission, final String methodName) {
-        if (!securityContext.hasAppPermission(permission)) {
+        if (!hasAppPermission(permission)) {
             throw PermissionException.createAppPermissionRequiredException(permission, methodName);
+        }
+    }
+
+    private boolean isLoggedIn() {
+        Boolean currentCheckType = checkTypeThreadLocal.get();
+        try {
+            // Don't check any further permissions.
+            checkTypeThreadLocal.set(Boolean.FALSE);
+            return securityContext.isLoggedIn();
+        } finally {
+            checkTypeThreadLocal.set(currentCheckType);
+        }
+    }
+
+    private boolean isAdmin() {
+        Boolean currentCheckType = checkTypeThreadLocal.get();
+        try {
+            // Don't check any further permissions.
+            checkTypeThreadLocal.set(Boolean.FALSE);
+            return securityContext.isAdmin();
+        } finally {
+            checkTypeThreadLocal.set(currentCheckType);
+        }
+    }
+
+    private boolean hasAppPermission(final String permission) {
+        Boolean currentCheckType = checkTypeThreadLocal.get();
+        try {
+            // Don't check any further permissions.
+            checkTypeThreadLocal.set(Boolean.FALSE);
+            return securityContext.hasAppPermission(permission);
+        } finally {
+            checkTypeThreadLocal.set(currentCheckType);
         }
     }
 }

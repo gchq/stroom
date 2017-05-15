@@ -30,7 +30,6 @@ import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;

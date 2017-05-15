@@ -16,18 +16,16 @@
 
 package stroom.task.cluster;
 
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomShutdown;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
-
-import stroom.entity.shared.Clearable;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.config.CacheConfiguration;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
+import stroom.entity.shared.Clearable;
+import stroom.util.spring.StroomShutdown;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 @Component

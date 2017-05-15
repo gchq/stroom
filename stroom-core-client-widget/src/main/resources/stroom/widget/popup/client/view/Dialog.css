@@ -16,7 +16,7 @@
 
 .popup {
 	position: relative;
-	z-index: 2;
+	z-index: 100;
 }
 
 .container {
@@ -58,7 +58,7 @@
 .titleText {
 	width: 100%;
 	padding: 3px 5px;
-	font-weight: bold;
+	font-weight: 500;
 	color: white;
 	cursor: default;
 	word-wrap: none;

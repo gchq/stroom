@@ -18,7 +18,6 @@ package stroom.pipeline.state;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.feed.shared.Feed;
 import stroom.util.spring.StroomScope;
 

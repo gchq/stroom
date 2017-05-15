@@ -16,9 +16,9 @@
 
 package stroom.util;
 
+import org.junit.rules.ExternalResource;
 import stroom.util.io.StreamUtil;
 import stroom.util.zip.ZipUtil;
-import org.junit.rules.ExternalResource;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;

@@ -53,6 +53,7 @@ import stroom.task.server.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.UserTokenUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
@@ -135,7 +136,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final ConcurrentHashMap<Long, Boolean> exhaustedFilterMap = new ConcurrentHashMap<>();
     private volatile StreamTaskCreatorRecentStreamDetails streamTaskCreatorRecentStreamDetails;
     private volatile int totalQueueSize = 1000;
-    private volatile int lastQueueSizeForStats = 0;
+    private volatile int lastQueueSizeForStats = -1;
 
     /**
      * Make sure the task store isn't allowed to be filled until this node has
@@ -495,7 +496,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             if (loadedFilter != null) {
 
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
-                securityContext.pushUser(loadedFilter.getUpdateUser());
+                securityContext.pushUser(UserTokenUtil.create(loadedFilter.getCreateUser(), null));
                 try {
                     LOGGER.debug("createTasksForFilter() - streamProcessorFilter {}", loadedFilter.toString());
 
@@ -749,7 +750,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         tracker.setStatus("Searching...");
         final StreamProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(null, filter.getUpdateUser(), findStreamCriteria, query,
+        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.create(filter.getUpdateUser(), null), findStreamCriteria, query,
                 minEvent, maxEvent, maxStreams, maxEvents, maxEventsPerStream, POLL_INTERVAL_MS);
         taskManager.execAsync(eventSearchTask, new TaskCallbackAdaptor<EventRefs>() {
             @Override
@@ -902,8 +903,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                     final Statistics statisticEventStore = factory.instance();
 
                     // Value type event as the queue size is not additive
-                    statisticEventStore.putEvent(new StatisticEvent(System.currentTimeMillis(),
-                            "Stream Task Queue Size", null, new Double(queueSize)));
+                    statisticEventStore.putEvent(StatisticEvent.createValue(System.currentTimeMillis(),
+                            "Stream Task Queue Size", null, queueSize));
                 } catch (final Throwable t) {
                     LOGGER.error(t.getMessage(), t);
                 }

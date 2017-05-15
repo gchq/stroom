@@ -41,7 +41,7 @@
 	text-align: left;
 	overflow: hidden;
 	white-space: nowrap;
-	font-weight: bold;
+	font-weight: 500;
 	cursor: default;
 }
 
@@ -53,11 +53,15 @@
 	text-align: left;
 	overflow: hidden;
 	white-space: nowrap;
-	font-weight: bold;
+	font-weight: 500;
     height : auto;
 	cursor: default;
 
 	border-bottom: #dddddd solid 1px;
+}
+
+.dataGridHeader * {
+	font-weight: 500;
 }
 
 @sprite .dataGridHeaderSelected {
@@ -65,12 +69,13 @@
 }
 
 .dataGridCell {
-	padding: 4px;
 	padding-left: 2px;
 	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 1px;
 	vertical-align: middle;
 	overflow: hidden;
-	height: 24px;
+	height: 16px;
 	white-space: nowrap;
 	
 	-moz-user-focus: initial;
@@ -82,8 +87,6 @@
 	user-focus: initial;
 	user-input: initial;
 	user-select: initial;
-
-	border-bottom: #dddddd solid 1px;
 }
 
 .dataGridResizableCell {
@@ -139,7 +142,7 @@
 }
 
 .dataGridEvenRow {
-    background-color: #f9f9f9;
+    background-color: #ebebeb;
 }
 
 .dataGridEvenRowCell {
@@ -206,7 +209,7 @@
 	/* iframe will capture the event and the slider will stop moving. */
 	background-color: white;
 	opacity: 0;
-	z-index: 2;
+	z-index: 10;
 	cursor: col-resize;
 }
 
@@ -238,6 +241,6 @@
 	/* iframe will capture the event and the slider will stop moving. */
 	background-color: white;
 	opacity: 0;
-	z-index: 2;
+	z-index: 10;
 	cursor: default;
 }

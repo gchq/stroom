@@ -20,10 +20,9 @@ import org.springframework.stereotype.Component;
 import stroom.node.shared.RecordCountService;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
-import stroom.util.ByteSizeUnit;
 import stroom.util.io.StreamUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.FileInputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -40,41 +39,17 @@ import java.util.regex.Pattern;
  */
 @Component
 public class NodeStatusServiceUtil {
-
-    @Resource
-    private NodeCache nodeCache;
+    private final NodeCache nodeCache;
+    private final RecordCountService recordCountService;
 
     private long time = System.currentTimeMillis();
 
     private CPUStats previousCPUStats;
 
-    @Resource
-    private RecordCountService recordCountService;
-
-    static class CPUStats {
-        public Long user;
-        public Long nice;
-        public Long system;
-        public Long idle;
-        public Long ioWait;
-        public Long irq;
-        public Long softirq;
-
-        CPUStats subtract(final CPUStats cpuStats) {
-            CPUStats rtn = new CPUStats();
-            rtn.user = this.user - cpuStats.user;
-            rtn.nice = this.nice - cpuStats.nice;
-            rtn.system = this.system - cpuStats.system;
-            rtn.idle = this.idle - cpuStats.idle;
-            rtn.ioWait = this.ioWait - cpuStats.ioWait;
-            rtn.irq = this.irq - cpuStats.irq;
-            rtn.softirq = this.softirq - cpuStats.softirq;
-            return rtn;
-        }
-
-        Long getTotal() {
-            return user + nice + system + idle + ioWait + irq + softirq;
-        }
+    @Inject
+    public NodeStatusServiceUtil(final NodeCache nodeCache, final RecordCountService recordCountService) {
+        this.nodeCache = nodeCache;
+        this.recordCountService = recordCountService;
     }
 
     /**
@@ -120,22 +95,23 @@ public class NodeStatusServiceUtil {
         }
     }
 
-    private StatisticEvent buildStatisticEvent(String stat, long timeMs, StatisticTag nodeTag, double value) {
+    private StatisticEvent buildStatisticEvent(String stat, long timeMs, StatisticTag nodeTag, String type, double value) {
         // These stat events are being generated every minute so use a precision
         // of 60s
-        return new StatisticEvent(timeMs, "Node Status-" + stat, Arrays.asList(nodeTag), value);
+        final StatisticTag typeTag = new StatisticTag("Type", type);
+        return StatisticEvent.createValue(timeMs, stat, Arrays.asList(nodeTag, typeTag), value);
     }
 
     public List<StatisticEvent> buildNodeStatus() {
         List<StatisticEvent> statisticEventList = new ArrayList<>();
 
-        StatisticTag nodeTag = new StatisticTag("Node", nodeCache.getDefaultNode().getName());
+        final StatisticTag nodeTag = new StatisticTag("Node", nodeCache.getDefaultNode().getName());
 
         final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
         final MemoryUsage heapUsage = memoryMXBean.getHeapMemoryUsage();
         final MemoryUsage nonHeapUsage = memoryMXBean.getNonHeapMemoryUsage();
 
-        final long timeNow = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
 
         final long heapUsed = heapUsage.getUsed();
         final long heapComitted = heapUsage.getCommitted();
@@ -145,31 +121,29 @@ public class NodeStatusServiceUtil {
         final long nonHeapMax = nonHeapUsage.getMax();
 
         if (heapUsed > 0) {
-            statisticEventList.add(buildStatisticEvent("JvmHeapUsedMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(heapUsed)));
+            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Heap Used", heapUsed));
         }
         if (heapComitted > 0) {
-            statisticEventList
-                    .add(buildStatisticEvent("JvmHeapComittedMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(heapComitted)));
+            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Heap Committed", heapComitted));
         }
         if (heapMax > 0) {
-            statisticEventList.add(buildStatisticEvent("JvmHeapMaxMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(heapMax)));
+            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Heap Max", heapMax));
         }
         if (nonHeapUsed > 0) {
-            statisticEventList.add(buildStatisticEvent("JvmNonHeapUsedMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(nonHeapUsed)));
+            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Non Heap Used", nonHeapUsed));
         }
         if (nonHeapComitted > 0) {
-            statisticEventList
-                    .add(buildStatisticEvent("JvmNonHeapComittedMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(nonHeapComitted)));
+            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Non Heap Committed", nonHeapComitted));
         }
         if (nonHeapMax > 0) {
-            statisticEventList.add(buildStatisticEvent("JvmNonHeapMaxMb", timeNow, nodeTag, ByteSizeUnit.MEGABYTE.unitValue(nonHeapMax)));
+            statisticEventList.add(buildStatisticEvent("Memory", now, nodeTag, "Non Heap Max", nonHeapMax));
         }
 
         // Get the current CPU stats.
         final CPUStats cpuStats = createLinuxStats(readSystemStatsInfo());
 
         // Get the elapsed time in seconds.
-        final long now = System.currentTimeMillis();
+        now = System.currentTimeMillis();
         final double duration = (now - time) / 1000D;
         time = now;
 
@@ -179,17 +153,14 @@ public class NodeStatusServiceUtil {
                 final CPUStats diff = cpuStats.subtract(previousCPUStats);
                 final double inc = 1000D / diff.getTotal();
 
-                statisticEventList.add(buildStatisticEvent("CpuIdle", timeNow, nodeTag, ((diff.idle * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent("CpuIoWait", timeNow, nodeTag, ((diff.ioWait * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent("CpuUser", timeNow, nodeTag, ((diff.user * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent("CpuIrq", timeNow, nodeTag, ((diff.irq * inc)) / 10F));
-                statisticEventList
-                        .add(buildStatisticEvent("CpuSoftIrq", timeNow, nodeTag, ((diff.softirq * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent("CpuSystem", timeNow, nodeTag, ((diff.system * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent("CpuNice", timeNow, nodeTag, ((diff.nice * inc)) / 10F));
-                statisticEventList
-                        .add(buildStatisticEvent("CpuTotal", timeNow, nodeTag, ((diff.getTotal() * inc)) / 10F));
-
+                statisticEventList.add(buildStatisticEvent("CPU", now, nodeTag, "Idle (%)", ((diff.idle * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent("CPU", now, nodeTag, "IO Wait (%)", ((diff.ioWait * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent("CPU", now, nodeTag, "User (%)", ((diff.user * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent("CPU", now, nodeTag, "Irq (%)", ((diff.irq * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent("CPU", now, nodeTag, "Soft Irq (%)", ((diff.softirq * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent("CPU", now, nodeTag, "System (%)", ((diff.system * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent("CPU", now, nodeTag, "Nice (%)", ((diff.nice * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent("CPU", now, nodeTag, "Total (%)", ((diff.getTotal() * inc)) / 10F));
             }
 
             // Calculate the eps values.
@@ -199,8 +170,8 @@ public class NodeStatusServiceUtil {
                 final long readEps = (long) (read / duration);
                 final long writeEps = (long) (written / duration);
 
-                statisticEventList.add(buildStatisticEvent("ReadEps", timeNow, nodeTag, readEps));
-                statisticEventList.add(buildStatisticEvent("WriteEps", timeNow, nodeTag, writeEps));
+                statisticEventList.add(buildStatisticEvent("EPS", now, nodeTag, "Read", readEps));
+                statisticEventList.add(buildStatisticEvent("EPS", now, nodeTag, "Write", writeEps));
             }
         }
 
@@ -209,7 +180,29 @@ public class NodeStatusServiceUtil {
         return statisticEventList;
     }
 
-    public void setNodeCache(final NodeCache nodeCache) {
-        this.nodeCache = nodeCache;
+    static class CPUStats {
+        public Long user;
+        public Long nice;
+        public Long system;
+        public Long idle;
+        public Long ioWait;
+        public Long irq;
+        public Long softirq;
+
+        CPUStats subtract(final CPUStats cpuStats) {
+            CPUStats rtn = new CPUStats();
+            rtn.user = this.user - cpuStats.user;
+            rtn.nice = this.nice - cpuStats.nice;
+            rtn.system = this.system - cpuStats.system;
+            rtn.idle = this.idle - cpuStats.idle;
+            rtn.ioWait = this.ioWait - cpuStats.ioWait;
+            rtn.irq = this.irq - cpuStats.irq;
+            rtn.softirq = this.softirq - cpuStats.softirq;
+            return rtn;
+        }
+
+        Long getTotal() {
+            return user + nice + system + idle + ioWait + irq + softirq;
+        }
     }
 }

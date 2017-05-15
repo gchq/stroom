@@ -16,14 +16,13 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import java.util.Arrays;
-
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.util.Arrays;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestBitmap extends StroomUnitTest {

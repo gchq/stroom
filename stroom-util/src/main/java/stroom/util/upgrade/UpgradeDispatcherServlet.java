@@ -16,14 +16,13 @@
 
 package stroom.util.upgrade;
 
-import java.io.IOException;
+import org.springframework.web.servlet.DispatcherServlet;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-
-import org.springframework.web.servlet.DispatcherServlet;
+import java.io.IOException;
 
 /**
  * Servlet that does some upgrade checking / work before starting.

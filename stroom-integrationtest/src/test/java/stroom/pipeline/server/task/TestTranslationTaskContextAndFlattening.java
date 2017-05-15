@@ -16,16 +16,15 @@
 
 package stroom.pipeline.server.task;
 
-import javax.annotation.Resource;
-
 import org.junit.Ignore;
 import org.junit.Test;
-
 import stroom.AbstractProcessIntegrationTest;
 import stroom.node.server.NodeCache;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.server.tools.StoreCreationTool;
 import stroom.task.server.TaskManager;
+
+import javax.annotation.Resource;
 
 @Ignore("TODO 2015-10-21: Restore tests or delete the class.")
 public class TestTranslationTaskContextAndFlattening extends AbstractProcessIntegrationTest {

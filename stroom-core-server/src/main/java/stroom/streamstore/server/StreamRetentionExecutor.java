@@ -16,16 +16,10 @@
 
 package stroom.streamstore.server;
 
-import java.util.List;
-
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.entity.server.util.PeriodUtil;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
@@ -37,8 +31,12 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * Factory for creating stream clean tasks.

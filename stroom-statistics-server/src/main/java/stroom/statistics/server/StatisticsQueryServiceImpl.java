@@ -80,7 +80,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
         }
 
         StatisticDataSet statisticDataSet = sqlStatisticEventStore.searchStatisticsData(
-                searchRequest.getQuery(),
+                searchRequest,
                 statisticStoreEntity);
 
         if (statisticDataSet.isEmpty()) {

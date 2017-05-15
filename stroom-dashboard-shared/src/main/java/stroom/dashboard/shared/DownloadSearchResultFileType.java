@@ -41,9 +41,4 @@ public enum DownloadSearchResultFileType implements HasDisplayValue {
     public String getDisplayValue() {
         return name;
     }
-
-    @Override
-    public String toString() {
-        return name;
-    }
 }

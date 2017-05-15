@@ -14,10 +14,9 @@ ext.versions = [
         stroom: '6.0-beta.1-SNAPSHOT',
         eventLogging: 'event-logging-v3.1.0',
         stroomQueryApi: 'stroom-query-api-v0.1.1',
-        stroomQueryApiSources: 'stroom-query-api-v0.1.0-sources',
+        stroomQueryApiSources: 'stroom-query-api-v0.1.1-sources',
         stroomQueryCommon: 'stroom-query-common-v0.1.1',
         stroomExpression: 'stroom-expression-v0.1.0',
-        //hbaseCommonShaded: 'hbase-common-shaded-v1.2.1-2-all',
         hadoopHdfsShaded: 'hadoop-hdfs-shaded-v2.6.4-2-all',
         hadoopCommonShaded: 'hadoop-common-shaded-v2.6.4-2-all'
 ]
@@ -121,7 +120,7 @@ project(':stroom-entity-shared') {
 }
 
 urlDependencies {
-    libs "jars"
+    libs "libs"
     compile(versions.stroomQueryApi,
         'https://github.com/gchq/stroom-query/releases/download/v0.1.1/stroom-query-api-v0.1.1.jar')
     compile(versions.stroomQueryApiSources,
@@ -132,8 +131,6 @@ urlDependencies {
         'https://github.com/gchq/stroom-query/releases/download/v0.1.1/stroom-query-common-v0.1.1.jar')
     compile(versions.stroomExpression,
         'https://github.com/gchq/stroom-expression/releases/download/v0.1.0/stroom-expression-v0.1.0.jar')
-    //compile(versions.hbaseCommonShaded,
-    //'https://github.com/gchq/hbase-common-shaded/releases/download/v1.2.1-2-all/hbase-common-shaded-v1.2.1-2-all.jar')
     compile(versions.hadoopHdfsShaded,
             'https://github.com/gchq/hadoop-hdfs-shaded/releases/download/v2.6.4-2-all/hadoop-hdfs-shaded-v2.6.4-2-all.jar')
     compile(versions.hadoopCommonShaded,

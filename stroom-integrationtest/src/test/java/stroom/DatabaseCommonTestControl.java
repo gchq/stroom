@@ -27,10 +27,10 @@ import stroom.dictionary.shared.Dictionary;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Folder;
+import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.importexport.server.ImportExportSerializer.ImportMode;
 import stroom.index.server.IndexShardWriterCache;
 import stroom.index.server.IndexShardWriterImpl;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -254,7 +254,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         if (schemaCount == 0) {
             // Import the schemas.
             final File xsdDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "samples/config/XML Schemas");
-            importExportSerializer.read(xsdDir, null, ImportMode.IGNORE_CONFIRMATION);
+            importExportSerializer.read(xsdDir.toPath(), null, ImportMode.IGNORE_CONFIRMATION);
         }
     }
 }

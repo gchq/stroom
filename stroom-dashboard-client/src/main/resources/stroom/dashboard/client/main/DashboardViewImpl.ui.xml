@@ -3,8 +3,18 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.layout.client.view">
     <ui:style>
+        .dashboard {
+        background-color: #f5f5f5;
+        width: 100%;
+        height: 100%;
+        }
+
         .bar {
-        border-bottom-style: solid;
+        width: 100%;
+        height: 100%;
+        }
+
+        .content {
         width: 100%;
         height: 100%;
         }
@@ -19,9 +29,14 @@
         width: 100%;
         }
 
+        .paramsContainer {
+        width: 100%;
+        padding: 2px;
+        }
+
         .params {
         width: 100%;
-        border: none;
+        border: 1px solid #ddd;
         }
 
         .right {
@@ -30,7 +45,7 @@
         }
 
         .leftInner {
-        padding-right: 10px;
+        padding: 3px;
         }
 
         .rightInner {
@@ -38,16 +53,18 @@
         right: 0px;
         }
     </ui:style>
-    <g:DockLayoutPanel unit="PX" width="100%" height="100%">
-        <g:north size="19">
-            <g:SimplePanel styleName="{style.bar} stroom-border">
+    <g:DockLayoutPanel unit="PX" styleName="{style.dashboard}" >
+        <g:north size="21">
+            <g:SimplePanel styleName="{style.bar} stroom-content-container">
                 <g:Grid width="100%" height="100%">
                     <g:row>
                         <g:customCell styleName="{style.left}">
                             <g:FlowPanel ui:field="left" styleName="{style.leftInner}"/>
                         </g:customCell>
                         <g:customCell styleName="{style.middle}">
-                            <g:TextBox ui:field="params" styleName="{style.params}"/>
+                            <g:FlowPanel styleName="{style.paramsContainer}">
+                                <g:TextBox ui:field="params" styleName="{style.params}"/>
+                            </g:FlowPanel>
                         </g:customCell>
                         <g:customCell styleName="{style.right}">
                             <g:FlowPanel ui:field="right" styleName="{style.rightInner}"/>
@@ -57,7 +74,7 @@
             </g:SimplePanel>
         </g:north>
         <g:center>
-            <v:ResizeSimplePanel ui:field="content" width="100%" height="100%"/>
+            <v:ResizeSimplePanel ui:field="content" styleName="{style.content} stroom-content-container"/>
         </g:center>
     </g:DockLayoutPanel>
 </ui:UiBinder>

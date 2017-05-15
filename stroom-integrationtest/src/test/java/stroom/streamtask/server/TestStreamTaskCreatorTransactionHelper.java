@@ -16,11 +16,8 @@
 
 package stroom.streamtask.server;
 
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.CommonTestScenarioCreator;
@@ -28,6 +25,8 @@ import stroom.feed.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
+
+import javax.annotation.Resource;
 
 public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrationTest {
     @Resource

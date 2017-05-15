@@ -16,21 +16,14 @@
 
 package stroom.jobsystem.server;
 
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.server.util.StroomDatabaseInfo;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.StroomDatabaseInfo;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.jobsystem.shared.ClusterLock;
 import stroom.node.server.NodeCache;
@@ -38,6 +31,11 @@ import stroom.task.server.TaskManager;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.SharedBoolean;
 import stroom.util.spring.StroomFrequencySchedule;
+
+import javax.annotation.Resource;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class ClusterLockServiceImpl implements ClusterLockService {

@@ -16,6 +16,23 @@
 
 package stroom.xml.converter.ds3;
 
+import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
+import stroom.entity.server.util.XMLUtil;
+import stroom.pipeline.server.DefaultLocationFactory;
+import stroom.pipeline.server.LocationFactory;
+import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
+import stroom.test.StroomProcessTestFileUtil;
+import stroom.util.io.FileUtil;
+import stroom.xml.converter.SchemaFilterFactory;
+
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -32,25 +49,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
-
-import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.InputSource;
-import org.xml.sax.XMLReader;
-
-import stroom.entity.server.util.XMLUtil;
-import stroom.pipeline.server.DefaultLocationFactory;
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
-import stroom.test.StroomProcessTestFileUtil;
-import stroom.util.io.FileUtil;
-import stroom.xml.converter.SchemaFilterFactory;
 
 public class DS3PerformanceTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(DS3PerformanceTest.class);

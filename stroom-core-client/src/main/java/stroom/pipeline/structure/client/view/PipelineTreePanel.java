@@ -17,14 +17,12 @@
 package stroom.pipeline.structure.client.view;
 
 import com.google.gwt.canvas.dom.client.Context2d;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
-
 import stroom.data.grid.client.MouseHelper;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.widget.htree.client.ArrowConnectorRenderer;
@@ -157,17 +155,14 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
             renderer.draw();
         }
 
-        pendingOperation.scheduleOperation(new ScheduledCommand() {
-            @Override
-            public void execute() {
-                boxPanel.clear();
-                if (renderer != null) {
-                    cellRenderer.clear();
-                    renderer.draw();
+        pendingOperation.scheduleOperation(() -> {
+            boxPanel.clear();
+            if (renderer != null) {
+                cellRenderer.clear();
+                renderer.draw();
 
-                    if (callback != null) {
-                        callback.onRefresh();
-                    }
+                if (callback != null) {
+                    callback.onRefresh();
                 }
             }
         });
@@ -176,5 +171,9 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     @Override
     public DefaultTreeForTreeLayout<PipelineElement> getTree() {
         return tree;
+    }
+
+    public int getTreeHeight() {
+        return canvas.getOffsetHeight();
     }
 }

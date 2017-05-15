@@ -16,18 +16,12 @@
 
 package stroom.xml.converter.ds3;
 
-import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-
 import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
 import stroom.util.CharBuffer;
 import stroom.util.shared.ModelStringUtil;
@@ -36,6 +30,11 @@ import stroom.xml.NamespaceConstants;
 import stroom.xml.converter.AbstractParser;
 import stroom.xml.converter.ds3.GroupFactory.MatchOrder;
 import stroom.xml.converter.ds3.NodeFactory.NodeType;
+
+import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Converter for a flat file to a SAX stream.

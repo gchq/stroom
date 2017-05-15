@@ -1,5 +1,7 @@
 <?xml version="1.1" encoding="UTF-8" ?>
-<xsl:stylesheet xpath-default-namespace="http://www.w3.org/2013/XSL/json" xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:stroom="stroom" version="2.0">
+<xsl:stylesheet xpath-default-namespace="http://www.w3.org/2013/XSL/json" xmlns="event-logging:3"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xmlns:stroom="stroom" version="2.0">
 
   <!-- Root template -->
   <xsl:template match="/">

@@ -16,13 +16,12 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.util.spring.StroomScope;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 @Scope(value = StroomScope.TASK)

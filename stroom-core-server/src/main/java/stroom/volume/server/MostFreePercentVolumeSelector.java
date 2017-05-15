@@ -16,10 +16,10 @@
 
 package stroom.volume.server;
 
-import java.util.List;
-
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeState;
+
+import java.util.List;
 
 public class MostFreePercentVolumeSelector implements VolumeSelector {
     public static final String NAME = "MostFreePercent";
