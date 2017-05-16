@@ -47,7 +47,6 @@ dependencies {
     compile 'org.flywaydb:flyway-core:4.0.3'
     compile 'com.mchange:c3p0:0.9.5.2'
 
-    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testCompile 'junit:junit:4.12'

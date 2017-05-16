@@ -24,11 +24,21 @@ gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(vers
 dependencies {
     compile project(':stroom-index-client')
     compile project(':stroom-statistics-client')
-    compile project(':stroom-security-shared')
     compile project(':stroom-dashboard-client')
+    compile project(':stroom-security-shared')
+    permitUnusedDeclared project(':stroom-security-shared')
+    compile project(':stroom-core-client')
+    compile project(':stroom-security-client-api')
+    compile project(':stroom-core-client-widget')
+    compile project(':stroom-security-client')
 
+    compile 'com.google.gwt:gwt-user:2.8.0'
     compile 'com.google.gwt.inject:gin:2.1.2'
+    compile 'com.google.inject:guice:3.0'
+    compile 'com.gwtplatform:gwtp-mvp-client:0.7'
+
     compile 'com.google.gwt:gwt-dev:2.8.0'
+    permitUnusedDeclared 'com.google.gwt:gwt-dev:2.8.0'
 }
 
 task gwtCompile(dependsOn: classes, type: JavaExec) {

@@ -20,30 +20,33 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-core-server')
     compile project(':stroom-index-shared')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-security-api')
+    compile project(':stroom-util')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
 
-//    // Jersey Server
-//    compile 'org.glassfish.jersey.core:jersey-container-jetty-http:2.25.1'
-//    compile 'org.glassfish.jersey.media:jersey-media-jaxb:2.25.1'
-//    compile 'org.glassfish.jersey.media:jersey-media-json-jackson:jar:2.25.1'
+    compile 'commons-lang:commons-lang:2.6'
+    compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
+    compile 'org.springframework:spring-context:4.3.4.RELEASE'
+    compile 'org.springframework:spring-beans:4.3.4.RELEASE'
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile 'org.apache.lucene:lucene-core:5.5.3'
+    compile 'org.apache.lucene:lucene-analyzers-common:5.5.3'
+    compile 'org.apache.lucene:lucene-queryparser:5.5.3'
+    compile 'org.springframework:spring-tx:4.3.4.RELEASE'
+    compile 'javax.inject:javax.inject:1'
+    compile 'net.sf.ehcache:ehcache-core:2.6.11'
+    compile 'xml-apis:xml-apis:1.0.b2'
+    compile 'javax.annotation:javax.annotation-api:1.2'
 
     // Jackson
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.8.6'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
-    compile 'com.fasterxml.jackson.core:jackson-core:2.8.6'
+    permitUnusedDeclared 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
 
-//    // JAX-RS annotations
-//    compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
-//    compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.8.6'
-
-    // Jersey JSON serialiser
-    compile 'org.glassfish.jersey.media:jersey-media-json-jackson:2.25'
-
-    // Jersey + Spring
-    compile('org.glassfish.jersey.ext:jersey-spring3:2.25') {
-        exclude(module: 'asm-all-repackaged')
-    }
-
-    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.0.2-beta'
 }

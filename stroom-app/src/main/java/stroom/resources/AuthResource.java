@@ -24,13 +24,14 @@ import org.glassfish.jersey.server.ContainerRequest;
 import stroom.entity.shared.EntityServiceException;
 import stroom.security.Insecure;
 import stroom.security.server.AuthenticationService;
+import stroom.security.server.AuthorisationService;
 import stroom.security.server.JWTUtils;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Optional;
@@ -43,9 +44,10 @@ import java.util.Optional;
 @Path("auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Insecure
-public class AuthenticationResource {
+public class AuthResource {
 
     private AuthenticationService authenticationService;
+    private AuthorisationService authorisationService;
 
     @GET
     @Path("/getToken")
@@ -54,10 +56,10 @@ public class AuthenticationResource {
     @Timed
     @Insecure
     // We're going to use BasicHttpAuthentication by passing the token in with the header.
-    public Response getToken(ContainerRequest request){
+    public Response getToken(ContainerRequest request) {
         Optional<UsernamePasswordToken> credentials = extractCredentialsFromHeader(request);
 
-        if(credentials.isPresent()){
+        if (credentials.isPresent()) {
             // FIXME: Bad credentials are not an exceptional case and I shouldn't have to use try-catch to detect one.
             try {
                 // If we're not logged in the getting a token will fail.
@@ -68,14 +70,13 @@ public class AuthenticationResource {
                 return Response
                         .ok(token, MediaType.TEXT_PLAIN)
                         .build();
-            } catch (EntityServiceException e){
+            } catch (EntityServiceException e) {
                 return Response
                         .status(Response.Status.UNAUTHORIZED)
                         .entity(e.getMessage())
                         .build();
             }
-        }
-        else{
+        } else {
             return Response
                     .status(Response.Status.BAD_REQUEST)
                     .entity("This method expects a username and password (like this: 'username:password') in the Authorization header, encoded as Base64.")
@@ -83,11 +84,31 @@ public class AuthenticationResource {
         }
     }
 
+    @POST
+    @Path("isAuthorised")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Timed
+    /**
+     * Authenticates using JWT
+     */
+    public Response isAuthorisedForStatistic(AuthorisationRequest authorisationRequest) {
+        boolean result = authorisationService.hasDocumentPermission(
+                authorisationRequest.getDocRef().getType(),
+                authorisationRequest.getDocRef().getUuid(),
+                authorisationRequest.getPermissions());
+        return result ? Response.ok().build() : Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
     public void setAuthenticationService(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
 
-    private static Optional<UsernamePasswordToken> extractCredentialsFromHeader(ContainerRequest request){
+    public void setAuthorisationService(AuthorisationService authorisationService) {
+        this.authorisationService = authorisationService;
+    }
+
+    private static Optional<UsernamePasswordToken> extractCredentialsFromHeader(ContainerRequest request) {
         try {
             String authorizationHeader = request.getHeaderString("Authorization");
             if (Strings.isNullOrEmpty(authorizationHeader) || !authorizationHeader.contains("Basic")) {

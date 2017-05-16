@@ -29,7 +29,7 @@ public class JWTUtils {
 
     // TODO Move these to config
     public static final String ISSUER = "stroom";
-    public static final String SECRET = "some-secret";
+    public static final String SECRET = "bd678197-a88e-499c-b03b-62c3dd7dfd2d";
 
     public static Optional<String> getAuthHeader(ServletRequest request) {
         HttpServletRequest httpServletRequest = WebUtils.toHttp(request);

@@ -24,9 +24,8 @@ before_script:
 # We run a script to build dependencies and do database setup
 install: "./.travis.install.sh"
 
-# We need to run shadowJar otherwise we won't be able to publish to DockerHub
-# We need to include --info otherwise there'll be no standard out for so long that Travis kills the job
-script: ./gradlew downloadUrlDependencies clean build shadowJar --info
+# We're running this as a script because our build is either too silent or too chatty and TravisCI will kill either way.
+script: travis_wait 30 ./gradlew downloadUrlDependencies clean build shadowJar
 
 # Push to DockerHub. The username and password were added using the Travis CLI.
 # The configuration below will only push an image if the branch being built is master.

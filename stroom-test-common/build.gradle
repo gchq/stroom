@@ -1,3 +1,6 @@
 dependencies {
     compile project(':stroom-util')
+    permitUnusedDeclared project(':stroom-util')
+
+    testCompile 'junit:junit:4.12'
 }
