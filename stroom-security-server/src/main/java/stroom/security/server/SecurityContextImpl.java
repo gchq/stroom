@@ -49,7 +49,6 @@ import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.persistence.RollbackException;
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,6 +65,7 @@ class SecurityContextImpl implements SecurityContext {
     private final UserService userService;
     private final DocumentPermissionService documentPermissionService;
     private final GenericEntityService genericEntityService;
+    private JWTService jwtService;
 
     private static final String INTERNAL = "INTERNAL";
     private static final String SYSTEM = "system";
@@ -73,13 +73,21 @@ class SecurityContextImpl implements SecurityContext {
     private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", INTERNAL, false, true);
 
     @Inject
-    SecurityContextImpl(final DocumentPermissionsCache documentPermissionsCache, final UserGroupsCache userGroupsCache, final UserAppPermissionsCache userAppPermissionsCache, final UserService userService, final DocumentPermissionService documentPermissionService, final GenericEntityService genericEntityService) {
+    SecurityContextImpl(
+            final DocumentPermissionsCache documentPermissionsCache,
+            final UserGroupsCache userGroupsCache,
+            final UserAppPermissionsCache userAppPermissionsCache,
+            final UserService userService,
+            final DocumentPermissionService documentPermissionService,
+            final GenericEntityService genericEntityService,
+            final JWTService jwtService) {
         this.documentPermissionsCache = documentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userService = userService;
         this.documentPermissionService = documentPermissionService;
         this.genericEntityService = genericEntityService;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -175,19 +183,7 @@ class SecurityContextImpl implements SecurityContext {
 
     @Override
     public String getToken() {
-        try {
-            return JWT
-                    .create()
-                    .withIssuer(JWTUtils.ISSUER)
-                    .withSubject(getUserId())
-                    .sign(Algorithm.HMAC256(JWTUtils.SECRET));
-        } catch (final JWTCreationException e) {
-            LOGGER.error(e.getMessage(), e);
-        } catch (final UnsupportedEncodingException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
-        return null;
+        return jwtService.getTokenFor(getUserId());
     }
 
     @Override

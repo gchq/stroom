@@ -8,7 +8,7 @@ import org.glassfish.jersey.server.ContainerRequest;
 import stroom.entity.shared.EntityServiceException;
 import stroom.security.Insecure;
 import stroom.security.server.AuthenticationService;
-import stroom.security.server.JWTUtils;
+import stroom.security.server.JWTService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -28,6 +28,7 @@ import java.util.Optional;
 @Insecure
 public class AuthenticationResource {
     private AuthenticationService authenticationService;
+    private JWTService jwtService;
 
     @GET
     @Path("/getToken")
@@ -45,7 +46,7 @@ public class AuthenticationResource {
                 // If we're not logged in the getting a token will fail.
                 authenticationService.login(credentials.get().getUsername(), new String(credentials.get().getPassword()));
 
-                String token = JWTUtils.getTokenFor(credentials.get().getUsername());
+                String token = jwtService.getTokenFor(credentials.get().getUsername());
 
                 return Response
                         .ok(token, MediaType.TEXT_PLAIN)
@@ -66,6 +67,10 @@ public class AuthenticationResource {
 
     public void setAuthenticationService(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
+    }
+
+    public void setJwtService(JWTService jwtService) {
+        this.jwtService = jwtService;
     }
 
     private static Optional<UsernamePasswordToken> extractCredentialsFromHeader(ContainerRequest request) {

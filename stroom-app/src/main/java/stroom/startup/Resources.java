@@ -26,6 +26,7 @@ import stroom.resources.SearchResource;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.security.server.AuthenticationService;
 import stroom.security.server.AuthorisationService;
+import stroom.security.server.JWTService;
 import stroom.util.upgrade.UpgradeDispatcherServlet;
 
 import javax.servlet.ServletException;
@@ -89,7 +90,9 @@ public class Resources {
 
     private void configureAuthenticationResource(ApplicationContext applicationContext){
         AuthenticationService authenticationService = applicationContext.getBean(AuthenticationService.class);
+        JWTService jwtService = applicationContext.getBean(JWTService.class);
         authenticationResource.setAuthenticationService(authenticationService);
+        authenticationResource.setJwtService(jwtService);
     }
 
     private void configureAuthorisationResource(ApplicationContext applicationContext){
