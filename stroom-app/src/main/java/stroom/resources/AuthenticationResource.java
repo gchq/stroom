@@ -1,19 +1,3 @@
-/*
- * Copyright 2017 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package stroom.resources;
 
 import com.codahale.metrics.annotation.Timed;
@@ -24,12 +8,10 @@ import org.glassfish.jersey.server.ContainerRequest;
 import stroom.entity.shared.EntityServiceException;
 import stroom.security.Insecure;
 import stroom.security.server.AuthenticationService;
-import stroom.security.server.AuthorisationService;
 import stroom.security.server.JWTUtils;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
@@ -37,17 +19,15 @@ import javax.ws.rs.core.Response;
 import java.util.Optional;
 
 /**
- * This is used for unsecured auth requests.
+ * This is used for unsecured authentication requests.
  *
  * It is explicitly excluded from the Shiro filter in SecurityConfiguration.shiroFilter().
  */
-@Path("auth")
+@Path("authentication")
 @Produces(MediaType.APPLICATION_JSON)
 @Insecure
-public class AuthResource {
-
+public class AuthenticationResource {
     private AuthenticationService authenticationService;
-    private AuthorisationService authorisationService;
 
     @GET
     @Path("/getToken")
@@ -84,28 +64,8 @@ public class AuthResource {
         }
     }
 
-    @POST
-    @Path("isAuthorised")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Timed
-    /**
-     * Authenticates using JWT
-     */
-    public Response isAuthorisedForStatistic(AuthorisationRequest authorisationRequest) {
-        boolean result = authorisationService.hasDocumentPermission(
-                authorisationRequest.getDocRef().getType(),
-                authorisationRequest.getDocRef().getUuid(),
-                authorisationRequest.getPermissions());
-        return result ? Response.ok().build() : Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-
     public void setAuthenticationService(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
-    }
-
-    public void setAuthorisationService(AuthorisationService authorisationService) {
-        this.authorisationService = authorisationService;
     }
 
     private static Optional<UsernamePasswordToken> extractCredentialsFromHeader(ContainerRequest request) {

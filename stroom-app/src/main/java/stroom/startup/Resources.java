@@ -20,7 +20,8 @@ import io.dropwizard.jersey.setup.JerseyEnvironment;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.context.ApplicationContext;
 import stroom.index.shared.IndexService;
-import stroom.resources.AuthResource;
+import stroom.resources.AuthenticationResource;
+import stroom.resources.AuthorisationResource;
 import stroom.resources.SearchResource;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.security.server.AuthenticationService;
@@ -32,14 +33,17 @@ import javax.servlet.ServletException;
 public class Resources {
 
     private final SearchResource searchResource;
-    private final AuthResource authResource;
+    private final AuthorisationResource authorisationResource;
+    private final AuthenticationResource authenticationResource;
 
     public Resources(JerseyEnvironment jersey, ServletHolder upgradeDispatcherServlerHolder){
         searchResource = new SearchResource();
         jersey.register(searchResource);
 
-        authResource = new AuthResource();
-        jersey.register(authResource);
+        authenticationResource = new AuthenticationResource();
+        jersey.register(authenticationResource);
+        authorisationResource = new AuthorisationResource();
+        jersey.register(authorisationResource);
 
         new Thread(() -> register(upgradeDispatcherServlerHolder)).start();
 
@@ -62,6 +66,7 @@ public class Resources {
                 if (applicationContext != null) {
                     configureSearchResource(applicationContext);
                     configureAuthenticationResource(applicationContext);
+                    configureAuthorisationResource(applicationContext);
                     apisAreNotYetConfigured = false;
                 }
             } catch (ServletException e) {
@@ -84,9 +89,11 @@ public class Resources {
 
     private void configureAuthenticationResource(ApplicationContext applicationContext){
         AuthenticationService authenticationService = applicationContext.getBean(AuthenticationService.class);
-        authResource.setAuthenticationService(authenticationService);
+        authenticationResource.setAuthenticationService(authenticationService);
+    }
 
+    private void configureAuthorisationResource(ApplicationContext applicationContext){
         AuthorisationService authorisationService = applicationContext.getBean(AuthorisationService.class);
-        authResource.setAuthorisationService(authorisationService);
+        authorisationResource.setAuthorisationService(authorisationService);
     }
 }
