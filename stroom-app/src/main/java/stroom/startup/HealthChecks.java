@@ -20,11 +20,19 @@ import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 
 public class HealthChecks {
-    public HealthChecks(HealthCheckRegistry healthCheckRegistry, Resources resources){
+    public HealthChecks(
+            HealthCheckRegistry healthCheckRegistry, Resources resources, ServiceDiscoveryManager serviceDiscoveryManager){
         healthCheckRegistry.register("SearchResourceHealthCheck", new HealthCheck() {
             @Override
             protected Result check() throws Exception {
                 return resources.getSearchResource().getHealth();
+            }
+        });
+
+        healthCheckRegistry.register("ServiceDiscoveryManager", new HealthCheck() {
+            @Override
+            protected Result check() throws Exception {
+                return serviceDiscoveryManager.getHealth();
             }
         });
     }

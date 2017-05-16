@@ -1,5 +1,6 @@
 package stroom.startup;
 
+import com.codahale.metrics.health.HealthCheck;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -19,6 +20,7 @@ public class ServiceDiscoveryManager {
     private final ServiceInstance<String> thisInstance;
 
     //TODO add health check
+    private HealthCheck.Result health;
 
     public ServiceDiscoveryManager(Config config){
         //TODO validate the URL we get passed - we don't want to register with something duff, e.g. missing the protocol
@@ -44,10 +46,16 @@ public class ServiceDiscoveryManager {
                 .thisInstance(thisInstance)
                 .build();
             serviceDiscovery.start();
+            health = HealthCheck.Result.healthy("Successfully registered the 'stroom' service.");
             LOGGER.info("Service instance created successfully!");
         } catch (Exception e){
+            health = HealthCheck.Result.unhealthy("Service instance creation failed!", e);
             LOGGER.error("Service instance creation failed!", e);
             throw new RuntimeException("Service instance creation failed!", e);
         }
+    }
+
+    public HealthCheck.Result getHealth() {
+        return health;
     }
 }
