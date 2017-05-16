@@ -217,8 +217,8 @@ public class IndexingFilter extends AbstractXMLFilter {
                                 // Ask the pool for another one and try again
                                 final IndexShardWriter newWriter = getIndexShardWriter();
                                 if (newWriter == indexShardWriter) {
-                                    LOGGER.warn("Expected a new writer but got the same one back!!!");
-//                                    throw new IndexException("Expected a new writer but got the same one back!!!");
+                                    LOGGER.error("Expected a new writer but got the same one back!!!");
+                                    throw new IndexException("Expected a new writer but got the same one back!!!");
                                 }
 
                                 indexShardWriter = newWriter;
@@ -282,7 +282,7 @@ public class IndexingFilter extends AbstractXMLFilter {
     }
 
     private IndexShardWriter getIndexShardWriter() throws IndexException {
-        indexShardWriter = indexShardCache.get(indexShardKey);
+        final IndexShardWriter indexShardWriter = indexShardCache.get(indexShardKey);
         if (indexShardWriter == null) {
             throw new IndexException("Unable to get writer for index '" + indexShardKey.getIndex().getName()
                     + "'. Please check the index has active volumes.");
