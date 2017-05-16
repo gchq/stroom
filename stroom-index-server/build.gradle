@@ -41,8 +41,7 @@ dependencies {
     compile 'javax.annotation:javax.annotation-api:1.2'
 
     // Jackson
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
-    permitUnusedDeclared 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
+    runtime 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')

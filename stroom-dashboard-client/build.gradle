@@ -6,8 +6,7 @@ dependencies {
     compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')
     compile project(':stroom-security-client-api')
-    compile project(':stroom-security-client')
-    permitUnusedDeclared project(':stroom-security-client')
+    runtime project(':stroom-security-client')
 
     compile 'com.google.jsinterop:jsinterop-annotations:1.0.1'
     compile 'com.google.gwt:gwt-user:2.8.0'
