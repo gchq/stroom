@@ -26,13 +26,13 @@ public class HealthChecks {
 
         resources.getResources().stream()
                 .filter(resource -> resource instanceof HasHealthCheck)
-                .forEach(resource -> {
+                .forEach(resource ->
                     healthCheckRegistry.register(resource.getName() + "HealthCheck", new HealthCheck() {
                         @Override
                         protected Result check() throws Exception {
                             return ((HasHealthCheck)resource).getHealth();
                         }
-                    });
-                });
+                    })
+                );
     }
 }
