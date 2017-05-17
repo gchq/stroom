@@ -1,4 +1,4 @@
-package stroom.pipeline.server;
+package stroom.kafka;
 
 import com.google.common.base.Strings;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -9,11 +9,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import java.util.Properties;
+import java.util.function.Consumer;
 
 /**
  * A singleton responsible for sending records to Kafka.
@@ -52,21 +51,19 @@ public class StroomKafkaProducer {
         }
     }
 
-    public void send(ProducerRecord<String, String> record, ErrorReceiverProxy errorReceiverProxy) {
+    public void send(final ProducerRecord<String, String> record, final Consumer<Exception> exceptionConsumer) {
         if (producer != null) {
 
             producer.send(record, (recordMetadata, exception) -> {
                 if (exception != null) {
-                    String errorMessage = "Unable to send record to Kafka: " + exception.getMessage();
-                    LOGGER.error(errorMessage);
-                    errorReceiverProxy.log(Severity.ERROR, null, null, errorMessage, exception);
+                    exceptionConsumer.accept(exception);
                 }
                 LOGGER.trace("Record send to Kafka");
             });
 
             producer.flush();
         } else {
-            errorReceiverProxy.log(Severity.ERROR, null, null, "Kafka is not properly configured.", null);
+            throw new RuntimeException("Producer is null, possibly not correctly configured");
         }
     }
 

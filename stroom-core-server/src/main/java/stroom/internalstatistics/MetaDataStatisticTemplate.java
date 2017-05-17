@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.statistics.server.common;
+package stroom.internalstatistics;
 
 import java.io.Serializable;
 import java.util.List;

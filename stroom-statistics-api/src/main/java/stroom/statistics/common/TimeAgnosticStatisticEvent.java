@@ -40,7 +40,6 @@ public class TimeAgnosticStatisticEvent implements Serializable {
     private TimeAgnosticStatisticEvent(final String name, final List<StatisticTag> tagList, final Long count, final Double value, final StatisticType statisticType) {
         this.name = name;
         this.tagList = buildTagList(tagList);
-        ;
         this.count = count;
         this.value = value;
         this.statisticType = statisticType;

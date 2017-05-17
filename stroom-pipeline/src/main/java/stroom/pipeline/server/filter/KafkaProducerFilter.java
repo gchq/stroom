@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
 import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.StroomKafkaProducer;
+import stroom.kafka.StroomKafkaProducer;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
@@ -58,7 +58,9 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
         super.endDocument();
         ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, recordKey, getOutput());
         try{
-            stroomKafkaProducer.send(newRecord, errorReceiverProxy);
+            stroomKafkaProducer.send(newRecord, exception -> {
+                errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", exception);
+            });
         } catch (RuntimeException e) {
             errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", e);
         }

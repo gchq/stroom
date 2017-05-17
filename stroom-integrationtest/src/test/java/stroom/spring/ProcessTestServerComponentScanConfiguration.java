@@ -46,7 +46,7 @@ import stroom.pipeline.server.XSLTServiceImpl;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.resource.server.ResourceStoreImpl;
 import stroom.security.server.UserServiceImpl;
-import stroom.statistics.server.common.MetaDataStatisticImpl;
+import stroom.internalstatistics.MetaDataStatisticImpl;
 import stroom.statistics.server.common.StatisticEventStoreFactoryImpl;
 import stroom.streamstore.server.StreamAttributeKeyServiceImpl;
 import stroom.streamstore.server.StreamTypeServiceImpl;

@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import stroom.kafka.StroomKafkaProducer;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.util.shared.Severity;
 

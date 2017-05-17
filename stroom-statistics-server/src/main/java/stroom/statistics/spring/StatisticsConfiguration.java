@@ -24,8 +24,8 @@ import org.slf4j.MarkerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import stroom.node.server.GlobalProperties;
-import stroom.statistics.server.common.MetaDataStatisticImpl;
-import stroom.statistics.server.common.MetaDataStatisticTemplate;
+import stroom.internalstatistics.MetaDataStatisticImpl;
+import stroom.internalstatistics.MetaDataStatisticTemplate;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Version;
 
