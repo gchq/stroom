@@ -17,13 +17,37 @@
 dependencies {
     compile project(':stroom-dashboard-shared')
     compile project(':stroom-core-server')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-security-api')
 
     compile urlDependencies.get(versions.stroomExpression)
 
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.8.5'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.8.5'
+    compile 'org.springframework:spring-core:4.3.4.RELEASE'
+    compile 'org.springframework:spring-aop:4.3.4.RELEASE'
+    compile 'org.springframework:spring-context:4.3.4.RELEASE'
+    compile 'javax.inject:javax.inject:1'
+    compile 'javax.servlet:javax.servlet-api:3.1.0'
+    compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
+    compile 'javax.annotation:javax.annotation-api:1.2'
+    compile 'net.sf.ehcache:ehcache-core:2.6.11'
+    compile 'org.slf4j:slf4j-api:1.6.2'
+    compile 'org.springframework:spring-tx:4.3.4.RELEASE'
+    compile 'org.apache.poi:poi:3.15'
     compile 'org.apache.poi:poi-ooxml:3.15'
+    compile 'org.glassfish.jersey.core:jersey-common:2.25.1'
     compile 'org.glassfish.jersey.core:jersey-client:2.25.1'
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.0.2-beta'
+    testCompile 'org.hamcrest:hamcrest-core:1.3'
+
 }

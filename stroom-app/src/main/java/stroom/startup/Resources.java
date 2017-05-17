@@ -21,11 +21,14 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.context.ApplicationContext;
 import stroom.index.shared.IndexService;
 import stroom.resources.AuthenticationResource;
+import stroom.resources.AuthorisationResource;
 import stroom.resources.LuceneQueryResource;
 import stroom.resources.NamedResource;
 import stroom.resources.SqlStatisticsQueryResource;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.security.server.AuthenticationService;
+import stroom.security.server.AuthorisationService;
+import stroom.security.server.JWTService;
 import stroom.statistics.common.StatisticsQueryService;
 import stroom.util.upgrade.UpgradeDispatcherServlet;
 
@@ -38,6 +41,7 @@ public class Resources {
     private final LuceneQueryResource luceneQueryResource;
     private final SqlStatisticsQueryResource sqlStatisticsQueryResource;
     private final AuthenticationResource authenticationResource;
+    private final AuthorisationResource authorisationResource;
     private final List<NamedResource> resources = new ArrayList<>();
 
     public Resources(JerseyEnvironment jersey, ServletHolder upgradeDispatcherServletHolder){
@@ -52,7 +56,9 @@ public class Resources {
 
         authenticationResource = new AuthenticationResource();
         jersey.register(authenticationResource);
-        resources.add(authenticationResource);
+
+        authorisationResource = new AuthorisationResource();
+        jersey.register(authorisationResource);
 
         new Thread(() -> register(upgradeDispatcherServletHolder)).start();
     }
@@ -75,6 +81,7 @@ public class Resources {
                     configureLuceneQueryResource(applicationContext);
                     configureSqlStatisticsQueryResource(applicationContext);
                     configureAuthenticationResource(applicationContext);
+                    configureAuthorisationResource(applicationContext);
                     apisAreNotYetConfigured = false;
                 }
             } catch (ServletException e) {
@@ -102,6 +109,13 @@ public class Resources {
 
     private void configureAuthenticationResource(ApplicationContext applicationContext){
         AuthenticationService authenticationService = applicationContext.getBean(AuthenticationService.class);
+        JWTService jwtService = applicationContext.getBean(JWTService.class);
         authenticationResource.setAuthenticationService(authenticationService);
+        authenticationResource.setJwtService(jwtService);
+    }
+
+    private void configureAuthorisationResource(ApplicationContext applicationContext){
+        AuthorisationService authorisationService = applicationContext.getBean(AuthorisationService.class);
+        authorisationResource.setAuthorisationService(authorisationService);
     }
 }

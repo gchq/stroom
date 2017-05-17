@@ -80,7 +80,7 @@ public interface SecurityContext {
      * id.
      *
      * @param documentType The type of document.
-     * @param documentId   The id of the document.
+     * @param documentUuid   The id of the document.
      * @param permission   The permission we are checking for.
      * @return True if the user associated with the security context has the
      * requested permission.

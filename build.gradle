@@ -13,12 +13,12 @@ apply plugin: 'gchq.urldependencies'
 ext.versions = [
         stroom: '6.0-beta.1-SNAPSHOT',
         eventLogging: 'event-logging-v3.1.0',
+        hadoopCommonShaded: 'hadoop-common-shaded-v2.6.4-2-all',
+        hadoopHdfsShaded: 'hadoop-hdfs-shaded-v2.6.4-2-all',
+        stroomExpression: 'stroom-expression-v0.1.0',
         stroomQueryApi: 'stroom-query-api-v0.1.1',
         stroomQueryApiSources: 'stroom-query-api-v0.1.1-sources',
-        stroomQueryCommon: 'stroom-query-common-v0.1.1',
-        stroomExpression: 'stroom-expression-v0.1.0',
-        hadoopHdfsShaded: 'hadoop-hdfs-shaded-v2.6.4-2-all',
-        hadoopCommonShaded: 'hadoop-common-shaded-v2.6.4-2-all'
+        stroomQueryCommon: 'stroom-query-common-v0.1.1'
 ]
 
 task wrapper(type: Wrapper) {
@@ -37,8 +37,9 @@ subprojects {
     apply plugin: 'java'
     
     //analyze missing dependencies for the code base
-    //apply plugin: 'ca.cutterslade.analyze'
+    apply plugin: 'ca.cutterslade.analyze'
     apply plugin: 'idea'
+
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
@@ -77,11 +78,6 @@ subprojects {
         mavenLocal()
 
         maven { url "http://repo.maven.apache.org/maven2" }
-    }
-
-    dependencies {
-        testCompile 'junit:junit:4.12'
-        testCompile 'org.mockito:mockito-core:2.0.2-beta'
     }
 }
 
@@ -122,17 +118,17 @@ project(':stroom-entity-shared') {
 urlDependencies {
     libs "libs"
     compile(versions.stroomQueryApi,
-        'https://github.com/gchq/stroom-query/releases/download/v0.1.1/stroom-query-api-v0.1.1.jar')
+            'https://github.com/gchq/stroom-query/releases/download/v0.1.1/stroom-query-api-v0.1.1.jar')
     compile(versions.stroomQueryApiSources,
-        'https://github.com/gchq/stroom-query/releases/download/v0.1.1/stroom-query-api-v0.1.1-sources.jar')
+            'https://github.com/gchq/stroom-query/releases/download/v0.1.1/stroom-query-api-v0.1.1-sources.jar')
     compile(versions.eventLogging,
-        'https://github.com/gchq/event-logging/releases/download/v3.1.0/event-logging-v3.1.0.jar')
+            'https://github.com/gchq/event-logging/releases/download/v3.1.0/event-logging-v3.1.0.jar')
     compile(versions.stroomQueryCommon,
-        'https://github.com/gchq/stroom-query/releases/download/v0.1.1/stroom-query-common-v0.1.1.jar')
+            'https://github.com/gchq/stroom-query/releases/download/v0.1.1/stroom-query-common-v0.1.1.jar')
     compile(versions.stroomExpression,
-        'https://github.com/gchq/stroom-expression/releases/download/v0.1.0/stroom-expression-v0.1.0.jar')
+            'https://github.com/gchq/stroom-expression/releases/download/v0.1.0/stroom-expression-v0.1.0.jar')
     compile(versions.hadoopHdfsShaded,
             'https://github.com/gchq/hadoop-hdfs-shaded/releases/download/v2.6.4-2-all/hadoop-hdfs-shaded-v2.6.4-2-all.jar')
     compile(versions.hadoopCommonShaded,
-    'https://github.com/gchq/hadoop-common-shaded/releases/download/v2.6.4-2-all/hadoop-common-shaded-v2.6.4-2-all.jar')
+            'https://github.com/gchq/hadoop-common-shaded/releases/download/v2.6.4-2-all/hadoop-common-shaded-v2.6.4-2-all.jar')
 }

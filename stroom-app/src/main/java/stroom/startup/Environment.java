@@ -17,7 +17,6 @@
 package stroom.startup;
 
 import org.eclipse.jetty.server.session.SessionHandler;
-import stroom.Config;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.thread.ThreadScopeContextHolder;
@@ -26,7 +25,7 @@ import stroom.util.thread.ThreadScopeContextHolder;
  * Configures  the environment, including the Dropwizard Environment as well as system properties and misc.
  */
 public class Environment {
-    public static void configure(Config config, io.dropwizard.setup.Environment environment) {
+    public static void configure(io.dropwizard.setup.Environment environment) {
         // Set up a session manager for Jetty
         SessionHandler sessions = new SessionHandler();
         environment.servlets().setSessionHandler(sessions);

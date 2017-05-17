@@ -1,19 +1,3 @@
-/*
- * Copyright 2017 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package stroom.resources;
 
 import com.codahale.metrics.annotation.Timed;
@@ -24,7 +8,7 @@ import org.glassfish.jersey.server.ContainerRequest;
 import stroom.entity.shared.EntityServiceException;
 import stroom.security.Insecure;
 import stroom.security.server.AuthenticationService;
-import stroom.security.server.JWTUtils;
+import stroom.security.server.JWTService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -35,16 +19,17 @@ import javax.ws.rs.core.Response;
 import java.util.Optional;
 
 /**
- * This is used for unsecured auth requests.
+ * This is used for unsecured authentication requests.
  *
  * It is explicitly excluded from the Shiro filter in SecurityConfiguration.shiroFilter().
  */
-@Path("auth")
+@Path("authentication")
 @Produces(MediaType.APPLICATION_JSON)
 @Insecure
 public class AuthenticationResource implements NamedResource {
 
     private AuthenticationService authenticationService;
+    private JWTService jwtService;
 
     @GET
     @Path("/getToken")
@@ -53,28 +38,27 @@ public class AuthenticationResource implements NamedResource {
     @Timed
     @Insecure
     // We're going to use BasicHttpAuthentication by passing the token in with the header.
-    public Response getToken(ContainerRequest request){
+    public Response getToken(ContainerRequest request) {
         Optional<UsernamePasswordToken> credentials = extractCredentialsFromHeader(request);
 
-        if(credentials.isPresent()){
+        if (credentials.isPresent()) {
             // FIXME: Bad credentials are not an exceptional case and I shouldn't have to use try-catch to detect one.
             try {
                 // If we're not logged in the getting a token will fail.
                 authenticationService.login(credentials.get().getUsername(), new String(credentials.get().getPassword()));
 
-                String token = JWTUtils.getTokenFor(credentials.get().getUsername());
+                String token = jwtService.getTokenFor(credentials.get().getUsername());
 
                 return Response
                         .ok(token, MediaType.TEXT_PLAIN)
                         .build();
-            } catch (EntityServiceException e){
+            } catch (EntityServiceException e) {
                 return Response
                         .status(Response.Status.UNAUTHORIZED)
                         .entity(e.getMessage())
                         .build();
             }
-        }
-        else{
+        } else {
             return Response
                     .status(Response.Status.BAD_REQUEST)
                     .entity("This method expects a username and password (like this: 'username:password') in the Authorization header, encoded as Base64.")
@@ -86,7 +70,11 @@ public class AuthenticationResource implements NamedResource {
         this.authenticationService = authenticationService;
     }
 
-    private static Optional<UsernamePasswordToken> extractCredentialsFromHeader(ContainerRequest request){
+    public void setJwtService(JWTService jwtService) {
+        this.jwtService = jwtService;
+    }
+
+    private static Optional<UsernamePasswordToken> extractCredentialsFromHeader(ContainerRequest request) {
         try {
             String authorizationHeader = request.getHeaderString("Authorization");
             if (Strings.isNullOrEmpty(authorizationHeader) || !authorizationHeader.contains("Basic")) {

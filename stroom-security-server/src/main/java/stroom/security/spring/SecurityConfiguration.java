@@ -32,6 +32,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import stroom.security.server.DBRealm;
 import stroom.security.server.JWTAuthenticationFilter;
+import stroom.security.server.JWTService;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomScope;
 
@@ -72,15 +73,20 @@ public class SecurityConfiguration {
     @Resource
     private DBRealm dbRealm;
 
+    @Bean(name = "jwtFilter")
+    public JWTAuthenticationFilter jwtAuthenticationFilter(JWTService jwtService) {
+        return new JWTAuthenticationFilter(jwtService);
+    }
+
     @Bean(name = "shiroFilter")
-    public AbstractShiroFilter shiroFilter() throws Exception {
+    public AbstractShiroFilter shiroFilter(JWTAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         final ShiroFilterFactoryBean shiroFilter = new ShiroFilterFactoryBean();
         shiroFilter.setSecurityManager(securityManager());
         shiroFilter.setLoginUrl("/login.html");
         shiroFilter.setSuccessUrl("/stroom.jsp");
-        shiroFilter.getFilters().put("jwtFilter", new JWTAuthenticationFilter());
+        shiroFilter.getFilters().put("jwtFilter", jwtAuthenticationFilter);
         shiroFilter.getFilterChainDefinitionMap().put("/**/secure/**", "authc, roles[USER]");
-        shiroFilter.getFilterChainDefinitionMap().put("/api/auth/getToken", "anon");
+        shiroFilter.getFilterChainDefinitionMap().put("/api/authentication/getToken", "anon");
         shiroFilter.getFilterChainDefinitionMap().put("/api/**", "jwtFilter");
         return (AbstractShiroFilter) shiroFilter.getObject();
     }

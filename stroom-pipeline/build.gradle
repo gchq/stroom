@@ -1,14 +1,36 @@
 dependencies {
     compile project(':stroom-core-server')
-    compile 'org.apache.poi:poi-ooxml:3.15'
+    compile project(':stroom-util')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-security-api')
+    compile project(':stroom-statistics-api')
+
     compile urlDependencies.get(versions.hadoopCommonShaded)
     compile urlDependencies.get(versions.hadoopHdfsShaded)
-    //Using 1.x because there is a classpath conflict with 2.x
-//    compile 'com.sun.jersey:jersey-client:1.19'
+
+    compile 'org.springframework:spring-beans:4.3.4.RELEASE'
+    compile 'org.springframework:spring-context:4.3.4.RELEASE'
+    compile 'org.springframework:spring-tx:4.3.4.RELEASE'
     compile 'org.glassfish.jersey.core:jersey-client:2.25.1'
     compile 'org.apache.kafka:kafka-clients:0.10.0.1' //CDH5.10 uses kafka 10.0
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile 'commons-lang:commons-lang:2.6'
+    compile 'net.sf.ehcache:ehcache-core:2.6.11'
+    compile 'net.sf.saxon:Saxon-HE:9.6.0-6'
+    compile 'com.google.guava:guava:20.0'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.8.6'
+    compile 'xml-apis:xml-apis:1.0.b2'
+    compile 'stax:stax-api:1.0.1'
+    compile 'javax.inject:javax.inject:1'
+    compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
+    compile 'javax.annotation:javax.annotation-api:1.2'
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.0.2-beta'
 }

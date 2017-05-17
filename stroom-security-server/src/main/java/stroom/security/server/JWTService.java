@@ -15,6 +15,8 @@ import org.jose4j.keys.HmacKey;
 import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
@@ -22,26 +24,24 @@ import java.util.Optional;
 
 import static org.jose4j.jws.AlgorithmIdentifiers.HMAC_SHA256;
 
-public class JWTUtils {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JWTUtils.class);
+@Component
+public class JWTService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JWTService.class);
 
     protected static final String AUTHORIZATION_HEADER = "Authorization";
 
-    // TODO Move these to config
-    public static final String ISSUER = "stroom";
-    public static final String SECRET = "some-secret";
+    private final String jwtSecret;
+    private final String jwtIssuer;
 
-    public static Optional<String> getAuthHeader(ServletRequest request) {
-        HttpServletRequest httpServletRequest = WebUtils.toHttp(request);
-        return(getAuthHeader(httpServletRequest));
+    public JWTService(
+            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.secret')}") final String jwtSecret,
+            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}") final String jwtIssuer){
+        this.jwtSecret = jwtSecret;
+        this.jwtIssuer = jwtIssuer;
     }
 
-    public static Optional<String> getAuthHeader(HttpServletRequest httpServletRequest){
-        String authHeader = httpServletRequest.getHeader(AUTHORIZATION_HEADER);
-        return Strings.isNullOrEmpty(authHeader) ? Optional.empty() : Optional.of(authHeader);
-    }
 
-    public static Optional<AuthenticationToken> verifyToken(ServletRequest request){
+    public Optional<AuthenticationToken> verifyToken(ServletRequest request){
         if (getAuthHeader(request).isPresent()) {
             String bearerString = getAuthHeader(request).get();
 
@@ -72,17 +72,17 @@ public class JWTUtils {
         }
     }
 
-    public static String getTokenFor(String username) {
-        return toToken(SECRET.getBytes(), getClaimsForUser(username));
+    public String getTokenFor(String username){
+        return toToken(jwtSecret.getBytes(), getClaimsForUser(username));
     }
 
-    private static JWTAuthenticationToken verifyToken(String token) {
+    private JWTAuthenticationToken verifyToken(String token) {
         try {
             String subject = null;
             if (token != null) {
                 JWTVerifier verifier = JWT
-                        .require(Algorithm.HMAC256(SECRET))
-                        .withIssuer(ISSUER)
+                        .require(Algorithm.HMAC256(jwtSecret))
+                        .withIssuer(jwtIssuer)
                         .build();
                 DecodedJWT jwt = verifier.verify(token);
                 subject = jwt.getSubject();
@@ -93,6 +93,16 @@ public class JWTUtils {
         } catch (final Exception e) {
             throw new AuthenticationException(e);
         }
+    }
+
+    public static Optional<String> getAuthHeader(ServletRequest request) {
+        HttpServletRequest httpServletRequest = WebUtils.toHttp(request);
+        return(getAuthHeader(httpServletRequest));
+    }
+
+    public static Optional<String> getAuthHeader(HttpServletRequest httpServletRequest){
+        String authHeader = httpServletRequest.getHeader(AUTHORIZATION_HEADER);
+        return Strings.isNullOrEmpty(authHeader) ? Optional.empty() : Optional.of(authHeader);
     }
 
     private static String toToken(byte[] key, JwtClaims claims) {
@@ -108,11 +118,11 @@ public class JWTUtils {
         catch (JoseException e) { throw Throwables.propagate(e); }
     }
 
-    private static JwtClaims getClaimsForUser(String user) {
+    private JwtClaims getClaimsForUser(String user) {
         final JwtClaims claims = new JwtClaims();
         claims.setExpirationTimeMinutesInTheFuture(5);
         claims.setSubject(user);
-        claims.setIssuer(ISSUER);
+        claims.setIssuer(jwtIssuer);
         return claims;
     }
 }
