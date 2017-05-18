@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#296** : Removed 'New' and 'Delete' buttons from the global property dialog.
 
+* Issue **#279** : Fixed NPE thrown during proxy aggregation.
+
 ## [v5.0-beta.26] - 2017-05-12
 
 * Issue **#287** : XSLT not found warnings property description now defaults to false.
