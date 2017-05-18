@@ -46,7 +46,7 @@ public class HelpPlugin extends Plugin {
                 .onSuccess(result -> {
                     IconMenuItem helpMenuItem;
                     String helpUrl = result.get(ClientProperties.HELP_URL);
-                    if (helpUrl != null && !helpUrl.equals("")) {
+                    if (helpUrl != null && helpUrl.trim().length() > 0) {
                         helpMenuItem = new IconMenuItem(1, GlyphIcons.HELP, GlyphIcons.HELP, "Help", null, true, () -> Window.open(GWT.getHostPageBaseURL() + result.get(ClientProperties.HELP_URL), "_blank", ""));
                     } else {
                         helpMenuItem = new IconMenuItem(1, GlyphIcons.HELP, GlyphIcons.HELP, "Help is not configured!", null, true, () -> {
