@@ -34,7 +34,7 @@ public class ManageGlobalPropertyPresenter extends ManageEntityPresenter<FindGlo
             final ManageGlobalPropertyListPresenter listPresenter,
             final Provider<ManageGlobalPropertyEditPresenter> editProvider,
             final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
-        super(eventBus, view, listPresenter, editProvider, null, dispatcher, securityContext);
+        super(eventBus, view, listPresenter, editProvider, null, dispatcher);
         this.manageGlobalPropertyListPresenter = listPresenter;
     }
 
