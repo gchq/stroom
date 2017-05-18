@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -113,18 +114,20 @@ public abstract class StroomZipRepositoryProcessor {
             final Iterable<File> zipFiles = stroomZipRepository.getZipFiles();
             int scanCount = 0;
             for (final File file : zipFiles) {
-                scanCount++;
+                if (file != null) {
+                    scanCount++;
 
-                // Quit once we have hit the max
-                if (scanCount > maxFileScan) {
-                    completedAllFiles = false;
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("process() - Hit scan limit of " + maxFileScan);
+                    // Quit once we have hit the max
+                    if (scanCount > maxFileScan) {
+                        completedAllFiles = false;
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("process() - Hit scan limit of " + maxFileScan);
+                        }
+                        break;
                     }
-                    break;
-                }
 
-                execute(file.getAbsolutePath(), createJobFileScan(stroomZipRepository, file));
+                    execute(file.getAbsolutePath(), createJobFileScan(stroomZipRepository, file));
+                }
             }
 
             waitForComplete();
@@ -140,8 +143,16 @@ public abstract class StroomZipRepositoryProcessor {
                 final String feedName = entry.getKey();
                 final List<File> fileList = entry.getValue();
 
-                // Sort the map so the items are processed in order
-                fileList.sort(Comparator.comparing(File::getName));
+                synchronized (fileList) {
+                    // Sort the map so the items are processed in order
+                    fileList.sort((f1, f2) -> {
+                        if (f1 == null || f2 == null || f1.getName() == null || f2.getName() == null) {
+                            return 0;
+                        }
+
+                        return f1.getName().compareTo(f2.getName());
+                    });
+                }
 
                 final StringBuilder msg = new StringBuilder();
                 msg.append(feedName);
@@ -170,7 +181,9 @@ public abstract class StroomZipRepositoryProcessor {
     private Runnable createJobFileScan(final StroomZipRepository stroomZipRepository, final File file) {
         return () -> {
             if (!monitor.isTerminated()) {
-                fileScan(stroomZipRepository, file);
+                if (file != null) {
+                    fileScan(stroomZipRepository, file);
+                }
             } else {
                 LOGGER.info("run() - Quit File Scan %s", file);
             }
@@ -227,7 +240,7 @@ public abstract class StroomZipRepositoryProcessor {
             }
 
             //add the file into the map, creating the list if needs be
-            feedToFileMap.computeIfAbsent(feed, k -> new ArrayList<>()).add(file);
+            feedToFileMap.computeIfAbsent(feed, k -> Collections.synchronizedList(new ArrayList<>())).add(file);
 
         } catch (final IOException ex) {
             // Unable to open file ... must be bad.
