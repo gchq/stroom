@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#288** : The error condition 'Expected a new writer but got the same one back!!!' should no longer be encountered as the root cause should now be fixed. The original check has been reinstated so that processing will terminate if we do encounter this problem.
 
+* Issue **#295** : Fixed the help property so that it can now be configured.
+
 ## [v5.0-beta.26] - 2017-05-12
 
 * Issue **#287** : XSLT not found warnings property description now defaults to false.
