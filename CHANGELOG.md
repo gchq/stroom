@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#295** : Fixed the help property so that it can now be configured.
 
+* Issue **#296** : Removed 'New' and 'Delete' buttons from the global property dialog.
+
 ## [v5.0-beta.26] - 2017-05-12
 
 * Issue **#287** : XSLT not found warnings property description now defaults to false.
