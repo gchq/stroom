@@ -244,8 +244,8 @@ public class SQLStatisticAggregationTransactionHelper {
             .append("   CT = AGG.CT ")
             .toString();
 
-    //TODO The last line of the above sql "CT = AGG.CT" causes the upsert to never update wehn run against mysql 5.7
-    //but works fine on 5.5. and 5.6
+    //TODO The last line of the above sql "CT = AGG.CT" causes the upsert to never update when run against mysql 5.7.18
+    //but works fine on 5.5. and 5.6. It also works fine on MariaDB 10.2.5.
 
     private static final String STAGE1_AGGREGATE_DELETE_SOURCE = new StringBuilder()
             .append("DELETE FROM SQL_STAT_VAL_SRC ")
