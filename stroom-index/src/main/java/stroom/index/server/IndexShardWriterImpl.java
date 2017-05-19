@@ -109,8 +109,8 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         this(service, indexFields, index, indexShard, DEFAULT_RAM_BUFFER_MB_SIZE);
     }
 
-    public IndexShardWriterImpl(final IndexShardService service, final IndexFields indexFields, final Index index,
-                                final IndexShard indexShard, final int ramBufferSizeMB) {
+    IndexShardWriterImpl(final IndexShardService service, final IndexFields indexFields, final Index index,
+                         final IndexShard indexShard, final int ramBufferSizeMB) {
         this.service = service;
         this.indexShard = indexShard;
         this.ramBufferSizeMB = ramBufferSizeMB;
@@ -226,8 +226,9 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 liveIndexWriterConfig.setMaxBufferedDocs(Integer.MAX_VALUE);
 
                 // Check the number of committed docs in this shard.
-                documentCount.set(indexWriter.numDocs());
-                lastDocumentCount = documentCount.get();
+                final int numDocs = indexWriter.numDocs();
+                documentCount.set(numDocs);
+                lastDocumentCount = numDocs;
                 if (create) {
                     if (lastDocumentCount != 0) {
                         LOGGER.error("Index should be new but already contains docs: " + lastDocumentCount);
@@ -561,18 +562,20 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     }
                 }
 
-                // Find out how many docs the DB thinks the shard currently
-                // contains.
-                final int docCountBeforeCommit = indexShard.getDocumentCount();
-
-                // Find out how many docs should be in the shard after commit.
-                lastDocumentCount = documentCount.get();
                 // Perform commit or close.
                 if (close) {
                     indexWriter.close();
                 } else {
                     indexWriter.commit();
                 }
+
+                // Find out how many docs the DB thinks the shard currently
+                // contains.
+                final int docCountBeforeCommit = indexShard.getDocumentCount();
+
+                // Find out how many docs should be in the shard now.
+                lastDocumentCount = indexWriter.numDocs();
+
                 // Record when commit completed so we know how fresh the index
                 // is for searching purposes.
                 lastCommitMs = System.currentTimeMillis();
@@ -629,7 +632,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     /**
      * Utility to update the stat's on the DB entity
      */
-    public synchronized void sync() {
+    synchronized void sync() {
         // Allow the thing to run without a service (e.g. benchmark mode)
         if (service != null) {
             boolean success = false;
@@ -731,7 +734,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 + documentCount;
     }
 
-    public synchronized void trace(final PrintStream ps) {
+    synchronized void trace(final PrintStream ps) {
         if (loggerPrintStream != null) {
             refreshEntity();
 
