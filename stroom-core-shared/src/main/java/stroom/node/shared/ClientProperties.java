@@ -31,7 +31,6 @@ public class ClientProperties implements SharedObject {
     public static final String NODE_NAME = "stroom.node";
     public static final String UP_DATE = "upDate";
 
-    // TODO : Make maintenance message get served on heartbeat.
     public static final String MAINTENANCE_MESSAGE = "stroom.maintenance.message";
     public static final String MAX_RESULTS = "stroom.search.maxResults";
     public static final String PROCESS_TIME_LIMIT = "stroom.search.process.defaultTimeLimit";
