@@ -8,6 +8,7 @@ dependencies {
     compile project(':stroom-entity-shared')
 
     compile urlDependencies.get(versions.eventLogging)
+    compile urlDependencies.get(versions.stroomQueryCommon)
 
     compile 'org.aspectj:aspectjweaver:1.6.2'
     runtime 'aopalliance:aopalliance:1.0'
@@ -22,11 +23,14 @@ dependencies {
     compile 'javax.validation:validation-api:1.1.0.Final'
     compile 'javax.inject:javax.inject:1'
     compile 'javax.servlet:javax.servlet-api:3.1.0'
+    compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
     compile 'org.apache.kafka:kafka-clients:0.10.0.1' //CDH5.10 uses kafka 10.0
     compile 'net.sf.ehcache:ehcache-core:2.6.11'
     runtime 'org.aspectj:aspectjrt:1.8.9'
     compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
     compile 'org.javassist:javassist:3.18.1-GA'
+    compile 'org.glassfish.jersey.core:jersey-common:2.25.1'
+    compile 'org.glassfish.jersey.core:jersey-client:2.25.1'
     compile 'org.slf4j:slf4j-api:1.6.2'
     compile 'com.caucho:hessian:4.0.38'
     compile 'com.google.gwt:gwt-servlet:2.8.0'

@@ -28,6 +28,8 @@ import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
+import stroom.datasource.DataSourceProvider;
+import stroom.datasource.DataSourceProviderRegistry;
 import stroom.logging.SearchEventLog;
 import stroom.query.api.DocRef;
 import stroom.query.api.Param;

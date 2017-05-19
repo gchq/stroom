@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.datasource;
 
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
@@ -40,10 +40,15 @@ import javax.ws.rs.core.Response;
 public class RemoteDataSourceProvider implements DataSourceProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(RemoteDataSourceProvider.class);
     private final SecurityContext securityContext;
+    private final String type;
     private String url = "http://127.0.0.1:8080/api/lucene";
 
-    public RemoteDataSourceProvider(final SecurityContext securityContext) {
+    public RemoteDataSourceProvider(final SecurityContext securityContext,
+                                    final String type,
+                                    String url) {
         this.securityContext = securityContext;
+        this.type = type;
+        this.url = url;
     }
 
     @Override

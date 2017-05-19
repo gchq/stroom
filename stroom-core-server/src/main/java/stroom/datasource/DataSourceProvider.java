@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.datasource;
 
 import stroom.datasource.api.DataSource;
 import stroom.query.api.DocRef;
