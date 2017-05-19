@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,6 @@
  */
 
 package stroom.pipeline.server.writer;
-
-import java.io.OutputStream;
-import java.io.Writer;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import stroom.io.EncodingWriter;
 import stroom.io.MultiOutputStream;
@@ -42,6 +33,15 @@ import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
+import java.io.OutputStream;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 public abstract class AbstractWriter extends AbstractXMLFilter implements Target, HasTargets {
     private static final NullOutputStream NULL_OUTPUT_STREAM = new NullOutputStream();
 
@@ -53,12 +53,12 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
     private EncodingWriter writer;
     private String encoding;
 
-    public AbstractWriter() {
+    AbstractWriter() {
         this.errorReceiver = new FatalErrorReceiver();
         outputStream.setOutputStream(NULL_OUTPUT_STREAM);
     }
 
-    public AbstractWriter(final ErrorReceiverProxy errorReceiverProxy) {
+    AbstractWriter(final ErrorReceiverProxy errorReceiverProxy) {
         this.errorReceiver = errorReceiverProxy;
         outputStream.setOutputStream(NULL_OUTPUT_STREAM);
     }
@@ -97,12 +97,13 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
             try {
                 charset = Charset.forName(encoding);
             } catch (final Exception e) {
+                error(e.getMessage(), e);
             }
         }
         return charset;
     }
 
-    protected void borrowDestinations(final byte[] header, final byte[] footer) {
+    void borrowDestinations(final byte[] header, final byte[] footer) {
         if (borrowedDestinations.size() == 0) {
             final List<OutputStream> outputStreams = new ArrayList<>(destinationProviders.size());
             for (final DestinationProvider destinationProvider : destinationProviders) {
@@ -132,7 +133,7 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
         }
     }
 
-    protected void returnDestinations() {
+    void returnDestinations() {
         // Ensure the encoding writer is flushed before we return the
         // destinations to the providers.
         if (writer != null) {
@@ -226,7 +227,7 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
         return errorReceiver;
     }
 
-    protected List<DestinationProvider> getDestinationProviders() {
+    private List<DestinationProvider> getDestinationProviders() {
         return destinationProviders;
     }
 
