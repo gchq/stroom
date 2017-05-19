@@ -69,7 +69,18 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     private final IndexShardService service;
     private volatile IndexShard indexShard;
     private volatile int ramBufferSizeMB = DEFAULT_RAM_BUFFER_MB_SIZE;
+
+    /**
+     * A count of documents added to the index used to control the maximum number of documents that are added.
+     * Note that due to the multi-threaded nature of document addition and how this count is used to control
+     * addition this will not always be accurate.
+     */
     private final AtomicInteger documentCount = new AtomicInteger(0);
+    /**
+     * An accurate count of the number of documents that have been successfully added to the index shard.
+     */
+    private final AtomicInteger actualDocumentCount = new AtomicInteger(0);
+
     private final File dir;
 
     /**
@@ -228,6 +239,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 // Check the number of committed docs in this shard.
                 final int numDocs = indexWriter.numDocs();
                 documentCount.set(numDocs);
+                actualDocumentCount.set(numDocs);
                 lastDocumentCount = numDocs;
                 if (create) {
                     if (lastDocumentCount != 0) {
@@ -431,6 +443,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                             // new index to add documents to.
                             indexWriter.addDocument(document);
                             added = true;
+                            actualDocumentCount.incrementAndGet();
 
                             final long duration = System.currentTimeMillis() - startTime;
                             if (duration > 1000) {
@@ -566,15 +579,15 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 // contains.
                 final int docCountBeforeCommit = indexShard.getDocumentCount();
 
-                // Find out how many docs should be in the shard now.
-                lastDocumentCount = indexWriter.numDocs();
-
                 // Perform commit or close.
                 if (close) {
                     indexWriter.close();
                 } else {
                     indexWriter.commit();
                 }
+
+                // If the index is closed we can be sure no additional documents were added successfully.
+                lastDocumentCount = actualDocumentCount.get();
 
                 // Record when commit completed so we know how fresh the index
                 // is for searching purposes.
@@ -731,14 +744,14 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 + ", indexWriter="
                 + (indexWriter == null ? "closed" : "open")
                 + ", actualDocs="
-                + documentCount;
+                + actualDocumentCount;
     }
 
     synchronized void trace(final PrintStream ps) {
         if (loggerPrintStream != null) {
             refreshEntity();
 
-            ps.println("Document Count = " + ModelStringUtil.formatCsv(documentCount.intValue()));
+            ps.println("Document Count = " + ModelStringUtil.formatCsv(actualDocumentCount.intValue()));
             if (dir != null) {
                 ps.println("Index File(s) Size = " + ModelStringUtil.formatIECByteSizeString(indexShard.getFileSize()));
             }
@@ -752,7 +765,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
     @Override
     public int getDocumentCount() {
-        return documentCount.intValue();
+        return actualDocumentCount.intValue();
     }
 
     @Override
@@ -787,7 +800,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
     @Override
     public boolean isFull() {
-        return documentCount.intValue() >= maxDocumentCount;
+        return actualDocumentCount.intValue() >= maxDocumentCount;
     }
 
     @Override
