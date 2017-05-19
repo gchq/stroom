@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.28] - 2017-05-19
+
 * Issue **#295** : Made the help URL absolute and not relative.
 
 * Issue **#293** : Attempt to fix mismatch document count error being reported when index shards are opened.
@@ -421,7 +423,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.27...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.28...HEAD
+[v5.0-beta.28]: https://github.com/gchq/stroom/compare/v5.0-beta.27...v5.0-beta.28
 [v5.0-beta.27]: https://github.com/gchq/stroom/compare/v5.0-beta.26...v5.0-beta.27
 [v5.0-beta.26]: https://github.com/gchq/stroom/compare/v5.0-beta.25...v5.0-beta.26
 [v5.0-beta.25]: https://github.com/gchq/stroom/compare/v5.0-beta.24...v5.0-beta.25
