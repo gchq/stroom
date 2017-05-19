@@ -452,19 +452,22 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                             }
                         } catch (final AlreadyClosedException e) {
                             LOGGER.debug(e.getMessage());
+
                         } catch (final CorruptIndexException e) {
                             LOGGER.error(e.getMessage(), e);
                             // Mark the shard as corrupt as this should be the
                             // only reason we can't add a document.
                             setStatus(IndexShardStatus.CORRUPT);
+
                         } catch (final Throwable t) {
                             LOGGER.error(t.getMessage(), t);
-                        }
 
-                        // If we were unable to add the document then decrement
-                        // the document count.
-                        if (!added) {
-                            documentCount.decrementAndGet();
+                        } finally {
+                            // If we were unable to add the document then decrement
+                            // the document count.
+                            if (!added) {
+                                documentCount.decrementAndGet();
+                            }
                         }
                     } else {
                         documentCount.decrementAndGet();
@@ -585,6 +588,16 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 } else {
                     indexWriter.commit();
                 }
+
+                // TODO : The document count here could still be inaccurate if a thread is still adding a document while
+                // the index shard is being closed and we get here after the document has been added but before the
+                // 'actualDocumentCount' variable has been incremented.
+                // TODO : Further more this method is called when the writer cache is asked to dispose of an index shard.
+                // If this happens because a thread has failed to add a document (this might be because the count has
+                // been exceeded) and has then asked the cache to dispose of this shard, we might still have many
+                // threads that are in the process of trying to add documents at the same time as we are closing this
+                // shard. This could lead to this index shard having a document count that is less than the maximum
+                // document count even though the limit has been met by some shards.
 
                 // If the index is closed we can be sure no additional documents were added successfully.
                 lastDocumentCount = actualDocumentCount.get();
