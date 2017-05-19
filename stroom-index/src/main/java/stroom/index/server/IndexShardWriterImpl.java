@@ -562,19 +562,19 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     }
                 }
 
-                // Perform commit or close.
-                if (close) {
-                    indexWriter.close();
-                } else {
-                    indexWriter.commit();
-                }
-
                 // Find out how many docs the DB thinks the shard currently
                 // contains.
                 final int docCountBeforeCommit = indexShard.getDocumentCount();
 
                 // Find out how many docs should be in the shard now.
                 lastDocumentCount = indexWriter.numDocs();
+
+                // Perform commit or close.
+                if (close) {
+                    indexWriter.close();
+                } else {
+                    indexWriter.commit();
+                }
 
                 // Record when commit completed so we know how fresh the index
                 // is for searching purposes.
