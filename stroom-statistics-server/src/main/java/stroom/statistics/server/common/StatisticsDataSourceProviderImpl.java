@@ -100,9 +100,7 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
         // Filter fields.
         if (entity.getStatisticDataSourceDataObject() != null) {
             final Statistics statistics = statisticsFactory.instance(entity.getEngineName());
-            if (statistics != null && statistics instanceof AbstractStatistics) {
-                fields = ((AbstractStatistics) statistics).getSupportedFields(fields);
-            }
+                fields = statistics.getSupportedFields(fields);
         }
 
         return fields;

@@ -16,9 +16,10 @@
 
 package stroom.statistics.common;
 
-import java.util.List;
-
+import stroom.datasource.api.DataSourceField;
 import stroom.statistics.shared.StatisticStore;
+
+import java.util.List;
 
 public interface Statistics {
     /**
@@ -33,7 +34,7 @@ public interface Statistics {
      *            The data source to store the stat against
      * @return
      */
-    boolean putEvent(StatisticEvent statisticEvent, StatisticStore statisticsDataSource);
+    void putEvent(StatisticEvent statisticEvent, StatisticStore statisticsDataSource);
 
     /**
      * @param statisticEvents
@@ -43,20 +44,20 @@ public interface Statistics {
      *            The data source to store the stat against
      * @return
      */
-    boolean putEvents(List<StatisticEvent> statisticEvents, StatisticStore statisticsDataSource);
+    void putEvents(List<StatisticEvent> statisticEvents, StatisticStore statisticsDataSource);
 
     /**
      * @param statisticEvent
      *            add event to the store
      */
-    boolean putEvent(StatisticEvent statisticEvent);
+    void putEvent(StatisticEvent statisticEvent);
 
     /**
      * @param statisticEvents
      *            add several events to the store. All events must be for the
      *            same statistic name and engine
      */
-    boolean putEvents(List<StatisticEvent> statisticEvents);
+    void putEvents(List<StatisticEvent> statisticEvents);
 
     /**
      * For a given statistic tag name, it returns all known values existing in
@@ -80,6 +81,8 @@ public interface Statistics {
      * @return Those statistic tag values that match both criteria
      */
     List<String> getValuesByTagAndPartialValue(String tagName, String partialValue);
+
+    List<DataSourceField> getSupportedFields(final List<DataSourceField> indexFields);
 
     /**
      * Flushes all events currently held in memory down to the persistent event

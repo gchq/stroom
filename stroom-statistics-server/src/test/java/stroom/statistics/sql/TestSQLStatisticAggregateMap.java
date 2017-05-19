@@ -23,7 +23,6 @@ import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.exception.StatisticsEventValidationException;
 import stroom.statistics.common.rollup.RollUpBitMask;
-import stroom.statistics.server.common.AbstractStatistics;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
@@ -427,7 +426,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
             event = StatisticEvent.createValue(timeMs, statName, buildTagList(valueSuffix), (Double) value);
         }
 
-        return AbstractStatistics.generateTagRollUps(event, buildStatisticDataSource(StatisticRollUpType.ALL));
+        return SQLStatisticEventStore.generateTagRollUps(event, buildStatisticDataSource(StatisticRollUpType.ALL));
 
     }
 

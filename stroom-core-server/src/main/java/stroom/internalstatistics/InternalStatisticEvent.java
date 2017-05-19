@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 
 import java.util.Map;
 
+//TODO this was added with a view to abstracting internal statistics from th SQL stats implementation.
 public class InternalStatisticEvent {
     private final String statisticName;
     private final Type type;

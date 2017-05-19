@@ -1,16 +1,22 @@
 package stroom.internalstatistics;
 
 import org.springframework.stereotype.Component;
-import stroom.statistics.common.Statistics;
-import stroom.statistics.common.StatisticsFactory;
 
 @Component
 public class InternalStatisticsServiceFactory {
 
-    private final StatisticsFactory statisticsFactory;
 
+//    private final KafkaInternalStatisticsService kafkaInternalStatisticsService;
+//    private final SQLInternalStatisticsService sqlInternalStatisticsService;
+//
+//    @Inject
+//    public InternalStatisticsServiceFactory(final KafkaInternalStatisticsService kafkaInternalStatisticsService,
+//                                            final SQLInternalStatisticsService sqlInternalStatisticsService) {
+//        this.kafkaInternalStatisticsService = kafkaInternalStatisticsService;
+//        this.sqlInternalStatisticsService = sqlInternalStatisticsService;
+//    }
 
-    public InternalStatisticsService instance() {
-
-    }
+//    public InternalStatisticsService create() {
+//
+//    }
 }

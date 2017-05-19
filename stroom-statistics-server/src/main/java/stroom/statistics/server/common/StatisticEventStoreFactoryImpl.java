@@ -19,12 +19,14 @@ package stroom.statistics.server.common;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import stroom.datasource.api.DataSourceField;
 import stroom.node.server.StroomPropertyService;
 import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
 import stroom.statistics.shared.StatisticStore;
+import stroom.statistics.sql.SQLStatisticEventStore;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 
@@ -63,7 +65,7 @@ public class StatisticEventStoreFactoryImpl implements StatisticsFactory, Initia
 
             // only add stores that are spring beans and are enabled
             if (statistics != null
-                    && AbstractStatistics.isDataStoreEnabled(statistics.getEngineName(), stroomPropertyService)) {
+                    && SQLStatisticEventStore.isDataStoreEnabled(statistics.getEngineName(), stroomPropertyService)) {
                 statisticEventStoreEngineMap.put(toKey(statistics.getEngineName()), beanName);
             }
         }
@@ -174,48 +176,35 @@ public class StatisticEventStoreFactoryImpl implements StatisticsFactory, Initia
         }
 
         @Override
-        public boolean putEvents(final List<StatisticEvent> statisticEvents) {
-            boolean result = false;
+        public void putEvents(final List<StatisticEvent> statisticEvents) {
             for (final Statistics statisticEventStore : implList) {
-                // OR the results together, i.e. considered a success if we
-                // could send to at least one engine
-                result = result || statisticEventStore.putEvents(statisticEvents);
+                statisticEventStore.putEvents(statisticEvents);
             }
-            return result;
         }
 
         @Override
-        public boolean putEvents(final List<StatisticEvent> statisticEvents,
+        public void putEvents(final List<StatisticEvent> statisticEvents,
                 final StatisticStore statisticsDataSource) {
-            boolean result = false;
             for (final Statistics statisticEventStore : implList) {
-                // OR the results together, i.e. considered a success if we
-                // could send to at least one engine
-                result = result || statisticEventStore.putEvents(statisticEvents, statisticsDataSource);
+                statisticEventStore.putEvents(statisticEvents, statisticsDataSource);
             }
-            return result;
         }
 
         @Override
-        public boolean putEvent(final StatisticEvent statisticEvent) {
-            boolean result = false;
+        public void putEvent(final StatisticEvent statisticEvent) {
             for (final Statistics statisticEventStore : implList) {
                 // OR the results together, i.e. considered a success if we
                 // could send to at least one engine
-                result = result || statisticEventStore.putEvent(statisticEvent);
+                statisticEventStore.putEvent(statisticEvent);
             }
-            return result;
         }
 
         @Override
-        public boolean putEvent(final StatisticEvent statisticEvent, final StatisticStore statisticsDataSource) {
+        public void putEvent(final StatisticEvent statisticEvent, final StatisticStore statisticsDataSource) {
             boolean result = false;
             for (final Statistics statisticEventStore : implList) {
-                // OR the results together, i.e. considered a success if we
-                // could send to at least one engine
-                result = result || statisticEventStore.putEvent(statisticEvent, statisticsDataSource);
+                statisticEventStore.putEvent(statisticEvent, statisticsDataSource);
             }
-            return result;
         }
 
         @Override
@@ -239,6 +228,11 @@ public class StatisticEventStoreFactoryImpl implements StatisticsFactory, Initia
         }
 
         @Override
+        public List<DataSourceField> getSupportedFields(final List<DataSourceField> indexFields) {
+            throw new UnsupportedOperationException(NOT_SUPPORTED_ERROR_TEXT);
+        }
+
+        @Override
         public void flushAllEvents() {
             for (final Statistics statisticEventStore : implList) {
                 statisticEventStore.flushAllEvents();
@@ -253,32 +247,28 @@ public class StatisticEventStoreFactoryImpl implements StatisticsFactory, Initia
         }
 
         @Override
-        public boolean putEvent(final StatisticEvent statisticEvent, final StatisticStore statisticsDataSource) {
+        public void putEvent(final StatisticEvent statisticEvent, final StatisticStore statisticsDataSource) {
             // return silently having done nothing as we have no stat store to
             // put stats to
-            return true;
         }
 
         @Override
-        public boolean putEvents(final List<StatisticEvent> statisticEvents,
+        public void putEvents(final List<StatisticEvent> statisticEvents,
                 final StatisticStore statisticsDataSource) {
             // return silently having done nothing as we have no stat store to
             // put stats to
-            return true;
         }
 
         @Override
-        public boolean putEvent(final StatisticEvent statisticEvent) {
+        public void putEvent(final StatisticEvent statisticEvent) {
             // return silently having done nothing as we have no stat store to
             // put stats to
-            return true;
         }
 
         @Override
-        public boolean putEvents(final List<StatisticEvent> statisticEvents) {
+        public void putEvents(final List<StatisticEvent> statisticEvents) {
             // return silently having done nothing as we have no stat store to
             // put stats to
-            return true;
         }
 
         // @Override
@@ -296,6 +286,11 @@ public class StatisticEventStoreFactoryImpl implements StatisticsFactory, Initia
         public List<String> getValuesByTagAndPartialValue(final String tagName, final String partialValue) {
             // return an empty list as we have no store to fetch data from
             return Collections.emptyList();
+        }
+
+        @Override
+        public List<DataSourceField> getSupportedFields(final List<DataSourceField> indexFields) {
+            return null;
         }
 
         @Override

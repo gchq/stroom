@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.statistics.server.common;
+package stroom.statistics.sql;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,11 +33,11 @@ import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.TimeAgnosticStatisticEvent;
 import stroom.statistics.common.rollup.RollUpBitMask;
+import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.common.StatisticRollUpType;
-import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomUnitTest;
 
@@ -45,9 +45,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-public class TestAbstractStatisticEventStore extends StroomUnitTest {
+public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     private static final long EVENT_TIME = 1234L;
     private static final String EVENT_NAME = "MyStatistic";
     private static final long EVENT_COUNT = 1;
@@ -66,7 +68,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         final StatisticStoreEntity statisticsDataSource = buildStatisticDataSource();
 
-        final RolledUpStatisticEvent rolledUpStatisticEvent = AbstractStatistics.generateTagRollUps(event,
+        final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
 
         assertEquals(4, rolledUpStatisticEvent.getPermutationCount());
@@ -117,7 +119,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         final StatisticStoreEntity statisticsDataSource = buildStatisticDataSource(StatisticRollUpType.CUSTOM);
 
-        final RolledUpStatisticEvent rolledUpStatisticEvent = AbstractStatistics.generateTagRollUps(event,
+        final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
 
         assertEquals(3, rolledUpStatisticEvent.getPermutationCount());
@@ -172,7 +174,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         final StatisticStoreEntity statisticsDataSource = buildStatisticDataSource();
 
-        final RolledUpStatisticEvent rolledUpStatisticEvent = AbstractStatistics.generateTagRollUps(event,
+        final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
 
         assertEquals(1, rolledUpStatisticEvent.getPermutationCount());
@@ -198,7 +200,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         final StatisticStoreEntity statisticsDataSource = buildStatisticDataSource(StatisticRollUpType.NONE);
 
-        final RolledUpStatisticEvent rolledUpStatisticEvent = AbstractStatistics.generateTagRollUps(event,
+        final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
 
         assertEquals(1, rolledUpStatisticEvent.getPermutationCount());
@@ -238,7 +240,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
 
         propertyService.setProperty(CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME, propertyValue);
 
-        final boolean result = AbstractStatistics.isDataStoreEnabled(engineName, propertyService);
+        final boolean result = SQLStatisticEventStore.isDataStoreEnabled(engineName, propertyService);
 
         Assert.assertEquals(expectedResult, result);
 
@@ -298,7 +300,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(searchRequest, dataSource);
+        SQLStatisticEventStore.buildCriteria(searchRequest, dataSource);
 
     }
 
@@ -317,7 +319,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(searchRequest, dataSource);
+        SQLStatisticEventStore.buildCriteria(searchRequest, dataSource);
 
     }
 
@@ -340,7 +342,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(searchRequest, dataSource);
+        final FindEventCriteria criteria = SQLStatisticEventStore.buildCriteria(searchRequest, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals(fromDate, criteria.getPeriod().getFrom().longValue());
@@ -368,7 +370,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(searchRequest, dataSource);
+        SQLStatisticEventStore.buildCriteria(searchRequest, dataSource);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -391,7 +393,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        AbstractStatistics.buildCriteria(searchRequest, dataSource);
+        SQLStatisticEventStore.buildCriteria(searchRequest, dataSource);
     }
 
     @Test
@@ -414,7 +416,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(searchRequest, dataSource);
+        final FindEventCriteria criteria = SQLStatisticEventStore.buildCriteria(searchRequest, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals("[]", criteria.getFilterTermsTree().toString());
@@ -441,7 +443,7 @@ public class TestAbstractStatisticEventStore extends StroomUnitTest {
         final StatisticStoreEntity dataSource = new StatisticStoreEntity();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = AbstractStatistics.buildCriteria(searchRequest, dataSource);
+        final FindEventCriteria criteria = SQLStatisticEventStore.buildCriteria(searchRequest, dataSource);
 
         Assert.assertNotNull(criteria);
         Assert.assertEquals(fromDate, criteria.getPeriod().getFrom().longValue());

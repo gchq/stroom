@@ -20,8 +20,6 @@ import stroom.statistics.shared.StatisticType;
 
 import java.util.List;
 
-import java.util.List;
-
 /**
  * Class to hold a statistic event, ie. the count or value of something in a
  * given time window
@@ -38,7 +36,7 @@ public class StatisticEvent {
     /**
      * Constructor for value type events with floating point values
      *
-     * @param time    time of the event in millis since epoch
+     * @param timeMs    time of the event in millis since epoch
      * @param name    the name of the event
      * @param tagList list of tag/value pairs that describe the event. Must be
      *                ordered by tag name. Can be null.
@@ -51,7 +49,7 @@ public class StatisticEvent {
     /**
      * Constructor for value type events with floating point values
      *
-     * @param time    time of the event in millis since epoch
+     * @param timeMs    time of the event in millis since epoch
      * @param name    the name of the event
      * @param tagList list of tag/value pairs that describe the event. Must be
      *                ordered by tag name. Can be null.

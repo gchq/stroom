@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import stroom.datasource.api.DataSourceField;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -59,27 +60,23 @@ public class TestStatisticsFilter implements Statistics {
     private final ArrayList<StatisticEvent> testEvents = new ArrayList<>();
 
     @Override
-    public boolean putEvents(final List<StatisticEvent> statisticEvents) {
+    public void putEvents(final List<StatisticEvent> statisticEvents) {
         testEvents.addAll(statisticEvents);
-        return true;
     }
 
     @Override
-    public boolean putEvents(final List<StatisticEvent> statisticEvents, final StatisticStore statisticStore) {
+    public void putEvents(final List<StatisticEvent> statisticEvents, final StatisticStore statisticStore) {
         testEvents.addAll(statisticEvents);
-        return true;
     }
 
     @Override
-    public boolean putEvent(final StatisticEvent statisticEvent) {
+    public void putEvent(final StatisticEvent statisticEvent) {
         testEvents.add(statisticEvent);
-        return true;
     }
 
     @Override
-    public boolean putEvent(final StatisticEvent statisticEvent, final StatisticStore statisticsDataSource) {
+    public void putEvent(final StatisticEvent statisticEvent, final StatisticStore statisticsDataSource) {
         testEvents.add(statisticEvent);
-        return true;
     }
 
     @Override
@@ -486,6 +483,11 @@ public class TestStatisticsFilter implements Statistics {
 
     @Override
     public List<String> getValuesByTagAndPartialValue(final String tagName, final String partialValue) {
+        throw new UnsupportedOperationException("Not used in this test class");
+    }
+
+    @Override
+    public List<DataSourceField> getSupportedFields(final List<DataSourceField> indexFields) {
         throw new UnsupportedOperationException("Not used in this test class");
     }
 

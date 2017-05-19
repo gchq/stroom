@@ -25,9 +25,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import stroom.datasource.api.DataSourceField;
+import stroom.entity.shared.Period;
+import stroom.entity.shared.Range;
+import stroom.internalstatistics.InternalStatisticsService;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.api.Query;
+import stroom.query.DateExpressionParser;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.query.api.SearchRequest;
+import stroom.statistics.common.CommonStatisticConstants;
+import stroom.statistics.common.FilterTermsTree;
+import stroom.statistics.common.FilterTermsTreeBuilder;
 import stroom.statistics.common.FindEventCriteria;
 import stroom.statistics.common.RolledUpStatisticEvent;
 import stroom.statistics.common.StatisticDataPoint;
@@ -36,12 +46,14 @@ import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticStoreCache;
 import stroom.statistics.common.StatisticStoreValidator;
 import stroom.statistics.common.StatisticTag;
+import stroom.statistics.common.Statistics;
 import stroom.statistics.common.exception.StatisticsEventValidationException;
 import stroom.statistics.common.rollup.RollUpBitMask;
-import stroom.statistics.server.common.AbstractStatistics;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 
@@ -52,25 +64,25 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Component
-public class SQLStatisticEventStore extends AbstractStatistics {
+public class SQLStatisticEventStore implements Statistics, InternalStatisticsService {
     public static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticEventStore.class);
 
     static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.statistics.sql.search.maxResults";
 
     public static final String ENGINE_NAME = "sql";
+    private static final List<ExpressionTerm.Condition> SUPPORTED_DATE_CONDITIONS = Arrays.asList(ExpressionTerm.Condition.BETWEEN);
 
-    private final SQLStatisticCache statisticCache;
-
-    private final DataSource statisticsDataSource;
-    private final StroomPropertyService propertyService;
 
     private static final int DEFAULT_POOL_SIZE = 10;
     private static final long DEFAULT_SIZE_THRESHOLD = 1000000L;
@@ -113,15 +125,21 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     private int poolSize = DEFAULT_POOL_SIZE;
 
     private GenericObjectPool<SQLStatisticAggregateMap> objectPool;
+    private final StatisticStoreValidator statisticsDataSourceValidator;
+    private final StatisticStoreCache statisticsDataSourceCache;
+    private final SQLStatisticCache statisticCache;
+    private final DataSource statisticsDataSource;
+    private final StroomPropertyService propertyService;
 
     @Inject
     SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
                            final StatisticStoreCache statisticsDataSourceCache, final SQLStatisticCache statisticCache,
                            @Named("statisticsDataSource") final DataSource statisticsDataSource, final StroomPropertyService propertyService) {
-        super(statisticsDataSourceValidator, statisticsDataSourceCache, propertyService);
+        this.statisticsDataSourceValidator = statisticsDataSourceValidator;
+        this.propertyService = propertyService;
+        this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;
         this.statisticsDataSource = statisticsDataSource;
-        this.propertyService = propertyService;
 
         initPool(getObjectPoolConfig());
     }
@@ -130,7 +148,8 @@ public class SQLStatisticEventStore extends AbstractStatistics {
                                   final StatisticStoreValidator statisticsDataSourceValidator,
                                   final StatisticStoreCache statisticsDataSourceCache, final SQLStatisticCache statisticCache,
                                   final DataSource statisticsDataSource, final StroomPropertyService propertyService) {
-        super(statisticsDataSourceValidator, statisticsDataSourceCache, propertyService);
+        this.statisticsDataSourceValidator = statisticsDataSourceValidator;
+        this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;
         this.statisticsDataSource = statisticsDataSource;
 
@@ -142,7 +161,313 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         initPool(getObjectPoolConfig());
     }
 
-    @Override
+    protected static FindEventCriteria buildCriteria(final SearchRequest searchRequest, final StatisticStoreEntity dataSource) {
+        LOGGER.trace("buildCriteria called for statistic {}", dataSource.getName());
+
+        // Get the current time in millis since epoch.
+        final long nowEpochMilli = System.currentTimeMillis();
+
+        // object looks a bit like this
+        // AND
+        // Date Time between 2014-10-22T23:00:00.000Z,2014-10-23T23:00:00.000Z
+
+        final ExpressionOperator topLevelExpressionOperator = searchRequest.getQuery().getExpression();
+
+        if (topLevelExpressionOperator == null || topLevelExpressionOperator.getOp() == null) {
+            throw new IllegalArgumentException(
+                    "The top level operator for the query must be one of [" + ExpressionOperator.Op.values() + "]");
+        }
+
+        final List<ExpressionItem> childExpressions = topLevelExpressionOperator.getChildren();
+        int validDateTermsFound = 0;
+        int dateTermsFound = 0;
+
+        // Identify the date term in the search criteria. Currently we must have
+        // a exactly one BETWEEN operator on the
+        // datetime
+        // field to be able to search. This is because of the way the search in
+        // hbase is done, ie. by start/stop row
+        // key.
+        // It may be possible to expand the capability to make multiple searches
+        // but that is currently not in place
+        ExpressionTerm dateTerm = null;
+        if (childExpressions != null) {
+            for (final ExpressionItem expressionItem : childExpressions) {
+                if (expressionItem instanceof ExpressionTerm) {
+                    final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
+
+                    if (expressionTerm.getField() == null) {
+                        throw new IllegalArgumentException("Expression term does not have a field specified");
+                    }
+
+                    if (expressionTerm.getField().equals(StatisticStoreEntity.FIELD_NAME_DATE_TIME)) {
+                        dateTermsFound++;
+
+                        if (SUPPORTED_DATE_CONDITIONS.contains(expressionTerm.getCondition())) {
+                            dateTerm = expressionTerm;
+                            validDateTermsFound++;
+                        }
+                    }
+                } else if (expressionItem instanceof ExpressionOperator) {
+                    if (((ExpressionOperator) expressionItem).getOp() == null) {
+                        throw new IllegalArgumentException(
+                                "An operator in the query is missing a type, it should be one of " + ExpressionOperator.Op.values());
+                    }
+                }
+            }
+        }
+
+        // ensure we have a date term
+        if (dateTermsFound != 1 || validDateTermsFound != 1) {
+            throw new UnsupportedOperationException(
+                    "Search queries on the statistic store must contain one term using the '"
+                            + StatisticStoreEntity.FIELD_NAME_DATE_TIME
+                            + "' field with one of the following condtitions [" + SUPPORTED_DATE_CONDITIONS.toString()
+                            + "].  Please amend the query");
+        }
+
+        // ensure the value field is not used in the query terms
+        if (contains(searchRequest.getQuery().getExpression(), StatisticStoreEntity.FIELD_NAME_VALUE)) {
+            throw new UnsupportedOperationException("Search queries containing the field '"
+                    + StatisticStoreEntity.FIELD_NAME_VALUE + "' are not supported.  Please remove it from the query");
+        }
+
+        // if we have got here then we have a single BETWEEN date term, so parse
+        // it.
+        final Range<Long> range = extractRange(dateTerm, searchRequest.getDateTimeLocale(), nowEpochMilli);
+
+        final List<ExpressionTerm> termNodesInFilter = new ArrayList<>();
+        findAllTermNodes(topLevelExpressionOperator, termNodesInFilter);
+
+        final Set<String> rolledUpFieldNames = new HashSet<>();
+
+        for (final ExpressionTerm term : termNodesInFilter) {
+            // add any fields that use the roll up marker to the black list. If
+            // somebody has said user=* then we do not
+            // want that in the filter as it will slow it down. The fact that
+            // they have said user=* means it will use
+            // the statistic name appropriate for that rollup, meaning the
+            // filtering is built into the stat name.
+            if (term.getValue().equals(RollUpBitMask.ROLL_UP_TAG_VALUE)) {
+                rolledUpFieldNames.add(term.getField());
+            }
+        }
+
+        if (!rolledUpFieldNames.isEmpty()) {
+            if (dataSource.getRollUpType().equals(StatisticRollUpType.NONE)) {
+                throw new UnsupportedOperationException(
+                        "Query contains rolled up terms but the Statistic Data Source does not support any roll-ups");
+            } else if (dataSource.getRollUpType().equals(StatisticRollUpType.CUSTOM)) {
+                if (!dataSource.isRollUpCombinationSupported(rolledUpFieldNames)) {
+                    throw new UnsupportedOperationException(String.format(
+                            "The query contains a combination of rolled up fields %s that is not in the list of custom roll-ups for the statistic data source",
+                            rolledUpFieldNames));
+                }
+            }
+        }
+
+        // Date Time is handled spearately to the the filter tree so ignore it
+        // in the conversion
+        final Set<String> blackListedFieldNames = new HashSet<>();
+        blackListedFieldNames.addAll(rolledUpFieldNames);
+        blackListedFieldNames.add(StatisticStoreEntity.FIELD_NAME_DATE_TIME);
+
+        final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder
+                .convertExpresionItemsTree(topLevelExpressionOperator, blackListedFieldNames);
+
+        final FindEventCriteria criteria = FindEventCriteria.instance(new Period(range.getFrom(), range.getTo()),
+                dataSource.getName(), filterTermsTree, rolledUpFieldNames);
+
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Searching statistics store with criteria: {}", criteria.toString());
+        }
+
+        return criteria;
+    }
+
+    /**
+     * Recursive method to populates the passed list with all enabled
+     * {@link ExpressionTerm} nodes found in the tree.
+     */
+    public static void findAllTermNodes(final ExpressionItem node, final List<ExpressionTerm> termsFound) {
+        // Don't go any further down this branch if this node is disabled.
+        if (node.enabled()) {
+            if (node instanceof ExpressionTerm) {
+                final ExpressionTerm termNode = (ExpressionTerm) node;
+
+                termsFound.add(termNode);
+
+            } else if (node instanceof ExpressionOperator) {
+                for (final ExpressionItem childNode : ((ExpressionOperator) node).getChildren()) {
+                    findAllTermNodes(childNode, termsFound);
+                }
+            }
+        }
+    }
+
+    public static boolean contains(final ExpressionItem expressionItem, final String fieldToFind) {
+        boolean hasBeenFound = false;
+
+        if (expressionItem instanceof ExpressionOperator) {
+            if (((ExpressionOperator) expressionItem).getChildren() != null) {
+                for (final ExpressionItem item : ((ExpressionOperator) expressionItem).getChildren()) {
+                    hasBeenFound = contains(item, fieldToFind);
+                    if (hasBeenFound) {
+                        break;
+                    }
+                }
+            }
+        } else {
+            if (((ExpressionTerm) expressionItem).getField() != null) {
+                hasBeenFound = ((ExpressionTerm) expressionItem).getField().equals(fieldToFind);
+            }
+        }
+
+        return hasBeenFound;
+    }
+
+    // TODO could go futher up the chain so is store agnostic
+    public static RolledUpStatisticEvent generateTagRollUps(final StatisticEvent event,
+                                                            final StatisticStoreEntity statisticsDataSource) {
+        RolledUpStatisticEvent rolledUpStatisticEvent = null;
+
+        final int eventTagListSize = event.getTagList().size();
+
+        final StatisticRollUpType rollUpType = statisticsDataSource.getRollUpType();
+
+        if (eventTagListSize == 0 || StatisticRollUpType.NONE.equals(rollUpType)) {
+            rolledUpStatisticEvent = new RolledUpStatisticEvent(event);
+        } else if (StatisticRollUpType.ALL.equals(rollUpType)) {
+            final List<List<StatisticTag>> tagListPerms = generateStatisticTagPerms(event.getTagList(),
+                    RollUpBitMask.getRollUpPermutationsAsBooleans(eventTagListSize));
+
+            // wrap the original event along with the perms list
+            rolledUpStatisticEvent = new RolledUpStatisticEvent(event, tagListPerms);
+
+        } else if (StatisticRollUpType.CUSTOM.equals(rollUpType)) {
+            final Set<List<Boolean>> perms = new HashSet<>();
+            for (final CustomRollUpMask mask : statisticsDataSource.getStatisticDataSourceDataObject()
+                    .getCustomRollUpMasks()) {
+                final RollUpBitMask rollUpBitMask = RollUpBitMask.fromTagPositions(mask.getRolledUpTagPositions());
+
+                perms.add(rollUpBitMask.getBooleanMask(eventTagListSize));
+            }
+            final List<List<StatisticTag>> tagListPerms = generateStatisticTagPerms(event.getTagList(), perms);
+
+            rolledUpStatisticEvent = new RolledUpStatisticEvent(event, tagListPerms);
+        }
+
+        return rolledUpStatisticEvent;
+    }
+
+    private static Range<Long> extractRange(final ExpressionTerm dateTerm, final String timeZoneId, final long nowEpochMilli) {
+        final String[] dateArr = dateTerm.getValue().split(",");
+
+        if (dateArr.length != 2) {
+            throw new RuntimeException("DateTime term is not a valid format, term: " + dateTerm.toString());
+        }
+
+        long rangeFrom = DateExpressionParser.parse(dateArr[0], timeZoneId, nowEpochMilli)
+                .map(time -> time.toInstant().toEpochMilli())
+                .orElse(0L);
+        // add one to make it exclusive
+        long rangeTo = DateExpressionParser.parse(dateArr[1], timeZoneId, nowEpochMilli)
+                .map(time -> time.toInstant().toEpochMilli() + 1)
+                .orElse(Long.MAX_VALUE);
+
+        final Range<Long> range = new Range<>(rangeFrom, rangeTo);
+
+        return range;
+    }
+
+    private static long parseDateTime(final String type, final String value, final String timeZoneId, final long nowEpochMilli) {
+        final ZonedDateTime dateTime;
+        try {
+            dateTime = DateExpressionParser.parse(value, timeZoneId, nowEpochMilli).get();
+        } catch (final Exception e) {
+            throw new RuntimeException("DateTime term has an invalid '" + type + "' value of '" + value + "'");
+        }
+
+        if (dateTime == null) {
+            throw new RuntimeException("DateTime term has an invalid '" + type + "' value of '" + value + "'");
+        }
+
+        return dateTime.toInstant().toEpochMilli();
+    }
+
+    private static List<List<StatisticTag>> generateStatisticTagPerms(final List<StatisticTag> eventTags,
+                                                                      final Set<List<Boolean>> perms) {
+        final List<List<StatisticTag>> tagListPerms = new ArrayList<>();
+        final int eventTagListSize = eventTags.size();
+
+        for (final List<Boolean> perm : perms) {
+            final List<StatisticTag> tags = new ArrayList<>();
+            for (int i = 0; i < eventTagListSize; i++) {
+                if (perm.get(i).booleanValue() == true) {
+                    // true means a rolled up tag so create a new tag with the
+                    // rolled up marker
+                    tags.add(new StatisticTag(eventTags.get(i).getTag(), RollUpBitMask.ROLL_UP_TAG_VALUE));
+                } else {
+                    // false means not rolled up so use the existing tag's value
+                    tags.add(eventTags.get(i));
+                }
+            }
+            tagListPerms.add(tags);
+        }
+        return tagListPerms;
+    }
+
+    /**
+     * TODO: This is a bit simplistic as a user could create a filter that said
+     * user=user1 AND user='*' which makes no sense. At the moment we would
+     * assume that the user tag is being rolled up so user=user1 would never be
+     * found in the data and thus would return no data.
+     */
+    public static RollUpBitMask buildRollUpBitMaskFromCriteria(final FindEventCriteria criteria,
+                                                               final StatisticStoreEntity statisticsDataSource) {
+        final Set<String> rolledUpTagsFound = criteria.getRolledUpFieldNames();
+
+        final RollUpBitMask result;
+
+        if (rolledUpTagsFound.size() > 0) {
+            final List<Integer> rollUpTagPositionList = new ArrayList<>();
+
+            for (final String tag : rolledUpTagsFound) {
+                final Integer position = statisticsDataSource.getPositionInFieldList(tag);
+                if (position == null) {
+                    throw new RuntimeException(String.format("No field position found for tag %s", tag));
+                }
+                rollUpTagPositionList.add(position);
+            }
+            result = RollUpBitMask.fromTagPositions(rollUpTagPositionList);
+
+        } else {
+            result = RollUpBitMask.ZERO_MASK;
+        }
+        return result;
+    }
+
+    public static boolean isDataStoreEnabled(final String engineName, final StroomPropertyService propertyService) {
+        final String enabledEngines = propertyService
+                .getProperty(CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME);
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("{} property value: {}", CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME,
+                    enabledEngines);
+        }
+
+        boolean result = false;
+
+        if (enabledEngines != null) {
+            for (final String engine : enabledEngines.split(",")) {
+                if (engine.equals(engineName)) {
+                    result = true;
+                }
+            }
+        }
+        return result;
+    }
+
     protected Set<String> getIndexFieldBlackList() {
         return BLACK_LISTED_INDEX_FIELDS;
     }
@@ -171,6 +496,11 @@ public class SQLStatisticEventStore extends AbstractStatistics {
 
     @Override
     public String getEngineName() {
+        return ENGINE_NAME;
+    }
+
+    @Override
+    public String getName() {
         return ENGINE_NAME;
     }
 
@@ -222,7 +552,7 @@ public class SQLStatisticEventStore extends AbstractStatistics {
     }
 
     @Override
-    public boolean putEvents(final List<StatisticEvent> statisticEvents, final StatisticStore statisticStore) {
+    public void putEvents(final List<StatisticEvent> statisticEvents, final StatisticStore statisticStore) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("putEvents - count={}", statisticEvents.size());
         }
@@ -236,7 +566,7 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         if (validateStatisticDataSource(statisticEvents.iterator().next(), entity) == false) {
             // no StatisticsDataSource entity so don't record the stat as we
             // will have no way of querying the stat
-            return false;
+            throw new RuntimeException(String.format("Invalid or missing statistic datasource with name %s", entity.getName()));
         }
 
         try {
@@ -258,13 +588,11 @@ public class SQLStatisticEventStore extends AbstractStatistics {
             throw new RuntimeException(seve.getMessage(), seve);
         } catch (final Exception ex) {
             LOGGER.error("putEvent()", ex);
-            return false;
         }
-        return true;
     }
 
     @Override
-    public boolean putEvent(final StatisticEvent statisticEvent, final StatisticStore statisticStore) {
+    public void putEvent(final StatisticEvent statisticEvent, final StatisticStore statisticStore) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("putEvent - count=1");
         }
@@ -276,7 +604,7 @@ public class SQLStatisticEventStore extends AbstractStatistics {
         if (validateStatisticDataSource(statisticEvent, entity) == false) {
             // no StatisticsDataSource entity so don't record the stat as we
             // will have no way of querying the stat
-            return false;
+            throw new RuntimeException(String.format("Invalid or missing statistic datasource with name %s", entity.getName()));
         }
 
         // Only process a stat if it is inside the processing threshold
@@ -293,10 +621,9 @@ public class SQLStatisticEventStore extends AbstractStatistics {
                 throw new RuntimeException(seve.getMessage(), seve);
             } catch (final Exception ex) {
                 LOGGER.error("putEvent()", ex);
-                return false;
+                throw new RuntimeException(String.format("Exception adding statistics to the aggregateMap"), ex);
             }
         }
-        return true;
     }
 
     public StatisticDataSet searchStatisticsData(final SearchRequest searchRequest, final StatisticStoreEntity dataSource) {
@@ -419,7 +746,7 @@ public class SQLStatisticEventStore extends AbstractStatistics {
 
     private PreparedStatement buildSearchPreparedStatement(final StatisticStoreEntity dataSource,
                                                            final FindEventCriteria criteria, final Connection connection) throws SQLException {
-        final RollUpBitMask rollUpBitMask = AbstractStatistics.buildRollUpBitMaskFromCriteria(criteria, dataSource);
+        final RollUpBitMask rollUpBitMask = SQLStatisticEventStore.buildRollUpBitMaskFromCriteria(criteria, dataSource);
 
         final String statNameWithMask = dataSource.getName() + rollUpBitMask.asHexString();
 
@@ -459,6 +786,88 @@ public class SQLStatisticEventStore extends AbstractStatistics {
 
         return ps;
     }
+
+    @Override
+    public void putEvent(final StatisticEvent statisticEvent) {
+        final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(statisticEvent.getName(),
+                getEngineName());
+        putEvent(statisticEvent, statisticsDataSource);
+    }
+
+    @Override
+    public void putEvents(final List<StatisticEvent> statisticEvents) {
+
+        statisticEvents.stream()
+                .collect(Collectors.groupingBy(StatisticEvent::getName, Collectors.toList()))
+                .values()
+                .forEach(this::putBatch);
+    }
+
+    /**
+     * @param eventsBatch A batch of {@link StatisticEvent} all with the same statistic name
+     */
+    private void putBatch(final List<StatisticEvent> eventsBatch) {
+        if (eventsBatch.size() > 0) {
+            final StatisticEvent firstEventInBatch = eventsBatch.get(0);
+            final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(firstEventInBatch.getName(),
+                    getEngineName());
+            putEvents(eventsBatch, statisticsDataSource);
+            eventsBatch.clear();
+        }
+    }
+
+    protected boolean validateStatisticDataSource(final StatisticEvent statisticEvent,
+                                                  final StatisticStoreEntity statisticsDataSource) {
+        if (statisticsDataSourceValidator != null) {
+            return statisticsDataSourceValidator.validateStatisticDataSource(statisticEvent.getName(), getEngineName(),
+                    statisticEvent.getType(), statisticsDataSource);
+        } else {
+            // no validator has been supplied so return true
+            return true;
+        }
+    }
+
+    protected StatisticStoreEntity getStatisticsDataSource(final String statisticName, final String engineName) {
+        return statisticsDataSourceCache.getStatisticsDataSource(statisticName, engineName);
+    }
+
+    public List<DataSourceField> getSupportedFields(final List<DataSourceField> indexFields) {
+        final Set<String> blackList = getIndexFieldBlackList();
+
+        if (blackList.size() == 0) {
+            // nothing blacklisted so just return the standard list from the
+            // data source
+            return indexFields;
+        } else {
+            // construct an anonymous class instance that will filter out black
+            // listed index fields, as supplied by the
+            // sub-class
+            final List<DataSourceField> supportedIndexFields = new ArrayList<>();
+            indexFields.stream()
+                    .filter(indexField -> !blackList.contains(indexField.getName()))
+                    .forEach(supportedIndexFields::add);
+
+            return supportedIndexFields;
+        }
+    }
+
+    public boolean isDataStoreEnabled() {
+        return SQLStatisticEventStore.isDataStoreEnabled(getEngineName(), propertyService);
+    }
+
+    public List<Set<Integer>> getFieldPositionsForBitMasks(final List<Short> maskValues) {
+        if (maskValues != null) {
+            final List<Set<Integer>> tagPosPermsList = new ArrayList<>();
+
+            for (final Short maskValue : maskValues) {
+                tagPosPermsList.add(RollUpBitMask.fromShort(maskValue).getTagPositions());
+            }
+            return tagPosPermsList;
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
 
     private class ObjectFactory extends BasePooledObjectFactory<SQLStatisticAggregateMap> {
         @Override

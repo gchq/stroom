@@ -18,6 +18,7 @@ package stroom.statistics.server;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import stroom.datasource.api.DataSourceField;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
@@ -56,24 +57,20 @@ public class MockStatisticEventStoreFactory implements StatisticsFactory {
         }
 
         @Override
-        public boolean putEvent(final StatisticEvent statisticEvent, final StatisticStore statisticsDataSource) {
-            return false;
+        public void putEvent(final StatisticEvent statisticEvent, final StatisticStore statisticsDataSource) {
         }
 
         @Override
-        public boolean putEvents(final List<StatisticEvent> statisticEvents,
+        public void putEvents(final List<StatisticEvent> statisticEvents,
                 final StatisticStore statisticsDataSource) {
-            return false;
         }
 
         @Override
-        public boolean putEvent(final StatisticEvent statisticEvent) {
-            return false;
+        public void putEvent(final StatisticEvent statisticEvent) {
         }
 
         @Override
-        public boolean putEvents(final List<StatisticEvent> statisticEvents) {
-            return false;
+        public void putEvents(final List<StatisticEvent> statisticEvents) {
         }
 
         @Override
@@ -83,6 +80,11 @@ public class MockStatisticEventStoreFactory implements StatisticsFactory {
 
         @Override
         public List<String> getValuesByTagAndPartialValue(final String tagName, final String partialValue) {
+            return null;
+        }
+
+        @Override
+        public List<DataSourceField> getSupportedFields(final List<DataSourceField> indexFields) {
             return null;
         }
 
