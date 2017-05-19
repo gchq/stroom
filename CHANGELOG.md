@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#295** : Made the help URL absolute and not relative.
 
+* Issue **#293** : Attempt to fix mismatch document count error being reported when index shards are opened.
+
 ## [v5.0-beta.27] - 2017-05-18
 
 * Issue **#288** : The error condition 'Expected a new writer but got the same one back!!!' should no longer be encountered as the root cause should now be fixed. The original check has been reinstated so that processing will terminate if we do encounter this problem.
