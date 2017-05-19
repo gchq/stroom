@@ -104,8 +104,8 @@ public final class FileSystemStreamSource implements StreamSource {
                 inputStream = FileSystemStreamTypeUtil.getInputStream(streamType, getFile());
                 streamCloser.add(inputStream);
             } catch (IOException ioEx) {
-                // Don't log this as an error if we expect this stream to have been deleted.
-                if (stream == null || !StreamStatus.DELETED.equals(stream.getStatus())) {
+                // Don't log this as an error if we expect this stream to have been deleted or be locked.
+                if (stream == null || StreamStatus.UNLOCKED.equals(stream.getStatus())) {
                     LOGGER.error("getInputStream", ioEx);
                 }
 
