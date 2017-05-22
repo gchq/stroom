@@ -32,6 +32,7 @@ import java.util.Optional;
 public class DataSourceProviderRegistry {
     private final Map<String, DataSourceProvider> providers = new HashMap<>();
 
+    //TODO these will go once service disco is added in
     public static final String TYPE_LUCENE = "lucene";
     public static final String TYPE_SQL_STATISTICS = "sqlstatistics";
     public static final String TYPE_STROOM_STATS = "stroom-stats";
@@ -42,7 +43,9 @@ public class DataSourceProviderRegistry {
     public DataSourceProviderRegistry(final SecurityContext securityContext) {
         this.securityContext = securityContext;
 
-        //TODO initialise the service discovery
+        //TODO providers currently hardcoded but instead need to be created on the fly
+        //by querying the service discovery manager to get the URL.
+
         providers.put(TYPE_LUCENE, new RemoteDataSourceProvider(
                 securityContext,
                 TYPE_LUCENE,
@@ -57,7 +60,6 @@ public class DataSourceProviderRegistry {
                 securityContext,
                 TYPE_STROOM_STATS,
                 "http://127.0.0.1:8081/"));
-
     }
 
     public Optional<DataSourceProvider> getDataSourceProvider(final String type) {
@@ -66,8 +68,8 @@ public class DataSourceProviderRegistry {
         } else {
             return Optional.empty();
         }
-
     }
+
     public Optional<DataSourceProvider> getDataSourceProvider(final DocRef dataSourceRef) {
         if (dataSourceRef != null) {
             return getDataSourceProvider(dataSourceRef.getType());

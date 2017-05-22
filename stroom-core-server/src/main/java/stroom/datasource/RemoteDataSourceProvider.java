@@ -45,7 +45,8 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
     public RemoteDataSourceProvider(final SecurityContext securityContext,
                                     final String type,
-                                    String url) {
+                                    final String url) {
+
         this.securityContext = securityContext;
         this.type = type;
         this.url = url;
