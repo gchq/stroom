@@ -1,5 +1,7 @@
 package stroom.proxy.repo;
 
+import stroom.util.io.CloseableUtil;
+
 import java.io.IOException;
 import java.io.OutputStream;
 
