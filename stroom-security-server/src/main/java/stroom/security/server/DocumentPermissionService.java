@@ -16,7 +16,7 @@
 
 package stroom.security.server;
 
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserRef;
 

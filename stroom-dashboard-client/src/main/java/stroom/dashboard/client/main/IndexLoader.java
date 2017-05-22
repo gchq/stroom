@@ -25,7 +25,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 
 import java.util.ArrayList;
 import java.util.Collections;

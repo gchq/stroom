@@ -16,7 +16,7 @@
 
 package stroom.security.shared;
 
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.shared.User.UserStatus;
 import stroom.util.shared.SharedObject;
 

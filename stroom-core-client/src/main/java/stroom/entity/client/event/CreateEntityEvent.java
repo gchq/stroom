@@ -21,7 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
 import stroom.entity.shared.PermissionInheritance;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 
 public class CreateEntityEvent extends GwtEvent<CreateEntityEvent.Handler> {
     private static Type<Handler> TYPE;

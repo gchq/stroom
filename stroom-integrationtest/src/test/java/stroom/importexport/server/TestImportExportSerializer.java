@@ -34,7 +34,7 @@ import stroom.feed.shared.FeedService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomCoreServerTestFileUtil;

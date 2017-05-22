@@ -16,7 +16,7 @@
 
 package stroom.statistics.server.common;
 
-import stroom.datasource.api.DataSource;
+import stroom.datasource.api.v1.DataSource;
 
 public interface StatisticsDataSourceProvider {
     DataSource getDataSource(String uuid);

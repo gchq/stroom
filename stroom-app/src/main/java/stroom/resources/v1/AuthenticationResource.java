@@ -1,4 +1,4 @@
-package stroom.resources;
+package stroom.resources.v1;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
@@ -23,7 +23,7 @@ import java.util.Optional;
  *
  * It is explicitly excluded from the Shiro filter in SecurityConfiguration.shiroFilter().
  */
-@Path("authentication")
+@Path("/v1/authentication")
 @Produces(MediaType.APPLICATION_JSON)
 @Insecure
 public class AuthenticationResource {

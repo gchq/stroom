@@ -16,7 +16,7 @@
 
 package stroom.dashboard.server;
 
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 
 public class ActiveQuery {
     private final DocRef docRef;

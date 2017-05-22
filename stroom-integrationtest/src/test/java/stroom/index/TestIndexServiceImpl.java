@@ -28,7 +28,7 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexService;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 
 import javax.annotation.Resource;
 

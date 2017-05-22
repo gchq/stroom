@@ -16,7 +16,7 @@
 
 package stroom.dashboard.server;
 
-import stroom.query.api.Row;
+import stroom.query.api.v1.Row;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.OffsetRange;

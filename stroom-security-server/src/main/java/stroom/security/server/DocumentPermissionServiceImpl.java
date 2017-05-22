@@ -28,7 +28,7 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityService;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 import stroom.security.shared.User.UserStatus;

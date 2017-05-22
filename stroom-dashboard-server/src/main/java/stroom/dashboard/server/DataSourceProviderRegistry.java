@@ -18,7 +18,7 @@ package stroom.dashboard.server;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomScope;
 

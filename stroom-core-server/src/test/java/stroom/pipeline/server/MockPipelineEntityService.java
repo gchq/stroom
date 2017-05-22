@@ -24,7 +24,7 @@ import stroom.importexport.server.EntityPathResolver;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;

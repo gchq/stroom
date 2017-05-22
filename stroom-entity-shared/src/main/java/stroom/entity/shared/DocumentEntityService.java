@@ -17,7 +17,7 @@
 package stroom.entity.shared;
 
 import stroom.entity.shared.ImportState.ImportMode;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.util.shared.Message;
 
 import java.util.List;

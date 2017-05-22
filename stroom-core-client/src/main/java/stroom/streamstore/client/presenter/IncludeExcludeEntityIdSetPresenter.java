@@ -35,7 +35,7 @@ import stroom.entity.shared.EntityReferenceComparator;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
 import stroom.process.shared.LoadEntityIdSetAction;
 import stroom.process.shared.SetId;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.util.shared.SharedMap;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;

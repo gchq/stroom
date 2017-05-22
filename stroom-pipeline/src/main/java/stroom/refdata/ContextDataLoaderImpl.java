@@ -18,7 +18,7 @@ package stroom.refdata;
 
 import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.streamstore.shared.Stream;
 import stroom.task.server.TaskManager;
 

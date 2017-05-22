@@ -43,7 +43,7 @@ import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.event.HighlightExplorerItemEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.shared.EntityData;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;

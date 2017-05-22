@@ -21,7 +21,7 @@ import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.query.CoprocessorSettings;
 import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.api.Query;
+import stroom.query.api.v1.Query;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;

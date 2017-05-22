@@ -46,7 +46,7 @@ import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.Script;

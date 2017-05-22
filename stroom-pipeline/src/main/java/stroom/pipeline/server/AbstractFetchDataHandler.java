@@ -43,7 +43,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.resource.server.BOMRemovalInputStream;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamSource;

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;

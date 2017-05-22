@@ -27,7 +27,7 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 import stroom.security.shared.UserRef;

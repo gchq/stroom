@@ -33,7 +33,7 @@ import org.springframework.transaction.TransactionException;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityService;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.server.exception.AuthenticationServiceException;

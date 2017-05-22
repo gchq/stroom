@@ -16,7 +16,7 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.util.shared.SharedObject;
 
 public interface CoprocessorSettings extends SharedObject {

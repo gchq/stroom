@@ -21,7 +21,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.ext.Attributes2Impl;
 import stroom.entity.server.util.XMLUtil;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.util.date.DateUtil;
 
 import javax.xml.parsers.SAXParser;

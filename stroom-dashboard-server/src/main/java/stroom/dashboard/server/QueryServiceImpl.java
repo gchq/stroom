@@ -32,7 +32,7 @@ import stroom.entity.server.util.SQLUtil;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.EntityServiceException;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
 

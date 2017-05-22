@@ -16,7 +16,7 @@
 
 package stroom.search.server;
 
-import stroom.query.api.Query;
+import stroom.query.api.v1.Query;
 import stroom.streamstore.shared.FindStreamCriteria;
 
 public class EventSearchTask extends AbstractSearchTask<EventRefs> {

@@ -33,9 +33,9 @@ import stroom.pipeline.server.errorhandler.TerminatedException;
 import stroom.query.Coprocessor;
 import stroom.query.CoprocessorSettings;
 import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.api.DocRef;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.Param;
+import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v1.Param;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.server.extraction.ExtractionTaskExecutor;
 import stroom.search.server.extraction.ExtractionTaskProducer;
@@ -150,7 +150,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                 taskMonitor.info("Initialising...");
 
                 this.task = task;
-                final stroom.query.api.Query query = task.getQuery();
+                final stroom.query.api.v1.Query query = task.getQuery();
 
                 try {
                     final long frequency = task.getResultSendFrequency();
@@ -272,7 +272,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
         }
     }
 
-    private void search(final ClusterSearchTask task, final stroom.query.api.Query query, final String[] storedFieldNames,
+    private void search(final ClusterSearchTask task, final stroom.query.api.v1.Query query, final String[] storedFieldNames,
                         final boolean filterStreams, final IndexFieldsMap indexFieldsMap,
                         final FieldIndexMap extractionFieldIndexMap,
                         final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap) {

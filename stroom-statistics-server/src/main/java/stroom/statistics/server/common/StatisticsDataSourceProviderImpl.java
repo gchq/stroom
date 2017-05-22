@@ -17,11 +17,11 @@
 package stroom.statistics.server.common;
 
 import org.springframework.stereotype.Component;
-import stroom.datasource.api.DataSource;
-import stroom.datasource.api.DataSourceField;
-import stroom.datasource.api.DataSourceField.DataSourceFieldType;
-import stroom.query.api.ExpressionTerm;
-import stroom.query.api.ExpressionTerm.Condition;
+import stroom.datasource.api.v1.DataSource;
+import stroom.datasource.api.v1.DataSourceField;
+import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
+import stroom.query.api.v1.ExpressionTerm;
+import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;

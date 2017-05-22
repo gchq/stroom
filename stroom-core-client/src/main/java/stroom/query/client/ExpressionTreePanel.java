@@ -26,7 +26,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Provider;
 import stroom.data.grid.client.MouseHelper;
-import stroom.datasource.api.DataSourceField;
+import stroom.datasource.api.v1.DataSourceField;
 import stroom.dictionary.shared.Dictionary;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.Box;

@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.resources;
+package stroom.resources.v1;
 
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;
-import stroom.datasource.api.DataSource;
+import stroom.datasource.api.v1.DataSource;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.query.SearchResponseCreator;
-import stroom.query.api.DocRef;
-import stroom.query.api.QueryKey;
-import stroom.query.api.SearchRequest;
-import stroom.query.api.SearchResponse;
+import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.QueryKey;
+import stroom.query.api.v1.SearchRequest;
+import stroom.query.api.v1.SearchResponse;
 import stroom.search.server.IndexDataSourceFieldUtil;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.search.server.SearchResultCreatorManager.Key;
@@ -36,7 +36,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Path("/index")
+@Path("/v1/index")
 @Produces(MediaType.APPLICATION_JSON)
 public class SearchResource {
     private SearchResultCreatorManager searchResultCreatorManager;

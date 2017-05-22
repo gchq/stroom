@@ -16,7 +16,7 @@
 
 package stroom.statistics.common;
 
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.statistics.shared.StatisticStoreEntity;
 
 public interface StatisticStoreCache {

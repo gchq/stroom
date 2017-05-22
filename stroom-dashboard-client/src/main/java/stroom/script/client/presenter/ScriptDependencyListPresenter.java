@@ -31,7 +31,7 @@ import stroom.entity.shared.DocRefs;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.explorer.shared.EntityData;
 import stroom.node.client.view.WrapperView;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.script.shared.Script;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.button.client.GlyphButtonView;

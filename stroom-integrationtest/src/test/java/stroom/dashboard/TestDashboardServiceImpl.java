@@ -30,7 +30,7 @@ import stroom.dashboard.shared.VisComponentSettings;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.Res;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;
 import stroom.visualisation.shared.Visualisation;

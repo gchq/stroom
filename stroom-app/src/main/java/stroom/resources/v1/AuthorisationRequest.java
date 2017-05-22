@@ -1,7 +1,7 @@
-package stroom.resources;
+package stroom.resources.v1;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 
 public class AuthorisationRequest {
     @JsonProperty
