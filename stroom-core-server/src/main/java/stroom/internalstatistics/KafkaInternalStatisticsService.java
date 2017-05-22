@@ -26,27 +26,22 @@ public class KafkaInternalStatisticsService implements InternalStatisticsService
     }
 
     @Override
-    public void putEvents(final List<StatisticEvent> internalStatisticEvents,
-                          final Consumer<Throwable> exceptionHandler) {
-        try {
-            internalStatisticEvents.stream()
-                    .collect(Collectors.groupingBy(StatisticEvent::getName, Collectors.toList()))
-                    .entrySet().stream()
-                    .filter(entry -> !entry.getValue().isEmpty())
-                    .forEach(entry -> {
-                        String statName = entry.getKey();
-                        //all have same name so have same type
-                        String topic = getTopic(entry.getValue().get(0).getType());
-                        String message = buildMessage(entry.getValue());
-                        ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, statName, message);
-                        stroomKafkaProducer.send(producerRecord, exception -> {
-                            LOGGER.error("Error sending {} internal statistics with name {} to kafka on topic {}",
-                                    entry.getValue().size(), statName, topic);
-                        });
+    public void putEvents(final List<StatisticEvent> internalStatisticEvents) {
+        internalStatisticEvents.stream()
+                .collect(Collectors.groupingBy(StatisticEvent::getName, Collectors.toList()))
+                .entrySet().stream()
+                .filter(entry -> !entry.getValue().isEmpty())
+                .forEach(entry -> {
+                    String statName = entry.getKey();
+                    //all have same name so have same type
+                    String topic = getTopic(entry.getValue().get(0).getType());
+                    String message = buildMessage(entry.getValue());
+                    ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, statName, message);
+                    stroomKafkaProducer.send(producerRecord, exception -> {
+                        LOGGER.error("Error sending {} internal statistics with name {} to kafka on topic {}",
+                                entry.getValue().size(), statName, topic);
                     });
-        } catch (Throwable e) {
-            exceptionHandler.accept(e);
-        }
+                });
     }
 
     private String buildMessage(List<StatisticEvent> events) {

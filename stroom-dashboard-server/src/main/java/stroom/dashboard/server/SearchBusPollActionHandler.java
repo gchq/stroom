@@ -159,12 +159,10 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             }
 
             // Get the data source provider for this query.
-            final DataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry.getDataSourceProvider(dataSourceRef);
-
-            if (dataSourceProvider == null) {
-                throw new RuntimeException(
-                        "No search provider found for '" + dataSourceRef.getType() + "' data source");
-            }
+            final DataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
+                    .getDataSourceProvider(dataSourceRef)
+                    .orElseThrow(() ->
+                            new RuntimeException( "No search provider found for '" + dataSourceRef.getType() + "' data source"));
 
             stroom.query.api.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
             stroom.query.api.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);

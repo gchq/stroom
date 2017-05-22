@@ -25,7 +25,7 @@ public interface InternalStatisticsService {
 
     Logger LOGGER = LoggerFactory.getLogger(InternalStatisticsService.class);
 
-    Consumer<Throwable> DEFAULT_EXCEPTION_HANDLER = throwable -> {
+    Consumer<Throwable> LOG_ONLY_EXCEPTION_HANDLER = throwable -> {
         LOGGER.error("Swallowing exception from putting internal statistic events", throwable);
     };
 
@@ -46,7 +46,7 @@ public interface InternalStatisticsService {
         try {
             putEvents(statisticEvents);
         } catch (Throwable e) {
-            DEFAULT_EXCEPTION_HANDLER.accept(e);
+            exceptionHandler.accept(e);
         }
     }
 
