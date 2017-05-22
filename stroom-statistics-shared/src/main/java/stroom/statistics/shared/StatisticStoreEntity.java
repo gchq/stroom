@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Entity
-@Table(name = "STAT_DAT_SRC", uniqueConstraints = @UniqueConstraint(columnNames = { "NAME", "ENGINE_NAME" }) )
+@Table(name = "STAT_DAT_SRC", uniqueConstraints = @UniqueConstraint(columnNames = { "NAME" }) )
 public class StatisticStoreEntity extends DocumentEntity implements StatisticStore {
     public static final String ENTITY_TYPE = "StatisticStore";
     public static final String ENTITY_TYPE_FOR_DISPLAY = "Statistic Store";
@@ -78,7 +78,6 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
     // Hibernate table/column names
     public static final String TABLE_NAME = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.DATA + SEP
             + SQLNameConstants.SOURCE;
-    public static final String ENGINE_NAME = SQLNameConstants.ENGINE + SEP + SQLNameConstants.NAME;
     public static final String STATISTIC_TYPE = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.TYPE;
     public static final String PRECISION = SQLNameConstants.PRECISION;
     public static final String ROLLUP_TYPE = SQLNameConstants.ROLLUP + SEP + SQLNameConstants.TYPE;
@@ -90,7 +89,6 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
     private static final long serialVersionUID = -649286188919707915L;
 
     private String description;
-    private String engineName;
     private byte pStatisticType;
     private byte pRollUpType;
     private Long precision;
@@ -106,7 +104,6 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
     private void setDefaults() {
         this.pStatisticType = StatisticType.COUNT.getPrimitiveValue();
         this.pRollUpType = StatisticRollUpType.NONE.getPrimitiveValue();
-        this.engineName = NOT_SET;
         this.precision = DEFAULT_PRECISION;
     }
 
@@ -124,15 +121,6 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
     @Transient
     public String getType() {
         return ENTITY_TYPE;
-    }
-
-    @Column(name = ENGINE_NAME, nullable = false)
-    public String getEngineName() {
-        return engineName;
-    }
-
-    public void setEngineName(final String engineName) {
-        this.engineName = engineName;
     }
 
     @Column(name = STATISTIC_TYPE, nullable = false)
