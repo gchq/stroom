@@ -16,31 +16,14 @@
 
 package stroom.streamtask.server;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-import java.util.zip.ZipOutputStream;
-
-import javax.annotation.Resource;
-
-import stroom.util.test.StroomExpectedException;
-import stroom.util.zip.StroomZipFile;
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.io.SeekableInputStream;
+import stroom.proxy.repo.StroomZipFile;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.NestedInputStream;
@@ -52,6 +35,20 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.DummyTask;
 import stroom.util.test.FileSystemTestUtil;
+import stroom.util.test.StroomExpectedException;
+
+import javax.annotation.Resource;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipOutputStream;
 
 public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Resource
@@ -347,7 +344,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     }
 
     private void writeTestFileWithContext(final File testFile, final Feed eventFeed, final String content,
-            final String context) throws IOException {
+                                          final String context) throws IOException {
         testFile.getParentFile().mkdirs();
         final FileOutputStream fileOutputStream = new FileOutputStream(testFile);
         final ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream);

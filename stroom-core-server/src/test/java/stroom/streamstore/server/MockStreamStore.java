@@ -25,7 +25,7 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.collections.TypedMap;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 import event.logging.BaseAdvancedQueryItem;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -87,7 +87,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         private final Stream stream;
         private final StreamType type;
         private StreamTarget parent;
-        private final HeaderMap attributeMap = new HeaderMap();
+        private final MetaMap attributeMap = new MetaMap();
 
         private final Map<StreamType, MockStreamTarget> childMap = new HashMap<>();
 
@@ -152,7 +152,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
 
         @Override
-        public HeaderMap getAttributeMap() {
+        public MetaMap getAttributeMap() {
             return attributeMap;
         }
 
@@ -167,7 +167,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         private final Stream stream;
         private StreamSource parent;
         private final StreamType type;
-        private final HeaderMap attributeMap = new HeaderMap();
+        private final MetaMap attributeMap = new MetaMap();
 
         public MockStreamSource(final Stream stream) {
             this.stream = stream;
@@ -239,7 +239,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
 
         @Override
-        public HeaderMap getAttributeMap() {
+        public MetaMap getAttributeMap() {
             return attributeMap;
         }
     }

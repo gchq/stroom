@@ -25,8 +25,8 @@ import java.util.regex.Pattern;
 import javax.security.auth.x500.X500Principal;
 import javax.servlet.http.HttpServletRequest;
 
+import stroom.feed.MetaMap;
 import stroom.util.logging.StroomLogger;
-import stroom.util.zip.HeaderMap;
 
 public class CertificateUtil {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(CertificateUtil.class);
@@ -112,7 +112,7 @@ public class CertificateUtil {
             return null;
         }
         final StringTokenizer attributes = new StringTokenizer(dn, ",");
-        final HeaderMap map = new HeaderMap();
+        final MetaMap map = new MetaMap();
         while (attributes.hasMoreTokens()) {
             final String token = attributes.nextToken();
             if (token.contains("=")) {

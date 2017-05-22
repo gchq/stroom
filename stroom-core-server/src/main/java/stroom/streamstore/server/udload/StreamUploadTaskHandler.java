@@ -21,6 +21,10 @@ import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
+import stroom.feed.MetaMap;
+import stroom.proxy.repo.StroomStreamProcessor;
+import stroom.proxy.repo.StroomZipFile;
+import stroom.proxy.repo.StroomZipFileType;
 import stroom.statistic.server.MetaDataStatistic;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -42,11 +46,7 @@ import stroom.util.spring.StroomScope;
 import stroom.util.task.MonitorImpl;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
-import stroom.util.zip.StroomStreamProcessor;
-import stroom.util.zip.StroomZipFile;
-import stroom.util.zip.StroomZipFileType;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -100,7 +100,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
 
         final String name = task.getFileName().toUpperCase();
 
-        final HeaderMap metaMap = new HeaderMap();
+        final MetaMap metaMap = new MetaMap();
         if (task.getMetaData() != null && task.getMetaData().trim().length() > 0) {
             try {
                 metaMap.read(task.getMetaData().getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -132,12 +132,12 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
     }
 
     private void uploadZipFile(final Monitor progressMonitor,
-                               final StreamUploadTask streamUploadTask, final HeaderMap headerMap) {
+                               final StreamUploadTask streamUploadTask, final MetaMap metaMap) {
         StroomZipFile stroomZipFile = null;
         try {
             progressMonitor.info("Zip");
 
-            stroomZipFile = new StroomZipFile(streamUploadTask.getFile().toFile());
+            stroomZipFile = new StroomZipFile(streamUploadTask.getFile());
 
             final List<List<String>> groupedFileLists = stroomZipFile.getStroomZipNameSet()
                     .getBaseNameGroupedList(AGGREGATION_DELIMITER);
@@ -145,7 +145,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
             for (int i = 0; i < groupedFileLists.size(); i++) {
                 progressMonitor.info("Zip %s/%s", i, groupedFileLists.size());
 
-                uploadData(stroomZipFile, streamUploadTask, headerMap, groupedFileLists.get(i));
+                uploadData(stroomZipFile, streamUploadTask, metaMap, groupedFileLists.get(i));
 
             }
         } catch (final Exception ex) {
@@ -157,13 +157,13 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
     }
 
     private void uploadStreamFile(final StreamUploadTask task,
-                                  final StreamUploadTask streamUploadTask, final HeaderMap headerMap) {
+                                  final StreamUploadTask streamUploadTask, final MetaMap metaMap) {
         try {
             final StreamType streamType = streamTypeService.loadByName(task.getStreamType().getName());
             final Feed feed = feedService.loadByUuid(task.getFeed().getUuid());
             final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                     .buildSingleHandlerList(streamStore, feedService, metaDataStatistics, feed, streamType);
-            final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(headerMap, handlerList,
+            final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList,
                     readThreadLocalBuffer.getBuffer(), "Upload");
             try (final InputStream inputStream = Files.newInputStream(streamUploadTask.getFile())) {
                 stroomStreamProcessor.process(inputStream, "Upload");
@@ -174,7 +174,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
         }
     }
 
-    private void uploadData(final StroomZipFile stroomZipFile, final StreamUploadTask task, final HeaderMap metaMap,
+    private void uploadData(final StroomZipFile stroomZipFile, final StreamUploadTask task, final MetaMap metaMap,
                             final List<String> fileList) throws IOException {
         final Monitor zipPartTaskMonitor = new MonitorImpl(taskMonitor);
         final Monitor streamReadTaskMonitor = new MonitorImpl(taskMonitor);
@@ -215,7 +215,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
         }
     }
 
-    private void streamContents(final StroomZipFile stroomZipFile, final HeaderMap globalMetaMap,
+    private void streamContents(final StroomZipFile stroomZipFile, final MetaMap globalMetaMap,
                                 final NestedStreamTarget nestedStreamTarget, final String baseName, final StroomZipFileType stroomZipFileType,
                                 final StreamProgressMonitor streamProgressMonitor) throws IOException {
         final InputStream sourceStream = stroomZipFile.getInputStream(baseName, stroomZipFileType);
@@ -229,7 +229,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
             nestedStreamTarget.closeEntry();
         }
         if (StroomZipFileType.Meta.equals(stroomZipFileType)) {
-            final HeaderMap segmentMetaMap = new HeaderMap();
+            final MetaMap segmentMetaMap = new MetaMap();
             segmentMetaMap.putAll(globalMetaMap);
             if (sourceStream != null) {
                 segmentMetaMap.read(sourceStream, false);

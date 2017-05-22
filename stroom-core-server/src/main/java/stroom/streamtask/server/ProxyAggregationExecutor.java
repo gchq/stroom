@@ -22,6 +22,10 @@ import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.jobsystem.server.JobTrackedSchedule;
+import stroom.feed.MetaMap;
+import stroom.proxy.repo.RepositoryProcessor;
+import stroom.proxy.repo.StroomZipRepository;
+import stroom.proxy.repo.StroomZipRepositoryProcessor;
 import stroom.statistic.server.MetaDataStatistic;
 import stroom.streamstore.server.StreamStore;
 import stroom.task.server.AsyncTaskHelper;
@@ -39,15 +43,12 @@ import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
-import stroom.util.zip.StroomZipRepository;
-import stroom.util.zip.StroomZipRepositoryProcessor;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -103,7 +104,7 @@ public class ProxyAggregationExecutor {
         this.stroomZipRepositoryProcessor = getStroomZipRepositoryProcessor();
         stroomZipRepositoryProcessor.setMaxAggregation(PropertyUtil.toInt(maxAggregation, StroomZipRepositoryProcessor.DEFAULT_MAX_AGGREGATION));
         stroomZipRepositoryProcessor.setMaxStreamSizeString(maxStreamSize);
-        stroomZipRepositoryProcessor.setMaxFileScan(PropertyUtil.toInt(maxFileScan, StroomZipRepositoryProcessor.DEFAULT_MAX_FILE_SCAN));
+        stroomZipRepositoryProcessor.setMaxFileScan(PropertyUtil.toInt(maxFileScan, RepositoryProcessor.DEFAULT_MAX_FILE_SCAN));
     }
 
     @StroomSimpleCronSchedule(cron = "0,10,20,30,40,50 * *")
@@ -163,11 +164,11 @@ public class ProxyAggregationExecutor {
 
         streamTargetStroomStreamHandler.setOneByOne(oneByOne);
 
-        final HeaderMap globalHeaderMap = new HeaderMap();
-        globalHeaderMap.put(StroomHeaderArguments.FEED, feed.getName());
+        final MetaMap globalMetaMap = new MetaMap();
+        globalMetaMap.put(StroomHeaderArguments.FEED, feed.getName());
 
         try {
-            streamTargetStroomStreamHandler.handleHeader(globalHeaderMap);
+            streamTargetStroomStreamHandler.handleHeader(globalMetaMap);
         } catch (final IOException ioEx) {
             streamTargetStroomStreamHandler.close();
             throw new RuntimeException(ioEx);
@@ -197,8 +198,7 @@ public class ProxyAggregationExecutor {
     protected StroomZipRepositoryProcessor getStroomZipRepositoryProcessor() {
         return new StroomZipRepositoryProcessor(taskMonitor) {
             @Override
-            public void processFeedFiles(final StroomZipRepository stroomZipRepository, final String feedName,
-                                         final List<File> fileList) {
+            public void processFeedFiles(final StroomZipRepository stroomZipRepository, final String feedName, final List<Path> fileList) {
                 final Feed feed = feedService.loadByName(feedName);
 
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
@@ -217,7 +217,7 @@ public class ProxyAggregationExecutor {
                 final boolean oneByOne = feed.isReference() || !aggregate;
 
                 List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feed);
-                List<File> deleteFileList = new ArrayList<>();
+                List<Path> deleteFileList = new ArrayList<>();
 
                 long sequence = 1;
                 long maxAggregation = getMaxAggregation();
@@ -229,7 +229,7 @@ public class ProxyAggregationExecutor {
 
                 final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("ProxyAggregationTask");
 
-                for (final File file : fileList) {
+                for (final Path file : fileList) {
                     if (stop) {
                         break;
                     }

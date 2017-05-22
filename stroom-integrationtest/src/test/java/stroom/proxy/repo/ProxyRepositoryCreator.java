@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package stroom;
+package stroom.proxy.repo;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import stroom.util.zip.*;
 import org.apache.commons.lang.StringUtils;
-
 import stroom.entity.shared.BaseResultList;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
-import stroom.util.zip.StroomZipEntry;
+import stroom.util.zip.StroomHeaderArguments;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 
 public class ProxyRepositoryCreator {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(ProxyRepositoryCreator.class);
@@ -49,38 +49,37 @@ public class ProxyRepositoryCreator {
         this.repository = repository;
     }
 
-    public void read(final File dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
+    public void read(final Path dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
         readDir(dir, mandateEffectiveDate, effectiveMs);
     }
 
-    private void readDir(final File dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
-        final File[] files = dir.listFiles();
-        for (final File file : files) {
-            if (!file.getName().startsWith(".")) {
-                if (file.isDirectory()) {
-                    // Recurse.
-                    readDir(file, mandateEffectiveDate, effectiveMs);
+    private void readDir(final Path dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
+        try (final Stream<Path> stream = Files.walk(dir)) {
+            stream.forEach(p -> {
+                if (!p.getFileName().toString().startsWith(".")) {
+                    if (Files.isRegularFile(p)) {
+                        final String fileName = p.getFileName().toString().toLowerCase();
+                        if (fileName.endsWith(INPUT_EXTENSION)) {
+                            loadInput(p, mandateEffectiveDate, effectiveMs);
 
-                } else {
-                    final String fileName = file.getName().toLowerCase();
-                    if (fileName.endsWith(INPUT_EXTENSION)) {
-                        loadInput(file, mandateEffectiveDate, effectiveMs);
-
-                    } else if (fileName.endsWith(ZIP_EXTENSION)) {
-                        loadZip(file, mandateEffectiveDate, effectiveMs);
+                        } else if (fileName.endsWith(ZIP_EXTENSION)) {
+                            loadZip(p, mandateEffectiveDate, effectiveMs);
+                        }
                     }
                 }
-            }
+            });
+        } catch (final IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    private void loadInput(final File file, final boolean mandateEffectiveDate, final Long effectiveMs) {
+    private void loadInput(final Path file, final boolean mandateEffectiveDate, final Long effectiveMs) {
         // Get the feed.
         final Feed feed = getFeed(file);
 
         try {
             if (feed.isReference() == mandateEffectiveDate) {
-                LOGGER.info("Loading data: " + file.getAbsolutePath());
+                LOGGER.info("Loading data: " + file.toAbsolutePath().toString());
 
                 final StroomZipOutputStream zipOutputStream = repository.getStroomZipOutputStream();
 
@@ -91,26 +90,26 @@ public class ProxyRepositoryCreator {
 
                 // Add meta data.
                 OutputStream zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Meta));
-                final HeaderMap map = createMap(feed, effectiveMs);
+                final MetaMap map = createMap(feed, effectiveMs);
                 map.write(zipPart, true);
 
                 // Add data.
                 zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Data));
-                StreamUtil.streamToStream(new BufferedInputStream(new FileInputStream(file)), zipPart);
+                StreamUtil.streamToStream(new BufferedInputStream(Files.newInputStream(file)), zipPart);
 
                 zipOutputStream.close();
             }
         } catch (final IOException e) {
-            throw new RuntimeException("Error loading file: " + file.getAbsolutePath(), e);
+            throw new RuntimeException("Error loading file: " + file.toAbsolutePath().toString(), e);
         }
     }
 
-    private void loadZip(final File file, final boolean mandateEffectiveDate, final Long effectiveMs) {
+    private void loadZip(final Path file, final boolean mandateEffectiveDate, final Long effectiveMs) {
         // Get the feed.
         final Feed feed = getFeed(file);
 
         if (feed.isReference() == mandateEffectiveDate) {
-            LOGGER.info("Loading data: " + file.getAbsolutePath());
+            LOGGER.info("Loading data: " + file.toAbsolutePath().toString());
 
             try {
                 final StroomZipOutputStream zipOutputStream = repository.getStroomZipOutputStream();
@@ -125,7 +124,7 @@ public class ProxyRepositoryCreator {
 
                     // Add meta data.
                     InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
-                    final HeaderMap map = createMap(feed, effectiveMs);
+                    final MetaMap map = createMap(feed, effectiveMs);
                     if (inputStream != null) {
                         map.read(inputStream, true);
                     }
@@ -152,15 +151,15 @@ public class ProxyRepositoryCreator {
                 zipOutputStream.close();
 
             } catch (final IOException e) {
-                throw new RuntimeException("Error loading file: " + file.getAbsolutePath(), e);
+                throw new RuntimeException("Error loading file: " + file.toAbsolutePath().toString(), e);
             }
         }
     }
 
-    private HeaderMap createMap(final Feed feed, final Long effectiveMs) {
+    private MetaMap createMap(final Feed feed, final Long effectiveMs) {
         final String dateTime = DateUtil.createNormalDateTimeString(effectiveMs);
 
-        final HeaderMap map = new HeaderMap();
+        final MetaMap map = new MetaMap();
         map.put(StroomHeaderArguments.FEED, feed.getName());
         map.put(StroomHeaderArguments.RECEIVED_TIME, dateTime);
         map.put(StroomHeaderArguments.EFFECTIVE_TIME, dateTime);
@@ -169,9 +168,9 @@ public class ProxyRepositoryCreator {
         return map;
     }
 
-    private Feed getFeed(final File file) {
+    private Feed getFeed(final Path file) {
         // Get the stem of the file name.
-        String stem = file.getName();
+        String stem = file.getFileName().toString();
         int index = stem.indexOf('.');
         if (index != -1) {
             stem = stem.substring(0, index);

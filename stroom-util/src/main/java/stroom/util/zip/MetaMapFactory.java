@@ -23,16 +23,17 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import stroom.feed.MetaMap;
 
-public class HeaderMapFactory {
-    public HeaderMap create() {
-        HeaderMap headerMap = new HeaderMap();
+public class MetaMapFactory {
+    public MetaMap create() {
+        MetaMap metaMap = new MetaMap();
 
         HttpServletRequest httpServletRequest = getHttpServletRequest();
-        addAllHeaders(httpServletRequest, headerMap);
-        addAllQueryString(httpServletRequest, headerMap);
+        addAllHeaders(httpServletRequest, metaMap);
+        addAllQueryString(httpServletRequest, metaMap);
 
-        return headerMap;
+        return metaMap;
     }
 
     protected HttpServletRequest getHttpServletRequest() {
@@ -42,15 +43,15 @@ public class HeaderMapFactory {
     }
 
     @SuppressWarnings("unchecked")
-    private void addAllHeaders(HttpServletRequest httpServletRequest, HeaderMap headerMap) {
+    private void addAllHeaders(HttpServletRequest httpServletRequest, MetaMap metaMap) {
         Enumeration<String> headerNames = httpServletRequest.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String header = headerNames.nextElement();
-            headerMap.put(header, httpServletRequest.getHeader(header));
+            metaMap.put(header, httpServletRequest.getHeader(header));
         }
     }
 
-    private void addAllQueryString(HttpServletRequest httpServletRequest, HeaderMap headerMap) {
+    private void addAllQueryString(HttpServletRequest httpServletRequest, MetaMap metaMap) {
         String queryString = httpServletRequest.getQueryString();
         if (queryString != null) {
             StringTokenizer st = new StringTokenizer(httpServletRequest.getQueryString(), "&");
@@ -61,10 +62,16 @@ public class HeaderMapFactory {
                     String key = pair.substring(0, pos);
                     String val = pair.substring(pos + 1, pair.length());
 
-                    headerMap.put(key, val);
+                    metaMap.put(key, val);
                 }
             }
         }
     }
 
+    public static MetaMap cloneAllowable(final MetaMap in) {
+        final MetaMap metaMap = new MetaMap();
+        metaMap.putAll(in);
+        metaMap.removeAll(StroomHeaderArguments.HEADER_CLONE_EXCLUDE_SET);
+        return metaMap;
+    }
 }

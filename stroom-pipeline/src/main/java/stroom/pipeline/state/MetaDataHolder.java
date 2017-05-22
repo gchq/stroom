@@ -27,7 +27,7 @@ import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.spring.StroomScope;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 @Component
 @Scope(value = StroomScope.TASK)
@@ -36,13 +36,13 @@ public class MetaDataHolder extends AbstractHolder<MetaDataHolder>implements Hol
 
     @Resource
     private StreamHolder streamHolder;
-    private HeaderMap metaData;
+    private MetaMap metaData;
     private long lastMetaStreamNo;
 
-    public HeaderMap getMetaData() throws IOException {
+    public MetaMap getMetaData() throws IOException {
         // Determine if we need to read the meta stream.
         if (metaData == null || lastMetaStreamNo != streamHolder.getStreamNo()) {
-            metaData = new HeaderMap();
+            metaData = new MetaMap();
             lastMetaStreamNo = streamHolder.getStreamNo();
 
             // Setup meta data.

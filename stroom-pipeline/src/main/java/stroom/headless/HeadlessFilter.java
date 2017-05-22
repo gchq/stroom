@@ -33,7 +33,7 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 import stroom.xml.event.simple.StartElement;
 import stroom.xml.event.simple.StartPrefixMapping;
 
@@ -56,7 +56,7 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
     private static final String SPACE = " ";
     private static final String COLON = ":";
 
-    private HeaderMap metaData;
+    private MetaMap metaData;
     private boolean started;
     private int depth;
     private StartElement root;
@@ -89,7 +89,7 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
         }
     }
 
-    public void changeMetaData(final HeaderMap metaData) {
+    public void changeMetaData(final MetaMap metaData) {
         this.metaData = metaData;
 
         if (depth == 1) {

@@ -20,6 +20,10 @@ import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
+import stroom.feed.MetaMap;
+import stroom.proxy.repo.StroomZipEntry;
+import stroom.proxy.repo.StroomZipFile;
+import stroom.proxy.repo.StroomZipFileType;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
@@ -28,10 +32,6 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
 import stroom.util.logging.StroomLogger;
-import stroom.util.zip.HeaderMap;
-import stroom.util.zip.StroomZipEntry;
-import stroom.util.zip.StroomZipFile;
-import stroom.util.zip.StroomZipFileType;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -107,7 +107,7 @@ public class DataLoader {
                 final RawInputSegmentWriter writer = new RawInputSegmentWriter();
                 writer.write(new BufferedInputStream(inputStream), outputStream);
 
-                final HeaderMap map = new HeaderMap();
+                final MetaMap map = new MetaMap();
                 map.put("TestData", "Loaded By SetupSampleData");
 
                 map.write(streamTarget.addChildStream(StreamType.META).getOutputStream(), true);
@@ -126,12 +126,12 @@ public class DataLoader {
             LOGGER.info("Loading data: " + file.toAbsolutePath());
 
             try {
-                final StroomZipFile stroomZipFile = new StroomZipFile(file.toFile());
+                final StroomZipFile stroomZipFile = new StroomZipFile(file);
                 final byte[] buffer = new byte[1024];
                 final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
                         streamStore, feedService, null, feed, feed.getStreamType());
 
-                final HeaderMap map = new HeaderMap();
+                final MetaMap map = new MetaMap();
                 map.put("TestData", "Loaded By SetupSampleData");
 
                 streamTargetStroomStreamHandler.handleHeader(map);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.util.zip;
+package stroom.datafeed.server;
 
-public enum StroomZipFileType {
-    Data(".dat"), Context(".ctx"), Meta(".meta"), Manifest(".mf");
+import stroom.util.zip.MetaMapFactory;
 
-    private final String extValue;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 
-    StroomZipFileType(final String extValue) {
-        this.extValue = extValue;
-    }
+public class MockMetaMapFactory extends MetaMapFactory {
+    @Resource
+    private HttpServletRequest httpServletRequest;
 
-    public String getExtension() {
-        return extValue;
+    @Override
+    protected HttpServletRequest getHttpServletRequest() {
+        return httpServletRequest;
     }
 }

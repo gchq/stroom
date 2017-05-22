@@ -27,15 +27,17 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.lang.StringUtils;
 
+import stroom.util.ArgsUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.thread.ThreadUtil;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 public abstract class ManualCheckStreamPerformance {
     static int testThreadCount = 10;
@@ -278,8 +280,7 @@ public abstract class ManualCheckStreamPerformance {
     }
 
     public static void main(final String[] args) throws IOException {
-        final HeaderMap map = new HeaderMap();
-        map.loadArgs(args);
+        final Map<String, String> map = ArgsUtil.parse(args);
 
         if (map.containsKey("testThreadCount")) {
             testThreadCount = Integer.parseInt(map.get("testThreadCount"));

@@ -20,22 +20,22 @@ import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 @Component
 @Scope(value = StroomScope.TASK)
 public class MetaData {
-    private final HeaderMap headerMap = new HeaderMap();
+    private final MetaMap metaMap = new MetaMap();
 
     public void put(final String key, final String value) {
-        headerMap.put(key, value);
+        metaMap.put(key, value);
     }
 
-    public void putAll(final HeaderMap headerMap) {
-        this.headerMap.putAll(headerMap);
+    public void putAll(final MetaMap metaMap) {
+        this.metaMap.putAll(metaMap);
     }
 
-    public HeaderMap getHeaderMap() {
-        return headerMap;
+    public MetaMap getMetaMap() {
+        return metaMap;
     }
 }

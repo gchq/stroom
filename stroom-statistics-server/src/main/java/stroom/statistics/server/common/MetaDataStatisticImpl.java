@@ -26,7 +26,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomStartup;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
     /**
      * @return build the STAT or return null for not valid
      */
-    private StatisticEvent buildStatisticEvent(final MetaDataStatisticTemplate template, final HeaderMap metaData) {
+    private StatisticEvent buildStatisticEvent(final MetaDataStatisticTemplate template, final MetaMap metaData) {
         Long timeMs = null;
         final String timeValue = metaData.get(template.getTimeMsAttribute());
         if (StringUtils.hasText(timeValue)) {
@@ -99,7 +99,7 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
     }
 
     @Override
-    public void recordStatistics(final HeaderMap metaData) {
+    public void recordStatistics(final MetaMap metaData) {
         if (statisticEventStore != null && templates != null) {
             for (final MetaDataStatisticTemplate template : templates) {
                 try {

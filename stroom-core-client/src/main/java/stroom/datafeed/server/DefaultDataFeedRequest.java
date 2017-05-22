@@ -28,11 +28,11 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
 import stroom.util.task.ServerTask;
 import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 import stroom.util.zip.StroomHeaderArguments;
 import stroom.util.zip.StroomStatusCode;
 import stroom.util.zip.StroomStreamException;
-import stroom.util.zip.StroomStreamProcessor;
+import stroom.proxy.repo.StroomStreamProcessor;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -61,7 +61,7 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
     @Resource
     private MetaDataStatistic metaDataStatistics;
     @Resource
-    private HeaderMap headerMap;
+    private MetaMap metaMap;
 
     /**
      * Read the file in.
@@ -73,13 +73,13 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
     public void processRequest() {
         securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
         try {
-            final String feedName = headerMap.get(StroomHeaderArguments.FEED);
+            final String feedName = metaMap.get(StroomHeaderArguments.FEED);
 
             if (!StringUtils.hasText(feedName)) {
                 throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
             }
 
-            final Feed feed = feedService.loadByName(headerMap.get(StroomHeaderArguments.FEED));
+            final Feed feed = feedService.loadByName(metaMap.get(StroomHeaderArguments.FEED));
 
             if (feed == null) {
                 throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_DEFINED);
@@ -92,9 +92,9 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
             List<StreamTargetStroomStreamHandler> handlers = StreamTargetStroomStreamHandler.buildSingleHandlerList(streamStore,
                     feedService, metaDataStatistics, feed, feed.getStreamType());
 
-            StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(headerMap, handlers,
+            StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers,
                     requestThreadLocalBuffer.getBuffer(),
-                    "DefaultDataFeedRequest-" + headerMap.get(StroomHeaderArguments.GUID));
+                    "DefaultDataFeedRequest-" + metaMap.get(StroomHeaderArguments.GUID));
 
             try {
                 stroomStreamProcessor.processRequestHeader(request);

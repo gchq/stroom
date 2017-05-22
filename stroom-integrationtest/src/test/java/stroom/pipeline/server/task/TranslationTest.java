@@ -59,9 +59,9 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Indicators;
 import stroom.util.task.ServerTask;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 import stroom.util.zip.StroomHeaderArguments;
-import stroom.util.zip.StroomStreamProcessor;
+import stroom.proxy.repo.StroomStreamProcessor;
 
 import javax.annotation.Resource;
 import java.io.BufferedInputStream;
@@ -285,13 +285,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private void loadZipData(final File file, final Feed feed) throws IOException {
-        final HeaderMap headerMap = new HeaderMap();
-        headerMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
+        final MetaMap metaMap = new MetaMap();
+        metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                 .buildSingleHandlerList(streamStore, feedService, null, feed, feed.getStreamType());
 
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(headerMap, handlerList, new byte[1000],
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList, new byte[1000],
                 "DefaultDataFeedRequest-");
 
         stroomStreamProcessor.process(new FileInputStream(file), "test");

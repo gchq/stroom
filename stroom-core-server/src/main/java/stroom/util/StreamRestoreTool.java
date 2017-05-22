@@ -29,7 +29,7 @@ import stroom.util.io.LineReader;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.ThreadScopeRunnable;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.mutable.MutableInt;
@@ -436,12 +436,12 @@ public class StreamRestoreTool extends DatabaseTool {
         final Map<String, String> rtnMap = new HashMap<>();
         final File manifest = new File(rootFile.substring(0, rootFile.lastIndexOf(".")) + ".mf.dat");
         if (manifest.isFile()) {
-            final HeaderMap headerMap = new HeaderMap();
+            final MetaMap metaMap = new MetaMap();
             try (FileInputStream inputStream = new FileInputStream(manifest)) {
-                headerMap.read(inputStream, true);
+                metaMap.read(inputStream, true);
             } catch (final IOException ioEx) {
             }
-            rtnMap.putAll(headerMap);
+            rtnMap.putAll(metaMap);
         }
         return rtnMap;
     }

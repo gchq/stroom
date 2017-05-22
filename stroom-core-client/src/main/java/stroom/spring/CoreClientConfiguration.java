@@ -41,8 +41,8 @@ import stroom.servlet.StatusServlet;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.zip.HeaderMap;
-import stroom.util.zip.HeaderMapFactory;
+import stroom.feed.MetaMap;
+import stroom.util.zip.MetaMapFactory;
 
 import java.util.Properties;
 
@@ -63,8 +63,8 @@ public class CoreClientConfiguration {
 
     @Bean
     @Scope("request")
-    public HeaderMap headerMap() {
-        return new HeaderMapFactory().create();
+    public MetaMap metaMap() {
+        return new MetaMapFactory().create();
     }
 
     @Bean

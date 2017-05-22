@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.zip.ZipException;
 
 @RunWith(StroomJUnit4ClassRunner.class)
-public class TestStroomStreamExcpetion {
+public class TestStroomStreamException {
     @Test
     public void testCompressedStreamCorrupt() {
         doTest(new ZipException("test"), StroomStatusCode.COMPRESSED_STREAM_INVALID, "test");

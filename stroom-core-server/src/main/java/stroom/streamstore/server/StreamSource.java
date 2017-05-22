@@ -21,7 +21,7 @@ import java.io.InputStream;
 
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 /**
  * <p>
@@ -49,7 +49,7 @@ public interface StreamSource extends Closeable {
     /**
      * Any attributes regarding the stream
      */
-    HeaderMap getAttributeMap();
+    MetaMap getAttributeMap();
 
     /**
      * Depending on the type of stream we we may return back null if the stream
