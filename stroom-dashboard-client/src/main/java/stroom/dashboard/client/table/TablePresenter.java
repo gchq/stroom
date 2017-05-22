@@ -59,7 +59,7 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
-import stroom.datasource.api.DataSourceField;
+import stroom.datasource.api.v1.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.entity.client.event.DirtyEvent;

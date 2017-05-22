@@ -1,4 +1,4 @@
-package stroom.resources;
+package stroom.resources.v1;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
@@ -6,6 +6,7 @@ import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.codec.Base64;
 import org.glassfish.jersey.server.ContainerRequest;
 import stroom.entity.shared.EntityServiceException;
+import stroom.resources.NamedResource;
 import stroom.security.Insecure;
 import stroom.security.server.AuthenticationService;
 import stroom.security.server.JWTService;
@@ -23,7 +24,7 @@ import java.util.Optional;
  *
  * It is explicitly excluded from the Shiro filter in SecurityConfiguration.shiroFilter().
  */
-@Path("authentication")
+@Path("/v1/authentication")
 @Produces(MediaType.APPLICATION_JSON)
 @Insecure
 public class AuthenticationResource implements NamedResource {

@@ -36,7 +36,7 @@ import stroom.entity.shared.ImportState.State;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.Res;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;

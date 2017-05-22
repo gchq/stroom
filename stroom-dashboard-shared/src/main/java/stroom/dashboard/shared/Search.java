@@ -16,8 +16,8 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.DocRef;
-import stroom.query.api.ExpressionOperator;
+import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.ExpressionOperator;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

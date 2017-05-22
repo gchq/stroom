@@ -22,7 +22,7 @@ import org.junit.runner.RunWith;
 import stroom.cache.CacheManagerAutoCloseable;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.shared.Stream;

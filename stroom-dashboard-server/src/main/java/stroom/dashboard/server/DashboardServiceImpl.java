@@ -31,7 +31,7 @@ import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 

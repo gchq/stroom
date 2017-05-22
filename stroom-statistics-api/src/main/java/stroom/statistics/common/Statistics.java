@@ -16,7 +16,7 @@
 
 package stroom.statistics.common;
 
-import stroom.datasource.api.DataSourceField;
+import stroom.datasource.api.v1.DataSourceField;
 import stroom.statistics.shared.StatisticStore;
 
 import java.util.List;

@@ -30,6 +30,7 @@ dependencies {
     compile 'org.springframework:spring-tx:4.3.4.RELEASE'
     compile 'javax.inject:javax.inject:1'
     compile 'javax.servlet:javax.servlet-api:3.1.0'
+    compile 'javax.annotation:javax.annotation-api:1.2'
     compile 'net.sf.ehcache:ehcache-core:2.6.11'
     compile 'org.slf4j:slf4j-api:1.7.21'
     compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'

@@ -16,7 +16,7 @@
 
 package stroom.pipeline.shared;
 
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 
 public class FetchDataWithPipelineAction extends FetchDataAction {
     private static final long serialVersionUID = -1773544031158236156L;

@@ -32,7 +32,7 @@ import stroom.entity.shared.PermissionInheritance;
 import stroom.importexport.server.Config;
 import stroom.importexport.server.EntityPathResolver;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 

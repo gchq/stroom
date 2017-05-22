@@ -16,7 +16,7 @@
 
 package stroom.query.client;
 
-import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.v1.ExpressionOperator.Op;
 
 public final class Operator extends Item {
     private Op op = Op.AND;

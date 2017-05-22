@@ -17,9 +17,9 @@
 package stroom.statistics.common;
 
 import org.junit.Test;
-import stroom.query.api.ExpressionBuilder;
-import stroom.query.api.ExpressionOperator.Op;
-import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.v1.ExpressionBuilder;
+import stroom.query.api.v1.ExpressionOperator.Op;
+import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.statistics.common.FilterTermsTree.OperatorNode;
 import stroom.statistics.common.FilterTermsTree.TermNode;
 import stroom.statistics.shared.StatisticStoreEntity;

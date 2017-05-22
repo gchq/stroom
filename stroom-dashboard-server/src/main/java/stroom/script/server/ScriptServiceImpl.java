@@ -26,7 +26,7 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.script.shared.FindScriptCriteria;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;

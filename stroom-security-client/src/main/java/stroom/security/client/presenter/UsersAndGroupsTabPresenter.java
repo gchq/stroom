@@ -27,7 +27,7 @@ import stroom.entity.client.presenter.ManageNewEntityPresenter;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.EntityServiceSaveAction;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;

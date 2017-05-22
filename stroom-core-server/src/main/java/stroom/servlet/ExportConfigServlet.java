@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.Folder;
 import stroom.importexport.server.ImportExportService;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.resource.server.ResourceStore;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;

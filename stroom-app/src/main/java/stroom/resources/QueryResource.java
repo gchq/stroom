@@ -1,10 +1,10 @@
 package stroom.resources;
 
-import stroom.datasource.api.DataSource;
-import stroom.query.api.DocRef;
-import stroom.query.api.QueryKey;
-import stroom.query.api.SearchRequest;
-import stroom.query.api.SearchResponse;
+import stroom.datasource.api.v1.DataSource;
+import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.QueryKey;
+import stroom.query.api.v1.SearchRequest;
+import stroom.query.api.v1.SearchResponse;
 
 public interface QueryResource extends HasHealthCheck, NamedResource {
 

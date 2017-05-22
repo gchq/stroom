@@ -36,11 +36,11 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFieldType;
 import stroom.query.DateExpressionParser;
-import stroom.query.api.DocRef;
-import stroom.query.api.ExpressionItem;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionTerm;
-import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.ExpressionItem;
+import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v1.ExpressionTerm;
+import stroom.query.api.v1.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
 import java.util.Collections;

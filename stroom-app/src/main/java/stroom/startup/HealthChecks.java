@@ -21,18 +21,16 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import stroom.resources.HasHealthCheck;
 
 public class HealthChecks {
-
     public HealthChecks(HealthCheckRegistry healthCheckRegistry, Resources resources){
-
         resources.getResources().stream()
-                .filter(resource -> resource instanceof HasHealthCheck)
-                .forEach(resource ->
-                    healthCheckRegistry.register(resource.getName() + "HealthCheck", new HealthCheck() {
-                        @Override
-                        protected Result check() throws Exception {
-                            return ((HasHealthCheck)resource).getHealth();
-                        }
-                    })
-                );
+            .filter(resource -> resource instanceof HasHealthCheck)
+            .forEach(resource ->
+                healthCheckRegistry.register(resource.getName() + "HealthCheck", new HealthCheck() {
+                    @Override
+                    protected Result check() throws Exception {
+                        return ((HasHealthCheck)resource).getHealth();
+                    }
+                })
+            );
     }
 }

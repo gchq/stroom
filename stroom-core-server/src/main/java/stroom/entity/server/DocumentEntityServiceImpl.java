@@ -38,7 +38,7 @@ import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.importexport.server.Config;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;

@@ -23,8 +23,8 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityReferenceFindAction;
-import stroom.query.api.DocRef;
-import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.StreamAttributeCondition;
 

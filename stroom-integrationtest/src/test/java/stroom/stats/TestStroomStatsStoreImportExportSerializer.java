@@ -21,7 +21,7 @@ import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.shared.*;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.statistics.server.common.StatisticsDataSourceProvider;
 import stroom.statistics.server.stroomstats.entity.FindStroomStatsStoreEntityCriteria;
 import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService;

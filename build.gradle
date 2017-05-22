@@ -12,13 +12,13 @@ apply plugin: 'gchq.urldependencies'
 
 ext.versions = [
         stroom: '6.0-beta.1-SNAPSHOT',
+        stroomQueryApi: 'stroom-query-api-v1.0.0',
+        stroomQueryApiSources: 'stroom-query-api-v1.0.0-sources',
+        stroomQueryCommon: 'stroom-query-common-v0.1.0',
+        stroomExpression: 'stroom-expression-v0.1.0',
         eventLogging: 'event-logging-v3.1.0',
         hadoopCommonShaded: 'hadoop-common-shaded-v2.6.4-2-all',
         hadoopHdfsShaded: 'hadoop-hdfs-shaded-v2.6.4-2-all',
-        stroomExpression: 'stroom-expression-v0.1.0',
-        stroomQueryApi: 'stroom-query-api-v0.1.1',
-        stroomQueryApiSources: 'stroom-query-api-v0.1.1-sources',
-        stroomQueryCommon: 'stroom-query-common-v0.1.1'
 ]
 
 task wrapper(type: Wrapper) {
@@ -118,13 +118,13 @@ project(':stroom-entity-shared') {
 urlDependencies {
     libs "libs"
     compile(versions.stroomQueryApi,
-            'https://github.com/gchq/stroom-query/releases/download/v0.1.1/stroom-query-api-v0.1.1.jar')
+        'https://github.com/gchq/stroom-query/releases/download/v1.0.0/stroom-query-api-v1.0.0.jar')
     compile(versions.stroomQueryApiSources,
-            'https://github.com/gchq/stroom-query/releases/download/v0.1.1/stroom-query-api-v0.1.1-sources.jar')
+        'https://github.com/gchq/stroom-query/releases/download/v1.0.0/stroom-query-api-v1.0.0-sources.jar')
     compile(versions.eventLogging,
             'https://github.com/gchq/event-logging/releases/download/v3.1.0/event-logging-v3.1.0.jar')
     compile(versions.stroomQueryCommon,
-            'https://github.com/gchq/stroom-query/releases/download/v0.1.1/stroom-query-common-v0.1.1.jar')
+        'https://github.com/gchq/stroom-query/releases/download/v1.0.0/stroom-query-common-v1.0.0.jar')
     compile(versions.stroomExpression,
             'https://github.com/gchq/stroom-expression/releases/download/v0.1.0/stroom-expression-v0.1.0.jar')
     compile(versions.hadoopHdfsShaded,

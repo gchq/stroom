@@ -22,7 +22,7 @@ import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityService;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 
 import java.util.Collection;
 import java.util.List;

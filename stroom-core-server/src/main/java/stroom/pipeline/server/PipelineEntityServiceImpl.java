@@ -27,7 +27,7 @@ import stroom.importexport.server.ImportExportHelper;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;

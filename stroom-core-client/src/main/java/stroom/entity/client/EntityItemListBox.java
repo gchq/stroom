@@ -17,7 +17,7 @@
 package stroom.entity.client;
 
 import stroom.item.client.ItemListBox;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 
 import java.util.Set;
 

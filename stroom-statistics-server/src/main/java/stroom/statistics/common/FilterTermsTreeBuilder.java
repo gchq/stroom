@@ -16,10 +16,10 @@
 
 package stroom.statistics.common;
 
-import stroom.query.api.ExpressionItem;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionTerm;
-import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.v1.ExpressionItem;
+import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v1.ExpressionTerm;
+import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.statistics.common.FilterTermsTree.OperatorNode;
 import stroom.statistics.common.FilterTermsTree.TermNode;
 

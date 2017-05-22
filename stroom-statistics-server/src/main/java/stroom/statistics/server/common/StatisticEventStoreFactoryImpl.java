@@ -19,7 +19,7 @@ package stroom.statistics.server.common;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import stroom.datasource.api.DataSourceField;
+import stroom.datasource.api.v1.DataSourceField;
 import stroom.node.server.StroomPropertyService;
 import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.StatisticEvent;

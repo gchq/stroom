@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.datasource.api.DataSourceField;
+import stroom.datasource.api.v1.DataSourceField;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;

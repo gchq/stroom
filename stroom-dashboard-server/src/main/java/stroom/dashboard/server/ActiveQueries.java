@@ -20,8 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.datasource.DataSourceProviderRegistry;
-import stroom.query.api.DocRef;
-import stroom.query.api.QueryKey;
+import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.QueryKey;
 
 import java.util.Iterator;
 import java.util.Map.Entry;

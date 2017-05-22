@@ -18,7 +18,7 @@ package stroom.statistics.server;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import stroom.datasource.api.DataSourceField;
+import stroom.datasource.api.v1.DataSourceField;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;

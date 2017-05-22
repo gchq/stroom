@@ -37,7 +37,7 @@ import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.util.date.DateUtil;
 
 import javax.annotation.Resource;

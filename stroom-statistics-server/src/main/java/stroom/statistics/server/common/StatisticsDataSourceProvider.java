@@ -16,8 +16,9 @@
 
 package stroom.statistics.server.common;
 
-import stroom.datasource.api.DataSource;
-import stroom.query.api.DocRef;
+import stroom.datasource.api.v1.DataSource;
+import stroom.query.api.v1.DocRef;
+import stroom.datasource.api.v1.DataSource;
 
 public interface StatisticsDataSourceProvider {
 

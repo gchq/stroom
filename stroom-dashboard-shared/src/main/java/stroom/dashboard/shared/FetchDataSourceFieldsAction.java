@@ -17,7 +17,7 @@
 package stroom.dashboard.shared;
 
 import stroom.entity.shared.Action;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 
 public class FetchDataSourceFieldsAction extends Action<DataSourceFields> {
     private static final long serialVersionUID = -6668626615097471925L;
