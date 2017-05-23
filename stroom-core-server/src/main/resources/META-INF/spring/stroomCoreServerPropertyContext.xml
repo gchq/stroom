@@ -791,7 +791,7 @@
             <property name="name" value="stroom.statistics.common.statisticEngines"/>
             <property name="value" value="sql"/>
             <property name="description"
-                      value="Comma delimited list of enabled engines that consume internal statistics (currently sql|kafka )"/>
+                      value="Comma delimited list of enabled engines that consume internal statistics (currently sql|stroom-stats )"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>

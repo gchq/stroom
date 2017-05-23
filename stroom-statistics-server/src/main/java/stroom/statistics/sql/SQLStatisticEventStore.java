@@ -38,8 +38,6 @@ import stroom.query.api.v1.SearchRequest;
 import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.FilterTermsTree;
 import stroom.statistics.common.FilterTermsTreeBuilder;
-import stroom.query.api.v1.Query;
-import stroom.query.api.v1.SearchRequest;
 import stroom.statistics.common.FindEventCriteria;
 import stroom.statistics.common.RolledUpStatisticEvent;
 import stroom.statistics.common.StatisticDataPoint;

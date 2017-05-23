@@ -8,20 +8,21 @@ import stroom.kafka.StroomKafkaProducer;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.shared.StatisticType;
 
+import javax.inject.Inject;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Component
-public class KafkaInternalStatisticsService implements InternalStatisticsService {
+public class StroomStatsInternalStatisticsService implements InternalStatisticsService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaInternalStatisticsService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsInternalStatisticsService.class);
 
     public static final String NAME = "kafka";
 
     private final StroomKafkaProducer stroomKafkaProducer;
 
-    public KafkaInternalStatisticsService(final StroomKafkaProducer stroomKafkaProducer) {
+    @Inject
+    public StroomStatsInternalStatisticsService(final StroomKafkaProducer stroomKafkaProducer) {
         this.stroomKafkaProducer = stroomKafkaProducer;
     }
 

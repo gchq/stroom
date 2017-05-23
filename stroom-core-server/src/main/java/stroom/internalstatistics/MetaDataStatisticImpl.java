@@ -26,7 +26,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.spring.StroomStartup;
 import stroom.util.zip.HeaderMap;
 
-import javax.inject.Inject;
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,8 +40,8 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
     private InternalStatisticsServiceFactory internalStatisticsServiceFactory;
     private volatile InternalStatisticsService internalStatisticsService;
 
-    @Inject
-    public MetaDataStatisticImpl(final InternalStatisticsServiceFactory internalStatisticsServiceFactory) {
+    @Resource
+    public void setInternalStatisticsServiceFactory(final InternalStatisticsServiceFactory internalStatisticsServiceFactory) {
         this.internalStatisticsServiceFactory = internalStatisticsServiceFactory;
     }
 
