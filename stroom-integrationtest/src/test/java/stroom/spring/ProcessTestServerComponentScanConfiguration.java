@@ -31,6 +31,7 @@ import stroom.feed.server.FeedServiceImpl;
 import stroom.feed.shared.FeedService;
 import stroom.folder.server.FolderServiceImpl;
 import stroom.importexport.server.ImportExportServiceImpl;
+import stroom.internalstatistics.MetaDataStatisticImpl;
 import stroom.jobsystem.server.ClusterLockServiceImpl;
 import stroom.jobsystem.server.JobManagerImpl;
 import stroom.jobsystem.server.JobNodeServiceImpl;
@@ -46,8 +47,6 @@ import stroom.pipeline.server.XSLTServiceImpl;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.resource.server.ResourceStoreImpl;
 import stroom.security.server.UserServiceImpl;
-import stroom.internalstatistics.MetaDataStatisticImpl;
-import stroom.statistics.server.common.StatisticEventStoreFactoryImpl;
 import stroom.streamstore.server.StreamAttributeKeyServiceImpl;
 import stroom.streamstore.server.StreamTypeServiceImpl;
 import stroom.streamstore.server.fs.FileSystemStreamStore;
@@ -109,7 +108,6 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = RecordCountServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ResourceStoreImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ScheduleServiceImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StatisticEventStoreFactoryImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamAttributeKeyServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamProcessorFilterServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamProcessorServiceImpl.class),

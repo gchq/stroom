@@ -31,6 +31,8 @@ import stroom.entity.server.util.SQLUtil;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
+import stroom.internalstatistics.InternalStatisticsService;
+import stroom.internalstatistics.InternalStatisticsServiceFactory;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
@@ -45,8 +47,6 @@ import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
-import stroom.statistics.common.Statistics;
-import stroom.statistics.common.StatisticsFactory;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
@@ -125,15 +125,15 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private final NodeCache nodeCache;
     private final StroomPropertyService stroomPropertyService;
     private final StroomBeanStore stroomBeanStore;
-    private final Provider<StatisticsFactory> factoryProvider;
+    private final Provider<InternalStatisticsServiceFactory> factoryProvider;
     private final AtomicReference<List<Volume>> currentVolumeState = new AtomicReference<>();
 
-    private volatile Statistics statistics;
+    private volatile InternalStatisticsService internalStatisticsService;
 
     @Inject
     VolumeServiceImpl(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
                       final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
-                      final Provider<StatisticsFactory> factoryProvider) {
+                      final Provider<InternalStatisticsServiceFactory> factoryProvider) {
         super(stroomEntityManager);
         this.stroomEntityManager = stroomEntityManager;
         this.nodeCache = nodeCache;
@@ -149,9 +149,9 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     @StroomStartup
     public void afterPropertiesSet() throws Exception {
         if (stroomBeanStore != null) {
-            final StatisticsFactory factory = factoryProvider.get();
+            final InternalStatisticsServiceFactory factory = factoryProvider.get();
             if (factory != null) {
-                statistics = factory.instance();
+                internalStatisticsService = factory.create();
             }
         }
     }
@@ -363,7 +363,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         try {
             final VolumeState volumeState = volume.getVolumeState();
 
-            if (statistics != null) {
+            if (internalStatisticsService != null) {
                 final long now = System.currentTimeMillis();
                 addStatisticEvent(now, volume, "Limit", volume.getBytesLimit());
                 addStatisticEvent(now, volume, "Used", volumeState.getBytesUsed());
@@ -383,7 +383,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             tags.add(new StatisticTag("Node", volume.getNode().getName()));
             tags.add(new StatisticTag("Path", volume.getPath()));
             tags.add(new StatisticTag("Type", type));
-            statistics.putEvent(StatisticEvent.createValue(timeMs, "Volumes", tags, bytes.doubleValue()));
+            internalStatisticsService.putEvent(StatisticEvent.createValue(timeMs, "Volumes", tags, bytes.doubleValue()));
         }
     }
 

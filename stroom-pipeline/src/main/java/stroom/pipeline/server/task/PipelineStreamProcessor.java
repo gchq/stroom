@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
+import stroom.internalstatistics.InternalStatisticsServiceFactory;
 import stroom.io.StreamCloser;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.destination.Destination;
@@ -53,7 +54,6 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
-import stroom.statistics.common.StatisticsFactory;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -137,7 +137,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     @Resource
     private PipelineDataCache pipelineDataCache;
     @Resource
-    private StatisticsFactory statisticEventStoreFactory;
+    private InternalStatisticsServiceFactory internalStatisticsServiceFactory;
 
     private StreamProcessor streamProcessor;
     private StreamProcessorFilter streamProcessorFilter;
@@ -317,7 +317,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
     private void recordStats(final Feed feed, final PipelineEntity pipelineEntity) {
         try {
-            statisticEventStoreFactory.instance()
+            internalStatisticsServiceFactory.create()
                     .putEvent(StatisticEvent.createCount(System.currentTimeMillis(), "PipelineStreamProcessor",
                             Arrays.asList(
                                     new StatisticTag("Feed", feed.getName()),
