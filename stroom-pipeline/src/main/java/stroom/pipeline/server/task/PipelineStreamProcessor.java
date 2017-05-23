@@ -317,13 +317,19 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
     private void recordStats(final Feed feed, final PipelineEntity pipelineEntity) {
         try {
-            internalStatisticsServiceFactory.create()
-                    .putEvent(StatisticEvent.createCount(System.currentTimeMillis(), "PipelineStreamProcessor",
+            String statName = "PipelineStreamProcessor";
+            StatisticEvent statisticEvent = StatisticEvent.createCount(System.currentTimeMillis(), statName,
                             Arrays.asList(
                                     new StatisticTag("Feed", feed.getName()),
                                     new StatisticTag("Pipeline", pipelineEntity.getName()),
                                     new StatisticTag("Node", nodeCache.getDefaultNode().getName())
-                            ), 1L));
+                            ), 1L);
+
+            internalStatisticsServiceFactory.create()
+                    .putEvent(statisticEvent, throwable ->
+                        outputError(new RuntimeException("Error recording internal stat " + statName, throwable),
+                                Severity.WARNING)
+                    );
         } catch (final Exception ex) {
             LOGGER.error("recordStats", ex);
         }
@@ -501,16 +507,19 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         }
     }
 
+    private void outputError(final Exception ex) {
+        outputError(ex, Severity.FATAL_ERROR);
+    }
     /**
      * Used to handle any errors that may occur during translation.
      */
-    private void outputError(final Exception ex) {
+    private void outputError(final Exception ex, final Severity severity) {
         if (errorReceiverProxy != null && !(ex instanceof LoggedException)) {
             try {
                 if (ex.getMessage() != null) {
-                    errorReceiverProxy.log(Severity.FATAL_ERROR, null, "PipelineStreamProcessor", ex.getMessage(), ex);
+                    errorReceiverProxy.log(severity, null, "PipelineStreamProcessor", ex.getMessage(), ex);
                 } else {
-                    errorReceiverProxy.log(Severity.FATAL_ERROR, null, "PipelineStreamProcessor", ex.toString(), ex);
+                    errorReceiverProxy.log(severity, null, "PipelineStreamProcessor", ex.toString(), ex);
                 }
             } catch (final Throwable e) {
                 // Ignore exception as we generated it.
