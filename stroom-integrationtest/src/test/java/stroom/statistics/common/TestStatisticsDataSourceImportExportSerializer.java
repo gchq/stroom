@@ -66,7 +66,6 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
         final DocRef folder = DocRefUtil.create(folderService.create(null, FileSystemTestUtil.getUniqueTestString()));
 
         final StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(folder, "StatName1");
-        statisticsDataSource.setEngineName("EngineName1");
         statisticsDataSource.setDescription("My Description");
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData());
@@ -100,7 +99,6 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
         final StatisticStoreEntity importedDataSource = dataSources.get(0);
 
         Assert.assertEquals(statisticsDataSource.getName(), importedDataSource.getName());
-        Assert.assertEquals(statisticsDataSource.getEngineName(), importedDataSource.getEngineName());
         Assert.assertEquals(statisticsDataSource.getStatisticType(), importedDataSource.getStatisticType());
         Assert.assertEquals(statisticsDataSource.getDescription(), importedDataSource.getDescription());
 
@@ -113,7 +111,6 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
         final DocRef folder = DocRefUtil.create(folderService.create(null, FileSystemTestUtil.getUniqueTestString()));
 
         final StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(folder, "StatName1");
-        statisticsDataSource.setEngineName("EngineName1");
         statisticsDataSource.setDescription("My Description");
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
 
@@ -128,8 +125,6 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
         Assert.assertNotNull(statisticsDataSource2);
 
         final String uuid = statisticsDataSource2.getUuid();
-
-        statisticsDataSource2 = null;
 
         final StatisticStoreEntity statisticsDataSource3 = statisticsDataSourceService.loadByUuid(uuid);
 

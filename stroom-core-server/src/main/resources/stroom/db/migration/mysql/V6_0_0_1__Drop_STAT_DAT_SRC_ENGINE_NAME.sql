@@ -14,21 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.statistics.common;
+-- Drop the ENGINE_NAME column from STAT_DAT_SRC as this table is exclusive to SQL stats
+-- making the column redundant. Need to drop/recreate the NAME index as ENGINE_NAME was used in it
 
-import java.util.List;
+SET FOREIGN_KEY_CHECKS = 0;
 
-public interface StatisticsEventValidator {
-    /**
-     * Validates and possibly cleans the data in the passed event and either
-     * throws an exception or returns a list of warnings.
-     *
-     * @param statisticEvent
-     *            The event to validate
-     * @return A list of warnings found during validation or an empty list
-     */
-    List<String> validateEvent(StatisticEvent statisticEvent);
+ALTER TABLE STAT_DAT_SRC DROP INDEX NAME;
 
-    String cleanString(String dirtyString);
+ALTER TABLE STAT_DAT_SRC ADD CONSTRAINT UNIQUE INDEX NAME (FK_FOLDER_ID, NAME);
 
-}
+ALTER TABLE STAT_DAT_SRC DROP COLUMN ENGINE_NAME;
+
+SET FOREIGN_KEY_CHECKS = 1;

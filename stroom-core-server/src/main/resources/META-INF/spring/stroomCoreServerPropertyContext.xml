@@ -791,18 +791,9 @@
             <property name="name" value="stroom.statistics.common.statisticEngines"/>
             <property name="value" value="sql"/>
             <property name="description"
-                      value="Comma delimited list of enabled engines that implement Statistic Event Store (currently 'sql')"/>
+                      value="Comma delimited list of enabled engines that consume internal statistics (currently sql|kafka )"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
-        </bean>
-
-        <!-- Legacy statistics store properties -->
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.statistics.legacy.statisticAggregationBatchSize"/>
-            <property name="value" value="1000000"/>
-            <property name="description"
-                      value="Number of STAT_VAL_SRC records to merge into STAT_VAL in one batch"/>
-            <property name="editable" value="true"/>
         </bean>
 
         <!-- SQL statistics store properties -->

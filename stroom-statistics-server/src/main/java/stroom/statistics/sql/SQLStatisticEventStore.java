@@ -135,8 +135,11 @@ public class SQLStatisticEventStore implements Statistics, InternalStatisticsSer
 
     @Inject
     SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
-                           final StatisticStoreCache statisticsDataSourceCache, final SQLStatisticCache statisticCache,
-                           @Named("statisticsDataSource") final DataSource statisticsDataSource, final StroomPropertyService propertyService) {
+                           final StatisticStoreCache statisticsDataSourceCache,
+                           final SQLStatisticCache statisticCache,
+                           @Named("statisticsDataSource") final DataSource statisticsDataSource,
+                           final StroomPropertyService propertyService) {
+
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
         this.propertyService = propertyService;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
@@ -146,10 +149,14 @@ public class SQLStatisticEventStore implements Statistics, InternalStatisticsSer
         initPool(getObjectPoolConfig());
     }
 
-    public SQLStatisticEventStore(final int poolSize, final long aggregatorSizeThreshold, final long poolAgeMsThreshold,
+    public SQLStatisticEventStore(final int poolSize,
+                                  final long aggregatorSizeThreshold,
+                                  final long poolAgeMsThreshold,
                                   final StatisticStoreValidator statisticsDataSourceValidator,
-                                  final StatisticStoreCache statisticsDataSourceCache, final SQLStatisticCache statisticCache,
-                                  final DataSource statisticsDataSource, final StroomPropertyService propertyService) {
+                                  final StatisticStoreCache statisticsDataSourceCache,
+                                  final SQLStatisticCache statisticCache,
+                                  final DataSource statisticsDataSource,
+                                  final StroomPropertyService propertyService) {
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;
@@ -163,7 +170,8 @@ public class SQLStatisticEventStore implements Statistics, InternalStatisticsSer
         initPool(getObjectPoolConfig());
     }
 
-    protected static FindEventCriteria buildCriteria(final SearchRequest searchRequest, final StatisticStoreEntity dataSource) {
+    protected static FindEventCriteria buildCriteria(final SearchRequest searchRequest,
+                                                     final StatisticStoreEntity dataSource) {
         LOGGER.trace("buildCriteria called for statistic {}", dataSource.getName());
 
         // Get the current time in millis since epoch.

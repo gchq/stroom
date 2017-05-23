@@ -64,7 +64,6 @@ import stroom.resource.server.MockResourceStore;
 import stroom.security.server.MockFolderService;
 import stroom.security.server.MockUserService;
 import stroom.statistic.server.MockMetaDataStatistic;
-import stroom.statistics.server.MockStatisticEventStoreFactory;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.server.MockStreamTypeService;
 import stroom.streamtask.server.MockStreamProcessorFilterService;
@@ -120,7 +119,6 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockRecordCountService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockResourceStore.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockScheduleService.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockStatisticEventStoreFactory.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockStreamProcessorFilterService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockStreamProcessorService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockStreamStore.class),

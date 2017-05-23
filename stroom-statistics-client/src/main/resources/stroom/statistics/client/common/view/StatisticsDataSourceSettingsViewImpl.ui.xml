@@ -11,12 +11,6 @@
         </g:customCell>
       </g:row>
       <g:row>
-        <g:cell>Engine Name:</g:cell>
-        <g:customCell>
-          <l:StringListBox ui:field="engineName" />
-        </g:customCell>
-      </g:row>
-      <g:row>
         <g:cell>Statistic Type:</g:cell>
         <g:customCell>
           <l:ItemListBox ui:field="statisticType" />

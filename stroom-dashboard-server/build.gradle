@@ -40,8 +40,6 @@ dependencies {
     compile 'org.springframework:spring-tx:4.3.4.RELEASE'
     compile 'org.apache.poi:poi:3.15'
     compile 'org.apache.poi:poi-ooxml:3.15'
-//    compile 'org.glassfish.jersey.core:jersey-common:2.25.1'
-//    compile 'org.glassfish.jersey.core:jersey-client:2.25.1'
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')

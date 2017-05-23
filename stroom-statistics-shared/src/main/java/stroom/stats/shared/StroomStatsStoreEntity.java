@@ -36,7 +36,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "STROOM_STATS_STORE", uniqueConstraints = @UniqueConstraint(columnNames = { "NAME" }) )
-public class StroomStatsStoreEntity extends DocumentEntity implements StatisticStore {
+public class StroomStatsStoreEntity extends DocumentEntity {
     public static final String ENTITY_TYPE = "StroomStatsStore";
     public static final String ENTITY_TYPE_FOR_DISPLAY = "Stroom-Stats Store";
 

@@ -22,14 +22,11 @@ import org.springframework.util.StringUtils;
 import stroom.statistic.server.MetaDataStatistic;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
-import stroom.statistics.common.Statistics;
-import stroom.statistics.common.StatisticsFactory;
 import stroom.util.date.DateUtil;
-import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomStartup;
 import stroom.util.zip.HeaderMap;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,17 +37,17 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaDataStatisticImpl.class);
 
     private List<MetaDataStatisticTemplate> templates;
-    private StatisticsFactory statisticEventStoreFactory;
-    private volatile Statistics statisticEventStore;
+    private InternalStatisticsServiceFactory internalStatisticsServiceFactory;
+    private volatile InternalStatisticsService internalStatisticsService;
 
-    @Resource
-    public void setStatisticEventStore(StatisticsFactory statisticEventStoreFactory) {
-        this.statisticEventStoreFactory = statisticEventStoreFactory;
+    @Inject
+    public MetaDataStatisticImpl(final InternalStatisticsServiceFactory internalStatisticsServiceFactory) {
+        this.internalStatisticsServiceFactory = internalStatisticsServiceFactory;
     }
 
     @StroomStartup
     public void afterPropertiesSet() throws Exception {
-        statisticEventStore = statisticEventStoreFactory.instance();
+        internalStatisticsService = internalStatisticsServiceFactory.create();
     }
 
     /**
@@ -101,12 +98,12 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
 
     @Override
     public void recordStatistics(final HeaderMap metaData) {
-        if (statisticEventStore != null && templates != null) {
+        if (internalStatisticsService != null && templates != null) {
             for (final MetaDataStatisticTemplate template : templates) {
                 try {
                     final StatisticEvent statisticEvent = buildStatisticEvent(template, metaData);
                     if (statisticEvent != null) {
-                        statisticEventStore.putEvent(statisticEvent);
+                        internalStatisticsService.putEvent(statisticEvent);
                     } else {
                         LOGGER.trace("recordStatistics() - abort {}", metaData);
                     }
@@ -115,12 +112,6 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
                 }
             }
         }
-    }
-
-    @StroomFrequencySchedule("1m")
-    public void flush() {
-        // Get a new instance
-        statisticEventStore = statisticEventStoreFactory.instance();
     }
 
     public void setTemplates(final List<MetaDataStatisticTemplate> templates) {

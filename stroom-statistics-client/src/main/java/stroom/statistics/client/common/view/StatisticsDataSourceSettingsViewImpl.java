@@ -45,8 +45,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
 
     @UiField
     TextArea description;
-    @UiField
-    StringListBox engineName;
 
     @UiField(provided = true)
     ItemListBox<StatisticType> statisticType;
@@ -76,9 +74,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
         precision.addItem(EventStoreTimeIntervalEnum.MINUTE);
         precision.addItem(EventStoreTimeIntervalEnum.HOUR);
         precision.addItem(EventStoreTimeIntervalEnum.DAY);
-
-        engineName = new StringListBox();
-        engineName.addItem(StatisticStoreEntity.NOT_SET);
 
         enabled = new TickBox(TickBoxState.UNTICK, null);
         // default to not ticked so Stroom doesn't start recording stats while the
@@ -110,12 +105,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
             }
         });
 
-        engineName.addChangeHandler(event -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
-        });
-
         enabled.addValueChangeHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onChange();
@@ -134,11 +123,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
     }
 
     @Override
-    public String getEngineName() {
-        return engineName.getSelected();
-    }
-
-    @Override
     public TickBox getEnabled() {
         return enabled;
     }
@@ -153,15 +137,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
         this.statisticType.setSelectedItem(statisticType);
     }
 
-    @Override
-    public void setEngineName(final String engine) {
-        this.engineName.setSelected(engine);
-    }
-
-    @Override
-    public void setEngineNames(final List<String> names) {
-        this.engineName.addItems(names);
-    }
 
     @Override
     public EventStoreTimeIntervalEnum getPrecision() {

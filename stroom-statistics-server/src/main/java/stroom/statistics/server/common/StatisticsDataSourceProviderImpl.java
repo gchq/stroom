@@ -31,7 +31,6 @@ import stroom.query.api.v1.ExpressionTerm;
 import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.common.Statistics;
-import stroom.statistics.common.StatisticsFactory;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.StatisticField;
@@ -44,14 +43,14 @@ import java.util.List;
 @Component
 public class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
     private final StatisticStoreCache statisticStoreCache;
-    private final StatisticsFactory statisticsFactory;
+    private final Statistics statistics;
 
     @Inject
     StatisticsDataSourceProviderImpl(final StatisticStoreCache statisticStoreCache,
-                                     final StatisticsFactory statisticsFactory) {
+                                     final Statistics statistics) {
 
         this.statisticStoreCache = statisticStoreCache;
-        this.statisticsFactory = statisticsFactory;
+        this.statistics = statistics;
     }
 
     @Override
@@ -105,7 +104,6 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
 
         // Filter fields.
         if (entity.getStatisticDataSourceDataObject() != null) {
-            final Statistics statistics = statisticsFactory.instance(entity.getEngineName());
                 fields = statistics.getSupportedFields(fields);
         }
 

@@ -37,6 +37,7 @@ dependencies {
     compile 'com.google.gwt:gwt-servlet:2.8.0'
     compile 'com.google.guava:guava:20.0'
     compile 'xml-apis:xml-apis:1.0.b2'
+    compile 'javax.annotation:javax.annotation-api:1.2'
 
     compile 'org.hibernate:hibernate-core:4.3.8.Final' /* LATEST 5.2.5.Final */
     runtime 'org.hibernate:hibernate-entitymanager:4.3.8.Final'  /* LATEST 5.2.5.Final */

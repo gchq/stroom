@@ -36,11 +36,10 @@ import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.Statistics;
-import stroom.statistics.common.StatisticsEventValidatorFactory;
-import stroom.statistics.common.StatisticsFactory;
-import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
+import stroom.statistics.shared.common.StatisticField;
+import stroom.statistics.sql.SQLStatisticsEventValidator;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
@@ -78,8 +77,8 @@ public class StatisticsFilter extends AbstractXMLFilter {
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
-    private final StatisticsFactory statisticEventStoreFactory;
     private final StatisticStoreEntityService statisticsDataSourceService;
+    private final Statistics statistics;
     private final List<StatisticEvent> statisticEventList = new ArrayList<>(EVENT_BUFFER_SIZE);
     private final StringBuilder textBuffer = new StringBuilder();
     private final Map<String, String> emptyTagToValueMap = new HashMap<>();
@@ -97,12 +96,13 @@ public class StatisticsFilter extends AbstractXMLFilter {
     private Locator locator;
 
     @Inject
-    public StatisticsFilter(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory,
-                            final StatisticsFactory statisticEventStoreFactory,
+    public StatisticsFilter(final ErrorReceiverProxy errorReceiverProxy,
+                            final LocationFactoryProxy locationFactory,
+                            final Statistics statistics,
                             final StatisticStoreEntityService statisticsDataSourceService) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
-        this.statisticEventStoreFactory = statisticEventStoreFactory;
+        this.statistics = statistics;
         this.statisticsDataSourceService = statisticsDataSourceService;
     }
 
@@ -143,7 +143,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
     }
 
     private Statistics getStatisticEventStore() {
-        return statisticEventStoreFactory.instance(this.statisticsDataSource.getEngineName());
+        return statistics;
     }
 
     private void flush() {
@@ -159,8 +159,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
     }
 
     private void putEvent(final StatisticEvent statisticEvent) {
-        final List<String> warnings = StatisticsEventValidatorFactory.getInstance(statisticsDataSource.getEngineName())
-                .validateEvent(statisticEvent);
+        final List<String> warnings = SQLStatisticsEventValidator.validateEvent(statisticEvent);
 
         for (final String warning : warnings) {
             warn(warning);
