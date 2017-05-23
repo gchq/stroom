@@ -57,11 +57,9 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
     @Override
     public Optional<String> getAddress(ExternalService externalService) {
         ServiceInstance<String> instance = getServiceInstance(externalService);
-        return instance == null ?
-                Optional.empty() :
-                instance.getAddress() == null ?
-                        Optional.empty() :
-                        Optional.of(instance.getAddress());
+
+        return Optional.ofNullable(instance)
+                .map(ServiceInstance::getAddress);
     }
 
     private ServiceProvider<String> createProvider(String name){

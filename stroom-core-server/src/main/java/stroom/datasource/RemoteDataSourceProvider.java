@@ -50,6 +50,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
     @Override
     public DataSource getDataSource(final DocRef docRef) {
+        //TODO this needs to be backed by a short life cache to avoid repeated trips over the net
         return post(docRef, "dataSource", DataSource.class);
     }
 

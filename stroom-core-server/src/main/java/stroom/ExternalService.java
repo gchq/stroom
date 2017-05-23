@@ -8,13 +8,13 @@ import java.util.stream.Stream;
 
 /**
  * The canonical list of external services.
- *
+ * <p>
  * Service names, used for service discovery lookup, are obtained from configuration.
  */
 public enum ExternalService {
     INDEX("index"),
-    HBASE_STATS("hbaseStats"),
-    SQL_STATS("sqlStats");
+    STROOM_STATS("stroomStats"),
+    SQL_STATISTICS("sqlStatistics");
 
     private String serviceKey;
 
@@ -28,10 +28,12 @@ public enum ExternalService {
     }
 
     static {
-        Stream.of(ExternalService.values()).forEach(externalService -> {
-            String docRef = StroomProperties.getProperty("stroom.services." + externalService.getServiceKey() + ".docRefType");
-            docRefTypeToServiceMap.put(docRef, externalService);
-        });
+        Stream.of(ExternalService.values())
+                .forEach(externalService -> {
+                    String docRefType = StroomProperties.getProperty(
+                            "stroom.services." + externalService.getServiceKey() + ".docRefType");
+                    docRefTypeToServiceMap.put(docRefType, externalService);
+                });
     }
 
     /**
@@ -44,7 +46,7 @@ public enum ExternalService {
     /**
      * This is the value in the configuration, i.e. stroom.services.<serviceKey>.name.
      */
-    public String getServiceKey(){
+    public String getServiceKey() {
         return serviceKey;
     }
 
