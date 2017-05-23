@@ -18,6 +18,8 @@ package stroom.datasource;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.ExternalService;
+import stroom.ServiceDiscoverer;
 import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomScope;
@@ -30,51 +32,43 @@ import java.util.Optional;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 public class DataSourceProviderRegistry {
-    private final Map<String, DataSourceProvider> providers = new HashMap<>();
-
-    //TODO these will go once service disco is added in
-    public static final String TYPE_LUCENE = "lucene";
-    public static final String TYPE_SQL_STATISTICS = "sqlstatistics";
-    public static final String TYPE_STROOM_STATS = "stroom-stats";
-
+    private final Map<ExternalService, DataSourceProvider> providers = new HashMap<>();
     private final SecurityContext securityContext;
+    private final ServiceDiscoverer serviceDiscoverer;
 
     @Inject
-    public DataSourceProviderRegistry(final SecurityContext securityContext) {
+    public DataSourceProviderRegistry(final SecurityContext securityContext, ServiceDiscoverer serviceDiscoverer) {
         this.securityContext = securityContext;
+        this.serviceDiscoverer = serviceDiscoverer;
 
-        //TODO providers currently hardcoded but instead need to be created on the fly
-        //by querying the service discovery manager to get the URL.
-
-        providers.put(TYPE_LUCENE, new RemoteDataSourceProvider(
-                securityContext,
-                TYPE_LUCENE,
-                "http://127.0.0.1:8080/api/lucene"));
-
-        providers.put(TYPE_SQL_STATISTICS, new RemoteDataSourceProvider(
-                securityContext,
-                TYPE_SQL_STATISTICS,
-                "http://127.0.0.1:8080/api/sqlstatistics"));
-
-        providers.put(TYPE_STROOM_STATS, new RemoteDataSourceProvider(
-                securityContext,
-                TYPE_STROOM_STATS,
-                "http://127.0.0.1:8081/"));
+        register(ExternalService.INDEX);
+        register(ExternalService.HBASE_STATS);
+        register(ExternalService.SQL_STATS);
     }
 
-    public Optional<DataSourceProvider> getDataSourceProvider(final String type) {
-        if (type != null) {
-            return Optional.ofNullable(providers.get(type));
+    public Optional<DataSourceProvider> getDataSourceProvider(final DocRef dataSourceRef) {
+        if (dataSourceRef != null) {
+            if (dataSourceRef.getType() != null) {
+                ExternalService dataSourceService = ExternalService.docRefTypeToServiceMap.get(dataSourceRef);
+                return Optional.ofNullable(providers.get(dataSourceService));
+            } else {
+                return Optional.empty();
+            }
         } else {
             return Optional.empty();
         }
     }
 
-    public Optional<DataSourceProvider> getDataSourceProvider(final DocRef dataSourceRef) {
-        if (dataSourceRef != null) {
-            return getDataSourceProvider(dataSourceRef.getType());
-        } else {
-            return Optional.empty();
+    private void register(ExternalService externalService){
+        Optional<String> indexAddress = serviceDiscoverer.getAddress(externalService);
+        if(indexAddress.isPresent()){
+            providers.put(
+                externalService,
+                new RemoteDataSourceProvider(
+                    securityContext,
+                    indexAddress.get()
+                )
+            );
         }
     }
 }

@@ -14,10 +14,10 @@ ext.versions = [
         stroom: '6.0-beta.1-SNAPSHOT',
         stroomQueryApi: 'stroom-query-api-v1.0.0',
         stroomQueryApiSources: 'stroom-query-api-v1.0.0-sources',
-        stroomQueryCommon: 'stroom-query-common-v0.1.0',
+        stroomQueryCommon: 'stroom-query-common-v1.0.0',
         stroomExpression: 'stroom-expression-v0.1.0',
         eventLogging: 'event-logging-v3.1.0',
-        hadoopCommonShaded: 'hadoop-common-shaded-v2.6.4-2-all',
+        hadoopCommonShaded: 'hadoop-common-shaded-v2.6.4-3-all',
         hadoopHdfsShaded: 'hadoop-hdfs-shaded-v2.6.4-2-all',
 ]
 
@@ -130,5 +130,5 @@ urlDependencies {
     compile(versions.hadoopHdfsShaded,
             'https://github.com/gchq/hadoop-hdfs-shaded/releases/download/v2.6.4-2-all/hadoop-hdfs-shaded-v2.6.4-2-all.jar')
     compile(versions.hadoopCommonShaded,
-            'https://github.com/gchq/hadoop-common-shaded/releases/download/v2.6.4-2-all/hadoop-common-shaded-v2.6.4-2-all.jar')
+            'https://github.com/gchq/hadoop-common-shaded/releases/download/v2.6.4-3/hadoop-common-shaded-v2.6.4-3-all.jar')
 }

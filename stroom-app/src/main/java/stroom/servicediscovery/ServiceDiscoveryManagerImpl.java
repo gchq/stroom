@@ -1,4 +1,4 @@
-package stroom.startup;
+package stroom.servicediscovery;
 
 import com.codahale.metrics.health.HealthCheck;
 import org.apache.curator.RetryPolicy;
@@ -11,18 +11,22 @@ import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.Config;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-public class ServiceDiscoveryManager {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
+@Component
+public class ServiceDiscoveryManagerImpl {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManagerImpl.class);
 
     private HealthCheck.Result health;
 
-    public ServiceDiscoveryManager(Config config){
+    public ServiceDiscoveryManagerImpl(
+            @Value("#{propertyConfigurer.getProperty('stroom.serviceDiscovery.zookeeperUrl')}") String zookeeperUrl,
+            @Value("#{propertyConfigurer.getProperty('stroom.serviceDiscovery.hostNameOrIpAddress')}") String hostNameOrIpAddress){
         //TODO validate the URL we get passed - we don't want to register with something duff, e.g. missing the protocol
-        LOGGER.info("Starting Curator client using Zookeeper at '{}'...", config.getZookeeperUrl());
+        LOGGER.info("Starting Curator client using Zookeeper at '{}'...", zookeeperUrl);
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-        CuratorFramework client = CuratorFrameworkFactory.newClient(config.getZookeeperUrl(), retryPolicy);
+        CuratorFramework client = CuratorFrameworkFactory.newClient(zookeeperUrl, retryPolicy);
         client.start();
 
         try {
@@ -31,19 +35,19 @@ public class ServiceDiscoveryManager {
 
             registerResource(
                     "authentication",
-                    config.getHostNameOrIpAddress() + "/api/authentication/",
+                    hostNameOrIpAddress + "/api/authentication/",
                     client);
             stringBuilder.append("authentication");
 
             registerResource(
                     "authorisation",
-                    config.getHostNameOrIpAddress() + "/api/authorisation/",
+                    hostNameOrIpAddress + "/api/authorisation/",
                     client);
             stringBuilder.append(", authorisation");
 
             registerResource(
                     "index",
-                    config.getHostNameOrIpAddress() + "/api/index/",
+                    hostNameOrIpAddress + "/api/index/",
                     client);
             stringBuilder.append(", index.");
 

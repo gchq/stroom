@@ -47,7 +47,6 @@ public class App extends Application<Config> {
         Listeners listeners = new Listeners(environment.servlets(), springContexts.rootContext);
         springContexts.start(environment, configuration);
         Resources resources = new Resources(environment.jersey(), servlets.upgradeDispatcherServletHolder);
-        ServiceDiscoveryManager serviceDiscoveryManager = new ServiceDiscoveryManager(configuration);
         HealthChecks healthChecks = new HealthChecks(environment.healthChecks(), resources);
     }
 }

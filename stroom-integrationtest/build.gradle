@@ -9,7 +9,8 @@ dependencies {
     permitUnusedDeclared project(':stroom-dashboard-server')
     compile project(':stroom-security-server')
     permitUnusedDeclared project(':stroom-security-server')
-
+    compile project(':stroom-app')
+    permitUnusedDeclared project(':stroom-app')
 
     testCompile urlDependencies.get(versions.stroomQueryApi)
     testCompile urlDependencies.get(versions.stroomQueryCommon)
