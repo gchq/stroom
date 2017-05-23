@@ -18,69 +18,86 @@ package stroom.streamstore.client.presenter;
 
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.client.event.DirtyEvent;
+import stroom.entity.client.event.DirtyEvent.DirtyHandler;
+import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.IndexFieldsMap;
 import stroom.streamstore.shared.DataRetentionPolicy;
 import stroom.streamstore.shared.DataRetentionRule;
 import stroom.streamstore.shared.FetchDataRetentionPolicyAction;
-import stroom.streamstore.shared.FetchFieldsAction;
 import stroom.streamstore.shared.SaveDataRetentionPolicyAction;
 import stroom.streamstore.shared.TimeUnit;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.presenter.Icon;
 
-public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetentionPolicyPresenter.DataRetentionPolicyView> {
+public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetentionPolicyPresenter.DataRetentionPolicyView> implements HasDirtyHandlers {
     private final DataRetentionPolicyListPresenter listPresenter;
-    private final EditExpressionPresenter editExpressionPresenter;
+    private final ExpressionTreePresenter expressionPresenter;
+    private final Provider<EditRulePresenter> editRulePresenterProvider;
     private final ClientDispatchAsync dispatcher;
 
     private DataRetentionPolicy policy;
-    private IndexFieldsMap indexFieldsMap;
 
     private GlyphButtonView saveButton;
     private GlyphButtonView addButton;
+    private GlyphButtonView editButton;
+    private GlyphButtonView disableButton;
     private GlyphButtonView deleteButton;
     private GlyphButtonView moveUpButton;
     private GlyphButtonView moveDownButton;
+
+    private boolean dirty;
+    private String lastLabel;
 
     @Inject
     public DataRetentionPolicyPresenter(final EventBus eventBus,
                                         final DataRetentionPolicyView view,
                                         final DataRetentionPolicyListPresenter listPresenter,
-                                        final EditExpressionPresenter editExpressionPresenter,
+                                        final ExpressionTreePresenter expressionPresenter,
+                                        final Provider<EditRulePresenter> editRulePresenterProvider,
                                         final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
-        this.editExpressionPresenter = editExpressionPresenter;
+        this.expressionPresenter = expressionPresenter;
+        this.editRulePresenterProvider = editRulePresenterProvider;
         this.dispatcher = dispatcher;
 
         getView().setTableView(listPresenter.getView());
-        getView().setExpressionView(editExpressionPresenter.getView());
+        getView().setExpressionView(expressionPresenter.getView());
+
+        // Stop users from selecting expression items.
+        expressionPresenter.setSelectionModel(null);
 
         saveButton = listPresenter.add(GlyphIcons.SAVE);
         addButton = listPresenter.add(GlyphIcons.ADD);
+        editButton = listPresenter.add(GlyphIcons.EDIT);
+        disableButton = listPresenter.add(GlyphIcons.DISABLE);
         deleteButton = listPresenter.add(GlyphIcons.DELETE);
         moveUpButton = listPresenter.add(GlyphIcons.UP);
         moveDownButton = listPresenter.add(GlyphIcons.DOWN);
 
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
-        enableButtons();
+        updateButtons();
 
         dispatcher.exec(new FetchDataRetentionPolicyAction()).onSuccess(result -> {
             policy = result;
-            update();
-        });
-
-        dispatcher.exec(new FetchFieldsAction()).onSuccess(result -> {
-            indexFieldsMap = new IndexFieldsMap(result);
             update();
         });
     }
@@ -91,14 +108,35 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
             dispatcher.exec(new SaveDataRetentionPolicyAction(policy)).onSuccess(result -> {
                 policy = result;
                 update();
+                setDirty(false);
             });
         }));
         registerHandler(addButton.addClickHandler(event -> {
             if (policy != null) {
-                final DataRetentionRule newPolicy = new DataRetentionRule(new ExpressionOperator(Op.AND), 1, TimeUnit.YEARS, true);
-                policy.getRules().add(newPolicy);
-                update();
-                listPresenter.getSelectionModel().setSelected(newPolicy);
+                add();
+            }
+        }));
+        registerHandler(editButton.addClickHandler(event -> {
+            if (policy != null) {
+                final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
+                if (selected != null) {
+                    edit(selected);
+                }
+            }
+        }));
+        registerHandler(disableButton.addClickHandler(event -> {
+            if (policy != null) {
+                final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
+                if (selected != null) {
+                    final DataRetentionRule newRule = new DataRetentionRule(!selected.isEnabled(), selected.getExpression(), selected.getAge(), selected.getTimeUnit(), selected.isForever());
+
+                    final int index = policy.getRules().indexOf(selected);
+                    policy.getRules().remove(index);
+                    policy.getRules().add(index, newRule);
+                    listPresenter.getSelectionModel().setSelected(newRule);
+                    update();
+                    setDirty(true);
+                }
             }
         }));
         registerHandler(deleteButton.addClickHandler(event -> {
@@ -107,7 +145,9 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                     if (ok) {
                         final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
                         policy.getRules().remove(rule);
+                        listPresenter.getSelectionModel().clear();
                         update();
+                        setDirty(true);
                     }
                 });
             }
@@ -121,6 +161,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                         policy.getRules().remove(rule);
                         policy.getRules().add(index - 1, rule);
                         update();
+                        setDirty(true);
                     }
                 }
             }
@@ -130,10 +171,11 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                 final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
                 if (rule != null) {
                     int index = policy.getRules().indexOf(rule);
-                    if (index < policy.getRules().size() - 2) {
+                    if (index < policy.getRules().size() - 1) {
                         policy.getRules().remove(rule);
                         policy.getRules().add(index + 1, rule);
                         update();
+                        setDirty(true);
                     }
                 }
             }
@@ -141,28 +183,104 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
-                editExpressionPresenter.read(rule.getExpression(), indexFieldsMap);
+                expressionPresenter.read(rule.getExpression());
+                if (event.getSelectionType().isDoubleSelect()) {
+                    edit(rule);
+                }
             } else {
-                editExpressionPresenter.read(null, indexFieldsMap);
+                expressionPresenter.read(null);
             }
+            updateButtons();
         }));
 
         super.onBind();
+    }
+
+    private void add() {
+        final DataRetentionRule newPolicy = new DataRetentionRule(true, new ExpressionOperator(Op.AND), 1, TimeUnit.YEARS, true);
+        final EditRulePresenter editRulePresenter = editRulePresenterProvider.get();
+        editRulePresenter.read(newPolicy);
+
+        final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
+        ShowPopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add New Rule", new PopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    final DataRetentionRule rule = editRulePresenter.write();
+                    policy.getRules().add(0, rule);
+                    update();
+                    listPresenter.getSelectionModel().setSelected(rule);
+                    setDirty(true);
+                }
+
+                HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);
+            }
+
+            @Override
+            public void onHide(final boolean autoClose, final boolean ok) {
+                // Do nothing.
+            }
+        });
+    }
+
+    private void edit(final DataRetentionRule existingRule) {
+        final EditRulePresenter editRulePresenter = editRulePresenterProvider.get();
+        editRulePresenter.read(existingRule);
+
+        final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
+        ShowPopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Rule", new PopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    final DataRetentionRule rule = editRulePresenter.write();
+                    final int index = policy.getRules().indexOf(existingRule);
+                    policy.getRules().remove(index);
+                    policy.getRules().add(index, rule);
+
+                    update();
+                    listPresenter.getSelectionModel().setSelected(rule);
+                    setDirty(true);
+                }
+
+                HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);
+            }
+
+            @Override
+            public void onHide(final boolean autoClose, final boolean ok) {
+                // Do nothing.
+            }
+        });
     }
 
     private void update() {
         if (policy != null) {
             listPresenter.setData(policy.getRules());
         }
-        enableButtons();
+        updateButtons();
     }
 
-    private void enableButtons() {
-        saveButton.setEnabled(policy != null);
-        addButton.setEnabled(policy != null);
-        deleteButton.setEnabled(policy != null && listPresenter.getSelectionModel().getSelected() != null);
-        moveUpButton.setEnabled(policy != null && listPresenter.getSelectionModel().getSelected() != null);
-        moveDownButton.setEnabled(policy != null && listPresenter.getSelectionModel().getSelected() != null);
+    private void updateButtons() {
+        final boolean loadedPolicy = policy != null;
+        final DataRetentionRule selection = listPresenter.getSelectionModel().getSelected();
+        final boolean selected = loadedPolicy && selection != null;
+        int index = -1;
+        if (selected) {
+            index = policy.getRules().indexOf(selection);
+        }
+
+        if (selection != null && selection.isEnabled()) {
+            disableButton.setTitle("Disable");
+        } else {
+            disableButton.setTitle("Enable");
+        }
+
+        saveButton.setEnabled(loadedPolicy && dirty);
+        addButton.setEnabled(loadedPolicy);
+        editButton.setEnabled(selected);
+        disableButton.setEnabled(selected);
+        deleteButton.setEnabled(selected);
+        moveUpButton.setEnabled(selected && index > 0);
+        moveDownButton.setEnabled(selected && index >= 0 && index < policy.getRules().size() - 1);
     }
 
     @Override
@@ -172,7 +290,34 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
 
     @Override
     public String getLabel() {
+        if (isDirty()) {
+            return "* " + "Data Retention";
+        }
+
         return "Data Retention";
+    }
+
+    private boolean isDirty() {
+        return dirty;
+    }
+
+    private void setDirty(final boolean dirty) {
+        if (this.dirty != dirty) {
+            this.dirty = dirty;
+            DirtyEvent.fire(this, dirty);
+            updateButtons();
+
+            // Only fire tab refresh if the tab has changed.
+            if (lastLabel == null || !lastLabel.equals(getLabel())) {
+                lastLabel = getLabel();
+                RefreshContentTabEvent.fire(this, this);
+            }
+        }
+    }
+
+    @Override
+    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
+        return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
     public interface DataRetentionPolicyView extends View {

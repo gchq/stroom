@@ -27,6 +27,8 @@ import stroom.streamstore.client.presenter.DataPresenter;
 import stroom.streamstore.client.presenter.DataPresenter.DataView;
 import stroom.streamstore.client.presenter.DataRetentionPolicyPresenter;
 import stroom.streamstore.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
+import stroom.streamstore.client.presenter.EditRulePresenter;
+import stroom.streamstore.client.presenter.EditRulePresenter.EditRuleView;
 import stroom.streamstore.client.presenter.EditExpressionPresenter;
 import stroom.streamstore.client.presenter.EditExpressionPresenter.EditExpressionView;
 import stroom.streamstore.client.presenter.EntityChoicePresenter;
@@ -54,6 +56,7 @@ import stroom.streamstore.client.presenter.TextPresenter;
 import stroom.streamstore.client.presenter.TextPresenter.TextView;
 import stroom.streamstore.client.view.ClassificationWrapperViewImpl;
 import stroom.streamstore.client.view.DataRetentionPolicyViewImpl;
+import stroom.streamstore.client.view.EditRuleViewImpl;
 import stroom.streamstore.client.view.DataViewImpl;
 import stroom.streamstore.client.view.EditExpressionViewImpl;
 import stroom.streamstore.client.view.EntityChoiceViewImpl;
@@ -102,6 +105,7 @@ public class StreamStoreModule extends PluginModule {
 
         bindPlugin(DataRetentionPolicyPlugin.class);
         bindPresenterWidget(EditExpressionPresenter.class, EditExpressionView.class, EditExpressionViewImpl.class);
+        bindPresenterWidget(EditRulePresenter.class, EditRuleView.class, EditRuleViewImpl.class);
         bindPresenterWidget(DataRetentionPolicyPresenter.class, DataRetentionPolicyView.class, DataRetentionPolicyViewImpl.class);
     }
 }

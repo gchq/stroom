@@ -25,19 +25,10 @@
         background: white;
         }
 
-        .bottomleft {
+        .bottom {
         width: 100%;
         height: 100%;
         border-top: 1px solid #c5cde2;
-        border-right: 1px solid #c5cde2;
-        background: white;
-        }
-
-        .bottomright {
-        width: 100%;
-        height: 100%;
-        border-top: 1px solid #c5cde2;
-        border-left: 1px solid #c5cde2;
         background: white;
         }
     </ui:style>
@@ -46,14 +37,7 @@
             <g:SimplePanel ui:field="table" styleName="{style.top}"/>
         </g:north>
         <g:center>
-            <g:MySplitLayoutPanel unit="PX" width="100%" height="100%" vSplits="0.5">
-                <g:east size="200">
-                    <g:SimplePanel ui:field="settings" styleName="{style.bottomright}"/>
-                </g:east>
-                <g:center>
-                    <g:SimplePanel ui:field="expression" styleName="{style.bottomleft}"/>
-                </g:center>
-            </g:MySplitLayoutPanel>
+            <g:SimplePanel ui:field="expression" styleName="{style.bottom}"/>
         </g:center>
     </g:MySplitLayoutPanel>
 </ui:UiBinder> 

@@ -51,7 +51,9 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
         final Column<DataRetentionRule, String> expressionColumn = new Column<DataRetentionRule, String>(new TextCell()) {
             @Override
             public String getValue(final DataRetentionRule row) {
-                return row.getExpression().toString();
+                final StringBuilder expression = new StringBuilder();
+                row.getExpression().append(expression, "", true);
+                return expression.toString();
             }
         };
         getView().addResizableColumn(expressionColumn, "Expression", 500);

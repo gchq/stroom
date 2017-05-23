@@ -39,9 +39,9 @@ public class TestDataRetentionPolicySerialisation {
         expression.addChild(new ExpressionTerm("Feed", Condition.EQUALS, "TEST_FEED"));
 
         final List<DataRetentionRule> list = new ArrayList<>();
-        list.add(new DataRetentionRule(expression, 10, TimeUnit.DAYS, false));
-        list.add(new DataRetentionRule(expression, 1, TimeUnit.MONTHS, false));
-        list.add(new DataRetentionRule(expression, 2, TimeUnit.WEEKS, false));
+        list.add(new DataRetentionRule(true, expression, 10, TimeUnit.DAYS, false));
+        list.add(new DataRetentionRule(true, expression, 1, TimeUnit.MONTHS, false));
+        list.add(new DataRetentionRule(true, expression, 2, TimeUnit.WEEKS, false));
 
         final DataRetentionPolicy policies = new DataRetentionPolicy(list);
 
@@ -49,7 +49,6 @@ public class TestDataRetentionPolicySerialisation {
         final String xml = XMLMarshallerUtil.marshal(context, policies);
 
         System.out.println(xml);
-
 
 
     }

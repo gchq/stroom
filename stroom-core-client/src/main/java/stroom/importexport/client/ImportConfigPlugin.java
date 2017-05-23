@@ -43,7 +43,7 @@ public class ImportConfigPlugin extends Plugin {
         super.onReveal(event);
 
         // Add items to the tools menu.
-        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(8));
+        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(9));
 
         if (securityContext.hasAppPermission("Import Configuration")) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, createImportMenuItem());
@@ -52,6 +52,6 @@ public class ImportConfigPlugin extends Plugin {
     }
 
     private MenuItem createImportMenuItem() {
-        return new IconMenuItem(9, GlyphIcons.UPLOAD, GlyphIcons.UPLOAD, "Import", null, true, () -> ImportConfigEvent.fire(ImportConfigPlugin.this));
+        return new IconMenuItem(10, GlyphIcons.UPLOAD, GlyphIcons.UPLOAD, "Import", null, true, () -> ImportConfigEvent.fire(ImportConfigPlugin.this));
     }
 }

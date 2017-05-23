@@ -26,9 +26,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "DataRetentionRule", propOrder = { "expression", "age", "timeUnit", "forever" })
+@XmlType(name = "DataRetentionRule", propOrder = { "enabled", "expression", "age", "timeUnit", "forever" })
 @XmlRootElement(name = "dataRetentionRule")
 public class DataRetentionRule implements SharedObject {
+    @XmlElement(name = "enabled")
+    private boolean enabled;
     @XmlElement(name = "expression")
     private ExpressionOperator expression;
     @XmlElement(name = "age")
@@ -42,11 +44,16 @@ public class DataRetentionRule implements SharedObject {
         // Default constructor for GWT serialisation.
     }
 
-    public DataRetentionRule(final ExpressionOperator expression, final int age, final TimeUnit timeUnit, final boolean forever) {
+    public DataRetentionRule(final boolean enabled, final ExpressionOperator expression, final int age, final TimeUnit timeUnit, final boolean forever) {
+        this.enabled = enabled;
         this.expression = expression;
         this.age = age;
         this.timeUnit = timeUnit;
         this.forever = forever;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 
     public ExpressionOperator getExpression() {

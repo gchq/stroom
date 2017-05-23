@@ -24,7 +24,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import org.hsqldb.ExpressionOp;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
@@ -33,8 +32,7 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.shared.ExpressionItem;
 import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFieldsMap;
+import stroom.streamstore.shared.FetchFieldsAction;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.GlyphIcons;
@@ -50,14 +48,12 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.presenter.ImageIcon;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPresenter.EditExpressionView> implements HasDirtyHandlers {
     private final ExpressionTreePresenter expressionPresenter;
     private final Resources resources;
     private final MenuListPresenter menuListPresenter;
-    private final ClientDispatchAsync dispatcher;
 
     private final ImageButtonView addOperatorButton;
     private final GlyphButtonView addTermButton;
@@ -72,7 +68,6 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         this.expressionPresenter = expressionPresenter;
         this.menuListPresenter = menuListPresenter;
         this.resources = resources;
-        this.dispatcher = dispatcher;
 
         view.setExpressionView(expressionPresenter.getView());
 
@@ -93,6 +88,8 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         addOperatorButton = view.addButton("Add Operator", resources.addOperator(), resources.addOperator(), true);
         disableItemButton = view.addButton(GlyphIcons.DISABLE);
         deleteItemButton = view.addButton(GlyphIcons.DELETE);
+
+        dispatcher.exec(new FetchFieldsAction()).onSuccess(result -> expressionPresenter.setFields(result.getIndexFields()));
     }
 
     @Override
@@ -149,19 +146,14 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         }
     }
 
-   public void read(final ExpressionOperator expressionOperator, final IndexFieldsMap indexFieldsMap) {
-        // Create a list of index fields.
-        final List<IndexField> indexedFields = new ArrayList<>();
-        if (indexFieldsMap != null) {
-            for (final IndexField indexField : indexFieldsMap.values()) {
-                if (indexField.isIndexed()) {
-                    indexedFields.add(indexField);
-                }
-            }
-        }
-        Collections.sort(indexedFields);
-        expressionPresenter.setFields(indexedFields);
+    public void read(final ExpressionOperator expressionOperator) {
         expressionPresenter.read(expressionOperator);
+    }
+
+    public ExpressionOperator write() {
+        final ExpressionOperator root = new ExpressionOperator();
+        expressionPresenter.write(root);
+        return root;
     }
 
     private void addOperator() {

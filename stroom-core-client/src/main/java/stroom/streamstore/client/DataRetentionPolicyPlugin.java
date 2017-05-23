@@ -28,6 +28,7 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.DataRetentionPolicyPresenter;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.MenuItem;
 
 public class DataRetentionPolicyPlugin extends MonitoringPlugin<DataRetentionPolicyPresenter> {
     @Inject
@@ -39,8 +40,11 @@ public class DataRetentionPolicyPlugin extends MonitoringPlugin<DataRetentionPol
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(Policy.MANAGE_POLICIES_PERMISSION)) {
-            event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
-                    new IconMenuItem(30, GlyphIcons.HISTORY, GlyphIcons.HISTORY, "Data Retention", null, true, () -> open()));
+            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, createDataRetentionMenuItem());
         }
+    }
+
+    private MenuItem createDataRetentionMenuItem() {
+        return new IconMenuItem(5, GlyphIcons.HISTORY, GlyphIcons.HISTORY, "Data Retention", null, true, () -> open());
     }
 }
