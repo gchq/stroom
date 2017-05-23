@@ -18,7 +18,6 @@ package stroom.statistics.sql;
 
 import stroom.statistics.common.RollUpBitMaskUtil;
 import stroom.statistics.common.StatisticTag;
-import stroom.statistics.common.StatisticsEventValidatorFactory;
 import stroom.statistics.common.rollup.RollUpBitMask;
 import stroom.util.shared.EqualsBuilder;
 
@@ -90,7 +89,7 @@ public class SQLStatKey {
      * We do direct SQL with keys so the MUST be cleaned
      */
     public static final String cleanText(final String text) {
-        return StatisticsEventValidatorFactory.getInstance(SQLStatisticEventStore.ENGINE_NAME).cleanString(text);
+        return SQLStatisticsEventValidator.cleanString(text);
     }
 
     public long getMs() {

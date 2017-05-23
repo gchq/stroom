@@ -18,17 +18,15 @@ package stroom.statistics.sql;
 
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
-import stroom.statistics.common.StatisticsEventValidator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class SQLStatisticsEventValidator implements StatisticsEventValidator {
+public class SQLStatisticsEventValidator {
     private static final Pattern DIRTY_CHARACTER_PATTERN = Pattern.compile(SQLStatisticConstants.NAME_SEPARATOR);
 
-    @Override
-    public List<String> validateEvent(final StatisticEvent statisticEvent) {
+    public static List<String> validateEvent(final StatisticEvent statisticEvent) {
         final List<String> warningList = new ArrayList<String>();
 
         for (final StatisticTag tag : statisticEvent.getTagList()) {
@@ -51,8 +49,7 @@ public class SQLStatisticsEventValidator implements StatisticsEventValidator {
         return warningList;
     }
 
-    @Override
-    public String cleanString(final String dirtyString) {
+    public static String cleanString(final String dirtyString) {
         if (dirtyString != null) {
             final String cleanedString = dirtyString.replaceAll(SQLStatisticConstants.NAME_SEPARATOR,
                     SQLStatisticConstants.DIRTY_CHARACTER_REPLACEMENT);

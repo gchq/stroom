@@ -31,7 +31,6 @@ import stroom.statistics.common.FindStatisticsEntityCriteria;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.common.Statistics;
-import stroom.statistics.common.StatisticsFactory;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
@@ -45,7 +44,6 @@ import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Unit test class for <code>XMLTransformer</code>.
@@ -97,7 +95,6 @@ public class TestStatisticsFilter implements Statistics {
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
         StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
-        statisticsDataSource.setEngineName(ENGINE_NAME);
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
@@ -107,16 +104,13 @@ public class TestStatisticsFilter implements Statistics {
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
-        final MockFactory mockFactory = new MockFactory(this);
-
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
-                new LocationFactoryProxy(), mockFactory, statisticsDataSourceService);
+                new LocationFactoryProxy(), this, statisticsDataSourceService);
 
         statisticsFilter.setStatisticsDataSource(statisticsDataSource);
 
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
-        Assert.assertEquals(statisticsDataSource.getEngineName(), mockFactory.getEngine());
         Assert.assertEquals("Expecting 2 events", 2, testEvents.size());
 
         Assert.assertEquals(DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"),
@@ -176,7 +170,6 @@ public class TestStatisticsFilter implements Statistics {
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
         StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
-        statisticsDataSource.setEngineName(ENGINE_NAME);
         statisticsDataSource.setStatisticType(StatisticType.VALUE);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
@@ -186,16 +179,14 @@ public class TestStatisticsFilter implements Statistics {
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
-        final MockFactory mockFactory = new MockFactory(this);
 
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
-                new LocationFactoryProxy(), mockFactory, statisticsDataSourceService);
+                new LocationFactoryProxy(), this, statisticsDataSourceService);
 
         statisticsFilter.setStatisticsDataSource(statisticsDataSource);
 
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
-        Assert.assertEquals(statisticsDataSource.getEngineName(), mockFactory.getEngine());
         Assert.assertEquals("Expecting 2 events", 2, testEvents.size());
 
         Assert.assertEquals(DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"),
@@ -230,7 +221,6 @@ public class TestStatisticsFilter implements Statistics {
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
         StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
-        statisticsDataSource.setEngineName(ENGINE_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -240,40 +230,8 @@ public class TestStatisticsFilter implements Statistics {
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
-        final MockFactory mockFactory = new MockFactory(this);
-
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
-                new LocationFactoryProxy(), mockFactory, statisticsDataSourceService);
-
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
-
-        // will throw an error as the type in the xml doesn't match the type in
-        // the SDS
-        ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void testInvalidTag() throws Exception {
-        final String inputPath = INPUT_DIR + "input03_badType.xml";
-
-        final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
-
-        final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
-        statisticsDataSource.setEngineName(ENGINE_NAME);
-        // xml has a value element so set this to count
-        statisticsDataSource.setStatisticType(StatisticType.VALUE);
-        statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
-                Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
-        statisticsDataSource.setEnabled(true);
-        statisticsDataSource = statisticsDataSourceService.save(statisticsDataSource);
-
-        final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
-
-        final MockFactory mockFactory = new MockFactory(this);
-
-        final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
-                new LocationFactoryProxy(), mockFactory, statisticsDataSourceService);
+                new LocationFactoryProxy(), this, statisticsDataSourceService);
 
         statisticsFilter.setStatisticsDataSource(statisticsDataSource);
 
@@ -290,7 +248,6 @@ public class TestStatisticsFilter implements Statistics {
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
         StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
-        statisticsDataSource.setEngineName(ENGINE_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -300,10 +257,8 @@ public class TestStatisticsFilter implements Statistics {
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
-        final MockFactory mockFactory = new MockFactory(this);
-
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
-                new LocationFactoryProxy(), mockFactory, statisticsDataSourceService);
+                new LocationFactoryProxy(), this, statisticsDataSourceService);
 
         statisticsFilter.setStatisticsDataSource(statisticsDataSource);
 
@@ -324,7 +279,6 @@ public class TestStatisticsFilter implements Statistics {
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
         StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
-        statisticsDataSource.setEngineName(ENGINE_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.VALUE);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -334,10 +288,9 @@ public class TestStatisticsFilter implements Statistics {
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
-        final MockFactory mockFactory = new MockFactory(this);
 
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
-                new LocationFactoryProxy(), mockFactory, statisticsDataSourceService);
+                new LocationFactoryProxy(), this, statisticsDataSourceService);
 
         statisticsFilter.setStatisticsDataSource(statisticsDataSource);
 
@@ -354,7 +307,6 @@ public class TestStatisticsFilter implements Statistics {
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
         StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
-        statisticsDataSource.setEngineName(ENGINE_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -364,10 +316,8 @@ public class TestStatisticsFilter implements Statistics {
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
-        final MockFactory mockFactory = new MockFactory(this);
-
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
-                new LocationFactoryProxy(), mockFactory, statisticsDataSourceService);
+                new LocationFactoryProxy(), this, statisticsDataSourceService);
 
         statisticsFilter.setStatisticsDataSource(statisticsDataSource);
 
@@ -384,7 +334,6 @@ public class TestStatisticsFilter implements Statistics {
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
         StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
-        statisticsDataSource.setEngineName(ENGINE_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -394,10 +343,8 @@ public class TestStatisticsFilter implements Statistics {
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
-        final MockFactory mockFactory = new MockFactory(this);
-
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
-                new LocationFactoryProxy(), mockFactory, statisticsDataSourceService);
+                new LocationFactoryProxy(), this, statisticsDataSourceService);
 
         statisticsFilter.setStatisticsDataSource(statisticsDataSource);
 
@@ -414,7 +361,6 @@ public class TestStatisticsFilter implements Statistics {
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
         StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
-        statisticsDataSource.setEngineName(ENGINE_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -424,10 +370,8 @@ public class TestStatisticsFilter implements Statistics {
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
-        final MockFactory mockFactory = new MockFactory(this);
-
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
-                new LocationFactoryProxy(), mockFactory, statisticsDataSourceService);
+                new LocationFactoryProxy(), this, statisticsDataSourceService);
 
         statisticsFilter.setStatisticsDataSource(statisticsDataSource);
 
@@ -448,7 +392,6 @@ public class TestStatisticsFilter implements Statistics {
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
         StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
-        statisticsDataSource.setEngineName(ENGINE_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -458,10 +401,8 @@ public class TestStatisticsFilter implements Statistics {
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
 
-        final MockFactory mockFactory = new MockFactory(this);
-
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
-                new LocationFactoryProxy(), mockFactory, statisticsDataSourceService);
+                new LocationFactoryProxy(), this, statisticsDataSourceService);
 
         statisticsFilter.setStatisticsDataSource(statisticsDataSource);
 
@@ -491,17 +432,6 @@ public class TestStatisticsFilter implements Statistics {
         throw new UnsupportedOperationException("Not used in this test class");
     }
 
-    // @Override
-    // public StatisticDataSet searchStatisticsData(final Search search, final
-    // StatisticStore dataSource) {
-    // throw new UnsupportedOperationException("Not used in this test class");
-    // }
-
-    // @Override
-    // public BaseResultList<StatisticsDataSource>
-    // getDataSources(FindStatStoreCriteria criteria) {
-    // throw new UnsupportedOperationException("Not used in this test class");
-    // }
 
     @Override
     public void flushAllEvents() {
@@ -509,114 +439,13 @@ public class TestStatisticsFilter implements Statistics {
 
     }
 
-    private static class MockStatisticsDataSourceService extends MockDocumentEntityService<StatisticStoreEntity, FindStatisticsEntityCriteria> implements StatisticStoreEntityService {
-//        @Override
-//        public BaseResultList<StatisticStoreEntity> find(final FindStatisticsEntityCriteria criteria)
-//                throws RuntimeException {
-//            throw new UnsupportedOperationException("Method not implmented");
-//        }
-//
-//        @Override
-//        public StatisticStoreEntity create(final StatisticStoreEntity entity) throws RuntimeException {
-//            throw new UnsupportedOperationException("Method not implmented");
-//        }
-//
-//        @Override
-//        public StatisticStoreEntity load(final StatisticStoreEntity entity) throws RuntimeException {
-//            return entity;
-//        }
-//
-//        @Override
-//        public StatisticStoreEntity load(final StatisticStoreEntity entity, final Set<String> fetchSet)
-//                throws RuntimeException {
-//            throw new UnsupportedOperationException("Method not implmented");
-//        }
-//
-//        @Override
-//        public StatisticStoreEntity loadById(final long id) throws RuntimeException {
-//            throw new UnsupportedOperationException("Method not implmented");
-//        }
-//
-//        @Override
-//        public StatisticStoreEntity loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
-//            throw new UnsupportedOperationException("Method not implmented");
-//        }
-//
-//        @Override
-//        public StatisticStoreEntity save(final StatisticStoreEntity entity) throws RuntimeException {
-//            throw new UnsupportedOperationException("Method not implmented");
-//        }
-//
-//        @Override
-//        public Boolean delete(final StatisticStoreEntity entity) throws RuntimeException {
-//            throw new UnsupportedOperationException("Method not implmented");
-//        }
-//
-//        @Override
-//        public FindStatisticsEntityCriteria createCriteria() {
-//            throw new UnsupportedOperationException("Method not implmented");
-//        }
+    private static class MockStatisticsDataSourceService
+            extends MockDocumentEntityService<StatisticStoreEntity, FindStatisticsEntityCriteria>
+            implements StatisticStoreEntityService {
 
-        // @Override
-        // public StatisticsDataSource loadByUUID(final String uuid) {
-        // throw new UnsupportedOperationException("Method not implmented");
-        // }
-        //
-        // @Override
-        // public StatisticsDataSource loadByUUID(final String uuid, final
-        // Set<String> fetchSet) {
-        // throw new UnsupportedOperationException("Method not implmented");
-        // }
         @Override
         public Class<StatisticStoreEntity> getEntityClass() {
             return StatisticStoreEntity.class;
         }
     }
-
-    private static class MockFactory implements StatisticsFactory {
-        private final Statistics statisticEventStore;
-        private String engine;
-
-        public MockFactory(final Statistics statisticEventStore) {
-            this.statisticEventStore = statisticEventStore;
-        }
-
-        public String getEngine() {
-            return engine;
-        }
-
-        @Override
-        public void initStatisticEventStoreBeanNames() {
-            throw new RuntimeException("Method not implmented");
-
-        }
-
-        @Override
-        public Statistics instance() {
-            throw new RuntimeException("Method not implmented");
-        }
-
-        @Override
-        public Statistics instance(final String engineName) {
-            this.engine = engineName;
-            return statisticEventStore;
-        }
-
-        @Override
-        public Statistics instance(final List<String> engineNames) {
-            throw new RuntimeException("Method not implmented");
-        }
-
-        @Override
-        public Set<String> getAllEngineNames() {
-            throw new RuntimeException("Method not implmented");
-        }
-
-    }
-
-    // @Override
-    // public IndexFields getSupportedFields(final DataSource
-    // statisticsDataSource) {
-    // throw new UnsupportedOperationException("Not used in this test class");
-    // }
 }

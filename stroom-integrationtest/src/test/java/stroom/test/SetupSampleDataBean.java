@@ -165,8 +165,8 @@ public final class SetupSampleDataBean {
                 .find(FindStatisticsEntityCriteria.instance());
 
         for (final StatisticStoreEntity statisticsDataSource : statisticsDataSources) {
-            LOGGER.info(String.format("Retreiving statisticsDataSource with name: {}, engine: {} and type: {}",
-                    statisticsDataSource.getName(), statisticsDataSource.getEngineName(),
+            LOGGER.info(String.format("Retreiving statisticsDataSource with name: {}, and type: {}",
+                    statisticsDataSource.getName(),
                     statisticsDataSource.getStatisticType()));
         }
 

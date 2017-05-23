@@ -51,7 +51,6 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
         @Override
         public StatisticStoreEntity getStatisticsDataSource(final String statisticName, final String engineName) {
             final StatisticStoreEntity statisticsDataSource = new StatisticStoreEntity();
-            statisticsDataSource.setEngineName(engineName);
             statisticsDataSource.setName(statisticName);
             statisticsDataSource.setPrecision(1000L);
 
