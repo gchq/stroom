@@ -27,6 +27,8 @@ import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Provider;
 import stroom.data.grid.client.MouseHelper;
 import stroom.dictionary.shared.Dictionary;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.shared.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
@@ -178,8 +180,8 @@ public class ExpressionTreePanel extends TreePanel<ExpressionItem> {
         return tree;
     }
 
-    public void setFields(final List<IndexField> fields) {
-        termEditor.setFields(fields);
+    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<IndexField> indexFields) {
+        termEditor.init(dispatcher, dataSource, indexFields);
     }
 
     public void endEditing() {

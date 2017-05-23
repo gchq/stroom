@@ -29,6 +29,7 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.shared.DocRef;
 import stroom.query.shared.ExpressionItem;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionTerm;
@@ -48,7 +49,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
         void setSelectionModel(MySingleSelectionModel<ExpressionItem> selectionModel);
 
-        void setFields(List<IndexField> fields);
+        void init(ClientDispatchAsync dispatcher, DocRef dataSource, List<IndexField> indexFields);
 
         void endEditing();
 
@@ -61,7 +62,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
     @Inject
     public ExpressionTreePresenter(final EventBus eventBus, final ExpressionTreeView view,
-            final ClientDispatchAsync dispatcher) {
+                                   final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         selectionModel = new MySingleSelectionModel<>();
         view.setSelectionModel(selectionModel);
@@ -87,8 +88,8 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         return selectionModel.addSelectionChangeHandler(handler);
     }
 
-    public void setFields(final List<IndexField> indexFields) {
-        getView().setFields(indexFields);
+    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<IndexField> indexFields) {
+        getView().init(dispatcher, dataSource, indexFields);
     }
 
     @Override

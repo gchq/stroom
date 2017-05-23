@@ -27,9 +27,11 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.ItemListBox;
@@ -53,9 +55,9 @@ public class TermEditor extends Composite {
     private final ItemListBox<IndexField> fieldListBox;
     private final ItemListBox<Condition> conditionListBox;
     private final Label andLabel;
-    private final TextBox value;
-    private final TextBox valueFrom;
-    private final TextBox valueTo;
+    private final SuggestBox value;
+    private final SuggestBox valueFrom;
+    private final SuggestBox valueTo;
     private final MyDateBox date;
     private final MyDateBox dateFrom;
     private final MyDateBox dateTo;
@@ -69,6 +71,8 @@ public class TermEditor extends Composite {
     private boolean reading;
     private boolean editing;
     private ExpressionUiHandlers uiHandlers;
+
+    private AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
 
     public TermEditor(final EntityDropDownPresenter dictionaryPresenter) {
         if (resources == null) {
@@ -125,7 +129,10 @@ public class TermEditor extends Composite {
         initWidget(layout);
     }
 
-    public void setFields(final List<IndexField> indexFields) {
+    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<IndexField> indexFields) {
+        suggestOracle.setDispatcher(dispatcher);
+        suggestOracle.setDataSource(dataSource);
+
         this.indexFields = indexFields;
         fieldListBox.clear();
         if (indexFields != null) {
@@ -214,6 +221,8 @@ public class TermEditor extends Composite {
     }
 
     private void changeField(final IndexField field) {
+        suggestOracle.setField(field);
+
         final List<Condition> conditions = getConditions(field);
 
         conditionListBox.clear();
@@ -445,11 +454,6 @@ public class TermEditor extends Composite {
         registerHandler(dateFrom.addValueChangeHandler(event -> fireDirty()));
         registerHandler(dateTo.addValueChangeHandler(event -> fireDirty()));
 
-
-//        registerHandler(date.addValueChangeHandler(dateChangeHandler));
-//        registerHandler(dateFrom.addValueChangeHandler(dateChangeHandler));
-//        registerHandler(dateTo.addValueChangeHandler(dateChangeHandler));
-
         if (dictionaryPresenter != null) {
             registerHandler(dictionaryPresenter.addDataSelectionHandler(event -> {
                 final DocRef selection = dictionaryPresenter.getSelectedEntityReference();
@@ -499,8 +503,8 @@ public class TermEditor extends Composite {
         return conditionListBox;
     }
 
-    private TextBox createTextBox(final int width) {
-        final TextBox textBox = new TextBox();
+    private SuggestBox createTextBox(final int width) {
+        final SuggestBox textBox = new SuggestBox(suggestOracle);
         fixStyle(textBox, width);
         return textBox;
     }

@@ -22,6 +22,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.shared.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.DraggableTreePanel;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
@@ -96,8 +98,8 @@ public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandl
     }
 
     @Override
-    public void setFields(final List<IndexField> fields) {
-        treePanel.setFields(fields);
+    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<IndexField> indexFields) {
+        treePanel.init(dispatcher, dataSource, indexFields);
     }
 
     @Override

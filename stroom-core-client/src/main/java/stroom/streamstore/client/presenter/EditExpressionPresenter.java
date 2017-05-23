@@ -28,6 +28,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.entity.shared.DocRef;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.shared.ExpressionItem;
@@ -89,7 +90,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         disableItemButton = view.addButton(GlyphIcons.DISABLE);
         deleteItemButton = view.addButton(GlyphIcons.DELETE);
 
-        dispatcher.exec(new FetchFieldsAction()).onSuccess(result -> expressionPresenter.setFields(result.getIndexFields()));
+        dispatcher.exec(new FetchFieldsAction()).onSuccess(result -> expressionPresenter.init(dispatcher, new DocRef("STREAM_STORE", "STREAM_STORE"), result.getIndexFields()));
     }
 
     @Override

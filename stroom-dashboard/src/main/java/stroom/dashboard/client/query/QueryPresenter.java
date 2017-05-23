@@ -282,7 +282,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             }
         }
         Collections.sort(indexedFields);
-        expressionPresenter.setFields(indexedFields);
+        expressionPresenter.init(dispatcher, dataSourceRef, indexedFields);
 
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(queryData.getDataSource(), dataSourceRef);
