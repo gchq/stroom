@@ -663,6 +663,11 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         pipelineReferences.add(pipelineReference);
     }
 
+    @PipelineProperty(description = "Advanced: Choose whether or not you want to use cached XSLT templates to improve performance.", defaultValue = "true")
+    public void setUsePool(final boolean usePool) {
+        this.usePool = usePool;
+    }
+
     @Override
     public void setInjectedCode(final String injectedCode) {
         this.injectedCode = injectedCode;
