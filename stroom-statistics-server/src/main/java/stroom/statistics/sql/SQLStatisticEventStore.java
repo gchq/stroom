@@ -75,7 +75,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Component
-public class SQLStatisticEventStore implements Statistics, InternalStatisticsService {
+public class SQLStatisticEventStore implements Statistics {
     public static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticEventStore.class);
 
     static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.statistics.sql.search.maxResults";
@@ -455,26 +455,26 @@ public class SQLStatisticEventStore implements Statistics, InternalStatisticsSer
         return result;
     }
 
-    public static boolean isDataStoreEnabled(final String engineName, final StroomPropertyService propertyService) {
-        final String enabledEngines = propertyService
-                .getProperty(CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME);
-
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("{} property value: {}", CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME,
-                    enabledEngines);
-        }
-
-        boolean result = false;
-
-        if (enabledEngines != null) {
-            for (final String engine : enabledEngines.split(",")) {
-                if (engine.equals(engineName)) {
-                    result = true;
-                }
-            }
-        }
-        return result;
-    }
+//    public static boolean isDataStoreEnabled(final String engineName, final StroomPropertyService propertyService) {
+//        final String enabledEngines = propertyService
+//                .getProperty(CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME);
+//
+//        if (LOGGER.isDebugEnabled()) {
+//            LOGGER.debug("{} property value: {}", CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME,
+//                    enabledEngines);
+//        }
+//
+//        boolean result = false;
+//
+//        if (enabledEngines != null) {
+//            for (final String engine : enabledEngines.split(",")) {
+//                if (engine.equals(engineName)) {
+//                    result = true;
+//                }
+//            }
+//        }
+//        return result;
+//    }
 
     protected Set<String> getIndexFieldBlackList() {
         return BLACK_LISTED_INDEX_FIELDS;
@@ -508,8 +508,8 @@ public class SQLStatisticEventStore implements Statistics, InternalStatisticsSer
     }
 
     @Override
-    public String getName() {
-        return ENGINE_NAME;
+    public String getDocRefType() {
+        return docRefType;
     }
 
     @StroomFrequencySchedule("1m")
@@ -859,9 +859,9 @@ public class SQLStatisticEventStore implements Statistics, InternalStatisticsSer
         }
     }
 
-    public boolean isDataStoreEnabled() {
-        return SQLStatisticEventStore.isDataStoreEnabled(getEngineName(), propertyService);
-    }
+//    public boolean isDataStoreEnabled() {
+//        return SQLStatisticEventStore.isDataStoreEnabled(getEngineName(), propertyService);
+//    }
 
     public List<Set<Integer>> getFieldPositionsForBitMasks(final List<Short> maskValues) {
         if (maskValues != null) {

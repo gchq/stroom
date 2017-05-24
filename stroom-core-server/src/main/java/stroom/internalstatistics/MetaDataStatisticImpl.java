@@ -20,15 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import stroom.statistic.server.MetaDataStatistic;
-import stroom.statistics.common.StatisticEvent;
-import stroom.statistics.common.StatisticTag;
 import stroom.util.date.DateUtil;
-import stroom.util.spring.StroomStartup;
 import stroom.util.zip.HeaderMap;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This is deliberately not declared as a component as the StatisticsConfiguration creates the bean.
@@ -37,23 +35,17 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaDataStatisticImpl.class);
 
     private List<MetaDataStatisticTemplate> templates;
-    private InternalStatisticsServiceFactory internalStatisticsServiceFactory;
-    private volatile InternalStatisticsService internalStatisticsService;
+    private InternalStatisticsFacadeFactory internalStatisticsFacadeFactory;
 
     @Resource
-    public void setInternalStatisticsServiceFactory(final InternalStatisticsServiceFactory internalStatisticsServiceFactory) {
-        this.internalStatisticsServiceFactory = internalStatisticsServiceFactory;
-    }
-
-    @StroomStartup
-    public void afterPropertiesSet() throws Exception {
-        internalStatisticsService = internalStatisticsServiceFactory.create();
+    public void setInternalStatisticsFacadeFactory(final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory) {
+        this.internalStatisticsFacadeFactory = internalStatisticsFacadeFactory;
     }
 
     /**
      * @return build the STAT or return null for not valid
      */
-    private StatisticEvent buildStatisticEvent(final MetaDataStatisticTemplate template, final HeaderMap metaData) {
+    private InternalStatisticEvent buildStatisticEvent(final MetaDataStatisticTemplate template, final HeaderMap metaData) {
         Long timeMs = null;
         final String timeValue = metaData.get(template.getTimeMsAttribute());
         if (StringUtils.hasText(timeValue)) {
@@ -65,13 +57,13 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
             }
         }
 
-        final List<StatisticTag> statisticTagList = new ArrayList<StatisticTag>();
+        final Map<String, String> statisticTags = new HashMap<>();
 
         for (final String tagName : template.getTagAttributeList()) {
             final String tagValue = metaData.get(tagName);
 
             if (StringUtils.hasText(tagValue)) {
-                statisticTagList.add(new StatisticTag(tagName, tagValue));
+                statisticTags.put(tagName, tagValue);
             } else {
                 // Quit!
                 return null;
@@ -93,23 +85,21 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
                 return null;
             }
         }
-        return StatisticEvent.createCount(timeMs, template.getName(), statisticTagList, increment);
+        return InternalStatisticEvent.createPlusNCountStat(template.getKey(), timeMs, statisticTags, increment);
     }
 
     @Override
     public void recordStatistics(final HeaderMap metaData) {
-        if (internalStatisticsService != null && templates != null) {
-            for (final MetaDataStatisticTemplate template : templates) {
-                try {
-                    final StatisticEvent statisticEvent = buildStatisticEvent(template, metaData);
-                    if (statisticEvent != null) {
-                        internalStatisticsService.putEvent(statisticEvent);
-                    } else {
-                        LOGGER.trace("recordStatistics() - abort {}", metaData);
-                    }
-                } catch (final Exception ex) {
-                    LOGGER.error("recordStatistics() - abort {}", metaData, ex);
+        for (final MetaDataStatisticTemplate template : templates) {
+            try {
+                final InternalStatisticEvent statisticEvent = buildStatisticEvent(template, metaData);
+                if (statisticEvent != null) {
+                    internalStatisticsFacadeFactory.create().putEvent(statisticEvent);
+                } else {
+                    LOGGER.trace("recordStatistics() - abort {}", metaData);
                 }
+            } catch (final Exception ex) {
+                LOGGER.error("recordStatistics() - abort {}", metaData, ex);
             }
         }
     }

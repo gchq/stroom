@@ -24,7 +24,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
-import stroom.internalstatistics.InternalStatisticsServiceFactory;
+import stroom.internalstatistics.InternalStatisticsFacadeFactory;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
@@ -216,7 +216,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
         public MockVolumeService(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
                                  final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
-                                 final Provider<InternalStatisticsServiceFactory> factoryProvider) {
+                                 final Provider<InternalStatisticsFacadeFactory> factoryProvider) {
             super(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, factoryProvider);
         }
         @Override

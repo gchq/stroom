@@ -32,7 +32,7 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.internalstatistics.InternalStatisticsService;
-import stroom.internalstatistics.InternalStatisticsServiceFactory;
+import stroom.internalstatistics.InternalStatisticsFacadeFactory;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
@@ -125,7 +125,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private final NodeCache nodeCache;
     private final StroomPropertyService stroomPropertyService;
     private final StroomBeanStore stroomBeanStore;
-    private final Provider<InternalStatisticsServiceFactory> factoryProvider;
+    private final Provider<InternalStatisticsFacadeFactory> factoryProvider;
     private final AtomicReference<List<Volume>> currentVolumeState = new AtomicReference<>();
 
     private volatile InternalStatisticsService internalStatisticsService;
@@ -133,7 +133,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     @Inject
     VolumeServiceImpl(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
                       final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
-                      final Provider<InternalStatisticsServiceFactory> factoryProvider) {
+                      final Provider<InternalStatisticsFacadeFactory> factoryProvider) {
         super(stroomEntityManager);
         this.stroomEntityManager = stroomEntityManager;
         this.nodeCache = nodeCache;
@@ -149,7 +149,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     @StroomStartup
     public void afterPropertiesSet() throws Exception {
         if (stroomBeanStore != null) {
-            final InternalStatisticsServiceFactory factory = factoryProvider.get();
+            final InternalStatisticsFacadeFactory factory = factoryProvider.get();
             if (factory != null) {
                 internalStatisticsService = factory.create();
             }

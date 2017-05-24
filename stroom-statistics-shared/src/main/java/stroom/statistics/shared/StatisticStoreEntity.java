@@ -82,7 +82,6 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
     public static final String PRECISION = SQLNameConstants.PRECISION;
     public static final String ROLLUP_TYPE = SQLNameConstants.ROLLUP + SEP + SQLNameConstants.TYPE;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String NOT_SET = "NOT SET";
     public static final Long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
     public static final String DEFAULT_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
 

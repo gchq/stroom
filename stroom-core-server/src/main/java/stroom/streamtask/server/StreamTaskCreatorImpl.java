@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
 import stroom.internalstatistics.InternalStatisticsService;
-import stroom.internalstatistics.InternalStatisticsServiceFactory;
+import stroom.internalstatistics.InternalStatisticsFacadeFactory;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
@@ -101,7 +101,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final StreamTaskService streamTaskService;
     private final StreamTaskHelper streamTaskHelper;
     private final StroomPropertyService propertyService;
-    private final Provider<InternalStatisticsServiceFactory> factoryProvider;
+    private final Provider<InternalStatisticsFacadeFactory> factoryProvider;
     private final StreamStore streamStore;
     private final SecurityContext securityContext;
 
@@ -152,7 +152,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final StreamTaskService streamTaskService,
                           final StreamTaskHelper streamTaskHelper,
                           final StroomPropertyService propertyService,
-                          final Provider<InternalStatisticsServiceFactory> factoryProvider,
+                          final Provider<InternalStatisticsFacadeFactory> factoryProvider,
                           final StreamStore streamStore,
                           final SecurityContext securityContext) {
 
@@ -909,7 +909,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             final int queueSize = getStreamTaskQueueSize();
             if (queueSize != lastQueueSizeForStats && factoryProvider != null) {
                 try {
-                    final InternalStatisticsServiceFactory factory = factoryProvider.get();
+                    final InternalStatisticsFacadeFactory factory = factoryProvider.get();
                     final InternalStatisticsService internalStatisticsService = factory.create();
 
                     // Value type event as the queue size is not additive

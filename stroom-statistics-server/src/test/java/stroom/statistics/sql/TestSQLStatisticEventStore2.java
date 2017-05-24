@@ -18,13 +18,11 @@ package stroom.statistics.sql;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.node.server.MockStroomPropertyService;
 import stroom.query.api.v1.ExpressionBuilder;
 import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.query.api.v1.Query;
 import stroom.query.api.v1.SearchRequest;
-import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.FilterTermsTree;
 import stroom.statistics.common.FindEventCriteria;
 import stroom.statistics.common.RolledUpStatisticEvent;
@@ -217,33 +215,6 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
                         || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue()));
             }
         }
-    }
-
-    @Test
-    public void testIsDataStoreEnabledSuccess() {
-        runIsDataSourceEnabled("sql,hbase", "hbase", true);
-    }
-
-    @Test
-    public void testIsDataStoreEnabledSuccess2() {
-        runIsDataSourceEnabled("sql,hbase,someOther", "hbase", true);
-    }
-
-    @Test
-    public void testIsDataStoreEnabledFailed() {
-        runIsDataSourceEnabled("sql", "hbase", false);
-    }
-
-    private void runIsDataSourceEnabled(final String propertyValue, final String engineName,
-                                        final boolean expectedResult) {
-        final MockStroomPropertyService propertyService = new MockStroomPropertyService();
-
-        propertyService.setProperty(CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME, propertyValue);
-
-        final boolean result = SQLStatisticEventStore.isDataStoreEnabled(engineName, propertyService);
-
-        Assert.assertEquals(expectedResult, result);
-
     }
 
     private StatisticEvent buildEvent(final List<StatisticTag> tagList) {

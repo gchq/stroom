@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.internalstatistics.InternalStatisticsServiceFactory;
+import stroom.internalstatistics.InternalStatisticsFacadeFactory;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
@@ -35,13 +35,13 @@ public class NodeStatusExecutor {
     @Resource
     private final NodeStatusServiceUtil nodeStatusServiceUtil;
     @Resource
-    private final InternalStatisticsServiceFactory internalStatisticsServiceFactory;
+    private final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory;
 
     public NodeStatusExecutor(final NodeStatusServiceUtil nodeStatusServiceUtil,
-                              final InternalStatisticsServiceFactory internalStatisticsServiceFactory) {
+                              final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory) {
 
         this.nodeStatusServiceUtil = nodeStatusServiceUtil;
-        this.internalStatisticsServiceFactory = internalStatisticsServiceFactory;
+        this.internalStatisticsFacadeFactory = internalStatisticsFacadeFactory;
     }
 
     /**
@@ -53,6 +53,6 @@ public class NodeStatusExecutor {
     @JobTrackedSchedule(jobName = "Node Status", advanced = false, description = "Job to record status of node (CPU and Memory usage)")
     public void exec() {
         LOGGER.debug("Updating the status for this node.");
-        internalStatisticsServiceFactory.create().putEvents(nodeStatusServiceUtil.buildNodeStatus());
+        internalStatisticsFacadeFactory.create().putEvents(nodeStatusServiceUtil.buildNodeStatus());
     }
 }

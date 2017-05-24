@@ -25,17 +25,13 @@ import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
 import stroom.explorer.shared.EntityData;
 import stroom.node.server.StroomPropertyService;
-import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.FindStatisticsEntityCriteria;
 import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.shared.StatisticStoreEntity;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @ProvidesExplorerData
@@ -54,7 +50,8 @@ public class StatisticsDataSourceExplorerDataProvider
     private final StroomPropertyService stroomPropertyService;
 
     @Inject
-    StatisticsDataSourceExplorerDataProvider(@Named("cachedFolderService") final FolderService cachedFolderService, final StatisticStoreEntityService statisticsDataSourceService,
+    StatisticsDataSourceExplorerDataProvider(@Named("cachedFolderService") final FolderService cachedFolderService,
+                                             final StatisticStoreEntityService statisticsDataSourceService,
                                              final StroomPropertyService stroomPropertyService) {
         super(cachedFolderService);
         LOGGER.debug("Initialising: {}", this.getClass().getCanonicalName());
@@ -64,22 +61,7 @@ public class StatisticsDataSourceExplorerDataProvider
 
     @Override
     public void addItems(final TreeModel treeModel) {
-        final String enabledEngines = stroomPropertyService
-                .getProperty(CommonStatisticConstants.STROOM_STATISTIC_ENGINES_PROPERTY_NAME);
-
-        List<String> enabledEnginesList = new ArrayList<>();
-        if (enabledEngines != null && enabledEngines.length() > 0) {
-            final String[] engines = enabledEngines.split(",");
-            Arrays.stream(engines).forEach(enabledEnginesList::add);
-        }
-
-        // newly created, but not yet enabled datasources will be in the DB with
-        // an engine of Not Set so need to include
-        // them
-        enabledEnginesList.add(StatisticStoreEntity.NOT_SET);
-
-        final FindStatisticsEntityCriteria criteria = FindStatisticsEntityCriteria
-                .instanceByEngineNames(enabledEnginesList);
+        final FindStatisticsEntityCriteria criteria = FindStatisticsEntityCriteria.instance();
 
         addItems(statisticsDataSourceService, treeModel, criteria);
     }

@@ -25,7 +25,7 @@ import java.util.List;
 public class MetaDataStatisticTemplate implements Serializable {
     private static final long serialVersionUID = -2347332113575225973L;
 
-    private String name;
+    private String key;
     private String timeMsAttribute;
     private String incrementAttribute;
     private List<String> tagAttributeList;
@@ -33,14 +33,14 @@ public class MetaDataStatisticTemplate implements Serializable {
     public MetaDataStatisticTemplate() {
     }
 
-    public MetaDataStatisticTemplate(final String name, final String timeMsAttribute,
+    public MetaDataStatisticTemplate(final String key, final String timeMsAttribute,
             final List<String> tagAttributeList) {
-        this(name, timeMsAttribute, null, tagAttributeList);
+        this(key, timeMsAttribute, null, tagAttributeList);
     }
 
-    public MetaDataStatisticTemplate(final String name, final String timeMsAttribute, final String incrementAttribute,
+    public MetaDataStatisticTemplate(final String key, final String timeMsAttribute, final String incrementAttribute,
             final List<String> tagAttributeList) {
-        this.name = name;
+        this.key = key;
         this.timeMsAttribute = timeMsAttribute;
         this.incrementAttribute = incrementAttribute;
         this.tagAttributeList = tagAttributeList;
@@ -62,12 +62,12 @@ public class MetaDataStatisticTemplate implements Serializable {
         this.tagAttributeList = tagAttributeList;
     }
 
-    public String getName() {
-        return name;
+    public String getKey() {
+        return key;
     }
 
-    public void setName(final String name) {
-        this.name = name;
+    public void setKey(final String key) {
+        this.key = key;
     }
 
     public String getIncrementAttribute() {

@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
-import stroom.internalstatistics.InternalStatisticsServiceFactory;
+import stroom.internalstatistics.InternalStatisticsFacadeFactory;
 import stroom.io.StreamCloser;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.destination.Destination;
@@ -137,7 +137,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     @Resource
     private PipelineDataCache pipelineDataCache;
     @Resource
-    private InternalStatisticsServiceFactory internalStatisticsServiceFactory;
+    private InternalStatisticsFacadeFactory internalStatisticsFacadeFactory;
 
     private StreamProcessor streamProcessor;
     private StreamProcessorFilter streamProcessorFilter;
@@ -325,7 +325,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                                     new StatisticTag("Node", nodeCache.getDefaultNode().getName())
                             ), 1L);
 
-            internalStatisticsServiceFactory.create()
+            internalStatisticsFacadeFactory.create()
                     .putEvent(statisticEvent, throwable ->
                         outputError(new RuntimeException("Error recording internal stat " + statName, throwable),
                                 Severity.WARNING)
