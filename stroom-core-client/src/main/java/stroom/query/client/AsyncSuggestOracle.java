@@ -20,7 +20,7 @@ import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRef;
-import stroom.query.shared.FetchFieldSuggestionsAction;
+import stroom.query.shared.FetchSuggestionsAction;
 import stroom.query.shared.IndexField;
 import stroom.util.shared.SharedString;
 
@@ -46,7 +46,7 @@ public class AsyncSuggestOracle extends SuggestOracle {
 
     @Override
     public void requestSuggestions(final Request request, final Callback callback) {
-        dispatcher.exec(new FetchFieldSuggestionsAction(dataSource, field, request.getQuery())).onSuccess(result -> {
+        dispatcher.exec(new FetchSuggestionsAction(dataSource, field, request.getQuery())).onSuccess(result -> {
             final List<Suggestion> suggestions = new ArrayList<>();
             for (final SharedString string : result) {
                 suggestions.add(new MultiWordSuggestion(string.toString(), string.toString()));

@@ -26,35 +26,36 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
 
-import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = FetchFieldsAction.class)
 @Scope(StroomScope.TASK)
 public class FetchFieldsHandler extends AbstractTaskHandler<FetchFieldsAction, IndexFields> {
     @Override
     public IndexFields exec(final FetchFieldsAction task) {
-        final List<IndexField> list = new ArrayList<>();
+        final Set<IndexField> set = new HashSet<>();
 
-        list.add(IndexField.createField("Feed"));
-        list.add(IndexField.createField("Stream Type"));
-        list.add(IndexField.createField("Pipeline"));
-        list.add(IndexField.createNumericField("Stream Id"));
-        list.add(IndexField.createNumericField("Parent Stream Id"));
-        list.add(IndexField.createDateField("Created"));
-        list.add(IndexField.createDateField("Effective"));
+        set.add(IndexField.createField("Feed"));
+        set.add(IndexField.createField("StreamType"));
+        set.add(IndexField.createField("Pipeline"));
+        set.add(IndexField.createNumericField("StreamId"));
+        set.add(IndexField.createNumericField("ParentStreamId"));
+        set.add(IndexField.createDateField("Created"));
+        set.add(IndexField.createDateField("Effective"));
 
         for (final Entry<String, StreamAttributeFieldUse> entry : StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.entrySet()) {
             final IndexField indexField = create(entry.getKey(), entry.getValue());
             if (indexField != null) {
-                list.add(indexField);
+                set.add(indexField);
             }
         }
 
-        list.sort(Comparator.comparing(IndexField::getFieldName));
-
+        final List<IndexField> list = set.stream().sorted(Comparator.comparing(IndexField::getFieldName)).collect(Collectors.toList());
         return new IndexFields(list);
     }
 

@@ -28,7 +28,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SuggestBox;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.dispatch.client.ClientDispatchAsync;
@@ -194,8 +193,8 @@ public class TermEditor extends Composite {
 
             final StringBuilder sb = new StringBuilder();
             for (final Widget widget : activeWidgets) {
-                if (widget instanceof TextBox) {
-                    sb.append(((TextBox) widget).getText());
+                if (widget instanceof SuggestBox) {
+                    sb.append(((SuggestBox) widget).getText());
                     sb.append(",");
                 } else if (widget instanceof MyDateBox) {
                     sb.append(((MyDateBox) widget).getValue());
