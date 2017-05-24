@@ -886,5 +886,401 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
 
+        <!-- Internal statistics DocRef names and UUIDs
+             Each internal statistic must have a .name and .uuid property for each statistic engine
+             that the stat events need to go to.  If no properties are defined for a stat, or its
+             uuid is not know to that engine then no stat will eb generated
+             stroom.internalstatistics.myInternalStatName.sqlStatistics.name
+             stroom.internalstatistics.myInternalStatName.sqlStatistics.uuid
+             stroom.internalstatistics.myInternalStatName.stroomStats.name
+             stroom.internalstatistics.myInternalStatName.stroomStats.uuid
+
+        -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.benchmarkCluster.docRefs"/>
+            <property name="value"
+                      value="docRef(sqlStatistics,946a88c6-a59a-11e6-bdc4-0242ac110002,Benchmark-Cluster Test),docRef(stroomStats,,Benchmark-Cluster Test)"/>
+            <property name="description"
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.benchmarkCluster.sqlStatistics.name"/>
+            <property name="value" value="Benchmark-Cluster Test"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.benchmarkCluster.sqlStatistics.uuid"/>
+            <property name="value" value="946a88c6-a59a-11e6-bdc4-0242ac110002"/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <!--
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.benchmarkCluster.stroomStats.name"/>
+            <property name="value" value="Benchmark-Cluster Test"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.benchmarkCluster.stroomStats.uuid"/>
+            <property name="value" value="Benchmark-Cluster Test"/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        -->
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.pipelineStreamProcessor.docRefs"/>
+            <property name="value"
+                      value="docRef(sqlStatistics,946a80fc-a59a-11e6-bdc4-0242ac110002,PipelineStreamProcessor),docRef(stroomStats,,PipelineStreamProcessor)"/>
+            <property name="description"
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.pipelineStreamProcessor.sqlStatistics.name"/>
+            <property name="value" value="PipelineStreamProcessor"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.PipelineStreamProcessor.sqlStatistics.uuid"/>
+            <property name="value" value="946a80fc-a59a-11e6-bdc4-0242ac110002"/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <!--
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.pipelineStreamProcessor.stroomStats.name"/>
+            <property name="value" value="PipelineStreamProcessor"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.PipelineStreamProcessor.stroomStats.uuid"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        -->
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.metaDataStreamSize.docRefs"/>
+            <property name="value"
+                      value="docRef(sqlStatistics,946a8814-a59a-11e6-bdc4-0242ac110002,Meta Data-Stream Size),docRef(stroomStats,,Meta Data-Stream Size)"/>
+            <property name="description"
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.metaDataStreamSize.sqlStatistics.name"/>
+            <property name="value" value="Meta Data-Stream Size"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.metaDataStreamSize.sqlStatistics.uuid"/>
+            <property name="value" value="946a8814-a59a-11e6-bdc4-0242ac110002"/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <!--
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.metaDataStreamSize.stroomStats.name"/>
+            <property name="value" value="Meta Data-Stream Size"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.metaDataStreamSize.stroomStats.uuid"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        -->
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.eventsPerSecond.docRefs"/>
+            <property name="value"
+                      value="docRef(sqlStatistics,a9936548-2572-448b-9d5b-8543052c4d92,EPS),docRef(stroomStats,,EPS)"/>
+            <property name="description"
+                      value="docRef(sqlStatistics,,),docRef(stroomStats,,)" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.eventsPerSecond.sqlStatistics.name"/>
+            <property name="value" value="EPS"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.eventsPerSecond.sqlStatistics.uuid"/>
+            <property name="value" value="a9936548-2572-448b-9d5b-8543052c4d92"/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <!--
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.eventsPerSecond.stroomStats.name"/>
+            <property name="value" value="EPS"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.eventsPerSecond.stroomStats.uuid"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        -->
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.cpu.docRefs"/>
+            <property name="value"
+                      value="docRef(sqlStatistics,af08c4a7-ee7c-44e4-8f5e-e9c6be280434,CPU),docRef(stroomStats,,CPU)"/>
+            <property name="description"
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.cpu.sqlStatistics.uuid"/>
+            <property name="value" value="af08c4a7-ee7c-44e4-8f5e-e9c6be280434"/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <!--
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.cpu.stroomStats.name"/>
+            <property name="value" value="CPU"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.cpu.stroomStats.uuid"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        -->
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.metaDataStreamsReceived.docRefs"/>
+            <property name="value"
+                      value="docRef(sqlStatistics,946a87bc-a59a-11e6-bdc4-0242ac110002,Meta Data-Streams Received),docRef(stroomStats,,Meta Data-Streams Received)"/>
+            <property name="description"
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.metaDataStreamsReceived.sqlStatistics.name"/>
+            <property name="value" value="Meta Data-Streams Received"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.metaDataStreamsReceived.sqlStatistics.uuid"/>
+            <property name="value" value="946a87bc-a59a-11e6-bdc4-0242ac110002"/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <!--
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.metaDataStreamsReceived.stroomStats.name"/>
+            <property name="value" value="Meta Data-Streams Received"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.metaDataStreamsReceived.stroomStats.uuid"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        -->
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.streamTaskQueueSize.docRefs"/>
+            <property name="value"
+                      value="docRef(sqlStatistics,946a7f0f-a59a-11e6-bdc4-0242ac110002,Stream Task Queue Size),docRef(stroomStats,,Stream Task Queue Size)"/>
+            <property name="description"
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.streamTaskQueueSize.sqlStatistics.name"/>
+            <property name="value" value="Stream Task Queue Size"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.streamTaskQueueSize.sqlStatistics.uuid"/>
+            <property name="value" value="946a7f0f-a59a-11e6-bdc4-0242ac110002"/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <!--
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.streamTaskQueueSize.stroomStats.name"/>
+            <property name="value" value="Stream Task Queue Size"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.streamTaskQueueSize.stroomStats.uuid"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        -->
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.volumes.docRefs"/>
+            <property name="value" value="docRef(sqlStatistics,ac4d8d10-6f75-4946-9708-18b8cb42a5a3,Volumes),docRef(stroomStats,,Volumes)"/>
+            <property name="description"
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.volumes.sqlStatistics.name"/>
+            <property name="value" value="Volumes"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.volumes.sqlStatistics.uuid"/>
+            <property name="value" value="ac4d8d10-6f75-4946-9708-18b8cb42a5a3"/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <!--
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.volumes.stroomStats.name"/>
+            <property name="value" value="Volumes"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.volumes.stroomStats.uuid"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        -->
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.Memory.docRefs"/>
+            <property name="value" value="docRef(sqlStatistics,77c09ccb-e251-4ca5-bca0-56a842654397,Memory),docRef(stroomStats,,Memory)"/>
+            <property name="description"
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...'" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.Memory.sqlStatistics.name"/>
+            <property name="value" value="Memory"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.Memory.sqlStatistics.uuid"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <!--
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.Memory.stroomStats.name"/>
+            <property name="value" value="Memory"/>
+            <property name="description"
+                      value="Name of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.internalstatistics.Memory.stroomStats.uuid"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="UUID of the internal statistic as defined in stroom-content" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        -->
+
     </util:list>
 </beans>
