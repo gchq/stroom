@@ -22,9 +22,9 @@ public class InternalStatisticDocRefCache {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InternalStatisticDocRefCache.class);
 
-    public static final String PROP_KEY_FORMAT = "stroom.internalstatistics.%s.docRefs";
-    public static final Pattern DOC_REF_PART_PATTERN = Pattern.compile("(docRef\\([^,]+,[0-9a-f\\-]+,[^,]\\))");
-    public static final Pattern DOC_REF_WHOLE_PATTERN = Pattern.compile("(" + DOC_REF_PART_PATTERN.pattern() + ",?)+");
+    private static final String PROP_KEY_FORMAT = "stroom.internalstatistics.%s.docRefs";
+    private static final Pattern DOC_REF_PART_PATTERN = Pattern.compile("(docRef\\([^,]+,[0-9a-f\\-]+,[^,]\\))");
+    private static final Pattern DOC_REF_WHOLE_PATTERN = Pattern.compile("(" + DOC_REF_PART_PATTERN.pattern() + ",?)+");
 
     private final StroomPropertyService stroomPropertyService;
     private final ConcurrentMap<String, List<DocRef>> map = new ConcurrentHashMap<>();
@@ -34,8 +34,12 @@ public class InternalStatisticDocRefCache {
         this.stroomPropertyService = stroomPropertyService;
     }
 
-
-    public List<DocRef> getDocRefs(final String internalStatisticKey) {
+    /**
+     * @param internalStatisticKey
+     * @return A list of {@link DocRef} objects for the given key.  Will return an empty list if no docRefs
+     * exist for the key
+     */
+    List<DocRef> getDocRefs(final String internalStatisticKey) {
         Preconditions.checkNotNull(internalStatisticKey);
         return map.computeIfAbsent(internalStatisticKey, this::getDocRefsFromProperty);
     }

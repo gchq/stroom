@@ -3,94 +3,82 @@ package stroom.internalstatistics;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
-import stroom.node.server.StroomPropertyService;
-import stroom.query.api.v1.DocRef;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 @Component
-public class InternalStatisticsFacadeFactory implements InitializingBean {
+public class InternalStatisticsFacadeFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InternalStatisticsFacadeFactory.class);
 
-    private static final String STROOM_STATISTIC_ENGINES_PROPERTY_NAME = "stroom.statistics.common.statisticEngines";
+    private static final DoNothingInternalStatisticsFacade DO_NOTHING_FACADE = new DoNothingInternalStatisticsFacade();
 
     private final StroomBeanStore stroomBeanStore;
-    private final StroomPropertyService stroomPropertyService;
+    private final InternalStatisticDocRefCache internalStatisticDocRefCache;
     private final Map<String, InternalStatisticsService> docRefTypeToServiceMap = new HashMap<>();
-    private final Map<String, List<DocRef>> keyToDocRefsMap = new HashMap<>();
 
+    private InternalStatisticsFacadeImpl internalStatisticsFacade;
+
+    @Inject
     public InternalStatisticsFacadeFactory(final StroomBeanStore stroomBeanStore,
-                                           final StroomPropertyService stroomPropertyService) {
+                                           final InternalStatisticDocRefCache internalStatisticDocRefCache) {
+
         this.stroomBeanStore = stroomBeanStore;
-        this.stroomPropertyService = stroomPropertyService;
+        this.internalStatisticDocRefCache = internalStatisticDocRefCache;
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        initStatisticEventStoreBeanNames();
-    }
-
+    @SuppressWarnings("unused")
     @StroomStartup(priority = 100)
     public void initStatisticEventStoreBeanNames() {
-        final List<String> allBeans = new ArrayList<>(stroomBeanStore.getStroomBeanByType(InternalStatisticsService.class));
+        final List<String> allBeans = new ArrayList<>(
+                stroomBeanStore.getStroomBeanByType(InternalStatisticsService.class));
         for (final String beanName : allBeans) {
             final InternalStatisticsService internalStatisticsService = (InternalStatisticsService) stroomBeanStore.getBean(beanName);
 
             // only add stores that are spring beans and are enabled
             if (internalStatisticsService != null) {
-                docRefTypeToServiceMap.put(Preconditions.checkNotNull(internalStatisticsService.getDocRefType()), internalStatisticsService);
+                LOGGER.debug("Registering internal statistics service for docRefType {}",
+                        internalStatisticsService.getDocRefType());
+
+                docRefTypeToServiceMap.put(
+                        Preconditions.checkNotNull(internalStatisticsService.getDocRefType()),
+                        internalStatisticsService);
             }
         }
+
+        internalStatisticsFacade = new InternalStatisticsFacadeImpl(internalStatisticDocRefCache, docRefTypeToServiceMap);
     }
 
+    /**
+     * @return An instance of the facade for recording internal statistics.  Do not hold on to the returned instance.
+     * Call create, use it then throw it away.
+     */
     public InternalStatisticsFacade create() {
-        return new InternalStatisticsFacade(stroomPropertyService, docRefTypeToServiceMap);
+        if (internalStatisticsFacade == null) {
+            return DO_NOTHING_FACADE;
+        }
+        return internalStatisticsFacade;
     }
 
+    /**
+     * Provides protection in case client code calls create when the proper facade has not been initialised, allowing
+     * the system to function albeit with the loss of the stats.
+     */
+    private static class DoNothingInternalStatisticsFacade implements InternalStatisticsFacade {
 
-//    public static class NoProvidersInternalStatisticsService implements InternalStatisticsService {
-//
-//        private static final Logger LOGGER = LoggerFactory.getLogger(NoProvidersInternalStatisticsService.class);
-//
-//        @Override
-//        public void putEvents(final List<StatisticEvent> statisticEvents) {
-//            LOGGER.debug("");
-//
-//        }
-//
-//        @Override
-//        public String getDocRefType() {
-//            throw new UnsupportedOperationException("getName is not supported on NoProvidersInternalStatisticsService");
-//        }
-//    }
+        @Override
+        public void putEvents(List<InternalStatisticEvent> statisticEvents, Consumer<Throwable> exceptionHandler) {
+            InternalStatisticsFacade.LOGGER.warn(
+                    "putEvents called when internalStatisticsFacade has not been initialised. The statistics will not be recorded");
 
-
-//    public boolean isDataStoreEnabled(final String engineName) {
-//        final String enabledEngines = stroomPropertyService.getProperty(STROOM_STATISTIC_ENGINES_PROPERTY_NAME);
-//
-//        LOGGER.debug("{} property value: {}", STROOM_STATISTIC_ENGINES_PROPERTY_NAME, enabledEngines);
-//
-//        boolean result = false;
-//
-//        if (enabledEngines != null) {
-//            for (final String engine : enabledEngines.split(",")) {
-//                if (engine.equals(engineName)) {
-//                    result = true;
-//                }
-//            }
-//        }
-//        return result;
-//    }
-
-//    private String toKey(final String name) {
-//        return name.trim().toUpperCase();
-//    }
+        }
+    }
 }

@@ -965,7 +965,7 @@
         </bean>
 
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.internalstatistics.Memory.docRefs"/>
+            <property name="name" value="stroom.internalstatistics.memory.docRefs"/>
             <property name="value"
                       value="docRef(sql_statistics,77c09ccb-e251-4ca5-bca0-56a842654397,Memory),docRef(stroomStats,,Memory)"/>
             <property name="description"

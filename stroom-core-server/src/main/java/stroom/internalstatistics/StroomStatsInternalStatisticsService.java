@@ -7,9 +7,11 @@ import org.springframework.stereotype.Component;
 import stroom.datasource.DataSourceProviderRegistry;
 import stroom.kafka.StroomKafkaProducer;
 import stroom.node.server.StroomPropertyService;
+import stroom.query.api.v1.DocRef;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -28,6 +30,7 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
     public StroomStatsInternalStatisticsService(final DataSourceProviderRegistry dataSourceProviderRegistry,
                                                 final StroomKafkaProducer stroomKafkaProducer,
                                                 final StroomPropertyService stroomPropertyService) {
+
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
         this.stroomKafkaProducer = stroomKafkaProducer;
         this.stroomPropertyService = stroomPropertyService;
@@ -35,14 +38,11 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
     }
 
     @Override
-    public void putEvents(final List<DecoratedInternalStatisticEvent> internalStatisticEvents) {
+    public void putEvents(final Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
 
         dataSourceProviderRegistry.getDataSourceProvider(docRefType).ifPresent(dataSourceProvider -> {
 
-            internalStatisticEvents.stream()
-                    .collect(Collectors.groupingBy(
-                            DecoratedInternalStatisticEvent::getDocRef, Collectors.toList()))
-                    .entrySet().stream()
+            eventsMap.entrySet().stream()
                     .filter(entry ->
                             !entry.getValue().isEmpty())
                     .filter(entry ->
@@ -51,7 +51,7 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
                         String statName = entry.getKey().getName();
                         //all have same name so have same type
                         String topic = getTopic(entry.getValue().get(0).getType());
-                        String message = buildMessage(entry.getValue());
+                        String message = buildMessage(entry.getKey(), entry.getValue());
                         ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, statName, message);
                         stroomKafkaProducer.send(producerRecord, exception -> {
                             throw new RuntimeException(String.format(
@@ -62,7 +62,7 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
         });
     }
 
-    private String buildMessage(List<DecoratedInternalStatisticEvent> events) {
+    private String buildMessage(final DocRef docRef, final List<InternalStatisticEvent> events) {
 
         //TODO - convert the list of internal stats into a single stroom-stats statistics object
         //then marhsall it to xml

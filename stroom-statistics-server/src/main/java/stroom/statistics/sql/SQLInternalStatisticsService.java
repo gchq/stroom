@@ -1,18 +1,22 @@
 package stroom.statistics.sql;
 
 import com.google.common.base.Preconditions;
+import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.internalstatistics.DecoratedInternalStatisticEvent;
+import stroom.internalstatistics.InternalStatisticEvent;
 import stroom.internalstatistics.InternalStatisticsService;
 import stroom.node.server.StroomPropertyService;
+import stroom.query.api.v1.DocRef;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.Statistics;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -35,45 +39,51 @@ public class SQLInternalStatisticsService implements InternalStatisticsService {
     }
 
     @Override
-    public void putEvents(final List<DecoratedInternalStatisticEvent> internalStatisticEvents) {
+    public void putEvents(final Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
 
-        List<StatisticEvent> statisticEvents = Preconditions.checkNotNull(internalStatisticEvents).stream()
-                .map(this::internalEventMapper)
+        List<StatisticEvent> statisticEvents = Preconditions.checkNotNull(eventsMap).entrySet().stream()
+                .flatMap(entry ->
+                        entry.getValue().stream()
+                                .map(event -> new Tuple2<>(entry.getKey(), event)))
+                .map(tuple2 -> internalEventMapper(tuple2._1(), tuple2._2()))
                 .collect(Collectors.toList());
 
         statisticsService.putEvents(statisticEvents);
     }
 
-    private StatisticEvent internalEventMapper(final DecoratedInternalStatisticEvent internalStatisticEvent) {
+    private StatisticEvent internalEventMapper(final DocRef docRef,
+                                               final InternalStatisticEvent internalStatisticEvent) {
 
         Preconditions.checkNotNull(internalStatisticEvent);
         switch (internalStatisticEvent.getType()) {
             case COUNT:
-                return mapCountEvent(internalStatisticEvent);
+                return mapCountEvent(docRef, internalStatisticEvent);
             case VALUE:
-                return mapValueEvent(internalStatisticEvent);
+                return mapValueEvent(docRef, internalStatisticEvent);
             default:
                 throw new IllegalArgumentException("Unknown type: " + internalStatisticEvent.getType());
         }
     }
 
-    private StatisticEvent mapCountEvent(final DecoratedInternalStatisticEvent internalStatisticEvent) {
+    private StatisticEvent mapCountEvent(final DocRef docRef,
+                                         final InternalStatisticEvent internalStatisticEvent) {
         return StatisticEvent.createCount(
                 internalStatisticEvent.getTimeMs(),
-                internalStatisticEvent.getDocRef().getName(),
+                docRef.getName(),
                 internalStatisticEvent.getTags().entrySet().stream()
                         .map(entry -> new StatisticTag(entry.getKey(), entry.getValue()))
                         .collect(Collectors.toList()),
                 internalStatisticEvent.getValueAsLong());
     }
 
-    private StatisticEvent mapValueEvent(final DecoratedInternalStatisticEvent internalStatisticEvent) {
+    private StatisticEvent mapValueEvent(final DocRef docRef,
+                                         final InternalStatisticEvent internalStatisticEvent) {
         return StatisticEvent.createValue(
                 internalStatisticEvent.getTimeMs(),
-                internalStatisticEvent.getDocRef().getName(),
+                docRef.getName(),
                 internalStatisticEvent.getTags().entrySet().stream()
-                    .map(entry -> new StatisticTag(entry.getKey(), entry.getValue()))
-                    .collect(Collectors.toList()),
+                        .map(entry -> new StatisticTag(entry.getKey(), entry.getValue()))
+                        .collect(Collectors.toList()),
                 internalStatisticEvent.getValueAsDouble());
     }
 

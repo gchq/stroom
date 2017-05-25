@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
-import stroom.internalstatistics.InternalStatisticsService;
+import stroom.internalstatistics.InternalStatisticEvent;
 import stroom.internalstatistics.InternalStatisticsFacadeFactory;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
@@ -31,7 +31,6 @@ import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
 import stroom.security.SecurityContext;
-import stroom.statistics.common.StatisticEvent;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Limits;
@@ -61,7 +60,6 @@ import stroom.util.spring.StroomStartup;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -94,6 +92,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskCreatorImpl.class);
 
+    private static final String INTERNAL_STAT_KEY_STREAM_TASK_QUEUE_SIZE = "streamTaskQueueSize";
+
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamTaskCreatorTransactionHelper streamTaskTransactionHelper;
     private final TaskManager taskManager;
@@ -101,7 +101,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final StreamTaskService streamTaskService;
     private final StreamTaskHelper streamTaskHelper;
     private final StroomPropertyService propertyService;
-    private final Provider<InternalStatisticsFacadeFactory> factoryProvider;
+    private final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory;
     private final StreamStore streamStore;
     private final SecurityContext securityContext;
 
@@ -152,7 +152,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final StreamTaskService streamTaskService,
                           final StreamTaskHelper streamTaskHelper,
                           final StroomPropertyService propertyService,
-                          final Provider<InternalStatisticsFacadeFactory> factoryProvider,
+                          final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory,
                           final StreamStore streamStore,
                           final SecurityContext securityContext) {
 
@@ -163,7 +163,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.streamTaskService = streamTaskService;
         this.streamTaskHelper = streamTaskHelper;
         this.propertyService = propertyService;
-        this.factoryProvider = factoryProvider;
+        this.internalStatisticsFacadeFactory = internalStatisticsFacadeFactory;
         this.streamStore = streamStore;
         this.securityContext = securityContext;
     }
@@ -907,14 +907,15 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             // Avoid writing loads of same value stats So write every min while
             // it changes Under little load the queue size will be 0
             final int queueSize = getStreamTaskQueueSize();
-            if (queueSize != lastQueueSizeForStats && factoryProvider != null) {
+            if (queueSize != lastQueueSizeForStats) {
                 try {
-                    final InternalStatisticsFacadeFactory factory = factoryProvider.get();
-                    final InternalStatisticsService internalStatisticsService = factory.create();
-
                     // Value type event as the queue size is not additive
-                    internalStatisticsService.putEvent(StatisticEvent.createValue(System.currentTimeMillis(),
-                            "Stream Task Queue Size", null, queueSize));
+                    internalStatisticsFacadeFactory.create()
+                            .putEvent(InternalStatisticEvent.createValueStat(
+                                    INTERNAL_STAT_KEY_STREAM_TASK_QUEUE_SIZE,
+                                    System.currentTimeMillis(),
+                                    null,
+                                    queueSize));
                 } catch (final Throwable t) {
                     LOGGER.error(t.getMessage(), t);
                 }

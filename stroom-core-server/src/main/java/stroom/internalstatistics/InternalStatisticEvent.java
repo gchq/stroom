@@ -2,6 +2,7 @@ package stroom.internalstatistics;
 
 import com.google.common.base.Preconditions;
 
+import java.util.Collections;
 import java.util.Map;
 
 public class InternalStatisticEvent {
@@ -33,7 +34,7 @@ public class InternalStatisticEvent {
         this.key = Preconditions.checkNotNull(key);
         this.type = Preconditions.checkNotNull(type);
         this.timeMs = timeMs;
-        this.tags = Preconditions.checkNotNull(tags);
+        this.tags = tags == null ? Collections.emptyMap() : tags;
         this.value = Preconditions.checkNotNull(value);
     }
 
