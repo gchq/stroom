@@ -17,6 +17,7 @@
 package stroom.node.server;
 
 import org.springframework.stereotype.Component;
+import stroom.internalstatistics.InternalStatisticEvent;
 import stroom.node.shared.RecordCountService;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.StatisticTag;
@@ -39,6 +40,8 @@ import java.util.regex.Pattern;
  */
 @Component
 public class NodeStatusServiceUtil {
+    private static final String INTERNAL_STAT_KEY_MEMORY = "memory";
+
     private final NodeCache nodeCache;
     private final RecordCountService recordCountService;
 
@@ -102,8 +105,8 @@ public class NodeStatusServiceUtil {
         return StatisticEvent.createValue(timeMs, stat, Arrays.asList(nodeTag, typeTag), value);
     }
 
-    public List<StatisticEvent> buildNodeStatus() {
-        List<StatisticEvent> statisticEventList = new ArrayList<>();
+    public List<InternalStatisticEvent> buildNodeStatus() {
+        List<InternalStatisticEvent> statisticEventList = new ArrayList<>();
 
         final StatisticTag nodeTag = new StatisticTag("Node", nodeCache.getDefaultNode().getName());
 
