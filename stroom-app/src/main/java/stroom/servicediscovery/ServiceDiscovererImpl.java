@@ -56,6 +56,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
 
     @Override
     public Optional<String> getAddress(ExternalService externalService) {
+        LOGGER.debug("Getting address for {}", externalService.getServiceKey());
         ServiceInstance<String> instance = getServiceInstance(externalService);
 
         return Optional.ofNullable(instance)
