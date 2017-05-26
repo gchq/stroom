@@ -22,8 +22,8 @@ public class InternalStatisticDocRefCache {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InternalStatisticDocRefCache.class);
 
-    private static final String PROP_KEY_FORMAT = "stroom.internalstatistics.%s.docRefs";
-    private static final Pattern DOC_REF_PART_PATTERN = Pattern.compile("(docRef\\([^,]+,[0-9a-f\\-]+,[^,]\\))");
+    static final String PROP_KEY_FORMAT = "stroom.internalstatistics.%s.docRefs";
+    private static final Pattern DOC_REF_PART_PATTERN = Pattern.compile("(docRef\\([^,]+,[0-9a-f\\-]+,[^,]+\\))");
     private static final Pattern DOC_REF_WHOLE_PATTERN = Pattern.compile("(" + DOC_REF_PART_PATTERN.pattern() + ",?)+");
 
     private final StroomPropertyService stroomPropertyService;
@@ -48,14 +48,19 @@ public class InternalStatisticDocRefCache {
         String propKey = String.format(PROP_KEY_FORMAT, internalStatisticKey);
 
         String docRefsStr = stroomPropertyService.getProperty(propKey);
-        Matcher matcher = DOC_REF_WHOLE_PATTERN.matcher(docRefsStr);
 
         if (docRefsStr == null || docRefsStr.isEmpty()) {
+            LOGGER.debug("Returning empty list");
             return Collections.emptyList();
-        } else if (!matcher.matches()) {
-            throw new RuntimeException(String.format("Property value for key %s does not contain valid docRefs [%s]", internalStatisticKey, docRefsStr));
-        } else {
-            return splitString(docRefsStr);
+        } else  {
+            Matcher matcher = DOC_REF_WHOLE_PATTERN.matcher(docRefsStr);
+            if (!matcher.matches()) {
+                throw new RuntimeException(String.format("Property value for key %s does not contain valid docRefs [%s]", internalStatisticKey, docRefsStr));
+            } else {
+                List<DocRef> docRefs = splitString(docRefsStr);
+                LOGGER.debug("Returning {}", docRefs);
+                return docRefs;
+            }
         }
     }
 
@@ -76,5 +81,4 @@ public class InternalStatisticDocRefCache {
         }
         return parts;
     }
-
 }

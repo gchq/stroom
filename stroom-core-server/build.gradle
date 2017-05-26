@@ -77,4 +77,5 @@ dependencies {
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.0.2-beta'
+    testCompile 'org.assertj:assertj-core:3.6.2'
 }
