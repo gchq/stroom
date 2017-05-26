@@ -94,7 +94,6 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                     getErrorReceiver());
             final TransformerHandler th = XMLUtil.createTransformerHandler(errorListener, indentOutput);
             th.setResult(new StreamResult(bufferedWriter));
-            th.setDocumentLocator(locator);
             handler = th;
             startedDocument = false;
 
