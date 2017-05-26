@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.29] - 2017-05-26
+
+* Issue **#179** : Updated Saxon-HE to version 9.7.0-18 and added XSLTFilter option to `usePool` to see if caching might be responsible for issue.
+
 * Issue **#288** : Made further changes to ensure that the IndexShardWriterCache doesn't try to reuse an index shard that has failed when adding any documents.
 
 ## [v5.0-beta.28] - 2017-05-19
@@ -425,7 +429,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.28...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.29...HEAD
+[v5.0-beta.29]: https://github.com/gchq/stroom/compare/v5.0-beta.28...v5.0-beta.29
 [v5.0-beta.28]: https://github.com/gchq/stroom/compare/v5.0-beta.27...v5.0-beta.28
 [v5.0-beta.27]: https://github.com/gchq/stroom/compare/v5.0-beta.26...v5.0-beta.27
 [v5.0-beta.26]: https://github.com/gchq/stroom/compare/v5.0-beta.25...v5.0-beta.26
