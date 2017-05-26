@@ -49,7 +49,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     private final MockStroomPropertyService propertyService = new MockStroomPropertyService();
     private final StatisticStoreCache mockStatisticsDataSourceCache = new StatisticStoreCache() {
         @Override
-        public StatisticStoreEntity getStatisticsDataSource(final String statisticName, final String engineName) {
+        public StatisticStoreEntity getStatisticsDataSource(final String statisticName) {
             final StatisticStoreEntity statisticsDataSource = new StatisticStoreEntity();
             statisticsDataSource.setName(statisticName);
             statisticsDataSource.setPrecision(1000L);

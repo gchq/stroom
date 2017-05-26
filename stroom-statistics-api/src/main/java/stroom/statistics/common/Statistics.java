@@ -23,11 +23,6 @@ import java.util.List;
 
 public interface Statistics {
     /**
-     * @return the name of the engine
-     */
-    String getEngineName();
-
-    /**
      * @param statisticEvent
      *            add event to the store
      * @param statisticsDataSource

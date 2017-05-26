@@ -110,7 +110,7 @@ public class StatisticsDataSourceCacheImpl implements StatisticStoreCache, Entit
     }
 
     @Override
-    public StatisticStoreEntity getStatisticsDataSource(final String statisticName, final String engineName) {
+    public StatisticStoreEntity getStatisticsDataSource(final String statisticName) {
         final Ehcache cacheByName = getCacheByName();
 
         final Element cacheResult = cacheByName.get(statisticName);
@@ -121,12 +121,12 @@ public class StatisticsDataSourceCacheImpl implements StatisticStoreCache, Entit
             // Id and key not found in cache so try pulling it from the DB
 
             final BaseResultList<StatisticStoreEntity> results = statisticsDataSourceService
-                    .find(FindStatisticsEntityCriteria.instanceByNameAndEngineName(statisticName, engineName));
+                    .find(FindStatisticsEntityCriteria.instanceByName(statisticName));
 
             if (results.size() > 1) {
                 throw new RuntimeException(String.format(
                         "Found multiple StatisticDataSource entities with name %s, engine %s and type %s.  This should not happen",
-                        statisticName, engineName));
+                        statisticName));
             } else if (results.size() == 1) {
                 statisticsDataSource = results.iterator().next();
                 // it is possible multiple threads may try and do this at the
@@ -214,55 +214,6 @@ public class StatisticsDataSourceCacheImpl implements StatisticStoreCache, Entit
             }
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Class to act as the key object for the cache
-     */
-    private static class NameEngineCacheKey {
-        private final String statisticName;
-        private final String engineName;
-
-        public NameEngineCacheKey(final String statisticName, final String engineName) {
-            this.statisticName = statisticName;
-            this.engineName = engineName;
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((engineName == null) ? 0 : engineName.hashCode());
-            result = prime * result + ((statisticName == null) ? 0 : statisticName.hashCode());
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "CacheKey [statisticName=" + statisticName + ", engineName=" + engineName + "]";
-        }
-
-        @Override
-        public boolean equals(final Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            final NameEngineCacheKey other = (NameEngineCacheKey) obj;
-            if (engineName == null) {
-                if (other.engineName != null)
-                    return false;
-            } else if (!engineName.equals(other.engineName))
-                return false;
-            if (statisticName == null) {
-                if (other.statisticName != null)
-                    return false;
-            } else if (!statisticName.equals(other.statisticName))
-                return false;
-            return true;
         }
     }
 }

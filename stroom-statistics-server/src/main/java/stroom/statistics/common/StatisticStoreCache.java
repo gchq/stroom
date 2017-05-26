@@ -20,7 +20,7 @@ import stroom.query.api.v1.DocRef;
 import stroom.statistics.shared.StatisticStoreEntity;
 
 public interface StatisticStoreCache {
-    StatisticStoreEntity getStatisticsDataSource(String statisticName, String engineName);
+    StatisticStoreEntity getStatisticsDataSource(String statisticName);
 
     StatisticStoreEntity getStatisticsDataSource(DocRef docRef);
 

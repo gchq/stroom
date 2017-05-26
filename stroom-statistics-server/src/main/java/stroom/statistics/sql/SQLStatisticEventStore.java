@@ -28,14 +28,12 @@ import org.springframework.util.StringUtils;
 import stroom.datasource.api.v1.DataSourceField;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
-import stroom.internalstatistics.InternalStatisticsService;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.DateExpressionParser;
 import stroom.query.api.v1.ExpressionItem;
 import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionTerm;
 import stroom.query.api.v1.SearchRequest;
-import stroom.statistics.common.CommonStatisticConstants;
 import stroom.statistics.common.FilterTermsTree;
 import stroom.statistics.common.FilterTermsTreeBuilder;
 import stroom.statistics.common.FindEventCriteria;
@@ -80,7 +78,6 @@ public class SQLStatisticEventStore implements Statistics {
 
     static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.statistics.sql.search.maxResults";
 
-    public static final String ENGINE_NAME = "sql";
     private static final List<ExpressionTerm.Condition> SUPPORTED_DATE_CONDITIONS = Arrays.asList(ExpressionTerm.Condition.BETWEEN);
 
 
@@ -502,16 +499,6 @@ public class SQLStatisticEventStore implements Statistics {
         return config;
     }
 
-    @Override
-    public String getEngineName() {
-        return ENGINE_NAME;
-    }
-
-    @Override
-    public String getDocRefType() {
-        return docRefType;
-    }
-
     @StroomFrequencySchedule("1m")
     public void evict() {
         LOGGER.debug("evict");
@@ -797,8 +784,7 @@ public class SQLStatisticEventStore implements Statistics {
 
     @Override
     public void putEvent(final StatisticEvent statisticEvent) {
-        final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(statisticEvent.getName(),
-                getEngineName());
+        final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(statisticEvent.getName());
         putEvent(statisticEvent, statisticsDataSource);
     }
 
@@ -817,8 +803,7 @@ public class SQLStatisticEventStore implements Statistics {
     private void putBatch(final List<StatisticEvent> eventsBatch) {
         if (eventsBatch.size() > 0) {
             final StatisticEvent firstEventInBatch = eventsBatch.get(0);
-            final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(firstEventInBatch.getName(),
-                    getEngineName());
+            final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(firstEventInBatch.getName());
             putEvents(eventsBatch, statisticsDataSource);
             eventsBatch.clear();
         }
@@ -827,7 +812,7 @@ public class SQLStatisticEventStore implements Statistics {
     protected boolean validateStatisticDataSource(final StatisticEvent statisticEvent,
                                                   final StatisticStoreEntity statisticsDataSource) {
         if (statisticsDataSourceValidator != null) {
-            return statisticsDataSourceValidator.validateStatisticDataSource(statisticEvent.getName(), getEngineName(),
+            return statisticsDataSourceValidator.validateStatisticDataSource(statisticEvent.getName(),
                     statisticEvent.getType(), statisticsDataSource);
         } else {
             // no validator has been supplied so return true
@@ -835,8 +820,8 @@ public class SQLStatisticEventStore implements Statistics {
         }
     }
 
-    protected StatisticStoreEntity getStatisticsDataSource(final String statisticName, final String engineName) {
-        return statisticsDataSourceCache.getStatisticsDataSource(statisticName, engineName);
+    protected StatisticStoreEntity getStatisticsDataSource(final String statisticName) {
+        return statisticsDataSourceCache.getStatisticsDataSource(statisticName);
     }
 
     public List<DataSourceField> getSupportedFields(final List<DataSourceField> indexFields) {

@@ -20,6 +20,8 @@ import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 
 public interface StatisticStoreValidator {
-    boolean validateStatisticDataSource(String statisticName, String engineName, StatisticType statisticType,
+
+    boolean validateStatisticDataSource(String statisticName,
+                                        StatisticType statisticType,
                                         StatisticStoreEntity statisticsDataSource);
 }

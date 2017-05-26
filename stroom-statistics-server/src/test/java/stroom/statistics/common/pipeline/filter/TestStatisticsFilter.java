@@ -51,7 +51,6 @@ import java.util.List;
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestStatisticsFilter implements Statistics {
     private static final String INPUT_DIR = "TestStatisticsFilter/";
-    private static final String ENGINE_NAME = "SQL";
     private static final String STAT_NAME = "myStatName";
     private static final double JUNIT_DOUBLE_TOLLERANCE = 0.001;
 
@@ -75,11 +74,6 @@ public class TestStatisticsFilter implements Statistics {
     @Override
     public void putEvent(final StatisticEvent statisticEvent, final StatisticStore statisticsDataSource) {
         testEvents.add(statisticEvent);
-    }
-
-    @Override
-    public String getEngineName() {
-        return "TEST";
     }
 
     @Before

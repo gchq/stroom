@@ -40,7 +40,6 @@ import stroom.util.spring.StroomBeanStore;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-import javax.inject.Provider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -216,8 +215,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
         public MockVolumeService(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
                                  final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
-                                 final Provider<InternalStatisticsFacadeFactory> factoryProvider) {
-            super(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, factoryProvider);
+                                 final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory) {
+            super(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsFacadeFactory);
         }
         @Override
         public BaseResultList<Volume> find(final FindVolumeCriteria criteria) {

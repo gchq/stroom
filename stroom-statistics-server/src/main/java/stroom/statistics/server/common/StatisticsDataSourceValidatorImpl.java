@@ -28,22 +28,23 @@ public class StatisticsDataSourceValidatorImpl implements StatisticStoreValidato
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsDataSourceValidatorImpl.class);
 
     @Override
-    public boolean validateStatisticDataSource(final String statisticName, final String engineName,
-            final StatisticType statisticType, final StatisticStoreEntity statisticsDataSource) {
+    public boolean validateStatisticDataSource(final String statisticName,
+                                               final StatisticType statisticType,
+                                               final StatisticStoreEntity statisticsDataSource) {
         if (statisticsDataSource == null) {
             LOGGER.warn(
-                    "No StatisticDataSource could be found with name {} and engine {}, so no statistics will be recorded for it.",
-                    statisticName, engineName);
+                    "No StatisticDataSource could be found with name {} and so no statistics will be recorded for it.",
+                    statisticName);
             return false;
         } else if (!statisticsDataSource.getStatisticType().equals(statisticType)) {
             LOGGER.error(
-                    "The type of the event [{}] is not valid for the StatisticDataSource with name {}, engine {} and type {}.",
-                    statisticType, statisticName, engineName, statisticsDataSource.getStatisticType().toString());
+                    "The type of the event [{}] is not valid for the StatisticDataSource with name {}, and type {}.",
+                    statisticType, statisticName, statisticsDataSource.getStatisticType().toString());
             return false;
         } else if (!statisticsDataSource.isEnabled()) {
             LOGGER.warn(
-                    "The StatisticDataSource with name {}, engine {} and type {} is not enabled, so no statistics will be recorded for it.",
-                    statisticName, engineName, statisticsDataSource.getStatisticType().toString());
+                    "The StatisticDataSource with name {}, and type {} is not enabled, so no statistics will be recorded for it.",
+                    statisticName, statisticsDataSource.getStatisticType().toString());
             return false;
         }
 

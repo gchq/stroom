@@ -25,7 +25,6 @@ import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.SQLUtil;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.StringCriteria;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.statistics.common.FindStatisticsEntityCriteria;
@@ -33,7 +32,6 @@ import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.shared.StatisticStoreEntity;
 
 import javax.inject.Inject;
-import java.util.List;
 
 @Component
 @Transactional
@@ -73,17 +71,6 @@ public class StatisticStoreEntityServiceImpl
         protected void appendBasicCriteria(final stroom.entity.server.util.SQLBuilder sql, final String alias,
                                            final FindStatisticsEntityCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
-
-            final List<String> engineNames = criteria.getEngineNames();
-
-            if (engineNames != null) {
-                if (engineNames.size() == 0) {
-                } else if (engineNames.size() == 1) {
-                    SQLUtil.appendValueQuery(sql, alias + ".engineName", engineNames.get(0));
-                } else {
-                    SQLUtil.appendValuesQuery(sql, alias + ".engineName", StringCriteria.convertStringList(engineNames));
-                }
-            }
 
             if (criteria.getStatisticType() != null) {
                 SQLUtil.appendValueQuery(sql, alias + ".pStatisticType", criteria.getStatisticType().getPrimitiveValue());
