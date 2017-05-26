@@ -16,16 +16,15 @@
 
 package stroom.index.server;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexableField;
-
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class MockIndexShardWriter implements IndexShardWriter {
     private final List<Document> documents = new ArrayList<Document>();
@@ -102,8 +101,8 @@ public class MockIndexShardWriter implements IndexShardWriter {
     }
 
     @Override
-    public Long getFileSize() {
-        return null;
+    public boolean isOkToReuse() {
+        return true;
     }
 
     @Override
@@ -123,11 +122,6 @@ public class MockIndexShardWriter implements IndexShardWriter {
 
     @Override
     public boolean isDeleted() {
-        return false;
-    }
-
-    @Override
-    public boolean isCorrupt() {
         return false;
     }
 

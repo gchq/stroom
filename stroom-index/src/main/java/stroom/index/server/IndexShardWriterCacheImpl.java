@@ -124,12 +124,12 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
             // Look for closed, non deleted, non full, non corrupt index shard
             // to add to
             if (indexShard.getIndex().getId() == key.getIndex().getId()
-                    && writer.getPartition().equals(key.getPartition()) && writer.isClosed() && !writer.isFull()) {
+                    && writer.getPartition().equals(key.getPartition()) && writer.isOkToReuse()) {
                 try {
                     // Open the writer.
                     final boolean success = writer.open(false);
                     if (success) {
-                        LOGGER.debug(() -> "getOrCreateIndexShard() - Opened index shard " + indexShard.getId() + " for index " + key.getIndex().getName() + " and partition " + key.getPartition());
+                        LOGGER.debug(() -> "getExistingWriter() - Opened existing index shard " + indexShard.getId() + " for index " + key.getIndex().getName() + " and partition " + key.getPartition());
                         return writer;
                     }
                 } catch (final Exception e) {

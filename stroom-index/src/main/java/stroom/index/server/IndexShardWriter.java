@@ -34,6 +34,10 @@ public interface IndexShardWriter extends Destroyable {
 
     boolean isDeleted();
 
+    boolean isOkToReuse();
+
+    boolean isFull();
+
     boolean close();
 
     boolean flush();
@@ -46,13 +50,7 @@ public interface IndexShardWriter extends Destroyable {
 
     boolean addDocument(Document document);
 
-    boolean isFull();
-
-    boolean isCorrupt();
-
     int getDocumentCount();
-
-    Long getFileSize();
 
     IndexShard getIndexShard();
 

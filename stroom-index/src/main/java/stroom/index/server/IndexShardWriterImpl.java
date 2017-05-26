@@ -95,6 +95,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     private volatile Long lastCommitMs;
     private volatile Integer lastCommitDocumentCount;
     private volatile Long lastCommitDurationMs;
+    private volatile boolean failedToAddDocument;
 
     private volatile boolean checked;
 
@@ -476,6 +477,12 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             }
         }
 
+        // If we weren't able to add a document for any reason then remember this failure so that we don't try and use
+        // this writer again.
+        if (!added) {
+            failedToAddDocument = true;
+        }
+
         return added;
     }
 
@@ -639,7 +646,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     final String durationString = ModelStringUtil.formatDurationString(duration);
                     LOGGER.debug("flushOrClose() - finish " + toString() + " " + durationString);
                 }
-
             }
         }
 
@@ -782,11 +788,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     }
 
     @Override
-    public Long getFileSize() {
-        return indexShard.getFileSize();
-    }
-
-    @Override
     public IndexShard getIndexShard() {
         return indexShard;
     }
@@ -812,8 +813,13 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     }
 
     @Override
+    public synchronized boolean isOkToReuse() {
+        return IndexShardStatus.CLOSED.equals(indexShard.getStatus()) && !failedToAddDocument;
+    }
+
+    @Override
     public boolean isFull() {
-        return actualDocumentCount.intValue() >= maxDocumentCount;
+        return documentCount.intValue() >= maxDocumentCount;
     }
 
     @Override
@@ -824,11 +830,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     @Override
     public boolean isDeleted() {
         return IndexShardStatus.DELETED.equals(indexShard.getStatus());
-    }
-
-    @Override
-    public boolean isCorrupt() {
-        return IndexShardStatus.CORRUPT.equals(indexShard.getStatus());
     }
 
     @Override
