@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#288** : Made further changes to ensure that the IndexShardWriterCache doesn't try to reuse an index shard that has failed when adding any documents.
+
 ## [v5.0-beta.28] - 2017-05-19
 
 * Issue **#295** : Made the help URL absolute and not relative.
