@@ -1,14 +1,7 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <data>
-   <customRollUpMask/>
-   <field>
-      <fieldName>Id</fieldName>
-   </field>
    <field>
       <fieldName>Node</fieldName>
-   </field>
-   <field>
-      <fieldName>Path</fieldName>
    </field>
    <field>
       <fieldName>Type</fieldName>

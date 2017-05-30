@@ -1,10 +1,10 @@
 <?xml version="1.1" encoding="UTF-8"?>
-<statisticStore>
+<stroomStatsStore>
    <description>CPU</description>
    <enabled>true</enabled>
    <name>CPU</name>
-   <precision>60000</precision>
+   <precision>MINUTE</precision>
    <rollUpType>NONE</rollUpType>
    <statisticType>VALUE</statisticType>
-   <uuid>af08c4a7-ee7c-44e4-8f5e-e9c6be280434</uuid>
-</statisticStore>
+   <uuid>1edfd582-5e60-413a-b91c-151bd544da47</uuid>
+</stroomStatsStore>
