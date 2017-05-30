@@ -2,7 +2,6 @@
 <statisticStore>
    <description>This is my description</description>
    <enabled>true</enabled>
-   <engineName>SQL</engineName>
    <name>PipelineStreamProcessor</name>
    <precision>60000</precision>
    <rollUpType>ALL</rollUpType>

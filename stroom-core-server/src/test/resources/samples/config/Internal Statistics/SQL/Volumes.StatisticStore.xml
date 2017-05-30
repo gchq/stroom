@@ -2,7 +2,6 @@
 <statisticStore>
    <description>Volumes</description>
    <enabled>true</enabled>
-   <engineName>SQL</engineName>
    <name>Volumes</name>
    <precision>60000</precision>
    <rollUpType>NONE</rollUpType>

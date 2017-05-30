@@ -2,7 +2,6 @@
 <statisticStore>
    <description>Meta Data-Streams Received</description>
    <enabled>true</enabled>
-   <engineName>SQL</engineName>
    <name>Meta Data-Streams Received</name>
    <precision>3600000</precision>
    <rollUpType>ALL</rollUpType>

@@ -2,7 +2,6 @@
 <statisticStore>
    <description>Benchmark-Cluster Test</description>
    <enabled>true</enabled>
-   <engineName>SQL</engineName>
    <name>Benchmark-Cluster Test</name>
    <precision>60000</precision>
    <rollUpType>ALL</rollUpType>

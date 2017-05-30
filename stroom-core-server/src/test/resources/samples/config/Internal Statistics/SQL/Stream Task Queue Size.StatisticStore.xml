@@ -2,7 +2,6 @@
 <statisticStore>
    <description>Stream Task Queue Size</description>
    <enabled>true</enabled>
-   <engineName>SQL</engineName>
    <name>Stream Task Queue Size</name>
    <precision>60000</precision>
    <rollUpType>NONE</rollUpType>
