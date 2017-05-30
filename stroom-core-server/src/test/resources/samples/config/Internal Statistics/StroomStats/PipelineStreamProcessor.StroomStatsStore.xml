@@ -1,6 +1,6 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <stroomStatsStore>
-    <description>Counts the number of times that a node/feed/pipeline combination is processed</description>
+   <description>Counts the number of times that a node/feed/pipeline combination is processed</description>
    <enabled>true</enabled>
    <name>PipelineStreamProcessor</name>
    <precision>MINUTE</precision>
