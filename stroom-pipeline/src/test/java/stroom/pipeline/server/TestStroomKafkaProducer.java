@@ -22,7 +22,7 @@ public class TestStroomKafkaProducer {
     @Ignore("You may use this to test the local instance of Kafka.")
     public void testManualSend(){
         // Given
-        StroomKafkaProducer stroomKafkaProducer = new StroomKafkaProducer("172.17.0.4:9092");
+        StroomKafkaProducer stroomKafkaProducer = new StroomKafkaProducer("stroom.kafka:9092");
         ProducerRecord<String, String> record = new ProducerRecord<>("statistics", "statistics", "some record data");
 
         // When
