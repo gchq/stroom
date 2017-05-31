@@ -30,6 +30,7 @@ import java.util.Optional;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 public class DataSourceProviderRegistry {
+
     private final SecurityContext securityContext;
     private final ServiceDiscoverer serviceDiscoverer;
 
@@ -44,9 +45,9 @@ public class DataSourceProviderRegistry {
         ExternalService dataSourceService = ExternalService.docRefTypeToServiceMap.get(docRefType);
         Optional<String> url = serviceDiscoverer.getAddress(dataSourceService);
 
-         return url
-                 .map(address -> Optional.of(new RemoteDataSourceProvider(securityContext, address)))
-                 .orElse(Optional.empty());
+        return url
+                .map(address -> Optional.of(new RemoteDataSourceProvider(securityContext, address)))
+                .orElse(Optional.empty());
     }
 
     public Optional<RemoteDataSourceProvider> getDataSourceProvider(final DocRef dataSourceRef) {

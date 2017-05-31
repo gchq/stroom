@@ -974,5 +974,57 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
 
+
+        <!-- Service discovery properties -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.zookeeperUrl"/>
+            <property name="value"
+                      value="localhost:2181"/>
+            <property name="description"
+                      value="The Zookeeper quorum connection string, required for service discovery" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.hostNameOrIpAddress"/>
+            <property name="value"
+                      value="http://localhost:8080"/>
+            <property name="description"
+                      value="The external facing address that stroom will register its services with service discovery" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.curator.baseSleepTimeMs"/>
+            <property name="value"
+                      value="5000"/>
+            <property name="description"
+                      value="Initial time in ms between retries to establish a connection to zookeeper" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.curator.maxSleepTimeMs"/>
+            <property name="value"
+                      value="300000"/>
+            <property name="description"
+                      value="Maximum time in ms between retries to establish a connection to zookeeper" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.curator.maxRetries"/>
+            <property name="value"
+                      value="100"/>
+            <property name="description"
+                      value="Maximum number of retries to establish a connection to zookeeper before giving up" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
     </util:list>
 </beans>

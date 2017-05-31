@@ -1,10 +1,7 @@
 package stroom.servicediscovery;
 
 import com.codahale.metrics.health.HealthCheck;
-import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.apache.curator.x.discovery.ServiceInstance;
@@ -14,21 +11,29 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
+
 @Component
-public class ServiceDiscoveryManagerImpl {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManagerImpl.class);
+public class ServiceDiscoveryRegistrar {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryRegistrar.class);
 
     private HealthCheck.Result health;
+    private final CuratorConnection curatorConnection;
+    private final String hostNameOrIpAddress;
 
-    public ServiceDiscoveryManagerImpl(
-            @Value("#{propertyConfigurer.getProperty('stroom.serviceDiscovery.zookeeperUrl')}") String zookeeperUrl,
+    @Inject
+    public ServiceDiscoveryRegistrar(
+            final CuratorConnection curatorConnection,
             @Value("#{propertyConfigurer.getProperty('stroom.serviceDiscovery.hostNameOrIpAddress')}") String hostNameOrIpAddress){
-        //TODO validate the URL we get passed - we don't want to register with something duff, e.g. missing the protocol
-        LOGGER.info("Starting Curator client using Zookeeper at '{}'...", zookeeperUrl);
-        RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-        CuratorFramework client = CuratorFrameworkFactory.newClient(zookeeperUrl, retryPolicy);
-        client.start();
 
+        this.curatorConnection = curatorConnection;
+        this.hostNameOrIpAddress = hostNameOrIpAddress;
+
+        health = HealthCheck.Result.unhealthy("Waiting for Curator connection");
+        this.curatorConnection.registerStartupListener(this::curatorStartupListener);
+    }
+
+    private void curatorStartupListener(CuratorFramework curatorFramework) {
         try {
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("Successfully registered the following services: ");
@@ -36,19 +41,19 @@ public class ServiceDiscoveryManagerImpl {
             registerResource(
                     "authentication",
                     hostNameOrIpAddress + "/api/authentication/",
-                    client);
+                    curatorFramework);
             stringBuilder.append("authentication");
 
             registerResource(
                     "authorisation",
                     hostNameOrIpAddress + "/api/authorisation/",
-                    client);
+                    curatorFramework);
             stringBuilder.append(", authorisation");
 
             registerResource(
                     "index",
                     hostNameOrIpAddress + "/api/index/",
-                    client);
+                    curatorFramework);
             stringBuilder.append(", index.");
 
             health = HealthCheck.Result.healthy(stringBuilder.toString());
@@ -66,7 +71,8 @@ public class ServiceDiscoveryManagerImpl {
                 .serviceType(ServiceType.PERMANENT)
                 .name(name)
                 .address(address)
-                .port(8080)
+                //port currently included in the address
+//                .port(8080)
                 .build();
 
         ServiceDiscovery<String> serviceDiscovery = ServiceDiscoveryBuilder

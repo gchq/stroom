@@ -16,6 +16,7 @@
 
 package stroom.startup;
 
+import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.context.ApplicationContext;
@@ -44,23 +45,31 @@ public class Resources {
     private final AuthorisationResource authorisationResource;
     private final List<NamedResource> resources = new ArrayList<>();
 
-    public Resources(JerseyEnvironment jersey, ServletHolder upgradeDispatcherServletHolder){
+    public Resources(JerseyEnvironment jersey, ServletMonitor servletMonitor) {
 
         luceneQueryResource = new LuceneQueryResource();
-        jersey.register(luceneQueryResource);
-        resources.add(luceneQueryResource);
+        registerResource(jersey, luceneQueryResource);
 
         sqlStatisticsQueryResource = new SqlStatisticsQueryResource();
-        jersey.register(sqlStatisticsQueryResource);
-        resources.add(sqlStatisticsQueryResource);
+        registerResource(jersey, sqlStatisticsQueryResource);
 
         authenticationResource = new AuthenticationResource();
-        jersey.register(authenticationResource);
+        registerResource(jersey, authenticationResource);
 
         authorisationResource = new AuthorisationResource();
-        jersey.register(authorisationResource);
+        registerResource(jersey, authenticationResource);
 
-        new Thread(() -> register(upgradeDispatcherServletHolder)).start();
+        servletMonitor.registerApplicationContextListener(this::configureLuceneQueryResource);
+        servletMonitor.registerApplicationContextListener(this::configureSqlStatisticsQueryResource);
+        servletMonitor.registerApplicationContextListener(this::configureAuthenticationResource);
+        servletMonitor.registerApplicationContextListener(this::configureAuthorisationResource);
+    }
+
+    private void registerResource(JerseyEnvironment jersey, Object resource) {
+        jersey.register(Preconditions.checkNotNull(resource));
+        if (resource instanceof NamedResource) {
+            resources.add((NamedResource) resource);
+        }
     }
 
     public void register(ServletHolder upgradeDispatcherServletHolder) {

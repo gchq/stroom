@@ -1,57 +1,46 @@
 package stroom.servicediscovery;
 
-import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import stroom.ExternalService;
 import stroom.ServiceDiscoverer;
+import stroom.util.spring.StroomShutdown;
 
+import javax.inject.Singleton;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 @Component
+@Singleton
 public class ServiceDiscovererImpl implements ServiceDiscoverer {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
 
+    private final CuratorConnection curatorConnection;
+    /*
+    Note: When using Curator 2.x (Zookeeper 3.4.x) it's essential that service provider objects are cached by your
+    application and reused. Since the internal NamespaceWatcher objects added by the service provider cannot be
+    removed in Zookeeper 3.4.x, creating a fresh service provider for each call to the same service will
+    eventually exhaust the memory of the JVM.
+     */
     private Map<ExternalService, ServiceProvider<String>> serviceProviders = new HashMap<>();
-    private ServiceDiscovery<String> serviceDiscovery;
+    private volatile ServiceDiscovery<String> serviceDiscovery;
 
-    public ServiceDiscovererImpl(
-            @Value("#{propertyConfigurer.getProperty('stroom.serviceDiscovery.zookeeperUrl')}") String zookeeperUrl){
+    @SuppressWarnings("unused")
+    public ServiceDiscovererImpl(final CuratorConnection curatorConnection){
 
-        RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-        CuratorFramework client = CuratorFrameworkFactory.newClient(zookeeperUrl, retryPolicy);
-        client.start();
+        this.curatorConnection = curatorConnection;
 
-        serviceDiscovery = ServiceDiscoveryBuilder
-                .builder(String.class)
-                .client(client)
-                .basePath("stroom-services")
-                .build();
-        try {
-            serviceDiscovery.start();
-
-            Arrays.stream(ExternalService.values()).forEach(externalService -> {
-                ServiceProvider<String> serviceProvider = createProvider(externalService.getServiceName());
-                serviceProviders.put(externalService, serviceProvider);
-            });
-
-        } catch (Exception e) {
-            LOGGER.error("There was a problem accessing service discovery!", e);
-            e.printStackTrace();
-        }
+        curatorConnection.registerStartupListener(this::initProviders);
     }
 
     @Override
@@ -63,6 +52,38 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
                 .map(ServiceInstance::getAddress);
     }
 
+    private synchronized void initProviders(final CuratorFramework curatorFramework) {
+
+        serviceDiscovery = ServiceDiscoveryBuilder
+                .builder(String.class)
+                .client(curatorFramework)
+                .basePath("stroom-services")
+                .build();
+        try {
+            serviceDiscovery.start();
+
+            //Attempt to
+            Arrays.stream(ExternalService.values()).forEach(externalService -> {
+                ServiceProvider<String> serviceProvider = createProvider(externalService.getServiceName());
+                serviceProviders.put(externalService, serviceProvider);
+            });
+
+        } catch (Exception e) {
+            LOGGER.error("There was a problem accessing service discovery!", e);
+        }
+    }
+
+    private ServiceDiscovery<String> getServiceDiscovery() {
+        if (serviceDiscovery == null) {
+            synchronized (this) {
+                if (serviceDiscovery == null) {
+
+                }
+            }
+        }
+        return serviceDiscovery;
+    }
+
     private ServiceProvider<String> createProvider(String name){
         ServiceProvider<String> provider = serviceDiscovery.serviceProviderBuilder()
                 .serviceName(name)
@@ -71,7 +92,6 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
             provider.start();
         } catch (Exception e) {
             LOGGER.error("Unable to start service provider for " + name + "!", e);
-            e.printStackTrace();
         }
 
         return provider;
@@ -82,6 +102,17 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
             return serviceProviders.get(externalService).getInstance();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @StroomShutdown
+    public void shutdown() {
+        if (serviceDiscovery != null) {
+            try {
+                serviceDiscovery.close();
+            } catch (IOException e) {
+                LOGGER.error("Failed to close serviceDiscovery with error", e);
+            }
         }
     }
 }
