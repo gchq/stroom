@@ -10,27 +10,33 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import stroom.resources.RegisteredService;
+import stroom.resources.ResourcePaths;
 
 import javax.inject.Inject;
+import java.util.Arrays;
 
 @Component
 public class ServiceDiscoveryRegistrar {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryRegistrar.class);
 
     private HealthCheck.Result health;
-    private final CuratorConnection curatorConnection;
+    private final ServiceDiscoveryManager serviceDiscoveryManager;
     private final String hostNameOrIpAddress;
+    private final String basePath;
 
     @Inject
     public ServiceDiscoveryRegistrar(
-            final CuratorConnection curatorConnection,
-            @Value("#{propertyConfigurer.getProperty('stroom.serviceDiscovery.hostNameOrIpAddress')}") String hostNameOrIpAddress){
+            final ServiceDiscoveryManager serviceDiscoveryManager,
+            @Value("#{propertyConfigurer.getProperty('stroom.serviceDiscovery.hostNameOrIpAddress')}") String hostNameOrIpAddress,
+            @Value("#{propertyConfigurer.getProperty('stroom.serviceDiscovery.basePath')}") String basePath) {
 
-        this.curatorConnection = curatorConnection;
+        this.serviceDiscoveryManager = serviceDiscoveryManager;
         this.hostNameOrIpAddress = hostNameOrIpAddress;
+        this.basePath = basePath;
 
         health = HealthCheck.Result.unhealthy("Waiting for Curator connection");
-        this.curatorConnection.registerStartupListener(this::curatorStartupListener);
+        this.serviceDiscoveryManager.registerStartupListener(this::curatorStartupListener);
     }
 
     private void curatorStartupListener(CuratorFramework curatorFramework) {
@@ -38,51 +44,46 @@ public class ServiceDiscoveryRegistrar {
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("Successfully registered the following services: ");
 
-            registerResource(
-                    "authentication",
-                    hostNameOrIpAddress + "/api/authentication/",
-                    curatorFramework);
-            stringBuilder.append("authentication");
+            Arrays.stream(RegisteredService.values())
+                    .forEach(registeredService -> {
+                        registerResource(
+                                registeredService,
+                                curatorFramework);
+                        stringBuilder.append(registeredService.getVersionedServiceName());
+                        stringBuilder.append(", ");
+                    });
 
-            registerResource(
-                    "authorisation",
-                    hostNameOrIpAddress + "/api/authorisation/",
-                    curatorFramework);
-            stringBuilder.append(", authorisation");
-
-            registerResource(
-                    "index",
-                    hostNameOrIpAddress + "/api/index/",
-                    curatorFramework);
-            stringBuilder.append(", index.");
-
-            health = HealthCheck.Result.healthy(stringBuilder.toString());
+            health = HealthCheck.Result.healthy(stringBuilder.toString().replaceAll(", $", ""));
             LOGGER.info("All service instances created successfully.");
-        } catch (Exception e){
+        } catch (Exception e) {
             health = HealthCheck.Result.unhealthy("Service instance creation failed!", e);
             LOGGER.error("Service instance creation failed!", e);
             throw new RuntimeException("Service instance creation failed!", e);
         }
     }
 
-    private static void registerResource(
-            String name, String address, CuratorFramework client) throws Exception {
-        ServiceInstance<String> serviceInstance = ServiceInstance.<String>builder()
-                .serviceType(ServiceType.PERMANENT)
-                .name(name)
-                .address(address)
-                //port currently included in the address
-//                .port(8080)
-                .build();
+    private void registerResource(final RegisteredService registeredService,
+                                  final CuratorFramework client) {
+        try {
+            ServiceInstance<String> serviceInstance = ServiceInstance.<String>builder()
+                    .serviceType(ServiceType.PERMANENT)
+                    .name(registeredService.getVersionedServiceName())
+                    .address(hostNameOrIpAddress + ResourcePaths.ROOT_PATH + registeredService.getVersionedPath())
+                    //port currently included in the address
+    //                .port(8080)
+                    .build();
 
-        ServiceDiscovery<String> serviceDiscovery = ServiceDiscoveryBuilder
-                .builder(String.class)
-                .client(client)
-                .basePath("stroom-services")
-                .thisInstance(serviceInstance)
-                .build();
-        serviceDiscovery.start();
-        LOGGER.info("Successfully registered '{}' service.", name);
+            ServiceDiscovery<String> serviceDiscovery = ServiceDiscoveryBuilder
+                    .builder(String.class)
+                    .client(client)
+                    .basePath(basePath)
+                    .thisInstance(serviceInstance)
+                    .build();
+            serviceDiscovery.start();
+            LOGGER.info("Successfully registered '{}' service.", registeredService.getVersionedServiceName());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to register service " + registeredService.getVersionedServiceName(), e);
+        }
     }
 
     public HealthCheck.Result getHealth() {

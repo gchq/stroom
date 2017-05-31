@@ -25,7 +25,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
 
-    private final CuratorConnection curatorConnection;
+    private final ServiceDiscoveryManager serviceDiscoveryManager;
     /*
     Note: When using Curator 2.x (Zookeeper 3.4.x) it's essential that service provider objects are cached by your
     application and reused. Since the internal NamespaceWatcher objects added by the service provider cannot be
@@ -36,11 +36,11 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
     private volatile ServiceDiscovery<String> serviceDiscovery;
 
     @SuppressWarnings("unused")
-    public ServiceDiscovererImpl(final CuratorConnection curatorConnection){
+    public ServiceDiscovererImpl(final ServiceDiscoveryManager serviceDiscoveryManager){
 
-        this.curatorConnection = curatorConnection;
+        this.serviceDiscoveryManager = serviceDiscoveryManager;
 
-        curatorConnection.registerStartupListener(this::initProviders);
+        serviceDiscoveryManager.registerStartupListener(this::initProviders);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
 
             //Attempt to
             Arrays.stream(ExternalService.values()).forEach(externalService -> {
-                ServiceProvider<String> serviceProvider = createProvider(externalService.getServiceName());
+                ServiceProvider<String> serviceProvider = createProvider(externalService.getVersionedServiceName());
                 serviceProviders.put(externalService, serviceProvider);
             });
 

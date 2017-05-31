@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.resources;
+package stroom.resources.query.v1;
 
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;
@@ -23,6 +23,7 @@ import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.QueryKey;
 import stroom.query.api.v1.SearchRequest;
 import stroom.query.api.v1.SearchResponse;
+import stroom.resources.ResourcePaths;
 import stroom.statistics.common.StatisticsQueryService;
 
 import javax.ws.rs.Consumes;
@@ -31,7 +32,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Path("/sqlstatistics")
+@Path(ResourcePaths.SQL_STATISTICS + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class SqlStatisticsQueryResource implements QueryResource {
     private StatisticsQueryService statisticsQueryService;

@@ -21,9 +21,9 @@ import java.util.function.Consumer;
 
 @Component
 @Singleton
-public class CuratorConnection {
+public class ServiceDiscoveryManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CuratorConnection.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
 
     public static final String PROP_KEY_ZOOKEEPER_QUORUM = "stroom.serviceDiscovery.zookeeperUrl";
     public static final String PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS = "stroom.serviceDiscovery.curator.baseSleepTimeMs";
@@ -37,7 +37,7 @@ public class CuratorConnection {
     private final List<Consumer<CuratorFramework>> curatorStartupListeners = new ArrayList<>();
 
     @SuppressWarnings("unused")
-    public CuratorConnection(final StroomPropertyService stroomPropertyService) {
+    public ServiceDiscoveryManager(final StroomPropertyService stroomPropertyService) {
 
         this.stroomPropertyService = stroomPropertyService;
         this.zookeeperUrl = stroomPropertyService.getProperty(PROP_KEY_ZOOKEEPER_QUORUM);

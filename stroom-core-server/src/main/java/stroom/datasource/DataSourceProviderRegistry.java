@@ -42,10 +42,9 @@ public class DataSourceProviderRegistry {
     }
 
     public Optional<RemoteDataSourceProvider> getDataSourceProvider(final String docRefType) {
-        ExternalService dataSourceService = ExternalService.docRefTypeToServiceMap.get(docRefType);
-        Optional<String> url = serviceDiscoverer.getAddress(dataSourceService);
 
-        return url
+        return ExternalService.getExternalService(docRefType)
+                .flatMap(serviceDiscoverer::getAddress)
                 .map(address -> Optional.of(new RemoteDataSourceProvider(securityContext, address)))
                 .orElse(Optional.empty());
     }

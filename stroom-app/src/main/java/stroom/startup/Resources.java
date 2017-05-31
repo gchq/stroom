@@ -21,11 +21,11 @@ import io.dropwizard.jersey.setup.JerseyEnvironment;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.context.ApplicationContext;
 import stroom.index.shared.IndexService;
-import stroom.resources.LuceneQueryResource;
+import stroom.resources.query.v1.StroomIndexQueryResource;
 import stroom.resources.NamedResource;
-import stroom.resources.SqlStatisticsQueryResource;
-import stroom.resources.v1.AuthenticationResource;
-import stroom.resources.v1.AuthorisationResource;
+import stroom.resources.query.v1.SqlStatisticsQueryResource;
+import stroom.resources.authentication.v1.AuthenticationResource;
+import stroom.resources.authorisation.v1.AuthorisationResource;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.security.server.AuthenticationService;
 import stroom.security.server.AuthorisationService;
@@ -39,7 +39,7 @@ import java.util.List;
 
 public class Resources {
 
-    private final LuceneQueryResource luceneQueryResource;
+    private final StroomIndexQueryResource stroomIndexQueryResource;
     private final SqlStatisticsQueryResource sqlStatisticsQueryResource;
     private final AuthenticationResource authenticationResource;
     private final AuthorisationResource authorisationResource;
@@ -47,8 +47,8 @@ public class Resources {
 
     public Resources(JerseyEnvironment jersey, ServletMonitor servletMonitor) {
 
-        luceneQueryResource = new LuceneQueryResource();
-        registerResource(jersey, luceneQueryResource);
+        stroomIndexQueryResource = new StroomIndexQueryResource();
+        registerResource(jersey, stroomIndexQueryResource);
 
         sqlStatisticsQueryResource = new SqlStatisticsQueryResource();
         registerResource(jersey, sqlStatisticsQueryResource);
@@ -107,8 +107,8 @@ public class Resources {
     private void configureLuceneQueryResource(ApplicationContext applicationContext){
         SearchResultCreatorManager searchResultCreatorManager = applicationContext.getBean(SearchResultCreatorManager.class);
         IndexService indexService = applicationContext.getBean(IndexService.class);
-        luceneQueryResource.setIndexService(indexService);
-        luceneQueryResource.setSearchResultCreatorManager(searchResultCreatorManager);
+        stroomIndexQueryResource.setIndexService(indexService);
+        stroomIndexQueryResource.setSearchResultCreatorManager(searchResultCreatorManager);
     }
 
     private void configureSqlStatisticsQueryResource(ApplicationContext applicationContext){
