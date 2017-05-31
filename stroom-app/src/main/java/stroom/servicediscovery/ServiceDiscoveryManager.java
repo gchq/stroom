@@ -1,10 +1,13 @@
 package stroom.servicediscovery;
 
+import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Preconditions;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.BoundedExponentialBackoffRetry;
+import org.apache.curator.x.discovery.ServiceDiscovery;
+import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -18,6 +21,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Component
 @Singleton
@@ -29,12 +33,16 @@ public class ServiceDiscoveryManager {
     public static final String PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS = "stroom.serviceDiscovery.curator.baseSleepTimeMs";
     public static final String PROP_KEY_CURATOR_MAX_SLEEP_TIME_MS = "stroom.serviceDiscovery.curator.maxSleepTimeMs";
     public static final String PROP_KEY_CURATOR_MAX_RETRIES = "stroom.serviceDiscovery.curator.maxRetries";
+    public static final String PROP_KEY_BASE_PATH = "stroom.serviceDiscovery.basePath";
 
     private final StroomPropertyService stroomPropertyService;
     private final String zookeeperUrl;
 
     private final AtomicReference<CuratorFramework> curatorFrameworkRef = new AtomicReference<>();
-    private final List<Consumer<CuratorFramework>> curatorStartupListeners = new ArrayList<>();
+    private final AtomicReference<ServiceDiscovery<String>> serviceDiscoveryRef = new AtomicReference<>();
+    private final List<Consumer<ServiceDiscovery<String>>> curatorStartupListeners = new ArrayList<>();
+
+    private HealthCheck.Result health;
 
     @SuppressWarnings("unused")
     public ServiceDiscoveryManager(final StroomPropertyService stroomPropertyService) {
@@ -42,18 +50,23 @@ public class ServiceDiscoveryManager {
         this.stroomPropertyService = stroomPropertyService;
         this.zookeeperUrl = stroomPropertyService.getProperty(PROP_KEY_ZOOKEEPER_QUORUM);
 
+        health = HealthCheck.Result.unhealthy("Waiting for Curator connection");
+
         //try and start the connection with ZK in another thread to prevent connection problems from stopping the bean
-        //creation and application startup
-        CompletableFuture.runAsync(this::startCurator);
+        //creation and application startup, then start ServiceDiscovery and notify any listeners
+        CompletableFuture.runAsync(this::startCurator)
+                .thenRun(this::startServiceDiscovery)
+                .thenRun(this::notifyListeners);
     }
 
-    public Optional<CuratorFramework> getCuratorFramework() {
-       return Optional.ofNullable(curatorFrameworkRef.get());
+    public Optional<ServiceDiscovery<String>> getServiceDiscovery() {
+       return Optional.ofNullable(serviceDiscoveryRef.get());
     }
 
-    public void registerStartupListener(final Consumer<CuratorFramework> listener) {
+    public void registerStartupListener(final Consumer<ServiceDiscovery<String>> listener) {
         curatorStartupListeners.add(Preconditions.checkNotNull(listener));
     }
+
 
     private void startCurator() {
         int baseSleepTimeMs = stroomPropertyService.getIntProperty(PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS, 5_000);
@@ -62,22 +75,61 @@ public class ServiceDiscoveryManager {
 
         RetryPolicy retryPolicy = new BoundedExponentialBackoffRetry(baseSleepTimeMs, maxSleepTimeMs, maxRetries);
 
-        LOGGER.info("Starting Curator client using Zookeeper at '{}'", zookeeperUrl);
         CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(zookeeperUrl, retryPolicy);
+        LOGGER.info("Starting Curator client using Zookeeper at '{}'", zookeeperUrl);
+        curatorFramework.start();
+
         boolean wasSet = curatorFrameworkRef.compareAndSet(null, curatorFramework);
         if (!wasSet) {
             LOGGER.error("Attempt to set curatorFrameworkRef when already set");
         } else {
-            curatorFramework.start();
             LOGGER.info("Started Curator client using Zookeeper at '{}'", zookeeperUrl);
+        }
+    }
 
+    private void startServiceDiscovery() {
+        String basePath = Preconditions.checkNotNull(stroomPropertyService.getProperty(PROP_KEY_BASE_PATH));
+
+        ServiceDiscovery<String> serviceDiscovery = ServiceDiscoveryBuilder
+                .builder(String.class)
+                .client(Preconditions.checkNotNull(curatorFrameworkRef.get(), "curatorframework should not be null at this point"))
+                .basePath(basePath)
+                .build();
+
+        try {
+            serviceDiscovery.start();
+            boolean wasSet = serviceDiscoveryRef.compareAndSet(null, serviceDiscovery);
+            if (!wasSet) {
+                LOGGER.error("Attempt to set serviceDiscoveryRef when already set");
+            } else {
+                LOGGER.info("Successfully started ServiceDiscovery on path " + basePath);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error starting ServiceDiscovery with base path %s", basePath), e);
+        }
+    }
+
+    private void notifyListeners() {
+
+        if (serviceDiscoveryRef.get() != null) {
             //now notify all listeners
-            curatorStartupListeners.forEach(listener -> listener.accept(curatorFramework));
+            curatorStartupListeners.forEach(listener -> listener.accept(serviceDiscoveryRef.get()));
+        } else {
+            LOGGER.error("Unable to notify listeners of serviceDiscovery starting, serviceDiscovery is null");
         }
     }
 
     @StroomShutdown
     public void shutdown() {
+        ServiceDiscovery<String> serviceDiscovery = serviceDiscoveryRef.get();
+        if (serviceDiscovery != null) {
+            try {
+                serviceDiscovery.close();
+            } catch (Exception e) {
+                LOGGER.error("Error while closing Service Discovery", e);
+            }
+        }
         CuratorFramework curatorFramework = curatorFrameworkRef.get();
 
         if (curatorFramework != null) {
@@ -87,6 +139,21 @@ public class ServiceDiscoveryManager {
                 LOGGER.error("Error while closing curator framework", e);
             }
         }
+    }
+
+    public HealthCheck.Result getHealth() {
+        ServiceDiscovery<String> serviceDiscovery = serviceDiscoveryRef.get();
+        if (serviceDiscovery != null) {
+            try {
+                String services = serviceDiscovery.queryForNames().stream()
+                        .collect(Collectors.joining(","));
+                return HealthCheck.Result.healthy("Running. Services found: " + services);
+
+            } catch (Exception e) {
+                return HealthCheck.Result.unhealthy("Error while querying available services, %s", e.getMessage());
+            }
+        }
+        return HealthCheck.Result.unhealthy("ServiceDiscovery is null");
     }
 
 }

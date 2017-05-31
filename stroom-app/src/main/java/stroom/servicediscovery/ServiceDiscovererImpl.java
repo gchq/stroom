@@ -1,8 +1,7 @@
 package stroom.servicediscovery;
 
-import org.apache.curator.framework.CuratorFramework;
+import com.codahale.metrics.health.HealthCheck;
 import org.apache.curator.x.discovery.ServiceDiscovery;
-import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceProvider;
 import org.slf4j.Logger;
@@ -18,6 +17,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @Singleton
@@ -33,10 +33,9 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
     eventually exhaust the memory of the JVM.
      */
     private Map<ExternalService, ServiceProvider<String>> serviceProviders = new HashMap<>();
-    private volatile ServiceDiscovery<String> serviceDiscovery;
 
     @SuppressWarnings("unused")
-    public ServiceDiscovererImpl(final ServiceDiscoveryManager serviceDiscoveryManager){
+    public ServiceDiscovererImpl(final ServiceDiscoveryManager serviceDiscoveryManager) {
 
         this.serviceDiscoveryManager = serviceDiscoveryManager;
 
@@ -52,52 +51,33 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
                 .map(ServiceInstance::getAddress);
     }
 
-    private synchronized void initProviders(final CuratorFramework curatorFramework) {
+    private void initProviders(final ServiceDiscovery<String> serviceDiscovery) {
 
-        serviceDiscovery = ServiceDiscoveryBuilder
-                .builder(String.class)
-                .client(curatorFramework)
-                .basePath("stroom-services")
-                .build();
-        try {
-            serviceDiscovery.start();
+        //Attempt to
+        Arrays.stream(ExternalService.values()).forEach(externalService -> {
+            ServiceProvider<String> serviceProvider = createProvider(
+                    serviceDiscovery,
+                    externalService.getVersionedServiceName());
+            serviceProviders.put(externalService, serviceProvider);
+        });
 
-            //Attempt to
-            Arrays.stream(ExternalService.values()).forEach(externalService -> {
-                ServiceProvider<String> serviceProvider = createProvider(externalService.getVersionedServiceName());
-                serviceProviders.put(externalService, serviceProvider);
-            });
-
-        } catch (Exception e) {
-            LOGGER.error("There was a problem accessing service discovery!", e);
-        }
     }
 
-    private ServiceDiscovery<String> getServiceDiscovery() {
-        if (serviceDiscovery == null) {
-            synchronized (this) {
-                if (serviceDiscovery == null) {
 
-                }
-            }
-        }
-        return serviceDiscovery;
-    }
-
-    private ServiceProvider<String> createProvider(String name){
+    private ServiceProvider<String> createProvider(ServiceDiscovery<String> serviceDiscovery, String serviceName) {
         ServiceProvider<String> provider = serviceDiscovery.serviceProviderBuilder()
-                .serviceName(name)
+                .serviceName(serviceName)
                 .build();
         try {
             provider.start();
         } catch (Exception e) {
-            LOGGER.error("Unable to start service provider for " + name + "!", e);
+            LOGGER.error("Unable to start service provider for " + serviceName + "!", e);
         }
 
         return provider;
     }
 
-    private ServiceInstance<String> getServiceInstance(ExternalService externalService){
+    private ServiceInstance<String> getServiceInstance(ExternalService externalService) {
         try {
             return serviceProviders.get(externalService).getInstance();
         } catch (Exception e) {
@@ -107,12 +87,37 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
 
     @StroomShutdown
     public void shutdown() {
-        if (serviceDiscovery != null) {
+        serviceProviders.entrySet().forEach(entry -> {
             try {
-                serviceDiscovery.close();
+                entry.getValue().close();
             } catch (IOException e) {
-                LOGGER.error("Failed to close serviceDiscovery with error", e);
+                LOGGER.error("Failed to close serviceProvider {} with error",
+                        entry.getKey().getVersionedServiceName(), e);
             }
+        });
+    }
+
+    public HealthCheck.Result getHealth() {
+        if (serviceProviders.isEmpty()) {
+            return HealthCheck.Result.unhealthy("No service providers found");
+        } else {
+            String providers = null;
+            try {
+                providers = serviceProviders.entrySet().stream()
+                        .map(entry -> {
+                            try {
+                                return entry.getKey().getVersionedServiceName() + " - " + entry.getValue().getAllInstances().size();
+                            } catch (Exception e) {
+                                throw new RuntimeException(String.format("Error querying instances for service %s",
+                                        entry.getKey().getVersionedServiceName()), e);
+                            }
+                        })
+                        .collect(Collectors.joining(","));
+            } catch (Exception e) {
+                return HealthCheck.Result.unhealthy("Error getting service provider details, error: " + e.getCause().getMessage());
+            }
+
+            return HealthCheck.Result.healthy("Running. Services providers: " + providers);
         }
     }
 }

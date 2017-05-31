@@ -7,4 +7,7 @@ public interface ServiceDiscoverer {
     Optional<String> getAddress(ExternalService externalService);
 
 //    Optional<SericInsta> getServiceInstance(ExternalService externalService);
+
+
+
 }

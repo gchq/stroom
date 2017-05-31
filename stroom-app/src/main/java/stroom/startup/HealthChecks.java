@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import stroom.resources.HasHealthCheck;
+import stroom.servicediscovery.ServiceDiscoveryManager;
 import stroom.servicediscovery.ServiceDiscoveryRegistrar;
 
 import java.util.function.Consumer;
@@ -36,39 +37,76 @@ public class HealthChecks {
 
     public static void registerHealthChecks(final HealthCheckRegistry healthCheckRegistry,
                                             final Resources resources,
-                                            final ServletMonitor servletMonitor){
+                                            final ServletMonitor servletMonitor) {
 
         resources.getResources().stream()
-            .filter(resource -> resource instanceof HasHealthCheck)
-            .forEach(resource -> {
-                String name = resource.getName() + HEALTH_CHECK_SUFFIX;
-                LOGGER.debug("Registering heath check {}", name);
-                healthCheckRegistry.register(name, new HealthCheck() {
-                    @Override
-                    protected Result check() throws Exception {
-                        return ((HasHealthCheck) resource).getHealth();
-                    }
+                .filter(resource -> resource instanceof HasHealthCheck)
+                .forEach(resource -> {
+                    String name = resource.getName() + HEALTH_CHECK_SUFFIX;
+                    LOGGER.debug("Registering heath check {}", name);
+                    healthCheckRegistry.register(name, new HealthCheck() {
+                        @Override
+                        protected Result check() throws Exception {
+                            return ((HasHealthCheck) resource).getHealth();
+                        }
+                    });
                 });
-            });
 
+        //register a listener to be called once the spring beans are available
         servletMonitor.registerApplicationContextListener(createApplicationContextListener(healthCheckRegistry));
     }
 
     private static Consumer<ApplicationContext> createApplicationContextListener(final HealthCheckRegistry healthCheckRegistry) {
 
-        return (applicationContext) -> registerServiceDiscoveryRegistrar(applicationContext, healthCheckRegistry);
+        return (applicationContext) -> {
+            registerServiceDiscoveryRegistrar(applicationContext, healthCheckRegistry);
+            registerServiceDiscoveryManager(applicationContext, healthCheckRegistry);
+        };
     }
 
     private static void registerServiceDiscoveryRegistrar(final ApplicationContext applicationContext,
-                                                   final HealthCheckRegistry healthCheckRegistry) {
+                                                          final HealthCheckRegistry healthCheckRegistry) {
+
         ServiceDiscoveryRegistrar serviceDiscoveryRegistrar = applicationContext.getBean(ServiceDiscoveryRegistrar.class);
         String name = serviceDiscoveryRegistrar.getClass().getName() + HEALTH_CHECK_SUFFIX;
         LOGGER.debug("Registering heath check {}", name);
+
         healthCheckRegistry.register(name, new HealthCheck() {
-                    @Override
-                    protected Result check() throws Exception {
-                        return serviceDiscoveryRegistrar.getHealth();
-                    }
-                });
+            @Override
+            protected Result check() throws Exception {
+                return serviceDiscoveryRegistrar.getHealth();
+            }
+        });
     }
+
+    private static void registerServiceDiscoveryManager(final ApplicationContext applicationContext,
+                                                        final HealthCheckRegistry healthCheckRegistry) {
+
+        ServiceDiscoveryManager serviceDiscoveryManager = applicationContext.getBean(ServiceDiscoveryManager.class);
+        String name = serviceDiscoveryManager.getClass().getName() + HEALTH_CHECK_SUFFIX;
+        LOGGER.debug("Registering heath check {}", name);
+
+        healthCheckRegistry.register(name, new HealthCheck() {
+            @Override
+            protected Result check() throws Exception {
+                return serviceDiscoveryManager.getHealth();
+            }
+        });
+    }
+
+    //TODO decide if we want this, if so need to add DropWizardMetrics to stroom-core-server
+//    private static void registerServiceDiscoverer(final ApplicationContext applicationContext,
+//                                                  final HealthCheckRegistry healthCheckRegistry) {
+//
+//        ServiceDiscoverer serviceDiscoverer = applicationContext.getBean(ServiceDiscoverer.class);
+//        String name = serviceDiscoverer.getClass().getName() + HEALTH_CHECK_SUFFIX;
+//        LOGGER.debug("Registering heath check {}", name);
+//
+//        healthCheckRegistry.register(name, new HealthCheck() {
+//            @Override
+//            protected Result check() throws Exception {
+//                return serviceDiscoverer.getHealth();
+//            }
+//        });
+//    }
 }

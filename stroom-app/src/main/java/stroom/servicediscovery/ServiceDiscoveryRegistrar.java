@@ -1,9 +1,8 @@
 package stroom.servicediscovery;
 
 import com.codahale.metrics.health.HealthCheck;
-import org.apache.curator.framework.CuratorFramework;
+import com.google.common.base.Preconditions;
 import org.apache.curator.x.discovery.ServiceDiscovery;
-import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceType;
 import org.slf4j.Logger;
@@ -39,7 +38,7 @@ public class ServiceDiscoveryRegistrar {
         this.serviceDiscoveryManager.registerStartupListener(this::curatorStartupListener);
     }
 
-    private void curatorStartupListener(CuratorFramework curatorFramework) {
+    private void curatorStartupListener(ServiceDiscovery<String> serviceDiscovery) {
         try {
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("Successfully registered the following services: ");
@@ -48,7 +47,7 @@ public class ServiceDiscoveryRegistrar {
                     .forEach(registeredService -> {
                         registerResource(
                                 registeredService,
-                                curatorFramework);
+                                serviceDiscovery);
                         stringBuilder.append(registeredService.getVersionedServiceName());
                         stringBuilder.append(", ");
                     });
@@ -63,7 +62,7 @@ public class ServiceDiscoveryRegistrar {
     }
 
     private void registerResource(final RegisteredService registeredService,
-                                  final CuratorFramework client) {
+                                  final ServiceDiscovery<String> serviceDiscovery) {
         try {
             ServiceInstance<String> serviceInstance = ServiceInstance.<String>builder()
                     .serviceType(ServiceType.PERMANENT)
@@ -73,13 +72,8 @@ public class ServiceDiscoveryRegistrar {
     //                .port(8080)
                     .build();
 
-            ServiceDiscovery<String> serviceDiscovery = ServiceDiscoveryBuilder
-                    .builder(String.class)
-                    .client(client)
-                    .basePath(basePath)
-                    .thisInstance(serviceInstance)
-                    .build();
-            serviceDiscovery.start();
+            Preconditions.checkNotNull(serviceDiscovery).registerService(serviceInstance);
+
             LOGGER.info("Successfully registered '{}' service.", registeredService.getVersionedServiceName());
         } catch (Exception e) {
             throw new RuntimeException("Failed to register service " + registeredService.getVersionedServiceName(), e);
