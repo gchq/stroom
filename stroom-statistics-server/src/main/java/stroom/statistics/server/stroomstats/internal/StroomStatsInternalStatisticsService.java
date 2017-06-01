@@ -6,13 +6,11 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.datasource.DataSourceProvider;
-import stroom.datasource.DataSourceProviderRegistry;
-import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatisticsService;
 import stroom.kafka.StroomKafkaProducer;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v1.DocRef;
+import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticsService;
 import stroom.stats.schema.Statistics;
 import stroom.stats.schema.TagType;
 
@@ -26,7 +24,10 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.StringWriter;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
 
 @SuppressWarnings("unused") //handled by stroom.statistics.internal.InternalStatisticsFacadeFactory
 @Component
@@ -34,12 +35,11 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsInternalStatisticsService.class);
 
-    private static final String PROP_KEY_DOC_REF_TYPE = "stroom.services.stroomStats.docRefType";
-    private static final String PROP_KEY_PREFIX_KAFKA_TOPICS = "stroom.services.stroomStats.kafkaTopics.";
+    static final String PROP_KEY_DOC_REF_TYPE = "stroom.services.stroomStats.docRefType";
+    static final String PROP_KEY_PREFIX_KAFKA_TOPICS = "stroom.services.stroomStats.kafkaTopics.";
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
 
-    private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final StroomKafkaProducer stroomKafkaProducer;
     private final StroomPropertyService stroomPropertyService;
     private final String docRefType;
@@ -47,11 +47,9 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
     private final DatatypeFactory datatypeFactory;
 
     @Inject
-    public StroomStatsInternalStatisticsService(final DataSourceProviderRegistry dataSourceProviderRegistry,
-                                                final StroomKafkaProducer stroomKafkaProducer,
+    public StroomStatsInternalStatisticsService(final StroomKafkaProducer stroomKafkaProducer,
                                                 final StroomPropertyService stroomPropertyService) {
 
-        this.dataSourceProviderRegistry = dataSourceProviderRegistry;
         this.stroomKafkaProducer = stroomKafkaProducer;
         this.stroomPropertyService = stroomPropertyService;
         this.docRefType = stroomPropertyService.getProperty(PROP_KEY_DOC_REF_TYPE);
@@ -75,40 +73,29 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
 
         Preconditions.checkNotNull(eventsMap);
 
-        Optional<DataSourceProvider> optDataSourceProvider = dataSourceProviderRegistry.getDataSourceProvider(docRefType);
-
-        if (optDataSourceProvider.isPresent()) {
-            try {
-                eventsMap.entrySet().stream()
-                        .filter(entry ->
-                                !entry.getValue().isEmpty())
-                        .filter(entry ->
-                                //TODO do we want to prevent putting the stats onto kafka if we can't see stroom-stats
-                                //ensure the provider has a datasource for our docRef
-                                optDataSourceProvider.get().getDataSource(entry.getKey()) != null)
-                        .forEach(entry -> {
-                            DocRef docRef = entry.getKey();
-                            List<InternalStatisticEvent> events = entry.getValue();
-                            String statName = docRef.getName();
-                            //all have same name so have same type
-                            String topic = getTopic(events.get(0).getType());
-                            String message = buildMessage(docRef, events);
-                            ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, statName, message);
-                            stroomKafkaProducer.send(producerRecord, StroomKafkaProducer.FlushMode.NO_FLUSH, exception -> {
-                                throw new RuntimeException(String.format(
-                                        "Error sending %s internal statistics with name %s to kafka on topic %s",
-                                        events.size(), statName, topic), exception);
-                            });
+        try {
+            //We work on the basis that a stat may or may not have a valid datasource (StatisticConfiguration) but we
+            //will let stroom-stats worry about that and just fire what we have at kafka
+            eventsMap.entrySet().stream()
+                    .filter(entry ->
+                            !entry.getValue().isEmpty())
+                    .forEach(entry -> {
+                        DocRef docRef = entry.getKey();
+                        List<InternalStatisticEvent> events = entry.getValue();
+                        String statName = docRef.getName();
+                        //all have same name so have same type
+                        String topic = getTopic(events.get(0).getType());
+                        String message = buildMessage(docRef, events);
+                        ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, statName, message);
+                        stroomKafkaProducer.send(producerRecord, StroomKafkaProducer.FlushMode.NO_FLUSH, exception -> {
+                            throw new RuntimeException(String.format(
+                                    "Error sending %s internal statistics with name %s to kafka on topic %s",
+                                    events.size(), statName, topic), exception);
                         });
-            } finally {
-                stroomKafkaProducer.flush();
-            }
-        } else {
-            long eventCount = eventsMap.values().stream()
-                    .flatMap(List::stream)
-                    .count();
-            LOGGER.error("No data source provider available to accept {} internal statistic events of type {}, the events will be lost",
-                    eventCount, docRefType);
+                    });
+        } finally {
+            //any problems with the send will call the exceptionhandler above to be triggered at this point
+            stroomKafkaProducer.flush();
         }
     }
 
@@ -119,11 +106,11 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
                 .map(event -> internalStatisticMapper(docRef, event))
                 .forEach(statistic -> statistics.getStatistic().add(statistic));
 
-        String msg = marshall(statistics);
-        return msg;
+        return marshall(statistics);
     }
 
-    private Statistics.Statistic internalStatisticMapper(final DocRef docRef, final InternalStatisticEvent internalStatisticEvent) {
+    private Statistics.Statistic internalStatisticMapper(final DocRef docRef,
+                                                         final InternalStatisticEvent internalStatisticEvent) {
         Preconditions.checkNotNull(internalStatisticEvent);
         Statistics.Statistic statistic = new Statistics.Statistic();
         statistic.setName(docRef.getName());
