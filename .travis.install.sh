@@ -8,3 +8,4 @@ mysql -e "FLUSH PRIVILEGES"
 git clone https://github.com/gchq/urlDependencies-plugin.git
 cd urlDependencies-plugin
 ./gradlew clean build publishToMavenLocal
+cd ..
