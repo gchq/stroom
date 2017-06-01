@@ -22,7 +22,7 @@ before_script:
   - "export JAVA_OPTS=-Xmx1024m"
 
 # We run a script to build dependencies and do database setup
-#install: "./.travis.install.sh"
+install: "./.travis.install.sh"
 
 # We're running this as a script because our build is either too silent or too chatty and TravisCI will kill either way.
 script: travis_wait 30 ./gradlew downloadUrlDependencies clean build shadowJar
