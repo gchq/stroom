@@ -20,7 +20,7 @@ public interface SecurityContext {
     /**
      * Temporarily set a different user to perform an action.
      *
-     * @param name The user token to push.
+     * @param token The user token to push.
      */
     void pushUser(String token);
 
