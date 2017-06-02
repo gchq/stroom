@@ -15,6 +15,7 @@ import stroom.node.server.StroomPropertyService;
 import stroom.util.spring.StroomShutdown;
 
 import javax.inject.Singleton;
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +34,7 @@ public class ServiceDiscoveryManager {
     public static final String PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS = "stroom.serviceDiscovery.curator.baseSleepTimeMs";
     public static final String PROP_KEY_CURATOR_MAX_SLEEP_TIME_MS = "stroom.serviceDiscovery.curator.maxSleepTimeMs";
     public static final String PROP_KEY_CURATOR_MAX_RETRIES = "stroom.serviceDiscovery.curator.maxRetries";
-    public static final String PROP_KEY_BASE_PATH = "stroom.serviceDiscovery.basePath";
+    public static final String PROP_KEY_ZOOKEEPER_BASE_PATH = "stroom.serviceDiscovery.zookeeperBasePath";
 
     private final StroomPropertyService stroomPropertyService;
     private final String zookeeperUrl;
@@ -43,6 +44,7 @@ public class ServiceDiscoveryManager {
     private final List<Consumer<ServiceDiscovery<String>>> curatorStartupListeners = new ArrayList<>();
 
     private HealthCheck.Result health;
+    private final List<Closeable> closeables = new ArrayList<>();
 
     @SuppressWarnings("unused")
     public ServiceDiscoveryManager(final StroomPropertyService stroomPropertyService) {
@@ -78,6 +80,7 @@ public class ServiceDiscoveryManager {
         CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(zookeeperUrl, retryPolicy);
         LOGGER.info("Starting Curator client using Zookeeper at '{}'", zookeeperUrl);
         curatorFramework.start();
+        closeables.add(curatorFramework);
 
         boolean wasSet = curatorFrameworkRef.compareAndSet(null, curatorFramework);
         if (!wasSet) {
@@ -88,16 +91,17 @@ public class ServiceDiscoveryManager {
     }
 
     private void startServiceDiscovery() {
-        String basePath = Preconditions.checkNotNull(stroomPropertyService.getProperty(PROP_KEY_BASE_PATH));
+        String basePath = Preconditions.checkNotNull(stroomPropertyService.getProperty(PROP_KEY_ZOOKEEPER_BASE_PATH));
 
         ServiceDiscovery<String> serviceDiscovery = ServiceDiscoveryBuilder
                 .builder(String.class)
-                .client(Preconditions.checkNotNull(curatorFrameworkRef.get(), "curatorframework should not be null at this point"))
+                .client(Preconditions.checkNotNull(curatorFrameworkRef.get(), "curatorFramework should not be null at this point"))
                 .basePath(basePath)
                 .build();
 
         try {
             serviceDiscovery.start();
+            closeables.add(serviceDiscovery);
             boolean wasSet = serviceDiscoveryRef.compareAndSet(null, serviceDiscovery);
             if (!wasSet) {
                 LOGGER.error("Attempt to set serviceDiscoveryRef when already set");
@@ -122,23 +126,16 @@ public class ServiceDiscoveryManager {
 
     @StroomShutdown
     public void shutdown() {
-        ServiceDiscovery<String> serviceDiscovery = serviceDiscoveryRef.get();
-        if (serviceDiscovery != null) {
-            try {
-                serviceDiscovery.close();
-            } catch (Exception e) {
-                LOGGER.error("Error while closing Service Discovery", e);
-            }
-        }
-        CuratorFramework curatorFramework = curatorFrameworkRef.get();
 
-        if (curatorFramework != null) {
-            try {
-                curatorFramework.close();
-            } catch (Exception e) {
-                LOGGER.error("Error while closing curator framework", e);
+        closeables.forEach(closeable -> {
+            if (closeable != null) {
+                try {
+                    closeable.close();
+                } catch (Exception e) {
+                    LOGGER.error("Error while closing {}", closeable.getClass().getCanonicalName(), e);
+                }
             }
-        }
+        });
     }
 
     public HealthCheck.Result getHealth() {

@@ -16,6 +16,7 @@
 
 package stroom.datasource;
 
+import org.apache.curator.x.discovery.ServiceInstance;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.ExternalService;
@@ -41,14 +42,35 @@ public class DataSourceProviderRegistry {
         this.serviceDiscoverer = serviceDiscoverer;
     }
 
+    /**
+     * Gets a valid instance of a {@link RemoteDataSourceProvider} by querying service discovery
+     * @param docRefType The docRef type to get a data source provider for
+     * @return A remote data source provider that can handle docRefs of the passed type. Will return
+     * an empty optional for two reasons:
+     * There may be no services that can handle the passed docRefType.
+     * The service has no instances that are up and enabled.
+     *
+     * The returned {@link RemoteDataSourceProvider} should be used and then thrown away, not cached or held.
+     */
     public Optional<RemoteDataSourceProvider> getDataSourceProvider(final String docRefType) {
 
         return ExternalService.getExternalService(docRefType)
-                .flatMap(serviceDiscoverer::getAddress)
-                .map(address -> Optional.of(new RemoteDataSourceProvider(securityContext, address)))
-                .orElse(Optional.empty());
+                .flatMap(serviceDiscoverer::getServiceInstance)
+                .filter(ServiceInstance::isEnabled)
+                .flatMap(serviceInstance -> {
+                    String address = serviceInstance.buildUriSpec();
+                    return Optional.of(new RemoteDataSourceProvider(securityContext, address));
+                });
     }
 
+    /**
+     * Gets a valid instance of a {@link RemoteDataSourceProvider} by querying service discovery
+     * @param dataSourceRef The docRef to get a data source provider for
+     * @return A remote data source provider that can handle the passed docRef. Will return
+     * an empty optional for two reasons:
+     * There may be no services that can handle the passed docRefType.
+     * The service has no instances that are up and enabled.
+     */
     public Optional<RemoteDataSourceProvider> getDataSourceProvider(final DocRef dataSourceRef) {
         return Optional.ofNullable(dataSourceRef)
                 .map(DocRef::getType)

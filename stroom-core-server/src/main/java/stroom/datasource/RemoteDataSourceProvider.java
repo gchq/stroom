@@ -46,21 +46,25 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
                                     final String url) {
         this.securityContext = securityContext;
         this.url = url;
+        LOGGER.trace("Creating RemoteDataSourceProvider for url {}", url);
     }
 
     @Override
     public DataSource getDataSource(final DocRef docRef) {
+        LOGGER.trace("getDataSource() called for docRef {} on url {}", docRef, url);
         //TODO this needs to be backed by a short life cache to avoid repeated trips over the net
         return post(docRef, "dataSource", DataSource.class);
     }
 
     @Override
     public SearchResponse search(final SearchRequest request) {
+        LOGGER.trace("search() called for request {} on url {}", request, url);
         return post(request, "search", SearchResponse.class);
     }
 
     @Override
     public Boolean destroy(final QueryKey queryKey) {
+        LOGGER.trace("destroy() called for queryKey {} on url {}", queryKey, url);
         return post(queryKey, "destroy", Boolean.class);
     }
 
@@ -82,5 +86,12 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
     @Override
     public String getType() {
         return "remote";
+    }
+
+    @Override
+    public String toString() {
+        return "RemoteDataSourceProvider{" +
+                "url='" + url + '\'' +
+                '}';
     }
 }

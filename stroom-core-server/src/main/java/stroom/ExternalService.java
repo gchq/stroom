@@ -1,6 +1,9 @@
 package stroom;
 
 import com.google.common.base.Preconditions;
+import org.apache.curator.x.discovery.ProviderStrategy;
+import org.apache.curator.x.discovery.strategies.RandomStrategy;
+import org.apache.curator.x.discovery.strategies.StickyStrategy;
 import stroom.util.config.StroomProperties;
 
 import java.util.HashMap;
@@ -14,11 +17,16 @@ import java.util.stream.Stream;
  * Service names, used for service discovery lookup, are obtained from configuration.
  */
 public enum ExternalService {
-    INDEX("index"),
-    STROOM_STATS("stroomStats"),
-    SQL_STATISTICS("sqlStatistics"),
-    AUTHENTICATION("authentication"),
-    AUTHORISATION("authorisation");
+    //stroom index involves multiple calls to fetch the data iteratively so must be sticky
+    INDEX("index", new StickyStrategy<>(new RandomStrategy<>())),
+    //stroom stats returns all results in one go so is stateless and can use a random strategy
+    STROOM_STATS("stroomStats", new RandomStrategy<>()),
+    //sql statistics returns all results in one go so is stateless and can use a random strategy
+    SQL_STATISTICS("sqlStatistics", new RandomStrategy<>()),
+    //stateless so random strategy
+    AUTHENTICATION("authentication", new RandomStrategy<>()),
+    //stateless so random strategy
+    AUTHORISATION("authorisation", new RandomStrategy<>());
 
     private static final String PROP_KEY_PREFIX = "stroom.services.";
     private static final String NAME_SUFFIX = ".name";
@@ -26,14 +34,16 @@ public enum ExternalService {
     private static final String DOC_REF_TYPE_SUFFIX = ".docRefType";
 
     private final String serviceKey;
+    private final ProviderStrategy<String> providerStrategy;
 
     /**
      * This maps doc ref types to services. I.e. if someone has the doc ref type they can get an ExternalService.
      */
     private static Map<String, ExternalService> docRefTypeToServiceMap = new HashMap<>();
 
-    ExternalService(String serviceKey) {
+    ExternalService(final String serviceKey, final ProviderStrategy<String> providerStrategy) {
         this.serviceKey = serviceKey;
+        this.providerStrategy = providerStrategy;
     }
 
     static {
@@ -68,6 +78,10 @@ public enum ExternalService {
     public String getVersionedServiceName() {
         String baseServiceName = getBaseServiceName();
         return getBaseServiceName() + "-v" + getVersion();
+    }
+
+    public ProviderStrategy<String> getProviderStrategy() {
+        return providerStrategy;
     }
 
     /**

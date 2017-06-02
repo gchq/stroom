@@ -914,11 +914,21 @@
         </bean>
 
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.serviceDiscovery.hostNameOrIpAddress"/>
+            <property name="name" value="stroom.serviceDiscovery.servicesHostNameOrIpAddress"/>
             <property name="value"
-                      value="http://localhost:8080"/>
+                      value="localhost"/>
             <property name="description"
-                      value="The external facing address that stroom will register its services with service discovery" />
+                      value="The external facing address that stroom will register its services with service discovery. If this property is empty stroom will try to establish the hostname. Recommended to be left blank in production to avoid having host specific configuration, unless the hostname is that of a load balancer in front of stroom instances." />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.servicesPort"/>
+            <property name="value"
+                      value="8080"/>
+            <property name="description"
+                      value="The external facing port that stroom will register its services with service discovery" />
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -954,7 +964,7 @@
         </bean>
 
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.serviceDiscovery.basePath"/>
+            <property name="name" value="stroom.serviceDiscovery.zookeeperBasePath"/>
             <property name="value"
                       value="stroom-services"/>
             <property name="description"

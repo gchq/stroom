@@ -25,7 +25,6 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
 
-    private final ServiceDiscoveryManager serviceDiscoveryManager;
     /*
     Note: When using Curator 2.x (Zookeeper 3.4.x) it's essential that service provider objects are cached by your
     application and reused. Since the internal NamespaceWatcher objects added by the service provider cannot be
@@ -37,52 +36,44 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
     @SuppressWarnings("unused")
     public ServiceDiscovererImpl(final ServiceDiscoveryManager serviceDiscoveryManager) {
 
-        this.serviceDiscoveryManager = serviceDiscoveryManager;
-
+        //create the service providers once service discovery has started up
         serviceDiscoveryManager.registerStartupListener(this::initProviders);
     }
 
-    @Override
-    public Optional<String> getAddress(ExternalService externalService) {
-        LOGGER.debug("Getting address for {}", externalService.getServiceKey());
-        ServiceInstance<String> instance = getServiceInstance(externalService);
 
-        return Optional.ofNullable(instance)
-                .map(ServiceInstance::getAddress);
+    @Override
+    public Optional<ServiceInstance<String>> getServiceInstance(final ExternalService externalService) {
+        try {
+            LOGGER.trace("Getting service instance for {}", externalService.getServiceKey());
+            return Optional.ofNullable(serviceProviders.get(externalService).getInstance());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void initProviders(final ServiceDiscovery<String> serviceDiscovery) {
 
-        //Attempt to
+        //Attempt to create ServiceProviders for each of the ExternalServices
         Arrays.stream(ExternalService.values()).forEach(externalService -> {
-            ServiceProvider<String> serviceProvider = createProvider(
-                    serviceDiscovery,
-                    externalService.getVersionedServiceName());
+            ServiceProvider<String> serviceProvider = createProvider(serviceDiscovery, externalService);
+            LOGGER.debug("Adding service provider {}", externalService.getVersionedServiceName());
             serviceProviders.put(externalService, serviceProvider);
         });
 
     }
 
-
-    private ServiceProvider<String> createProvider(ServiceDiscovery<String> serviceDiscovery, String serviceName) {
+    private ServiceProvider<String> createProvider(final ServiceDiscovery<String> serviceDiscovery, final ExternalService externalService) {
         ServiceProvider<String> provider = serviceDiscovery.serviceProviderBuilder()
-                .serviceName(serviceName)
+                .serviceName(externalService.getVersionedServiceName())
+                .providerStrategy(externalService.getProviderStrategy())
                 .build();
         try {
             provider.start();
         } catch (Exception e) {
-            LOGGER.error("Unable to start service provider for " + serviceName + "!", e);
+            LOGGER.error("Unable to start service provider for {}", externalService.getVersionedServiceName(), e);
         }
 
         return provider;
-    }
-
-    private ServiceInstance<String> getServiceInstance(ExternalService externalService) {
-        try {
-            return serviceProviders.get(externalService).getInstance();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @StroomShutdown
@@ -101,9 +92,8 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
         if (serviceProviders.isEmpty()) {
             return HealthCheck.Result.unhealthy("No service providers found");
         } else {
-            String providers = null;
             try {
-                providers = serviceProviders.entrySet().stream()
+                String providers = serviceProviders.entrySet().stream()
                         .map(entry -> {
                             try {
                                 return entry.getKey().getVersionedServiceName() + " - " + entry.getValue().getAllInstances().size();
@@ -113,11 +103,10 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
                             }
                         })
                         .collect(Collectors.joining(","));
+                return HealthCheck.Result.healthy("Running. Services providers: " + providers);
             } catch (Exception e) {
                 return HealthCheck.Result.unhealthy("Error getting service provider details, error: " + e.getCause().getMessage());
             }
-
-            return HealthCheck.Result.healthy("Running. Services providers: " + providers);
         }
     }
 }
