@@ -1,4 +1,4 @@
-package stroom.resources;
+package stroom.resources.authentication.v1;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.glassfish.jersey.client.ClientConfig;
@@ -6,6 +6,7 @@ import org.glassfish.jersey.client.ClientResponse;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.resources.authorisation.v1.AuthorizationHelper;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -19,7 +20,7 @@ public class TestAuthenticationResource {
 
         // When
         Response response = client
-                .target("http://localhost:8080/api/authentication/getToken")
+                .target(AuthorizationHelper.GET_TOKEN_TARGET)
                 .request()
                 .header("Authorization", AuthorizationHelper.getHeaderWithValidBasicAuthCredentials())
                 .get();
@@ -37,7 +38,7 @@ public class TestAuthenticationResource {
 
         // When
         Response response = client
-                .target("http://localhost:8080/api/authentication/getToken")
+                .target(AuthorizationHelper.GET_TOKEN_TARGET)
                 .request()
                 .header("Authorization", AuthorizationHelper.getHeaderWithInvalidBasicAuthCredentials())
                 .get();

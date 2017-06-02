@@ -836,6 +836,14 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.services.index.version"/>
+            <property name="value" value="1"/>
+            <property name="description"
+                      value="Version of the index service" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.services.index.docRefType"/>
             <property name="value" value="index"/>
             <property name="description"
@@ -848,6 +856,14 @@
             <property name="value" value="stroom-stats"/>
             <property name="description"
                       value="The name of the stroom-stats service" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.services.stroomStats.version"/>
+            <property name="value" value="1"/>
+            <property name="description"
+                      value="The version of the stroom-stats service" />
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -868,6 +884,14 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.services.sqlStatistics.version"/>
+            <property name="value" value="1"/>
+            <property name="description"
+                      value="The version of the built-in sql statistics service" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.services.sqlStatistics.name"/>
             <property name="value" value="sql_statistics"/>
             <property name="description"
@@ -875,6 +899,81 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
+
+
+
+        <!-- Service discovery properties -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.zookeeperUrl"/>
+            <property name="value"
+                      value="localhost:2181"/>
+            <property name="description"
+                      value="The Zookeeper quorum connection string, required for service discovery" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.servicesHostNameOrIpAddress"/>
+            <property name="value"
+                      value="localhost"/>
+            <property name="description"
+                      value="The external facing address that stroom will register its services with service discovery. If this property is empty stroom will try to establish the hostname. Recommended to be left blank in production to avoid having host specific configuration, unless the hostname is that of a load balancer in front of stroom instances." />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.servicesPort"/>
+            <property name="value"
+                      value="8080"/>
+            <property name="description"
+                      value="The external facing port that stroom will register its services with service discovery" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.curator.baseSleepTimeMs"/>
+            <property name="value"
+                      value="5000"/>
+            <property name="description"
+                      value="Initial time in ms between retries to establish a connection to zookeeper" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.curator.maxSleepTimeMs"/>
+            <property name="value"
+                      value="300000"/>
+            <property name="description"
+                      value="Maximum time in ms between retries to establish a connection to zookeeper" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.curator.maxRetries"/>
+            <property name="value"
+                      value="100"/>
+            <property name="description"
+                      value="Maximum number of retries to establish a connection to zookeeper before giving up" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.zookeeperBasePath"/>
+            <property name="value"
+                      value="stroom-services"/>
+            <property name="description"
+                      value="The base path to use in zookeeper for Curator service discover. All services registering or querying discoverable services must use the same value for this base path." />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+
 
         <!-- Internal statistics definitions
              Each internal statistic can have multiple docRef definitions, one for each statistics engine,
@@ -973,6 +1072,8 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
+
+
 
     </util:list>
 </beans>

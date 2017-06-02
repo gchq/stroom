@@ -16,15 +16,16 @@
 
 package stroom.startup;
 
+import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.context.ApplicationContext;
 import stroom.index.shared.IndexService;
-import stroom.resources.LuceneQueryResource;
+import stroom.resources.query.v1.StroomIndexQueryResource;
 import stroom.resources.NamedResource;
-import stroom.resources.SqlStatisticsQueryResource;
-import stroom.resources.v1.AuthenticationResource;
-import stroom.resources.v1.AuthorisationResource;
+import stroom.resources.query.v1.SqlStatisticsQueryResource;
+import stroom.resources.authentication.v1.AuthenticationResource;
+import stroom.resources.authorisation.v1.AuthorisationResource;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.security.server.AuthenticationService;
 import stroom.security.server.AuthorisationService;
@@ -38,29 +39,37 @@ import java.util.List;
 
 public class Resources {
 
-    private final LuceneQueryResource luceneQueryResource;
+    private final StroomIndexQueryResource stroomIndexQueryResource;
     private final SqlStatisticsQueryResource sqlStatisticsQueryResource;
     private final AuthenticationResource authenticationResource;
     private final AuthorisationResource authorisationResource;
     private final List<NamedResource> resources = new ArrayList<>();
 
-    public Resources(JerseyEnvironment jersey, ServletHolder upgradeDispatcherServletHolder){
+    public Resources(JerseyEnvironment jersey, ServletMonitor servletMonitor) {
 
-        luceneQueryResource = new LuceneQueryResource();
-        jersey.register(luceneQueryResource);
-        resources.add(luceneQueryResource);
+        stroomIndexQueryResource = new StroomIndexQueryResource();
+        registerResource(jersey, stroomIndexQueryResource);
 
         sqlStatisticsQueryResource = new SqlStatisticsQueryResource();
-        jersey.register(sqlStatisticsQueryResource);
-        resources.add(sqlStatisticsQueryResource);
+        registerResource(jersey, sqlStatisticsQueryResource);
 
         authenticationResource = new AuthenticationResource();
-        jersey.register(authenticationResource);
+        registerResource(jersey, authenticationResource);
 
         authorisationResource = new AuthorisationResource();
-        jersey.register(authorisationResource);
+        registerResource(jersey, authenticationResource);
 
-        new Thread(() -> register(upgradeDispatcherServletHolder)).start();
+        servletMonitor.registerApplicationContextListener(this::configureLuceneQueryResource);
+        servletMonitor.registerApplicationContextListener(this::configureSqlStatisticsQueryResource);
+        servletMonitor.registerApplicationContextListener(this::configureAuthenticationResource);
+        servletMonitor.registerApplicationContextListener(this::configureAuthorisationResource);
+    }
+
+    private void registerResource(JerseyEnvironment jersey, Object resource) {
+        jersey.register(Preconditions.checkNotNull(resource));
+        if (resource instanceof NamedResource) {
+            resources.add((NamedResource) resource);
+        }
     }
 
     public void register(ServletHolder upgradeDispatcherServletHolder) {
@@ -98,8 +107,8 @@ public class Resources {
     private void configureLuceneQueryResource(ApplicationContext applicationContext){
         SearchResultCreatorManager searchResultCreatorManager = applicationContext.getBean(SearchResultCreatorManager.class);
         IndexService indexService = applicationContext.getBean(IndexService.class);
-        luceneQueryResource.setIndexService(indexService);
-        luceneQueryResource.setSearchResultCreatorManager(searchResultCreatorManager);
+        stroomIndexQueryResource.setIndexService(indexService);
+        stroomIndexQueryResource.setSearchResultCreatorManager(searchResultCreatorManager);
     }
 
     private void configureSqlStatisticsQueryResource(ApplicationContext applicationContext){

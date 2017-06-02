@@ -103,6 +103,8 @@ dependencies {
     integrationTestCompile 'org.assertj:assertj-core:3.6.2'
     integrationTestCompile 'io.dropwizard:dropwizard-testing:1.1.0'
     integrationTestCompile 'io.dropwizard:dropwizard-client:1.1.0'
+
+    testCompile 'junit:junit:4.12'
 }
 
 sourceSets {

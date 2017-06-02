@@ -1,6 +1,7 @@
-package stroom.resources.v1;
+package stroom.resources.authorisation.v1;
 
 import com.codahale.metrics.annotation.Timed;
+import stroom.resources.ResourcePaths;
 import stroom.security.Insecure;
 import stroom.security.server.AuthorisationService;
 
@@ -11,7 +12,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Path("/v1/authorisation")
+@Path(ResourcePaths.AUTHORISATION + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Insecure
 public class AuthorisationResource {

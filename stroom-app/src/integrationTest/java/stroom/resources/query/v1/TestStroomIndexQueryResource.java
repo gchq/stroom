@@ -1,4 +1,4 @@
-package stroom.resources;
+package stroom.resources.query.v1;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,6 +18,9 @@ import stroom.query.api.v1.QueryKey;
 import stroom.query.api.v1.ResultRequest;
 import stroom.query.api.v1.SearchRequest;
 import stroom.query.api.v1.SearchResponse;
+import stroom.resources.authorisation.v1.AuthorizationHelper;
+import stroom.resources.RegisteredService;
+import stroom.resources.ResourcePaths;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -35,7 +38,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * This is not currently a test. It is a way of exercising the query api, i.e. it is support for manual testing.
  */
-public class TestLuceneQueryResource {
+public class TestStroomIndexQueryResource {
+
+    public static final String SEARCH_TARGET = "http://localhost:8080" +
+            ResourcePaths.ROOT_PATH +
+            RegisteredService.INDEX_V1.getVersionedPath() +
+            "/search";
 
     private String jwtToken;
 
@@ -55,7 +63,7 @@ public class TestLuceneQueryResource {
 
         // When
         Response response = client
-                .target("http://localhost:8080/api/lucene/search")
+                .target(SEARCH_TARGET)
                 .request()
                 .header("Authorization", "Bearer " + jwtToken)
                 .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
@@ -78,7 +86,7 @@ public class TestLuceneQueryResource {
         // When
         Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
         Response response = client
-                .target("http://localhost:8080/api/lucene/search")
+                .target(SEARCH_TARGET)
                 .request()
                 .header("Authorization", "Bearer " + jwtToken)
                 .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
