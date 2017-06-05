@@ -15,7 +15,7 @@
  */
 
 dependencies {
-    compile urlDependencies.get(versions.stroomQueryApi)
+    compile urlDependencies.get(urlLibs.stroomQueryApi)
 
     compile project(':stroom-util-shared')
     compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'

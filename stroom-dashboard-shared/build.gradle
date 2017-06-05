@@ -15,7 +15,7 @@
  */
 
 dependencies {
-    compile urlDependencies.get(versions.stroomQueryApi)
+    compile urlDependencies.get(urlLibs.stroomQueryApi)
     compile project(':stroom-util-shared')
     compile project(':stroom-entity-shared')
 

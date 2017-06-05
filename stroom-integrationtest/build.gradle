@@ -12,8 +12,8 @@ dependencies {
     compile project(':stroom-app')
     permitUnusedDeclared project(':stroom-app')
 
-    testCompile urlDependencies.get(versions.stroomQueryApi)
-    testCompile urlDependencies.get(versions.stroomQueryCommon)
+    testCompile urlDependencies.get(urlLibs.stroomQueryApi)
+    testCompile urlDependencies.get(urlLibs.stroomQueryCommon)
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')

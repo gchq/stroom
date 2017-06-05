@@ -7,8 +7,8 @@ dependencies {
     compile project(':stroom-security-api')
     compile project(':stroom-statistics-api')
 
-    compile urlDependencies.get(versions.hadoopCommonShaded)
-    compile urlDependencies.get(versions.hadoopHdfsShaded)
+    compile urlDependencies.get(urlLibs.hadoopCommonShaded)
+    compile urlDependencies.get(urlLibs.hadoopHdfsShaded)
 
     compile 'org.springframework:spring-beans:4.3.4.RELEASE'
     compile 'org.springframework:spring-context:4.3.4.RELEASE'

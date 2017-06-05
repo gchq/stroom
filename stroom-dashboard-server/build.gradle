@@ -23,7 +23,7 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-security-api')
 
-    compile urlDependencies.get(versions.stroomExpression)
+    compile urlDependencies.get(urlLibs.stroomExpression)
 
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.8.5'

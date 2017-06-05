@@ -18,8 +18,8 @@ parent.subprojects.each { p ->
 gwtSourceDirs << sourceSets.main.compileClasspath
 
 // We need to add the sources of GitHub dependencies.
-gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(versions.stroomQueryApiSources))).getAsPath())
-gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(versions.stroomQueryApi))).getAsPath())
+gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApiSources))).getAsPath())
+gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApi))).getAsPath())
 
 dependencies {
     compile project(':stroom-dashboard-client')

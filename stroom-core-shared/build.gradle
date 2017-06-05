@@ -17,7 +17,7 @@
 dependencies {
     compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')
-    compile urlDependencies.get(versions.stroomQueryApi)
+    compile urlDependencies.get(urlLibs.stroomQueryApi)
 
     compile 'org.hibernate:hibernate-core:4.3.8.Final' /* LATEST 5.2.5.Final */
     permitUnusedDeclared 'org.hibernate:hibernate-core:4.3.8.Final' /* LATEST 5.2.5.Final */

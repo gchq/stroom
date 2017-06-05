@@ -6,8 +6,8 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-entity-shared')
 
-    compile urlDependencies.get(versions.eventLogging)
-    compile urlDependencies.get(versions.stroomQueryCommon)
+    compile urlDependencies.get(urlLibs.eventLogging)
+    compile urlDependencies.get(urlLibs.stroomQueryCommon)
 
     compile 'org.aspectj:aspectjweaver:1.6.2'
     runtime 'aopalliance:aopalliance:1.0'

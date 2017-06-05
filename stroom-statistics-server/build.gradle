@@ -30,9 +30,9 @@ dependencies {
         transitive = false
     }
 
-    compile urlDependencies.get(versions.stroomExpression)
-    compile urlDependencies.get(versions.stroomQueryCommon)
-    compile urlDependencies.get(versions.hadoopCommonShaded)
+    compile urlDependencies.get(urlLibs.stroomExpression)
+    compile urlDependencies.get(urlLibs.stroomQueryCommon)
+    compile urlDependencies.get(urlLibs.hadoopCommonShaded)
     compile 'org.springframework:spring-beans:4.3.4.RELEASE'
     compile 'org.springframework:spring-core:4.3.4.RELEASE'
     compile 'org.springframework:spring-context:4.3.4.RELEASE'
