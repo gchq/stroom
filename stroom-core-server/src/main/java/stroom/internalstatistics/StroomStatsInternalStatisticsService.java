@@ -1,6 +1,7 @@
 package stroom.internalstatistics;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,7 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsInternalStatisticsService.class);
 
     private static final String PROP_KEY_DOC_REF_TYPE = "stroom.services.stroomStats.docRefType";
+    private static final String PROP_KEY_PREFIX_KAFKA_TOPICS = "stroom.services.stroomStats.kafkaTopics.";
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
 
@@ -184,8 +186,14 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
 
     private String getTopic(final InternalStatisticEvent.Type type) {
 
-        //TODO get this from a stroom prop, one prop for each type or a single prop that holds a prefix
-        throw new RuntimeException(String.format("not yet implemented"));
+        String propKey = PROP_KEY_PREFIX_KAFKA_TOPICS + type.toString().toLowerCase();
+        String topic = stroomPropertyService.getProperty(propKey);
+
+        if (Strings.isNullOrEmpty(topic)) {
+            throw new RuntimeException(
+                    String.format("Missing value for property %s, unable to send internal statistics", topic));
+        }
+        return topic;
     }
 
     @Override
