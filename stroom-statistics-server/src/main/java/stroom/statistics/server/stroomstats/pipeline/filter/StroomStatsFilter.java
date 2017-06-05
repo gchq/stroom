@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.filter;
+package stroom.statistics.server.stroomstats.pipeline.filter;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
-import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.kafka.StroomKafkaProducer;
+import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.server.filter.AbstractSamplingFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService;
+import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
@@ -36,26 +39,30 @@ import javax.inject.Inject;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(
-        type = "KafkaProducerFilter",
+        type = "StroomStatsFilter",
         category = PipelineElementType.Category.FILTER,
         roles = {PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_SIMPLE},
-        icon = ElementIcons.KAFKA)
-public class KafkaProducerFilter extends AbstractSamplingFilter {
+        icon = ElementIcons.STROOM_STATS)
+public class StroomStatsFilter extends AbstractSamplingFilter {
     private final ErrorReceiverProxy errorReceiverProxy;
     private final StroomKafkaProducer stroomKafkaProducer;
+    private final StroomStatsStoreEntityService stroomStatsStoreEntityService;
 
     private String recordKey;
     private String topic;
+    private StroomStatsStoreEntity stroomStatsStoreEntity;
 
     @Inject
-    public KafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
-                               final LocationFactoryProxy locationFactory,
-                               final StroomKafkaProducer stroomKafkaProducer) {
+    public StroomStatsFilter(final ErrorReceiverProxy errorReceiverProxy,
+                             final LocationFactoryProxy locationFactory,
+                             final StroomKafkaProducer stroomKafkaProducer,
+                             final StroomStatsStoreEntityService stroomStatsStoreEntityService) {
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
         this.stroomKafkaProducer = stroomKafkaProducer;
+        this.stroomStatsStoreEntityService = stroomStatsStoreEntityService;
     }
 
     @Override
@@ -63,6 +70,9 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
         super.endDocument();
         ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, recordKey, getOutput());
         try {
+            //TODO determine topic from type of SSSE
+            //TODO determine key from SSSE name
+            //TODO change SKP to add a syncronous method and use that for both filters
             stroomKafkaProducer.send(newRecord, exception -> {
                 errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", exception);
             });
@@ -72,12 +82,7 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
     }
 
     @PipelineProperty(description = "The key for the record. This determines the partition.")
-    public void setRecordKey(final String recordKey) {
-        this.recordKey = recordKey;
+    public void setStroomStatsStoreEntity(final StroomStatsStoreEntity stroomStatsStoreEntity) {
     }
 
-    @PipelineProperty(description = "The topic to send the record to.")
-    public void setTopic(final String topic) {
-        this.topic = topic;
-    }
 }
