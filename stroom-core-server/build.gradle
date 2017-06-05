@@ -8,6 +8,7 @@ dependencies {
 
     compile urlDependencies.get(urlLibs.eventLogging)
     compile urlDependencies.get(urlLibs.stroomQueryCommon)
+    compile urlDependencies.get(urlLibs.stroomStatsApi)
 
     compile 'org.aspectj:aspectjweaver:1.6.2'
     runtime 'aopalliance:aopalliance:1.0'
