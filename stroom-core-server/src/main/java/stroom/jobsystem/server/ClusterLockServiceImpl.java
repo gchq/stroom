@@ -132,7 +132,6 @@ public class ClusterLockServiceImpl implements ClusterLockService {
         LOGGER.debug("releaseLock(%s) - <<< %s", lockName, success);
     }
 
-    @Override
     @StroomFrequencySchedule("1m")
     public void keepAlive() {
         LOGGER.debug("keepAlive() - >>>");

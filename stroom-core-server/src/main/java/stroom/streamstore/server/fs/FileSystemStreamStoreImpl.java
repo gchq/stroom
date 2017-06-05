@@ -16,9 +16,20 @@
 
 package stroom.streamstore.server.fs;
 
+import event.logging.BaseAdvancedQueryItem;
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.BaseAdvancedQueryOperator.Or;
+import event.logging.TermCondition;
+import event.logging.util.EventLoggingUtil;
+import org.joda.time.DateTimeZone;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryDataLogUtil;
-import stroom.entity.server.util.*;
+import stroom.entity.server.util.EntityServiceLogUtil;
+import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseEntity;
@@ -48,11 +59,11 @@ import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamAttributeCondition;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeFieldUse;
 import stroom.streamstore.shared.StreamAttributeValue;
+import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamTypeService;
@@ -60,17 +71,9 @@ import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.zip.HeaderMap;
-import event.logging.BaseAdvancedQueryItem;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.BaseAdvancedQueryOperator.Or;
-import event.logging.TermCondition;
-import event.logging.util.EventLoggingUtil;
-import org.joda.time.DateTimeZone;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -340,7 +343,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
      * Open a existing stream source.
      * </p>
      *
-     * @param streamId        The stream id to open a stream source for.
+     * @param streamId  The stream id to open a stream source for.
      * @param anyStatus Used to specify if this method will return stream sources that
      *                  are logically deleted or locked. If false only unlocked stream
      *                  sources will be returned, null otherwise.
@@ -1242,8 +1245,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
         Period period = null;
 
-        @SuppressWarnings("unchecked")
-        final List<Object[]> rows = entityManager.executeNativeQueryResultList(sql);
+        @SuppressWarnings("unchecked") final List<Object[]> rows = entityManager.executeNativeQueryResultList(sql);
 
         if (rows != null && rows.size() > 0) {
             period = new Period(((Number) rows.get(0)[0]).longValue(), ((Number) rows.get(0)[1]).longValue());
@@ -1280,36 +1282,35 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 //            if (doneOne) {
 //                sql.append(" UNION");
 //            }
-            sql.append(" (SELECT ");
-            sql.append(feed.getId());
-            sql.append(", ");
-            sql.append("MAX(");
-            sql.append(Stream.EFFECTIVE_MS);
-            sql.append(") FROM ");
-            sql.append(Stream.TABLE_NAME);
-            sql.append(" WHERE ");
-            sql.append(Stream.EFFECTIVE_MS);
-            sql.append(" < ");
-            sql.arg(criteria.getEffectivePeriod().getFrom());
-            sql.append(" AND ");
-            sql.append(Stream.STATUS);
-            sql.append(" = ");
-            sql.arg(StreamStatus.UNLOCKED.getPrimitiveValue());
-            sql.append(" AND ");
-            sql.append(StreamType.FOREIGN_KEY);
-            sql.append(" = ");
-            sql.arg(streamType.getId());
-            sql.append(" AND ");
-            sql.append(Feed.FOREIGN_KEY);
-            sql.append(" = ");
-            sql.arg(feed.getId());
-            sql.append(")");
+        sql.append(" (SELECT ");
+        sql.append(feed.getId());
+        sql.append(", ");
+        sql.append("MAX(");
+        sql.append(Stream.EFFECTIVE_MS);
+        sql.append(") FROM ");
+        sql.append(Stream.TABLE_NAME);
+        sql.append(" WHERE ");
+        sql.append(Stream.EFFECTIVE_MS);
+        sql.append(" < ");
+        sql.arg(criteria.getEffectivePeriod().getFrom());
+        sql.append(" AND ");
+        sql.append(Stream.STATUS);
+        sql.append(" = ");
+        sql.arg(StreamStatus.UNLOCKED.getPrimitiveValue());
+        sql.append(" AND ");
+        sql.append(StreamType.FOREIGN_KEY);
+        sql.append(" = ");
+        sql.arg(streamType.getId());
+        sql.append(" AND ");
+        sql.append(Feed.FOREIGN_KEY);
+        sql.append(" = ");
+        sql.arg(feed.getId());
+        sql.append(")");
 //
 //            doneOne = true;
 //        }
 
-        @SuppressWarnings("unchecked")
-        final List<Object[]> resultSet = entityManager.executeNativeQueryResultList(sql);
+        @SuppressWarnings("unchecked") final List<Object[]> resultSet = entityManager.executeNativeQueryResultList(sql);
 
         for (final Object[] row : resultSet) {
             final Long feedId = SQLUtil.getLong(row, 0);
@@ -1559,5 +1560,4 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         }
         return streamType;
     }
-
 }

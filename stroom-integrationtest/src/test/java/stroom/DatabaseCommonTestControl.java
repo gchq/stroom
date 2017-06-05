@@ -50,6 +50,7 @@ import stroom.node.shared.VolumeState;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
+import stroom.policy.shared.Policy;
 import stroom.script.shared.Script;
 import stroom.security.server.DocumentPermission;
 import stroom.security.server.Permission;
@@ -133,6 +134,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         deleteEntity(StreamVolume.class);
         deleteEntity(StreamAttributeValue.class);
         deleteEntity(Stream.class);
+
+        deleteEntity(Policy.class);
 
         deleteEntity(Query.class);
         deleteEntity(Dashboard.class);

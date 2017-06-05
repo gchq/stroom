@@ -16,14 +16,10 @@
 
 package stroom.streamstore.server;
 
-import javax.inject.Inject;
-
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
 import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.jobsystem.server.ClusterLockService;
@@ -36,8 +32,11 @@ import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.server.AbstractBatchDeleteExecutor;
 import stroom.streamtask.server.BatchIdTransactionHelper;
 import stroom.streamtask.shared.StreamTask;
-import stroom.util.spring.StroomFrequencySchedule;
+import stroom.util.spring.StroomScope;
+import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
+
+import javax.inject.Inject;
 
 @Component
 @Scope(value = StroomScope.TASK)
@@ -51,14 +50,14 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
 
     @Inject
     public StreamDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
-            final ClusterLockService clusterLockService, final StroomPropertyService propertyService,
-            final TaskMonitor taskMonitor) {
+                                final ClusterLockService clusterLockService, final StroomPropertyService propertyService,
+                                final TaskMonitor taskMonitor) {
         super(batchIdTransactionHelper, clusterLockService, propertyService, taskMonitor, TASK_NAME, LOCK_NAME,
                 STREAM_DELETE_PURGE_AGE_PROPERTY, STREAM_DELETE_BATCH_SIZE_PROPERTY, DEFAULT_STREAM_DELETE_BATCH_SIZE,
                 TEMP_STRM_ID_TABLE);
     }
 
-    @StroomFrequencySchedule("1h")
+    @StroomSimpleCronSchedule(cron = "0 0 *")
     @JobTrackedSchedule(jobName = "Stream Delete", description = "Physically delete streams that have been logically deleted based on age of delete ("
             + STREAM_DELETE_PURGE_AGE_PROPERTY + ")")
     @Transactional(propagation = Propagation.NEVER)

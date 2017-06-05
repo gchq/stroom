@@ -30,6 +30,7 @@ import stroom.entity.shared.Range;
 import stroom.entity.shared.StringCriteria;
 
 import javax.persistence.Query;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
@@ -379,6 +380,37 @@ public final class SQLUtil {
         }
     }
 
+    public static void appendLongRangeQuery(final SQLBuilder sql, final String field, final Range<Long> range) {
+        if (range != null) {
+            final Number size = range.size();
+            // Exact range
+            if (size != null && size.longValue() == 1) {
+                sql.append(" AND ");
+                sql.append(field);
+                sql.append(" = ");
+                sql.append(range.getFrom());
+            } else {
+                if (range.getFrom() != null) {
+                    sql.append(" AND ");
+                    sql.append(field);
+                    sql.append(" >= ");
+                    sql.append(range.getFrom());
+                }
+                if (range.getTo() != null) {
+                    sql.append(" AND ");
+                    sql.append(field);
+                    sql.append(" < ");
+                    sql.append(range.getTo());
+                }
+                if (range.isMatchNull()) {
+                    sql.append(" AND ");
+                    sql.append(field);
+                    sql.append(" IS NULL");
+                }
+            }
+        }
+    }
+
     /**
      * Append a range query.
      */
@@ -424,6 +456,36 @@ public final class SQLUtil {
             sql.append(" ");
             sql.arg(value);
         }
+    }
+
+
+    public static void join(final SQLBuilder sql, final String table, final String alias, final String aliasLeft, final String fieldLeft, final String aliasRight, final String fieldRight) {
+        join(sql, " JOIN ", table, alias, aliasLeft, fieldLeft, aliasRight, fieldRight);
+    }
+
+    public static void leftOuterJoin(final SQLBuilder sql, final String table, final String alias, final String aliasLeft, final String fieldLeft, final String aliasRight, final String fieldRight) {
+        join(sql, " LEFT OUTER JOIN ", table, alias, aliasLeft, fieldLeft, aliasRight, fieldRight);
+    }
+
+    public static void rightOuterJoin(final SQLBuilder sql, final String table, final String alias, final String aliasLeft, final String fieldLeft, final String aliasRight, final String fieldRight) {
+        join(sql, " RIGHT OUTER JOIN ", table, alias, aliasLeft, fieldLeft, aliasRight, fieldRight);
+    }
+
+    private static void join(final SQLBuilder sql, final String joinType, final String table, final String alias, final String aliasLeft, final String fieldLeft, final String aliasRight, final String fieldRight) {
+        sql.append(joinType);
+        sql.append(table);
+        sql.append(" ");
+        sql.append(alias);
+        sql.append(" ON ");
+        sql.append("(");
+        sql.append(aliasLeft);
+        sql.append(".");
+        sql.append(fieldLeft);
+        sql.append(" = ");
+        sql.append(aliasRight);
+        sql.append(".");
+        sql.append(fieldRight);
+        sql.append(")");
     }
 
     public static final String buildSQLTrace(final String sql, final List<Object> args) {

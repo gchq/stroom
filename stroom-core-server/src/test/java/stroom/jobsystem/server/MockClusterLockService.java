@@ -18,7 +18,6 @@ package stroom.jobsystem.server;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
 import stroom.util.spring.StroomSpringProfiles;
 
 @Profile(StroomSpringProfiles.TEST)
@@ -35,9 +34,5 @@ public class MockClusterLockService implements ClusterLockService {
 
     @Override
     public void releaseLock(final String lockName) {
-    }
-
-    @Override
-    public void keepAlive() {
     }
 }

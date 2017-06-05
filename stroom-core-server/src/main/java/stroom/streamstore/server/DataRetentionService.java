@@ -53,18 +53,18 @@ public class DataRetentionService {
         return read(policy);
     }
 
-    public DataRetentionPolicy save(final DataRetentionPolicy dataRetentionPolicies) {
+    public DataRetentionPolicy save(final DataRetentionPolicy dataRetentionPolicy) {
         Policy policy = getPolicy();
         if (policy == null) {
             throw new RuntimeException("Unable to fetch or create policy in DB");
         }
 
-        if (policy.getVersion() != dataRetentionPolicies.getVersion()) {
+        if (policy.getVersion() != dataRetentionPolicy.getVersion()) {
             throw new RuntimeException("The policy has been updated by somebody else");
         }
 
         try {
-            String data = marshal(dataRetentionPolicies);
+            String data = marshal(dataRetentionPolicy);
             policy.setData(data);
             policy = policyService.save(policy);
 
@@ -79,13 +79,13 @@ public class DataRetentionService {
     private DataRetentionPolicy read(final Policy policy) {
         try {
             String data = policy.getData();
-            DataRetentionPolicy dataRetentionPolicies = unmarshal(data);
-            if (dataRetentionPolicies == null) {
-                dataRetentionPolicies = new DataRetentionPolicy(new ArrayList<>());
+            DataRetentionPolicy dataRetentionPolicy = unmarshal(data);
+            if (dataRetentionPolicy == null) {
+                dataRetentionPolicy = new DataRetentionPolicy(new ArrayList<>());
             }
 
-            dataRetentionPolicies.setVersion(policy.getVersion());
-            return dataRetentionPolicies;
+            dataRetentionPolicy.setVersion(policy.getVersion());
+            return dataRetentionPolicy;
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage());
@@ -121,8 +121,8 @@ public class DataRetentionService {
         return XMLMarshallerUtil.unmarshal(context, DataRetentionPolicy.class, data);
     }
 
-    private String marshal(final DataRetentionPolicy dataRetentionPolicies) throws Exception {
+    private String marshal(final DataRetentionPolicy dataRetentionPolicy) throws Exception {
         final JAXBContext context = JAXBContext.newInstance(DataRetentionPolicy.class);
-        return XMLMarshallerUtil.marshal(context, dataRetentionPolicies);
+        return XMLMarshallerUtil.marshal(context, dataRetentionPolicy);
     }
 }
