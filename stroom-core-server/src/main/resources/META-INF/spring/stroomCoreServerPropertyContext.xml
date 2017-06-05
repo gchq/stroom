@@ -826,7 +826,13 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
 
-        <!-- Service and DocRef.type name mappings-->
+
+
+
+        <!-- External Service properties, including DocRef.type name mappings-->
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+        <!-- Stroom-Index -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.services.index.name"/>
             <property name="value" value="index"/>
@@ -851,6 +857,8 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
+
+        <!-- Stroom-Stats -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.services.stroomStats.name"/>
             <property name="value" value="stroom-stats"/>
@@ -876,6 +884,25 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.services.stroomStats.kafkaTopics.count"/>
+            <property name="value"
+                      value="statisticEvents-Count"/>
+            <property name="description"
+                      value="The kafka topic to send Count type stroom-stats statistic events to" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.services.stroomStats.kafkaTopics.value"/>
+            <property name="value"
+                      value="statisticEvents-Value"/>
+            <property name="description"
+                      value="The kafka topic to send Value type stroom-stats statistic events to" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <!-- SQL Statistcis -->
+        <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.services.sqlStatistics.name"/>
             <property name="value" value="sql_statistics"/>
             <property name="description"
@@ -900,9 +927,11 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
 
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
         <!-- Service discovery properties -->
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.serviceDiscovery.zookeeperUrl"/>
             <property name="value"
@@ -972,6 +1001,8 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
 
 
 
@@ -983,6 +1014,7 @@
              If an internal statistic docRefs property has an empty value then the statistic events will be silently
              ignored.
         -->
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.benchmarkCluster.docRefs"/>
             <property name="value"
@@ -1072,6 +1104,7 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
 
