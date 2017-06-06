@@ -41,7 +41,7 @@ public class JWTService {
     }
 
 
-    public Optional<AuthenticationToken> verifyToken(ServletRequest request){
+    public Optional<JWTAuthenticationToken> verifyToken(ServletRequest request){
         Optional<String> authHeader = getAuthHeader(request);
         Optional<String> authParam = getAuthParam(request);
         String jws;
