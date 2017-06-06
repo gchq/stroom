@@ -42,32 +42,36 @@ public class JWTService {
 
 
     public Optional<AuthenticationToken> verifyToken(ServletRequest request){
-        if (getAuthHeader(request).isPresent()) {
-            String bearerString = getAuthHeader(request).get();
-
-            final String jwtToken;
+        Optional<String> authHeader = getAuthHeader(request);
+        Optional<String> authParam = getAuthParam(request);
+        String jws;
+        if (authHeader.isPresent()) {
+            String bearerString = authHeader.get();
 
             if(bearerString.contains("Bearer")){
                 // TODO This chops out 'Bearer'. We're dealing with unpredictable client data so we need a
                 // way to do this that more robustly handles an error in the string.
-                jwtToken = bearerString.substring(7);
+                jws = bearerString.substring(7);
             }
             else{
-                jwtToken = bearerString;
+                jws = bearerString;
             }
-
-            try {
-                return Optional.of(verifyToken(jwtToken));
-            } catch (Exception e){
-                LOGGER.error("Unable to verify token:", e.getMessage(), e);
-                // If we get an exception verifying the token then we need to log the message
-                // and continue as if the token wasn't provided.
-                // TODO: decide if this should be handled by an exception and how
-                return Optional.empty();
-            }
+        }
+        else if(authParam.isPresent()) {
+            jws = authParam.get();
         }
         else {
             // If there's no token then we've nothing to do.
+            return Optional.empty();
+        }
+
+        try {
+            return Optional.of(verifyToken(jws));
+        } catch (Exception e){
+            LOGGER.error("Unable to verify token:", e.getMessage(), e);
+            // If we get an exception verifying the token then we need to log the message
+            // and continue as if the token wasn't provided.
+            // TODO: decide if this should be handled by an exception and how
             return Optional.empty();
         }
     }
@@ -93,6 +97,11 @@ public class JWTService {
         } catch (final Exception e) {
             throw new AuthenticationException(e);
         }
+    }
+
+    public static Optional<String> getAuthParam(ServletRequest request){
+        String token = request.getParameter("token");
+        return Optional.of(token);
     }
 
     public static Optional<String> getAuthHeader(ServletRequest request) {

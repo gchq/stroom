@@ -50,7 +50,9 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
         boolean loggedIn = false;
 
-        if (isLoginRequest(request, response) || JWTService.getAuthHeader(request).isPresent()) {
+        if (isLoginRequest(request, response)
+                || JWTService.getAuthHeader(request).isPresent()
+                || JWTService.getAuthParam(request).isPresent()) {
             loggedIn = executeLogin(request, response);
         }
 
