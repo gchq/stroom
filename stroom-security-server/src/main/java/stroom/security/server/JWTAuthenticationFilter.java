@@ -18,7 +18,6 @@ package stroom.security.server;
 
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.web.filter.authc.AuthenticatingFilter;
 import org.apache.shiro.web.util.WebUtils;
 
@@ -65,8 +64,8 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     }
 
     @Override
-    protected AuthenticationToken createToken(ServletRequest request, ServletResponse response) throws IOException {
-        return jwtService.verifyToken(request).orElseGet(() -> new UsernamePasswordToken());
+    protected JWTAuthenticationToken createToken(ServletRequest request, ServletResponse response) throws IOException {
+        return jwtService.verifyToken(request).orElseGet(null);
     }
 
     @Override
