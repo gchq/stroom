@@ -16,9 +16,8 @@
 
 package stroom.statistics.sql;
 
-import stroom.statistics.common.RollUpBitMaskUtil;
-import stroom.statistics.common.StatisticTag;
-import stroom.statistics.common.rollup.RollUpBitMask;
+import stroom.statistics.sql.rollup.RollUpBitMaskUtil;
+import stroom.statistics.sql.rollup.RollUpBitMask;
 import stroom.util.shared.EqualsBuilder;
 
 import java.util.List;

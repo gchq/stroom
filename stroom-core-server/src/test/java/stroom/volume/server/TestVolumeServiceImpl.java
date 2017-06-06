@@ -24,7 +24,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
-import stroom.internalstatistics.InternalStatisticsFacadeFactory;
+import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;

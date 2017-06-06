@@ -19,7 +19,6 @@ package stroom.stats.shared;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticType;
 
 import javax.persistence.Column;

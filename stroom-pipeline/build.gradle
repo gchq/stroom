@@ -6,6 +6,7 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-security-api')
     compile project(':stroom-statistics-api')
+    permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
 
     compile urlDependencies.get(urlLibs.hadoopCommonShaded)
     compile urlDependencies.get(urlLibs.hadoopHdfsShaded)

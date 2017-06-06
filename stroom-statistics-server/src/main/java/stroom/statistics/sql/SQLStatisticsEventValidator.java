@@ -16,9 +16,6 @@
 
 package stroom.statistics.sql;
 
-import stroom.statistics.common.StatisticEvent;
-import stroom.statistics.common.StatisticTag;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;

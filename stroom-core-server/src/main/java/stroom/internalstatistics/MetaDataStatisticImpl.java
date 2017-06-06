@@ -19,7 +19,8 @@ package stroom.internalstatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
-import stroom.statistic.server.MetaDataStatistic;
+import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.zip.HeaderMap;
 
@@ -29,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This is deliberately not declared as a component as the StatisticsConfiguration creates the bean.
+ * This is deliberately not declared as a component as the {@link stroom.spring.MetaDataStatisticConfiguration} creates the bean.
  */
 public class MetaDataStatisticImpl implements MetaDataStatistic {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaDataStatisticImpl.class);

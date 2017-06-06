@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.statistic.server.MetaDataStatistic;
+import stroom.internalstatistics.MetaDataStatistic;
 import stroom.streamstore.server.StreamStore;
 import stroom.task.server.AsyncTaskHelper;
 import stroom.task.server.GenericServerTask;

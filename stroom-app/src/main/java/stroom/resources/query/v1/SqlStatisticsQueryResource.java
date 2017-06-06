@@ -24,7 +24,7 @@ import stroom.query.api.v1.QueryKey;
 import stroom.query.api.v1.SearchRequest;
 import stroom.query.api.v1.SearchResponse;
 import stroom.resources.ResourcePaths;
-import stroom.statistics.common.StatisticsQueryService;
+import stroom.statistics.sql.StatisticsQueryService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -64,7 +64,7 @@ public class SqlStatisticsQueryResource implements QueryResource {
         return statisticsQueryService.destroy(queryKey);
     }
 
-    public void setStatisticsQueryService(StatisticsQueryService statisticsQueryService) {
+    public void setStatisticsQueryService(final StatisticsQueryService statisticsQueryService) {
         this.statisticsQueryService = statisticsQueryService;
     }
 

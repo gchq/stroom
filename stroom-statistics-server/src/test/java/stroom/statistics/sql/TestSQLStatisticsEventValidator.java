@@ -18,8 +18,6 @@ package stroom.statistics.sql;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.statistics.common.StatisticEvent;
-import stroom.statistics.common.StatisticTag;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -17,10 +17,9 @@
 package stroom.statistics.sql;
 
 import org.apache.commons.lang.mutable.MutableLong;
-import stroom.statistics.common.RolledUpStatisticEvent;
-import stroom.statistics.common.TimeAgnosticStatisticEvent;
-import stroom.statistics.common.exception.StatisticsEventValidationException;
+import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.shared.StatisticType;
+import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -21,11 +21,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-import stroom.statistics.common.FilterOperationMode;
-import stroom.statistics.common.FilterTermsTree;
-import stroom.statistics.common.FilterTermsTree.OperatorNode;
-import stroom.statistics.common.FilterTermsTree.TermNode;
-import stroom.statistics.common.PrintableNode;
+import stroom.statistics.sql.search.FilterOperationMode;
+import stroom.statistics.sql.search.FilterTermsTree;
+import stroom.statistics.sql.search.FilterTermsTree.OperatorNode;
+import stroom.statistics.sql.search.FilterTermsTree.TermNode;
+import stroom.statistics.sql.search.PrintableNode;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.ArrayList;

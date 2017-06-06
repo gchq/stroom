@@ -18,15 +18,13 @@ package stroom.statistics.sql;
 
 import org.apache.commons.lang.mutable.MutableLong;
 import org.junit.Test;
-import stroom.statistics.common.RolledUpStatisticEvent;
-import stroom.statistics.common.StatisticEvent;
-import stroom.statistics.common.StatisticTag;
-import stroom.statistics.common.exception.StatisticsEventValidationException;
-import stroom.statistics.common.rollup.RollUpBitMask;
+import stroom.statistics.sql.exception.StatisticsEventValidationException;
+import stroom.statistics.sql.rollup.RollUpBitMask;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticsDataSourceData;
+import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.ArrayList;

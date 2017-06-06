@@ -30,7 +30,7 @@ import stroom.search.server.SearchResultCreatorManager;
 import stroom.security.server.AuthenticationService;
 import stroom.security.server.AuthorisationService;
 import stroom.security.server.JWTService;
-import stroom.statistics.common.StatisticsQueryService;
+import stroom.statistics.sql.StatisticsQueryService;
 import stroom.util.upgrade.UpgradeDispatcherServlet;
 
 import javax.servlet.ServletException;
