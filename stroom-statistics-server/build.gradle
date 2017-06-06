@@ -48,6 +48,7 @@ dependencies {
     compile 'org.flywaydb:flyway-core:4.0.3'
     compile 'com.mchange:c3p0:0.9.5.2'
     compile 'io.vavr:vavr:0.9.0'
+    compile 'org.apache.kafka:kafka-clients:0.10.0.1' //CDH5.10 uses kafka 10.0
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
