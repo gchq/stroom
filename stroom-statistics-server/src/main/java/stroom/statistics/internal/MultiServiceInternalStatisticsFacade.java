@@ -7,6 +7,7 @@ import stroom.query.api.v1.DocRef;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -49,10 +50,19 @@ class MultiServiceInternalStatisticsFacade implements InternalStatisticsFacade {
                         }))
                 .toArray(len -> new CompletableFuture[len]);
 
-        CompletableFuture.allOf(futures)
-                .exceptionally(throwable -> {
-                    exceptionHandler.accept(throwable);
-                    return null;
-                });
+        try {
+            CompletableFuture.allOf(futures)
+                    .exceptionally(throwable -> {
+                        exceptionHandler.accept(throwable);
+                        return null;
+                    })
+                    .get();
+        } catch (InterruptedException e) {
+            LOGGER.error("Thread interrupted waiting for internal stats to be sent to all services", e);
+            Thread.currentThread().interrupt();
+        } catch (ExecutionException e) {
+            LOGGER.error("Error sending internal stats to all services", e);
+            exceptionHandler.accept(e);
+        }
     }
 }

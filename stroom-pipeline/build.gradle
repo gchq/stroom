@@ -34,4 +34,11 @@ dependencies {
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.0.2-beta'
+
+    //the following logging libs are needed when running junits outside dropwizard
+    testRuntime libs.logback_core
+    testRuntime libs.logback_classic
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.jcl_over_slf4j
+    testRuntime libs.jul_to_slf4j
 }

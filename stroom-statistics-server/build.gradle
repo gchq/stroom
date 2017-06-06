@@ -33,12 +33,14 @@ dependencies {
     compile urlDependencies.get(urlLibs.stroomExpression)
     compile urlDependencies.get(urlLibs.stroomQueryCommon)
     compile urlDependencies.get(urlLibs.hadoopCommonShaded)
+
+    compile libs.slf4j_api
+
     compile 'org.springframework:spring-beans:4.3.4.RELEASE'
     compile 'org.springframework:spring-core:4.3.4.RELEASE'
     compile 'org.springframework:spring-context:4.3.4.RELEASE'
     compile 'commons-lang:commons-lang:2.6'
     compile 'net.sf.ehcache:ehcache-core:2.6.11'
-    compile 'org.slf4j:slf4j-api:1.7.21'
     compile 'com.google.guava:guava:20.0'
     compile 'javax.inject:javax.inject:1'
     compile 'org.apache.commons:commons-pool2:2.4.2'
@@ -56,4 +58,12 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.0.2-beta'
     testCompile 'org.assertj:assertj-core:3.6.2'
+
+    //the following logging libs are needed when running junits outside dropwizard
+    testRuntime libs.logback_core
+    testRuntime libs.logback_classic
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.jcl_over_slf4j
+    testRuntime libs.jul_to_slf4j
+
 }

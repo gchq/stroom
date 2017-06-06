@@ -3,5 +3,5 @@ dependencies {
     compile project(':stroom-util-shared')
 
     compile 'com.google.guava:guava:20.0'
-    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile libs.slf4j_api
 }

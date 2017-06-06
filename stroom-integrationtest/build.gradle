@@ -21,10 +21,16 @@ dependencies {
     testCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
 
-    testRuntime 'org.slf4j:slf4j-api:1.7.21'
+    testCompile libs.slf4j_api
     testRuntime 'org.glassfish:javax.el:3.0.1-b08'
     testCompile 'junit:junit:4.12'
-    testRuntime 'ch.qos.logback:logback-classic:1.1.8'
+
+    //the following logging libs are needed when running junits outside dropwizard
+    testRuntime libs.logback_core
+    testRuntime libs.logback_classic
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.jcl_over_slf4j
+    testRuntime libs.jul_to_slf4j
 
     // Use default DB config.
     compile project(':stroom-config')

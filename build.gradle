@@ -10,15 +10,23 @@ buildscript {
 }
 apply plugin: 'gchq.urldependencies'
 
+//version numbers for libs that share version numbers, e.g. dropwizard-*
 ext.versions = [
-        stroom: '6.0-beta.1-SNAPSHOT',
-        //same version for both stroom-query-api and stroom-query-common
-        stroomQuery: 'v1.0.0',
-        stroomExpression: 'v0.1.0',
-        stroomStats: 'v0.4.0-alpha',
-        eventLogging: 'v3.1.0',
-        hadoopCommonShaded: 'v2.6.4-3',
-        hadoopHdfsShaded: 'v2.6.4'
+    //----------Stroom-----------------
+    stroom: '6.0-beta.1-SNAPSHOT',
+
+    //------Stroom-repos---------------
+    eventLogging: 'v3.1.0',
+    hadoopCommonShaded: 'v2.6.4-3',
+    hadoopHdfsShaded: 'v2.6.4',
+    stroomExpression: 'v0.1.0', //same version for both stroom-query-api and stroom-query-common
+    stroomQuery: 'v1.0.0', //same version for both stroom-query-api and stroom-query-common
+    stroomStats: 'v0.4.0-alpha',
+
+    //------------3rd-party------------
+    logback: '1.2.1', //in line with dropwizard 1.1.0
+    slf4j: '1.7.24', //in line with dropwizard 1.1.0
+    zzDUMMYzz: 'makes sorting easier'
 ]
 
 //lib names for urlDependenciesPlugin
@@ -30,7 +38,18 @@ ext.urlLibs = [
     stroomStatsApi: "stroom-stats-api-$versions.stroomStats",
     eventLogging: "event-logging-$versions.eventLogging",
     hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
-    hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all"
+    hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
+    zzDUMMYzz: "makes sorting easier"
+]
+
+ext.libs = [
+    jul_to_slf4j: "org.slf4j:jul-to-slf4j:$versions.slf4j",
+    jcl_over_slf4j: "org.slf4j:jcl-over-slf4j:$versions.slf4j",
+    log4j_over_slf4j: "org.slf4j:log4j-over-slf4j:$versions.slf4j",
+    logback_classic: "ch.qos.logback:logback-classic:$versions.logback",
+    logback_core: "ch.qos.logback:logback-core:$versions.logback",
+    slf4j_api: "org.slf4j:slf4j-api:$versions.slf4j",
+    zzDUMMYzz: "makes sorting easier"
 ]
 
 task wrapper(type: Wrapper) {

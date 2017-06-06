@@ -6,4 +6,11 @@ dependencies {
     compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
 
     testCompile 'junit:junit:4.12'
+
+    //the following logging libs are needed when running junits outside dropwizard
+    testRuntime libs.logback_core
+    testRuntime libs.logback_classic
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.jcl_over_slf4j
+    testRuntime libs.jul_to_slf4j
 }
