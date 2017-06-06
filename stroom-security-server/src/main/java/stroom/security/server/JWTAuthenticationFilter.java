@@ -56,12 +56,11 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
         if (!loggedIn) {
             HttpServletResponse httpResponse = WebUtils.toHttp(response);
-            httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            httpResponse.sendRedirect(getLoginUrl());
         }
 
         return loggedIn;
     }
-
 
     @Override
     protected AuthenticationToken createToken(ServletRequest request, ServletResponse response) throws IOException {

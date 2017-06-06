@@ -22,6 +22,7 @@ import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.AbstractShiroFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -79,15 +80,17 @@ public class SecurityConfiguration {
     }
 
     @Bean(name = "shiroFilter")
-    public AbstractShiroFilter shiroFilter(JWTAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public AbstractShiroFilter shiroFilter(
+            JWTAuthenticationFilter jwtAuthenticationFilter,
+            @Value("#{propertyConfigurer.getProperty('stroom.ui.login.url')}") final String loginUrl)
+            throws Exception {
         final ShiroFilterFactoryBean shiroFilter = new ShiroFilterFactoryBean();
         shiroFilter.setSecurityManager(securityManager());
-        shiroFilter.setLoginUrl("/login.html");
+        shiroFilter.setLoginUrl(loginUrl);
         shiroFilter.setSuccessUrl("/stroom.jsp");
         shiroFilter.getFilters().put("jwtFilter", jwtAuthenticationFilter);
-        shiroFilter.getFilterChainDefinitionMap().put("/**/secure/**", "authc, roles[USER]");
+        shiroFilter.getFilterChainDefinitionMap().put("/**", "jwtFilter");
         shiroFilter.getFilterChainDefinitionMap().put("/api/authentication/getToken", "anon");
-        shiroFilter.getFilterChainDefinitionMap().put("/api/**", "jwtFilter");
         return (AbstractShiroFilter) shiroFilter.getObject();
     }
 
