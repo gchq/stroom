@@ -15,11 +15,11 @@
     <appender-ref ref="STDOUT" />
   </logger>
 
-  <logger name="stroom.statistics.sql.SQLStatisticAggregationManager">
+  <logger name="stroom.statistics.server.sql.SQLStatisticAggregationManager">
     <level value="debug" />
   </logger>
 
-  <logger name="stroom.statistics.sql.SQLStatisticAggregationTransactionHelper">
+  <logger name="stroom.statistics.server.sql.SQLStatisticAggregationTransactionHelper">
     <level value="debug" />
   </logger>
   
