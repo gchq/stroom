@@ -16,24 +16,6 @@
 
 package stroom.search.server.shard;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.inject.Inject;
-
-import stroom.util.logging.StroomLogger;
-import org.apache.lucene.index.IndexWriter;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
-
-import stroom.index.server.IndexShardWriter;
-import stroom.index.server.IndexShardWriterCache;
-import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardService;
-import stroom.search.server.IndexShardSearcher;
-import stroom.search.server.IndexShardSearcherImpl;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
@@ -42,6 +24,21 @@ import net.sf.ehcache.Element;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.constructs.blocking.SelfPopulatingCache;
 import net.sf.ehcache.event.CacheEventListenerAdapter;
+import org.apache.lucene.index.IndexWriter;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
+import stroom.index.server.Indexer;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardService;
+import stroom.search.server.IndexShardSearcher;
+import stroom.search.server.IndexShardSearcherImpl;
+import stroom.util.logging.StroomLogger;
+
+import javax.inject.Inject;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class IndexShardSearcherCache implements InitializingBean {
@@ -106,10 +103,7 @@ public class IndexShardSearcherCache implements InitializingBean {
                     IndexWriter indexWriter = null;
                     Exception writerException = null;
                     try {
-                        final IndexShardWriter indexShardWriter = indexShardWriterPool.getWriter(indexShard);
-                        if (indexShardWriter != null) {
-                            indexWriter = indexShardWriter.getWriter();
-                        }
+                        indexWriter = indexer.getWriter(indexShard);
                     } catch (final Exception e) {
                         writerException = e;
                     }
@@ -152,16 +146,16 @@ public class IndexShardSearcherCache implements InitializingBean {
 
     public static final int MAX_OPEN_SHARDS = 2;
 
-    private final IndexShardWriterCache indexShardWriterPool;
+    private final Indexer indexer;
     private final CacheManager cacheManager;
 
     private final Cache cache;
     private final SelfPopulatingCache selfPopulatingCache;
 
     @Inject
-    public IndexShardSearcherCache(final IndexShardWriterCache indexShardWriterPool,
-            final IndexShardService indexShardService, final CacheManager cacheManager) {
-        this.indexShardWriterPool = indexShardWriterPool;
+    public IndexShardSearcherCache(final Indexer indexer,
+                                   final IndexShardService indexShardService, final CacheManager cacheManager) {
+        this.indexer = indexer;
         this.cacheManager = cacheManager;
 
         final CacheConfiguration cacheConfiguration = new CacheConfiguration("Index Shard Searcher Cache",
@@ -175,8 +169,7 @@ public class IndexShardSearcherCache implements InitializingBean {
         cache = new Cache(cacheConfiguration) {
             @Override
             public void removeAll() throws IllegalStateException, CacheException {
-                @SuppressWarnings("rawtypes")
-                final List keys = cache.getKeys();
+                @SuppressWarnings("rawtypes") final List keys = cache.getKeys();
                 for (final Object key : keys) {
                     cache.remove(key);
                 }

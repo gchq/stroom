@@ -19,7 +19,6 @@ package stroom.index.server;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LiveIndexWriterConfig;
@@ -45,6 +44,7 @@ import stroom.util.shared.ModelStringUtil;
 
 import javax.persistence.EntityNotFoundException;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,11 +75,8 @@ public class IndexShardWriterImpl implements IndexShardWriter {
      * Note that due to the multi-threaded nature of document addition and how this count is used to control
      * addition this will not always be accurate.
      */
-    private final AtomicInteger documentCount = new AtomicInteger(0);
-    /**
-     * An accurate count of the number of documents that have been successfully added to the index shard.
-     */
-    private final AtomicInteger actualDocumentCount = new AtomicInteger(0);
+    private final AtomicInteger documentCount = new AtomicInteger();
+//    private final AtomicInteger actualDocumentCount = new AtomicInteger();
 
     private final File dir;
 
@@ -95,7 +92,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     private volatile Long lastCommitMs;
     private volatile Integer lastCommitDocumentCount;
     private volatile Long lastCommitDurationMs;
-    private volatile boolean failedToAddDocument;
 
     private volatile boolean checked;
 
@@ -142,7 +138,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         fieldAnalyzers = new HashMap<>();
         updateFieldAnalyzers(indexFields);
         analyzerWrapper = new PerFieldAnalyzerWrapper(defaultAnalyzer, fieldAnalyzers);
-
     }
 
     /**
@@ -157,12 +152,25 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         boolean success = false;
 
         try {
-            if (!isOpen()) {
-                if (IndexShardStatus.OPEN.equals(indexShard.getStatus())) {
-                    LOGGER.warn("Attempt to open an index that is already marked as open");
-                } else {
+            switch (getStatus()) {
+                case CLOSED:
                     success = doOpen(create);
-                }
+                    break;
+                case CLOSING:
+                    LOGGER.warn("Attempt to open an index shard that is closing");
+                    break;
+                case OPEN:
+                    LOGGER.warn("Attempt to open an index shard that is already open");
+                    break;
+                case OPENING:
+                    LOGGER.warn("Attempt to open an index shard that is already opening");
+                    break;
+                case DELETED:
+                    LOGGER.warn("Attempt to open an index shard that is deleted");
+                    break;
+                case CORRUPT:
+                    LOGGER.warn("Attempt to open an index shard that is corrupt");
+                    break;
             }
         } catch (final Throwable t) {
             LOGGER.error(t.getMessage(), t);
@@ -174,9 +182,12 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     private synchronized boolean doOpen(final boolean create) {
         boolean success = false;
 
-        try {
-            // Never open deleted index shards.
-            if (!IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
+        // Never open deleted or corrupt index shards.
+        if (IndexShardStatus.CLOSED.equals(getStatus())) {
+            try {
+                // Let everybody know we are opening this shard.
+                setStatus(IndexShardStatus.OPENING);
+
                 final long startMs = System.currentTimeMillis();
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Opening " + indexShard);
@@ -240,7 +251,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 // Check the number of committed docs in this shard.
                 final int numDocs = indexWriter.numDocs();
                 documentCount.set(numDocs);
-                actualDocumentCount.set(numDocs);
                 lastDocumentCount = numDocs;
                 if (create) {
                     if (lastDocumentCount != 0) {
@@ -251,8 +261,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                             + indexShard.getDocumentCount());
                 }
 
-                // We have opened the index so update the DB object.
-                setStatus(IndexShardStatus.OPEN);
 
                 // Output some debug.
                 if (LOGGER.isDebugEnabled()) {
@@ -261,19 +269,21 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 }
 
                 success = true;
+                // We have opened the index so update the DB object.
+                setStatus(IndexShardStatus.OPEN);
+
+            } catch (final LockObtainFailedException t) {
+                LOGGER.warn(t.getMessage());
+                // Something went wrong.
+                setStatus(IndexShardStatus.CLOSED);
+            } catch (final Throwable t) {
+                LOGGER.error(t.getMessage(), t);
+                // Something went wrong.
+                setStatus(IndexShardStatus.CORRUPT);
             }
-        } catch (final LockObtainFailedException t) {
-            LOGGER.warn(t.getMessage());
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
         }
 
         return success;
-    }
-
-    @Override
-    public boolean isOpen() {
-        return indexWriter != null && IndexShardStatus.OPEN.equals(indexShard.getStatus());
     }
 
     @Override
@@ -281,7 +291,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         boolean success = false;
 
         try {
-            if (isOpen()) {
+            if (IndexShardStatus.OPEN.equals(getStatus())) {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Closing index: " + toString());
                 }
@@ -317,7 +327,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             checked = true;
 
             // Don't check deleted shards.
-            if (!IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
+            if (!IndexShardStatus.DELETED.equals(getStatus())) {
                 try {
                     // Output some debug.
                     if (LOGGER.isDebugEnabled()) {
@@ -374,7 +384,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         boolean success = false;
 
         try {
-            if (!IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
+            if (!IndexShardStatus.DELETED.equals(getStatus())) {
                 LOGGER.warn("deleteFromDisk() - Can only be called on delete records %s", indexShard);
             } else {
                 // Make sure the shard is closed before it is deleted. If it
@@ -416,80 +426,50 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         return success;
     }
 
+    private final AtomicInteger adding = new AtomicInteger();
+
     @Override
-    public boolean addDocument(final Document document) {
-        boolean added = false;
-        if (document != null) {
-            // We can't write to deleted index shard's
-            if (!IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
-                // Make sure the index is open (it won't open if we have hit the
-                // limit.
-                if (!isOpen() && documentCount.get() < maxDocumentCount) {
-                    open(false);
-                }
-
-                // Make sure the index is now open before we try and add a
-                // document to it.
-                final IndexWriter indexWriter = this.indexWriter;
-                if (indexWriter != null && isOpen()) {
-                    // Avoid any sync blocks so try and inc the number and if it
-                    // went over then drop it back and return false
-                    if (documentCount.incrementAndGet() <= maxDocumentCount) {
-                        try {
-                            final long startTime = System.currentTimeMillis();
-
-                            // An Exception might be thrown here if the index
-                            // has been deleted. If this happens log the error
-                            // and return false so that the pool can return a
-                            // new index to add documents to.
-                            indexWriter.addDocument(document);
-                            added = true;
-                            actualDocumentCount.incrementAndGet();
-
-                            final long duration = System.currentTimeMillis() - startTime;
-                            if (duration > 1000) {
-                                LOGGER.warn("addDocument() - took " + ModelStringUtil.formatDurationString(duration)
-                                        + " " + toString());
-                            }
-                        } catch (final AlreadyClosedException e) {
-                            LOGGER.debug(e.getMessage());
-
-                        } catch (final CorruptIndexException e) {
-                            LOGGER.error(e.getMessage(), e);
-                            // Mark the shard as corrupt as this should be the
-                            // only reason we can't add a document.
-                            setStatus(IndexShardStatus.CORRUPT);
-
-                        } catch (final Throwable t) {
-                            LOGGER.error(t.getMessage(), t);
-
-                        } finally {
-                            // If we were unable to add the document then decrement
-                            // the document count.
-                            if (!added) {
-                                documentCount.decrementAndGet();
-                            }
-                        }
-                    } else {
-                        documentCount.decrementAndGet();
-                    }
-                }
+    public void addDocument(final Document document) throws IOException, IndexException, AlreadyClosedException {
+        adding.incrementAndGet();
+        try {
+            // Make sure the index is now open before we try and add a
+            // document to it.
+            final IndexWriter indexWriter = this.indexWriter;
+            if (indexWriter == null || !IndexShardStatus.OPEN.equals(getStatus())) {
+                throw new AlreadyClosedException("Shard is not open (status = " + getStatus() + ")");
             }
-        }
 
-        // If we weren't able to add a document for any reason then remember this failure so that we don't try and use
-        // this writer again.
-        if (!added) {
-            failedToAddDocument = true;
-        }
+            // An Exception might be thrown here if the index
+            // has been deleted. If this happens log the error
+            // and return false so that the pool can return a
+            // new index to add documents to.
+            try {
+                if (documentCount.getAndIncrement() >= maxDocumentCount) {
+                    throw new IndexException("Shard is full");
+                }
 
-        return added;
+                final long startTime = System.currentTimeMillis();
+                indexWriter.addDocument(document);
+                final long duration = System.currentTimeMillis() - startTime;
+                if (duration > 1000) {
+                    LOGGER.warn("addDocument() - took " + ModelStringUtil.formatDurationString(duration)
+                            + " " + toString());
+                }
+
+            } catch (final Throwable e) {
+                documentCount.decrementAndGet();
+                throw e;
+            }
+
+        } finally {
+            adding.decrementAndGet();
+        }
     }
 
     @Override
     public void updateIndex(final Index index) {
         // There's no point updating the analysers on a deleted index.
-        if (!isDeleted()) {
+        if (!IndexShardStatus.DELETED.equals(getStatus())) {
             // Check if this index shard has been deleted on the DB.
             try {
                 final IndexShard is = service.load(indexShard);
@@ -503,12 +483,12 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 LOGGER.error(t.getMessage(), t);
             }
 
-            if (!isDeleted()) {
+            if (!IndexShardStatus.DELETED.equals(getStatus())) {
                 sync();
                 checkRetention(index);
             }
 
-            if (!isDeleted()) {
+            if (!IndexShardStatus.DELETED.equals(getStatus()) && !IndexShardStatus.CORRUPT.equals(getStatus())) {
                 if (fieldIndex == null || fieldIndex.getVersion() != index.getVersion()) {
                     fieldAnalyzerLock.lock();
                     try {
@@ -572,7 +552,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     private synchronized boolean flushOrClose(final boolean close) {
         boolean success = false;
 
-        if (isOpen()) {
+        if (IndexShardStatus.OPEN.equals(getStatus())) {
             // Record commit start time.
             final long startTime = System.currentTimeMillis();
 
@@ -587,27 +567,27 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
                 // Find out how many docs the DB thinks the shard currently
                 // contains.
-                final int docCountBeforeCommit = indexShard.getDocumentCount();
+                int docCountBeforeCommit;
 
                 // Perform commit or close.
                 if (close) {
+                    setStatus(IndexShardStatus.CLOSING);
+
+                    // Wait for us to stop adding docs.
+                    while (adding.get() > 0) {
+                        LOGGER.debug("Waiting for " + adding.get() + " docs to finish being added before we can close this shard");
+                        Thread.sleep(1000);
+                    }
+
+                    docCountBeforeCommit = indexShard.getDocumentCount();
                     indexWriter.close();
                 } else {
+                    docCountBeforeCommit = indexShard.getDocumentCount();
                     indexWriter.commit();
                 }
 
-                // TODO : The document count here could still be inaccurate if a thread is still adding a document while
-                // the index shard is being closed and we get here after the document has been added but before the
-                // 'actualDocumentCount' variable has been incremented.
-                // TODO : Further more this method is called when the writer cache is asked to dispose of an index shard.
-                // If this happens because a thread has failed to add a document (this might be because the count has
-                // been exceeded) and has then asked the cache to dispose of this shard, we might still have many
-                // threads that are in the process of trying to add documents at the same time as we are closing this
-                // shard. This could lead to this index shard having a document count that is less than the maximum
-                // document count even though the limit has been met by some shards.
-
                 // If the index is closed we can be sure no additional documents were added successfully.
-                lastDocumentCount = actualDocumentCount.get();
+                lastDocumentCount = documentCount.get();
 
                 // Record when commit completed so we know how fresh the index
                 // is for searching purposes.
@@ -677,7 +657,12 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         }
     }
 
-    private synchronized void setStatus(final IndexShardStatus status) {
+    @Override
+    public IndexShardStatus getStatus() {
+        return indexShard.getStatus();
+    }
+
+    public synchronized void setStatus(final IndexShardStatus status) {
         // Allow the thing to run without a service (e.g. benchmark mode)
         if (service != null) {
             boolean success = false;
@@ -762,15 +747,15 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 + indexShard
                 + ", indexWriter="
                 + (indexWriter == null ? "closed" : "open")
-                + ", actualDocs="
-                + actualDocumentCount;
+                + ", docCount="
+                + documentCount.get();
     }
 
     synchronized void trace(final PrintStream ps) {
         if (loggerPrintStream != null) {
             refreshEntity();
 
-            ps.println("Document Count = " + ModelStringUtil.formatCsv(actualDocumentCount.intValue()));
+            ps.println("Document Count = " + ModelStringUtil.formatCsv(documentCount.intValue()));
             if (dir != null) {
                 ps.println("Index File(s) Size = " + ModelStringUtil.formatIECByteSizeString(indexShard.getFileSize()));
             }
@@ -784,7 +769,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
     @Override
     public int getDocumentCount() {
-        return actualDocumentCount.intValue();
+        return documentCount.intValue();
     }
 
     @Override
@@ -813,23 +798,8 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     }
 
     @Override
-    public synchronized boolean isOkToReuse() {
-        return IndexShardStatus.CLOSED.equals(indexShard.getStatus()) && !failedToAddDocument;
-    }
-
-    @Override
     public boolean isFull() {
-        return documentCount.intValue() >= maxDocumentCount;
-    }
-
-    @Override
-    public boolean isClosed() {
-        return IndexShardStatus.CLOSED.equals(indexShard.getStatus());
-    }
-
-    @Override
-    public boolean isDeleted() {
-        return IndexShardStatus.DELETED.equals(indexShard.getStatus());
+        return documentCount.get() >= maxDocumentCount;
     }
 
     @Override
@@ -838,13 +808,11 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     }
 
     @Override
-    public synchronized void destroy() {
-        if (isOpen()) {
-            try {
-                close();
-            } catch (final Exception ex) {
-                LOGGER.error("destroy() - Error closing writer %s", this);
-            }
+    public void destroy() {
+        try {
+            close();
+        } catch (final Exception ex) {
+            LOGGER.error("destroy() - Error closing writer %s", this);
         }
     }
 }

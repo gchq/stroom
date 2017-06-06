@@ -31,9 +31,9 @@ public class StripedLock {
 
     /**
      * We use a number here based on our typical concurrency profile. So 10
-     * indexing threads and 128 locks seems OK.
+     * indexing threads and 2048 locks seems OK.
      */
-    public static final int DEFAULT_NUMBER_OF_MUTEXES = 128;
+    public static final int DEFAULT_NUMBER_OF_MUTEXES = 2048;
     private Lock[] mutexes = null;
 
     public StripedLock() {

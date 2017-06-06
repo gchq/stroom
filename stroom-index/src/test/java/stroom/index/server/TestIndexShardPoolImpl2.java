@@ -83,7 +83,7 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
         };
 
         try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-            final IndexShardWriterCacheImpl indexShardPoolImpl = new IndexShardWriterCacheImpl(cacheManager, null, null,
+            final IndexShardManagerImpl indexShardManager = new IndexShardManagerImpl(cacheManager, null, null,
                     mockIndexShardService, new NodeCache(defaultNode), null) {
                 @Override
                 protected void destroy(final IndexShardKey key, final IndexShardWriter value) {
@@ -101,20 +101,13 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
             final SimpleExecutor simpleExecutor = new SimpleExecutor(10);
 
             for (int i = 0; i < 1000; i++) {
-                simpleExecutor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (int i = 0; i < 100; i++) {
-                            // Get a writer from the pool.
-                            final IndexShardWriter writer = indexShardPoolImpl.get(indexShardKey);
-
-                            // Do some work.
-                            final Field field = FieldFactory.create(indexField, "test");
-                            final Document document = new Document();
-                            document.add(field);
-
-                            writer.addDocument(document);
-                        }
+                simpleExecutor.execute(() -> {
+                    for (int i1 = 0; i1 < 100; i1++) {
+                        // Do some work.
+                        final Field field = FieldFactory.create(indexField, "test");
+                        final Document document = new Document();
+                        document.add(field);
+                        indexShardManager.addDocument(indexShardKey, document);
                     }
                 });
             }

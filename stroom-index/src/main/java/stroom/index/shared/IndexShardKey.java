@@ -16,15 +16,10 @@
 
 package stroom.index.shared;
 
-import java.util.Date;
-
-import stroom.util.shared.EqualsBuilder;
-
 public class IndexShardKey {
     private final Index index;
     private final String partition;
     private final int shardNo;
-    private final int hashCode;
 
     // The time that the partition that this shard belongs to starts
     private final Long partitionFromTime;
@@ -32,17 +27,12 @@ public class IndexShardKey {
     private final Long partitionToTime;
 
     public IndexShardKey(final Index index, final String partition, final Long partitionFromTime,
-            final Long partitionToTime, final int shardNo) {
+                         final Long partitionToTime, final int shardNo) {
         this.index = index;
         this.partition = partition;
         this.partitionFromTime = partitionFromTime;
         this.partitionToTime = partitionToTime;
         this.shardNo = shardNo;
-
-        int code = index.hashCode();
-        code = (code * 31) + partition.hashCode();
-        code = (code * 31) + Integer.valueOf(shardNo).hashCode();
-        hashCode = code;
     }
 
     public Index getIndex() {
@@ -66,23 +56,22 @@ public class IndexShardKey {
     }
 
     @Override
-    public int hashCode() {
-        return hashCode;
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final IndexShardKey that = (IndexShardKey) o;
+
+        if (shardNo != that.shardNo) return false;
+        if (!index.equals(that.index)) return false;
+        return partition.equals(that.partition);
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof IndexShardKey)) {
-            return false;
-        }
-
-        final IndexShardKey key = (IndexShardKey) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(index, key.index);
-        builder.append(partition, key.partition);
-        builder.append(shardNo, key.shardNo);
-        return builder.isEquals();
+    public int hashCode() {
+        int result = index.hashCode();
+        result = 31 * result + partition.hashCode();
+        result = 31 * result + shardNo;
+        return result;
     }
 }

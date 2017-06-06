@@ -16,9 +16,19 @@
 
 package stroom.index.server;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 import stroom.cache.CacheManagerAutoCloseable;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
@@ -31,15 +41,6 @@ import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.logging.StroomLogger;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.thread.ThreadUtil;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -97,7 +98,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
     AtomicInteger failedThreads = new AtomicInteger(0);
 
     private void doTest(final int threadSize, final int jobSize, final int numberOfIndexes,
-            final int shardsPerPartition, final int maxDocumentsPerIndexShard) throws InterruptedException {
+                        final int shardsPerPartition, final int maxDocumentsPerIndexShard) throws InterruptedException {
         final IndexField indexField = IndexField.createField("test");
         final IndexFields indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(indexField);
@@ -140,7 +141,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         // });
 
         try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-            final IndexShardWriterCacheImpl indexShardPool = new IndexShardWriterCacheImpl(cacheManager, null, null,
+            final IndexShardManagerImpl indexShardManager = new IndexShardManagerImpl(cacheManager, null, null,
                     mockIndexShardService, nodeCache, null) {
                 @Override
                 protected void destroy(final IndexShardKey key, final IndexShardWriter writer) {
@@ -155,7 +156,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
                     // }
                     // }
                     super.destroy(key, writer);
-                    if (writer != null && writer.isOpen()) {
+                    if (writer != null && IndexShardStatus.OPEN.equals(writer.getStatus())) {
                         throw new RuntimeException("Writer should have been closed on destroy!");
                     }
                 }
@@ -176,13 +177,13 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
                 for (int j = 0; j < jobSize; j++) {
                     final int testNumber = i;
                     final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-                    simpleExecutor.execute(new IndexThread(indexShardPool, indexShardKey, indexField, testNumber));
+                    simpleExecutor.execute(new IndexThread(indexShardManager, indexShardKey, indexField, testNumber));
                 }
             }
 
             simpleExecutor.waitForComplete();
             simpleExecutor.stop(false);
-            indexShardPool.shutdown();
+            indexShardManager.shutdown();
 
             Assert.assertEquals("Not expecting any errored threads", 0, failedThreads.get());
         } catch (final Exception e) {
@@ -191,14 +192,14 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
     }
 
     class IndexThread extends Thread {
-        private final IndexShardWriterCacheImpl indexShardPoolImpl;
+        private final Indexer indexer;
         private final IndexShardKey indexShardKey;
         private final IndexField indexField;
         private final int testNumber;
 
-        public IndexThread(final IndexShardWriterCacheImpl indexShardPoolImpl, final IndexShardKey indexShardKey,
-                final IndexField indexField, final int testNumber) {
-            this.indexShardPoolImpl = indexShardPoolImpl;
+        public IndexThread(final Indexer indexer, final IndexShardKey indexShardKey,
+                           final IndexField indexField, final int testNumber) {
+            this.indexer = indexer;
             this.indexShardKey = indexShardKey;
             this.indexField = indexField;
             this.testNumber = testNumber;
@@ -207,25 +208,18 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         @Override
         public void run() {
             try {
-                // Get a writer from the pool.
-                IndexShardWriter writer = indexShardPoolImpl.get(indexShardKey);
-
                 // Do some work.
                 final Field field = FieldFactory.create(indexField, "test");
                 final Document document = new Document();
                 document.add(field);
-                while (!writer.addDocument(document)) {
-                    indexShardPoolImpl.remove(indexShardKey);
 
-                    // Ask the pool for another one and try again
-                    writer = indexShardPoolImpl.get(indexShardKey);
-                }
+                indexer.addDocument(indexShardKey, document);
 
                 // Delay returning the writer to the pool.
                 ThreadUtil.sleep(1);
 
                 // // Return the writer to the pool.
-                // indexShardPoolImpl.returnObject(poolItem, true);
+                // indexShardManager.returnObject(poolItem, true);
 
             } catch (final Throwable th) {
                 LOGGER.error("TEST ERROR " + testNumber, th);
