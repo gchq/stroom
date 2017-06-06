@@ -231,18 +231,7 @@ public class DBRealm extends AuthenticatingRealm {
         User user = null;
 
         try {
-            if (!doneCreateOrRefreshAdminRole) {
-                doneCreateOrRefreshAdminRole = true;
-                createOrRefreshAdminUserGroup();
-            }
-
             UserRef userRef = userService.getUserRefByName(username);
-            if (userRef == null) {
-                // The requested system user does not exist.
-                if (UserService.INITIAL_ADMIN_ACCOUNT.equals(username)) {
-                    userRef = createOrRefreshAdmin();
-                }
-            }
 
             if (userRef != null) {
                 user = userService.loadByUuidInsecure(userRef.getUuid());
@@ -255,6 +244,7 @@ public class DBRealm extends AuthenticatingRealm {
         return user;
     }
 
+    //TODO: Used by SetupSampleData, but should go because it's no longer used in prod code.
     /**
      * @return a new admin user
      */
@@ -283,6 +273,7 @@ public class DBRealm extends AuthenticatingRealm {
         return userRef;
     }
 
+    //TODO: Used by SetupSampleData, but should go because it's no longer used in prod code.
     /**
      * Enusure the admin user groups are created
      *
@@ -292,6 +283,7 @@ public class DBRealm extends AuthenticatingRealm {
         return createOrRefreshAdminUserGroup(ADMINISTRATORS);
     }
 
+    //TODO: Used by SetupSampleData, but should go because it's no longer used in prod code.
     private UserRef createOrRefreshAdminUserGroup(final String userGroupName) {
         final FindUserCriteria findUserGroupCriteria = new FindUserCriteria(userGroupName, true);
         findUserGroupCriteria.getFetchSet().add(Permission.ENTITY_TYPE);
