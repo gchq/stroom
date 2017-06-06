@@ -12,22 +12,13 @@ apply plugin: 'gchq.urldependencies'
 
 ext.versions = [
         stroom: '6.0-beta.1-SNAPSHOT',
-
         //same version for both stroom-query-api and stroom-query-common
         stroomQuery: 'v1.0.0',
         stroomExpression: 'v0.1.0',
         stroomStats: 'v0.4.0-alpha',
-
-        //stroomQueryApi: 'stroom-query-api-v1.0.0',
-        //stroomQueryApiSources: 'stroom-query-api-v1.0.0-sources',
-        //stroomQueryCommon: 'stroom-query-common-v1.0.0',
-        //stroomExpression: 'stroom-expression-v0.1.0',
         eventLogging: 'v3.1.0',
         hadoopCommonShaded: 'v2.6.4-3',
         hadoopHdfsShaded: 'v2.6.4'
-        //eventLogging: 'event-logging-v3.1.0',
-        //hadoopCommonShaded: 'hadoop-common-shaded-v2.6.4-3-all',
-        //hadoopHdfsShaded: 'hadoop-hdfs-shaded-v2.6.4-2-all',
 ]
 
 //lib names for urlDependenciesPlugin
