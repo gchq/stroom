@@ -74,26 +74,30 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
         Optional<DataSourceProvider> optDataSourceProvider = dataSourceProviderRegistry.getDataSourceProvider(docRefType);
 
         if (optDataSourceProvider.isPresent()) {
-            eventsMap.entrySet().stream()
-                    .filter(entry ->
-                            !entry.getValue().isEmpty())
-                    .filter(entry ->
-                            //ensure the provider has a datasource for our docRef
-                            optDataSourceProvider.get().getDataSource(entry.getKey()) != null)
-                    .forEach(entry -> {
-                        DocRef docRef = entry.getKey();
-                        List<InternalStatisticEvent> events = entry.getValue();
-                        String statName = docRef.getName();
-                        //all have same name so have same type
-                        String topic = getTopic(events.get(0).getType());
-                        String message = buildMessage(docRef, events);
-                        ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, statName, message);
-                        stroomKafkaProducer.send(producerRecord, exception -> {
-                            throw new RuntimeException(String.format(
-                                    "Error sending %s internal statistics with name %s to kafka on topic %s",
-                                    events.size(), statName, topic), exception);
+            try {
+                eventsMap.entrySet().stream()
+                        .filter(entry ->
+                                !entry.getValue().isEmpty())
+                        .filter(entry ->
+                                //ensure the provider has a datasource for our docRef
+                                optDataSourceProvider.get().getDataSource(entry.getKey()) != null)
+                        .forEach(entry -> {
+                            DocRef docRef = entry.getKey();
+                            List<InternalStatisticEvent> events = entry.getValue();
+                            String statName = docRef.getName();
+                            //all have same name so have same type
+                            String topic = getTopic(events.get(0).getType());
+                            String message = buildMessage(docRef, events);
+                            ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, statName, message);
+                            stroomKafkaProducer.send(producerRecord, StroomKafkaProducer.FlushMode.NO_FLUSH, exception -> {
+                                throw new RuntimeException(String.format(
+                                        "Error sending %s internal statistics with name %s to kafka on topic %s",
+                                        events.size(), statName, topic), exception);
+                            });
                         });
-                    });
+            } finally {
+                stroomKafkaProducer.flush();
+            }
         } else {
             long eventCount = eventsMap.values().stream().flatMap(List::stream).count();
             LOGGER.error("No data source provider available to accept {} internal statistic events of type {}",

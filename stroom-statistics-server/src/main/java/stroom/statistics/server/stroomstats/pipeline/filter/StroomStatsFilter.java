@@ -17,6 +17,8 @@
 package stroom.statistics.server.stroomstats.pipeline.filter;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
@@ -29,6 +31,7 @@ import stroom.pipeline.server.filter.AbstractSamplingFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService;
+import stroom.statistics.server.stroomstats.kafka.TopicNameFactory;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
@@ -46,34 +49,40 @@ import javax.inject.Inject;
                 PipelineElementType.VISABILITY_SIMPLE},
         icon = ElementIcons.STROOM_STATS)
 public class StroomStatsFilter extends AbstractSamplingFilter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsFilter.class);
+
     private final ErrorReceiverProxy errorReceiverProxy;
     private final StroomKafkaProducer stroomKafkaProducer;
     private final StroomStatsStoreEntityService stroomStatsStoreEntityService;
+    private final TopicNameFactory topicNameFactory;
 
-    private String recordKey;
-    private String topic;
     private StroomStatsStoreEntity stroomStatsStoreEntity;
 
     @Inject
     public StroomStatsFilter(final ErrorReceiverProxy errorReceiverProxy,
                              final LocationFactoryProxy locationFactory,
                              final StroomKafkaProducer stroomKafkaProducer,
-                             final StroomStatsStoreEntityService stroomStatsStoreEntityService) {
+                             final StroomStatsStoreEntityService stroomStatsStoreEntityService,
+                             final TopicNameFactory topicNameFactory) {
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
         this.stroomKafkaProducer = stroomKafkaProducer;
         this.stroomStatsStoreEntityService = stroomStatsStoreEntityService;
+        this.topicNameFactory = topicNameFactory;
     }
 
     @Override
     public void endDocument() throws SAXException {
         super.endDocument();
-        ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, recordKey, getOutput());
         try {
-            //TODO determine topic from type of SSSE
-            //TODO determine key from SSSE name
-            //TODO change SKP to add a syncronous method and use that for both filters
-            stroomKafkaProducer.send(newRecord, exception -> {
+            String topic = topicNameFactory.getTopic(stroomStatsStoreEntity.getStatisticType());
+            String recordKey = stroomStatsStoreEntity.getName();
+            ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, recordKey, getOutput());
+            if (stroomStatsStoreEntity == null) {
+                throw new RuntimeException("No Stroom-Stats data source selected");
+            }
+            LOGGER.trace("Sending statistics to topic {} with key {}", topic, recordKey);
+            stroomKafkaProducer.send(newRecord, StroomKafkaProducer.FlushMode.FLUSH_ON_SEND, exception -> {
                 errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", exception);
             });
         } catch (RuntimeException e) {
@@ -81,8 +90,9 @@ public class StroomStatsFilter extends AbstractSamplingFilter {
         }
     }
 
-    @PipelineProperty(description = "The key for the record. This determines the partition.")
+    @PipelineProperty(description = "The Stroom-Stats data source to send statistics to")
     public void setStroomStatsStoreEntity(final StroomStatsStoreEntity stroomStatsStoreEntity) {
+        this.stroomStatsStoreEntity = stroomStatsStoreEntity;
     }
 
 }
