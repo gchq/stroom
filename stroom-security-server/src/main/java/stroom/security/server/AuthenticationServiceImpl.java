@@ -199,7 +199,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return null;
     }
 
-
     @Override
     public User changePassword(final User user, final String oldPassword, final String newPassword) {
         if (user == null) {
@@ -351,16 +350,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return Boolean.TRUE;
     }
 
+    /**
+     * TODO JC 2017-06-06: This is invoked by GWT using AutoLoginAction. But because we're logging in using
+     * a token the characterisation of this flow as 'logging in' is incorrect. I.e. change the naming.
+     */
     @Override
     @Insecure
     public User autoLogin() throws RuntimeException {
-        User user = getCurrentUser();
-        if (user != null) {
-            user = userService.loadByUuid(user.getUuid());
-            return user;
-        }
-        user = loginWithCertificate();
-
+        User user = userService.loadByUuid(securityContext.getUserUuid());
         return user;
     }
 

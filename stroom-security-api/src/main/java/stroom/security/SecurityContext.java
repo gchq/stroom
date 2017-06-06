@@ -38,6 +38,13 @@ public interface SecurityContext {
      */
     String getUserId();
 
+    /**
+     * Get the uuid of the user associated with this security context.
+     *
+     * @return The uuid of the user associated with this security context.
+     */
+    String getUserUuid();
+
     String getToken();
 
     /**

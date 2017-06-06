@@ -16,9 +16,6 @@
 
 package stroom.security.server;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTCreationException;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.UnavailableSecurityManagerException;
 import org.apache.shiro.session.InvalidSessionException;
@@ -179,6 +176,15 @@ class SecurityContextImpl implements SecurityContext {
             return null;
         }
         return userRef.getName();
+    }
+
+    @Override
+    public String getUserUuid() {
+        final UserRef userRef = getUserRef();
+        if (userRef == null) {
+            return null;
+        }
+        return userRef.getUuid();
     }
 
     @Override
