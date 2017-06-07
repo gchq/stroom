@@ -1,29 +1,29 @@
 dependencies {
     compile project(':stroom-util-shared')
 
-    compile 'org.slf4j:slf4j-api:1.6.1'
-    compile 'org.apache.commons:commons-compress:1.12'
-    compile 'commons-lang:commons-lang:2.6'
-    compile 'commons-io:commons-io:2.5'
-    permitUnusedDeclared 'commons-io:commons-io:2.5'
-    compile 'net.sf.ehcache:ehcache-core:2.6.11'
-    compile 'org.springframework:spring-context:4.3.4.RELEASE'
-    compile 'org.springframework:spring-core:4.3.4.RELEASE'
-    compile 'org.springframework:spring-beans:4.3.4.RELEASE'
-    compile 'org.springframework:spring-test:4.3.4.RELEASE'
-    permitUnusedDeclared 'org.springframework:spring-test:4.3.4.RELEASE'
-    compile 'org.springframework:spring-aop:4.3.4.RELEASE'
-    compile 'org.springframework:spring-web:4.3.4.RELEASE'
-    compile 'org.springframework:spring-webmvc:4.3.4.RELEASE'
-    compile 'com.google.guava:guava:20.0'
-    compile 'javax.servlet:javax.servlet-api:3.1.0'
+    compile libs.commons_compress //#'org.apache.commons:commons-compress:1.12'
+    compile libs.commons_io //#'commons-io:commons-io:2.5'
+    permitUnusedDeclared libs.commons_io //#'commons-io:commons-io:2.5'
+    compile libs.commons_lang //#'commons-lang:commons-lang:2.6'
+    compile libs.ehcache_core //#'net.sf.ehcache:ehcache-core:2.6.11'
+    compile libs.guava //#'com.google.guava:guava:20.0'
+    compile libs.javax_servlet_api //#'javax.servlet:javax.servlet-api:3.1.0'
+    compile libs.slf4j_api //#'org.slf4j:slf4j-api:1.6.1'
+    compile libs.spring_aop //#'org.springframework:spring-aop:4.3.4.RELEASE'
+    compile libs.spring_beans //#'org.springframework:spring-beans:4.3.4.RELEASE'
+    compile libs.spring_context //#'org.springframework:spring-context:4.3.4.RELEASE'
+    compile libs.spring_core //#'org.springframework:spring-core:4.3.4.RELEASE'
+    compile libs.spring_test //#'org.springframework:spring-test:4.3.4.RELEASE'
+    permitUnusedDeclared libs.spring_test //#'org.springframework:spring-test:4.3.4.RELEASE'
+    compile libs.spring_web //#'org.springframework:spring-web:4.3.4.RELEASE'
+    compile libs.spring_webmvc //#'org.springframework:spring-webmvc:4.3.4.RELEASE'
 
-    testCompile 'junit:junit:4.12'
+    testCompile libs.junit //#'junit:junit:4.12'
 
     //the following logging libs are needed when running junits outside dropwizard
-    testRuntime libs.logback_core
-    testRuntime libs.logback_classic
-    testRuntime libs.log4j_over_slf4j
     testRuntime libs.jcl_over_slf4j
     testRuntime libs.jul_to_slf4j
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.logback_classic
+    testRuntime libs.logback_core
 }

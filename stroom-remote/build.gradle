@@ -1,8 +1,9 @@
 dependencies {
     compile project(':stroom-util')
-    compile 'com.caucho:hessian:4.0.38'
-    compile 'commons-lang:commons-lang:2.6'
-    compile 'org.slf4j:slf4j-api:1.6.1'
-    compile 'org.springframework:spring-context:4.3.4.RELEASE'
-    compile 'org.springframework:spring-web:4.3.4.RELEASE'
+
+    compile libs.commons_lang //#'commons-lang:commons-lang:2.6'
+    compile libs.hessian //#'com.caucho:hessian:4.0.38'
+    compile libs.slf4j_api //#'org.slf4j:slf4j-api:1.6.1'
+    compile libs.spring_context //#'org.springframework:spring-context:4.3.4.RELEASE'
+    compile libs.spring_web //#'org.springframework:spring-web:4.3.4.RELEASE'
 }

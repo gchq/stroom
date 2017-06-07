@@ -16,7 +16,6 @@
 
 package stroom.datasource;
 
-import org.apache.curator.x.discovery.ServiceInstance;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.ExternalService;
@@ -56,7 +55,7 @@ public class DataSourceProviderRegistry {
 
         return ExternalService.getExternalService(docRefType)
                 .flatMap(serviceDiscoverer::getServiceInstance)
-                .filter(ServiceInstance::isEnabled)
+//                .filter(ServiceInstance::isEnabled) //not available until curator 2.12
                 .flatMap(serviceInstance -> {
                     String address = serviceInstance.buildUriSpec();
                     return Optional.of(new RemoteDataSourceProvider(securityContext, address));

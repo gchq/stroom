@@ -22,19 +22,19 @@ gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlL
 gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApi))).getAsPath())
 
 dependencies {
-    compile project(':stroom-dashboard-client')
     compile project(':stroom-core-client')
     compile project(':stroom-core-client-widget')
+    compile project(':stroom-dashboard-client')
     compile project(':stroom-security-client')
 
-    compile 'com.google.inject:guice:3.0'
-    compile 'com.google.gwt:gwt-servlet:2.8.0'
-    permitUnusedDeclared 'com.google.gwt:gwt-servlet:2.8.0'
-    compile 'com.google.gwt:gwt-user:2.8.0'
-    compile 'com.google.gwt.inject:gin:2.1.2'
-    compile 'com.google.gwt:gwt-dev:2.8.0'
-    permitUnusedDeclared 'com.google.gwt:gwt-dev:2.8.0'
-    compile 'com.gwtplatform:gwtp-mvp-client:0.7'
+    compile libs.gin //#'com.google.gwt.inject:gin:2.1.2'
+    compile libs.guice //#'com.google.inject:guice:3.0'
+    compile libs.gwt_dev //#'com.google.gwt:gwt-dev:2.8.0'
+    permitUnusedDeclared libs.gwt_dev //#'com.google.gwt:gwt-dev:2.8.0'
+    compile libs.gwt_servlet //#'com.google.gwt:gwt-servlet:2.8.0'
+    permitUnusedDeclared libs.gwt_servlet //#'com.google.gwt:gwt-servlet:2.8.0'
+    compile libs.gwt_user //#'com.google.gwt:gwt-user:2.8.0'
+    compile libs.gwtp_mvp_client //#'com.gwtplatform:gwtp-mvp-client:0.7'
 }
 
 task gwtCompile(dependsOn: classes, type: JavaExec) {

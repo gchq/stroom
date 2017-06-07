@@ -1,44 +1,44 @@
 dependencies {
     compile project(':stroom-core-server')
-    compile project(':stroom-util')
-    compile project(':stroom-entity-shared')
-    compile project(':stroom-util-shared')
     compile project(':stroom-core-shared')
+    compile project(':stroom-entity-shared')
     compile project(':stroom-security-api')
     compile project(':stroom-statistics-api')
     permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
     compile urlDependencies.get(urlLibs.hadoopCommonShaded)
     compile urlDependencies.get(urlLibs.hadoopHdfsShaded)
 
-    compile 'org.springframework:spring-beans:4.3.4.RELEASE'
-    compile 'org.springframework:spring-context:4.3.4.RELEASE'
-    compile 'org.springframework:spring-tx:4.3.4.RELEASE'
-    compile 'org.glassfish.jersey.core:jersey-client:2.25.1'
-    compile 'org.apache.kafka:kafka-clients:0.10.0.1' //CDH5.10 uses kafka 10.0
-    compile 'org.slf4j:slf4j-api:1.7.21'
-    compile 'com.google.guava:guava:20.0'
-    compile 'commons-lang:commons-lang:2.6'
-    compile 'net.sf.ehcache:ehcache-core:2.6.11'
-    compile 'net.sf.saxon:Saxon-HE:9.6.0-6'
-    compile 'com.fasterxml.jackson.core:jackson-core:2.8.6'
-    compile 'xml-apis:xml-apis:1.0.b2'
-    compile 'stax:stax-api:1.0.1'
-    compile 'javax.inject:javax.inject:1'
-    compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
-    compile 'javax.annotation:javax.annotation-api:1.2'
+    compile libs.spring_beans //#'org.springframework:spring-beans:4.3.4.RELEASE'
+    compile libs.spring_context //#'org.springframework:spring-context:4.3.4.RELEASE'
+    compile libs.spring_tx //#'org.springframework:spring-tx:4.3.4.RELEASE'
+    compile libs.jersey_client //#'org.glassfish.jersey.core:jersey-client:2.25.1'
+    compile libs.kafka_clients //#'org.apache.kafka:kafka-clients:0.10.0.1' //CDH5.10 uses kafka 10.0
+    compile libs.slf4j_api //#'org.slf4j:slf4j-api:1.7.21'
+    compile libs.guava //#'com.google.guava:guava:20.0'
+    compile libs.commons_lang //#'commons-lang:commons-lang:2.6'
+    compile libs.ehcache_core //#'net.sf.ehcache:ehcache-core:2.6.11'
+    compile libs.saxon_he //#'net.sf.saxon:Saxon-HE:9.6.0-6'
+    compile libs.jackson_core //#'com.fasterxml.jackson.core:jackson-core:2.8.6'
+    compile libs.xml_apis //#'xml-apis:xml-apis:1.0.b2'
+    compile libs.stax_api //#'stax:stax-api:1.0.1'
+    compile libs.javax_inject //#'javax.inject:javax.inject:1'
+    compile libs.ws_rs_api //#'javax.ws.rs:javax.ws.rs-api:2.0.1'
+    compile libs.javax_annotation_api //#'javax.annotation:javax.annotation-api:1.2'
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
 
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.0.2-beta'
+    testCompile libs.junit //#'junit:junit:4.12'
+    testCompile libs.mockito_core //#'org.mockito:mockito-core:2.0.2-beta'
 
     //the following logging libs are needed when running junits outside dropwizard
-    testRuntime libs.logback_core
-    testRuntime libs.logback_classic
-    testRuntime libs.log4j_over_slf4j
     testRuntime libs.jcl_over_slf4j
     testRuntime libs.jul_to_slf4j
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.logback_classic
+    testRuntime libs.logback_core
 }

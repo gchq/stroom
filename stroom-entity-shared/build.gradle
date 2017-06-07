@@ -18,19 +18,20 @@ dependencies {
     compile urlDependencies.get(urlLibs.stroomQueryApi)
 
     compile project(':stroom-util-shared')
-    compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
 
-    compile 'javax.validation:validation-api:1.0.0.GA'
-    runtime 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
-    runtime 'com.google.jsinterop:jsinterop-annotations:1.0.1'
+    compile libs.hibernate_jpa_api //#'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
+    compile libs.validation_api //#'javax.validation:validation-api:1.0.0.GA'
 
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.0.2-beta'
+    runtime libs.jackson_annotations //#'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
+    runtime libs.jsinterop_annotations //#'com.google.jsinterop:jsinterop-annotations:1.0.1'
+
+    testCompile libs.junit //#'junit:junit:4.12'
+    testCompile libs.mockito_core //#'org.mockito:mockito-core:2.0.2-beta'
 
     //the following logging libs are needed when running junits outside dropwizard
-    testRuntime libs.logback_core
-    testRuntime libs.logback_classic
-    testRuntime libs.log4j_over_slf4j
     testRuntime libs.jcl_over_slf4j
     testRuntime libs.jul_to_slf4j
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.logback_classic
+    testRuntime libs.logback_core
 }
