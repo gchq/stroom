@@ -50,7 +50,7 @@ public class InternalStatisticDocRefCache {
         String docRefsStr = stroomPropertyService.getProperty(propKey);
 
         if (docRefsStr == null || docRefsStr.isEmpty()) {
-            LOGGER.debug("Returning empty list");
+            LOGGER.trace("Returning empty list");
             return Collections.emptyList();
         } else  {
             Matcher matcher = DOC_REF_WHOLE_PATTERN.matcher(docRefsStr);
@@ -58,7 +58,7 @@ public class InternalStatisticDocRefCache {
                 throw new RuntimeException(String.format("Property value for key %s does not contain valid docRefs [%s]", internalStatisticKey, docRefsStr));
             } else {
                 List<DocRef> docRefs = splitString(docRefsStr);
-                LOGGER.debug("Returning {}", docRefs);
+                LOGGER.trace("Returning {}", docRefs);
                 return docRefs;
             }
         }
