@@ -16,22 +16,22 @@
 
 package stroom.pipeline.state;
 
-import java.io.IOException;
-
-import javax.annotation.Resource;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.util.date.DateUtil;
 import stroom.util.spring.StroomScope;
 import stroom.util.zip.HeaderMap;
 
+import javax.annotation.Resource;
+import java.io.IOException;
+
 @Component
 @Scope(value = StroomScope.TASK)
-public class MetaDataHolder extends AbstractHolder<MetaDataHolder>implements Holder {
+public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Holder {
     private static final int MINIMUM_BYTE_COUNT = 10;
 
     @Resource
@@ -58,6 +58,24 @@ public class MetaDataHolder extends AbstractHolder<MetaDataHolder>implements Hol
                     if (byteCount > MINIMUM_BYTE_COUNT) {
                         metaData.read(inputStream, false);
                     }
+                }
+            }
+
+            final Stream stream = streamHolder.getStream();
+            if (stream != null) {
+                if (stream.getFeed() != null) {
+                    metaData.computeIfAbsent("Feed", k -> stream.getFeed().getName());
+                }
+                if (stream.getStreamType() != null) {
+                    metaData.computeIfAbsent("StreamType", k -> stream.getStreamType().getDisplayValue());
+                }
+                metaData.computeIfAbsent("CreatedTime", k -> DateUtil.createNormalDateTimeString(stream.getCreateMs()));
+                if (stream.getEffectiveMs() != null) {
+                    metaData.computeIfAbsent("EffectiveTime", k -> DateUtil.createNormalDateTimeString(stream.getEffectiveMs()));
+                }
+
+                if (stream.getStreamProcessor() != null && stream.getStreamProcessor().getPipeline() != null) {
+                    metaData.computeIfAbsent("Pipeline", k -> stream.getStreamProcessor().getPipeline().getName());
                 }
             }
         }
