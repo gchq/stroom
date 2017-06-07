@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.31] - 2017-06-07
+
 * Issue **#307** : Made some changes to avoid potential NPE caused by session serialisation.
 
 * Issue **#306** : Added a stroom `meta` XSLT function. The XSLT function now exposes `Feed`, `StreamType`, `CreatedTime`, `EffectiveTime` and `Pipeline` meta attributes from the currently processing stream in addition to any other meta data that might apply. To access these meta data attributes of the current stream use `stroom:meta('StreamType')` etc. The `feed-attribute` function is now an alias for the `meta` function and should be considered to be deprecated.
@@ -439,7 +441,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.30...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.31...HEAD
+[v5.0-beta.31]: https://github.com/gchq/stroom/compare/v5.0-beta.30...v5.0-beta.31
 [v5.0-beta.30]: https://github.com/gchq/stroom/compare/v5.0-beta.29...v5.0-beta.30
 [v5.0-beta.29]: https://github.com/gchq/stroom/compare/v5.0-beta.28...v5.0-beta.29
 [v5.0-beta.28]: https://github.com/gchq/stroom/compare/v5.0-beta.27...v5.0-beta.28
