@@ -15,10 +15,14 @@
   ~ limitations under the License.
   -->
 <ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:noNamespaceSchemaLocation="http://ehcache.org/ehcache.xsd">
-  <defaultCache eternal="true" maxElementsInMemory="1000000"
-    overflowToDisk="false" />
-<!--   <cache name="serviceCache" maxElementsInMemory="1000" eternal="false" -->
-<!--     overflowToDisk="false" timeToIdleSeconds="60" timeToLiveSeconds="60" /> -->
+         xsi:noNamespaceSchemaLocation="http://ehcache.org/ehcache.xsd">
+    <defaultCache eternal="true" maxElementsInMemory="1000000"
+                  overflowToDisk="false"/>
+    <!--   <cache name="serviceCache" maxElementsInMemory="1000" eternal="false" -->
+    <!--     overflowToDisk="false" timeToIdleSeconds="60" timeToLiveSeconds="60" /> -->
+
+
+    <!-- The statistics caches are currently configured in stroomCoreServerEHCache.xml -->
+
 </ehcache>
 

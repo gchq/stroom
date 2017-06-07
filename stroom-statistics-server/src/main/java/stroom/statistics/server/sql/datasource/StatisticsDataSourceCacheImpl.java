@@ -16,6 +16,7 @@
 
 package stroom.statistics.server.sql.datasource;
 
+import com.google.common.base.Preconditions;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
@@ -77,7 +78,8 @@ public class StatisticsDataSourceCacheImpl implements StatisticStoreCache, Entit
 
     @Override
     public StatisticStoreEntity getStatisticsDataSource(final DocRef docRef) {
-        final Ehcache cacheByRef = getCacheByRef();
+        final Ehcache cacheByRef = Preconditions.checkNotNull(getCacheByRef(),
+                "Cache %s cannot be found - check EHCache configuration", STATISTICS_DATA_SOURCE_CACHE_NAME_BY_ID);
 
         final Element cacheResult = cacheByRef.get(docRef);
 
