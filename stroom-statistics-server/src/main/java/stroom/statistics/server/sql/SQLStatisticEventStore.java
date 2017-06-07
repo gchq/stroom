@@ -16,6 +16,7 @@
 
 package stroom.statistics.server.sql;
 
+import com.google.common.base.Preconditions;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
@@ -551,7 +552,7 @@ public class SQLStatisticEventStore implements Statistics {
 
         final Long optionalEventProcessingThresholdMs = getEventProcessingThresholdMs();
 
-        final StatisticStoreEntity entity = (StatisticStoreEntity) statisticStore;
+        final StatisticStoreEntity entity = (StatisticStoreEntity) Preconditions.checkNotNull(statisticStore);
 
         // validate the first stat in the batch to check we have a statistic
         // data source for it.
