@@ -40,12 +40,18 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
         serviceDiscoveryManager.registerStartupListener(this::initProviders);
     }
 
-
     @Override
     public Optional<ServiceInstance<String>> getServiceInstance(final ExternalService externalService) {
         try {
             LOGGER.trace("Getting service instance for {}", externalService.getServiceKey());
-            return Optional.ofNullable(serviceProviders.get(externalService).getInstance());
+            return Optional.ofNullable(serviceProviders.get(externalService))
+                    .flatMap(stringServiceProvider -> {
+                        try {
+                            return Optional.ofNullable(stringServiceProvider.getInstance());
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
