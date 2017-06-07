@@ -81,10 +81,8 @@ public abstract class AbstractIndexShard {
                     directory = new NIOFSDirectory(dir, new SimpleFSLockFactory());
 
                     // We have opened the index so update the DB object.
-                    if (directory != null) {
-                        indexShard.setStatus(IndexShardStatus.OPEN);
-                        indexShard = service.save(indexShard);
-                    }
+                    indexShard.setStatus(IndexShardStatus.OPEN);
+                    indexShard = service.save(indexShard);
                 }
             } finally {
                 if (directory == null) {

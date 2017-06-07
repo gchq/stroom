@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public class TreeStructure implements SharedObject {
+    private static final long serialVersionUID = 4459080492974776354L;
     private ExplorerData root;
     private Map<ExplorerData, ExplorerData> parentMap = new HashMap<>();
     private Map<ExplorerData, List<ExplorerData>> childMap = new HashMap<>();

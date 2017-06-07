@@ -9,6 +9,64 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.31] - 2017-06-07
+
+* Issue **#307** : Made some changes to avoid potential NPE caused by session serialisation.
+
+* Issue **#306** : Added a stroom `meta` XSLT function. The XSLT function now exposes `Feed`, `StreamType`, `CreatedTime`, `EffectiveTime` and `Pipeline` meta attributes from the currently processing stream in addition to any other meta data that might apply. To access these meta data attributes of the current stream use `stroom:meta('StreamType')` etc. The `feed-attribute` function is now an alias for the `meta` function and should be considered to be deprecated.
+
+* Issue **#303** : The stream delete job now uses cron in preference to a frequency.
+
+## [v5.0-beta.30] - 2017-06-06
+
+* Issue **#152** : Changed the way indexing is performed so that a single indexer object is now responsible for indexing documents and adding them to the appropriate shard.
+
+## [v5.0-beta.29] - 2017-05-26
+
+* Issue **#179** : Updated Saxon-HE to version 9.7.0-18 and added XSLTFilter option to `usePool` to see if caching might be responsible for issue.
+
+* Issue **#288** : Made further changes to ensure that the IndexShardWriterCache doesn't try to reuse an index shard that has failed when adding any documents.
+
+## [v5.0-beta.28] - 2017-05-19
+
+* Issue **#295** : Made the help URL absolute and not relative.
+
+* Issue **#293** : Attempt to fix mismatch document count error being reported when index shards are opened.
+
+* Issue **#292** : Fixed locking for rolling stream appender.
+
+* Issue **#292** : Rolling stream output is no longer associated with a task, processor or pipeline to avoid future processing tasks from deleting rolling streams by thinking they are superseded.
+
+* Issue **#292** : Data that we expect to be unavailable, e.g. locked and deleted streams, will no longer log exceptions when a user tries to view it and will instead return an appropriate message to the user in place of the data.
+
+## [v5.0-beta.27] - 2017-05-18
+
+* Issue **#288** : The error condition 'Expected a new writer but got the same one back!!!' should no longer be encountered as the root cause should now be fixed. The original check has been reinstated so that processing will terminate if we do encounter this problem.
+
+* Issue **#295** : Fixed the help property so that it can now be configured.
+
+* Issue **#296** : Removed 'New' and 'Delete' buttons from the global property dialog.
+
+* Issue **#279** : Fixed NPE thrown during proxy aggregation.
+
+* Issue **#294** : Changing stream task status now tries multiple times to attempt to avoid a hibernate LockAcquisitionException.
+
+## [v5.0-beta.26] - 2017-05-12
+
+* Issue **#287** : XSLT not found warnings property description now defaults to false.
+
+* Issue **#261** : The save button is now only enabled when a dashboard or other item is made dirty and it is not read only.
+
+* Issue **#286** : Dashboards now correctly save the selected tab when a tab is selected via the popup tab selector (visible when tabs are collapsed).
+
+* Issue **#289** : Changed Log4J configuration to suppress logging from Hibernate SqlExceptionHandler for expected exceptions like constraint violations.
+
+* Issue **#288** : Changed 'Expected a new writer...' fatal error to warning as the condition in question might be acceptable.
+
+## [v5.0-beta.25] - 2017-05-10
+
+* Issue **#285** : Attempted fix for GWT RPC serialisation issue.
+
 ## [v5.0-beta.24] - 2017-05-09
 
 * Issue **#283** : Statistics for the stream task queue are now captured even if the size is zero.
@@ -383,7 +441,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.24...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.31...HEAD
+[v5.0-beta.31]: https://github.com/gchq/stroom/compare/v5.0-beta.30...v5.0-beta.31
+[v5.0-beta.30]: https://github.com/gchq/stroom/compare/v5.0-beta.29...v5.0-beta.30
+[v5.0-beta.29]: https://github.com/gchq/stroom/compare/v5.0-beta.28...v5.0-beta.29
+[v5.0-beta.28]: https://github.com/gchq/stroom/compare/v5.0-beta.27...v5.0-beta.28
+[v5.0-beta.27]: https://github.com/gchq/stroom/compare/v5.0-beta.26...v5.0-beta.27
+[v5.0-beta.26]: https://github.com/gchq/stroom/compare/v5.0-beta.25...v5.0-beta.26
+[v5.0-beta.25]: https://github.com/gchq/stroom/compare/v5.0-beta.24...v5.0-beta.25
 [v5.0-beta.24]: https://github.com/gchq/stroom/compare/v5.0-beta.23...v5.0-beta.24
 [v5.0-beta.23]: https://github.com/gchq/stroom/compare/v5.0-beta.22...v5.0-beta.23
 [v5.0-beta.22]: https://github.com/gchq/stroom/compare/v5.0-beta.21...v5.0-beta.22

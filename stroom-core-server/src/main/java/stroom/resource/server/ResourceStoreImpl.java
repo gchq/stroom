@@ -37,8 +37,8 @@ import stroom.util.spring.StroomStartup;
  */
 @Component("resourceStore")
 public class ResourceStoreImpl implements ResourceStore {
-    private Set<ResourceKey> currentFiles = new HashSet<ResourceKey>();
-    private Set<ResourceKey> oldFiles = new HashSet<ResourceKey>();
+    private Set<ResourceKey> currentFiles = new HashSet<>();
+    private Set<ResourceKey> oldFiles = new HashSet<>();
     private long sequence;
     private File tempDir = null;
 

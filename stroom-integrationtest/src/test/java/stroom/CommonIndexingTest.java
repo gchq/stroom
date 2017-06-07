@@ -25,7 +25,7 @@ import stroom.test.StroomProcessTestFileUtil;
 import org.junit.Assert;
 import org.springframework.stereotype.Component;
 
-import stroom.index.server.IndexShardWriterCache;
+import stroom.index.server.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.pipeline.server.task.PipelineStreamProcessor;
 import stroom.pipeline.shared.PipelineEntity;
@@ -50,7 +50,7 @@ public class CommonIndexingTest {
             .getTestResourcesFile(DIR + "search_result_text.xsl");
 
     @Resource
-    private IndexShardWriterCache indexShardPool;
+    private IndexShardManager indexShardManager;
     @Resource
     private CommonTranslationTest commonTranslationTest;
     @Resource
@@ -83,7 +83,7 @@ public class CommonIndexingTest {
             }
 
             // Flush all newly created index shards.
-            indexShardPool.findFlush(new FindIndexShardCriteria());
+            indexShardManager.findFlush(new FindIndexShardCriteria());
         } catch (final Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -92,7 +92,7 @@ public class CommonIndexingTest {
     public int flushIndex() {
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         criteria.getIndexIdSet().setMatchAll(true);
-        indexShardPool.findFlush(criteria);
+        indexShardManager.findFlush(criteria);
 
         return 1;
     }

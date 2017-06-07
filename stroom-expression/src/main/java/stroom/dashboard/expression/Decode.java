@@ -68,7 +68,7 @@ public class Decode extends AbstractFunction implements Serializable {
     public static final String NAME = "decode";
 
     private Generator gen;
-    private Function function = null;
+    private Function function;
     private boolean hasAggregate;
 
     private String[] str;

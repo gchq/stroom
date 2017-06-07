@@ -17,22 +17,27 @@
 package stroom.index.server;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
 
+import org.apache.lucene.store.AlreadyClosedException;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.cache.AbstractCacheBean.Destroyable;
+import stroom.index.shared.IndexShard.IndexShardStatus;
 
-public interface IndexShardWriter extends Destroyable {
+import java.io.IOException;
+
+interface IndexShardWriter extends Destroyable {
     void check();
+
+    IndexShardStatus getStatus();
+
+    void setStatus(IndexShardStatus status);
 
     boolean open(boolean create);
 
-    boolean isOpen();
-
-    boolean isClosed();
-
-    boolean isDeleted();
+    boolean isFull();
 
     boolean close();
 
@@ -44,15 +49,9 @@ public interface IndexShardWriter extends Destroyable {
 
     void updateIndex(Index index);
 
-    boolean addDocument(Document document);
-
-    boolean isFull();
-
-    boolean isCorrupt();
+    void addDocument(Document document) throws IOException, IndexException, AlreadyClosedException;
 
     int getDocumentCount();
-
-    Long getFileSize();
 
     IndexShard getIndexShard();
 

@@ -42,7 +42,7 @@ class DeleteIndexShardActionHandler extends AbstractTaskHandler<DeleteIndexShard
     @Override
     public VoidResult exec(final DeleteIndexShardAction action) {
         final FindDeleteServiceClusterTask<FindIndexShardCriteria> clusterTask = new FindDeleteServiceClusterTask<>(
-                action.getUserToken(), action.getTaskName(), IndexShardWriterCache.class,
+                action.getUserToken(), action.getTaskName(), IndexShardManager.class,
                 action.getCriteria());
         dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
         return new VoidResult();

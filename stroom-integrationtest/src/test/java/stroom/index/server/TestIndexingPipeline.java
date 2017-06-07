@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server;
+package stroom.index.server;
 
+import org.junit.After;
+import org.junit.Before;
 import stroom.AbstractProcessIntegrationTest;
-import stroom.index.server.IndexShardWriter;
-import stroom.index.server.MockIndexShardWriter;
-import stroom.index.server.MockIndexShardWriterCache;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShardKey;
+import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.server.factory.Pipeline;
@@ -64,7 +64,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     @Resource
     private ErrorReceiverProxy errorReceiver;
     @Resource
-    private MockIndexShardWriterCache indexShardPool;
+    private MockIndexShardManager indexShardManager;
     @Resource
     private PipelineEntityService pipelineEntityService;
     @Resource
@@ -73,6 +73,12 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     private StreamHolder streamHolder;
     @Resource
     private PipelineDataCache pipelineDataCache;
+
+    @Before
+    @After
+    public void clear() {
+        indexShardManager.clear();
+    }
 
     @Test
     public void testSimple() {
@@ -119,10 +125,10 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         pipeline.process(inputStream);
 
         // Make sure we only used one writer.
-        Assert.assertEquals(1, indexShardPool.getWriters().size());
+        Assert.assertEquals(1, indexShardManager.getWriters().size());
 
         // Get the writer from the pool.
-        final Map<IndexShardKey, IndexShardWriter> writers = indexShardPool.getWriters();
+        final Map<IndexShardKey, IndexShardWriter> writers = indexShardManager.getWriters();
         final MockIndexShardWriter writer = (MockIndexShardWriter) writers.values().iterator().next();
 
         // Check that we indexed 4 documents.
@@ -145,6 +151,6 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         }
 
         // // Return the writer to the pool.
-        // indexShardPool.returnObject(poolItem, true);
+        // indexShardManager.returnObject(poolItem, true);
     }
 }

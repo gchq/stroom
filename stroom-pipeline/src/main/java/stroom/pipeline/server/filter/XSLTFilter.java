@@ -649,7 +649,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         this.xsltNamePattern = xsltNamePattern;
     }
 
-    @PipelineProperty(description = "If XSLT cannot be found to match the name pattern suppress warnings.", defaultValue = "true")
+    @PipelineProperty(description = "If XSLT cannot be found to match the name pattern suppress warnings.", defaultValue = "false")
     public void setSuppressXSLTNotFoundWarnings(final boolean suppressXSLTNotFoundWarnings) {
         this.suppressXSLTNotFoundWarnings = suppressXSLTNotFoundWarnings;
     }
@@ -661,6 +661,11 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         }
 
         pipelineReferences.add(pipelineReference);
+    }
+
+    @PipelineProperty(description = "Advanced: Choose whether or not you want to use cached XSLT templates to improve performance.", defaultValue = "true")
+    public void setUsePool(final boolean usePool) {
+        this.usePool = usePool;
     }
 
     @Override

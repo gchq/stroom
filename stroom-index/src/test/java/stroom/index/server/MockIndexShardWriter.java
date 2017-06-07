@@ -16,29 +16,26 @@
 
 package stroom.index.server;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexableField;
+import stroom.index.shared.Index;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShard.IndexShardStatus;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexableField;
-
-import stroom.index.shared.Index;
-import stroom.index.shared.IndexShard;
-
 public class MockIndexShardWriter implements IndexShardWriter {
     private final List<Document> documents = new ArrayList<Document>();
     private static AtomicLong idGen = new AtomicLong();
+    private IndexShardStatus status = IndexShardStatus.CLOSED;
 
     @Override
     public boolean open(final boolean create) {
+        setStatus(IndexShardStatus.OPEN);
         return true;
-    }
-
-    @Override
-    public boolean isOpen() {
-        return false;
     }
 
     @Override
@@ -55,6 +52,7 @@ public class MockIndexShardWriter implements IndexShardWriter {
 
     @Override
     public boolean close() {
+        setStatus(IndexShardStatus.CLOSED);
         return true;
     }
 
@@ -64,6 +62,7 @@ public class MockIndexShardWriter implements IndexShardWriter {
 
     @Override
     public boolean delete() {
+        setStatus(IndexShardStatus.DELETED);
         return true;
     }
 
@@ -73,14 +72,13 @@ public class MockIndexShardWriter implements IndexShardWriter {
     }
 
     @Override
-    public boolean addDocument(final Document document) {
+    public void addDocument(final Document document) {
         // Create a new document and copy the fields.
         final Document doc = new Document();
         for (final IndexableField field : document.getFields()) {
             doc.add(field);
         }
         documents.add(doc);
-        return true;
     }
 
     @Override
@@ -102,11 +100,6 @@ public class MockIndexShardWriter implements IndexShardWriter {
     }
 
     @Override
-    public Long getFileSize() {
-        return null;
-    }
-
-    @Override
     public boolean isFull() {
         return false;
     }
@@ -117,22 +110,17 @@ public class MockIndexShardWriter implements IndexShardWriter {
     }
 
     @Override
-    public boolean isClosed() {
-        return false;
-    }
-
-    @Override
-    public boolean isDeleted() {
-        return false;
-    }
-
-    @Override
-    public boolean isCorrupt() {
-        return false;
-    }
-
-    @Override
     public IndexWriter getWriter() {
         return null;
+    }
+
+    @Override
+    public IndexShardStatus getStatus() {
+        return status;
+    }
+
+    @Override
+    public void setStatus(final IndexShardStatus status) {
+        this.status = status;
     }
 }

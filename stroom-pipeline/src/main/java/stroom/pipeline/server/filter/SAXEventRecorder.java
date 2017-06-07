@@ -196,7 +196,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         if (xPathFilters != null) {
             try {
                 final NodeInfo nodeInfo = getEvents();
-                final DocumentInfo documentInfo = nodeInfo.getDocumentRoot();
+                final NodeInfo documentInfo = nodeInfo.getRoot();
                 for (final CompiledXPathFilter compiledXPathFilter : xPathFilters) {
                     final Object result = compiledXPathFilter.getXPathExpression().evaluate(documentInfo,
                             XPathConstants.NODESET);

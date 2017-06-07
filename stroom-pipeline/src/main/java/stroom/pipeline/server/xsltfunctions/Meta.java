@@ -34,7 +34,7 @@ import net.sf.saxon.value.StringValue;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class FeedAttribute extends StroomExtensionFunctionCall {
+public class Meta extends StroomExtensionFunctionCall {
     @Resource
     private MetaDataHolder metaDataHolder;
 

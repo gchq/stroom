@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server;
+package stroom.index.server;
 
+import org.apache.lucene.document.Document;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.xml.sax.SAXException;
 import stroom.AbstractProcessIntegrationTest;
 import stroom.feed.shared.Feed;
-import stroom.index.server.IndexMarshaller;
-import stroom.index.server.IndexShardKeyUtil;
-import stroom.index.server.IndexShardWriter;
-import stroom.index.server.MockIndexShardWriter;
-import stroom.index.server.MockIndexShardWriterCache;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShardKey;
+import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.factory.Pipeline;
@@ -40,13 +42,9 @@ import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexField.AnalyzerType;
 import stroom.query.shared.IndexFieldType;
 import stroom.query.shared.IndexFields;
-import stroom.test.StroomProcessTestFileUtil;
 import stroom.test.PipelineTestUtil;
+import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.date.DateUtil;
-import org.apache.lucene.document.Document;
-import org.junit.Assert;
-import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import javax.annotation.Resource;
 import javax.xml.parsers.ParserConfigurationException;
@@ -65,7 +63,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     @Resource
     private FeedHolder feedHolder;
     @Resource
-    private MockIndexShardWriterCache indexShardPool;
+    private MockIndexShardManager indexShardManager;
     @Resource
     private IndexService indexService;
     @Resource
@@ -74,6 +72,12 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     private PipelineMarshaller pipelineMarshaller;
     @Resource
     private PipelineDataCache pipelineDataCache;
+
+    @Before
+    @After
+    public void clear() {
+        indexShardManager.clear();
+    }
 
     @Test
     public void testSimpleDocuments() throws SAXException, ParserConfigurationException, IOException {
@@ -207,12 +211,12 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
         // Wrote anything ?
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-        if (indexShardPool.getWriters().size() > 0) {
-            Assert.assertEquals(1, indexShardPool.getWriters().size());
-            Assert.assertTrue(indexShardPool.getWriters().containsKey(indexShardKey));
+        if (indexShardManager.getWriters().size() > 0) {
+            Assert.assertEquals(1, indexShardManager.getWriters().size());
+            Assert.assertTrue(indexShardManager.getWriters().containsKey(indexShardKey));
 
             // Get a writer from the pool.
-            for (final IndexShardWriter writer : indexShardPool.getWriters().values()) {
+            for (final IndexShardWriter writer : indexShardManager.getWriters().values()) {
                 return ((MockIndexShardWriter) writer).getDocuments();
             }
         }

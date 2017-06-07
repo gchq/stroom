@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.shared;
+package stroom.index.server;
 
-public class StreamPermissionException extends RuntimeException {
-    private static final long serialVersionUID = -4440960036445588068L;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexWriter;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardKey;
 
-    public StreamPermissionException(final String message) {
-        super(message);
-    }
+public interface Indexer {
+    void addDocument(IndexShardKey key, Document document);
+
+    IndexWriter getWriter(final IndexShard indexShard);
 }

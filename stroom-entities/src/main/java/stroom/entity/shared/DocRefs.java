@@ -25,6 +25,7 @@ import java.util.TreeSet;
 
 @XmlRootElement(name = "docs")
 public class DocRefs implements Iterable<DocRef>, Serializable {
+    private static final long serialVersionUID = 8637215303311013483L;
     private Set<DocRef> set = new TreeSet<DocRef>();
 
     public DocRefs() {

@@ -31,7 +31,7 @@ import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.index.server.IndexShardWriterCache;
+import stroom.index.server.IndexShardManager;
 import stroom.index.server.IndexShardWriterImpl;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
@@ -96,7 +96,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
     @Resource
-    private IndexShardWriterCache indexShardWriterPool;
+    private IndexShardManager indexShardManager;
     @Resource
     private DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
     @Resource
@@ -149,7 +149,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         streamTaskCreator.shutdown();
 
         // Make sure we don't delete database entries without clearing the pool.
-        indexShardWriterPool.shutdown();
+        indexShardManager.shutdown();
 
         for (final IndexShard indexShard : indexShardService.find(new FindIndexShardCriteria())) {
             final IndexShardWriterImpl writer = new IndexShardWriterImpl(indexShardService, null, indexShard.getIndex(),

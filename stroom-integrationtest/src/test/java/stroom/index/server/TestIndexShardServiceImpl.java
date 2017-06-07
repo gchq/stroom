@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.index;
+package stroom.index.server;
 
 import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;

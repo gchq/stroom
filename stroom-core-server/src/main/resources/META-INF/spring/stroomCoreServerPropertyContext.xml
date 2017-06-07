@@ -785,6 +785,13 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.helpUrl"/>
+            <property name="value" value=""/>
+            <property name="description" value="The URL of hosted help files."/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
 
         <!-- Common statistics store properties -->
         <bean class="stroom.node.shared.GlobalProperty">

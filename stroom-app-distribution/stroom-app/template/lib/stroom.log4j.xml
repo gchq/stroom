@@ -19,6 +19,10 @@
     <param name="MaxFileSize" value="10"/>
   </appender>
 
+  <logger name="org.hibernate">
+    <level value="fatal"/>
+  </logger>
+
   <logger name="stroom" additivity="false">
     <level value="info"/>
     <appender-ref ref="STROOM"/>

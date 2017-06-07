@@ -16,10 +16,6 @@
 
 package stroom.index.server;
 
-import javax.annotation.Resource;
-
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.util.spring.StroomScope;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.springframework.context.annotation.Scope;
@@ -27,13 +23,9 @@ import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
 import stroom.index.server.CachedIndexService.CachedIndex;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShardKey;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFieldType;
-import stroom.query.shared.IndexFieldsMap;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ErrorStatistics;
@@ -45,46 +37,42 @@ import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
+import stroom.query.shared.IndexField;
+import stroom.query.shared.IndexFieldType;
+import stroom.query.shared.IndexFieldsMap;
 import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
+import stroom.util.spring.StroomScope;
 
-import java.util.concurrent.locks.Lock;
+import javax.inject.Inject;
 
 /**
  * The index filter... takes the index XML and builds the LUCENE documents
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "IndexingFilter", category = Category.FILTER, roles = { PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE }, icon = ElementIcons.INDEX)
-public class IndexingFilter extends AbstractXMLFilter {
+@ConfigurableElement(type = "IndexingFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
+        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.INDEX)
+class IndexingFilter extends AbstractXMLFilter {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexingFilter.class);
-
-    private static final StripedLock WRITER_KEY_LOCKS = new StripedLock();
 
     private static final String RECORD = "record";
     private static final String DATA = "data";
     private static final String NAME = "name";
     private static final String VALUE = "value";
 
-    @Resource
-    private StreamHolder streamHolder;
-    @Resource
-    private LocationFactoryProxy locationFactory;
-    @Resource
-    private IndexShardWriterCache indexShardCache;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
-    @Resource
-    private CachedIndexService cachedIndexService;
+    private final StreamHolder streamHolder;
+    private final LocationFactoryProxy locationFactory;
+    private final Indexer indexer;
+    private final ErrorReceiverProxy errorReceiverProxy;
+    private final CachedIndexService cachedIndexService;
 
     private IndexFieldsMap indexFieldsMap;
 
     private Index index;
     private IndexShardKey indexShardKey;
-    private IndexShardWriter indexShardWriter;
 
     private final CharBuffer debugBuffer = new CharBuffer(10);
 
@@ -93,6 +81,19 @@ public class IndexingFilter extends AbstractXMLFilter {
     private int fieldsIndexed = 0;
 
     private Locator locator;
+
+    @Inject
+    IndexingFilter(final StreamHolder streamHolder,
+                   final LocationFactoryProxy locationFactory,
+                   final Indexer indexer,
+                   final ErrorReceiverProxy errorReceiverProxy,
+                   final CachedIndexService cachedIndexService) {
+        this.streamHolder = streamHolder;
+        this.locationFactory = locationFactory;
+        this.indexer = indexer;
+        this.errorReceiverProxy = errorReceiverProxy;
+        this.cachedIndexService = cachedIndexService;
+    }
 
     /**
      * Initialise
@@ -132,8 +133,7 @@ public class IndexingFilter extends AbstractXMLFilter {
     /**
      * Sets the locator to use when reporting errors.
      *
-     * @param locator
-     *            The locator to use.
+     * @param locator The locator to use.
      */
     @Override
     public void setDocumentLocator(final Locator locator) {
@@ -197,38 +197,7 @@ public class IndexingFilter extends AbstractXMLFilter {
         // have indexed some fields.
         if (fieldsIndexed > 0) {
             try {
-                boolean success = false;
-                while (!success) {
-                    success = indexShardWriter != null && indexShardWriter.addDocument(document);
-
-                    if (!success) {
-                        // If we failed then try under lock to make sure we get a new writer.
-                        final Lock lock = WRITER_KEY_LOCKS.getLockForKey(indexShardKey);
-                        lock.lock();
-                        try {
-                            // Ask the cache for the current one (it might have been changed by another thread) and try again.
-                            indexShardWriter = getIndexShardWriter();
-                            success = indexShardWriter.addDocument(document);
-
-                            if (!success) {
-                                // Failed to add it so remove this object from the cache and try to get another one.
-                                indexShardCache.remove(indexShardKey);
-
-                                // Ask the pool for another one and try again
-                                final IndexShardWriter newWriter = getIndexShardWriter();
-                                if (newWriter == indexShardWriter) {
-                                    LOGGER.fatal("Expected a new writer but got the same one back!!!");
-                                    throw new IndexException("Expected a new writer but got the same one back!!!");
-                                }
-
-                                indexShardWriter = newWriter;
-                            }
-
-                        } finally {
-                            lock.unlock();
-                        }
-                    }
-                }
+                indexer.addDocument(indexShardKey, document);
             } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
                 // Terminate processing as this is a fatal error.
@@ -279,16 +248,6 @@ public class IndexingFilter extends AbstractXMLFilter {
         } catch (final RuntimeException e) {
             log(Severity.ERROR, e.getMessage(), e);
         }
-    }
-
-    private IndexShardWriter getIndexShardWriter() throws IndexException {
-        indexShardWriter = indexShardCache.get(indexShardKey);
-        if (indexShardWriter == null) {
-            throw new IndexException("Unable to get writer for index '" + indexShardKey.getIndex().getName()
-                    + "'. Please check the index has active volumes.");
-        }
-
-        return indexShardWriter;
     }
 
     @PipelineProperty(description = "The index to send records to.")

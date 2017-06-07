@@ -371,7 +371,7 @@ public class EntityPluginEventManager extends Plugin {
 
             if (allowNew) {
                 final Item newItem = new SimpleParentMenuItem(1, GlyphIcons.NEW_ITEM, GlyphIcons.NEW_ITEM, "New",
-                        null, children != null && children.size() > 0, null) {
+                        null, true, null) {
                     @Override
                     public Future<List<Item>> getChildren() {
                         final FutureImpl<List<Item>> future = new FutureImpl<>();

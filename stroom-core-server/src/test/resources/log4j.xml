@@ -12,6 +12,11 @@
 		<level value="error" />
 		<appender-ref ref="STDOUT" />
 	</logger>
+
+	<logger name="org.hibernate">
+		<level value="fatal"/>
+	</logger>
+
 	<logger name="stroom" additivity="false">
 		<level value="info" />
 		<appender-ref ref="STDOUT" />

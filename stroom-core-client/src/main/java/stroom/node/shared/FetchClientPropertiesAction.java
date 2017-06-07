@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,8 @@ package stroom.node.shared;
 import stroom.dispatch.shared.Action;
 
 public class FetchClientPropertiesAction extends Action<ClientProperties> {
-    private static final long serialVersionUID = 8527193263958207882L;
+    private static final long serialVersionUID = 6083235358421128201L;
+
     private String type;
 
     public FetchClientPropertiesAction() {
@@ -34,8 +35,12 @@ public class FetchClientPropertiesAction extends Action<ClientProperties> {
         return type;
     }
 
+    public void setType(final String type) {
+        this.type = type;
+    }
+
     @Override
     public String getTaskName() {
-        return "Version info";
+        return "Fetch Client Properties";
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,30 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.state;
+package stroom.servlet;
 
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.util.shared.ResourceKey;
+import stroom.util.spring.StroomScope;
 
-import stroom.util.zip.HeaderMap;
+import java.util.HashMap;
 
 @Component
-@Scope(value = StroomScope.TASK)
-public class MetaData {
-    private final HeaderMap headerMap = new HeaderMap();
+@Scope(value = StroomScope.SESSION)
+public class SessionResourceMap {
+    private final HashMap<ResourceKey, ResourceKey> sessionResourceMap = new HashMap<>();
 
-    public void put(final String key, final String value) {
-        headerMap.put(key, value);
+    public void put(final ResourceKey key, final ResourceKey value) {
+        sessionResourceMap.put(key, value);
     }
 
-    public void putAll(final HeaderMap headerMap) {
-        this.headerMap.putAll(headerMap);
+    public ResourceKey get(final ResourceKey key) {
+        return sessionResourceMap.get(key);
     }
 
-    public HeaderMap getHeaderMap() {
-        return headerMap;
+    public ResourceKey remove(final ResourceKey key) {
+        return sessionResourceMap.remove(key);
     }
 }
+

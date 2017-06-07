@@ -16,20 +16,22 @@
 
 package stroom.index.server;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import stroom.util.spring.StroomSpringProfiles;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexWriter;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.util.spring.StroomSpringProfiles;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Profile(StroomSpringProfiles.TEST)
-@Component("indexShardWriterCache")
-public class MockIndexShardWriterCache implements IndexShardWriterCache {
+@Component("indexShardManager")
+public class MockIndexShardManager implements IndexShardManager, Indexer {
     private final Map<IndexShardKey, IndexShardWriter> writers = new HashMap<>();
 
     @Override
@@ -48,27 +50,16 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
     }
 
     @Override
-    public void clear() {
-        writers.clear();
+    public void addDocument(final IndexShardKey key, final Document document) {
+        try {
+            get(key).addDocument(document);
+        } catch (final IOException e) {
+            throw new IndexException(e.getMessage(), e);
+        }
     }
 
-    @Override
-    public IndexShardWriter get(final IndexShardKey k) {
-        IndexShardWriter writer = writers.get(k);
-        if (writer == null) {
-            writer = new MockIndexShardWriter();
-            writers.put(k, writer);
-        }
-
-        return writer;
-    }
-
-    @Override
-    public void remove(final IndexShardKey key) {
-        final IndexShardWriter writer = writers.remove(key);
-        if (writer != null) {
-            writer.destroy();
-        }
+    private IndexShardWriter get(final IndexShardKey key) {
+        return writers.computeIfAbsent(key, k -> new MockIndexShardWriter());
     }
 
     public Map<IndexShardKey, IndexShardWriter> getWriters() {
@@ -76,7 +67,7 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
     }
 
     @Override
-    public IndexShardWriter getWriter(final IndexShard indexShard) {
+    public IndexWriter getWriter(final IndexShard indexShard) {
         return null;
     }
 
@@ -89,5 +80,9 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
 
     @Override
     public void shutdown() {
+    }
+
+    public void clear() {
+        writers.clear();
     }
 }

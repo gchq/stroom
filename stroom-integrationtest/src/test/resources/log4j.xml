@@ -13,6 +13,10 @@
         </layout>
     </appender>
 
+    <logger name="org.hibernate">
+        <level value="fatal"/>
+    </logger>
+
     <logger name="stroom">
         <level value="INFO"/>
     </logger>

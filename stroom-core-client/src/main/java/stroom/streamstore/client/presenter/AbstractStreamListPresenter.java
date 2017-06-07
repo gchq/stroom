@@ -159,10 +159,12 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 final Set<Long> oldIdSet = new HashSet<Long>(entityIdSet.getIdSet());
                 entityIdSet.clear();
                 entityIdSet.setMatchAll(oldMatchAll);
-                for (final StreamAttributeMap map : data) {
-                    final long id = map.getStream().getId();
-                    if (oldIdSet.contains(id)) {
-                        entityIdSet.add(id);
+                if (data != null) {
+                    for (final StreamAttributeMap map : data) {
+                        final long id = map.getStream().getId();
+                        if (oldIdSet.contains(id)) {
+                            entityIdSet.add(id);
+                        }
                     }
                 }
             }
