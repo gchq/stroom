@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#307** : Made some changes to avoid potential NPE caused by session serialisation.
+
 ## [v5.0-beta.30] - 2017-06-06
 
 * Issue **#152** : Changed the way indexing is performed so that a single indexer object is now responsible for indexing documents and adding them to the appropriate shard.
