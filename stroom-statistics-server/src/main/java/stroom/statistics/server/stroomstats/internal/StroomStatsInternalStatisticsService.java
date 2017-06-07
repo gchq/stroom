@@ -73,6 +73,8 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
     @Override
     public void putEvents(final Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
 
+        Preconditions.checkNotNull(eventsMap);
+
         Optional<DataSourceProvider> optDataSourceProvider = dataSourceProviderRegistry.getDataSourceProvider(docRefType);
 
         if (optDataSourceProvider.isPresent()) {
@@ -81,6 +83,7 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
                         .filter(entry ->
                                 !entry.getValue().isEmpty())
                         .filter(entry ->
+                                //TODO do we want to prevent putting the stats onto kafka if we can't see stroom-stats
                                 //ensure the provider has a datasource for our docRef
                                 optDataSourceProvider.get().getDataSource(entry.getKey()) != null)
                         .forEach(entry -> {
@@ -101,8 +104,10 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
                 stroomKafkaProducer.flush();
             }
         } else {
-            long eventCount = eventsMap.values().stream().flatMap(List::stream).count();
-            LOGGER.error("No data source provider available to accept {} internal statistic events of type {}",
+            long eventCount = eventsMap.values().stream()
+                    .flatMap(List::stream)
+                    .count();
+            LOGGER.error("No data source provider available to accept {} internal statistic events of type {}, the events will be lost",
                     eventCount, docRefType);
         }
     }
