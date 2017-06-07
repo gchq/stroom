@@ -26,28 +26,28 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile libs.commons_lang //#'commons-lang:commons-lang:2.6'
-    compile libs.ehcache_core //#'net.sf.ehcache:ehcache-core:2.6.11'
-    compile libs.hibernate_jpa_api //#'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
-    compile libs.javax_annotation_api //#'javax.annotation:javax.annotation-api:1.2'
-    compile libs.javax_inject //#'javax.inject:javax.inject:1'
-    compile libs.lucene_analyzers_common //#'org.apache.lucene:lucene-analyzers-common:5.5.3'
-    compile libs.lucene_core //#'org.apache.lucene:lucene-core:5.5.3'
-    compile libs.lucene_queryparser //#'org.apache.lucene:lucene-queryparser:5.5.3'
-    compile libs.slf4j_api //#'org.slf4j:slf4j-api:1.7.21'
-    compile libs.spring_beans //#'org.springframework:spring-beans:4.3.4.RELEASE'
-    compile libs.spring_context //#'org.springframework:spring-context:4.3.4.RELEASE'
-    compile libs.spring_tx //#'org.springframework:spring-tx:4.3.4.RELEASE'
-    compile libs.xml_apis //#'xml-apis:xml-apis:1.0.b2'
+    compile libs.commons_lang
+    compile libs.ehcache_core
+    compile libs.hibernate_jpa_api
+    compile libs.javax_annotation_api
+    compile libs.javax_inject
+    compile libs.lucene_analyzers_common
+    compile libs.lucene_core
+    compile libs.lucene_queryparser
+    compile libs.slf4j_api
+    compile libs.spring_beans
+    compile libs.spring_context
+    compile libs.spring_tx
+    compile libs.xml_apis
 
     // Jackson
-    runtime libs.jackson_annotations //#'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
+    runtime libs.jackson_annotations
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
 
-    testCompile libs.junit //#'junit:junit:4.12'
-    testCompile libs.mockito_core //#'org.mockito:mockito-core:2.0.2-beta'
+    testCompile libs.junit
+    testCompile libs.mockito_core
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

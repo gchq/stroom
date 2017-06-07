@@ -66,42 +66,42 @@ dependencies {
     compile urlDependencies.get(versions.stroomQueryApi)
     compile urlDependencies.get(versions.stroomQueryCommon)
 
-    compile libs.curator_client //#'org.apache.curator:curator_client:2.11.0'
-    compile libs.curator_framework //#'org.apache.curator:curator_framework:2.11.0'
-    compile libs.curator_x_discovery //#'org.apache.curator:curator_x_discovery:2.11.0'
+    compile libs.curator_client
+    compile libs.curator_framework
+    compile libs.curator_x_discovery
     compile (libs.dropwizard_assets) {
         exclude ( group: "org.glassfish.web", module: "javax.el" )
     }
     compile (libs.dropwizard_core) {
         exclude ( group: "org.glassfish.web", module: "javax.el" )
     }
-    compile libs.dropwizard_jersey //#'io.dropwizard:dropwizard-jersey:1.0.6'
-    compile libs.dropwizard_jetty //#'io.dropwizard:dropwizard-jetty:1.0.6'
-    compile libs.dropwizard_metrics_annotation //#'io.dropwizard.metrics:metrics-annotation:3.1.2'
-    compile libs.dropwizard_metrics_healthchecks //#'io.dropwizard.metrics:metrics_healthchecks:3.1.2'
-    compile libs.guava //#'com.google.guava:guava:20.0'
-    compile libs.jackson_annotations //#'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
-    compile libs.javax_inject //#'javax.inject:javax.inject:1'
-    compile libs.javax_servlet_api //#'javax.servlet:javax.servlet_api:3.1.0'
-    compile libs.jersey_server //#'org.glassfish.jersey.core:jersey-server:2.25'
-    compile libs.jetty_server //#'org.eclipse.jetty:jetty-server:9.3.9.v20160517'
-    compile libs.jetty_servlet //#'org.eclipse.jetty:jetty-servlet:9.3.9.v20160517'
-    compile libs.shiro_core //#'org.apache.shiro:shiro-core:1.3.2'
-    compile libs.slf4j_api //#'org.slf4j:slf4j-api:1.7.24'
-    compile libs.spring_beans //#'org.springframework:spring-beans:4.3.4.RELEASE'
-    compile libs.spring_context //#'org.springframework:spring_context:4.3.4.RELEASE'
-    compile libs.spring_web //#'org.springframework:spring_web:4.2.1.RELEASE'
-    compile libs.ws_rs_api //#'javax.ws.rs:javax.ws.rs_api:2.0.1'
+    compile libs.dropwizard_jersey
+    compile libs.dropwizard_jetty
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_metrics_healthchecks
+    compile libs.guava
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
+    compile libs.jersey_server
+    compile libs.jetty_server
+    compile libs.jetty_servlet
+    compile libs.shiro_core
+    compile libs.slf4j_api
+    compile libs.spring_beans
+    compile libs.spring_context
+    compile libs.spring_web
+    compile libs.ws_rs_api
 
-    runtime libs.shiro_web //#'org.apache.shiro:shiro-web:1.3.2'
+    runtime libs.shiro_web
     runtime libs.javax_el
     runtime libs.javax_el_api
 
-    integrationTestCompile libs.junit //#'junit:junit:4.12'
-    integrationTestCompile libs.mockito_core //#'org.mockito:mockito-core:2.0.2-beta'
-    integrationTestCompile libs.assertj_core //#'org.assertj:assertj-core:3.6.2'
-    integrationTestCompile libs.dropwizard_testing //#'io.dropwizard:dropwizard-testing:1.1.0'
-    integrationTestCompile libs.dropwizard_client //#'io.dropwizard:dropwizard-client:1.1.0'
+    integrationTestCompile libs.junit
+    integrationTestCompile libs.mockito_core
+    integrationTestCompile libs.assertj_core
+    integrationTestCompile libs.dropwizard_testing
+    integrationTestCompile libs.dropwizard_client
 }
 
 sourceSets {

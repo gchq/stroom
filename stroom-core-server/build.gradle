@@ -12,66 +12,66 @@ dependencies {
     compile urlDependencies.get(urlLibs.stroomQueryCommon)
     compile urlDependencies.get(urlLibs.stroomStatsApi)
 
-    compile libs.hessian //#'com.caucho:hessian:4.0.38'
-    compile libs.guava //#'com.google.guava:guava:20.0'
-    compile libs.gwt_servlet //#'com.google.gwt:gwt-servlet:2.8.0'
-    compile libs.commons_lang //#'commons-lang:commons-lang:2.6'
-    compile libs.javax_annotation_api //#'javax.annotation:javax.annotation-api:1.2'
-    compile libs.javax_inject //#'javax.inject:javax.inject:1'
-    compile libs.javax_servlet_api //#'javax.servlet:javax.servlet-api:3.1.0'
-    compile libs.validation_api //#'javax.validation:validation-api:1.1.0.Final'
-    compile libs.ws_rs_api //#'javax.ws.rs:javax.ws.rs-api:2.0.1'
-    compile libs.ehcache_core //#'net.sf.ehcache:ehcache-core:2.6.11'
-    compile libs.commons_pool2 //#'org.apache.commons:commons-pool2:2.4.2'
-    compile libs.curator_x_discovery //#'org.apache.curator:curator-x-discovery:2.12.0'
-    compile libs.kafka_clients //#'org.apache.kafka:kafka_clients:0.10.0.1' //CDH5.10 uses kafka 10.0
-    compile libs.aspectjweaver //#'org.aspectj:aspectjweaver:1.6.2'
-    compile libs.jersey_client //#'org.glassfish.jersey.core:jersey-client:2.25.1'
-    compile libs.jersey_common //#'org.glassfish.jersey.core:jersey-common:2.25.1'
-    compile libs.hibernate_jpa_api //#'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
-    compile libs.hibernate_core //#'org.hibernate:hibernate-core:4.3.8.Final' /* LATEST 5.2.5.Final */
-    compile libs.javassist //#'org.javassist:javassist:3.18.1-GA'
-    compile libs.slf4j_api //#'org.slf4j:slf4j-api:1.6.2'
-    compile libs.spring_aop //#'org.springframework:spring-aop:4.3.4.RELEASE'
-    compile libs.spring_beans //#'org.springframework:spring-beans:4.3.4.RELEASE'
-    compile libs.spring_context //#'org.springframework:spring-context:4.3.4.RELEASE'
-    compile libs.spring_core //#'org.springframework:spring-core:4.3.4.RELEASE'
-    compile libs.spring_web //#'org.springframework:spring-web:4.3.4.RELEASE'
-    compile libs.spring_webmvc //#'org.springframework:spring-webmvc:4.3.4.RELEASE'
-    compile libs.xml_apis //#'xml-apis:xml-apis:1.0.b2'
+    compile libs.hessian
+    compile libs.guava
+    compile libs.gwt_servlet
+    compile libs.commons_lang
+    compile libs.javax_annotation_api
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
+    compile libs.validation_api
+    compile libs.ws_rs_api
+    compile libs.ehcache_core
+    compile libs.commons_pool2
+    compile libs.curator_x_discovery
+    compile libs.kafka_clients
+    compile libs.aspectjweaver
+    compile libs.jersey_client
+    compile libs.jersey_common
+    compile libs.hibernate_jpa_api
+    compile libs.hibernate_core
+    compile libs.javassist
+    compile libs.slf4j_api
+    compile libs.spring_aop
+    compile libs.spring_beans
+    compile libs.spring_context
+    compile libs.spring_core
+    compile libs.spring_web
+    compile libs.spring_webmvc
+    compile libs.xml_apis
     compile (libs.ehcache_spring_annotations) {
         exclude(module: 'guava')
     }
-    compile libs.flyway_core //#'org.flywaydb:flyway-core:4.0.3'
-    compile libs.hsqldb //#'org.hsqldb:hsqldb:2.3.4'
-    permitUnusedDeclared libs.hsqldb //#'org.hsqldb:hsqldb:2.3.4'
+    compile libs.flyway_core
+    compile libs.hsqldb
+    permitUnusedDeclared libs.hsqldb
 
-    compile libs.c3p0 //#'com.mchange:c3p0:0.9.5.2'
-    compile libs.spring_tx //#'org.springframework:spring-tx:4.3.4.RELEASE'
-    compile libs.spring_jdbc //#'org.springframework:spring-jdbc:4.3.4.RELEASE'
-    compile libs.spring_orm //#'org.springframework:spring-orm:4.3.4.RELEASE'
-    compile libs.commons_fileupload //#'commons-fileupload:commons-fileupload:1.3.2'
+    compile libs.c3p0
+    compile libs.spring_tx
+    compile libs.spring_jdbc
+    compile libs.spring_orm
+    compile libs.commons_fileupload
 
-    runtime libs.saxon_he //#'net.sf.saxon:Saxon-HE:9.6.0-6' /* LATEST 9.7.0-12 */
-    runtime libs.jackson_annotations //#'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
-    runtime libs.jackson_core //#'com.fasterxml.jackson.core:jackson-core:2.8.6'
-    runtime libs.hibernate_entitymanager //#'org.hibernate:hibernate-entitymanager:4.3.8.Final'  /* LATEST 5.2.5.Final */
-    runtime libs.aopalliance //#'aopalliance:aopalliance:1.0'
-    runtime libs.aspectjrt //#'org.aspectj:aspectjrt:1.8.9'
+    runtime libs.saxon_he
+    runtime libs.jackson_annotations
+    runtime libs.jackson_core
+    runtime libs.hibernate_entitymanager
+    runtime libs.aopalliance
+    runtime libs.aspectjrt
     // dropwizard 1.0.6 uses hibernate-validator 5.2.4.Final
     // dropwizard 1.1.0 uses hibernate-validator 5.3.4.Final
     // so be consistent with dropwizard to avoid problems with different versions of javax.el
-    runtime libs.hibernate_validator //#'org.hibernate:hibernate-validator:5.3.4.Final'  /* LATEST 5.4.1.Final */
-    runtime libs.mysql_connector_java //#'mysql:mysql-connector-java:5.1.40' /* LATEST 6.0.5 */
-    runtime libs.lucene_core //#'org.apache.lucene:lucene-core:5.5.3' /* LATEST 6.3.0 */
-    runtime libs.lucene_analyzers_common //#'org.apache.lucene:lucene-analyzers-common:5.5.3' /* LATEST 6.3.0 */
-    runtime libs.lucene_queryparser //#'org.apache.lucene:lucene-queryparser:5.5.3' /* LATEST 6.3.0 */
+    runtime libs.hibernate_validator
+    runtime libs.mysql_connector_java
+    runtime libs.lucene_core
+    runtime libs.lucene_analyzers_common
+    runtime libs.lucene_queryparser
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
-    testCompile libs.junit //#'junit:junit:4.12'
-    testCompile libs.mockito_core //#'org.mockito:mockito-core:2.0.2-beta'
+    testCompile libs.junit
+    testCompile libs.mockito_core
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

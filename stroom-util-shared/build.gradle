@@ -1,6 +1,6 @@
 dependencies {
-    testCompile libs.hamcrest_core //#'org.hamcrest:hamcrest-core:1.3'
-    testCompile libs.junit //#'junit:junit:4.12'
+    testCompile libs.hamcrest_core
+    testCompile libs.junit
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

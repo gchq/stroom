@@ -19,14 +19,14 @@ dependencies {
 
     compile project(':stroom-util-shared')
 
-    compile libs.hibernate_jpa_api //#'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
-    compile libs.validation_api //#'javax.validation:validation-api:1.0.0.GA'
+    compile libs.hibernate_jpa_api
+    compile libs.validation_api
 
-    runtime libs.jackson_annotations //#'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
-    runtime libs.jsinterop_annotations //#'com.google.jsinterop:jsinterop-annotations:1.0.1'
+    runtime libs.jackson_annotations
+    runtime libs.jsinterop_annotations
 
-    testCompile libs.junit //#'junit:junit:4.12'
-    testCompile libs.mockito_core //#'org.mockito:mockito-core:2.0.2-beta'
+    testCompile libs.junit
+    testCompile libs.mockito_core
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

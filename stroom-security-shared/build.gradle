@@ -4,11 +4,11 @@ dependencies {
 
     runtime project(':stroom-security-api')
 
-    compile libs.hibernate_jpa_api //#'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
-    compile libs.validation_api //#'javax.validation:validation-api:1.0.0.GA'
-    compile libs.hibernate_annotations //#'org.hibernate:hibernate-annotations:3.5.6-Final' /* LATEST 5.2.5.Final */
+    compile libs.hibernate_jpa_api
+    compile libs.validation_api
+    compile libs.hibernate_annotations
 
-    testCompile libs.junit //#'junit:junit:4.12'
+    testCompile libs.junit
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

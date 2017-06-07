@@ -25,9 +25,9 @@ dependencies {
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
     testCompile libs.slf4j_api
-    testCompile libs.junit //#'junit:junit:4.12'
+    testCompile libs.junit
 
-    testRuntime libs.javax_el //#'org.glassfish:javax.el:3.0.1-b08'
+    testRuntime libs.javax_el
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j
     testRuntime libs.jul_to_slf4j

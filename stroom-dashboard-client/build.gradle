@@ -8,14 +8,14 @@ dependencies {
     compile project(':stroom-util-shared')
     runtime project(':stroom-security-client')
 
-    compile libs.gin //#'com.google.gwt.inject:gin:2.1.2'
-    compile libs.guice //#'com.google.inject:guice:3.0'
-    compile libs.gwt_user //#'com.google.gwt:gwt-user:2.8.0'
-    compile libs.gwtp_mvp_client //#'com.gwtplatform:gwtp-mvp-client:0.7'
-    compile libs.javax_inject //#'javax.inject:javax.inject:1'
-    compile libs.jsinterop_annotations //#'com.google.jsinterop:jsinterop-annotations:1.0.1'
+    compile libs.gin
+    compile libs.guice
+    compile libs.gwt_user
+    compile libs.gwtp_mvp_client
+    compile libs.javax_inject
+    compile libs.jsinterop_annotations
 
-    testCompile libs.junit //#'junit:junit:4.12'
+    testCompile libs.junit
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

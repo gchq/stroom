@@ -2,7 +2,7 @@ dependencies {
     compile project(':stroom-util')
     permitUnusedDeclared project(':stroom-util')
 
-    testCompile libs.junit //#'junit:junit:4.12'
+    testCompile libs.junit
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j
