@@ -47,6 +47,15 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
      * Add the columns to the table.
      */
     private void initTableColumns() {
+        // Rule.
+        final Column<DataRetentionRule, String> ruleColumn = new Column<DataRetentionRule, String>(new TextCell()) {
+            @Override
+            public String getValue(final DataRetentionRule row) {
+                return String.valueOf(row.getRuleNumber());
+            }
+        };
+        getView().addResizableColumn(ruleColumn, "Rule", ColumnSizeConstants.SMALL_COL);
+
         // Expression.
         final Column<DataRetentionRule, String> expressionColumn = new Column<DataRetentionRule, String>(new TextCell()) {
             @Override
@@ -65,13 +74,18 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
                 return row.getAgeString();
             }
         };
-        getView().addResizableColumn(ageColumn, "Retention", 300);
+        getView().addResizableColumn(ageColumn, "Retention", ColumnSizeConstants.SMALL_COL);
 
 
         getView().addEndColumn(new EndColumn<>());
     }
 
     public void setData(final List<DataRetentionRule> data) {
+        // Set rule numbers on all of the rules for display purposes.
+        for (int i = 0; i < data.size(); i++) {
+            data.get(i).setRuleNumber(i + 1);
+        }
+
         getView().setRowData(0, data);
         getView().setRowCount(data.size());
     }

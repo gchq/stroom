@@ -23,9 +23,9 @@ import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.StringCriteria;
 import stroom.entity.shared.StringCriteria.MatchStyle;
 import stroom.feed.shared.FeedService;
-import stroom.node.shared.NodeService;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.query.shared.FetchSuggestionsAction;
+import stroom.streamstore.server.StreamFields;
 import stroom.streamstore.shared.StreamTypeService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -41,14 +41,12 @@ import java.util.List;
 @Scope(StroomScope.TASK)
 class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction, SharedList<SharedString>> {
     private final FeedService feedService;
-    private final NodeService nodeService;
     private final PipelineEntityService pipelineEntityService;
     private final StreamTypeService streamTypeService;
 
     @Inject
-    public FetchSuggestionsHandler(final FeedService feedService, final NodeService nodeService, final PipelineEntityService pipelineEntityService, final StreamTypeService streamTypeService) {
+    public FetchSuggestionsHandler(final FeedService feedService, final PipelineEntityService pipelineEntityService, final StreamTypeService streamTypeService) {
         this.feedService = feedService;
-        this.nodeService = nodeService;
         this.pipelineEntityService = pipelineEntityService;
         this.streamTypeService = streamTypeService;
     }
@@ -57,19 +55,15 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
     public SharedList<SharedString> exec(final FetchSuggestionsAction task) {
         if (task.getDataSource() != null) {
             if ("STREAM_STORE".equals(task.getDataSource().getUuid())) {
-                if (task.getField().getFieldName().equals("Feed")) {
+                if (task.getField().getFieldName().equals(StreamFields.FEED)) {
                     return createList(feedService, task.getText());
                 }
 
-                if (task.getField().getFieldName().equals("Node")) {
-                    return createList(nodeService, task.getText());
-                }
-
-                if (task.getField().getFieldName().equals("Pipeline")) {
+                if (task.getField().getFieldName().equals(StreamFields.PIPELINE)) {
                     return createList(pipelineEntityService, task.getText());
                 }
 
-                if (task.getField().getFieldName().equals("StreamType")) {
+                if (task.getField().getFieldName().equals(StreamFields.STREAM_TYPE)) {
                     return createList(streamTypeService, task.getText());
                 }
             }

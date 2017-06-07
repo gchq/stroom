@@ -43,6 +43,8 @@ public class DataRetentionRule implements SharedObject {
     @XmlElement(name = "forever")
     private boolean forever;
 
+    private transient int ruleNumber;
+
     public DataRetentionRule() {
         // Default constructor for GWT serialisation.
     }
@@ -89,6 +91,15 @@ public class DataRetentionRule implements SharedObject {
             sb.setLength(sb.length() - 1);
         }
         return sb.toString();
+    }
+
+    @XmlTransient
+    public int getRuleNumber() {
+        return ruleNumber;
+    }
+
+    public void setRuleNumber(final int ruleNumber) {
+        this.ruleNumber = ruleNumber;
     }
 
     @Override
