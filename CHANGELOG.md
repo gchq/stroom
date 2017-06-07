@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.1-alpha.1] - 2017-06-07
+
+* Issue **#202** : Initial release of the new data retention policy functionality.
+
 ## [v5.0-beta.31] - 2017-06-07
 
 * Issue **#307** : Made some changes to avoid potential NPE caused by session serialisation.
@@ -441,7 +445,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.31...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.1-alpha.1...HEAD
+[v5.1-alpha.1]: https://github.com/gchq/stroom/compare/v5.0-beta.31...v5.1-alpha.1
 [v5.0-beta.31]: https://github.com/gchq/stroom/compare/v5.0-beta.30...v5.0-beta.31
 [v5.0-beta.30]: https://github.com/gchq/stroom/compare/v5.0-beta.29...v5.0-beta.30
 [v5.0-beta.29]: https://github.com/gchq/stroom/compare/v5.0-beta.28...v5.0-beta.29
