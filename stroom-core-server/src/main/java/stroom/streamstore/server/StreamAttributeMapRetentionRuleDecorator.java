@@ -28,6 +28,9 @@ import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.date.DateUtil;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,10 +58,23 @@ public class StreamAttributeMapRetentionRuleDecorator {
 
         if (index != -1) {
             final DataRetentionRule rule = rules.get(index);
-            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION, rule.getAgeString());
+            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_AGE, rule.getAgeString());
+
+            String keepUntil = DataRetentionRule.FOREVER;
+            if (streamAttributeMap.getStream() != null) {
+                final long millis = streamAttributeMap.getStream().getCreateMs();
+                final LocalDateTime createTime = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDateTime();
+                final Long ms = DataRetentionAgeUtil.plus(createTime, rule);
+                if (ms != null) {
+                    keepUntil = DateUtil.createNormalDateTimeString(ms);
+                }
+            }
+
+            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_UNTIL, keepUntil);
             streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_RULE, String.valueOf(index + 1));
         } else {
-            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION, DataRetentionRule.KEEP_FOREVER);
+            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_AGE, DataRetentionRule.FOREVER);
+            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_UNTIL, DataRetentionRule.FOREVER);
             streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_RULE, "None");
         }
     }

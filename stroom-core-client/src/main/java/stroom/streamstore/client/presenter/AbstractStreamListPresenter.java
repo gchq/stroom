@@ -375,8 +375,9 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
         TooltipUtil.addBreak(html);
         TooltipUtil.addHeading(html, "Retention");
-        TooltipUtil.addRowData(html, "Age", row.getAttributeValue(StreamAttributeConstants.RETENTION));
-        TooltipUtil.addRowData(html, "Rule", row.getAttributeValue(StreamAttributeConstants.RETENTION_RULE));
+        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_AGE, row.getAttributeValue(StreamAttributeConstants.RETENTION_AGE));
+        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_UNTIL, row.getAttributeValue(StreamAttributeConstants.RETENTION_UNTIL));
+        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_RULE, row.getAttributeValue(StreamAttributeConstants.RETENTION_RULE));
     }
 
     protected void addCreatedColumn() {

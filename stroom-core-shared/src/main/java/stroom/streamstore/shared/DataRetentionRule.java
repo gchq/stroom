@@ -30,7 +30,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "DataRetentionRule", propOrder = { "enabled", "expression", "age", "timeUnit", "forever" })
 @XmlRootElement(name = "dataRetentionRule")
 public class DataRetentionRule implements SharedObject {
-    public static final String KEEP_FOREVER = "Keep Forever";
+    public static final String FOREVER = "Forever";
 
     @XmlElement(name = "enabled")
     private boolean enabled;
@@ -78,7 +78,7 @@ public class DataRetentionRule implements SharedObject {
     @XmlTransient
     public String getAgeString() {
         if (forever) {
-            return KEEP_FOREVER;
+            return FOREVER;
         }
 
         final StringBuilder sb = new StringBuilder()

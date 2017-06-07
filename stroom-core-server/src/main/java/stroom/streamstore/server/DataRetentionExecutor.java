@@ -144,37 +144,7 @@ public class DataRetentionExecutor {
     }
 
     private Long getAge(final LocalDateTime now, final DataRetentionRule rule) {
-        if (rule.isForever()) {
-            return null;
-        }
-
-        LocalDateTime age = null;
-        switch (rule.getTimeUnit()) {
-            case MINUTES:
-                age = now.minusMinutes(rule.getAge());
-                break;
-            case HOURS:
-                age = now.minusHours(rule.getAge());
-                break;
-            case DAYS:
-                age = now.minusDays(rule.getAge());
-                break;
-            case WEEKS:
-                age = now.minusWeeks(rule.getAge());
-                break;
-            case MONTHS:
-                age = now.minusMonths(rule.getAge());
-                break;
-            case YEARS:
-                age = now.minusYears(rule.getAge());
-                break;
-        }
-
-        if (age == null) {
-            return null;
-        }
-
-        return age.toInstant(ZoneOffset.UTC).toEpochMilli();
+        return DataRetentionAgeUtil.minus(now, rule);
     }
 
     private void info(final String info) {
