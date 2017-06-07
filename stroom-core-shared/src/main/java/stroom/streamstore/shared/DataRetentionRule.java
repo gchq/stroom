@@ -23,12 +23,15 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "DataRetentionRule", propOrder = { "enabled", "expression", "age", "timeUnit", "forever" })
 @XmlRootElement(name = "dataRetentionRule")
 public class DataRetentionRule implements SharedObject {
+    public static final String KEEP_FOREVER = "Keep Forever";
+
     @XmlElement(name = "enabled")
     private boolean enabled;
     @XmlElement(name = "expression")
@@ -70,6 +73,22 @@ public class DataRetentionRule implements SharedObject {
 
     public boolean isForever() {
         return forever;
+    }
+
+    @XmlTransient
+    public String getAgeString() {
+        if (forever) {
+            return KEEP_FOREVER;
+        }
+
+        final StringBuilder sb = new StringBuilder()
+                .append(age)
+                .append(" ")
+                .append(timeUnit.getDisplayValue());
+        if (age == 1) {
+            sb.setLength(sb.length() - 1);
+        }
+        return sb.toString();
     }
 
     @Override

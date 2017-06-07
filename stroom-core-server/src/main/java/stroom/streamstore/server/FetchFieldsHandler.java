@@ -18,7 +18,6 @@ package stroom.streamstore.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.query.shared.IndexFields;
-import stroom.streamstore.server.fs.DataRetentionTransactionHelper;
 import stroom.streamstore.shared.FetchFieldsAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -29,6 +28,6 @@ import stroom.util.spring.StroomScope;
 public class FetchFieldsHandler extends AbstractTaskHandler<FetchFieldsAction, IndexFields> {
     @Override
     public IndexFields exec(final FetchFieldsAction task) {
-        return DataRetentionTransactionHelper.getFields();
+        return StreamFields.getFields();
     }
 }

@@ -28,6 +28,8 @@ public class StreamAttributeConstants {
     public static final String REC_ERROR = "RecError";
     public static final String REC_FATAL = "RecFatal";
     public static final String DURATION = "Duration";
+    public static final String RETENTION = "Retention";
+    public static final String RETENTION_RULE = "Retention Rule";
     public static final String NODE = "Node";
     public static final String FEED = "Feed";
     public static final String STREAM_ID = "StreamId";
@@ -60,6 +62,5 @@ public class StreamAttributeConstants {
         map.put(EFFECTIVE_TIME, StreamAttributeFieldUse.DATE_FIELD);
 
         SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP = Collections.unmodifiableMap(map);
-
     }
 }

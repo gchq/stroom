@@ -62,18 +62,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
         final Column<DataRetentionRule, String> ageColumn = new Column<DataRetentionRule, String>(new TextCell()) {
             @Override
             public String getValue(final DataRetentionRule row) {
-                if (row.isForever()) {
-                    return "Keep Forever";
-                }
-
-                final StringBuilder sb = new StringBuilder()
-                        .append(row.getAge())
-                        .append(" ")
-                        .append(row.getTimeUnit().getDisplayValue());
-                if (row.getAge() == 1) {
-                    sb.setLength(sb.length() - 1);
-                }
-                return sb.toString();
+                return row.getAgeString();
             }
         };
         getView().addResizableColumn(ageColumn, "Retention", 300);

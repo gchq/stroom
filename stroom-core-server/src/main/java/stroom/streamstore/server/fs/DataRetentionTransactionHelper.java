@@ -19,7 +19,6 @@ package stroom.streamstore.server.fs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.dictionary.shared.DictionaryService;
@@ -32,8 +31,8 @@ import stroom.query.shared.ExpressionItem;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionTerm;
 import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFields;
 import stroom.streamstore.server.ExpressionMatcher;
+import stroom.streamstore.server.StreamFields;
 import stroom.streamstore.shared.DataRetentionRule;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
@@ -46,79 +45,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Component
 public class DataRetentionTransactionHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionTransactionHelper.class);
-
-    private static final String STREAM_ID = "Stream Id";
-    private static final String PARENT_STREAM_ID = "Parent Stream Id";
-    private static final String CREATED_ON = "Created On";
-    private static final String FEED = "Feed";
-    private static final String STREAM_TYPE = "Stream Type";
-    private static final String PIPELINE = "Pipeline";
-
-
-    private static final Map<String, String> STREAM_FIELDS = new HashMap<>();
-    private static final Map<String, String> FEED_FIELDS = new HashMap<>();
-    private static final Map<String, String> STREAM_TYPE_FIELDS = new HashMap<>();
-    private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
-    //    private static final Map<String, String> STREAM_ATTRIBUTE_FIELDS = new HashMap<>();
-    private static final IndexFields FIELDS;
-    private static final Map<String, IndexField> INDEX_FIELD_MAP;
-
-    static {
-        STREAM_FIELDS.put(STREAM_ID, Stream.ID);
-        STREAM_FIELDS.put(PARENT_STREAM_ID, Stream.PARENT_STREAM_ID);
-        STREAM_FIELDS.put(CREATED_ON, Stream.CREATE_MS);
-
-        FEED_FIELDS.put(FEED, Feed.NAME);
-
-        STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamType.NAME);
-
-        PIPELINE_FIELDS.put(PIPELINE, PipelineEntity.NAME);
-
-        // TODO : Don't include these fields for now as the processing required to fetch attributes for each stream will be slow.
-//        STREAM_ATTRIBUTE_FIELDS.put(StreamAttributeConstants.REC_READ, StreamAttributeConstants.REC_READ);
-//        STREAM_ATTRIBUTE_FIELDS.put(StreamAttributeConstants.REC_WRITE, StreamAttributeConstants.REC_WRITE);
-//        STREAM_ATTRIBUTE_FIELDS.put(StreamAttributeConstants.REC_INFO, StreamAttributeConstants.REC_INFO);
-//        STREAM_ATTRIBUTE_FIELDS.put(StreamAttributeConstants.REC_WARN, StreamAttributeConstants.REC_WARN);
-//        STREAM_ATTRIBUTE_FIELDS.put(StreamAttributeConstants.REC_ERROR, StreamAttributeConstants.REC_ERROR);
-//        STREAM_ATTRIBUTE_FIELDS.put(StreamAttributeConstants.REC_FATAL, StreamAttributeConstants.REC_FATAL);
-//        STREAM_ATTRIBUTE_FIELDS.put(StreamAttributeConstants.DURATION, StreamAttributeConstants.DURATION);
-//        STREAM_ATTRIBUTE_FIELDS.put(StreamAttributeConstants.FILE_SIZE, StreamAttributeConstants.FILE_SIZE);
-//        STREAM_ATTRIBUTE_FIELDS.put(StreamAttributeConstants.STREAM_SIZE, StreamAttributeConstants.STREAM_SIZE);
-
-        final Set<IndexField> set = new HashSet<>();
-
-        set.add(IndexField.createNumericField(STREAM_ID));
-        set.add(IndexField.createNumericField(PARENT_STREAM_ID));
-        set.add(IndexField.createDateField(CREATED_ON));
-
-        set.add(IndexField.createField(FEED));
-        set.add(IndexField.createField(STREAM_TYPE));
-        set.add(IndexField.createField(PIPELINE));
-
-//        STREAM_ATTRIBUTE_FIELDS.forEach((k, v) -> {
-//            final IndexField indexField = create(k, StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.get(v));
-//            if (indexField != null) {
-//                set.add(indexField);
-//            }
-//        });
-
-        final List<IndexField> list = set.stream().sorted(Comparator.comparing(IndexField::getFieldName)).collect(Collectors.toList());
-        FIELDS = new IndexFields(list);
-        INDEX_FIELD_MAP = list.stream().collect(Collectors.toMap(IndexField::getFieldName, Function.identity()));
-    }
 
     private final DataSource dataSource;
     private final FileSystemStreamStore fileSystemStreamStore;
@@ -135,8 +71,8 @@ public class DataRetentionTransactionHelper {
     public void deleteMatching(final Period ageRange, final List<DataRetentionRule> rules, final Map<DataRetentionRule, Long> ageMap) {
         // Find out which fields are used by the expressions so we don't have to do unnecessary joins.
         final Set<String> fieldSet = new HashSet<>();
-        fieldSet.add(STREAM_ID);
-        fieldSet.add(CREATED_ON);
+        fieldSet.add(StreamFields.STREAM_ID);
+        fieldSet.add(StreamFields.CREATED_ON);
 
         // Also make sure we create a list of rules that are enabled and have at least one enabled term.
         final List<DataRetentionRule> activeRules = new ArrayList<>();
@@ -159,10 +95,10 @@ public class DataRetentionTransactionHelper {
         final SQLBuilder sql = new SQLBuilder();
         sql.append("SELECT");
 
-        final boolean includeStream = addFieldsToQuery(STREAM_FIELDS, fieldSet, sql, "S");
-        final boolean includeFeed = addFieldsToQuery(FEED_FIELDS, fieldSet, sql, "F");
-        final boolean includeStreamType = addFieldsToQuery(STREAM_TYPE_FIELDS, fieldSet, sql, "ST");
-        final boolean includePipeline = addFieldsToQuery(PIPELINE_FIELDS, fieldSet, sql, "P");
+        final boolean includeStream = addFieldsToQuery(StreamFields.getStreamFields(), fieldSet, sql, "S");
+        final boolean includeFeed = addFieldsToQuery(StreamFields.getFeedFields(), fieldSet, sql, "F");
+        final boolean includeStreamType = addFieldsToQuery(StreamFields.getStreamTypeFields(), fieldSet, sql, "ST");
+        final boolean includePipeline = addFieldsToQuery(StreamFields.getPipelineFields(), fieldSet, sql, "P");
 
         // Remove last comma from field list.
         sql.setLength(sql.length() - 1);
@@ -185,14 +121,14 @@ public class DataRetentionTransactionHelper {
         sql.append(" WHERE 1=1");
         SQLUtil.appendLongRangeQuery(sql, "S." + Stream.CREATE_MS, ageRange);
 
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(INDEX_FIELD_MAP, dictionaryService);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamFields.getFieldMap(), dictionaryService);
 
         try (final Connection connection = dataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(sql.toString())) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         final Map<String, Object> attributeMap = createAttributeMap(resultSet, fieldSet);
-                        final Long streamId = (Long) attributeMap.get(STREAM_ID);
+                        final Long streamId = (Long) attributeMap.get(StreamFields.STREAM_ID);
                         try {
                             LOGGER.debug("Processing stream {}", streamId);
 
@@ -200,7 +136,7 @@ public class DataRetentionTransactionHelper {
                             if (matchingRule != null) {
                                 final Long age = ageMap.get(matchingRule);
                                 if (age != null) {
-                                    final Long createMs = (Long) attributeMap.get(CREATED_ON);
+                                    final Long createMs = (Long) attributeMap.get(StreamFields.CREATED_ON);
                                     if (createMs < age) {
                                         LOGGER.debug("Deleting stream {}", streamId);
                                         fileSystemStreamStore.deleteStream(Stream.createStub(streamId));
@@ -231,7 +167,7 @@ public class DataRetentionTransactionHelper {
         final Map<String, Object> attributeMap = new HashMap<>();
         fieldSet.forEach(fieldName -> {
             try {
-                final IndexField indexField = INDEX_FIELD_MAP.get(fieldName);
+                final IndexField indexField = StreamFields.getFieldMap().get(fieldName);
                 switch (indexField.getFieldType()) {
                     case FIELD:
                         final String string = resultSet.getString(fieldName);
@@ -286,30 +222,5 @@ public class DataRetentionTransactionHelper {
                 fieldSet.add(term.getField());
             }
         }
-    }
-
-//    private static IndexField create(final String name, final StreamAttributeFieldUse streamAttributeFieldUse) {
-//        switch (streamAttributeFieldUse) {
-//            case FIELD:
-//                return IndexField.createField(name);
-//            case ID:
-//                return IndexField.createIdField(name);
-//            case DURATION_FIELD:
-//                return IndexField.createNumericField(name);
-//            case COUNT_IN_DURATION_FIELD:
-//                return IndexField.createNumericField(name);
-//            case NUMERIC_FIELD:
-//                return IndexField.createNumericField(name);
-//            case DATE_FIELD:
-//                return IndexField.createDateField(name);
-//            case SIZE_FIELD:
-//                return IndexField.createNumericField(name);
-//        }
-//
-//        return null;
-//    }
-
-    public static IndexFields getFields() {
-        return FIELDS;
     }
 }

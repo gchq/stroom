@@ -173,6 +173,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         addAttributeColumn("Error", StreamAttributeConstants.REC_ERROR, 40);
         addAttributeColumn("Warn", StreamAttributeConstants.REC_WARN, 40);
         addAttributeColumn("Info", StreamAttributeConstants.REC_INFO, 40);
+        addAttributeColumn("Retention", StreamAttributeConstants.RETENTION, ColumnSizeConstants.MEDIUM_COL);
 
         getView().addEndColumn(new EndColumn<StreamAttributeMap>());
     }

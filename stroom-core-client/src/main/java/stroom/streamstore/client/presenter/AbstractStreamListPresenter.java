@@ -44,6 +44,7 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
@@ -371,6 +372,11 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             }
         }
         // }
+
+        TooltipUtil.addBreak(html);
+        TooltipUtil.addHeading(html, "Retention");
+        TooltipUtil.addRowData(html, "Age", row.getAttributeValue(StreamAttributeConstants.RETENTION));
+        TooltipUtil.addRowData(html, "Rule", row.getAttributeValue(StreamAttributeConstants.RETENTION_RULE));
     }
 
     protected void addCreatedColumn() {
