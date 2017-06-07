@@ -30,6 +30,7 @@ import stroom.util.shared.PropertyMap;
 import stroom.util.shared.ResourceKey;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -54,10 +55,14 @@ public final class ImportFileServlet extends HttpServlet implements DataUploadSe
 
     private static final long serialVersionUID = 487567988479000995L;
 
-    @Resource
-    private transient SessionResourceStore sessionResourceStore;
-    @Resource
-    private transient StreamEventLog streamEventLog;
+    private final SessionResourceStore sessionResourceStore;
+    private final StreamEventLog streamEventLog;
+
+    @Inject
+    ImportFileServlet(final SessionResourceStore sessionResourceStore, final StreamEventLog streamEventLog) {
+        this.sessionResourceStore = sessionResourceStore;
+        this.streamEventLog = streamEventLog;
+    }
 
     @Override
     protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
@@ -88,11 +93,10 @@ public final class ImportFileServlet extends HttpServlet implements DataUploadSe
             uuid.write(propertyMap);
             fileItem.delete();
 
-        } catch (final Throwable th) {
-            streamEventLog.importStream(new Date(), "Import", null, th);
-            LOGGER.error("doPost() - Error on DataStreamHandler.create()", th);
-            propertyMap.put("exception", th.getMessage());
-            // response.getWriter().write("FAILED - " + th.getMessage());
+        } catch (final Throwable t) {
+            streamEventLog.importStream(new Date(), "Import", null, t);
+            LOGGER.error(t.getMessage(), t);
+            propertyMap.put("exception", t.getMessage());
         }
 
         response.getWriter().write(propertyMap.toArgLine());
