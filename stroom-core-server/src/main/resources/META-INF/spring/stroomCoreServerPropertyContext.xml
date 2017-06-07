@@ -919,10 +919,10 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.services.sqlStatistics.name"/>
+            <property name="name" value="stroom.services.sqlStatistics.docRefType"/>
             <property name="value" value="sql_statistics"/>
             <property name="description"
-                      value="The entity type for the built-in sql statistics service" />
+                      value="The entity type for the sql statistics service" />
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
