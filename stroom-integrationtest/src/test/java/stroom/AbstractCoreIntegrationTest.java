@@ -25,19 +25,27 @@ import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;
-import stroom.spring.PersistenceConfiguration;
-import stroom.spring.ScopeConfiguration;
-import stroom.spring.ScopeTestConfiguration;
-import stroom.spring.ServerComponentScanTestConfiguration;
-import stroom.spring.ServerConfiguration;
+import stroom.spring.*;
 import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.spring.VisualisationConfiguration;
 
 @ActiveProfiles(value = {StroomSpringProfiles.PROD, StroomSpringProfiles.IT, SecurityConfiguration.MOCK_SECURITY})
-@ContextConfiguration(classes = {ScopeConfiguration.class, PersistenceConfiguration.class,
-        ServerComponentScanTestConfiguration.class, ServerConfiguration.class, SecurityConfiguration.class, ScopeTestConfiguration.class, PipelineConfiguration.class,
-        EventLoggingConfiguration.class, IndexConfiguration.class, SearchConfiguration.class, ScriptConfiguration.class,
-        VisualisationConfiguration.class, DashboardConfiguration.class, StatisticsConfiguration.class})
+@ContextConfiguration(classes = {
+        ScopeConfiguration.class,
+        PersistenceConfiguration.class,
+        ServerComponentScanTestConfiguration.class,
+        ServerConfiguration.class,
+        SecurityConfiguration.class,
+        ScopeTestConfiguration.class,
+        PipelineConfiguration.class,
+        EventLoggingConfiguration.class,
+        IndexConfiguration.class,
+        SearchConfiguration.class,
+        ScriptConfiguration.class,
+        VisualisationConfiguration.class,
+        DashboardConfiguration.class,
+        StatisticsConfiguration.class,
+        MetaDataStatisticConfiguration.class})
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
 }
