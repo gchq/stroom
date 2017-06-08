@@ -17,6 +17,7 @@
 package stroom.startup;
 
 import org.eclipse.jetty.server.session.SessionHandler;
+import stroom.resources.ResourcePaths;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.thread.ThreadScopeContextHolder;
@@ -31,10 +32,11 @@ public class Environment {
         environment.servlets().setSessionHandler(sessions);
 
         // We want Stroom to use the root path so we need to move Dropwizard's path.
-        environment.jersey().setUrlPattern("/api/*");
+        environment.jersey().setUrlPattern(ResourcePaths.ROOT_PATH + "/*");
 
         // We need to set this otherwise we won't have all the beans we need.
-        System.setProperty("spring.profiles.active", String.format("%s,%s", StroomSpringProfiles.PROD, SecurityConfiguration.PROD_SECURITY));
+        System.setProperty("spring.profiles.active",
+                String.format("%s,%s", StroomSpringProfiles.PROD, SecurityConfiguration.PROD_SECURITY));
 
         // We need to prime this otherwise we won't have a thread scope context and bean initialisation will fail
         ThreadScopeContextHolder.createContext();

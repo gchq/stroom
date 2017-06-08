@@ -1,71 +1,82 @@
 dependencies {
-    compile project(':stroom-remote')
     compile project(':stroom-core-shared')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-remote')
     compile project(':stroom-security-api')
     compile project(':stroom-statistics-api')
+    permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
-    compile project(':stroom-entity-shared')
 
-    compile urlDependencies.get(versions.eventLogging)
+    compile urlDependencies.get(urlLibs.eventLogging)
+    compile urlDependencies.get(urlLibs.stroomQueryCommon)
+    compile urlDependencies.get(urlLibs.stroomStatsApi)
 
-    compile 'org.aspectj:aspectjweaver:1.6.2'
-    runtime 'aopalliance:aopalliance:1.0'
-    compile 'commons-lang:commons-lang:2.6'
-    compile 'org.apache.commons:commons-pool2:2.4.2'
-    compile 'org.springframework:spring-core:4.3.4.RELEASE'
-    compile 'org.springframework:spring-web:4.3.4.RELEASE'
-    compile 'org.springframework:spring-beans:4.3.4.RELEASE'
-    compile 'org.springframework:spring-context:4.3.4.RELEASE'
-    compile 'org.springframework:spring-aop:4.3.4.RELEASE'
-    compile 'org.springframework:spring-webmvc:4.3.4.RELEASE'
-    compile 'javax.validation:validation-api:1.1.0.Final'
-    compile 'javax.inject:javax.inject:1'
-    compile 'javax.servlet:javax.servlet-api:3.1.0'
-    compile 'net.sf.ehcache:ehcache-core:2.6.11'
-    runtime 'org.aspectj:aspectjrt:1.8.9'
-    compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
-    compile 'org.javassist:javassist:3.18.1-GA'
-    compile 'org.slf4j:slf4j-api:1.6.2'
-    compile 'com.caucho:hessian:4.0.38'
-    compile 'com.google.gwt:gwt-servlet:2.8.0'
-    compile 'xml-apis:xml-apis:1.0.b2'
+    compile libs.hessian
+    compile libs.guava
+    compile libs.gwt_servlet
+    compile libs.commons_lang
+    compile libs.javax_annotation_api
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
+    compile libs.validation_api
+    compile libs.ws_rs_api
+    compile libs.ehcache_core
+    compile libs.commons_pool2
+    compile libs.curator_x_discovery
+    compile libs.kafka_clients
+    compile libs.aspectjweaver
+    compile libs.jersey_client
+    compile libs.jersey_common
+    compile libs.hibernate_jpa_api
+    compile libs.hibernate_core
+    compile libs.javassist
+    compile libs.slf4j_api
+    compile libs.spring_aop
+    compile libs.spring_beans
+    compile libs.spring_context
+    compile libs.spring_core
+    compile libs.spring_web
+    compile libs.spring_webmvc
+    compile libs.xml_apis
+    compile (libs.ehcache_spring_annotations) {
+        exclude(module: 'guava')
+    }
+    compile libs.flyway_core
+    compile libs.hsqldb
+    permitUnusedDeclared libs.hsqldb
 
-    compile 'org.hibernate:hibernate-core:4.3.8.Final' /* LATEST 5.2.5.Final */
-    runtime 'org.hibernate:hibernate-entitymanager:4.3.8.Final'  /* LATEST 5.2.5.Final */
+    compile libs.c3p0
+    compile libs.spring_tx
+    compile libs.spring_jdbc
+    compile libs.spring_orm
+    compile libs.commons_fileupload
 
+    runtime libs.saxon_he
+    runtime libs.jackson_annotations
+    runtime libs.jackson_core
+    runtime libs.hibernate_entitymanager
+    runtime libs.aopalliance
+    runtime libs.aspectjrt
     // dropwizard 1.0.6 uses hibernate-validator 5.2.4.Final
     // dropwizard 1.1.0 uses hibernate-validator 5.3.4.Final
     // so be consistent with dropwizard to avoid problems with different versions of javax.el
-    runtime 'org.hibernate:hibernate-validator:5.3.4.Final'  /* LATEST 5.4.1.Final */
-
-    compile('com.googlecode.ehcache-spring-annotations:ehcache-spring-annotations:1.2.0') {
-        exclude(module: 'guava')
-    }
-    compile 'org.flywaydb:flyway-core:4.0.3'
-    compile 'org.hsqldb:hsqldb:2.3.4'
-    permitUnusedDeclared 'org.hsqldb:hsqldb:2.3.4'
-    runtime 'mysql:mysql-connector-java:5.1.40' /* LATEST 6.0.5 */
-
-    runtime 'org.apache.lucene:lucene-core:5.5.3' /* LATEST 6.3.0 */
-    runtime 'org.apache.lucene:lucene-analyzers-common:5.5.3' /* LATEST 6.3.0 */
-    runtime 'org.apache.lucene:lucene-queryparser:5.5.3' /* LATEST 6.3.0 */
-
-    compile 'com.mchange:c3p0:0.9.5.2'
-    runtime 'net.sf.saxon:Saxon-HE:9.6.0-6' /* LATEST 9.7.0-12 */
-
-    compile 'org.springframework:spring-tx:4.3.4.RELEASE'
-    compile 'org.springframework:spring-jdbc:4.3.4.RELEASE'
-    compile 'org.springframework:spring-orm:4.3.4.RELEASE'
-
-    runtime 'com.fasterxml.jackson.core:jackson-annotations:2.8.6'
-    runtime 'com.fasterxml.jackson.core:jackson-core:2.8.6'
-
-    compile 'commons-fileupload:commons-fileupload:1.3.2'
+    runtime libs.hibernate_validator
+    runtime libs.mysql_connector_java
+    runtime libs.lucene_core
+    runtime libs.lucene_analyzers_common
+    runtime libs.lucene_queryparser
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.0.2-beta'
+    testCompile libs.junit
+    testCompile libs.mockito_core
+
+    //the following logging libs are needed when running junits outside dropwizard
+    testRuntime libs.jcl_over_slf4j
+    testRuntime libs.jul_to_slf4j
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.logback_classic
+    testRuntime libs.logback_core
 }

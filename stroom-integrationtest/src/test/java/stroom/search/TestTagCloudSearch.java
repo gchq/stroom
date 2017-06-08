@@ -97,7 +97,7 @@ public class TestTagCloudSearch extends AbstractSearchTest {
         final ExpressionBuilder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
         final Query query = new Query(dataSourceRef, expression.build());
 
-        final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultStyle.TABLE, true);
+        final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, true);
 
         final List<ResultRequest> resultRequests = Collections.singletonList(tableResultRequest);
 

@@ -200,12 +200,12 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public boolean authenticate(HttpServletResponse httpServletResponse) throws IOException, ServletException {
+    public boolean authenticate(final HttpServletResponse response) throws IOException, ServletException {
         return false;
     }
 
     @Override
-    public void login(String s, String s1) throws ServletException {
+    public void login(final String username, final String password) throws ServletException {
 
     }
 
@@ -220,12 +220,12 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public Part getPart(String s) throws IOException, ServletException {
+    public Part getPart(final String name) throws IOException, ServletException {
         return null;
     }
 
     @Override
-    public <T extends HttpUpgradeHandler> T upgrade(Class<T> aClass) throws IOException, ServletException {
+    public <T extends HttpUpgradeHandler> T upgrade(final Class<T> handlerClass) throws IOException, ServletException {
         return null;
     }
 
@@ -316,7 +316,7 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public AsyncContext startAsync(ServletRequest servletRequest, ServletResponse servletResponse) throws IllegalStateException {
+    public AsyncContext startAsync(final ServletRequest servletRequest, final ServletResponse servletResponse) throws IllegalStateException {
         return null;
     }
 
@@ -514,7 +514,7 @@ public class MockHttpServletRequest implements HttpServletRequest {
         }
 
         @Override
-        public void setReadListener(ReadListener readListener) {
+        public void setReadListener(final ReadListener readListener) {
 
         }
     }

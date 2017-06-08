@@ -43,8 +43,8 @@ import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.security.server.DBRealm;
-import stroom.statistics.common.FindStatisticsEntityCriteria;
-import stroom.statistics.common.StatisticStoreEntityService;
+import stroom.statistics.server.sql.datasource.FindStatisticsEntityCriteria;
+import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.streamstore.server.StreamStore;
@@ -165,8 +165,8 @@ public final class SetupSampleDataBean {
                 .find(FindStatisticsEntityCriteria.instance());
 
         for (final StatisticStoreEntity statisticsDataSource : statisticsDataSources) {
-            LOGGER.info(String.format("Retreiving statisticsDataSource with name: {}, engine: {} and type: {}",
-                    statisticsDataSource.getName(), statisticsDataSource.getEngineName(),
+            LOGGER.info(String.format("Retreiving statisticsDataSource with name: {}, and type: {}",
+                    statisticsDataSource.getName(),
                     statisticsDataSource.getStatisticType()));
         }
 

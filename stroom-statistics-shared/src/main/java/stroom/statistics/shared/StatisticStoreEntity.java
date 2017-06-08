@@ -19,6 +19,10 @@ package stroom.statistics.shared;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
+import stroom.statistics.shared.common.StatisticField;
+import stroom.statistics.shared.common.StatisticRollUpType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -28,12 +32,15 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Entity
-@Table(name = "STAT_DAT_SRC", uniqueConstraints = @UniqueConstraint(columnNames = { "NAME", "ENGINE_NAME" }) )
+@Table(name = "STAT_DAT_SRC", uniqueConstraints = @UniqueConstraint(columnNames = { "NAME" }) )
 public class StatisticStoreEntity extends DocumentEntity implements StatisticStore {
     public static final String ENTITY_TYPE = "StatisticStore";
     public static final String ENTITY_TYPE_FOR_DISPLAY = "Statistic Store";
@@ -45,22 +52,42 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
     public static final String FIELD_NAME_MAX_VALUE = "Max Statistic Value";
     public static final String FIELD_NAME_PRECISION = "Precision";
     public static final String FIELD_NAME_PRECISION_MS = "Precision ms";
+
+
+    public static final Map<StatisticType, List<String>> STATIC_FIELDS_MAP = new HashMap<>();
+
+    static {
+        STATIC_FIELDS_MAP.put(StatisticType.COUNT, Arrays.asList(
+                FIELD_NAME_DATE_TIME,
+                FIELD_NAME_COUNT,
+                FIELD_NAME_PRECISION,
+                FIELD_NAME_PRECISION_MS
+        ));
+        STATIC_FIELDS_MAP.put(StatisticType.VALUE, Arrays.asList(
+                FIELD_NAME_DATE_TIME,
+                FIELD_NAME_VALUE,
+                FIELD_NAME_COUNT,
+                FIELD_NAME_MIN_VALUE,
+                FIELD_NAME_MAX_VALUE,
+                FIELD_NAME_PRECISION,
+                FIELD_NAME_PRECISION_MS
+        ));
+    }
+
+
     // Hibernate table/column names
     public static final String TABLE_NAME = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.DATA + SEP
             + SQLNameConstants.SOURCE;
-    public static final String ENGINE_NAME = SQLNameConstants.ENGINE + SEP + SQLNameConstants.NAME;
     public static final String STATISTIC_TYPE = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.TYPE;
     public static final String PRECISION = SQLNameConstants.PRECISION;
     public static final String ROLLUP_TYPE = SQLNameConstants.ROLLUP + SEP + SQLNameConstants.TYPE;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String NOT_SET = "NOT SET";
     public static final Long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
     public static final String DEFAULT_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
 
     private static final long serialVersionUID = -649286188919707915L;
 
     private String description;
-    private String engineName;
     private byte pStatisticType;
     private byte pRollUpType;
     private Long precision;
@@ -76,7 +103,6 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
     private void setDefaults() {
         this.pStatisticType = StatisticType.COUNT.getPrimitiveValue();
         this.pRollUpType = StatisticRollUpType.NONE.getPrimitiveValue();
-        this.engineName = NOT_SET;
         this.precision = DEFAULT_PRECISION;
     }
 
@@ -94,15 +120,6 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
     @Transient
     public String getType() {
         return ENTITY_TYPE;
-    }
-
-    @Column(name = ENGINE_NAME, nullable = false)
-    public String getEngineName() {
-        return engineName;
-    }
-
-    public void setEngineName(final String engineName) {
-        this.engineName = engineName;
     }
 
     @Column(name = STATISTIC_TYPE, nullable = false)
@@ -233,6 +250,13 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
         } else {
             return Collections.emptyList();
         }
+    }
+
+    @Transient
+    public List<String> getAllFieldNames() {
+        List<String> allFieldNames = new ArrayList<>(STATIC_FIELDS_MAP.get(getStatisticType()));
+        allFieldNames.addAll(getFieldNames());
+        return allFieldNames;
     }
 
     @Transient

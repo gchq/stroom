@@ -1,14 +1,14 @@
 dependencies {
-    compile project(':stroom-statistics-shared')
     compile project(':stroom-core-client')
-    compile project(':stroom-statistics-api')
+    compile project(':stroom-core-client-widget')
+    compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
     compile project(':stroom-security-client-api')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-core-client-widget')
+    compile project(':stroom-statistics-api')
+    compile project(':stroom-statistics-shared')
 
-    compile('com.google.gwt:gwt-user:2.8.0')
-    compile('com.google.gwt.inject:gin:2.1.2')
-    compile('com.google.inject:guice:3.0')
-    compile('com.gwtplatform:gwtp-mvp-client:0.7')
+    compile libs.gwt_user
+    compile libs.gin
+    compile libs.guice
+    compile libs.gwtp_mvp_client
 }

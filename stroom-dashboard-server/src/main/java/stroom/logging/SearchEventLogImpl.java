@@ -28,7 +28,7 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.dashboard.server.DataSourceProviderRegistry;
+import stroom.datasource.DataSourceProviderRegistry;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.server.QueryDataLogUtil;
 import stroom.query.api.v1.DocRef;

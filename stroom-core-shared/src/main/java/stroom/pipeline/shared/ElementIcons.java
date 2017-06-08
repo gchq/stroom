@@ -21,6 +21,7 @@ public final class ElementIcons {
     public static final String ID = "id.png";
     public static final String INDEX = "index.png";
     public static final String JSON = "json.png";
+    public static final String KAFKA = "kafka.png";
     public static final String RECORD_COUNT = "recordCount.png";
     public static final String RECORD_OUTPUT = "recordOutput.png";
     public static final String REFERENCE_DATA = "referenceData.png";
@@ -28,6 +29,7 @@ public final class ElementIcons {
     public static final String SPLIT = "split.png";
     public static final String STATISTICS = "statistics.png";
     public static final String STREAM = "stream.png";
+    public static final String STROOM_STATS = "stroomStats.png";
     public static final String TEXT = "text.png";
     public static final String XML = "xml.png";
     public static final String XSD = "xsd.png";

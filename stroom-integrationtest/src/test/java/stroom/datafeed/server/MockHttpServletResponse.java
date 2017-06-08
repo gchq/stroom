@@ -123,12 +123,12 @@ public class MockHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
-    public String getHeader(String s) {
+    public String getHeader(final String name) {
         return null;
     }
 
     @Override
-    public Collection<String> getHeaders(String s) {
+    public Collection<String> getHeaders(final String name) {
         return null;
     }
 
@@ -205,7 +205,7 @@ public class MockHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
-    public void setContentLengthLong(long l) {
+    public void setContentLengthLong(final long len) {
 
     }
 

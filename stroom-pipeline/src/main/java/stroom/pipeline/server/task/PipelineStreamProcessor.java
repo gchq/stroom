@@ -16,6 +16,7 @@
 
 package stroom.pipeline.server.task;
 
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
@@ -23,6 +24,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
+import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.io.StreamCloser;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.destination.Destination;
@@ -51,9 +54,6 @@ import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
-import stroom.statistics.common.StatisticEvent;
-import stroom.statistics.common.StatisticTag;
-import stroom.statistics.common.StatisticsFactory;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -83,7 +83,6 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -97,6 +96,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private static final int PREVIEW_SIZE = 100;
     private static final int MIN_STREAM_SIZE = 1;
     private static final Pattern XML_DECL_PATTERN = Pattern.compile("<\\?\\s*xml[^>]*>", Pattern.CASE_INSENSITIVE);
+    private static final String INTERNAL_STAT_KEY_PIPELINE_STREAM_PROCESSOR = "pipelineStreamProcessor";
 
     @Resource
     private PipelineFactory pipelineFactory;
@@ -137,7 +137,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     @Resource
     private PipelineDataCache pipelineDataCache;
     @Resource
-    private StatisticsFactory statisticEventStoreFactory;
+    private InternalStatisticsFacadeFactory internalStatisticsFacadeFactory;
 
     private StreamProcessor streamProcessor;
     private StreamProcessorFilter streamProcessorFilter;
@@ -317,13 +317,21 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
     private void recordStats(final Feed feed, final PipelineEntity pipelineEntity) {
         try {
-            statisticEventStoreFactory.instance()
-                    .putEvent(StatisticEvent.createCount(System.currentTimeMillis(), "PipelineStreamProcessor",
-                            Arrays.asList(
-                                    new StatisticTag("Feed", feed.getName()),
-                                    new StatisticTag("Pipeline", pipelineEntity.getName()),
-                                    new StatisticTag("Node", nodeCache.getDefaultNode().getName())
-                            ), 1L));
+            InternalStatisticEvent event = InternalStatisticEvent.createPlusOneCountStat(
+                    INTERNAL_STAT_KEY_PIPELINE_STREAM_PROCESSOR,
+                    System.currentTimeMillis(),
+                    ImmutableMap.of(
+                            "Feed", feed.getName(),
+                            "Pipeline", pipelineEntity.getName(),
+                            "Node", nodeCache.getDefaultNode().getName()));
+
+            internalStatisticsFacadeFactory.create()
+                    .putEvent(event, throwable ->
+                        outputError(
+                                new RuntimeException("Error recording internal statistic with key " +
+                                        INTERNAL_STAT_KEY_PIPELINE_STREAM_PROCESSOR, throwable),
+                                Severity.WARNING));
+
         } catch (final Exception ex) {
             LOGGER.error("recordStats", ex);
         }
@@ -501,16 +509,19 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         }
     }
 
+    private void outputError(final Exception ex) {
+        outputError(ex, Severity.FATAL_ERROR);
+    }
     /**
      * Used to handle any errors that may occur during translation.
      */
-    private void outputError(final Exception ex) {
+    private void outputError(final Exception ex, final Severity severity) {
         if (errorReceiverProxy != null && !(ex instanceof LoggedException)) {
             try {
                 if (ex.getMessage() != null) {
-                    errorReceiverProxy.log(Severity.FATAL_ERROR, null, "PipelineStreamProcessor", ex.getMessage(), ex);
+                    errorReceiverProxy.log(severity, null, "PipelineStreamProcessor", ex.getMessage(), ex);
                 } else {
-                    errorReceiverProxy.log(Severity.FATAL_ERROR, null, "PipelineStreamProcessor", ex.toString(), ex);
+                    errorReceiverProxy.log(severity, null, "PipelineStreamProcessor", ex.toString(), ex);
                 }
             } catch (final Throwable e) {
                 // Ignore exception as we generated it.

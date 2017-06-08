@@ -73,6 +73,7 @@ public class Servlets {
                 "                stroom.visualisation.spring.VisualisationConfiguration,\n" +
                 "                stroom.dashboard.spring.DashboardConfiguration,\n" +
                 "                stroom.spring.CoreClientConfiguration,\n" +
+                "                stroom.spring.MetaDataStatisticConfiguration,\n" +
                 "                stroom.statistics.spring.StatisticsConfiguration,\n" +
                 "                stroom.security.spring.SecurityConfiguration");
         return servlet;

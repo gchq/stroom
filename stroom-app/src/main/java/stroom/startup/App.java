@@ -46,8 +46,8 @@ public class App extends Application<Config> {
         Filters filters = new Filters(environment.getApplicationContext());
         Listeners listeners = new Listeners(environment.servlets(), springContexts.rootContext);
         springContexts.start(environment, configuration);
-        Resources resources = new Resources(environment.jersey(), servlets.upgradeDispatcherServletHolder);
-        ServiceDiscoveryManager serviceDiscoveryManager = new ServiceDiscoveryManager(configuration);
-        HealthChecks healthChecks = new HealthChecks(environment.healthChecks(), resources, serviceDiscoveryManager);
+        ServletMonitor servletMonitor = new ServletMonitor((servlets.upgradeDispatcherServletHolder));
+        Resources resources = new Resources(environment.jersey(), servletMonitor);
+        HealthChecks.registerHealthChecks(environment.healthChecks(), resources, servletMonitor);
     }
 }

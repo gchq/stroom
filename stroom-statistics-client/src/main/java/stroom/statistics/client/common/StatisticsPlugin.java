@@ -31,9 +31,9 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.node.client.ClientPropertyCache;
 import stroom.security.client.ClientSecurityContext;
 import stroom.statistics.client.common.presenter.StatisticsDataSourcePresenter;
-import stroom.statistics.shared.CustomRollUpMask;
-import stroom.statistics.shared.StatisticField;
-import stroom.statistics.shared.StatisticRollUpType;
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.StatisticField;
+import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 
@@ -80,7 +80,6 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
     private void doConfirmSave(final EntityEditPresenter<?, StatisticStoreEntity> presenter,
                                final StatisticStoreEntity entity, final StatisticStoreEntity entityFromDb) {
         // get the persisted versions of the fields we care about
-        final String prevEngineName = entityFromDb.getEngineName();
         final StatisticType prevType = entityFromDb.getStatisticType();
         final StatisticRollUpType prevRollUpType = entityFromDb.getRollUpType();
         final Long prevInterval = entityFromDb.getPrecision();
@@ -92,8 +91,8 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
         // if one of a select list of attributes has changed then warn the user
         // only need a null check on the engine name as the rest will never be
         // null
-        if (entityFromDb != null && ((prevEngineName == null && entity.getEngineName() != null)
-                || !prevEngineName.equals(entity.getEngineName()) || !prevType.equals(entity.getStatisticType())
+        if (entityFromDb != null && (
+                !prevType.equals(entity.getStatisticType())
                 || !prevRollUpType.equals(entity.getRollUpType()) || !prevInterval.equals(entity.getPrecision())
                 || !prevFieldList.equals(entity.getStatisticFields())
                 || !prevMaskSet.equals(entity.getCustomRollUpMasks()))) {
@@ -118,6 +117,6 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
 
     private void doSave(final EntityEditPresenter<?, StatisticStoreEntity> presenter,
                         final StatisticStoreEntity entity) {
-        save(entity).onSuccess(ent -> presenter.read(ent));
+        save(entity).onSuccess(presenter::read);
     }
 }

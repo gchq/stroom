@@ -24,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
+import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
@@ -33,14 +34,12 @@ import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.VolumeState;
-import stroom.statistics.common.StatisticsFactory;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-import javax.inject.Provider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -216,8 +215,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
         public MockVolumeService(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
                                  final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
-                                 final Provider<StatisticsFactory> factoryProvider) {
-            super(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, factoryProvider);
+                                 final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory) {
+            super(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsFacadeFactory);
         }
         @Override
         public BaseResultList<Volume> find(final FindVolumeCriteria criteria) {

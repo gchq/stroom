@@ -1,33 +1,39 @@
 dependencies {
-    compile project(':stroom-core-server')
-    permitUnusedDeclared project(':stroom-core-server')
-    compile project(':stroom-index-server')
-    permitUnusedDeclared project(':stroom-index-server')
-    compile project(':stroom-statistics-server')
-    permitUnusedDeclared project(':stroom-statistics-server')
-    compile project(':stroom-dashboard-server')
-    permitUnusedDeclared project(':stroom-dashboard-server')
-    compile project(':stroom-security-server')
-    permitUnusedDeclared project(':stroom-security-server')
-
-
-    testCompile urlDependencies.get(versions.stroomQueryApi)
-    testCompile urlDependencies.get(versions.stroomQueryCommon)
-    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-index-server', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
-
-    testRuntime 'org.slf4j:slf4j-api:1.7.21'
-    testRuntime 'org.glassfish:javax.el:3.0.1-b08'
-    testCompile 'junit:junit:4.12'
-    testRuntime 'ch.qos.logback:logback-classic:1.1.8'
-
+    compile project(':stroom-app')
+    permitUnusedDeclared project(':stroom-app')
     // Use default DB config.
     compile project(':stroom-config')
     permitUnusedDeclared project(':stroom-config')
+    compile project(':stroom-core-server')
+    permitUnusedDeclared project(':stroom-core-server')
+    compile project(':stroom-dashboard-server')
+    permitUnusedDeclared project(':stroom-dashboard-server')
+    compile project(':stroom-index-server')
+    permitUnusedDeclared project(':stroom-index-server')
+    compile project(':stroom-security-server')
+    permitUnusedDeclared project(':stroom-security-server')
+    compile project(':stroom-statistics-server')
+    permitUnusedDeclared project(':stroom-statistics-server')
+
+    testCompile urlDependencies.get(urlLibs.stroomQueryApi)
+    testCompile urlDependencies.get(urlLibs.stroomQueryCommon)
+    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-index-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+
+    testCompile libs.slf4j_api
+    testCompile libs.junit
+
+    testRuntime libs.javax_el
+    //the following logging libs are needed when running junits outside dropwizard
+    testRuntime libs.jcl_over_slf4j
+    testRuntime libs.jul_to_slf4j
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.logback_classic
+    testRuntime libs.logback_core
 }
 
 task setupSampleData(type: JavaExec) {

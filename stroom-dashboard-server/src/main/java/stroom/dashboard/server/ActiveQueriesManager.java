@@ -19,6 +19,7 @@ package stroom.dashboard.server;
 import net.sf.ehcache.CacheManager;
 import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
+import stroom.datasource.DataSourceProviderRegistry;
 import stroom.util.spring.StroomFrequencySchedule;
 
 import javax.inject.Inject;

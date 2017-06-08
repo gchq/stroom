@@ -32,35 +32,21 @@ import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.statistics.shared.EventStoreTimeIntervalEnum;
-import stroom.statistics.shared.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
-import stroom.statistics.shared.common.engines.FetchStatisticsEnginesAction;
+import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
+import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.widget.tickbox.client.view.TickBox;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class StatisticsDataSourceSettingsPresenter
         extends MyPresenterWidget<StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView>
         implements HasRead<StatisticStoreEntity>, HasWrite<StatisticStoreEntity>, HasDirtyHandlers,
         StatisticsDataSourceSettingsUiHandlers {
-    private String selectedEngine;
 
     @Inject
     public StatisticsDataSourceSettingsPresenter(final EventBus eventBus, final StatisticsDataSourceSettingsView view,
                                                  final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
-
-        dispatcher.exec(new FetchStatisticsEnginesAction()).onSuccess(result -> {
-            final List<String> engines = new ArrayList<>();
-            engines.addAll(result.getEngines());
-            view.setEngineNames(engines);
-            if (selectedEngine != null) {
-                view.setEngineName(selectedEngine);
-            }
-        });
 
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
             @Override
@@ -82,9 +68,7 @@ public class StatisticsDataSourceSettingsPresenter
     @Override
     public void read(final StatisticStoreEntity statisticsDataSource) {
         if (statisticsDataSource != null) {
-            selectedEngine = statisticsDataSource.getEngineName();
             getView().getDescription().setText(statisticsDataSource.getDescription());
-            getView().setEngineName(statisticsDataSource.getEngineName());
             getView().setStatisticType(statisticsDataSource.getStatisticType());
             getView().getEnabled().setBooleanValue(statisticsDataSource.isEnabled());
             getView().setPrecision(EventStoreTimeIntervalEnum.fromColumnInterval(statisticsDataSource.getPrecision()));
@@ -96,7 +80,6 @@ public class StatisticsDataSourceSettingsPresenter
     public void write(final StatisticStoreEntity statisticsDataSource) {
         if (statisticsDataSource != null) {
             statisticsDataSource.setDescription(getView().getDescription().getText());
-            statisticsDataSource.setEngineName(getView().getEngineName());
             statisticsDataSource.setStatisticType(getView().getStatisticType());
             statisticsDataSource.setEnabled(getView().getEnabled().getBooleanValue());
             statisticsDataSource.setPrecision(getView().getPrecision().columnInterval());
@@ -113,15 +96,9 @@ public class StatisticsDataSourceSettingsPresenter
             extends View, HasUiHandlers<StatisticsDataSourceSettingsUiHandlers> {
         TextArea getDescription();
 
-        String getEngineName();
-
-        void setEngineName(String engine);
-
         StatisticType getStatisticType();
 
         void setStatisticType(StatisticType statisticType);
-
-        void setEngineNames(List<String> names);
 
         StatisticRollUpType getRollUpType();
 

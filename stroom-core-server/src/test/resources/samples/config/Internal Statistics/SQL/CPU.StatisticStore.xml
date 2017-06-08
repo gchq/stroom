@@ -2,7 +2,6 @@
 <statisticStore>
    <description>CPU</description>
    <enabled>true</enabled>
-   <engineName>SQL</engineName>
    <name>CPU</name>
    <precision>60000</precision>
    <rollUpType>NONE</rollUpType>

@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
-import stroom.statistic.server.MetaDataStatistic;
+import stroom.internalstatistics.MetaDataStatistic;
 import stroom.streamstore.server.StreamFactory;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;

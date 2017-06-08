@@ -2,7 +2,6 @@
 <statisticStore>
    <description>Meta Data-Stream Size</description>
    <enabled>true</enabled>
-   <engineName>SQL</engineName>
    <name>Meta Data-Stream Size</name>
    <precision>3600000</precision>
    <rollUpType>ALL</rollUpType>

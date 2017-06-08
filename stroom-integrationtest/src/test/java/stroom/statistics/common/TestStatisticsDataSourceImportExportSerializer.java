@@ -28,8 +28,10 @@ import stroom.entity.shared.FolderService;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.query.api.v1.DocRef;
-import stroom.statistics.server.common.StatisticsDataSourceProvider;
-import stroom.statistics.shared.StatisticField;
+import stroom.statistics.server.sql.datasource.FindStatisticsEntityCriteria;
+import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
+import stroom.statistics.server.sql.datasource.StatisticsDataSourceProvider;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
@@ -66,7 +68,6 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
         final DocRef folder = DocRefUtil.create(folderService.create(null, FileSystemTestUtil.getUniqueTestString()));
 
         final StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(folder, "StatName1");
-        statisticsDataSource.setEngineName("EngineName1");
         statisticsDataSource.setDescription("My Description");
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData());
@@ -100,7 +101,6 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
         final StatisticStoreEntity importedDataSource = dataSources.get(0);
 
         Assert.assertEquals(statisticsDataSource.getName(), importedDataSource.getName());
-        Assert.assertEquals(statisticsDataSource.getEngineName(), importedDataSource.getEngineName());
         Assert.assertEquals(statisticsDataSource.getStatisticType(), importedDataSource.getStatisticType());
         Assert.assertEquals(statisticsDataSource.getDescription(), importedDataSource.getDescription());
 
@@ -113,7 +113,6 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
         final DocRef folder = DocRefUtil.create(folderService.create(null, FileSystemTestUtil.getUniqueTestString()));
 
         final StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(folder, "StatName1");
-        statisticsDataSource.setEngineName("EngineName1");
         statisticsDataSource.setDescription("My Description");
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
 
@@ -125,19 +124,21 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
 
         StatisticStoreEntity statisticsDataSource2 = statisticsDataSourceService
                 .find(FindStatisticsEntityCriteria.instance()).getFirst();
+        Assert.assertNotNull(statisticsDataSource2);
 
         final String uuid = statisticsDataSource2.getUuid();
-
-        statisticsDataSource2 = null;
 
         final StatisticStoreEntity statisticsDataSource3 = statisticsDataSourceService.loadByUuid(uuid);
 
         // Assert.assertNotNull(((StatisticsDataSource)
         // statisticsDataSource3).getStatisticDataSourceData());
+        Assert.assertNotNull(statisticsDataSource3);
         Assert.assertNotNull(statisticsDataSource3.getStatisticDataSourceDataObject());
 
-        final DataSource statisticsDataSource4 = statisticsDataSourceProvider.getDataSource(uuid);
+        DocRef statisticDataSource3DocRef = DocRefUtil.create(statisticsDataSource3);
 
-        Assert.assertNotNull(statisticsDataSource4.getFields());
+        final DataSource dataSource = statisticsDataSourceProvider.getDataSource(statisticDataSource3DocRef);
+
+        Assert.assertNotNull(dataSource.getFields());
     }
 }

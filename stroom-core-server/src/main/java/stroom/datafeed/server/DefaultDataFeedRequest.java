@@ -23,7 +23,7 @@ import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
-import stroom.statistic.server.MetaDataStatistic;
+import stroom.internalstatistics.MetaDataStatistic;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
 import stroom.util.task.ServerTask;

@@ -99,7 +99,7 @@ public class TestEventSearch extends AbstractSearchTest {
         for (final String componentId : componentIds) {
             final TableSettings tableSettings = createTableSettings(index, extractValues);
 
-            final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultStyle.TABLE, true);
+            final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, true);
             resultRequests.add(tableResultRequest);
         }
 

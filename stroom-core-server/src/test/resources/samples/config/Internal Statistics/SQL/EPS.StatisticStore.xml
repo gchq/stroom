@@ -2,7 +2,6 @@
 <statisticStore>
    <description>EPS</description>
    <enabled>true</enabled>
-   <engineName>SQL</engineName>
    <name>EPS</name>
    <precision>60000</precision>
    <rollUpType>NONE</rollUpType>

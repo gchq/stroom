@@ -18,23 +18,23 @@ parent.subprojects.each { p ->
 gwtSourceDirs << sourceSets.main.compileClasspath
 
 // We need to add the sources of GitHub dependencies.
-gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(versions.stroomQueryApiSources))).getAsPath())
-gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(versions.stroomQueryApi))).getAsPath())
+gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApiSources))).getAsPath())
+gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApi))).getAsPath())
 
 dependencies {
-    compile project(':stroom-dashboard-client')
     compile project(':stroom-core-client')
     compile project(':stroom-core-client-widget')
+    compile project(':stroom-dashboard-client')
     compile project(':stroom-security-client')
 
-    compile 'com.google.inject:guice:3.0'
-    compile 'com.google.gwt:gwt-servlet:2.8.0'
-    permitUnusedDeclared 'com.google.gwt:gwt-servlet:2.8.0'
-    compile 'com.google.gwt:gwt-user:2.8.0'
-    compile 'com.google.gwt.inject:gin:2.1.2'
-    compile 'com.google.gwt:gwt-dev:2.8.0'
-    permitUnusedDeclared 'com.google.gwt:gwt-dev:2.8.0'
-    compile 'com.gwtplatform:gwtp-mvp-client:0.7'
+    compile libs.gin
+    compile libs.guice
+    compile libs.gwt_dev
+    permitUnusedDeclared libs.gwt_dev
+    compile libs.gwt_servlet
+    permitUnusedDeclared libs.gwt_servlet
+    compile libs.gwt_user
+    compile libs.gwtp_mvp_client
 }
 
 task gwtCompile(dependsOn: classes, type: JavaExec) {
@@ -77,7 +77,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
     minHeapSize = '1G'
-    maxHeapSize = '4G'
+    maxHeapSize = '2G'
 }
 
 task gwtDraftCompile(dependsOn: classes, type: JavaExec) {

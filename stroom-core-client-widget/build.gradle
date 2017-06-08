@@ -2,12 +2,12 @@ dependencies {
     compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')
 
-    compile 'javax.inject:javax.inject:1'
-    compile 'com.google.gwt.inject:gin:2.1.2'
-    compile 'com.google.inject:guice:3.0'
-    compile 'com.google.gwt:gwt-user:2.8.0'
-    compile ('com.gwtplatform:gwtp-mvp-client:0.7') { /* LATEST 1.5.3 */
+    compile libs.gin
+    compile libs.guice
+    compile libs.gwt_user
+    compile (libs.gwtp_mvp_client) {
         exclude(module: 'persistence-api')
         exclude(module: 'gwtp-crawler-service')
     }
+    compile libs.javax_inject
 }

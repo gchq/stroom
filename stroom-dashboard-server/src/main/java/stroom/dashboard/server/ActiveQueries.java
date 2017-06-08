@@ -16,7 +16,10 @@
 
 package stroom.dashboard.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.datasource.DataSourceProviderRegistry;
 import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.QueryKey;
 
@@ -26,6 +29,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ActiveQueries {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ActiveQueries.class);
+
     private final ConcurrentHashMap<DashboardQueryKey, ActiveQuery> activeQueries = new ConcurrentHashMap<>();
 
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
@@ -43,8 +48,14 @@ public class ActiveQueries {
             final ActiveQuery activeQuery = entry.getValue();
             if (keys == null || !keys.contains(queryKey)) {
                 // Terminate the associated search task.
-                final DataSourceProvider dataSourceProvider = dataSourceProviderRegistry.getDataSourceProvider(activeQuery.getDocRef());
-                final Boolean success = dataSourceProvider.destroy(new QueryKey(queryKey.getUuid()));
+                Boolean success = dataSourceProviderRegistry.getDataSourceProvider(activeQuery.getDocRef())
+                        .map(provider -> provider.destroy(new QueryKey(queryKey.getUuid())))
+                        .orElseGet(() -> {
+                            LOGGER.warn("Unable to destroy query with key {} as provider {} cannot be found",
+                                    queryKey.getUuid(),
+                                    activeQuery.getDocRef().getType());
+                            return Boolean.TRUE;
+                        });
 
                 if (Boolean.TRUE.equals(success)) {
                     // Remove the collector from the available searches as it is no longer required by the UI.

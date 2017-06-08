@@ -23,7 +23,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
-import stroom.statistics.shared.StatisticField;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
