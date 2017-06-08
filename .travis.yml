@@ -35,7 +35,8 @@ before_script:
 install: echo "skip 'gradle assemble' step to speed up build"
 
 # We're running this as a script because our build is either too silent or too chatty and TravisCI will kill either way.
-script: travis_wait 30 ./gradlew -Pversion=$TRAVIS_TAG downloadUrlDependencies clean build -x test shadowJar
+#script: travis_wait 30 ./gradlew -Pversion=$TRAVIS_TAG downloadUrlDependencies clean build -x test shadowJar
+script: ./gradlew -Pversion=$TRAVIS_TAG downloadUrlDependencies clean build -x test shadowJar
 
 # Push to DockerHub. The username and password were added using the Travis CLI.
 # The configuration below will only push an image if the branch being built is master.
