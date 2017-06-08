@@ -3,37 +3,46 @@
 language: java
 dist: trusty
 services:
-  - mysql
+  #- mysql
   - docker
 jdk: oraclejdk8
-sudo: required
+sudo: false
 
 # These packages are required to run MySQL 5.6 on Trusty
-addons:
-  apt:
-    packages:
-    - mysql-server-5.6
-    - mysql-client-core-5.6
-    - mysql-client-5.6
+#addons:
+  #apt:
+    #packages:
+    #- mysql-server-5.6
+    #- mysql-client-core-5.6
+    #- mysql-client-5.6
 
 # Increase the size of the heap
 before_script:
   - "echo $JAVA_OPTS"
   - "export JAVA_OPTS=-Xmx1024m"
+  - "git clone https://github.com/gchq/urlDependencies-plugin.git"
+  - "pushd urlDependencies-plugin"
+  - "./gradlew clean build publishToMavenLocal"
+  - "popd"
+  - "git clone https://github.com/gchq/stroom-resources.git"
+  - "pushd stroom-resources/dev-resources/compose"
+  #- "docker-compose -f hbase-kafka-mysql-stroom-zk.yml up -d"
+  - "popd"
 
 # We run a script to build dependencies and do database setup
 #install: "./.travis.install.sh"
+    
+install: echo "skip 'gradle assemble' step to speed up build"
 
 # We're running this as a script because our build is either too silent or too chatty and TravisCI will kill either way.
-script: travis_wait 30 ./gradlew downloadUrlDependencies clean build shadowJar
+script: travis_wait 30 ./gradlew -Pversion=$TRAVIS_TAG downloadUrlDependencies clean build -x test shadowJar
 
 # Push to DockerHub. The username and password were added using the Travis CLI.
 # The configuration below will only push an image if the branch being built is master.
 after_success:
-  - docker build --tag=gchq/stroom:latest stroom-app/.
-  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+  - if [ "$TRAVIS_BRANCH" == "dev" ]; then
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+    docker build --tag=gchq/stroom:dev-latest stroom-app/.
     docker push gchq/stroom;
     fi
 
@@ -47,9 +56,16 @@ deploy:
   on:
     tags: true
 
+#clean out gradle caches as per travis docs
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
 # Cache dependencies to speed up the build
 cache:
   directories:
     - .autoconf
     - $HOME/.m2
     - libs
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
