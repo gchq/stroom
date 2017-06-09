@@ -101,7 +101,7 @@ public class JWTService {
 
     public static Optional<String> getAuthParam(ServletRequest request){
         String token = request.getParameter("token");
-        return Optional.of(token);
+        return Optional.ofNullable(token);
     }
 
     public static Optional<String> getAuthHeader(ServletRequest request) {
