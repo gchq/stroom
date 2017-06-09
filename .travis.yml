@@ -1,20 +1,35 @@
-# Basic configuration
-# Sets up Ubuntu Trusty, which is needed for MySQL 5.6
 language: java
 dist: trusty
-services:
-  #- mysql
-  - docker
+#services:
+  #- docker
 jdk: oraclejdk8
-sudo: required #to ensure we get a VM rather than a container for more memory
+sudo: required #to ensure we get a VM rather than a container for more memory and for all the apt-get stuff
 
-# These packages are required to run MySQL 5.6 on Trusty
-#addons:
-  #apt:
-    #packages:
-    #- mysql-server-5.6
-    #- mysql-client-core-5.6
-    #- mysql-client-5.6
+env:
+  DOCKER_COMPOSE_VERSION: 1.13.0
+    
+before_install:
+    #Print out the current versions before we change them
+  - docker --version
+  - docker-compose --version
+  - sudo apt-get update
+    #remove the old docker version
+  - sudo apt-get -y remove docker docker-engine
+    #extra stuff required for docker CE
+  - apt-get -y install linux-image-extra-$(uname -r) linux-image-extra-virtual apt-transport-https ca-certificates curl software-properties-common docker-ce
+  - docker --version
+    #remove the old docker-compose
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+  - docker-compose --version
+
+
+# We run a script to build dependencies and do database setup
+#install: "./.travis.install.sh"
+    
+install: echo "skip 'gradle assemble' step to speed up build"
 
 # Increase the size of the heap
 before_script:
@@ -26,13 +41,10 @@ before_script:
   - "popd"
   - "git clone https://github.com/gchq/stroom-resources.git"
   - "pushd stroom-resources/dev-resources/compose"
-  #- "docker-compose -f hbase-kafka-mysql-stroom-zk.yml up -d"
+    #start all the services we need to run the integration tests in stroom
+  - "docker-compose -f hbase-kafka-mysql-zk.yml up -d"
   - "popd"
 
-# We run a script to build dependencies and do database setup
-#install: "./.travis.install.sh"
-    
-install: echo "skip 'gradle assemble' step to speed up build"
 
 # We're running this as a script because our build is either too silent or too chatty and TravisCI will kill either way.
 #script: travis_wait 30 ./gradlew -Pversion=$TRAVIS_TAG downloadUrlDependencies clean build -x test shadowJar
