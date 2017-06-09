@@ -16,6 +16,9 @@ before_install:
     #remove the old docker version
   - sudo apt-get -y remove docker docker-engine
     #extra stuff required for docker CE
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    #Add the apt repo for docker
+  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - sudo apt-get -y install linux-image-extra-$(uname -r) linux-image-extra-virtual apt-transport-https ca-certificates curl software-properties-common docker-ce
   - docker --version
     #remove the old docker-compose
