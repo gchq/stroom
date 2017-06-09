@@ -6,7 +6,7 @@ services:
   #- mysql
   - docker
 jdk: oraclejdk8
-sudo: false
+sudo: required #to ensure we get a VM rather than a container for more memory
 
 # These packages are required to run MySQL 5.6 on Trusty
 #addons:
