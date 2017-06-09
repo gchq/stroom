@@ -43,7 +43,7 @@ script: ./gradlew -Pversion=$TRAVIS_TAG downloadUrlDependencies clean build -x t
 after_success:
   - if [ "$TRAVIS_BRANCH" == "dev" ]; then
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
-    docker build --tag=gchq/stroom:dev-latest stroom-app/.
+    docker build --tag=gchq/stroom:dev-latest stroom-app/. ;
     docker push gchq/stroom;
     fi
 
