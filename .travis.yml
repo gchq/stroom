@@ -6,9 +6,10 @@ jdk: oraclejdk8
 sudo: required #to ensure we get a VM rather than a container for more memory and for all the apt-get stuff
 
 env:
-  CURRENT_STROOM_DEV_VERSION: v6.0.0
-  DOCKER_REPO: gchq/stroom
-  DOCKER_COMPOSE_VERSION: 1.13.0
+  global:
+    - CURRENT_STROOM_DEV_VERSION=v6.0.0
+    - DOCKER_REPO=gchq/stroom
+    - DOCKER_COMPOSE_VERSION=1.13.0
     
 before_install:
     #Print out the current versions before we change them
@@ -50,7 +51,6 @@ before_script:
   - "docker-compose -f stroom-dbs.yml up -d"
   - "popd"
 
-
 # We're running this as a script because our build is either too silent or too chatty and TravisCI will kill either way.
 #script: travis_wait 30 ./gradlew -Pversion=$TRAVIS_TAG downloadUrlDependencies clean build -x test shadowJar
 script: ./gradlew -Pversion=$TRAVIS_TAG downloadUrlDependencies clean build shadowJar
@@ -58,16 +58,18 @@ script: ./gradlew -Pversion=$TRAVIS_TAG downloadUrlDependencies clean build shad
 # Push to DockerHub. The username and password were added using the Travis CLI.
 # The configuration below will only push an image if the branch being built is master.
 after_success:
-  - export DATE_ONLY=$(date +%y%m%d)
-  - export DATE_TIME=$(date +%y%m%d%H%M%S)
+  - export DATE_ONLY="$(date +%y%m%d)"
+  - export DATE_TIME="$(date +%y%m%d%H%M%S)"
     #establish what version of stroom we are building
-  - if [ -n "$TRAVIS_TAG" ]; then
+  - |
+    if [ -n "$TRAVIS_TAG" ]; then
       #this is a tagged build so use the tag as the version
       export STROOM_VERSION=${TRAVIS_TAG};
     else
       export STROOM_VERSION=${CURRENT_STROOM_DEV_VERSION};
     fi
-  - if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
+  - |
+    if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
       export SPECIFIC_TAG="--tag=${DOCKER_REPO}:${STROOM_VERSION}-${DATE_ONLY}-DAILY";
       export FLOATING_TAG="";
     elif [ -n "$TRAVIS_TAG" ]; then
@@ -77,7 +79,8 @@ after_success:
       export SPECIFIC_TAG="";
       export FLOATING_TAG="--tag=${DOCKER_REPO}:${STROOM_VERSION}-SNAPSHOT";
     fi
-  - if [ -n "$TRAVIS_BRANCH" == "dev" || -n "$TRAVIS_TAG" || "$TRAVIS_EVENT_TYPE" == "cron" ]; then
+  - |
+    if [ -n "$TRAVIS_BRANCH" == "dev" || -n "$TRAVIS_TAG" || "$TRAVIS_EVENT_TYPE" == "cron" ]; then
       docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
       docker build ${SPECIFIC_TAG} ${FLOATING_TAG} stroom-app/. ;
       #docker build --tag=gchq/stroom:dev-latest stroom-app/. ;
