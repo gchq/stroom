@@ -6,8 +6,9 @@ def tmpDir = "${gwtBuildDir}/tmp"
 def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
-//def gwtCompilerMain =  'com.google.gwt.dev.Compiler'
 def gwtCompilerMain =  'stroom.gwt.GwtCompilerWrapper'
+def gwtCompilerMinHeap = '50M'
+def gwtCompilerMaxHeap = '400M'
 
 def gwtSourceDirs = []
 parent.subprojects.each { p ->
@@ -82,8 +83,8 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = '1G'
-    maxHeapSize = '2G'
+    minHeapSize = gwtCompilerMinHeap
+    maxHeapSize = gwtCompilerMaxHeap
 }
 
 task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
@@ -125,8 +126,8 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = '1G'
-    maxHeapSize = '4G'
+    minHeapSize = gwtCompilerMinHeap
+    maxHeapSize = gwtCompilerMaxHeap
 }
 
 task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
@@ -166,8 +167,8 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
         ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = '1G'
-    maxHeapSize = '4G'
+    minHeapSize = gwtCompilerMinHeap
+    maxHeapSize = gwtCompilerMaxHeap
 }
 
 task gwtClean {
