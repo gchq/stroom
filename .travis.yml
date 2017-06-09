@@ -63,7 +63,6 @@ after_success:
     #establish what version of stroom we are building
   - |
     if [ -n "$TRAVIS_TAG" ]; then
-      #this is a tagged build so use the tag as the version
       export STROOM_VERSION=${TRAVIS_TAG};
     else
       export STROOM_VERSION=${CURRENT_STROOM_DEV_VERSION};
@@ -80,10 +79,9 @@ after_success:
       export FLOATING_TAG="--tag=${DOCKER_REPO}:${STROOM_VERSION}-SNAPSHOT";
     fi
   - |
-    if [ -n "$TRAVIS_BRANCH" = "dev" ] || [ -n "$TRAVIS_TAG" ] || [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
+    if [ "$TRAVIS_BRANCH" = "dev" ] || [ -n "$TRAVIS_TAG" ] || [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
       docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
       docker build ${SPECIFIC_TAG} ${FLOATING_TAG} stroom-app/. ;
-      #docker build --tag=gchq/stroom:dev-latest stroom-app/. ;
       docker push gchq/stroom;
     fi
 
