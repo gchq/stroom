@@ -6,6 +6,8 @@ def tmpDir = "${gwtBuildDir}/tmp"
 def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
+//def gwtCompilerMain =  'com.google.gwt.dev.Compiler'
+def gwtCompilerMain =  'stroom.gwt.GwtCompilerWrapper'
 
 def gwtSourceDirs = []
 parent.subprojects.each { p ->
@@ -54,7 +56,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         file(extraDir).mkdirs()
     }
 
-    main = 'com.google.gwt.dev.Compiler'
+    main = gwtCompilerMain
 
     classpath {
         gwtSourceDirs
@@ -95,7 +97,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         file(extraDir).mkdirs()
     }
 
-    main = 'com.google.gwt.dev.Compiler'
+    main = gwtCompilerMain
 
     classpath {
         gwtSourceDirs

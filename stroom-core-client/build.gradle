@@ -13,6 +13,9 @@ dependencies {
     compile libs.gwtp_mvp_client
     compile libs.javax_inject
 
+    //Needed only for the GwtCompilerWrapper
+    compileOnly libs.gwt_dev
+
     testCompile project(path: ':stroom-util')
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile libs.junit
