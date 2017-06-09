@@ -42,8 +42,9 @@ public class GwtCompilerWrapper {
         CompletableFuture<Void> future = CompletableFuture.runAsync(() -> Compiler.main(args));
 
         future.exceptionally(throwable -> {
-            System.out.println("Error during GWT Compile");
-            throw new RuntimeException(throwable);
+            System.out.println("Error during GWT Compile: " + throwable.getMessage());
+            throwable.printStackTrace();
+            return null;
         });
 
         Instant startTime = Instant.now();
@@ -53,10 +54,11 @@ public class GwtCompilerWrapper {
             System.out.println(String.format("GWT Compile still running... (Duration: %s)", duration));
         }
 
-//        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-//            Duration duration = Duration.between(startTime, Instant.now());
-//            System.out.println(String.format("Finished compilation. (Duration: %s)", duration));
-//        }));
+        if (future.isCompletedExceptionally()) {
+            System.exit(1);
+        }
+        System.exit(0);
+
     }
 
 
