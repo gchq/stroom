@@ -36,7 +36,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -101,7 +101,7 @@ public class DataRetentionExecutor {
             if (rules != null && rules.size() > 0) {
                 // Calculate the data retention ages for all enabled rules.
                 final LocalDateTime now = LocalDateTime.now();
-                final Map<DataRetentionRule, Long> ageMap = rules.stream()
+                final Map<DataRetentionRule, Optional<Long>> ageMap = rules.stream()
                         .filter(DataRetentionRule::isEnabled)
                         .collect(Collectors.toMap(Function.identity(), rule -> getAge(now, rule)));
 
@@ -122,7 +122,10 @@ public class DataRetentionExecutor {
                 this.lastRun = nowMs;
 
                 // Now figure out what unique ages we have.
-                final Set<Long> ages = ageMap.values().stream().filter(Objects::nonNull).collect(Collectors.toSet());
+                final Set<Long> ages = ageMap.values().stream()
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .collect(Collectors.toSet());
 
                 // Process the different data ages separately as they can consider different sets of streams.
                 ages.forEach(age -> {
@@ -137,14 +140,14 @@ public class DataRetentionExecutor {
 
                     info("Considering stream retention for period: " + ageRange);
 
-                    dataRetentionTransactionHelper.deleteMatching(ageRange, rules, ageMap);
+                    dataRetentionTransactionHelper.deleteMatching(ageRange, rules, ageMap, taskMonitor);
                 });
             }
         }
     }
 
-    private Long getAge(final LocalDateTime now, final DataRetentionRule rule) {
-        return DataRetentionAgeUtil.minus(now, rule);
+    private Optional<Long> getAge(final LocalDateTime now, final DataRetentionRule rule) {
+        return Optional.ofNullable(DataRetentionAgeUtil.minus(now, rule));
     }
 
     private void info(final String info) {

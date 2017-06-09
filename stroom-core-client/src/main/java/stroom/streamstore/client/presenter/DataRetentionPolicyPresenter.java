@@ -57,6 +57,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
     private GlyphButtonView saveButton;
     private GlyphButtonView addButton;
     private GlyphButtonView editButton;
+    private GlyphButtonView copyButton;
     private GlyphButtonView disableButton;
     private GlyphButtonView deleteButton;
     private GlyphButtonView moveUpButton;
@@ -87,6 +88,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         saveButton = listPresenter.add(GlyphIcons.SAVE);
         addButton = listPresenter.add(GlyphIcons.ADD);
         editButton = listPresenter.add(GlyphIcons.EDIT);
+        copyButton = listPresenter.add(GlyphIcons.COPY);
         disableButton = listPresenter.add(GlyphIcons.DISABLE);
         deleteButton = listPresenter.add(GlyphIcons.DELETE);
         moveUpButton = listPresenter.add(GlyphIcons.UP);
@@ -107,6 +109,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         registerHandler(saveButton.addClickHandler(event -> {
             dispatcher.exec(new SaveDataRetentionPolicyAction(policy)).onSuccess(result -> {
                 policy = result;
+                listPresenter.getSelectionModel().clear();
                 update();
                 setDirty(false);
             });
@@ -124,11 +127,35 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                 }
             }
         }));
+        registerHandler(copyButton.addClickHandler(event -> {
+            if (policy != null) {
+                final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
+                if (selected != null) {
+                    ExpressionOperator expression = selected.getExpression();
+                    if (expression != null) {
+                        expression = expression.copy();
+                    }
+
+                    final DataRetentionRule newRule = new DataRetentionRule(System.currentTimeMillis(), selected.getName(), selected.isEnabled(), expression, selected.getAge(), selected.getTimeUnit(), selected.isForever());
+
+                    final int index = policy.getRules().indexOf(selected);
+
+                    if (index < policy.getRules().size() - 1) {
+                        policy.getRules().add(index + 1, newRule);
+                    } else {
+                        policy.getRules().add(newRule);
+                    }
+
+                    update();
+                    listPresenter.getSelectionModel().setSelected(newRule);
+                }
+            }
+        }));
         registerHandler(disableButton.addClickHandler(event -> {
             if (policy != null) {
                 final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
-                    final DataRetentionRule newRule = new DataRetentionRule(!selected.isEnabled(), selected.getExpression(), selected.getAge(), selected.getTimeUnit(), selected.isForever());
+                    final DataRetentionRule newRule = new DataRetentionRule(selected.getCreationTime(), selected.getName(), !selected.isEnabled(), selected.getExpression(), selected.getAge(), selected.getTimeUnit(), selected.isForever());
 
                     final int index = policy.getRules().indexOf(selected);
                     policy.getRules().remove(index);
@@ -197,9 +224,9 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
     }
 
     private void add() {
-        final DataRetentionRule newPolicy = new DataRetentionRule(true, new ExpressionOperator(Op.AND), 1, TimeUnit.YEARS, true);
+        final DataRetentionRule newRule = new DataRetentionRule(System.currentTimeMillis(), "", true, new ExpressionOperator(Op.AND), 1, TimeUnit.YEARS, true);
         final EditRulePresenter editRulePresenter = editRulePresenterProvider.get();
-        editRulePresenter.read(newPolicy);
+        editRulePresenter.read(newRule);
 
         final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
         ShowPopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add New Rule", new PopupUiHandlers() {
@@ -239,7 +266,11 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
 
                     update();
                     listPresenter.getSelectionModel().setSelected(rule);
-                    setDirty(true);
+
+                    // Only mark the policies as dirty if the rule was actually changed.
+                    if (!existingRule.equals(rule)) {
+                        setDirty(true);
+                    }
                 }
 
                 HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);
@@ -254,6 +285,10 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
 
     private void update() {
         if (policy != null) {
+            // Set rule numbers on all of the rules for display purposes.
+            for (int i = 0; i < policy.getRules().size(); i++) {
+                policy.getRules().get(i).setRuleNumber(i + 1);
+            }
             listPresenter.setData(policy.getRules());
         }
         updateButtons();
@@ -277,6 +312,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         saveButton.setEnabled(loadedPolicy && dirty);
         addButton.setEnabled(loadedPolicy);
         editButton.setEnabled(selected);
+        copyButton.setEnabled(selected);
         disableButton.setEnabled(selected);
         deleteButton.setEnabled(selected);
         moveUpButton.setEnabled(selected && index > 0);
@@ -305,7 +341,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         if (this.dirty != dirty) {
             this.dirty = dirty;
             DirtyEvent.fire(this, dirty);
-            updateButtons();
+            saveButton.setEnabled(dirty);
 
             // Only fire tab refresh if the tab has changed.
             if (lastLabel == null || !lastLabel.equals(getLabel())) {

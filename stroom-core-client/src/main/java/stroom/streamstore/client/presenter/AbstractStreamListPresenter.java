@@ -359,7 +359,11 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             Collections.sort(keys);
 
             for (final String key : keys) {
-                TooltipUtil.addRowData(html, key, row.formatAttribute(key));
+                if (!key.equals(StreamAttributeConstants.RETENTION_AGE) &&
+                        !key.equals(StreamAttributeConstants.RETENTION_UNTIL) &&
+                        !key.equals(StreamAttributeConstants.RETENTION_RULE)) {
+                    TooltipUtil.addRowData(html, key, row.formatAttribute(key));
+                }
             }
         } catch (final Exception ex) {
             html.append(ex.getMessage());

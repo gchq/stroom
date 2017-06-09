@@ -92,4 +92,8 @@ public abstract class ExpressionItem implements SharedObject {
             }
         }
     }
+
+    public abstract boolean internalEquals(final Object o);
+
+    public abstract int internalHashCode();
 }

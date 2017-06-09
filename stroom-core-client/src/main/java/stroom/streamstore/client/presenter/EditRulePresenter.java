@@ -28,6 +28,7 @@ import stroom.streamstore.shared.TimeUnit;
 
 public class EditRulePresenter extends MyPresenterWidget<EditRuleView> {
     private final EditExpressionPresenter editExpressionPresenter;
+    private long creationTime;
     private boolean enabled;
 
     @Inject
@@ -39,6 +40,7 @@ public class EditRulePresenter extends MyPresenterWidget<EditRuleView> {
     }
 
     void read(final DataRetentionRule rule) {
+        this.creationTime = rule.getCreationTime();
         this.enabled = rule.isEnabled();
 
         if (rule.getExpression() == null) {
@@ -53,22 +55,26 @@ public class EditRulePresenter extends MyPresenterWidget<EditRuleView> {
 
     DataRetentionRule write() {
         final ExpressionOperator expression = editExpressionPresenter.write();
-        return new DataRetentionRule(enabled, expression, getView().getAge(), getView().getTimeUnit(), getView().isForever());
+        return new DataRetentionRule(creationTime, getView().getName(), enabled, expression, getView().getAge(), getView().getTimeUnit(), getView().isForever());
     }
 
     public interface EditRuleView extends View {
         void setExpressionView(View view);
 
-        void setForever(boolean forever);
+        String getName();
+
+        void setName(String name);
 
         boolean isForever();
 
-        void setAge(int age);
+        void setForever(boolean forever);
 
         int getAge();
 
-        void setTimeUnit(TimeUnit timeUnit);
+        void setAge(int age);
 
         TimeUnit getTimeUnit();
+
+        void setTimeUnit(TimeUnit timeUnit);
     }
 }

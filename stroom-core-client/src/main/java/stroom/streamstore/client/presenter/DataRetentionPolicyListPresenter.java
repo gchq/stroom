@@ -54,7 +54,16 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
                 return String.valueOf(row.getRuleNumber());
             }
         };
-        getView().addResizableColumn(ruleColumn, "Rule", ColumnSizeConstants.SMALL_COL);
+        getView().addResizableColumn(ruleColumn, "Rule", 40);
+
+        // Name.
+        final Column<DataRetentionRule, String> nameColumn = new Column<DataRetentionRule, String>(new TextCell()) {
+            @Override
+            public String getValue(final DataRetentionRule row) {
+                return String.valueOf(row.getName());
+            }
+        };
+        getView().addResizableColumn(nameColumn, "Name", ColumnSizeConstants.MEDIUM_COL);
 
         // Expression.
         final Column<DataRetentionRule, String> expressionColumn = new Column<DataRetentionRule, String>(new TextCell()) {
@@ -81,11 +90,6 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
     }
 
     public void setData(final List<DataRetentionRule> data) {
-        // Set rule numbers on all of the rules for display purposes.
-        for (int i = 0; i < data.size(); i++) {
-            data.get(i).setRuleNumber(i + 1);
-        }
-
         getView().setRowData(0, data);
         getView().setRowCount(data.size());
     }

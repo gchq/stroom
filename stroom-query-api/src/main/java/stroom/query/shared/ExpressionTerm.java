@@ -120,4 +120,26 @@ public class ExpressionTerm extends ExpressionItem {
     public boolean contains(final String fieldToFind) {
         return this.field.equals(fieldToFind);
     }
+
+    @Override
+    public boolean internalEquals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final ExpressionTerm term = (ExpressionTerm) o;
+
+        if (field != null ? !field.equals(term.field) : term.field != null) return false;
+        if (condition != term.condition) return false;
+        if (value != null ? !value.equals(term.value) : term.value != null) return false;
+        return dictionary != null ? dictionary.equals(term.dictionary) : term.dictionary == null;
+    }
+
+    @Override
+    public int internalHashCode() {
+        int result = field != null ? field.hashCode() : 0;
+        result = 31 * result + (condition != null ? condition.hashCode() : 0);
+        result = 31 * result + (value != null ? value.hashCode() : 0);
+        result = 31 * result + (dictionary != null ? dictionary.hashCode() : 0);
+        return result;
+    }
 }

@@ -163,4 +163,44 @@ public class ExpressionOperator extends ExpressionItem {
 
         return hasBeenFound;
     }
+
+    @Override
+    public boolean internalEquals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final ExpressionOperator that = (ExpressionOperator) o;
+
+        if (op != that.op) return false;
+
+        if (children != null && that.children != null) {
+            if (children.size() != that.children.size()) {
+                return false;
+            }
+
+            for (int i = 0; i < children.size(); i++) {
+                final ExpressionItem expressionItem1 = children.get(i);
+                final ExpressionItem expressionItem2 = that.children.get(i);
+                if (!expressionItem1.internalEquals(expressionItem2)) {
+                    return false;
+                }
+            }
+        }
+
+        return children == that.children;
+    }
+
+    @Override
+    public int internalHashCode() {
+        int result = op != null ? op.hashCode() : 0;
+
+        if (children != null) {
+            result = 31 * result + children.size();
+            for (final ExpressionItem expressionItem : children) {
+                result = 31 * result + expressionItem.internalHashCode();
+            }
+        }
+
+        return result;
+    }
 }

@@ -37,6 +37,7 @@ import stroom.streamstore.shared.DataRetentionRule;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
+import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -49,6 +50,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -68,7 +70,7 @@ public class DataRetentionTransactionHelper {
     }
 
     @Transactional(propagation = Propagation.NEVER, readOnly = true)
-    public void deleteMatching(final Period ageRange, final List<DataRetentionRule> rules, final Map<DataRetentionRule, Long> ageMap) {
+    public void deleteMatching(final Period ageRange, final List<DataRetentionRule> rules, final Map<DataRetentionRule, Optional<Long>> ageMap, final TaskMonitor taskMonitor) {
         // Find out which fields are used by the expressions so we don't have to do unnecessary joins.
         final Set<String> fieldSet = new HashSet<>();
         fieldSet.add(StreamFields.STREAM_ID);
@@ -92,6 +94,66 @@ public class DataRetentionTransactionHelper {
             return;
         }
 
+        final long rowCount = getRowCount(ageRange, fieldSet);
+        long rowNum = 1;
+
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamFields.getFieldMap(), dictionaryService);
+
+        final String sql = getSQL(ageRange, fieldSet, false);
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        final Map<String, Object> attributeMap = createAttributeMap(resultSet, fieldSet);
+                        final Long streamId = (Long) attributeMap.get(StreamFields.STREAM_ID);
+                        try {
+                            final String streamInfo = "stream " + rowNum++ + " of " + rowCount + " (stream id=" + streamId + ")";
+                            info(taskMonitor, "Examining " + streamInfo);
+
+                            final DataRetentionRule matchingRule = findMatchingRule(expressionMatcher, attributeMap, activeRules);
+                            if (matchingRule != null) {
+                                ageMap.get(matchingRule).ifPresent(age -> {
+                                    final Long createMs = (Long) attributeMap.get(StreamFields.CREATED_ON);
+                                    if (createMs < age) {
+                                        info(taskMonitor, "Deleting " + streamInfo);
+                                        fileSystemStreamStore.deleteStream(Stream.createStub(streamId));
+                                    }
+                                });
+                            }
+                        } catch (final Exception e) {
+                            LOGGER.error("An error occurred processing stream " + streamId, e);
+                        }
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    private void info(final TaskMonitor taskMonitor, final String message) {
+        LOGGER.debug(message);
+        taskMonitor.info(message);
+    }
+
+    private long getRowCount(final Period ageRange, final Set<String> fieldSet) {
+        long rowCount = 0;
+        final String sql = getSQL(ageRange, fieldSet, true);
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        rowCount = resultSet.getLong(1);
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return rowCount;
+    }
+
+    private String getSQL(final Period ageRange, final Set<String> fieldSet, final boolean count) {
         final SQLBuilder sql = new SQLBuilder();
         sql.append("SELECT");
 
@@ -100,8 +162,13 @@ public class DataRetentionTransactionHelper {
         final boolean includeStreamType = addFieldsToQuery(StreamFields.getStreamTypeFields(), fieldSet, sql, "ST");
         final boolean includePipeline = addFieldsToQuery(StreamFields.getPipelineFields(), fieldSet, sql, "P");
 
-        // Remove last comma from field list.
-        sql.setLength(sql.length() - 1);
+        if (count) {
+            sql.setLength(0);
+            sql.append("SELECT COUNT(*)");
+        } else {
+            // Remove last comma from field list.
+            sql.setLength(sql.length() - 1);
+        }
 
         sql.append(" FROM ");
         sql.append(Stream.TABLE_NAME);
@@ -121,37 +188,7 @@ public class DataRetentionTransactionHelper {
         sql.append(" WHERE 1=1");
         SQLUtil.appendLongRangeQuery(sql, "S." + Stream.CREATE_MS, ageRange);
 
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamFields.getFieldMap(), dictionaryService);
-
-        try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql.toString())) {
-                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                    while (resultSet.next()) {
-                        final Map<String, Object> attributeMap = createAttributeMap(resultSet, fieldSet);
-                        final Long streamId = (Long) attributeMap.get(StreamFields.STREAM_ID);
-                        try {
-                            LOGGER.debug("Processing stream {}", streamId);
-
-                            final DataRetentionRule matchingRule = findMatchingRule(expressionMatcher, attributeMap, activeRules);
-                            if (matchingRule != null) {
-                                final Long age = ageMap.get(matchingRule);
-                                if (age != null) {
-                                    final Long createMs = (Long) attributeMap.get(StreamFields.CREATED_ON);
-                                    if (createMs < age) {
-                                        LOGGER.debug("Deleting stream {}", streamId);
-                                        fileSystemStreamStore.deleteStream(Stream.createStub(streamId));
-                                    }
-                                }
-                            }
-                        } catch (final Exception e) {
-                            LOGGER.error("An error occurred processing stream " + streamId, e);
-                        }
-                    }
-                }
-            }
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
+        return sql.toString();
     }
 
     private DataRetentionRule findMatchingRule(final ExpressionMatcher expressionMatcher, final Map<String, Object> attributeMap, final List<DataRetentionRule> activeRules) {

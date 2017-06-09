@@ -16,13 +16,18 @@
 
 package stroom.streamstore.client.view;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.item.client.ItemListBox;
 import stroom.streamstore.client.presenter.EditRulePresenter.EditRuleView;
 import stroom.streamstore.shared.TimeUnit;
@@ -35,7 +40,11 @@ public class EditRuleViewImpl extends ViewImpl implements EditRuleView {
     @UiField
     SimplePanel expression;
     @UiField
+    TextBox name;
+    @UiField
     TickBox forever;
+    @UiField
+    Label retainLabel;
     @UiField
     ValueSpinner age;
     @UiField
@@ -68,6 +77,16 @@ public class EditRuleViewImpl extends ViewImpl implements EditRuleView {
     }
 
     @Override
+    public String getName() {
+        return name.getText();
+    }
+
+    @Override
+    public void setName(final String name) {
+        this.name.setText(name);
+    }
+
+    @Override
     public boolean isForever() {
         return forever.getBooleanValue();
     }
@@ -75,6 +94,7 @@ public class EditRuleViewImpl extends ViewImpl implements EditRuleView {
     @Override
     public void setForever(final boolean forever) {
         this.forever.setBooleanValue(forever);
+        setEnabled(!forever);
     }
 
     @Override
@@ -95,6 +115,21 @@ public class EditRuleViewImpl extends ViewImpl implements EditRuleView {
     @Override
     public void setTimeUnit(final TimeUnit timeUnit) {
         this.timeUnit.setSelectedItem(timeUnit);
+    }
+
+    @UiHandler("forever")
+    public void onAddFunctionClick(final ValueChangeEvent<TickBoxState> event) {
+        setEnabled(!isForever());
+    }
+
+    private void setEnabled(final boolean enabled) {
+        if (enabled) {
+            retainLabel.getElement().getStyle().setOpacity(1);
+        } else {
+            retainLabel.getElement().getStyle().setOpacity(0.5);
+        }
+        age.setEnabled(enabled);
+        timeUnit.setEnabled(enabled);
     }
 
     public interface Binder extends UiBinder<Widget, EditRuleViewImpl> {

@@ -70,8 +70,16 @@ public class StreamAttributeMapRetentionRuleDecorator {
                 }
             }
 
+            // Create a rule name that includes the rule number.
+            String ruleName;
+            if (rule.getName() != null && rule.getName().length() > 0) {
+                ruleName = (index + 1) + " " + rule.getName();
+            } else {
+                ruleName = String.valueOf(index + 1);
+            }
+
             streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_UNTIL, keepUntil);
-            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_RULE, String.valueOf(index + 1));
+            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_RULE, ruleName);
         } else {
             streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_AGE, DataRetentionRule.FOREVER);
             streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_UNTIL, DataRetentionRule.FOREVER);

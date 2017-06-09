@@ -77,7 +77,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         final ExpressionTerm feedTerm = new ExpressionTerm("Feed", Condition.EQUALS, feed.getName());
         final ExpressionOperator expression = new ExpressionOperator(Op.AND);
         expression.addChild(feedTerm);
-        final DataRetentionRule rule = new DataRetentionRule(true, expression, RETENTION_PERIOD_DAYS, stroom.streamstore.shared.TimeUnit.DAYS, false);
+        final DataRetentionRule rule = new DataRetentionRule(expression, RETENTION_PERIOD_DAYS, stroom.streamstore.shared.TimeUnit.DAYS, false);
         final DataRetentionPolicy currentPolicy = dataRetentionService.load();
         final DataRetentionPolicy dataRetentionPolicy = new DataRetentionPolicy(Collections.singletonList(rule));
         if (currentPolicy != null) {

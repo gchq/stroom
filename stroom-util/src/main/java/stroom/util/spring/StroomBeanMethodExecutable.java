@@ -44,7 +44,7 @@ public class StroomBeanMethodExecutable {
 
     public void exec(final Task<?> task) {
         try {
-            LOGGER.info(message + " " + stroomBeanMethod.getBeanName() + "." + stroomBeanMethod.getBeanMethod().getName());
+            LOGGER.debug(message + " " + stroomBeanMethod.getBeanName() + "." + stroomBeanMethod.getBeanMethod().getName());
             final Class<?>[] paramTypes = stroomBeanMethod.getBeanMethod().getParameterTypes();
             if (paramTypes.length > 0) {
                 if (paramTypes.length > 1) {

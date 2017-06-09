@@ -27,11 +27,15 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "DataRetentionRule", propOrder = { "enabled", "expression", "age", "timeUnit", "forever" })
+@XmlType(name = "DataRetentionRule", propOrder = {"creationTime", "name", "enabled", "expression", "age", "timeUnit", "forever"})
 @XmlRootElement(name = "dataRetentionRule")
 public class DataRetentionRule implements SharedObject {
     public static final String FOREVER = "Forever";
 
+    @XmlElement(name = "creationTime")
+    private long creationTime;
+    @XmlElement(name = "name")
+    private String name;
     @XmlElement(name = "enabled")
     private boolean enabled;
     @XmlElement(name = "expression")
@@ -49,12 +53,43 @@ public class DataRetentionRule implements SharedObject {
         // Default constructor for GWT serialisation.
     }
 
-    public DataRetentionRule(final boolean enabled, final ExpressionOperator expression, final int age, final TimeUnit timeUnit, final boolean forever) {
+    public DataRetentionRule(
+            final ExpressionOperator expression,
+            final int age,
+            final TimeUnit timeUnit,
+            final boolean forever) {
+        this.expression = expression;
+        this.age = age;
+        this.timeUnit = timeUnit;
+        this.forever = forever;
+    }
+
+    public DataRetentionRule(final long creationTime,
+                             final String name,
+                             final boolean enabled,
+                             final ExpressionOperator expression,
+                             final int age,
+                             final TimeUnit timeUnit,
+                             final boolean forever) {
+        this.creationTime = creationTime;
+        this.name = name;
         this.enabled = enabled;
         this.expression = expression;
         this.age = age;
         this.timeUnit = timeUnit;
         this.forever = forever;
+    }
+
+    public long getCreationTime() {
+        return creationTime;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(final String name) {
+        this.name = name;
     }
 
     public boolean isEnabled() {
@@ -107,17 +142,23 @@ public class DataRetentionRule implements SharedObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final DataRetentionRule that = (DataRetentionRule) o;
+        final DataRetentionRule rule = (DataRetentionRule) o;
 
-        if (age != that.age) return false;
-        if (forever != that.forever) return false;
-        if (expression != null ? !expression.equals(that.expression) : that.expression != null) return false;
-        return timeUnit == that.timeUnit;
+        if (creationTime != rule.creationTime) return false;
+        if (enabled != rule.enabled) return false;
+        if (age != rule.age) return false;
+        if (forever != rule.forever) return false;
+        if (name != null ? !name.equals(rule.name) : rule.name != null) return false;
+        if (expression != null ? !expression.internalEquals(rule.expression) : rule.expression != null) return false;
+        return timeUnit == rule.timeUnit;
     }
 
     @Override
     public int hashCode() {
-        int result = expression != null ? expression.hashCode() : 0;
+        int result = (int) (creationTime ^ (creationTime >>> 32));
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (enabled ? 1 : 0);
+        result = 31 * result + (expression != null ? expression.internalHashCode() : 0);
         result = 31 * result + age;
         result = 31 * result + (timeUnit != null ? timeUnit.hashCode() : 0);
         result = 31 * result + (forever ? 1 : 0);

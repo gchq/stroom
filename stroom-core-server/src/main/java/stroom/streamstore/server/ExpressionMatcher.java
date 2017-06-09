@@ -311,6 +311,9 @@ public class ExpressionMatcher {
 
     private long getDate(final String fieldName, final Object value) {
         try {
+            if (value instanceof Long) {
+                return (Long) value;
+            }
             return DateUtil.parseNormalDateTimeString(value.toString());
 
 //            return new DateExpressionParser().parse(value, timeZoneId, nowEpochMilli).toInstant().toEpochMilli();
