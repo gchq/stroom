@@ -8,7 +8,7 @@ def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
 def gwtCompilerMain =  'stroom.gwt.GwtCompilerWrapper'
 def gwtCompilerMinHeap = '50M'
-def gwtCompilerMaxHeap = '400M'
+def gwtCompilerMaxHeap = '500M'
 
 def gwtSourceDirs = []
 parent.subprojects.each { p ->
