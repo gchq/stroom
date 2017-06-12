@@ -29,7 +29,6 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
   - docker-compose --version
 
-
 # We run a script to build dependencies and do database setup
 #install: "./.travis.install.sh"
     
@@ -37,17 +36,22 @@ install: echo "skip 'gradle assemble' step to speed up build"
 
 # Increase the size of the heap
 before_script:
-  - "echo $JAVA_OPTS"
-  - "export JAVA_OPTS=-Xmx1024m"
-  - "git clone https://github.com/gchq/urlDependencies-plugin.git"
-  - "pushd urlDependencies-plugin"
-  - "./gradlew clean build publishToMavenLocal"
-  - "popd"
-  - "git clone https://github.com/gchq/stroom-resources.git"
-  - "pushd stroom-resources/dev-resources/compose"
+  - echo $JAVA_OPTS
+  - export JAVA_OPTS=-Xmx1024m
+  - mkdir -p ../git_work
+  - pushd ../git_work
+  - git clone https://github.com/gchq/urlDependencies-plugin.git
+  - pushd urlDependencies-plugin
+  - ./gradlew clean build publishToMavenLocal
+  - popd
+  - git clone https://github.com/gchq/stroom-resources.git
+  - pushd stroom-resources/dev-resources/compose
     #start all the services we need to run the integration tests in stroom
-  - "docker-compose -f kafka-mysql-zk.yml up -d"
-  - "popd"
+  - docker-compose -f kafka-mysql-zk.yml up -d
+  - popd
+  - popd
+  - mkdir -p ~/.stroom/
+  - cp stroom.conf.example ~/.stroom/stroom.conf
 
 # We're running this as a script because our build is either too silent or too chatty and TravisCI will kill either way.
 # Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
