@@ -1,7 +1,5 @@
 language: java
 dist: trusty
-#services:
-  #- docker
 jdk: oraclejdk8
 sudo: required #to ensure we get a VM rather than a container for more memory and for all the apt-get stuff
 
@@ -13,23 +11,23 @@ env:
     
 before_install:
     #Print out the current versions before we change them
-  #- docker --version
-  #- docker-compose --version
-    ##remove the old docker version
-  #- sudo apt-get -y remove docker docker-engine
-    ##extra stuff required for docker CE
-  #- curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    ##Add the apt repo for docker
-  #- sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-  #- sudo apt-get update
-  #- sudo apt-get -y install linux-image-extra-$(uname -r) linux-image-extra-virtual apt-transport-https ca-certificates curl software-properties-common docker-ce
-  #- docker --version
-    ##remove the old docker-compose
-  #- sudo rm /usr/local/bin/docker-compose
-  #- curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  #- chmod +x docker-compose
-  #- sudo mv docker-compose /usr/local/bin
-  #- docker-compose --version
+  - docker --version
+  - docker-compose --version
+    #remove the old docker version
+  - sudo apt-get -y remove docker docker-engine
+    #extra stuff required for docker CE
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    #Add the apt repo for docker
+  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - sudo apt-get update
+  - sudo apt-get -y install linux-image-extra-$(uname -r) linux-image-extra-virtual apt-transport-https ca-certificates curl software-properties-common docker-ce
+  - docker --version
+    #remove the old docker-compose
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+  - docker-compose --version
 
 
 # We run a script to build dependencies and do database setup
@@ -48,11 +46,12 @@ before_script:
   - "git clone https://github.com/gchq/stroom-resources.git"
   - "pushd stroom-resources/dev-resources/compose"
     #start all the services we need to run the integration tests in stroom
-  #- "docker-compose -f stroom-dbs.yml up -d"
+  - "docker-compose -f stroom-dbs.yml up -d"
   - "popd"
 
 # We're running this as a script because our build is either too silent or too chatty and TravisCI will kill either way.
-script: ./gradlew -Pversion=$TRAVIS_TAG downloadUrlDependencies clean build -x test shadowJar
+# Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
+script: ./gradlew -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 downloadUrlDependencies clean build shadowJar
 #script: ./gradlew -Pversion=$TRAVIS_TAG downloadUrlDependencies clean build shadowJar
 
 # Push to DockerHub. The username and password were added using the Travis CLI.
