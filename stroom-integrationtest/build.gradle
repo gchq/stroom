@@ -36,6 +36,13 @@ dependencies {
     testRuntime libs.logback_core
 }
 
+// Integration tests are quite slow so output progress for each test to keep travis alive
+test {
+    afterTest { desc, result -> 
+        println "Executing test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+    }
+}
+
 task setupSampleData(type: JavaExec) {
     // We need to set the working directory as the stroom root otherwise
     // setupSampleData won't find 'samples' directories in other modules.
