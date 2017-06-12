@@ -30,6 +30,8 @@ import java.util.List;
 @XmlType(name = "DataReceiptPolicy", propOrder = {"rules"})
 @XmlRootElement(name = "dataReceiptPolicy")
 public class DataReceiptPolicy implements SharedObject {
+    private static final long serialVersionUID = -7268301402378907741L;
+
     @XmlElement(name = "rule")
     private List<DataReceiptRule> rules;
     @XmlTransient

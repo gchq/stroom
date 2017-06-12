@@ -30,6 +30,8 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "DataReceiptRule", propOrder = {"creationTime", "name", "enabled", "expression", "action"})
 @XmlRootElement(name = "dataReceiptRule")
 public class DataReceiptRule implements SharedObject {
+    private static final long serialVersionUID = -4466080173384628077L;
+
     @XmlElement(name = "creationTime")
     private long creationTime;
     @XmlElement(name = "name")

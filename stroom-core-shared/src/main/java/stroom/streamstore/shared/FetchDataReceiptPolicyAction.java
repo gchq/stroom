@@ -19,7 +19,7 @@ package stroom.streamstore.shared;
 import stroom.dispatch.shared.Action;
 
 public class FetchDataReceiptPolicyAction extends Action<DataReceiptPolicy> {
-    private static final long serialVersionUID = 6648093324274652791L;
+    private static final long serialVersionUID = 1131164657465601115L;
 
     public FetchDataReceiptPolicyAction() {
     }
