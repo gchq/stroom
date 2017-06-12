@@ -29,12 +29,12 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.item.client.ItemListBox;
-import stroom.streamstore.client.presenter.EditRulePresenter.EditRuleView;
+import stroom.streamstore.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.streamstore.shared.TimeUnit;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-public class EditRuleViewImpl extends ViewImpl implements EditRuleView {
+public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetentionRuleView {
     private final Widget widget;
 
     @UiField
@@ -51,7 +51,7 @@ public class EditRuleViewImpl extends ViewImpl implements EditRuleView {
     ItemListBox<TimeUnit> timeUnit;
 
     @Inject
-    public EditRuleViewImpl(final EditRuleViewImpl.Binder binder) {
+    public DataRetentionRuleViewImpl(final DataRetentionRuleViewImpl.Binder binder) {
         widget = binder.createAndBindUi(this);
 
         age.setMin(1);
@@ -132,6 +132,6 @@ public class EditRuleViewImpl extends ViewImpl implements EditRuleView {
         timeUnit.setEnabled(enabled);
     }
 
-    public interface Binder extends UiBinder<Widget, EditRuleViewImpl> {
+    public interface Binder extends UiBinder<Widget, DataRetentionRuleViewImpl> {
     }
 }

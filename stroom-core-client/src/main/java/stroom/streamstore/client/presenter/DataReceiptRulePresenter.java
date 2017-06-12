@@ -22,24 +22,24 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
-import stroom.streamstore.client.presenter.EditRulePresenter.EditRuleView;
-import stroom.streamstore.shared.DataRetentionRule;
-import stroom.streamstore.shared.TimeUnit;
+import stroom.streamstore.client.presenter.DataReceiptRulePresenter.DataReceiptRuleView;
+import stroom.streamstore.shared.DataReceiptAction;
+import stroom.streamstore.shared.DataReceiptRule;
 
-public class EditRulePresenter extends MyPresenterWidget<EditRuleView> {
+public class DataReceiptRulePresenter extends MyPresenterWidget<DataReceiptRuleView> {
     private final EditExpressionPresenter editExpressionPresenter;
     private long creationTime;
     private boolean enabled;
 
     @Inject
-    public EditRulePresenter(final EventBus eventBus,
-                             final EditRuleView view, final EditExpressionPresenter editExpressionPresenter) {
+    public DataReceiptRulePresenter(final EventBus eventBus,
+                                    final DataReceiptRuleView view, final EditExpressionPresenter editExpressionPresenter) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
-    void read(final DataRetentionRule rule) {
+    void read(final DataReceiptRule rule) {
         this.creationTime = rule.getCreationTime();
         this.enabled = rule.isEnabled();
 
@@ -48,33 +48,23 @@ public class EditRulePresenter extends MyPresenterWidget<EditRuleView> {
         } else {
             editExpressionPresenter.read(rule.getExpression());
         }
-        getView().setForever(rule.isForever());
-        getView().setAge(rule.getAge());
-        getView().setTimeUnit(rule.getTimeUnit());
+        getView().setAction(rule.getAction());
     }
 
-    DataRetentionRule write() {
+    DataReceiptRule write() {
         final ExpressionOperator expression = editExpressionPresenter.write();
-        return new DataRetentionRule(creationTime, getView().getName(), enabled, expression, getView().getAge(), getView().getTimeUnit(), getView().isForever());
+        return new DataReceiptRule(creationTime, getView().getName(), enabled, expression, getView().getAction());
     }
 
-    public interface EditRuleView extends View {
+    public interface DataReceiptRuleView extends View {
         void setExpressionView(View view);
 
         String getName();
 
         void setName(String name);
 
-        boolean isForever();
+        DataReceiptAction getAction();
 
-        void setForever(boolean forever);
-
-        int getAge();
-
-        void setAge(int age);
-
-        TimeUnit getTimeUnit();
-
-        void setTimeUnit(TimeUnit timeUnit);
+        void setAction(DataReceiptAction action);
     }
 }

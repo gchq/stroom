@@ -20,15 +20,20 @@ import stroom.app.client.gin.PluginModule;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
+import stroom.streamstore.client.DataReceiptPolicyPlugin;
 import stroom.streamstore.client.DataRetentionPolicyPlugin;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.streamstore.client.presenter.DataPresenter;
 import stroom.streamstore.client.presenter.DataPresenter.DataView;
+import stroom.streamstore.client.presenter.DataReceiptPolicyPresenter;
+import stroom.streamstore.client.presenter.DataReceiptPolicyPresenter.DataReceiptPolicyView;
+import stroom.streamstore.client.presenter.DataReceiptRulePresenter;
+import stroom.streamstore.client.presenter.DataReceiptRulePresenter.DataReceiptRuleView;
 import stroom.streamstore.client.presenter.DataRetentionPolicyPresenter;
 import stroom.streamstore.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
-import stroom.streamstore.client.presenter.EditRulePresenter;
-import stroom.streamstore.client.presenter.EditRulePresenter.EditRuleView;
+import stroom.streamstore.client.presenter.DataRetentionRulePresenter;
+import stroom.streamstore.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.streamstore.client.presenter.EditExpressionPresenter;
 import stroom.streamstore.client.presenter.EditExpressionPresenter.EditExpressionView;
 import stroom.streamstore.client.presenter.EntityChoicePresenter;
@@ -55,8 +60,10 @@ import stroom.streamstore.client.presenter.StreamTypeUiManager;
 import stroom.streamstore.client.presenter.TextPresenter;
 import stroom.streamstore.client.presenter.TextPresenter.TextView;
 import stroom.streamstore.client.view.ClassificationWrapperViewImpl;
+import stroom.streamstore.client.view.DataReceiptPolicyViewImpl;
+import stroom.streamstore.client.view.DataReceiptRuleViewImpl;
 import stroom.streamstore.client.view.DataRetentionPolicyViewImpl;
-import stroom.streamstore.client.view.EditRuleViewImpl;
+import stroom.streamstore.client.view.DataRetentionRuleViewImpl;
 import stroom.streamstore.client.view.DataViewImpl;
 import stroom.streamstore.client.view.EditExpressionViewImpl;
 import stroom.streamstore.client.view.EntityChoiceViewImpl;
@@ -103,9 +110,12 @@ public class StreamStoreModule extends PluginModule {
         bindSharedView(DropDrownView.class, DropDownViewImpl.class);
         bindSharedView(DropDownTreeView.class, DropDownTreeViewImpl.class);
 
+        bindPlugin(DataReceiptPolicyPlugin.class);
         bindPlugin(DataRetentionPolicyPlugin.class);
         bindPresenterWidget(EditExpressionPresenter.class, EditExpressionView.class, EditExpressionViewImpl.class);
-        bindPresenterWidget(EditRulePresenter.class, EditRuleView.class, EditRuleViewImpl.class);
+        bindPresenterWidget(DataReceiptRulePresenter.class, DataReceiptRuleView.class, DataReceiptRuleViewImpl.class);
+        bindPresenterWidget(DataReceiptPolicyPresenter.class, DataReceiptPolicyView.class, DataReceiptPolicyViewImpl.class);
+        bindPresenterWidget(DataRetentionRulePresenter.class, DataRetentionRuleView.class, DataRetentionRuleViewImpl.class);
         bindPresenterWidget(DataRetentionPolicyPresenter.class, DataRetentionPolicyView.class, DataRetentionPolicyViewImpl.class);
     }
 }

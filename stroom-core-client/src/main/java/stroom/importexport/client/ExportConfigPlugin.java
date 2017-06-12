@@ -41,7 +41,7 @@ public class ExportConfigPlugin extends Plugin {
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
         // Add items to the tools menu.
-        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(9));
+        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(100));
         if (securityContext.hasAppPermission("Export Configuration")) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, createExportMenuItem());
         }
@@ -49,6 +49,6 @@ public class ExportConfigPlugin extends Plugin {
     }
 
     private MenuItem createExportMenuItem() {
-        return new IconMenuItem(11, GlyphIcons.DOWNLOAD, GlyphIcons.DOWNLOAD, "Export", null, true, () -> ExportConfigEvent.fire(ExportConfigPlugin.this));
+        return new IconMenuItem(110, GlyphIcons.DOWNLOAD, GlyphIcons.DOWNLOAD, "Export", null, true, () -> ExportConfigEvent.fire(ExportConfigPlugin.this));
     }
 }

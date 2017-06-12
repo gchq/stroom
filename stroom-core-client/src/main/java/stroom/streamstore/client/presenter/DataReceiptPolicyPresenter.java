@@ -32,11 +32,11 @@ import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
-import stroom.streamstore.shared.DataRetentionPolicy;
-import stroom.streamstore.shared.DataRetentionRule;
-import stroom.streamstore.shared.FetchDataRetentionPolicyAction;
-import stroom.streamstore.shared.SaveDataRetentionPolicyAction;
-import stroom.streamstore.shared.TimeUnit;
+import stroom.streamstore.shared.DataReceiptAction;
+import stroom.streamstore.shared.DataReceiptPolicy;
+import stroom.streamstore.shared.DataReceiptRule;
+import stroom.streamstore.shared.FetchDataReceiptPolicyAction;
+import stroom.streamstore.shared.SaveDataReceiptPolicyAction;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -46,13 +46,13 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.presenter.Icon;
 
-public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetentionPolicyPresenter.DataRetentionPolicyView> implements HasDirtyHandlers {
-    private final DataRetentionPolicyListPresenter listPresenter;
+public class DataReceiptPolicyPresenter extends ContentTabPresenter<DataReceiptPolicyPresenter.DataReceiptPolicyView> implements HasDirtyHandlers {
+    private final DataReceiptPolicyListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
-    private final Provider<DataRetentionRulePresenter> editRulePresenterProvider;
+    private final Provider<DataReceiptRulePresenter> editRulePresenterProvider;
     private final ClientDispatchAsync dispatcher;
 
-    private DataRetentionPolicy policy;
+    private DataReceiptPolicy policy;
 
     private GlyphButtonView saveButton;
     private GlyphButtonView addButton;
@@ -67,12 +67,12 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
     private String lastLabel;
 
     @Inject
-    public DataRetentionPolicyPresenter(final EventBus eventBus,
-                                        final DataRetentionPolicyView view,
-                                        final DataRetentionPolicyListPresenter listPresenter,
-                                        final ExpressionTreePresenter expressionPresenter,
-                                        final Provider<DataRetentionRulePresenter> editRulePresenterProvider,
-                                        final ClientDispatchAsync dispatcher) {
+    public DataReceiptPolicyPresenter(final EventBus eventBus,
+                                      final DataReceiptPolicyView view,
+                                      final DataReceiptPolicyListPresenter listPresenter,
+                                      final ExpressionTreePresenter expressionPresenter,
+                                      final Provider<DataReceiptRulePresenter> editRulePresenterProvider,
+                                      final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.expressionPresenter = expressionPresenter;
@@ -98,7 +98,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
 
         updateButtons();
 
-        dispatcher.exec(new FetchDataRetentionPolicyAction()).onSuccess(result -> {
+        dispatcher.exec(new FetchDataReceiptPolicyAction()).onSuccess(result -> {
             policy = result;
             update();
         });
@@ -107,7 +107,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
     @Override
     protected void onBind() {
         registerHandler(saveButton.addClickHandler(event -> {
-            dispatcher.exec(new SaveDataRetentionPolicyAction(policy)).onSuccess(result -> {
+            dispatcher.exec(new SaveDataReceiptPolicyAction(policy)).onSuccess(result -> {
                 policy = result;
                 listPresenter.getSelectionModel().clear();
                 update();
@@ -121,7 +121,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         }));
         registerHandler(editButton.addClickHandler(event -> {
             if (policy != null) {
-                final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
+                final DataReceiptRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
                     edit(selected);
                 }
@@ -129,14 +129,14 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         }));
         registerHandler(copyButton.addClickHandler(event -> {
             if (policy != null) {
-                final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
+                final DataReceiptRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
                     ExpressionOperator expression = selected.getExpression();
                     if (expression != null) {
                         expression = expression.copy();
                     }
 
-                    final DataRetentionRule newRule = new DataRetentionRule(System.currentTimeMillis(), selected.getName(), selected.isEnabled(), expression, selected.getAge(), selected.getTimeUnit(), selected.isForever());
+                    final DataReceiptRule newRule = new DataReceiptRule(System.currentTimeMillis(), selected.getName(), selected.isEnabled(), expression, selected.getAction());
 
                     final int index = policy.getRules().indexOf(selected);
 
@@ -153,9 +153,9 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         }));
         registerHandler(disableButton.addClickHandler(event -> {
             if (policy != null) {
-                final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
+                final DataReceiptRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
-                    final DataRetentionRule newRule = new DataRetentionRule(selected.getCreationTime(), selected.getName(), !selected.isEnabled(), selected.getExpression(), selected.getAge(), selected.getTimeUnit(), selected.isForever());
+                    final DataReceiptRule newRule = new DataReceiptRule(selected.getCreationTime(), selected.getName(), !selected.isEnabled(), selected.getExpression(), selected.getAction());
 
                     final int index = policy.getRules().indexOf(selected);
                     policy.getRules().remove(index);
@@ -170,7 +170,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
             if (policy != null) {
                 ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
                     if (ok) {
-                        final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
+                        final DataReceiptRule rule = listPresenter.getSelectionModel().getSelected();
                         policy.getRules().remove(rule);
                         listPresenter.getSelectionModel().clear();
                         update();
@@ -181,7 +181,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         }));
         registerHandler(moveUpButton.addClickHandler(event -> {
             if (policy != null) {
-                final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
+                final DataReceiptRule rule = listPresenter.getSelectionModel().getSelected();
                 if (rule != null) {
                     int index = policy.getRules().indexOf(rule);
                     if (index > 0) {
@@ -195,7 +195,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         }));
         registerHandler(moveDownButton.addClickHandler(event -> {
             if (policy != null) {
-                final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
+                final DataReceiptRule rule = listPresenter.getSelectionModel().getSelected();
                 if (rule != null) {
                     int index = policy.getRules().indexOf(rule);
                     if (index < policy.getRules().size() - 1) {
@@ -208,7 +208,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
             }
         }));
         registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
-            final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
+            final DataReceiptRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
                 expressionPresenter.read(rule.getExpression());
                 if (event.getSelectionType().isDoubleSelect()) {
@@ -224,23 +224,23 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
     }
 
     private void add() {
-        final DataRetentionRule newRule = new DataRetentionRule(System.currentTimeMillis(), "", true, new ExpressionOperator(Op.AND), 1, TimeUnit.YEARS, true);
-        final DataRetentionRulePresenter editRulePresenter = editRulePresenterProvider.get();
+        final DataReceiptRule newRule = new DataReceiptRule(System.currentTimeMillis(), "", true, new ExpressionOperator(Op.AND), DataReceiptAction.RECEIVE);
+        final DataReceiptRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule);
 
         final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
-        ShowPopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add New Rule", new PopupUiHandlers() {
+        ShowPopupEvent.fire(DataReceiptPolicyPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add New Rule", new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
-                    final DataRetentionRule rule = editRulePresenter.write();
+                    final DataReceiptRule rule = editRulePresenter.write();
                     policy.getRules().add(0, rule);
                     update();
                     listPresenter.getSelectionModel().setSelected(rule);
                     setDirty(true);
                 }
 
-                HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);
+                HidePopupEvent.fire(DataReceiptPolicyPresenter.this, editRulePresenter);
             }
 
             @Override
@@ -250,16 +250,16 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         });
     }
 
-    private void edit(final DataRetentionRule existingRule) {
-        final DataRetentionRulePresenter editRulePresenter = editRulePresenterProvider.get();
+    private void edit(final DataReceiptRule existingRule) {
+        final DataReceiptRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(existingRule);
 
         final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
-        ShowPopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Rule", new PopupUiHandlers() {
+        ShowPopupEvent.fire(DataReceiptPolicyPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Rule", new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
-                    final DataRetentionRule rule = editRulePresenter.write();
+                    final DataReceiptRule rule = editRulePresenter.write();
                     final int index = policy.getRules().indexOf(existingRule);
                     policy.getRules().remove(index);
                     policy.getRules().add(index, rule);
@@ -273,7 +273,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                     }
                 }
 
-                HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);
+                HidePopupEvent.fire(DataReceiptPolicyPresenter.this, editRulePresenter);
             }
 
             @Override
@@ -296,7 +296,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
 
     private void updateButtons() {
         final boolean loadedPolicy = policy != null;
-        final DataRetentionRule selection = listPresenter.getSelectionModel().getSelected();
+        final DataReceiptRule selection = listPresenter.getSelectionModel().getSelected();
         final boolean selected = loadedPolicy && selection != null;
         int index = -1;
         if (selected) {
@@ -327,10 +327,10 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
     @Override
     public String getLabel() {
         if (isDirty()) {
-            return "* " + "Data Retention";
+            return "* " + "Data Receipt";
         }
 
-        return "Data Retention";
+        return "Data Receipt";
     }
 
     private boolean isDirty() {
@@ -356,7 +356,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
-    public interface DataRetentionPolicyView extends View {
+    public interface DataReceiptPolicyView extends View {
         void setTableView(View view);
 
         void setExpressionView(View view);

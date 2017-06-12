@@ -56,7 +56,7 @@ public class ManageNodeToolsPlugin extends NodeToolsPlugin {
         }
         if (getSecurityContext().hasAppPermission(GlobalProperty.MANAGE_PROPERTIES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(6, GlyphIcons.PROPERTIES, GlyphIcons.PROPERTIES, "Properties", null, true, () -> {
+                    new IconMenuItem(90, GlyphIcons.PROPERTIES, GlyphIcons.PROPERTIES, "Properties", null, true, () -> {
                         final PopupSize popupSize = new PopupSize(1000, 600, true);
                         ShowPopupEvent.fire(ManageNodeToolsPlugin.this, manageGlobalPropertyPresenter.get(),
                                 PopupType.CLOSE_DIALOG, null, popupSize, "System Properties", null, null);

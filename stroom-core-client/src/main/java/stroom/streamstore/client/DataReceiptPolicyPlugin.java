@@ -25,15 +25,15 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.MonitoringPlugin;
 import stroom.policy.shared.Policy;
 import stroom.security.client.ClientSecurityContext;
-import stroom.streamstore.client.presenter.DataRetentionPolicyPresenter;
+import stroom.streamstore.client.presenter.DataReceiptPolicyPresenter;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;
 
-public class DataRetentionPolicyPlugin extends MonitoringPlugin<DataRetentionPolicyPresenter> {
+public class DataReceiptPolicyPlugin extends MonitoringPlugin<DataReceiptPolicyPresenter> {
     @Inject
-    public DataRetentionPolicyPlugin(final EventBus eventBus, final ContentManager eventManager,
-                                     final Provider<DataRetentionPolicyPresenter> presenterProvider, final ClientSecurityContext securityContext) {
+    public DataReceiptPolicyPlugin(final EventBus eventBus, final ContentManager eventManager,
+                                   final Provider<DataReceiptPolicyPresenter> presenterProvider, final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider, securityContext);
     }
 
@@ -45,6 +45,6 @@ public class DataRetentionPolicyPlugin extends MonitoringPlugin<DataRetentionPol
     }
 
     private MenuItem createDataRetentionMenuItem() {
-        return new IconMenuItem(51, GlyphIcons.HISTORY, GlyphIcons.HISTORY, "Data Retention", null, true, () -> open());
+        return new IconMenuItem(50, GlyphIcons.HISTORY, GlyphIcons.HISTORY, "Data Receipt", null, true, () -> open());
     }
 }
