@@ -1,10 +1,13 @@
 #This is an example of the configuration file ~/.stroom/stroom.conf that sets 
 #various properties for running stroom in development
 
+#Prevents stroom from prompting for a new password on first login
 stroom.developmentMode=true
+
 stroom.node=node1a
 stroom.rack=rack1
 stroom.temp=/tmp/stroom/
+
 #Uncomment this to enable browser's right click menu for development
 #stroom.ui.oncontextmenu=
 
