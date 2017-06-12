@@ -107,8 +107,8 @@
 	    <div id="loadingText">Loading Application. Please wait...</div>
 	  </div>
 	</div>
-	
-	<div id="logo" style="position:absolute;top:0px;left:0px;width:146px;height:35px;background:url('images/logo.png');background-repeat:no-repeat" />
+
+	<object id="logo" style="position:absolute;top:0px;left:0px;width:146px;height:35px;" type="image/svg+xml" data="images/logo.svg" />
   
     <noscript>
       <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color:white; border: 1px solid red; padding: 4px; font-family: sans-serif">
