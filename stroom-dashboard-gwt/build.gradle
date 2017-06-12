@@ -54,7 +54,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         file(extraDir).mkdirs()
     }
 
-    main = gwtCompilerMain
+    main = gwtCompilerProps.mainClass
 
     classpath {
         gwtSourceDirs
@@ -67,7 +67,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
                     '-XfragmentCount', '5',
                     '-optimize', '9',
                     '-failOnError',
-                    '-localWorkers', gwtCompilerWorkers,
+                    '-localWorkers', gwtCompilerProps.workers,
                     '-war', warDir,
                     '-deploy', deployDir,
                     '-extra', extraDir,
@@ -76,8 +76,8 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
             ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = gwtCompilerMinHeap
-    maxHeapSize = gwtCompilerMaxHeap
+    minHeapSize = gwtCompilerProps.minHeap
+    maxHeapSize = gwtCompilerProps.maxHeap
 }
 
 task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
@@ -95,7 +95,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         file(extraDir).mkdirs()
     }
 
-    main = gwtCompilerMain
+    main = gwtCompilerProps.mainClass
 
     classpath {
         gwtSourceDirs
@@ -109,7 +109,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
                     '-XfragmentCount', '0',
                     '-optimize', '0',
                     '-failOnError',
-                    '-localWorkers', gwtCompilerWorkers,
+                    '-localWorkers', gwtCompilerProps.workers,
                     '-incremental',
                     '-war', warDir,
                     '-deploy', deployDir,
@@ -119,8 +119,8 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
             ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = gwtCompilerMinHeap
-    maxHeapSize = gwtCompilerMaxHeap
+    minHeapSize = gwtCompilerProps.minHeap
+    maxHeapSize = gwtCompilerProps.maxHeap
 }
 
 task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
@@ -160,8 +160,8 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
             ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = gwtCompilerMinHeap
-    maxHeapSize = gwtCompilerMaxHeap
+    minHeapSize = gwtCompilerProps.minHeap
+    maxHeapSize = gwtCompilerProps.maxHeap
 }
 
 task gwtClean {

@@ -10,16 +10,20 @@ buildscript {
 }
 apply plugin: 'gchq.urldependencies'
 
+//if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
+//use that, else use a default value
 ext.getPropertyOrDefault = { propName, defaultValue -> 
     return project.hasProperty(propName) ? 
         project.getProperty(propName) : 
         defaultValue
 }
 
-ext.gwtCompilerMain =  'stroom.gwt.GwtCompilerWrapper'
-ext.gwtCompilerMinHeap = getPropertyOrDefault('gwtCompilerMinHeap', '50M')
-ext.gwtCompilerMaxHeap = getPropertyOrDefault('gwtCompilerMaxHeap', '500M')
-ext.gwtCompilerWorkers = getPropertyOrDefault('gwtCompilerWorkers', '5')
+ext.gwtCompilerProps = [
+    mainClass: 'stroom.gwt.GwtCompilerWrapper',
+    minHeap: getPropertyOrDefault('gwtCompilerMinHeap', '50M'),
+    maxHeap: getPropertyOrDefault('gwtCompilerMaxHeap', '500M'),
+    workers: getPropertyOrDefault('gwtCompilerWorkers', '5')
+]
 
 //version numbers for libs that share version numbers, e.g. dropwizard-*, or for github repo release versions
 ext.versions = [
