@@ -6,9 +6,6 @@ def tmpDir = "${gwtBuildDir}/tmp"
 def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
-def gwtCompilerMain =  'stroom.gwt.GwtCompilerWrapper'
-def gwtCompilerMinHeap = '50M'
-def gwtCompilerMaxHeap = '500M'
 
 def gwtSourceDirs = []
 parent.subprojects.each { p ->
@@ -74,7 +71,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
             '-XfragmentCount', '5',
             '-optimize', '9',
             '-failOnError',
-            '-localWorkers', '5',
+            '-localWorkers', gwtCompilerWorkers,
             '-war', warDir,
             '-deploy', deployDir,
             '-extra', extraDir,
@@ -116,7 +113,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
             '-XfragmentCount', '0',
             '-optimize', '0',
             '-failOnError',
-            '-localWorkers', '5',
+            '-localWorkers', gwtCompilerWorkers,
             '-incremental',
             '-war', warDir,
             '-deploy', deployDir,
