@@ -46,7 +46,7 @@ before_script:
   - "git clone https://github.com/gchq/stroom-resources.git"
   - "pushd stroom-resources/dev-resources/compose"
     #start all the services we need to run the integration tests in stroom
-  - "docker-compose -f stroom-dbs.yml up -d"
+  - "docker-compose -f kafka-mysql-zk.yml up -d"
   - "popd"
 
 # We're running this as a script because our build is either too silent or too chatty and TravisCI will kill either way.
