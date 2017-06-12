@@ -30,22 +30,25 @@ import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.spring.VisualisationConfiguration;
 
-@ActiveProfiles(value = {StroomSpringProfiles.PROD, StroomSpringProfiles.IT, SecurityConfiguration.MOCK_SECURITY})
+@ActiveProfiles(value = {
+        StroomSpringProfiles.PROD,
+        StroomSpringProfiles.IT,
+        SecurityConfiguration.MOCK_SECURITY})
 @ContextConfiguration(classes = {
-        ScopeConfiguration.class,
-        PersistenceConfiguration.class,
-        ServerComponentScanTestConfiguration.class,
-        ServerConfiguration.class,
-        SecurityConfiguration.class,
-        ScopeTestConfiguration.class,
-        PipelineConfiguration.class,
+        DashboardConfiguration.class,
         EventLoggingConfiguration.class,
         IndexConfiguration.class,
-        SearchConfiguration.class,
+        MetaDataStatisticConfiguration.class,
+        PersistenceConfiguration.class,
+        PipelineConfiguration.class,
+        ScopeConfiguration.class,
+        ScopeTestConfiguration.class,
         ScriptConfiguration.class,
-        VisualisationConfiguration.class,
-        DashboardConfiguration.class,
+        SearchConfiguration.class,
+        SecurityConfiguration.class,
+        ServerComponentScanTestConfiguration.class,
+        ServerConfiguration.class,
         StatisticsConfiguration.class,
-        MetaDataStatisticConfiguration.class})
+        VisualisationConfiguration.class})
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
 }
