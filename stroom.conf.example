@@ -1,0 +1,25 @@
+#This is an example of the configuration file ~/.stroom/stroom.conf that sets 
+#various properties for running stroom in development
+
+stroom.developmentMode=true
+stroom.node=node1a
+stroom.rack=rack1
+stroom.temp=/tmp/stroom/
+#Uncomment this to enable browser's right click menu for development
+#stroom.ui.oncontextmenu=
+
+#Hibernate properties
+stroom.jpaHbm2DdlAuto=validate
+stroom.jpaDialect=org.hibernate.dialect.MySQLInnoDBDialect
+
+#Stroom database properties
+stroom.jdbcDriverClassName=com.mysql.jdbc.Driver
+stroom.jdbcDriverUrl=jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
+stroom.jdbcDriverUsername=stroomuser
+stroom.jdbcDriverPassword=stroompassword1
+
+#SQL Statistics database properties
+stroom.statistics.sql.jdbcDriverClassName=com.mysql.jdbc.Driver
+stroom.statistics.sql.jdbcDriverUrl=jdbc:mysql://localhost:3308/statistics?useUnicode=yes&characterEncoding=UTF-8
+stroom.statistics.sql.jdbcDriverUsername=stroomuser
+stroom.statistics.sql.jdbcDriverPassword=stroompassword1
