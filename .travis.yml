@@ -69,6 +69,8 @@ script: ./gradlew -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 downloadUrlDepend
 after_success:
   - export DATE_ONLY="$(date +%y%m%d)"
   - export DATE_TIME="$(date +%y%m%d%H%M%S)"
+  - export FLOATING_TAG="";
+  - export SPECIFIC_TAG="";
     #establish what version of stroom we are building
   - |
     if [ -n "$TRAVIS_TAG" ]; then
@@ -79,23 +81,23 @@ after_success:
   - |
     if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
       versionStr=${STROOM_VERSION}-${DATE_ONLY}-DAILY";
-      export SPECIFIC_TAG="--tag=${DOCKER_REPO}:${versionStr};
-      export FLOATING_TAG="";
+      export SPECIFIC_TAG="--tag=${DOCKER_REPO}:${versionStr}";
       echo "versionStr: ${versionStr}";
       git config --global user.email "builds@travis-ci.com";
       git config --global user.name "Travis CI";
-      git tag ${gitTag} -a -m "Automated Travis build $TRAVIS_BUILD_NUMBER" 2>/dev/null;
-      git push -q https://$TAGPERM@github.com/gchq/stroom --follow-tags >/dev/null 2>&1;
+      #git tag ${gitTag} -a -m "Automated Travis build $TRAVIS_BUILD_NUMBER" 2>/dev/null;
+      git tag ${gitTag} -a -m "Automated Travis build $TRAVIS_BUILD_NUMBER" 
+      #git push -q https://$TAGPERM@github.com/gchq/stroom --follow-tags >/dev/null 2>&1;
+      git push -q https://$TAGPERM@github.com/gchq/stroom --follow-tags 
     elif [ -n "$TRAVIS_TAG" ]; then
       export SPECIFIC_TAG="--tag=${DOCKER_REPO}:${TRAVIS_TAG}";
-      export FLOATING_TAG="";
     elif [ "$TRAVIS_BRANCH" = "dev" ]; then
-      export SPECIFIC_TAG="";
       export FLOATING_TAG="--tag=${DOCKER_REPO}:${STROOM_VERSION}-SNAPSHOT";
     fi
   - |
     if [ "$TRAVIS_BRANCH" = "dev" ] || [ -n "$TRAVIS_TAG" ] || [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
       if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+        echo "Using tags: ${SPECIFIC_TAG} ${FLOATING_TAG}";
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
         docker build ${SPECIFIC_TAG} ${FLOATING_TAG} stroom-app/. ;
         docker push gchq/stroom;
