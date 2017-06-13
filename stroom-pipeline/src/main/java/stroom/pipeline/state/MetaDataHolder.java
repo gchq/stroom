@@ -16,30 +16,71 @@
 
 package stroom.pipeline.state;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.date.DateUtil;
 import stroom.util.spring.StroomScope;
 import stroom.util.zip.HeaderMap;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @Scope(value = StroomScope.TASK)
 public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Holder {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetaDataHolder.class);
     private static final int MINIMUM_BYTE_COUNT = 10;
+    private static final String FEED = "Feed";
+    private static final String STREAM_TYPE = "StreamType";
+    private static final String CREATED_TIME = "CreatedTime";
+    private static final String EFFECTIVE_TIME = "EffectiveTime";
+    private static final String PIPELINE = "Pipeline";
 
-    @Resource
-    private StreamHolder streamHolder;
+    private static final Set<String> FETCH_SET = Collections.singleton(PipelineEntity.ENTITY_TYPE);
+
+    private final StreamHolder streamHolder;
+    private final StreamProcessorService streamProcessorService;
+
+    private Map<String, String> parentData = new ConcurrentHashMap<>();
     private HeaderMap metaData;
     private long lastMetaStreamNo;
 
-    public HeaderMap getMetaData() throws IOException {
+    @Inject
+    MetaDataHolder(final StreamHolder streamHolder, final StreamProcessorService streamProcessorService) {
+        this.streamHolder = streamHolder;
+        this.streamProcessorService = streamProcessorService;
+    }
+
+    public String get(final String key) throws IOException {
+        if (key == null || key.length() == 0) {
+            return null;
+        }
+
+        if (key.equalsIgnoreCase(FEED)) {
+            return getFeed();
+        } else if (key.equalsIgnoreCase(STREAM_TYPE)) {
+            return getStreamType();
+        } else if (key.equalsIgnoreCase(CREATED_TIME)) {
+            return getCreatedTime();
+        } else if (key.equalsIgnoreCase(EFFECTIVE_TIME)) {
+            return getEffectiveTime();
+        } else if (key.equalsIgnoreCase(PIPELINE)) {
+            return getPipeline();
+        }
+
         // Determine if we need to read the meta stream.
         if (metaData == null || lastMetaStreamNo != streamHolder.getStreamNo()) {
             metaData = new HeaderMap();
@@ -60,26 +101,61 @@ public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Ho
                     }
                 }
             }
-
-            final Stream stream = streamHolder.getStream();
-            if (stream != null) {
-                if (stream.getFeed() != null) {
-                    metaData.computeIfAbsent("Feed", k -> stream.getFeed().getName());
-                }
-                if (stream.getStreamType() != null) {
-                    metaData.computeIfAbsent("StreamType", k -> stream.getStreamType().getDisplayValue());
-                }
-                metaData.computeIfAbsent("CreatedTime", k -> DateUtil.createNormalDateTimeString(stream.getCreateMs()));
-                if (stream.getEffectiveMs() != null) {
-                    metaData.computeIfAbsent("EffectiveTime", k -> DateUtil.createNormalDateTimeString(stream.getEffectiveMs()));
-                }
-
-                if (stream.getStreamProcessor() != null && stream.getStreamProcessor().getPipeline() != null) {
-                    metaData.computeIfAbsent("Pipeline", k -> stream.getStreamProcessor().getPipeline().getName());
-                }
-            }
         }
 
-        return metaData;
+        return metaData.get(key);
+    }
+
+    private String getFeed() {
+        return parentData.computeIfAbsent(FEED, k -> {
+            final Stream stream = streamHolder.getStream();
+            if (stream != null && stream.getFeed() != null) {
+                return stream.getFeed().getName();
+            }
+            return null;
+        });
+    }
+
+    private String getStreamType() {
+        return parentData.computeIfAbsent(STREAM_TYPE, k -> {
+            final Stream stream = streamHolder.getStream();
+            if (stream != null) {
+                return stream.getStreamType().getDisplayValue();
+            }
+            return null;
+        });
+    }
+
+    private String getCreatedTime() {
+        return parentData.computeIfAbsent(CREATED_TIME, k -> {
+            final Stream stream = streamHolder.getStream();
+            if (stream != null) {
+                return DateUtil.createNormalDateTimeString(stream.getCreateMs());
+            }
+            return null;
+        });
+    }
+
+    private String getEffectiveTime() {
+        return parentData.computeIfAbsent(EFFECTIVE_TIME, k -> {
+            final Stream stream = streamHolder.getStream();
+            if (stream != null) {
+                return DateUtil.createNormalDateTimeString(stream.getEffectiveMs());
+            }
+            return null;
+        });
+    }
+
+    private String getPipeline() {
+        return parentData.computeIfAbsent(PIPELINE, k -> {
+            final Stream stream = streamHolder.getStream();
+            if (stream != null && stream.getStreamProcessor() != null) {
+                final StreamProcessor streamProcessor = streamProcessorService.load(stream.getStreamProcessor(), FETCH_SET);
+                if (streamProcessor != null && streamProcessor.getPipeline() != null) {
+                    return streamProcessor.getPipeline().getName();
+                }
+            }
+            return null;
+        });
     }
 }

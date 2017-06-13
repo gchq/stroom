@@ -16,44 +16,39 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import java.io.IOException;
-
-import javax.annotation.Resource;
-
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.pipeline.state.MetaDataHolder;
-import stroom.util.spring.StroomScope;
-import stroom.util.zip.HeaderMap;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.pipeline.state.MetaDataHolder;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
 public class Meta extends StroomExtensionFunctionCall {
-    @Resource
-    private MetaDataHolder metaDataHolder;
+    private final MetaDataHolder metaDataHolder;
+
+    @Inject
+    Meta(final MetaDataHolder metaDataHolder) {
+        this.metaDataHolder = metaDataHolder;
+    }
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {
+        String key = null;
         String value = null;
 
         try {
-            final HeaderMap headerMap = metaDataHolder.getMetaData();
-            if (headerMap != null) {
-                final String key = getSafeString(functionName, context, arguments, 0);
-                if (key != null) {
-                    value = headerMap.get(key);
-                }
-            }
-
-        } catch (final IOException e) {
-            outputWarning(context, new StringBuilder("Unable to load header map"), e);
+            key = getSafeString(functionName, context, arguments, 0);
+            value = metaDataHolder.get(key);
+        } catch (final Exception e) {
+            outputWarning(context, new StringBuilder("Error fetching meta value for key '" + key + "'"), e);
         }
 
         if (value == null) {
