@@ -62,7 +62,7 @@ public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
     }
 
     @PipelineProperty(description = "XML version, e.g. 1.0 or 1.1", defaultValue = "1.1")
-    public void setXMLVersion(final String xmlMode) {
+    public void setXmlVersion(final String xmlMode) {
         if ("1.0".equals(xmlMode)) {
             mode = XMLmode.XML_1_0;
         }
