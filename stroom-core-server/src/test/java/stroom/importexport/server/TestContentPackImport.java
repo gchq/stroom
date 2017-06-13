@@ -63,7 +63,7 @@ public class TestContentPackImport {
 
     static {
         String userHome = System.getProperty("user.home");
-        CONTENT_PACK_DIR = Paths.get(userHome, StroomProperties.USER_CONF_DIR, ContentPackImport.CONTENT_PACK_IMPORT_DIR);
+        CONTENT_PACK_DIR = Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
     }
 
     Path testPack1 = CONTENT_PACK_DIR.resolve("testPack1.zip");
@@ -74,7 +74,7 @@ public class TestContentPackImport {
     public void setup() throws IOException {
 
         String userHome = System.getProperty("user.home");
-        Path contentPackDir = Paths.get(userHome, StroomProperties.USER_CONF_DIR, ContentPackImport.CONTENT_PACK_IMPORT_DIR);
+        Path contentPackDir = Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
         Files.createDirectories(contentPackDir);
     }
 
@@ -155,11 +155,5 @@ public class TestContentPackImport {
         Assert.assertFalse(Files.exists(testPack1));
         Assert.assertTrue(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.FAILED_DIR).resolve(testPack1.getFileName())));
     }
-
-    @Test
-    public void dummyTest() {
-        Assert.assertTrue(true);
-    }
-
 
 }

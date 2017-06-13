@@ -32,9 +32,6 @@ import stroom.entity.server.util.SQLUtil;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
-import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatisticsFacade;
-import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
@@ -47,6 +44,9 @@ import stroom.node.shared.VolumeService;
 import stroom.node.shared.VolumeState;
 import stroom.security.Insecure;
 import stroom.security.Secured;
+import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticsFacade;
+import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
@@ -68,6 +68,8 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * Implementation for the volume API.
@@ -591,22 +593,31 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     private Optional<Path> getDefaultVolumesPath() {
-        Optional<Path> defaultVolumesDir;
+        return Stream.<Supplier<Optional<Path>>>of(
+                this::getApplicationJarDir,
+                this::getUserHomeDir,
+                Optional::empty)
+                .map(Supplier::get)
+                .filter(Optional::isPresent)
+                .findFirst()
+                .map(Optional::get)
+                .flatMap(path -> Optional.of(path.resolve(DEFAULT_VOLUMES_SUBDIR)));
+    }
 
-        String catalinaHome = System.getProperty("catalina.home");
-        String userHome = System.getProperty("user.home");
+    private Optional<Path> getUserHomeDir() {
+        return Optional.ofNullable(System.getProperty("user.home"))
+                .flatMap(userHome -> Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR)));
+    }
 
-        if (catalinaHome != null) {
-            //running inside tomcat so use a subdir in there
-            Path catalinaHomePath = Paths.get(catalinaHome);
-            defaultVolumesDir = Optional.of(catalinaHomePath.getParent().resolve(DEFAULT_VOLUMES_SUBDIR));
-        } else if (userHome != null) {
-            //not in tomcat so use the personal user conf dir as a base
-            defaultVolumesDir = Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(DEFAULT_VOLUMES_SUBDIR));
-        } else {
-            defaultVolumesDir = Optional.empty();
+
+    private Optional<Path> getApplicationJarDir() {
+        try {
+            String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
+            return Optional.of(Paths.get(codeSourceLocation).getParent());
+        } catch (Exception e) {
+            LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
+            return Optional.empty();
         }
-        return defaultVolumesDir;
     }
 
 }
