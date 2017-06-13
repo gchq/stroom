@@ -8,7 +8,7 @@
         </encoder>
     </appender>
 
-    <logger name="stroom" level="info" additivity="false"/>
+    <logger name="stroom" level="debug" additivity="false"/>
 
     <logger name="stroom.statistics" level="debug" />
 
