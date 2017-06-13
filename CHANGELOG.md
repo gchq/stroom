@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-* Issue **#311** : Fixed request for 'Pipeline' in `meta` XSLT function. Errors are now dealt with correctly so that the XSLT will not fail due to missing meta data.
+* Issue **#311** : Fixed request for `Pipeline` in `meta` XSLT function. Errors are now dealt with correctly so that the XSLT will not fail due to missing meta data.
 
 * Issue **#313** : Fixed case of `xmlVersion` property on `InvalidXMLCharFilterReader`.
 
