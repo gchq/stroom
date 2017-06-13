@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#313** : Fixed case of `xmlVersion` property on `InvalidXMLCharFilterReader`.
+
 ## [v5.0-beta.31] - 2017-06-07
 
 * Issue **#307** : Made some changes to avoid potential NPE caused by session serialisation.
