@@ -67,8 +67,8 @@ script: ./gradlew -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 downloadUrlDepend
 # Push to DockerHub. The username and password were added using the Travis CLI.
 # The configuration below will only push an image if the branch being built is master.
 after_success:
-  - export DATE_ONLY="$(date +%y%m%d)"
-  - export DATE_TIME="$(date +%y%m%d%H%M%S)"
+  - export DATE_ONLY="$(date +%Y%m%d)"
+  - export DATE_TIME="$(date +%Y%m%d%H%M%S)"
   - export FLOATING_TAG="";
   - export SPECIFIC_TAG="";
     #establish what version of stroom we are building
