@@ -28,7 +28,7 @@ RUN echo "http_proxy: $http_proxy" && \
         bash \
         su-exec \
         tini && \
-    adduser -s /bin/false -D -H stroom && \
+    adduser -s /bin/false -D stroom && \
     mkdir -p /stroom && \
     mkdir -p /stroom/volumes && \
     mkdir -p /stroom/contentPackImport 
