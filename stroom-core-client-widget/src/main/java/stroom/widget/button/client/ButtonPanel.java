@@ -61,6 +61,12 @@ public class ButtonPanel extends FlowPanel {
         return button;
     }
 
+    public SVGButtonView add(final SVGIcon preset) {
+        final SVGButton button = createButton(preset);
+        add(button);
+        return button;
+    }
+
     private ImageButton createButton(final String title, final ImageResource enabledImage,
             final ImageResource disabledImage, final boolean enabled) {
         final ImageButton button = new ImageButton();
@@ -78,6 +84,17 @@ public class ButtonPanel extends FlowPanel {
         final GlyphButton button = new GlyphButton();
         button.setIcon(preset.getGlyph());
         button.setColour(preset.getColourSet());
+        button.setTitle(preset.getTitle());
+        button.setEnabled(preset.isEnabled());
+        if (vertical) {
+            button.getElement().getStyle().setDisplay(Display.BLOCK);
+        }
+        return button;
+    }
+
+    private SVGButton createButton(final SVGIcon preset) {
+        final SVGButton button = new SVGButton();
+        button.setIcon(preset.getUrl());
         button.setTitle(preset.getTitle());
         button.setEnabled(preset.isEnabled());
         if (vertical) {

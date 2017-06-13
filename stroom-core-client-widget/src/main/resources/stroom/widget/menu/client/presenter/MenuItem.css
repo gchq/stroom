@@ -37,6 +37,7 @@
     position: absolute;
 	display: inline-block;
 	vertical-align: top;
+	cursor: pointer;
 }
 
 .face {

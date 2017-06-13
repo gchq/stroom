@@ -17,11 +17,11 @@
 package stroom.widget.button.client;
 
 public final class GlyphIcons {
-    public static final GlyphIcon.ColourSet RED = GlyphIcon.ColourSet.create("#D32F2F", "#E53935");
-    public static final GlyphIcon.ColourSet GREEN = GlyphIcon.ColourSet.create("#4CAF50", "#66BB6A");
-    public static final GlyphIcon.ColourSet BLUE = GlyphIcon.ColourSet.create("#1E88E5", "#2196F3");
-    public static final GlyphIcon.ColourSet YELLOW = GlyphIcon.ColourSet.create("#FF8F00", "#FFA000");
-    public static final GlyphIcon.ColourSet GREY = GlyphIcon.ColourSet.create("#757575", "#9E9E9E");
+    public static final ColourSet RED = ColourSet.create("#D32F2F", "#E53935");
+    public static final ColourSet GREEN = ColourSet.create("#4CAF50", "#66BB6A");
+    public static final ColourSet BLUE = ColourSet.create("#1E88E5", "#2196F3");
+    public static final ColourSet YELLOW = ColourSet.create("#FF8F00", "#FFA000");
+    public static final ColourSet GREY = ColourSet.create("#757575", "#9E9E9E");
 
     public static final GlyphIcon ADD = new GlyphIcon("fa fa-plus", BLUE, "Add", true);
     public static final GlyphIcon ALERT = new GlyphIcon("fa fa-exclamation-triangle", YELLOW, "Alert", true);
@@ -52,8 +52,8 @@ public final class GlyphIcons {
     public static final GlyphIcon PROPERTIES = new GlyphIcon("fa fa-cog", YELLOW, "Properties", true);
     public static final GlyphIcon REFRESH = new GlyphIcon("fa fa-refresh", GREEN, "Refresh", true);
     public static final GlyphIcon REMOVE = new GlyphIcon("fa fa-minus", BLUE, "Remove", false);
-    public static final GlyphIcon SAVE = new GlyphIcon("fa fa-floppy-o", BLUE, "Save", false);
-    public static final GlyphIcon SAVE_AS = new GlyphIcon("fa fa-code-fork", BLUE, "Save As", true);
+//    public static final GlyphIcon SAVE = new GlyphIcon("fa fa-floppy-o", BLUE, "Save", false);
+//    public static final GlyphIcon SAVE_AS = new GlyphIcon("fa fa-code-fork", BLUE, "Save As", true);
     public static final GlyphIcon UNDO = new GlyphIcon("fa fa-undo", BLUE, "Undo", false);
     public static final GlyphIcon UP = new GlyphIcon("fa fa-arrow-up", BLUE, "Up", false);
     public static final GlyphIcon UPLOAD = new GlyphIcon("fa fa-arrow-up", GREEN, "Upload", true);

@@ -61,6 +61,7 @@ import stroom.util.client.ImageUtil;
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.SharedMap;
 import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SVGIcons;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
@@ -465,7 +466,7 @@ public class EntityPluginEventManager extends Plugin {
 
         keyboardInterceptor.addKeyTest(CTRL_S, command);
 
-        return new IconMenuItem(priority, GlyphIcons.SAVE, GlyphIcons.SAVE, "Save", "Ctrl+S",
+        return new IconMenuItem(priority, SVGIcons.SAVE, SVGIcons.SAVE, "Save", "Ctrl+S",
                 enabled, command);
     }
 
@@ -477,7 +478,7 @@ public class EntityPluginEventManager extends Plugin {
             }
         };
 
-        return new IconMenuItem(priority, GlyphIcons.SAVE_AS, GlyphIcons.SAVE_AS, "Save As", null,
+        return new IconMenuItem(priority, SVGIcons.SAVE_AS, SVGIcons.SAVE_AS, "Save As", null,
                 enabled, command);
     }
 
@@ -492,7 +493,7 @@ public class EntityPluginEventManager extends Plugin {
 
         keyboardInterceptor.addKeyTest(CTRL_SHIFT_S, command);
 
-        return new IconMenuItem(priority, GlyphIcons.SAVE, GlyphIcons.SAVE, "Save All",
+        return new IconMenuItem(priority, SVGIcons.SAVE, SVGIcons.SAVE, "Save All",
                 "Ctrl+Shift+S", enabled, command);
     }
 

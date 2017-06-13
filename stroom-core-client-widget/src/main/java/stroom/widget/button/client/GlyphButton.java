@@ -42,9 +42,9 @@ public class GlyphButton extends ButtonBase implements GlyphButtonView {
 
     private final Element face;
 
-    private GlyphIcon.ColourSet colourSet;
+    private ColourSet colourSet;
 
-    public static GlyphButton create(final String icon, final GlyphIcon.ColourSet colour, final String title, final boolean enabled) {
+    public static GlyphButton create(final String icon, final ColourSet colour, final String title, final boolean enabled) {
         final GlyphButton button = new GlyphButton();
         button.setIcon(icon);
         button.setColour(colour);
@@ -90,7 +90,7 @@ public class GlyphButton extends ButtonBase implements GlyphButtonView {
     }
 
     @Override
-    public void setColour(final GlyphIcon.ColourSet colourSet) {
+    public void setColour(final ColourSet colourSet) {
         this.colourSet = colourSet;
         face.getStyle().setColor(colourSet.getEnabled());
     }

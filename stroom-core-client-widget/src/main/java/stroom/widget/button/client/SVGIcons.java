@@ -16,21 +16,11 @@
 
 package stroom.widget.button.client;
 
-import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.dom.client.HasMouseDownHandlers;
+public final class SVGIcons {
+    public static final SVGIcon SAVE = new SVGIcon("/images/save.svg", "Save", false);
+    public static final SVGIcon SAVE_AS = new SVGIcon("/images/saveas.svg", "Save As", true);
 
-public interface GlyphButtonView extends HasClickHandlers, HasMouseDownHandlers {
-    void setIcon(String icon);
-
-    void setColour(ColourSet colour);
-
-    void setEnabled(boolean enabled);
-
-    boolean isEnabled();
-
-    void setVisible(boolean visible);
-
-    boolean isVisible();
-
-    void setTitle(String title);
+    private SVGIcons() {
+        // Utility class.
+    }
 }

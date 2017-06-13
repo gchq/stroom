@@ -30,6 +30,8 @@ import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.SVGButtonView;
+import stroom.widget.button.client.SVGIcon;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;
@@ -54,6 +56,8 @@ public interface DataGridView<R> extends View, HasRows {
     ImageButtonView addButton(String title, ImageResource enabledImage, ImageResource disabledImage, boolean enabled);
 
     GlyphButtonView addButton(GlyphIcon preset);
+
+    SVGButtonView addButton(SVGIcon preset);
 
     HandlerRegistration addColumnSortHandler(ColumnSortEvent.Handler handler);
 

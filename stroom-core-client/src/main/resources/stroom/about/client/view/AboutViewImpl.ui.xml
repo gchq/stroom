@@ -35,8 +35,7 @@
         <g:north size="30">
             <g:FlowPanel styleName="stroom-body {style.stroom-body}">
                 <g:HTMLPanel>
-                    <object style="position:absolute;width:120px;height:30px;" type="image/svg+xml"
-                            data="images/logo.svg"/>
+                    <object style="position:absolute;width:185px;height:29px;" type="image/svg+xml" data="images/logo.svg"/>
                 </g:HTMLPanel>
             </g:FlowPanel>
         </g:north>

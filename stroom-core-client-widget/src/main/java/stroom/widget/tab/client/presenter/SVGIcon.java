@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.widget.button.client;
+package stroom.widget.tab.client.presenter;
 
-import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.dom.client.HasMouseDownHandlers;
+public class SVGIcon implements Icon {
+    private String url;
 
-public interface GlyphButtonView extends HasClickHandlers, HasMouseDownHandlers {
-    void setIcon(String icon);
+    private SVGIcon(final String url) {
+        this.url = url;
+    }
 
-    void setColour(ColourSet colour);
+    public static SVGIcon create(final String url) {
+        return new SVGIcon(url);
+    }
 
-    void setEnabled(boolean enabled);
-
-    boolean isEnabled();
-
-    void setVisible(boolean visible);
-
-    boolean isVisible();
-
-    void setTitle(String title);
+    public String getUrl() {
+        return url;
+    }
 }

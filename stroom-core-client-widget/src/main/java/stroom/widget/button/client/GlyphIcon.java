@@ -19,44 +19,6 @@ package stroom.widget.button.client;
 import stroom.widget.tab.client.presenter.Icon;
 
 public class GlyphIcon implements Icon {
-    public static class ColourSet {
-        private final String enabled;
-        private final String hover;
-        private final String down;
-        private final String disabled;
-
-        public ColourSet(final String enabled, final String hover, final String down, final String disabled) {
-            this.enabled = enabled;
-            this.hover = hover;
-            this.down = down;
-            this.disabled = disabled;
-        }
-
-        public static ColourSet create(final String colour) {
-            return new ColourSet(colour, colour, colour, "rgba(0,0,0,0.3)");
-        }
-
-        public static ColourSet create(final String enabled, final String hover) {
-            return new ColourSet(enabled, hover, hover, "rgba(0,0,0,0.3)");
-        }
-
-        public String getEnabled() {
-            return enabled;
-        }
-
-        public String getHover() {
-            return hover;
-        }
-
-        public String getDown() {
-            return down;
-        }
-
-        public String getDisabled() {
-            return disabled;
-        }
-    }
-
     private final String glyph;
     private final ColourSet colourSet;
     private final String title;

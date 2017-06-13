@@ -56,6 +56,9 @@ import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SVGButtonView;
+import stroom.widget.button.client.SVGIcon;
+import stroom.widget.button.client.SVGIcons;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -68,8 +71,8 @@ import java.util.List;
 
 public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.DashboardView, Dashboard>
         implements FlexLayoutChangeHandler, EntityTabData, DashboardUiHandlers {
-    private final GlyphButtonView saveButton;
-    private final GlyphButtonView saveAsButton;
+    private final SVGButtonView saveButton;
+    private final SVGButtonView saveAsButton;
     private final DashboardLayoutPresenter layoutPresenter;
     private final Provider<ComponentAddPresenter> addPresenterProvider;
     private final Components components;
@@ -91,8 +94,8 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
         this.addPresenterProvider = addPresenterProvider;
         this.components = components;
 
-        saveButton = addButtonLeft(GlyphIcons.SAVE);
-        saveAsButton = addButtonLeft(GlyphIcons.SAVE_AS);
+        saveButton = addButtonLeft(SVGIcons.SAVE);
+        saveAsButton = addButtonLeft(SVGIcons.SAVE_AS);
         saveButton.setEnabled(false);
         saveAsButton.setEnabled(false);
 
@@ -119,6 +122,16 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
     }
 
     private GlyphButtonView addButtonLeft(final GlyphIcon preset) {
+        if (leftButtons == null) {
+            leftButtons = new ButtonPanel();
+            leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
+            addWidgetLeft(leftButtons);
+        }
+
+        return leftButtons.add(preset);
+    }
+
+    private SVGButtonView addButtonLeft(final SVGIcon preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
             leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);

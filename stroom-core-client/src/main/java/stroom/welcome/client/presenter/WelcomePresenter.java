@@ -27,6 +27,7 @@ import stroom.node.shared.ClientProperties;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
+import stroom.widget.tab.client.presenter.SVGIcon;
 
 public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.WelcomeView> {
     public interface WelcomeView extends View {
@@ -70,7 +71,7 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
 
     @Override
     public Icon getIcon() {
-        return ImageIcon.create(ContentTabPresenter.TAB_IMAGE_URL + "welcome.png");
+        return SVGIcon.create("/images/oo.svg");
     }
 
     @Override

@@ -31,8 +31,10 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import stroom.widget.button.client.GlyphIcon;
+import stroom.widget.button.client.SVGImage;
 import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
+import stroom.widget.tab.client.presenter.SVGIcon;
 
 public class CurveTab extends AbstractTab {
     public interface Style extends CssResource {
@@ -146,6 +148,33 @@ public class CurveTab extends AbstractTab {
                         + "\"></i></div></div>");
                 final HTML html = new HTML(safeHtml);
                 final Element elem = html.getElement();
+                element.appendChild(elem);
+            } else if (icon instanceof SVGIcon) {
+                final SVGIcon svgIcon = (SVGIcon) icon;
+
+                final SVGImage svgImage = new SVGImage(svgIcon.getUrl(), 18, 18);
+                svgImage.setStyleName(resources.style().icon());
+
+
+//                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
+//                        + resources.style().icon()
+//                        + "\"></div>");
+//                final HTML html = new HTML(safeHtml);
+//
+//                if (svgIcon.getUrl() != null) {
+//                    ResourceCache.get(svgIcon.getUrl(), data -> {
+//                        html.setHTML("<div class=\"" +
+//                                resources.style().icon() +
+//                                "\">" +
+//                                data +
+//                                "</div>");
+//                        final Element svg = getElement().getElementsByTagName("svg").getItem(0).cast();
+//                        svg.setAttribute("width", "18");
+//                        svg.setAttribute("height", "18");
+//                    });
+//                }
+
+                final Element elem = svgImage.getElement();
                 element.appendChild(elem);
             }
         }

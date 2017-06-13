@@ -57,6 +57,8 @@ import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.SVGButtonView;
+import stroom.widget.button.client.SVGIcon;
 import stroom.widget.util.client.DoubleSelectTest;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -533,6 +535,11 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
 
     @Override
     public GlyphButtonView addButton(final GlyphIcon preset) {
+        return buttonPanel.add(preset);
+    }
+
+    @Override
+    public SVGButtonView addButton(final SVGIcon preset) {
         return buttonPanel.add(preset);
     }
 

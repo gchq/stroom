@@ -16,21 +16,28 @@
 
 package stroom.widget.button.client;
 
-import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.dom.client.HasMouseDownHandlers;
+import stroom.widget.tab.client.presenter.Icon;
 
-public interface GlyphButtonView extends HasClickHandlers, HasMouseDownHandlers {
-    void setIcon(String icon);
+public class SVGIcon implements Icon {
+    private final String url;
+    private final String title;
+    private final boolean enabled;
 
-    void setColour(ColourSet colour);
+    public SVGIcon(final String url, final String title, final boolean enabled) {
+        this.url = url;
+        this.title = title;
+        this.enabled = enabled;
+    }
 
-    void setEnabled(boolean enabled);
+    public String getUrl() {
+        return url;
+    }
 
-    boolean isEnabled();
+    public String getTitle() {
+        return title;
+    }
 
-    void setVisible(boolean visible);
-
-    boolean isVisible();
-
-    void setTitle(String title);
+    public boolean isEnabled() {
+        return enabled;
+    }
 }

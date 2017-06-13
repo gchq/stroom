@@ -39,6 +39,8 @@ import stroom.streamstore.shared.FetchDataReceiptPolicyAction;
 import stroom.streamstore.shared.SaveDataReceiptPolicyAction;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SVGButtonView;
+import stroom.widget.button.client.SVGIcons;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -54,7 +56,7 @@ public class DataReceiptPolicyPresenter extends ContentTabPresenter<DataReceiptP
 
     private DataReceiptPolicy policy;
 
-    private GlyphButtonView saveButton;
+    private SVGButtonView saveButton;
     private GlyphButtonView addButton;
     private GlyphButtonView editButton;
     private GlyphButtonView copyButton;
@@ -85,7 +87,7 @@ public class DataReceiptPolicyPresenter extends ContentTabPresenter<DataReceiptP
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
 
-        saveButton = listPresenter.add(GlyphIcons.SAVE);
+        saveButton = listPresenter.add(SVGIcons.SAVE);
         addButton = listPresenter.add(GlyphIcons.ADD);
         editButton = listPresenter.add(GlyphIcons.EDIT);
         copyButton = listPresenter.add(GlyphIcons.COPY);
