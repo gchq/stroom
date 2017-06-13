@@ -60,10 +60,10 @@ public class BadTextXMLFilterReaderElement extends AbstractReaderElement {
         }
     }
 
-    @PipelineProperty(description = "Leaf-entities are the identifiers for tags between which non-escaped characters need to be escaped.")
-    public void setLeafList(final String leafList) {
+    @PipelineProperty(description = "A comma separated list of tags between which non-escaped characters will be escaped.")
+    public void setTags(final String leafList) {
         if (leafList != null) {
-            forceLeafEntities = leafList.split(" ");
+            forceLeafEntities = leafList.split(",");
         }
     }
 }
