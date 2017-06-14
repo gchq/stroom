@@ -16,7 +16,6 @@
 
 package stroom.datasource;
 
-import org.apache.curator.x.discovery.ServiceInstance;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.ExternalService;
@@ -43,20 +42,20 @@ public class DataSourceProviderRegistry {
     }
 
     /**
-     * Gets a valid instance of a {@link RemoteDataSourceProvider} by querying service discovery
+     * Gets a valid instance of a {@link DataSourceProvider} by querying service discovery
      * @param docRefType The docRef type to get a data source provider for
      * @return A remote data source provider that can handle docRefs of the passed type. Will return
      * an empty optional for two reasons:
      * There may be no services that can handle the passed docRefType.
      * The service has no instances that are up and enabled.
      *
-     * The returned {@link RemoteDataSourceProvider} should be used and then thrown away, not cached or held.
+     * The returned {@link DataSourceProvider} should be used and then thrown away, not cached or held.
      */
-    public Optional<RemoteDataSourceProvider> getDataSourceProvider(final String docRefType) {
+    public Optional<DataSourceProvider> getDataSourceProvider(final String docRefType) {
 
         return ExternalService.getExternalService(docRefType)
                 .flatMap(serviceDiscoverer::getServiceInstance)
-                .filter(ServiceInstance::isEnabled)
+//                .filter(ServiceInstance::isEnabled) //not available until curator 2.12
                 .flatMap(serviceInstance -> {
                     String address = serviceInstance.buildUriSpec();
                     return Optional.of(new RemoteDataSourceProvider(securityContext, address));
@@ -71,7 +70,7 @@ public class DataSourceProviderRegistry {
      * There may be no services that can handle the passed docRefType.
      * The service has no instances that are up and enabled.
      */
-    public Optional<RemoteDataSourceProvider> getDataSourceProvider(final DocRef dataSourceRef) {
+    public Optional<DataSourceProvider> getDataSourceProvider(final DocRef dataSourceRef) {
         return Optional.ofNullable(dataSourceRef)
                 .map(DocRef::getType)
                 .flatMap(this::getDataSourceProvider);

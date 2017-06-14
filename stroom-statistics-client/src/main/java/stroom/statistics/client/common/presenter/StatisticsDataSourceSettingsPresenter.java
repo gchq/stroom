@@ -32,21 +32,16 @@ import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
-import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
-import stroom.statistics.shared.common.engines.FetchStatisticsEnginesAction;
+import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
+import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.widget.tickbox.client.view.TickBox;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class StatisticsDataSourceSettingsPresenter
         extends MyPresenterWidget<StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView>
         implements HasRead<StatisticStoreEntity>, HasWrite<StatisticStoreEntity>, HasDirtyHandlers,
         StatisticsDataSourceSettingsUiHandlers {
-    private String selectedEngine;
 
     @Inject
     public StatisticsDataSourceSettingsPresenter(final EventBus eventBus, final StatisticsDataSourceSettingsView view,

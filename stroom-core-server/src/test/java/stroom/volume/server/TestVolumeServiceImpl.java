@@ -24,7 +24,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
-import stroom.internalstatistics.InternalStatisticsFacadeFactory;
+import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
@@ -90,7 +90,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     @Before
     public void init() throws IOException {
         MockitoAnnotations.initMocks(this);
-        deleteDefaulVolumesDir();
+        deleteDefaultVolumesDir();
 
         volumeList = new ArrayList<>();
 //        volumeList.clear();
@@ -163,7 +163,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     }
 
     @Test
-    public void testStartup_Disabled(){
+    public void testStartup_Disabled() {
         mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "false");
 
         volumeServiceImpl.startup();
@@ -174,7 +174,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     }
 
     @Test
-    public void testStartup_EnabledExistingVolumes(){
+    public void testStartup_EnabledExistingVolumes() {
         mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
 
         volumeServiceImpl.startup();
@@ -185,7 +185,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     }
 
     @Test
-    public void testStartup_EnabledNoExistingVolumes(){
+    public void testStartup_EnabledNoExistingVolumes() {
         mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
         volumeServiceImpl.volumeList.clear();
         volumeServiceImpl.startup();
@@ -201,13 +201,13 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         Assert.assertTrue(Files.exists(DEFAULT_STREAM_VOLUME_PATH));
     }
 
-    private void deleteDefaulVolumesDir() throws IOException {
-        Files.deleteIfExists(DEFAULT_INDEX_VOLUME_PATH);
-        Files.deleteIfExists(DEFAULT_STREAM_VOLUME_PATH);
-        Files.deleteIfExists(DEFAULT_VOLUMES_PATH);
+    private void deleteDefaultVolumesDir() throws IOException {
+        FileUtil.forceDelete(DEFAULT_INDEX_VOLUME_PATH);
+        FileUtil.forceDelete(DEFAULT_STREAM_VOLUME_PATH);
+        FileUtil.forceDelete(DEFAULT_VOLUMES_PATH);
     }
 
-    private static class MockVolumeService  extends VolumeServiceImpl {
+    private static class MockVolumeService extends VolumeServiceImpl {
 
         public List<Volume> volumeList = null;
         public boolean saveCalled;
@@ -218,6 +218,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
                                  final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory) {
             super(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsFacadeFactory);
         }
+
         @Override
         public BaseResultList<Volume> find(final FindVolumeCriteria criteria) {
             return BaseResultList.createUnboundedList(volumeList);
@@ -233,9 +234,11 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
             super.save(entity);
             saveCalled = true;
             savedVolumes.add(entity);
-            return  entity;
+            return entity;
         }
-    };
+    }
+
+    ;
 
 
 }

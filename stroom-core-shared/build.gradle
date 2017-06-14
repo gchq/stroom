@@ -19,9 +19,9 @@ dependencies {
     compile project(':stroom-util-shared')
     compile urlDependencies.get(urlLibs.stroomQueryApi)
 
-    compile 'org.hibernate:hibernate-core:4.3.8.Final' /* LATEST 5.2.5.Final */
-    permitUnusedDeclared 'org.hibernate:hibernate-core:4.3.8.Final' /* LATEST 5.2.5.Final */
-    compile 'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final'
-    compile 'javax.validation:validation-api:1.0.0.GA'
-    compile 'com.google.gwt:gwt-servlet:2.8.0'
+    compile libs.gwt_servlet
+    compile libs.hibernate_core
+    permitUnusedDeclared libs.hibernate_core
+    compile libs.hibernate_jpa_api
+    compile libs.validation_api
 }

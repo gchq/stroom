@@ -55,7 +55,6 @@ import stroom.security.server.DocumentPermission;
 import stroom.security.server.Permission;
 import stroom.security.server.UserGroupUser;
 import stroom.security.shared.User;
-import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.streamstore.server.fs.FileSystemUtil;

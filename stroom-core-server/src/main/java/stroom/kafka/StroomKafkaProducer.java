@@ -29,6 +29,11 @@ import java.util.function.Consumer;
 public class StroomKafkaProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomKafkaProducer.class);
 
+    public enum FlushMode {
+        FLUSH_ON_SEND,
+        NO_FLUSH
+    }
+
     private final String bootstrapServers;
 
     //instance of a kafka producer that will be shared by all threads
@@ -40,23 +45,35 @@ public class StroomKafkaProducer {
         this.bootstrapServers = bootstrapServers;
     }
 
-    public void send(final ProducerRecord<String, String> record, final Consumer<Exception> exceptionConsumer) {
+    public void send(final ProducerRecord<String, String> record,
+                     final FlushMode flushMode,
+                     final Consumer<Exception> exceptionConsumer) {
         //kafka may not have been up on startup so ensure we have a producer instance now
         try {
             intiProducer();
 
-            Preconditions.checkNotNull(producer).send(record, (recordMetadata, exception) -> {
+            try {
+                Preconditions.checkNotNull(producer).send(record, (recordMetadata, exception) -> {
 
-                if (exception != null) {
-                    exceptionConsumer.accept(exception);
+                    if (exception != null) {
+                        exceptionConsumer.accept(exception);
+                    }
+                    LOGGER.trace("Record sent to Kafka");
+                });
+            } finally {
+                if (flushMode.equals(FlushMode.FLUSH_ON_SEND)) {
+                    producer.flush();
                 }
-                LOGGER.trace("Record sent to Kafka");
-            });
-
-            producer.flush();
+            }
         } catch (Exception e) {
             LOGGER.error("Error initialising kafka producer to " + bootstrapServers, e);
             exceptionConsumer.accept(e);
+        }
+    }
+
+    public void flush() {
+        if (producer != null) {
+            producer.flush();
         }
     }
 

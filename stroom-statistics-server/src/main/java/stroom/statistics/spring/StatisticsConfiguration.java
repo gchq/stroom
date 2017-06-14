@@ -24,8 +24,6 @@ import org.slf4j.MarkerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import stroom.node.server.GlobalProperties;
-import stroom.internalstatistics.MetaDataStatisticImpl;
-import stroom.internalstatistics.MetaDataStatisticTemplate;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Version;
 
@@ -34,7 +32,6 @@ import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.Arrays;
 
 @Configuration
 public class StatisticsConfiguration {
@@ -42,18 +39,6 @@ public class StatisticsConfiguration {
 
     public StatisticsConfiguration() {
         LOGGER.info("StatisticsConfiguration loading...");
-    }
-
-    /**
-     * This bean must be returned as a class and not an interface otherwise annotation scanning will not work.
-     */
-    @Bean
-    public MetaDataStatisticImpl metaDataStatistic() {
-        final MetaDataStatisticImpl metaDataStatistic = new MetaDataStatisticImpl();
-        metaDataStatistic.setTemplates(Arrays.asList(
-                new MetaDataStatisticTemplate("Meta Data-Streams Received", "receivedTime", Arrays.asList("Feed")),
-                new MetaDataStatisticTemplate("Meta Data-Stream Size", "receivedTime", "StreamSize", Arrays.asList("Feed"))));
-        return metaDataStatistic;
     }
 
     @Bean

@@ -32,11 +32,26 @@ import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
+/**
+ * A generic kakfa producer filter for sending in XML content to a kafka topic.  Currently the whole XML document
+ * is sent as a single kafka message with a key specified in the filter properties in the UI.
+ *
+ * TODO It would be quite good to be able to set the key as a substitution variable e.g. ${userid} such that it
+ * finds an element in the document with that name and uses its value as the key.
+ *
+ * TODO we may also want a way of breaking up the data in individual atomic events rather than a single kafka message
+ * containing a batch of events
+ */
+@SuppressWarnings("unused")
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "KafkaProducerFilter", category = PipelineElementType.Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS,
-        PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.STREAM)
+@ConfigurableElement(
+        type = "KafkaProducerFilter",
+        category = PipelineElementType.Category.FILTER,
+        roles = {PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.VISABILITY_SIMPLE},
+        icon = ElementIcons.KAFKA)
 public class KafkaProducerFilter extends AbstractSamplingFilter {
     private final ErrorReceiverProxy errorReceiverProxy;
     private final StroomKafkaProducer stroomKafkaProducer;
@@ -57,8 +72,8 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
     public void endDocument() throws SAXException {
         super.endDocument();
         ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, recordKey, getOutput());
-        try{
-            stroomKafkaProducer.send(newRecord, exception -> {
+        try {
+            stroomKafkaProducer.send(newRecord, StroomKafkaProducer.FlushMode.FLUSH_ON_SEND, exception -> {
                 errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", exception);
             });
         } catch (RuntimeException e) {
