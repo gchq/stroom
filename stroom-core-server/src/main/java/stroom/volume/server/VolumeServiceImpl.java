@@ -69,6 +69,7 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -613,7 +614,11 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private Optional<Path> getApplicationJarDir() {
         try {
             String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
-            return Optional.of(Paths.get(codeSourceLocation).getParent());
+            if (Pattern.matches(".*/stroom[^/]*.jar$", codeSourceLocation)) {
+                return Optional.of(Paths.get(codeSourceLocation).getParent());
+            } else {
+                return Optional.empty();
+            }
         } catch (Exception e) {
             LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
             return Optional.empty();
