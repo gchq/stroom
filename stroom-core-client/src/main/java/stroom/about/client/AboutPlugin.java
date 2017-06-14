@@ -25,7 +25,7 @@ import stroom.about.client.presenter.AboutPresenter;
 import stroom.app.client.MenuKeys;
 import stroom.app.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.menu.client.presenter.Separator;
@@ -59,6 +59,6 @@ public class AboutPlugin extends Plugin {
                 new KeyedParentMenuItem(5, "Help", event.getMenuItems(), MenuKeys.HELP_MENU));
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, new Separator(2));
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU,
-                new IconMenuItem(3, SvgIcons.ABOUT, null, "About", null, true, () -> provider.get().forceReveal()));
+                new IconMenuItem(3, SvgPresets.ABOUT, null, "About", null, true, () -> provider.get().forceReveal()));
     }
 }

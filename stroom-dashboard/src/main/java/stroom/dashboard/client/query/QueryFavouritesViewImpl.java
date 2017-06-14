@@ -29,7 +29,7 @@ import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesVie
 import stroom.dashboard.shared.Query;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcon;
+import stroom.svg.client.SvgPreset;
 
 public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavouritesView {
     public interface Binder extends UiBinder<Widget, QueryFavouritesViewImpl> {
@@ -66,7 +66,7 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
     }
 
     @Override
-    public ButtonView addButton(final SvgIcon preset) {
+    public ButtonView addButton(final SvgPreset preset) {
         return buttonPanel.add(preset);
     }
 }

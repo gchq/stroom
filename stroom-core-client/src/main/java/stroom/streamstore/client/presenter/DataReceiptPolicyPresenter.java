@@ -38,14 +38,13 @@ import stroom.streamstore.shared.DataReceiptRule;
 import stroom.streamstore.shared.FetchDataReceiptPolicyAction;
 import stroom.streamstore.shared.SaveDataReceiptPolicyAction;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.Icon;
 
 public class DataReceiptPolicyPresenter extends ContentTabPresenter<DataReceiptPolicyPresenter.DataReceiptPolicyView> implements HasDirtyHandlers {
     private final DataReceiptPolicyListPresenter listPresenter;
@@ -86,14 +85,14 @@ public class DataReceiptPolicyPresenter extends ContentTabPresenter<DataReceiptP
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
 
-        saveButton = listPresenter.add(SvgIcons.SAVE);
-        addButton = listPresenter.add(SvgIcons.ADD);
-        editButton = listPresenter.add(SvgIcons.EDIT);
-        copyButton = listPresenter.add(SvgIcons.COPY);
-        disableButton = listPresenter.add(SvgIcons.DISABLE);
-        deleteButton = listPresenter.add(SvgIcons.DELETE);
-        moveUpButton = listPresenter.add(SvgIcons.UP);
-        moveDownButton = listPresenter.add(SvgIcons.DOWN);
+        saveButton = listPresenter.add(SvgPresets.SAVE);
+        addButton = listPresenter.add(SvgPresets.ADD);
+        editButton = listPresenter.add(SvgPresets.EDIT);
+        copyButton = listPresenter.add(SvgPresets.COPY);
+        disableButton = listPresenter.add(SvgPresets.DISABLE);
+        deleteButton = listPresenter.add(SvgPresets.DELETE);
+        moveUpButton = listPresenter.add(SvgPresets.UP);
+        moveDownButton = listPresenter.add(SvgPresets.DOWN);
 
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
@@ -322,7 +321,7 @@ public class DataReceiptPolicyPresenter extends ContentTabPresenter<DataReceiptP
 
     @Override
     public Icon getIcon() {
-        return SvgIcons.HISTORY;
+        return SvgPresets.HISTORY;
     }
 
     @Override

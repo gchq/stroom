@@ -28,9 +28,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.client.presenter.ExplorerTreeUiHandlers;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgButton;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 
 public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandlers>
@@ -53,9 +51,9 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
 
     @Inject
     public ExplorerTreeViewImpl(final Binder binder) {
-        newItem = SvgButton.create(SvgIcons.NEW_ITEM);
-        deleteItem = SvgButton.create(SvgIcons.DELETE);
-        typeFilter = SvgButton.create(SvgIcons.FILTER);
+        newItem = SvgButton.create(SvgPresets.NEW_ITEM);
+        deleteItem = SvgButton.create(SvgPresets.DELETE);
+        typeFilter = SvgButton.create(SvgPresets.FILTER);
         widget = binder.createAndBindUi(this);
     }
 

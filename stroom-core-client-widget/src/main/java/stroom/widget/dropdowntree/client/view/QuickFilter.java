@@ -32,7 +32,7 @@ import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 
 public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
@@ -69,7 +69,7 @@ public class QuickFilter extends FlowPanel
         textBox.setStyleName(RESOURCES.style().textBox());
         label.setStyleName(RESOURCES.style().label());
 
-        clearButton = SvgButton.create(SvgIcons.CLEAR);
+        clearButton = SvgButton.create(SvgPresets.CLEAR);
         clearButton.addStyleName(RESOURCES.style().clear());
 
         add(textBox);

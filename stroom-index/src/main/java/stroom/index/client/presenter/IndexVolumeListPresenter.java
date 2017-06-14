@@ -34,7 +34,7 @@ import stroom.node.client.presenter.VolumeStatusListPresenter;
 import stroom.node.client.view.WrapperView;
 import stroom.node.shared.Volume;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -69,9 +69,9 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
 //        volumeStatusListPresenter.setSelectionModel(new MySingleSelectionModel<>());
 //        volumeListPresenter.setSelectionModel(new MultiSelectionModel<>());
 
-        addButton = volumeListPresenter.getView().addButton(SvgIcons.ADD);
+        addButton = volumeListPresenter.getView().addButton(SvgPresets.ADD);
         addButton.setTitle("Add Volume");
-        removeButton = volumeListPresenter.getView().addButton(SvgIcons.DELETE);
+        removeButton = volumeListPresenter.getView().addButton(SvgPresets.DELETE);
         removeButton.setTitle("Remove Volume");
     }
 

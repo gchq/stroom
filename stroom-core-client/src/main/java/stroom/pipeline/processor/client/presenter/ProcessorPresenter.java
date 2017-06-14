@@ -53,8 +53,7 @@ import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedMap;
 import stroom.util.shared.SharedObject;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -115,11 +114,11 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     private void createButtons() {
         if (addButton == null && removeButton == null) {
-            addButton = processorListPresenter.getView().addButton(SvgIcons.ADD);
+            addButton = processorListPresenter.getView().addButton(SvgPresets.ADD);
             addButton.setTitle("Add Processor");
-            editButton = processorListPresenter.getView().addButton(SvgIcons.EDIT);
+            editButton = processorListPresenter.getView().addButton(SvgPresets.EDIT);
             editButton.setTitle("Edit Processor");
-            removeButton = processorListPresenter.getView().addButton(SvgIcons.REMOVE);
+            removeButton = processorListPresenter.getView().addButton(SvgPresets.REMOVE);
             removeButton.setTitle("Remove Processor");
             registerHandler(addButton.addClickHandler(event -> {
                 if (allowUpdate) {

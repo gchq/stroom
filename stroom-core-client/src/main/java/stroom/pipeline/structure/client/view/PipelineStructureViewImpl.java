@@ -33,9 +33,7 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.pipeline.structure.client.presenter.PipelineStructureUiHandlers;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgButton;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -67,11 +65,11 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
 
     @Inject
     public PipelineStructureViewImpl(final Binder binder) {
-        add = SvgButton.create(SvgIcons.ADD);
+        add = SvgButton.create(SvgPresets.ADD);
         add.setTitle("Add New Pipeline Element");
-        restore = SvgButton.create(SvgIcons.UNDO);
+        restore = SvgButton.create(SvgPresets.UNDO);
         restore.setTitle("Restore Pipeline Element");
-        remove = SvgButton.create(SvgIcons.REMOVE);
+        remove = SvgButton.create(SvgPresets.REMOVE);
         remove.setTitle("Remove Pipeline Element");
 
         widget = binder.createAndBindUi(this);

@@ -27,10 +27,10 @@ import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Image;
-import stroom.widget.button.client.SvgImage;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.SvgImage;
+import stroom.svg.client.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
-import stroom.widget.tab.client.presenter.SvgIcon;
+import stroom.svg.client.SvgIcon;
 
 public class CurveTab extends AbstractTab {
     public interface Style extends CssResource {
@@ -148,8 +148,8 @@ public class CurveTab extends AbstractTab {
             } else if (icon instanceof SvgIcon) {
                 final SvgIcon svgIcon = (SvgIcon) icon;
 
-                final SvgImage svgImage = new SvgImage(svgIcon.getUrl(), 18, 18);
-                svgImage.setStyleName(resources.style().icon());
+                final Image image = new Image(svgIcon.getUrl());
+                image.addStyleName(resources.style().icon());
 
 
 //                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
@@ -170,7 +170,7 @@ public class CurveTab extends AbstractTab {
 //                    });
 //                }
 
-                final Element elem = svgImage.getElement();
+                final Element elem = image.getElement();
                 element.appendChild(elem);
             }
         }

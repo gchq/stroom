@@ -28,8 +28,8 @@ import stroom.data.grid.client.EndColumn;
 import stroom.security.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.button.client.SvgIcon;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.util.client.MultiSelectionModel;
 
 public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserListView> implements UserListUiHandlers {
@@ -43,22 +43,22 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
         userListView.setUiHandlers(this);
 
         // Icon
-        dataGridView.addColumn(new Column<UserRef, SvgIcon>(new SvgCell()) {
+        dataGridView.addColumn(new Column<UserRef, SvgPreset>(new SvgCell()) {
             @Override
-            public SvgIcon getValue(final UserRef userRef) {
+            public SvgPreset getValue(final UserRef userRef) {
                 if (userRef.isEnabled()) {
                     if (!userRef.isGroup()) {
-                        return SvgIcons.USER;
+                        return SvgPresets.USER;
                     }
 
-                    return SvgIcons.USER_GROUP;
+                    return SvgPresets.USER_GROUP;
                 }
 
                 if (!userRef.isGroup()) {
-                    return SvgIcons.USER_DISABLED;
+                    return SvgPresets.USER_DISABLED;
                 }
 
-                return SvgIcons.USER_GROUP_DISABLED;
+                return SvgPresets.USER_GROUP_DISABLED;
             }
         }, "</br>", 20);
 
@@ -78,7 +78,7 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
         return dataGridView.addButton(title, enabledImage, disabledImage, enabled);
     }
 
-    public ButtonView addButton(final SvgIcon preset) {
+    public ButtonView addButton(final SvgPreset preset) {
         return dataGridView.addButton(preset);
     }
 

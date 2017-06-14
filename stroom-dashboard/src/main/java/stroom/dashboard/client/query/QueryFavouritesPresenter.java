@@ -40,8 +40,8 @@ import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.QueryData;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcon;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -80,11 +80,11 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         selectionModel = new MySingleSelectionModel<>();
         view.getCellList().setSelectionModel(selectionModel);
 
-        createButton = view.addButton(SvgIcons.NEW_ITEM);
+        createButton = view.addButton(SvgPresets.NEW_ITEM);
         createButton.setTitle("Create Favourite From Current Query");
-        editButton = view.addButton(SvgIcons.OPEN);
+        editButton = view.addButton(SvgPresets.OPEN);
         editButton.setTitle("Change Favourite Name");
-        deleteButton = view.addButton(SvgIcons.DELETE);
+        deleteButton = view.addButton(SvgPresets.DELETE);
         deleteButton.setTitle("Delete Favourite");
     }
 
@@ -276,6 +276,6 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
         void setExpressionView(View view);
 
-        ButtonView addButton(SvgIcon preset);
+        ButtonView addButton(SvgPreset preset);
     }
 }

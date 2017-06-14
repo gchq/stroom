@@ -43,8 +43,7 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -95,15 +94,15 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 //        selectionModel = new MySingleSelectionModel<PipelineReference>();
 //        getView().setSelectionModel(selectionModel);
 
-        addButton = getView().addButton(SvgIcons.NEW_ITEM);
+        addButton = getView().addButton(SvgPresets.NEW_ITEM);
         addButton.setTitle("New Reference");
         addButton.setEnabled(false);
 
-        editButton = getView().addButton(SvgIcons.EDIT);
+        editButton = getView().addButton(SvgPresets.EDIT);
         editButton.setTitle("Edit Reference");
         editButton.setEnabled(false);
 
-        removeButton = getView().addButton(SvgIcons.REMOVE);
+        removeButton = getView().addButton(SvgPresets.REMOVE);
         removeButton.setTitle("Remove Refefence");
         removeButton.setEnabled(false);
 

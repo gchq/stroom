@@ -26,7 +26,7 @@ import stroom.node.client.presenter.ManageVolumesPresenter;
 import stroom.node.shared.GlobalProperty;
 import stroom.node.shared.Volume;
 import stroom.security.client.ClientSecurityContext;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -48,7 +48,7 @@ public class ManageNodeToolsPlugin extends NodeToolsPlugin {
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(Volume.MANAGE_VOLUMES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(4, SvgIcons.VOLUMES, SvgIcons.VOLUMES, "Volumes", null, true, () -> {
+                    new IconMenuItem(4, SvgPresets.VOLUMES, SvgPresets.VOLUMES, "Volumes", null, true, () -> {
                         final PopupSize popupSize = new PopupSize(1000, 600, true);
                         ShowPopupEvent.fire(ManageNodeToolsPlugin.this, manageVolumesPresenter.get(),
                                 PopupType.CLOSE_DIALOG, null, popupSize, "Volumes", null, null);
@@ -56,7 +56,7 @@ public class ManageNodeToolsPlugin extends NodeToolsPlugin {
         }
         if (getSecurityContext().hasAppPermission(GlobalProperty.MANAGE_PROPERTIES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(90, SvgIcons.PROPERTIES, SvgIcons.PROPERTIES, "Properties", null, true, () -> {
+                    new IconMenuItem(90, SvgPresets.PROPERTIES, SvgPresets.PROPERTIES, "Properties", null, true, () -> {
                         final PopupSize popupSize = new PopupSize(1000, 600, true);
                         ShowPopupEvent.fire(ManageNodeToolsPlugin.this, manageGlobalPropertyPresenter.get(),
                                 PopupType.CLOSE_DIALOG, null, popupSize, "System Properties", null, null);

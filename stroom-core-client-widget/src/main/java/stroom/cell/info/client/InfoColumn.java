@@ -20,17 +20,17 @@ import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
-import stroom.widget.button.client.SvgIcon;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 
-public abstract class InfoColumn<T> extends Column<T, SvgIcon> {
+public abstract class InfoColumn<T> extends Column<T, SvgPreset> {
     public InfoColumn() {
         super(new SvgCell());
     }
 
     @Override
-    public SvgIcon getValue(T object) {
-        return SvgIcons.INFO;
+    public SvgPreset getValue(T object) {
+        return SvgPresets.INFO;
     }
 
     protected abstract void showInfo(final T row, int x, int y);

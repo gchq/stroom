@@ -28,7 +28,7 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.button.client.SvgIcon;
+import stroom.svg.client.SvgPreset;
 
 public class ManageEntityListPresenter<C extends BaseCriteria, E extends BaseEntity>
         extends MyPresenterWidget<DataGridView<E>> implements Refreshable {
@@ -45,7 +45,7 @@ public class ManageEntityListPresenter<C extends BaseCriteria, E extends BaseEnt
     }
 
 
-    public ButtonView addButton(final SvgIcon preset) {
+    public ButtonView addButton(final SvgPreset preset) {
         return getView().addButton(preset);
     }
 

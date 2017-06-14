@@ -33,7 +33,7 @@ import com.google.gwt.view.client.HasRows;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 
 public class Pager extends AbstractPager {
     public interface Binder extends UiBinder<Widget, Pager> {
@@ -73,11 +73,11 @@ public class Pager extends AbstractPager {
             binder = GWT.create(Binder.class);
         }
 
-        first = SvgButton.create(SvgIcons.FAST_BACKWARD_BLUE);
-        prev = SvgButton.create(SvgIcons.STEP_BACKWARD_BLUE);
-        next = SvgButton.create(SvgIcons.STEP_FORWARD_BLUE);
-        last = SvgButton.create(SvgIcons.FAST_FORWARD_BLUE);
-        refresh = SvgButton.create(SvgIcons.REFRESH_BLUE);
+        first = SvgButton.create(SvgPresets.FAST_BACKWARD_BLUE);
+        prev = SvgButton.create(SvgPresets.STEP_BACKWARD_BLUE);
+        next = SvgButton.create(SvgPresets.STEP_FORWARD_BLUE);
+        last = SvgButton.create(SvgPresets.FAST_FORWARD_BLUE);
+        refresh = SvgButton.create(SvgPresets.REFRESH_BLUE);
 
         initWidget(binder.createAndBindUi(this));
 

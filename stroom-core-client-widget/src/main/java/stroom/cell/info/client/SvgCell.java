@@ -22,16 +22,21 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesBuilder;
+import com.google.gwt.safecss.shared.SafeStylesUtils;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import stroom.widget.button.client.SvgIcon;
-import stroom.widget.button.client.SvgImage;
+import stroom.svg.client.SvgPreset;
 
-public class SvgCell extends AbstractCell<SvgIcon> {
+public class SvgCell extends AbstractCell<SvgPreset> {
     public interface Style extends CssResource {
-        String DEFAULT_CSS = "FACell.css";
+        String DEFAULT_CSS = "SvgCell.css";
 
         String icon();
 
@@ -45,13 +50,13 @@ public class SvgCell extends AbstractCell<SvgIcon> {
         Style style();
     }
 
-//    interface Template extends SafeHtmlTemplates {
-//        @Template("<div class=\"{0}\"><div class=\"{1}\" style=\"{2}\"><i class=\"{3}\"></i></div></div>")
-//        SafeHtml icon(String iconClassName, String faceClassName, SafeStyles colour, String icon);
-//    }
+    interface Template extends SafeHtmlTemplates {
+        @Template("<img class=\"{0}\" style=\"{1}\" src=\"{2}\"/>")
+        SafeHtml icon(String className, SafeStyles style, String url);
+    }
 
     private static Resources resources;
-//    private static Template template;
+    private static Template template;
 
     public SvgCell() {
         super("click");
@@ -59,14 +64,14 @@ public class SvgCell extends AbstractCell<SvgIcon> {
             resources = GWT.create(Resources.class);
             resources.style().ensureInjected();
         }
-//        if (template == null) {
-//            template = GWT.create(Template.class);
-//        }
+        if (template == null) {
+            template = GWT.create(Template.class);
+        }
     }
 
     @Override
-    public void onBrowserEvent(final Context context, final Element parent, final SvgIcon value, final NativeEvent event,
-                               final ValueUpdater<SvgIcon> valueUpdater) {
+    public void onBrowserEvent(final Context context, final Element parent, final SvgPreset value, final NativeEvent event,
+                               final ValueUpdater<SvgPreset> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
         if ("click".equals(event.getType())) {
             EventTarget eventTarget = event.getEventTarget();
@@ -81,23 +86,28 @@ public class SvgCell extends AbstractCell<SvgIcon> {
     }
 
     @Override
-    protected void onEnterKeyDown(final Context context, final Element parent, final SvgIcon value,
-                                  final NativeEvent event, final ValueUpdater<SvgIcon> valueUpdater) {
+    protected void onEnterKeyDown(final Context context, final Element parent, final SvgPreset value,
+                                  final NativeEvent event, final ValueUpdater<SvgPreset> valueUpdater) {
         if (valueUpdater != null) {
             valueUpdater.update(value);
         }
     }
 
     @Override
-    public void render(final Context context, final SvgIcon value, final SafeHtmlBuilder sb) {
+    public void render(final Context context, final SvgPreset value, final SafeHtmlBuilder sb) {
         if (value == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            final SvgImage svgImage = new SvgImage(value.getUrl(), 18, 18, true);
-            svgImage.setStyleName(resources.style().icon());
-            sb.append(SafeHtmlUtils.fromTrustedString(svgImage.getElement().getString()));
+            final SafeStylesBuilder builder = new SafeStylesBuilder();
+            builder.append(SafeStylesUtils.forWidth(value.getWidth(), Unit.PX));
+            builder.append(SafeStylesUtils.forHeight(value.getHeight(), Unit.PX));
 
-//            sb.append(template.icon(resources.style().icon(), resources.style().face(), SafeStylesUtils.forTrustedColor(value.getColourSet().getEnabled()), value.getGlyph()));
+            String className = resources.style().icon();
+            if (!value.isEnabled()) {
+                className += " " + resources.style().disabled();
+            }
+
+            sb.append(template.icon(className, builder.toSafeStyles(), value.getUrl()));
         }
     }
 }

@@ -27,7 +27,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.streamstore.shared.DataReceiptRule;
 import stroom.util.client.BorderUtil;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcon;
+import stroom.svg.client.SvgPreset;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;
@@ -98,7 +98,7 @@ public class DataReceiptPolicyListPresenter extends MyPresenterWidget<DataGridVi
         return getView().getSelectionModel();
     }
 
-    public ButtonView add(final SvgIcon preset) {
+    public ButtonView add(final SvgPreset preset) {
         return getView().addButton(preset);
     }
 }

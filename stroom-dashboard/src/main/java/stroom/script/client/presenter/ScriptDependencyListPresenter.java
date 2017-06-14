@@ -35,8 +35,7 @@ import stroom.node.client.view.WrapperView;
 import stroom.script.shared.Script;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,9 +62,9 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
 
         view.setView(scriptListPresenter.getView());
 
-        addButton = scriptListPresenter.getView().addButton(SvgIcons.ADD);
+        addButton = scriptListPresenter.getView().addButton(SvgPresets.ADD);
         addButton.setTitle("Add Dependency");
-        removeButton = scriptListPresenter.getView().addButton(SvgIcons.REMOVE);
+        removeButton = scriptListPresenter.getView().addButton(SvgPresets.REMOVE);
         removeButton.setTitle("Remove Dependency");
     }
 

@@ -70,6 +70,8 @@
 	position: absolute;
 	top: 0px;
 	left: 5px;
+	width: 18px;
+	height: 18px;
 	margin-top: 5px;
 	-moz-user-select: none;
 }

@@ -46,7 +46,7 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     private TreeLayout<PipelineElement> treeLayout;
 
     private final LayeredCanvas canvas;
-    private PipelineElementRenderer2 cellRenderer;
+    private PipelineElementRenderer cellRenderer;
 
     private final FlowPanel panel;
     private final FlowPanel boxPanel;
@@ -65,7 +65,7 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
         if (canvas != null) {
             final Context2d arrowContext = canvas.getLayer(TreeRenderer.ARROW_LAYER).getContext2d();
 
-            cellRenderer = new PipelineElementRenderer2(boxPanel, pipelineElementBoxFactory);
+            cellRenderer = new PipelineElementRenderer(boxPanel, pipelineElementBoxFactory);
             final ConnectorRenderer<PipelineElement> connectorRenderer = new ArrowConnectorRenderer<PipelineElement>(
                     arrowContext);
 

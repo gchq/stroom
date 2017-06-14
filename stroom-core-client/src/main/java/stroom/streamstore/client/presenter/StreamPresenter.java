@@ -60,9 +60,8 @@ import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.button.client.SvgIcons;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
@@ -135,29 +134,29 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
         // Delete, Undelete, DE-duplicate
         if (securityContext.hasAppPermission(Stream.DELETE_DATA_PERMISSION)) {
-            streamListDelete = streamListPresenter.add(SvgIcons.DELETE);
+            streamListDelete = streamListPresenter.add(SvgPresets.DELETE);
             streamListDelete.setEnabled(false);
-            streamRelationListDelete = streamRelationListPresenter.add(SvgIcons.DELETE);
+            streamRelationListDelete = streamRelationListPresenter.add(SvgPresets.DELETE);
             streamRelationListDelete.setEnabled(false);
-            streamListUndelete = streamListPresenter.add(SvgIcons.UNDO);
+            streamListUndelete = streamListPresenter.add(SvgPresets.UNDO);
             streamListUndelete.setTitle("Un-Delete");
-            streamRelationListUndelete = streamRelationListPresenter.add(SvgIcons.UNDO);
+            streamRelationListUndelete = streamRelationListPresenter.add(SvgPresets.UNDO);
             streamRelationListUndelete.setTitle("un-Delete");
         }
 
         // Download
         if (securityContext.hasAppPermission(Stream.EXPORT_DATA_PERMISSION)) {
-            streamListDownload = streamListPresenter.add(SvgIcons.DOWNLOAD);
-            streamRelationListDownload = streamRelationListPresenter.add(SvgIcons.DOWNLOAD);
+            streamListDownload = streamListPresenter.add(SvgPresets.DOWNLOAD);
+            streamRelationListDownload = streamRelationListPresenter.add(SvgPresets.DOWNLOAD);
         }
 
         // Upload
         if (securityContext.hasAppPermission(Stream.IMPORT_DATA_PERMISSION)) {
-            streamListUpload = streamListPresenter.add(SvgIcons.UPLOAD);
+            streamListUpload = streamListPresenter.add(SvgPresets.UPLOAD);
         }
 
         // Filter
-        streamListFilter = streamListPresenter.add(SvgIcons.FILTER);
+        streamListFilter = streamListPresenter.add(SvgPresets.FILTER);
 
         // Init the buttons
         setStreamListSelectableEnabled(null, StreamStatus.UNLOCKED);

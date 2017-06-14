@@ -26,7 +26,7 @@ import stroom.monitoring.client.MonitoringPlugin;
 import stroom.policy.shared.Policy;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.DataRetentionPolicyPresenter;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;
 
@@ -45,6 +45,6 @@ public class DataRetentionPolicyPlugin extends MonitoringPlugin<DataRetentionPol
     }
 
     private MenuItem createDataRetentionMenuItem() {
-        return new IconMenuItem(51, SvgIcons.HISTORY, SvgIcons.HISTORY, "Data Retention", null, true, () -> open());
+        return new IconMenuItem(51, SvgPresets.HISTORY, SvgPresets.HISTORY, "Data Retention", null, true, () -> open());
     }
 }

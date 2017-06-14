@@ -74,8 +74,7 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedObject;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -146,11 +145,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         view.setTableView(dataGrid);
 
         // Add the 'add field' button.
-        addFieldButton = dataGrid.addButton(SvgIcons.ADD);
+        addFieldButton = dataGrid.addButton(SvgPresets.ADD);
         addFieldButton.setTitle("Add Field");
 
         // Download
-        downloadButton = dataGrid.addButton(SvgIcons.DOWNLOAD);
+        downloadButton = dataGrid.addButton(SvgPresets.DOWNLOAD);
         downloadButton.setVisible(securityContext.hasAppPermission(Dashboard.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         fieldsManager = new FieldsManager(this, menuListPresenter, expressionPresenter, formatPresenter,

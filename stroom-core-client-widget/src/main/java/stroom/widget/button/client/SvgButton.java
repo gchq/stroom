@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
+import stroom.svg.client.SvgPreset;
 import stroom.widget.util.client.ResourceCache;
 
 public class SvgButton extends ButtonBase implements ButtonView {
@@ -42,21 +43,25 @@ public class SvgButton extends ButtonBase implements ButtonView {
      */
     private boolean allowClick;
 
-    private final SvgIcon preset;
+    private final SvgPreset preset;
 
-    public static SvgButton create(final SvgIcon preset) {
+    public static SvgButton create(final SvgPreset preset) {
         final SvgButton button = new SvgButton(preset);
         return button;
     }
 
-    private SvgButton(final SvgIcon preset) {
-        super(Document.get().createDivElement());
+    private SvgButton(final SvgPreset preset) {
+        super(Document.get().createImageElement());
         this.preset = preset;
 
         sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
-        getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
+//        getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
 
-        setIcon(preset.getUrl());
+        getElement().setAttribute("src", preset.getUrl());
+
+
+
+//        setIcon(preset.getUrl());
         setWidth(preset.getWidth() + "px");
         setHeight(preset.getHeight() + "px");
         setTitle(preset.getTitle());
@@ -75,18 +80,18 @@ public class SvgButton extends ButtonBase implements ButtonView {
         }
     }
 
-    private void setIcon(final String url) {
-        ResourceCache.get(url, data -> {
-            if (data != null) {
-                getElement().setInnerHTML(data);
-                final Element svg = getElement().getElementsByTagName("svg").getItem(0).cast();
-//                svg.setAttribute("style", "fill:" + colourSet.getEnabled());
-                svg.setAttribute("width", String.valueOf(preset.getWidth()));
-                svg.setAttribute("height", String.valueOf(preset.getHeight()));
-                svg.setTitle(getElement().getTitle());
-            }
-        });
-    }
+//    private void setIcon(final String url) {
+//        ResourceCache.get(url, data -> {
+//            if (data != null) {
+//                getElement().setInnerHTML(data);
+//                final Element svg = getElement().getElementsByTagName("svg").getItem(0).cast();
+////                svg.setAttribute("style", "fill:" + colourSet.getEnabled());
+//                svg.setAttribute("width", String.valueOf(preset.getWidth()));
+//                svg.setAttribute("height", String.valueOf(preset.getHeight()));
+//                svg.setTitle(getElement().getTitle());
+//            }
+//        });
+//    }
 
     @Override
     public void onBrowserEvent(final Event event) {

@@ -21,7 +21,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 
 public class SmallSpinner extends Composite {
     public interface Style extends CssResource {
@@ -43,7 +43,7 @@ public class SmallSpinner extends Composite {
             resources.style().ensureInjected();
         }
 
-        final SvgButton button = SvgButton.create(SvgIcons.SPINNER);
+        final SvgButton button = SvgButton.create(SvgPresets.SPINNER);
         initWidget(button);
 
         getElement().setClassName(resources.style().smallSpinner());

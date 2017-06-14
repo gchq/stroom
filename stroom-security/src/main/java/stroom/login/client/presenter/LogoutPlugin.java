@@ -25,7 +25,7 @@ import stroom.app.client.MenuKeys;
 import stroom.app.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.event.RequestLogoutEvent;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.menu.client.presenter.Separator;
@@ -44,7 +44,7 @@ public class LogoutPlugin extends Plugin {
                 new KeyedParentMenuItem(4, "User", event.getMenuItems(), MenuKeys.USER_MENU));
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, new Separator(2));
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU,
-                new IconMenuItem(3, SvgIcons.LOGOUT, SvgIcons.LOGOUT, "Logout", null, true, new Command() {
+                new IconMenuItem(3, SvgPresets.LOGOUT, SvgPresets.LOGOUT, "Logout", null, true, new Command() {
                     @Override
                     public void execute() {
                         ConfirmEvent.fire(LogoutPlugin.this, "Are you sure you want to logout?", new ConfirmCallback() {

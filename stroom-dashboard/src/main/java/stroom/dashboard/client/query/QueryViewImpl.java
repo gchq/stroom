@@ -33,7 +33,7 @@ import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.FabButton;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.button.client.SvgIcon;
+import stroom.svg.client.SvgPreset;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
@@ -71,7 +71,7 @@ public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
     }
 
     @Override
-    public ButtonView addButton(final SvgIcon preset) {
+    public ButtonView addButton(final SvgPreset preset) {
         return buttonPanel.add(preset);
     }
 

@@ -23,8 +23,7 @@ import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -48,9 +47,9 @@ public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter i
         this.dispatcher = dispatcher;
         this.selectUserPresenterProvider = selectUserPresenterProvider;
 
-        addButton = addButton(SvgIcons.ADD);
+        addButton = addButton(SvgPresets.ADD);
         addButton.setTitle("Add Group");
-        removeButton = addButton(SvgIcons.REMOVE);
+        removeButton = addButton(SvgPresets.REMOVE);
         removeButton.setTitle("Remove Group");
     }
 

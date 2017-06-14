@@ -37,8 +37,8 @@ import stroom.entity.shared.EntityRow;
 import stroom.entity.shared.ResultList;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
-import stroom.widget.button.client.SvgIcon;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -59,11 +59,11 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
 
         getView().addColumn(new InfoHelpLinkColumn<Job>() {
             @Override
-            public SvgIcon getValue(final Job row) {
+            public SvgPreset getValue(final Job row) {
                 if (!row.isPersistent()) {
                     return null;
                 }
-                return SvgIcons.HELP;
+                return SvgPresets.HELP;
             }
 
             @Override

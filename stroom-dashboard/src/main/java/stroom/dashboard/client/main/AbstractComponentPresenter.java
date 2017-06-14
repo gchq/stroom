@@ -32,7 +32,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.Icon;
 
 public abstract class AbstractComponentPresenter<V extends View> extends MyPresenterWidget<V>
         implements Component, HasDirtyHandlers {

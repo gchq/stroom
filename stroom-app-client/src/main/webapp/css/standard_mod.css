@@ -392,12 +392,10 @@ td.datePickerYear {
 }
 
 .gwt-SplitLayoutPanel-HDragger {
-	background: url(../images/verticalDivider.png) center center no-repeat;
 	cursor: col-resize;
 }
 
 .gwt-SplitLayoutPanel-VDragger {
-	background: url(../images/horizontalDivider.png) center center no-repeat;
 	cursor: row-resize;
 }
 

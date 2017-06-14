@@ -32,8 +32,8 @@ import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.SvgPresets;
+import stroom.svg.client.Icon;
 
 public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataGridView<DBTableStatus>> implements ColumnSortEvent.Handler {
     private final FindSystemTableStatusAction action;
@@ -103,7 +103,7 @@ public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataG
 
     @Override
     public Icon getIcon() {
-        return SvgIcons.DATABASE;
+        return SvgPresets.DATABASE;
     }
 
     @Override

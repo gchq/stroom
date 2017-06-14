@@ -28,7 +28,7 @@ import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
 import stroom.security.client.presenter.UsersAndGroupsPresenter;
 import stroom.security.shared.User;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -58,7 +58,7 @@ public class ManageUserPlugin extends NodeToolsPlugin {
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(User.MANAGE_USERS_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(1, SvgIcons.USER, SvgIcons.USER, "Users And Groups", null, true, new Command() {
+                    new IconMenuItem(1, SvgPresets.USER, SvgPresets.USER, "Users And Groups", null, true, new Command() {
                         @Override
                         public void execute() {
                             usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {

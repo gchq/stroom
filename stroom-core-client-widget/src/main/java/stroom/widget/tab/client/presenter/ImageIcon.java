@@ -18,6 +18,7 @@ package stroom.widget.tab.client.presenter;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Image;
+import stroom.svg.client.Icon;
 
 public class ImageIcon implements Icon {
     private final Image image;

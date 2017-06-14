@@ -31,7 +31,7 @@ import stroom.pipeline.stepping.client.presenter.SteppingFilterUiHandlers;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 
 public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiHandlers>
         implements SteppingFilterSettingsView {
@@ -55,11 +55,11 @@ public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiH
 
     @Inject
     public SteppingFilterViewImpl(final Binder binder) {
-        addXPath = SvgButton.create(SvgIcons.ADD);
+        addXPath = SvgButton.create(SvgPresets.ADD);
         addXPath.setTitle("Add XPath");
-        editXPath = SvgButton.create(SvgIcons.EDIT);
+        editXPath = SvgButton.create(SvgPresets.EDIT);
         editXPath.setTitle("Edit XPath");
-        removeXPath = SvgButton.create(SvgIcons.REMOVE);
+        removeXPath = SvgButton.create(SvgPresets.REMOVE);
         removeXPath.setTitle("Delete XPath");
 
         widget = binder.createAndBindUi(this);

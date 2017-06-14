@@ -29,8 +29,7 @@ import stroom.query.shared.Field;
 import stroom.query.shared.Sort;
 import stroom.query.shared.Sort.SortDirection;
 import stroom.query.shared.TableSettings;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -455,7 +454,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createFilterMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(3, SvgIcons.FILTER, SvgIcons.FILTER, "Filter", null, true, () -> filterField(field));
+        final Item item = new IconMenuItem(3, SvgPresets.FILTER, SvgPresets.FILTER, "Filter", null, true, () -> filterField(field));
         if (field.getFilter() != null && ((field.getFilter().getIncludes() != null
                 && field.getFilter().getIncludes().trim().length() > 0)
                 || (field.getFilter().getExcludes() != null && field.getFilter().getExcludes().trim().length() > 0))) {
@@ -474,7 +473,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createRemoveMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(5, SvgIcons.REMOVE, SvgIcons.REMOVE, "Remove", null, true, () -> deleteField(field));
+        final Item item = new IconMenuItem(5, SvgPresets.REMOVE, SvgPresets.REMOVE, "Remove", null, true, () -> deleteField(field));
         return item;
     }
 }

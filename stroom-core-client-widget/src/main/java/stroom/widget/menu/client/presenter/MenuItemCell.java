@@ -33,10 +33,8 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Image;
 import stroom.data.table.client.CellTableViewImpl.MenuResources;
-import stroom.widget.button.client.SvgIcon;
-import stroom.widget.button.client.SvgIcon;
-import stroom.widget.button.client.SvgImage;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgPreset;
 import stroom.widget.tab.client.presenter.ImageIcon;
 
 public class MenuItemCell extends AbstractCell<Item> {
@@ -54,7 +52,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         String icon();
 
-        String face();
+//        String face();
 
         String disabled();
 
@@ -111,6 +109,9 @@ public class MenuItemCell extends AbstractCell<Item> {
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml inner(String className, SafeHtml icon);
 
+            @Template("<img class=\"{0}\" src=\"{1}\">")
+            SafeHtml icon(String className, String url);
+
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml text(String className, SafeHtml text);
         }
@@ -151,11 +152,9 @@ public class MenuItemCell extends AbstractCell<Item> {
                             inner.append(TEMPLATE.inner(RESOURCES.style().icon(),
                                     SafeHtmlUtils.fromTrustedString(image.getElement().getString())));
                         }
-                    } else if (enabledIcon != null && enabledIcon instanceof SvgIcon) {
-                        final SvgIcon svgIcon = (SvgIcon) enabledIcon;
-                        final SvgImage svgImage = new SvgImage(svgIcon.getUrl(), 18, 18, true);
-                        svgImage.setStyleName(RESOURCES.style().icon());
-                        inner.append(SafeHtmlUtils.fromTrustedString(svgImage.getElement().getString()));
+                    } else if (enabledIcon != null && enabledIcon instanceof SvgPreset) {
+                        final SvgPreset glyphIcon = (SvgPreset) enabledIcon;
+                        inner.append(TEMPLATE.icon(RESOURCES.style().icon(), glyphIcon.getUrl()));
                     } else {
                         inner.append(TEMPLATE.inner(RESOURCES.style().icon(), SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }
@@ -167,11 +166,9 @@ public class MenuItemCell extends AbstractCell<Item> {
                             inner.append(TEMPLATE.inner(RESOURCES.style().icon(),
                                     SafeHtmlUtils.fromTrustedString(image.getElement().getString())));
                         }
-                    } else if (disabledIcon != null && disabledIcon instanceof SvgIcon) {
-                        final SvgIcon svgIcon = (SvgIcon) disabledIcon;
-                        final SvgImage svgImage = new SvgImage(svgIcon.getUrl(), 18, 18, true);
-                        svgImage.setStyleName(RESOURCES.style().icon() + " " + RESOURCES.style().disabled());
-                        inner.append(SafeHtmlUtils.fromTrustedString(svgImage.getElement().getString()));
+                    } else if (enabledIcon != null && enabledIcon instanceof SvgPreset) {
+                        final SvgPreset glyphIcon = (SvgPreset) enabledIcon;
+                        inner.append(TEMPLATE.icon(RESOURCES.style().icon() + " " + RESOURCES.style().disabled(), glyphIcon.getUrl()));
                     } else {
                         inner.append(TEMPLATE.inner(RESOURCES.style().icon(), SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }

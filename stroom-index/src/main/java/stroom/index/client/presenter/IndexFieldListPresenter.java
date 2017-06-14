@@ -37,8 +37,7 @@ import stroom.index.shared.Index;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexFields;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import java.util.ArrayList;
@@ -62,15 +61,15 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         super(eventBus, new DataGridViewImpl<IndexField>(true, true));
         this.indexFieldEditPresenter = indexFieldEditPresenter;
 
-        newButton = getView().addButton(SvgIcons.NEW_ITEM);
+        newButton = getView().addButton(SvgPresets.NEW_ITEM);
         newButton.setTitle("New Field");
-        editButton = getView().addButton(SvgIcons.EDIT);
+        editButton = getView().addButton(SvgPresets.EDIT);
         editButton.setTitle("Edit Field");
-        removeButton = getView().addButton(SvgIcons.DELETE);
+        removeButton = getView().addButton(SvgPresets.DELETE);
         removeButton.setTitle("Remove Field");
-        upButton = getView().addButton(SvgIcons.UP);
+        upButton = getView().addButton(SvgPresets.UP);
         upButton.setTitle("Move Up");
-        downButton = getView().addButton(SvgIcons.DOWN);
+        downButton = getView().addButton(SvgPresets.DOWN);
         downButton.setTitle("Move Down");
 
         addColumns();

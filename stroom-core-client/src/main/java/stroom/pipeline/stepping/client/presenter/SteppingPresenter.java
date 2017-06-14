@@ -58,8 +58,8 @@ import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.Indicators;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcon;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.LayerContainer;
 
@@ -120,7 +120,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         stepControlPresenter.setEnabledButtons(false, action.getStepType(), true, showingData, foundRecord);
 
-        saveButton = addButtonLeft(SvgIcons.SAVE);
+        saveButton = addButtonLeft(SvgPresets.SAVE);
     }
 
     @Override
@@ -147,7 +147,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 //        return button;
 //    }
 
-    private ButtonView addButtonLeft(final SvgIcon preset) {
+    private ButtonView addButtonLeft(final SvgPreset preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
             getView().addWidgetLeft(leftButtons);

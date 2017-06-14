@@ -54,13 +54,13 @@ import stroom.util.client.RandomId;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcon;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 
 import java.util.ArrayList;
@@ -91,8 +91,8 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
         this.addPresenterProvider = addPresenterProvider;
         this.components = components;
 
-        saveButton = addButtonLeft(SvgIcons.SAVE);
-        saveAsButton = addButtonLeft(SvgIcons.SAVE_AS);
+        saveButton = addButtonLeft(SvgPresets.SAVE);
+        saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
         saveButton.setEnabled(false);
         saveAsButton.setEnabled(false);
 
@@ -111,14 +111,14 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
         layoutPresenter.setComponents(components);
         view.setContent(layoutPresenter.getView());
 
-        addButton = addButtonLeft(SvgIcons.ADD);
+        addButton = addButtonLeft(SvgPresets.ADD);
         addButton.setTitle("Add Component");
         addButton.setEnabled(false);
 
         view.setUiHandlers(this);
     }
 
-    private ButtonView addButtonLeft(final SvgIcon preset) {
+    private ButtonView addButtonLeft(final SvgPreset preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
             leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
@@ -368,7 +368,7 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
 
     @Override
     public Icon getIcon() {
-        return ImageIcon.create(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getType() + ".png");
+        return ImageIcon.create(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getType() + ".svg");
     }
 
     @Override

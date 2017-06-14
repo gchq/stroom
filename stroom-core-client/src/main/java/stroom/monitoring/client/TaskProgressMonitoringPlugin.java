@@ -25,7 +25,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.presenter.TaskProgressMonitoringPresenter;
 import stroom.security.client.ClientSecurityContext;
 import stroom.task.shared.FindTaskProgressAction;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class TaskProgressMonitoringPlugin extends MonitoringPlugin<TaskProgressMonitoringPresenter> {
@@ -40,7 +40,7 @@ public class TaskProgressMonitoringPlugin extends MonitoringPlugin<TaskProgressM
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(FindTaskProgressAction.MANAGE_TASKS_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
-                    new IconMenuItem(13, SvgIcons.JOBS, SvgIcons.JOBS, "Server Tasks", null, true, () -> open()));
+                    new IconMenuItem(13, SvgPresets.JOBS, SvgPresets.JOBS, "Server Tasks", null, true, () -> open()));
         }
     }
 }

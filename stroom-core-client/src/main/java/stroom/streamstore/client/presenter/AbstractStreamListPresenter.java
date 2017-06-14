@@ -52,8 +52,8 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.button.client.SvgIcon;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -263,23 +263,23 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         });
     }
 
-    public SvgIcon getInfoCellState(final StreamAttributeMap object) {
+    public SvgPreset getInfoCellState(final StreamAttributeMap object) {
         // Should only show unlocked ones by default
         if (StreamStatus.UNLOCKED.equals(object.getStream().getStatus())) {
-            return SvgIcons.INFO;
+            return SvgPresets.INFO;
         }
         if (StreamStatus.DELETED.equals(object.getStream().getStatus())) {
-            return SvgIcons.DELETE;
+            return SvgPresets.DELETE;
         }
 
-        return SvgIcons.ALERT;
+        return SvgPresets.ALERT;
     }
 
     protected void addInfoColumn() {
         // Info column.
         final InfoColumn<StreamAttributeMap> infoColumn = new InfoColumn<StreamAttributeMap>() {
             @Override
-            public SvgIcon getValue(final StreamAttributeMap object) {
+            public SvgPreset getValue(final StreamAttributeMap object) {
                 return getInfoCellState(object);
             }
 
@@ -540,7 +540,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         return getView().addButton(title, enabledImage, disabledImage, enabled);
     }
 
-    public ButtonView add(final SvgIcon preset) {
+    public ButtonView add(final SvgPreset preset) {
         return getView().addButton(preset);
     }
 }

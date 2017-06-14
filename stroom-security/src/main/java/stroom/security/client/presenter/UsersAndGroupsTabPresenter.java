@@ -32,8 +32,7 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
@@ -66,9 +65,9 @@ public class UsersAndGroupsTabPresenter extends
 
         setInSlot(LIST, listPresenter);
 
-        newButton = listPresenter.addButton(SvgIcons.NEW_ITEM);
-        openButton = listPresenter.addButton(SvgIcons.OPEN);
-        deleteButton = listPresenter.addButton(SvgIcons.DELETE);
+        newButton = listPresenter.addButton(SvgPresets.NEW_ITEM);
+        openButton = listPresenter.addButton(SvgPresets.OPEN);
+        deleteButton = listPresenter.addButton(SvgPresets.DELETE);
 
         final boolean updatePerm = securityContext.hasAppPermission(User.MANAGE_USERS_PERMISSION);
 

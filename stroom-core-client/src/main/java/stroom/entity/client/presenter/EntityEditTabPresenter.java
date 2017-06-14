@@ -37,10 +37,9 @@ import stroom.util.shared.HasType;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.button.client.SvgIcon;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.tab.client.presenter.Icon;
-import stroom.widget.tab.client.presenter.ImageIcon;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
+import stroom.svg.client.Icon;
 import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 
@@ -62,8 +61,8 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
                                   final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
 
-        saveButton = addButtonLeft(SvgIcons.SAVE);
-        saveAsButton = addButtonLeft(SvgIcons.SAVE_AS);
+        saveButton = addButtonLeft(SvgPresets.SAVE);
+        saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
         saveButton.setEnabled(false);
         saveAsButton.setEnabled(false);
 
@@ -92,7 +91,7 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
         return button;
     }
 
-    public ButtonView addButtonLeft(final SvgIcon preset) {
+    public ButtonView addButtonLeft(final SvgPreset preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
             leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
@@ -185,7 +184,7 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
 
     @Override
     public Icon getIcon() {
-        return ImageIcon.create(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getType() + ".png");
+        return new SvgPreset(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getType() + ".svg", null, true);
     }
 
     @Override

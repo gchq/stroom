@@ -86,7 +86,7 @@ public abstract class AbstractExplorerDataProvider<E extends DocumentEntity, C e
 
     @Override
     public String getIconUrl() {
-        return DocumentType.DOC_IMAGE_URL + getType() + ".png";
+        return DocumentType.DOC_IMAGE_URL + getType() + ".svg";
     }
 
     // TODO : This is a temporary fudge until the separate explorer service is created.

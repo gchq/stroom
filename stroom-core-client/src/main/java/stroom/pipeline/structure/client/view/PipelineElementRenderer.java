@@ -16,118 +16,71 @@
 
 package stroom.pipeline.structure.client.view;
 
-import com.google.gwt.canvas.dom.client.Context2d;
-import com.google.gwt.canvas.dom.client.Context2d.TextAlign;
-import com.google.gwt.canvas.dom.client.CssColor;
-import com.google.gwt.canvas.dom.client.TextMetrics;
-import com.google.gwt.dom.client.ImageElement;
-import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.view.client.SelectionModel;
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.widget.htree.client.CellRenderer;
-import stroom.widget.htree.client.ShadowBox;
-import stroom.widget.htree.client.ShadowBox.Colors;
+import stroom.widget.htree.client.CellRenderer2;
 import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.Dimension;
 import stroom.widget.htree.client.treelayout.NodeExtentProvider;
+import stroom.widget.htree.client.treelayout.TreeLayout;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class PipelineElementRenderer
-        implements CellRenderer<PipelineElement>, NodeExtentProvider<PipelineElement> {
-    private static final int IMAGE_MARGIN = 4;
-    private static final int DEFAULT_TEXT_SIZE = 10;
-    private static final int DEFAULT_TEXT_PADDING = 5;
+        implements CellRenderer2<PipelineElement>, NodeExtentProvider<PipelineElement> {
+    private final PipelineElementBoxFactory pipelineElementBoxFactory;
+    private final FlowPanel panel;
 
-    private final int textSize = DEFAULT_TEXT_SIZE;
-    private final int textPadding = DEFAULT_TEXT_PADDING;
-    private final String font = textSize + "px Arial";
+    private SelectionModel<PipelineElement> selectionModel;
 
-    private final String textColor = "black";
+    private final List<PipelineElementBox> boxes = new ArrayList<PipelineElementBox>();
 
-    private final Context2d shadowContext;
-    private final Context2d backgroundContext;
-    private final Context2d textContext;
-    private final ShadowBox shadowBox;
-
-    private static final Colors NORMAL = Colors.createDefault();
-    private static final Colors OVER = Colors.createDefaultMouseOver();
-    private static final Colors SELECTED = Colors.createDefaultSelection();
-
-    public PipelineElementRenderer(final Context2d shadowContext, final Context2d backgroundContext,
-            final Context2d textContext) {
-        this.shadowContext = shadowContext;
-        this.backgroundContext = backgroundContext;
-        this.textContext = textContext;
-        shadowBox = new ShadowBox();
+    public PipelineElementRenderer(final FlowPanel panel, final PipelineElementBoxFactory pipelineElementBoxFactory) {
+        this.panel = panel;
+        this.pipelineElementBoxFactory = pipelineElementBoxFactory;
     }
 
     @Override
-    public void render(final Bounds bounds, final PipelineElement element, final boolean mouseOver,
-            final boolean selected) {
-        if (selected) {
-            shadowBox.draw(shadowContext, backgroundContext, bounds, SELECTED);
-        } else if (mouseOver) {
-            shadowBox.draw(shadowContext, backgroundContext, bounds, OVER);
-        } else {
-            shadowBox.draw(shadowContext, backgroundContext, bounds, NORMAL);
-        }
-        drawText(textContext, bounds, element);
-    }
+    public void render(final TreeLayout<PipelineElement> treeLayout, final Bounds bounds, final PipelineElement item) {
+        final boolean selected = selectionModel != null && selectionModel.isSelected(item);
+        final PipelineElementBox pipelineElementBox = pipelineElementBoxFactory.create(item);
+        pipelineElementBox.setSelected(selected);
 
-    private void drawText(final Context2d ctx, final Bounds bounds, final PipelineElement element) {
-        final double x = bounds.getX() + textPadding;
-        final double y = bounds.getY() + textPadding + textSize - 1;
+        final Style style = pipelineElementBox.getElement().getStyle();
+        style.setLeft(bounds.getX(), Unit.PX);
+        style.setTop(bounds.getY(), Unit.PX);
 
-        final String url = PipelineImageUtil.getImageURL(element);
-        if (url != null) {
-            // Get the image element from the cache. This is necessary as the
-            // canvas need images to be loaded before it can render them.
-            ImageCache.getImage(url, imageElement -> {
-                // Draw the image.
-                drawImage(ctx, x, y, imageElement, element);
-            });
-        } else {
-            // We don't have an image so just render text.
-            drawText(ctx, x, y, element);
-        }
-    }
-
-    private void drawImage(final Context2d ctx, final double x, final double y, final ImageElement imageElement,
-            final PipelineElement element) {
-        if (imageElement != null) {
-            ctx.drawImage(imageElement, x, y - 12);
-            drawText(ctx, x + imageElement.getWidth() + IMAGE_MARGIN, y, element);
-
-        } else {
-            // We don't have an image so just render text.
-            drawText(ctx, x, y, element);
-        }
-    }
-
-    private void drawText(final Context2d ctx, final double x, final double y, final PipelineElement element) {
-        final CssColor fill = CssColor.make(textColor);
-
-        ctx.setFont(font);
-        ctx.setTextAlign(TextAlign.LEFT);
-        ctx.setFillStyle(fill);
-        ctx.fillText(element.getId(), x, y);
+        panel.add(pipelineElementBox);
+        boxes.add(pipelineElementBox);
     }
 
     @Override
-    public Dimension getExtents(final PipelineElement element) {
+    public Dimension getExtents(final PipelineElement pipelineElement) {
         double width = 0;
-
-        // Get image.
-        final Image image = PipelineImageUtil.getImage(element.getElementType());
-        if (image != null) {
-            width += image.getWidth() + IMAGE_MARGIN;
-        }
-
-        textContext.setFont(font);
-        final TextMetrics textMetrics = textContext.measureText(element.getId());
-        width += textMetrics.getWidth();
-        width += (textPadding * 2);
-
-        final double height = textSize + (textPadding * 2);
+        double height = 0;
+        final PipelineElementBox pipelineElementBox = pipelineElementBoxFactory.create(pipelineElement);
+        RootPanel.get().add(pipelineElementBox);
+        width += pipelineElementBox.getElement().getScrollWidth();
+        height += pipelineElementBox.getElement().getScrollHeight();
+        RootPanel.get().remove(pipelineElementBox);
 
         return new Dimension(width, height);
+    }
+
+    public void clear() {
+        boxes.clear();
+    }
+
+    public List<PipelineElementBox> getBoxes() {
+        return boxes;
+    }
+
+    public void setSelectionModel(final SelectionModel<PipelineElement> selectionModel) {
+        this.selectionModel = selectionModel;
     }
 }

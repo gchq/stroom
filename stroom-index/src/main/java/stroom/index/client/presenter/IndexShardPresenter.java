@@ -52,7 +52,7 @@ import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -94,7 +94,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
         buttonFlush = getView().addButton("Flush Selected Shards", resources.flush(), resources.flushDisabled(), false);
         buttonClose = getView().addButton("Close Selected Shards", resources.close(), resources.closeDisabled(), false);
-        buttonDelete = getView().addButton(SvgIcons.DELETE);
+        buttonDelete = getView().addButton(SvgPresets.DELETE);
         buttonDelete.setTitle("Delete Selected Shards");
 
         addColumns();

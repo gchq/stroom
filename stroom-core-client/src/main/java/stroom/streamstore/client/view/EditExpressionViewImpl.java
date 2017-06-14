@@ -29,7 +29,7 @@ import stroom.streamstore.client.presenter.EditExpressionPresenter.EditExpressio
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.button.client.SvgIcon;
+import stroom.svg.client.SvgPreset;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class EditExpressionViewImpl extends ViewImpl implements EditExpressionView, RequiresResize, ProvidesResize {
@@ -62,7 +62,7 @@ public class EditExpressionViewImpl extends ViewImpl implements EditExpressionVi
     }
 
     @Override
-    public ButtonView addButton(final SvgIcon preset) {
+    public ButtonView addButton(final SvgPreset preset) {
         return buttonPanel.add(preset);
     }
 

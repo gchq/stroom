@@ -23,7 +23,7 @@ import stroom.app.client.presenter.Plugin;
 import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.ClientSecurityContext;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.Separator;
@@ -52,6 +52,6 @@ public class ImportConfigPlugin extends Plugin {
     }
 
     private MenuItem createImportMenuItem() {
-        return new IconMenuItem(105, SvgIcons.UPLOAD, SvgIcons.UPLOAD, "Import", null, true, () -> ImportConfigEvent.fire(ImportConfigPlugin.this));
+        return new IconMenuItem(105, SvgPresets.UPLOAD, SvgPresets.UPLOAD, "Import", null, true, () -> ImportConfigEvent.fire(ImportConfigPlugin.this));
     }
 }

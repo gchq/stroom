@@ -27,8 +27,8 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
 import stroom.pipeline.stepping.client.presenter.StepControlUIHandlers;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.button.client.SvgIcon;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 
 public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandlers> implements StepControlView {
     public interface Binder extends UiBinder<Widget, StepControlViewImpl> {
@@ -50,16 +50,16 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
     @Inject
     public StepControlViewImpl(final Binder binder) {
 
-        firstButton = createButton(SvgIcons.FAST_BACKWARD_GREEN, "Step First");
-        backwardButton = createButton(SvgIcons.STEP_BACKWARD_GREEN, "Step Backward");
-        forwardButton = createButton(SvgIcons.STEP_FORWARD_GREEN, "Step Forward");
-        lastButton = createButton(SvgIcons.FAST_FORWARD_GREEN, "Step Last");
-        refreshButton = createButton(SvgIcons.REFRESH_GREEN, "Refresh Current Step");
+        firstButton = createButton(SvgPresets.FAST_BACKWARD_GREEN, "Step First");
+        backwardButton = createButton(SvgPresets.STEP_BACKWARD_GREEN, "Step Backward");
+        forwardButton = createButton(SvgPresets.STEP_FORWARD_GREEN, "Step Forward");
+        lastButton = createButton(SvgPresets.FAST_FORWARD_GREEN, "Step Last");
+        refreshButton = createButton(SvgPresets.REFRESH_GREEN, "Refresh Current Step");
 
         widget = binder.createAndBindUi(this);
     }
 
-    private SvgButton createButton(final SvgIcon svgIcon, final String title) {
+    private SvgButton createButton(final SvgPreset svgIcon, final String title) {
         final SvgButton button = SvgButton.create(svgIcon);
         button.setTitle(title);
         final Style style = button.getElement().getStyle();

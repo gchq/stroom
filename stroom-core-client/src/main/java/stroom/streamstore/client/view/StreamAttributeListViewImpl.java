@@ -28,7 +28,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.streamstore.client.presenter.StreamAttributeListPresenter.StreamAttributeListView;
 import stroom.streamstore.client.presenter.StreamAttributeListUiHandlers;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 
 public class StreamAttributeListViewImpl extends ViewWithUiHandlers<StreamAttributeListUiHandlers>
         implements StreamAttributeListView {
@@ -46,8 +46,8 @@ public class StreamAttributeListViewImpl extends ViewWithUiHandlers<StreamAttrib
 
     @Inject
     public StreamAttributeListViewImpl(final Binder binder) {
-        add = SvgButton.create(SvgIcons.ADD);
-        remove = SvgButton.create(SvgIcons.REMOVE);
+        add = SvgButton.create(SvgPresets.ADD);
+        remove = SvgButton.create(SvgPresets.REMOVE);
         widget = binder.createAndBindUi(this);
     }
 

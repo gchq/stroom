@@ -26,8 +26,7 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserPermission;
 import stroom.security.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -62,8 +61,8 @@ public class DocumentPermissionsTabPresenter
         this.permissionsListPresenter = permissionsListPresenter;
         this.selectUserPresenterProvider = selectUserPresenterProvider;
 
-        addButton = userListPresenter.addButton(SvgIcons.ADD);
-        removeButton = userListPresenter.addButton(SvgIcons.REMOVE);
+        addButton = userListPresenter.addButton(SvgPresets.ADD);
+        removeButton = userListPresenter.addButton(SvgPresets.REMOVE);
 
         getView().setUserView(userListPresenter.getView());
         getView().setPermissionsView(permissionsListPresenter.getView());

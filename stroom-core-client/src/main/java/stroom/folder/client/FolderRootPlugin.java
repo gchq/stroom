@@ -32,8 +32,9 @@ import stroom.explorer.shared.ExplorerData;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
+import stroom.svg.client.SvgIcon;
 import stroom.util.client.ImageUtil;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SelectionType;
@@ -102,7 +103,7 @@ public class FolderRootPlugin extends Plugin implements TabData {
 
     @Override
     public Icon getIcon() {
-        return ImageIcon.create(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getLabel());
+        return new SvgIcon(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + FolderService.ROOT, 18, 19);
     }
 
     @Override

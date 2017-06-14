@@ -31,9 +31,7 @@ import stroom.node.client.view.WrapperView;
 import stroom.node.shared.FlushVolumeStatusAction;
 import stroom.node.shared.Volume;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -67,10 +65,10 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
         this.editProvider = editProvider;
         this.dispatcher = dispatcher;
 
-        newButton = volumeStatusListPresenter.getView().addButton(SvgIcons.NEW_ITEM);
-        openButton = volumeStatusListPresenter.getView().addButton(SvgIcons.EDIT);
-        deleteButton = volumeStatusListPresenter.getView().addButton(SvgIcons.DELETE);
-        rescanButton = volumeStatusListPresenter.getView().addButton(SvgIcons.REFRESH_GREEN);
+        newButton = volumeStatusListPresenter.getView().addButton(SvgPresets.NEW_ITEM);
+        openButton = volumeStatusListPresenter.getView().addButton(SvgPresets.EDIT);
+        deleteButton = volumeStatusListPresenter.getView().addButton(SvgPresets.DELETE);
+        rescanButton = volumeStatusListPresenter.getView().addButton(SvgPresets.REFRESH_GREEN);
         rescanButton.setTitle("Rescan Public Volumes");
 
         view.setView(volumeStatusListPresenter.getView());

@@ -29,7 +29,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.button.client.SvgIcon;
+import stroom.svg.client.SvgPreset;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;
@@ -53,7 +53,7 @@ public interface DataGridView<R> extends View, HasRows {
 
     ImageButtonView addButton(String title, ImageResource enabledImage, ImageResource disabledImage, boolean enabled);
 
-    ButtonView addButton(SvgIcon preset);
+    ButtonView addButton(SvgPreset preset);
 
     HandlerRegistration addColumnSortHandler(ColumnSortEvent.Handler handler);
 

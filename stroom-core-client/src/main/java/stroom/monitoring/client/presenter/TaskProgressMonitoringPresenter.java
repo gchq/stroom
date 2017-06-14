@@ -50,13 +50,12 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TaskId;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.Icon;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
@@ -82,7 +81,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         this.tooltipPresenter = tooltipPresenter;
         this.criteria.setOrderBy(FindTaskProgressCriteria.ORDER_BY_AGE, OrderByDirection.DESCENDING);
 
-        terminateButton = getView().addButton(SvgIcons.DELETE);
+        terminateButton = getView().addButton(SvgPresets.DELETE);
         terminateButton.addClickHandler(event -> endSelectedTask());
         terminateButton.setEnabled(true);
 
@@ -264,7 +263,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
 
     @Override
     public Icon getIcon() {
-        return SvgIcons.JOBS;
+        return SvgPresets.JOBS;
     }
 
     private void endSelectedTask() {

@@ -30,8 +30,7 @@ import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.StringCriteria.MatchStyle;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
@@ -64,11 +63,11 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
         setInSlot(LIST, listPresenter);
 
         if (allowNew() && newPresenter != null) {
-            newButton = listPresenter.addButton(SvgIcons.NEW_ITEM);
+            newButton = listPresenter.addButton(SvgPresets.NEW_ITEM);
         }
-        openButton = listPresenter.addButton(SvgIcons.EDIT);
+        openButton = listPresenter.addButton(SvgPresets.EDIT);
         if (allowDelete()) {
-            deleteButton = listPresenter.addButton(SvgIcons.DELETE);
+            deleteButton = listPresenter.addButton(SvgPresets.DELETE);
         }
     }
 

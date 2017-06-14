@@ -34,7 +34,7 @@ import stroom.streamstore.client.presenter.ClassificationUiHandlers;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 
 public class SteppingContentTabPresenter extends ContentTabPresenter<ClassificationWrapperView>

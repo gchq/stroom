@@ -36,8 +36,7 @@ import stroom.statistics.shared.StatisticField;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import java.util.ArrayList;
@@ -60,11 +59,11 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
         super(eventBus, new DataGridViewImpl<StatisticField>(true, true));
         this.statisticsFieldEditPresenter = statisticsFieldEditPresenter;
 
-        newButton = getView().addButton(SvgIcons.NEW_ITEM);
+        newButton = getView().addButton(SvgPresets.NEW_ITEM);
         newButton.setTitle("New Field");
-        editButton = getView().addButton(SvgIcons.EDIT);
+        editButton = getView().addButton(SvgPresets.EDIT);
         editButton.setTitle("Edit Field");
-        removeButton = getView().addButton(SvgIcons.REMOVE);
+        removeButton = getView().addButton(SvgPresets.REMOVE);
         removeButton.setTitle("Remove Field");
 
         addColumns();

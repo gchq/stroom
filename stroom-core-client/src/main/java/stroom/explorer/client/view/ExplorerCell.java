@@ -16,6 +16,7 @@ import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import stroom.explorer.shared.ExplorerData;
 import stroom.util.client.ImageUtil;
+import stroom.svg.client.SvgImage;
 
 public class ExplorerCell extends AbstractCell<ExplorerData> {
     public interface Style extends CssResource {
@@ -51,7 +52,7 @@ public class ExplorerCell extends AbstractCell<ExplorerData> {
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
 
-        @Template("<div class=\"{0}\"><img src=\"{1}\" /></div>")
+        @Template("<img class=\"{0}\" src=\"{1}\" />")
         SafeHtml icon(String iconClass, SafeUri iconUrl);
 
         @Template("<div class=\"{0}\">{1}</div>")
@@ -127,6 +128,10 @@ public class ExplorerCell extends AbstractCell<ExplorerData> {
 
             if (item.getIconUrl() != null) {
                 final SafeUri safeUri = UriUtils.fromTrustedString(ImageUtil.getImageURL() + item.getIconUrl());
+//                final SvgImage svgImage = new SvgImage(ImageUtil.getImageURL() + item.getIconUrl(), 16, 16, true);
+//                svgImage.setStyleName(style.icon());
+//                iconHtml = SafeHtmlUtils.fromTrustedString(svgImage.getElement().getString());
+
                 iconHtml = template.icon(style.icon(), safeUri);
             }
 

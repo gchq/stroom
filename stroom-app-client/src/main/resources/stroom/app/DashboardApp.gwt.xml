@@ -21,6 +21,7 @@
   <inherits name='stroom.security.Security' />
   <inherits name='stroom.service.Service' />
   <inherits name='stroom.util.Util' />
+  <inherits name='stroom.svg.SVG' />
 
   <!-- Import Stroom widgets -->
 <!--   <inherits name="stroom.widget.code.Code" /> -->

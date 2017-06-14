@@ -66,8 +66,8 @@ import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.button.client.SvgIcon;
-import stroom.widget.button.client.SvgIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -155,11 +155,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             }
         });
 
-        addTermButton = view.addButton(SvgIcons.ADD);
+        addTermButton = view.addButton(SvgPresets.ADD);
         addTermButton.setTitle("Add Term");
         addOperatorButton = view.addButton("Add Operator", resources.addOperator(), resources.addOperator(), true);
-        disableItemButton = view.addButton(SvgIcons.DISABLE);
-        deleteItemButton = view.addButton(SvgIcons.DELETE);
+        disableItemButton = view.addButton(SvgPresets.DISABLE);
+        deleteItemButton = view.addButton(SvgPresets.DELETE);
         historyButton = view.addButton("History", resources.history(), null, true);
         favouriteButton = view.addButton("Favourites", resources.favourite(), null, true);
 
@@ -586,12 +586,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final boolean hasSelection = selectedItem != null;
 
         final List<Item> menuItems = new ArrayList<Item>();
-        menuItems.add(new IconMenuItem(1, SvgIcons.ADD, SvgIcons.ADD, "Add Term", null, true, () -> addTerm()));
+        menuItems.add(new IconMenuItem(1, SvgPresets.ADD, SvgPresets.ADD, "Add Term", null, true, () -> addTerm()));
         menuItems.add(new IconMenuItem(2, ImageIcon.create(resources.addOperator()), ImageIcon.create(resources.addOperator()), "Add Operator", null,
                 true, () -> addOperator()));
-        menuItems.add(new IconMenuItem(3, SvgIcons.DISABLE, SvgIcons.DISABLE, getEnableDisableText(),
+        menuItems.add(new IconMenuItem(3, SvgPresets.DISABLE, SvgPresets.DISABLE, getEnableDisableText(),
                 null, hasSelection, () -> disable()));
-        menuItems.add(new IconMenuItem(4, SvgIcons.DELETE, SvgIcons.DELETE, "Delete", null,
+        menuItems.add(new IconMenuItem(4, SvgPresets.DELETE, SvgPresets.DELETE, "Delete", null,
                 hasSelection, () -> delete()));
 
         return menuItems;
@@ -632,7 +632,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         ImageButtonView addButton(String title, ImageResource enabledImage, ImageResource disabledImage,
                                   boolean enabled);
 
-        ButtonView addButton(SvgIcon preset);
+        ButtonView addButton(SvgPreset preset);
 
         void setExpressionView(View view);
 

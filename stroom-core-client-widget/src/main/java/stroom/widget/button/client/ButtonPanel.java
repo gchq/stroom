@@ -22,6 +22,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.FlowPanel;
+import stroom.svg.client.SvgPreset;
 
 public class ButtonPanel extends FlowPanel {
     public interface Style extends CssResource {
@@ -56,7 +57,7 @@ public class ButtonPanel extends FlowPanel {
     }
 
 
-    public ButtonView add(final SvgIcon preset) {
+    public ButtonView add(final SvgPreset preset) {
         final SvgButton button = createButton(preset);
         add(button);
         return button;
@@ -75,7 +76,7 @@ public class ButtonPanel extends FlowPanel {
         return button;
     }
 
-    private SvgButton createButton(final SvgIcon preset) {
+    private SvgButton createButton(final SvgPreset preset) {
         final SvgButton button = SvgButton.create(preset);
         if (vertical) {
             button.getElement().getStyle().setDisplay(Display.BLOCK);

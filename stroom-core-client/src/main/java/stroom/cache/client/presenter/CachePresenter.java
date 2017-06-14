@@ -22,8 +22,8 @@ import com.gwtplatform.mvp.client.View;
 import stroom.cache.shared.CacheRow;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.widget.button.client.SvgIcons;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.SvgPresets;
+import stroom.svg.client.Icon;
 
 public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView> {
     public static final String LIST = "LIST";
@@ -59,7 +59,7 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
 
     @Override
     public Icon getIcon() {
-        return SvgIcons.MONITORING;
+        return SvgPresets.MONITORING;
     }
 
     @Override
