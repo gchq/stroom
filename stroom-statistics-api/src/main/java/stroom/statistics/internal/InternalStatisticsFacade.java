@@ -25,7 +25,8 @@ public interface InternalStatisticsFacade {
         putEvents(Collections.singletonList(internalStatisticEvent), LOG_ONLY_EXCEPTION_HANDLER);
     }
 
-    default void putEvent(final InternalStatisticEvent internalStatisticEvent, final Consumer<Throwable> exceptionHandler) {
+    default void putEvent(final InternalStatisticEvent internalStatisticEvent,
+                          final Consumer<Throwable> exceptionHandler) {
         putEvents(Collections.singletonList(internalStatisticEvent), exceptionHandler);
     }
 
@@ -61,7 +62,9 @@ public interface InternalStatisticsFacade {
         }
 
         public void putBatch() {
-            internalStatisticsFacade.putEvents(events, exceptionHandler == null ? LOG_ONLY_EXCEPTION_HANDLER : exceptionHandler);
+            internalStatisticsFacade.putEvents(
+                    events,
+                    exceptionHandler == null ? LOG_ONLY_EXCEPTION_HANDLER : exceptionHandler);
         }
     }
 }

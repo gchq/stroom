@@ -44,12 +44,22 @@ class MultiServiceInternalStatisticsFacade implements InternalStatisticsFacade {
                                                     Collectors.toList()))));
 
             serviceToEventsMapMap.entrySet().forEach(entry -> {
-                InternalStatisticsService service = entry.getKey();
-                service.putEvents(entry.getValue());
+                //TODO as it stands if we get a failure to send with one service, we won't send to any other services
+                //it may be better to record the exception without letting it propogate and then throw an exception at
+                //the end if any failed
+                putEvents(entry.getKey(), entry.getValue());
             });
         } catch (Exception e) {
             LOGGER.error("Error sending internal stats to all services", e);
             exceptionHandler.accept(e);
+        }
+    }
+
+    private void putEvents(final InternalStatisticsService service, Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
+        try {
+            service.putEvents(eventsMap);
+        } catch (Exception e) {
+            throw new RuntimeException("Error sending internal statistics to service of type " + service.getDocRefType(), e);
         }
     }
 }

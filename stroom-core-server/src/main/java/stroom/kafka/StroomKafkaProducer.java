@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +16,7 @@ import stroom.util.spring.StroomShutdown;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Properties;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 /**
@@ -58,22 +60,22 @@ public class StroomKafkaProducer {
 
             if (producer != null) {
                 try {
-                    producer.send(record, (recordMetadata, exception) -> {
+                    Future<RecordMetadata> future = producer.send(record, (recordMetadata, exception) -> {
 
                         if (exception != null) {
                             exceptionHandler.accept(exception);
                         }
                         LOGGER.trace("Record sent to Kafka");
                     });
+
+                    if (flushMode.equals(FlushMode.FLUSH_ON_SEND)) {
+                        future.get();
+                    }
+
                 } catch (Exception e) {
                     LOGGER.error("Error initialising kafka producer to " + bootstrapServers, e);
                     exceptionHandler.accept(e);
-                } finally {
-                    if (flushMode.equals(FlushMode.FLUSH_ON_SEND)) {
-                        producer.flush();
-                    }
                 }
-
             } else {
                 exceptionHandler.accept(new IOException("The kafka producer is currently not initialised, " +
                         "kafka may be down or the connection details incorrect"));
