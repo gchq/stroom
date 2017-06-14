@@ -23,7 +23,6 @@ class MultiServiceInternalStatisticsFacade implements InternalStatisticsFacade {
 
     @Override
     public void putEvents(List<InternalStatisticEvent> statisticEvents, Consumer<Throwable> exceptionHandler) {
-        ;
 
         try {
             //Group the events by service and docref
@@ -52,32 +51,5 @@ class MultiServiceInternalStatisticsFacade implements InternalStatisticsFacade {
             LOGGER.error("Error sending internal stats to all services", e);
             exceptionHandler.accept(e);
         }
-
-        /*
-        //fire off the list of internal stats events to each service asynchronously
-        //ensuring all are completed
-        CompletableFuture<Void>[] futures = serviceToEventsMapMap.entrySet().stream()
-                .map(entry ->
-                        CompletableFuture.runAsync(() -> {
-                            InternalStatisticsService service = entry.getKey();
-                            service.putEvents(entry.getValue());
-                        }))
-                .toArray(len -> new CompletableFuture[len]);
-
-        try {
-            CompletableFuture.allOf(futures)
-                    .exceptionally(throwable -> {
-                        exceptionHandler.accept(throwable);
-                        return null;
-                    })
-                    .get();
-        } catch (InterruptedException e) {
-            LOGGER.error("Thread interrupted waiting for internal stats to be sent to all services", e);
-            Thread.currentThread().interrupt();
-        } catch (ExecutionException e) {
-            LOGGER.error("Error sending internal stats to all services", e);
-            exceptionHandler.accept(e);
-        }
-        */
     }
 }
