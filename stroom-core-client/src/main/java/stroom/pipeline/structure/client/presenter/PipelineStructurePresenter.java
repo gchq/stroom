@@ -56,7 +56,8 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.client.BorderUtil;
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SvgIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
@@ -304,9 +305,9 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
         final List<Item> menuItems = new ArrayList<>();
 
-        menuItems.add(new SimpleParentMenuItem(0, GlyphIcons.ADD, GlyphIcons.ADD, "Add", null, addMenuItems != null && addMenuItems.size() > 0, addMenuItems));
-        menuItems.add(new SimpleParentMenuItem(1, GlyphIcons.UNDO, GlyphIcons.UNDO, "Restore", null, restoreMenuItems != null && restoreMenuItems.size() > 0, restoreMenuItems));
-        menuItems.add(new IconMenuItem(2, GlyphIcons.REMOVE, GlyphIcons.REMOVE, "Remove", null, selected != null, () -> onRemove(null)));
+        menuItems.add(new SimpleParentMenuItem(0, SvgIcons.ADD, SvgIcons.ADD, "Add", null, addMenuItems != null && addMenuItems.size() > 0, addMenuItems));
+        menuItems.add(new SimpleParentMenuItem(1, SvgIcons.UNDO, SvgIcons.UNDO, "Restore", null, restoreMenuItems != null && restoreMenuItems.size() > 0, restoreMenuItems));
+        menuItems.add(new IconMenuItem(2, SvgIcons.REMOVE, SvgIcons.REMOVE, "Remove", null, selected != null, () -> onRemove(null)));
 
         return menuItems;
     }

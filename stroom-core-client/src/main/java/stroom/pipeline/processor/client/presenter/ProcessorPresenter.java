@@ -44,18 +44,17 @@ import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
 import stroom.query.shared.ExpressionTerm;
 import stroom.query.shared.QueryData;
-import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.StreamFilterPresenter;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedMap;
 import stroom.util.shared.SharedObject;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -73,9 +72,9 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     private PipelineEntity pipelineEntity;
     private SharedObject selectedProcessor;
-    private GlyphButtonView addButton;
-    private GlyphButtonView editButton;
-    private GlyphButtonView removeButton;
+    private ButtonView addButton;
+    private ButtonView editButton;
+    private ButtonView removeButton;
 
     private boolean allowUpdate;
 
@@ -116,11 +115,11 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     private void createButtons() {
         if (addButton == null && removeButton == null) {
-            addButton = processorListPresenter.getView().addButton(GlyphIcons.ADD);
+            addButton = processorListPresenter.getView().addButton(SvgIcons.ADD);
             addButton.setTitle("Add Processor");
-            editButton = processorListPresenter.getView().addButton(GlyphIcons.EDIT);
+            editButton = processorListPresenter.getView().addButton(SvgIcons.EDIT);
             editButton.setTitle("Edit Processor");
-            removeButton = processorListPresenter.getView().addButton(GlyphIcons.REMOVE);
+            removeButton = processorListPresenter.getView().addButton(SvgIcons.REMOVE);
             removeButton.setTitle("Remove Processor");
             registerHandler(addButton.addClickHandler(event -> {
                 if (allowUpdate) {

@@ -82,9 +82,9 @@
         <g:north size="19">
             <g:FlowPanel styleName="{style.bar}">
                 <g:FlowPanel styleName="{style.buttons}">
-                    <v:GlyphButton ui:field="add"/>
-                    <v:GlyphButton ui:field="remove"/>
-                    <v:GlyphButton ui:field="restore"/>
+                    <v:SvgButton ui:field="add"/>
+                    <v:SvgButton ui:field="remove"/>
+                    <v:SvgButton ui:field="restore"/>
                 </g:FlowPanel>
                 <g:Label text="Inherit From: " styleName="gwt-Label {style.label}"/>
                 <g:SimplePanel ui:field="inherit"/>

@@ -50,9 +50,9 @@ import stroom.node.shared.Volume;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -82,7 +82,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
     private final ImageButtonView buttonFlush;
     private final ImageButtonView buttonClose;
-    private final GlyphButtonView buttonDelete;
+    private final ButtonView buttonDelete;
     private Index index;
 
     @Inject
@@ -94,7 +94,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
         buttonFlush = getView().addButton("Flush Selected Shards", resources.flush(), resources.flushDisabled(), false);
         buttonClose = getView().addButton("Close Selected Shards", resources.close(), resources.closeDisabled(), false);
-        buttonDelete = getView().addButton(GlyphIcons.DELETE);
+        buttonDelete = getView().addButton(SvgIcons.DELETE);
         buttonDelete.setTitle("Delete Selected Shards");
 
         addColumns();

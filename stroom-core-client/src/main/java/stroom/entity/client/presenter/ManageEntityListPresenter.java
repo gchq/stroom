@@ -26,9 +26,9 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.SvgIcon;
 
 public class ManageEntityListPresenter<C extends BaseCriteria, E extends BaseEntity>
         extends MyPresenterWidget<DataGridView<E>> implements Refreshable {
@@ -45,7 +45,7 @@ public class ManageEntityListPresenter<C extends BaseCriteria, E extends BaseEnt
     }
 
 
-    public GlyphButtonView addButton(final GlyphIcon preset) {
+    public ButtonView addButton(final SvgIcon preset) {
         return getView().addButton(preset);
     }
 

@@ -73,8 +73,9 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.util.shared.Expander;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.SharedObject;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -96,8 +97,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final TableResultRequest tableResultRequest = new TableResultRequest(0, 100);
     private final List<Column<Row, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
-    private final GlyphButtonView addFieldButton;
-    private final GlyphButtonView downloadButton;
+    private final ButtonView addFieldButton;
+    private final ButtonView downloadButton;
     private final Provider<FieldAddPresenter> fieldAddPresenterProvider;
     private final DownloadPresenter downloadPresenter;
     private final ClientDispatchAsync dispatcher;
@@ -145,11 +146,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         view.setTableView(dataGrid);
 
         // Add the 'add field' button.
-        addFieldButton = dataGrid.addButton(GlyphIcons.ADD);
+        addFieldButton = dataGrid.addButton(SvgIcons.ADD);
         addFieldButton.setTitle("Add Field");
 
         // Download
-        downloadButton = dataGrid.addButton(GlyphIcons.DOWNLOAD);
+        downloadButton = dataGrid.addButton(SvgIcons.DOWNLOAD);
         downloadButton.setVisible(securityContext.hasAppPermission(Dashboard.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         fieldsManager = new FieldsManager(this, menuListPresenter, expressionPresenter, formatPresenter,

@@ -33,9 +33,9 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Image;
 import stroom.data.table.client.CellTableViewImpl.MenuResources;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.SVGIcon;
-import stroom.widget.button.client.SVGImage;
+import stroom.widget.button.client.SvgIcon;
+import stroom.widget.button.client.SvgIcon;
+import stroom.widget.button.client.SvgImage;
 import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 
@@ -111,10 +111,6 @@ public class MenuItemCell extends AbstractCell<Item> {
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml inner(String className, SafeHtml icon);
 
-
-            @Template("<div class=\"{0}\"><div class=\"{1}\" style=\"{2}\"><i class=\"{3}\"></i></div></div>")
-            SafeHtml icon(String iconClassName, String faceClassName, SafeStyles colour, String icon);
-
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml text(String className, SafeHtml text);
         }
@@ -155,13 +151,9 @@ public class MenuItemCell extends AbstractCell<Item> {
                             inner.append(TEMPLATE.inner(RESOURCES.style().icon(),
                                     SafeHtmlUtils.fromTrustedString(image.getElement().getString())));
                         }
-                    } else if (enabledIcon != null && enabledIcon instanceof GlyphIcon) {
-                        final GlyphIcon glyphIcon = (GlyphIcon) enabledIcon;
-                        inner.append(TEMPLATE.icon(RESOURCES.style().icon(), RESOURCES.style().face(),
-                                SafeStylesUtils.forTrustedColor(glyphIcon.getColourSet().getEnabled()), glyphIcon.getGlyph()));
-                    } else if (enabledIcon != null && enabledIcon instanceof SVGIcon) {
-                        final SVGIcon svgIcon = (SVGIcon) enabledIcon;
-                        final SVGImage svgImage = new SVGImage(svgIcon.getUrl(), 18, 18, true);
+                    } else if (enabledIcon != null && enabledIcon instanceof SvgIcon) {
+                        final SvgIcon svgIcon = (SvgIcon) enabledIcon;
+                        final SvgImage svgImage = new SvgImage(svgIcon.getUrl(), 18, 18, true);
                         svgImage.setStyleName(RESOURCES.style().icon());
                         inner.append(SafeHtmlUtils.fromTrustedString(svgImage.getElement().getString()));
                     } else {
@@ -175,13 +167,9 @@ public class MenuItemCell extends AbstractCell<Item> {
                             inner.append(TEMPLATE.inner(RESOURCES.style().icon(),
                                     SafeHtmlUtils.fromTrustedString(image.getElement().getString())));
                         }
-                    } else if (disabledIcon != null && disabledIcon instanceof GlyphIcon) {
-                        final GlyphIcon glyphIcon = (GlyphIcon) disabledIcon;
-                        inner.append(TEMPLATE.icon(RESOURCES.style().icon(), RESOURCES.style().face() + " " + RESOURCES.style().disabled(),
-                                SafeStylesUtils.forTrustedColor(glyphIcon.getColourSet().getEnabled()), glyphIcon.getGlyph()));
-                    } else if (disabledIcon != null && disabledIcon instanceof SVGIcon) {
-                        final SVGIcon svgIcon = (SVGIcon) disabledIcon;
-                        final SVGImage svgImage = new SVGImage(svgIcon.getUrl(), 18, 18, true);
+                    } else if (disabledIcon != null && disabledIcon instanceof SvgIcon) {
+                        final SvgIcon svgIcon = (SvgIcon) disabledIcon;
+                        final SvgImage svgImage = new SvgImage(svgIcon.getUrl(), 18, 18, true);
                         svgImage.setStyleName(RESOURCES.style().icon() + " " + RESOURCES.style().disabled());
                         inner.append(SafeHtmlUtils.fromTrustedString(svgImage.getElement().getString()));
                     } else {

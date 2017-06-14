@@ -24,15 +24,12 @@ import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.safecss.shared.SafeStyles;
-import com.google.gwt.safecss.shared.SafeStylesUtils;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import stroom.widget.button.client.GlyphIcon;
+import stroom.widget.button.client.SvgIcon;
+import stroom.widget.button.client.SvgImage;
 
-public class FACell extends AbstractCell<GlyphIcon> {
+public class SvgCell extends AbstractCell<SvgIcon> {
     public interface Style extends CssResource {
         String DEFAULT_CSS = "FACell.css";
 
@@ -48,28 +45,28 @@ public class FACell extends AbstractCell<GlyphIcon> {
         Style style();
     }
 
-    interface Template extends SafeHtmlTemplates {
-        @Template("<div class=\"{0}\"><div class=\"{1}\" style=\"{2}\"><i class=\"{3}\"></i></div></div>")
-        SafeHtml icon(String iconClassName, String faceClassName, SafeStyles colour, String icon);
-    }
+//    interface Template extends SafeHtmlTemplates {
+//        @Template("<div class=\"{0}\"><div class=\"{1}\" style=\"{2}\"><i class=\"{3}\"></i></div></div>")
+//        SafeHtml icon(String iconClassName, String faceClassName, SafeStyles colour, String icon);
+//    }
 
     private static Resources resources;
-    private static Template template;
+//    private static Template template;
 
-    public FACell() {
+    public SvgCell() {
         super("click");
         if (resources == null) {
             resources = GWT.create(Resources.class);
             resources.style().ensureInjected();
         }
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
+//        if (template == null) {
+//            template = GWT.create(Template.class);
+//        }
     }
 
     @Override
-    public void onBrowserEvent(final Context context, final Element parent, final GlyphIcon value, final NativeEvent event,
-                               final ValueUpdater<GlyphIcon> valueUpdater) {
+    public void onBrowserEvent(final Context context, final Element parent, final SvgIcon value, final NativeEvent event,
+                               final ValueUpdater<SvgIcon> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
         if ("click".equals(event.getType())) {
             EventTarget eventTarget = event.getEventTarget();
@@ -84,19 +81,23 @@ public class FACell extends AbstractCell<GlyphIcon> {
     }
 
     @Override
-    protected void onEnterKeyDown(final Context context, final Element parent, final GlyphIcon value,
-                                  final NativeEvent event, final ValueUpdater<GlyphIcon> valueUpdater) {
+    protected void onEnterKeyDown(final Context context, final Element parent, final SvgIcon value,
+                                  final NativeEvent event, final ValueUpdater<SvgIcon> valueUpdater) {
         if (valueUpdater != null) {
             valueUpdater.update(value);
         }
     }
 
     @Override
-    public void render(final Context context, final GlyphIcon value, final SafeHtmlBuilder sb) {
+    public void render(final Context context, final SvgIcon value, final SafeHtmlBuilder sb) {
         if (value == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            sb.append(template.icon(resources.style().icon(), resources.style().face(), SafeStylesUtils.forTrustedColor(value.getColourSet().getEnabled()), value.getGlyph()));
+            final SvgImage svgImage = new SvgImage(value.getUrl(), 18, 18, true);
+            svgImage.setStyleName(resources.style().icon());
+            sb.append(SafeHtmlUtils.fromTrustedString(svgImage.getElement().getString()));
+
+//            sb.append(template.icon(resources.style().icon(), resources.style().face(), SafeStylesUtils.forTrustedColor(value.getColourSet().getEnabled()), value.getGlyph()));
         }
     }
 }

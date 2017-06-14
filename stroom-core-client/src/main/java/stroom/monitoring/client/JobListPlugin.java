@@ -25,7 +25,7 @@ import stroom.jobsystem.client.presenter.JobPresenter;
 import stroom.jobsystem.shared.Job;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.ClientSecurityContext;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
@@ -39,7 +39,7 @@ public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(Job.MANAGE_JOBS_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
-                    new IconMenuItem(9, GlyphIcons.JOBS, GlyphIcons.JOBS, "Jobs", null, true, () -> open()));
+                    new IconMenuItem(9, SvgIcons.JOBS, SvgIcons.JOBS, "Jobs", null, true, () -> open()));
         }
     }
 }

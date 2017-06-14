@@ -57,9 +57,9 @@ import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.Indicators;
 import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.SVGButtonView;
-import stroom.widget.button.client.SVGIcon;
-import stroom.widget.button.client.SVGIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcon;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.LayerContainer;
 
@@ -79,7 +79,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final ClientDispatchAsync dispatcher;
     private final Map<String, ElementPresenter> editorMap = new HashMap<String, ElementPresenter>();
     private final PipelineModel pipelineModel;
-    private final SVGButtonView saveButton;
+    private final ButtonView saveButton;
     private boolean foundRecord;
     private boolean showingData;
     private boolean busyTranslating;
@@ -120,7 +120,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         stepControlPresenter.setEnabledButtons(false, action.getStepType(), true, showingData, foundRecord);
 
-        saveButton = addButtonLeft(SVGIcons.SAVE);
+        saveButton = addButtonLeft(SvgIcons.SAVE);
     }
 
     @Override
@@ -147,7 +147,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 //        return button;
 //    }
 
-    private SVGButtonView addButtonLeft(final SVGIcon preset) {
+    private ButtonView addButtonLeft(final SvgIcon preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
             getView().addWidgetLeft(leftButtons);

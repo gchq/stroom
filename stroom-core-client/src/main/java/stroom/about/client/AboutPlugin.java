@@ -25,10 +25,10 @@ import stroom.about.client.presenter.AboutPresenter;
 import stroom.app.client.MenuKeys;
 import stroom.app.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.menu.client.presenter.Separator;
-import stroom.widget.tab.client.presenter.ImageIcon;
 
 public class AboutPlugin extends Plugin {
     public interface AboutResources extends ClientBundle {
@@ -59,6 +59,6 @@ public class AboutPlugin extends Plugin {
                 new KeyedParentMenuItem(5, "Help", event.getMenuItems(), MenuKeys.HELP_MENU));
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, new Separator(2));
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU,
-                new IconMenuItem(3, ImageIcon.create(resources.about()), null, "About", null, true, () -> provider.get().forceReveal()));
+                new IconMenuItem(3, SvgIcons.ABOUT, null, "About", null, true, () -> provider.get().forceReveal()));
     }
 }

@@ -34,8 +34,9 @@ import stroom.explorer.shared.EntityData;
 import stroom.node.client.view.WrapperView;
 import stroom.script.shared.Script;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcons;
+import stroom.widget.button.client.SvgIcons;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,8 +46,8 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         implements HasRead<Script>, HasWrite<Script>, HasDirtyHandlers {
     private final ScriptListPresenter scriptListPresenter;
     private final EntityChooser explorerDropDownTreePresenter;
-    private final GlyphButtonView addButton;
-    private final GlyphButtonView removeButton;
+    private final ButtonView addButton;
+    private final ButtonView removeButton;
     private DocRefs scripts;
 
     @Inject
@@ -62,9 +63,9 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
 
         view.setView(scriptListPresenter.getView());
 
-        addButton = scriptListPresenter.getView().addButton(GlyphIcons.ADD);
+        addButton = scriptListPresenter.getView().addButton(SvgIcons.ADD);
         addButton.setTitle("Add Dependency");
-        removeButton = scriptListPresenter.getView().addButton(GlyphIcons.REMOVE);
+        removeButton = scriptListPresenter.getView().addButton(SvgIcons.REMOVE);
         removeButton.setTitle("Remove Dependency");
     }
 

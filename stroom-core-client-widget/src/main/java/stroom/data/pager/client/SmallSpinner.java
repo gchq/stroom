@@ -20,7 +20,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
-import stroom.widget.button.client.GlyphButton;
+import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.SvgIcons;
 
 public class SmallSpinner extends Composite {
     public interface Style extends CssResource {
@@ -42,8 +43,7 @@ public class SmallSpinner extends Composite {
             resources.style().ensureInjected();
         }
 
-        final GlyphButton button = new GlyphButton();
-        button.setIcon("fa fa-circle-o");
+        final SvgButton button = SvgButton.create(SvgIcons.SPINNER);
         initWidget(button);
 
         getElement().setClassName(resources.style().smallSpinner());

@@ -55,14 +55,9 @@ public class ButtonPanel extends FlowPanel {
         return button;
     }
 
-    public GlyphButtonView add(final GlyphIcon preset) {
-        final GlyphButton button = createButton(preset);
-        add(button);
-        return button;
-    }
 
-    public SVGButtonView add(final SVGIcon preset) {
-        final SVGButton button = createButton(preset);
+    public ButtonView add(final SvgIcon preset) {
+        final SvgButton button = createButton(preset);
         add(button);
         return button;
     }
@@ -80,23 +75,8 @@ public class ButtonPanel extends FlowPanel {
         return button;
     }
 
-    private GlyphButton createButton(final GlyphIcon preset) {
-        final GlyphButton button = new GlyphButton();
-        button.setIcon(preset.getGlyph());
-        button.setColour(preset.getColourSet());
-        button.setTitle(preset.getTitle());
-        button.setEnabled(preset.isEnabled());
-        if (vertical) {
-            button.getElement().getStyle().setDisplay(Display.BLOCK);
-        }
-        return button;
-    }
-
-    private SVGButton createButton(final SVGIcon preset) {
-        final SVGButton button = new SVGButton();
-        button.setIcon(preset.getUrl());
-        button.setTitle(preset.getTitle());
-        button.setEnabled(preset.isEnabled());
+    private SvgButton createButton(final SvgIcon preset) {
+        final SvgButton button = SvgButton.create(preset);
         if (vertical) {
             button.getElement().getStyle().setDisplay(Display.BLOCK);
         }

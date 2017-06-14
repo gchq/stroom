@@ -31,8 +31,9 @@ import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
@@ -46,9 +47,9 @@ public class UsersAndGroupsTabPresenter extends
     private final Provider<GroupEditPresenter> groupEditPresenterProvider;
     private final ManageNewEntityPresenter newPresenter;
     private final ClientDispatchAsync dispatcher;
-    private final GlyphButtonView newButton;
-    private final GlyphButtonView openButton;
-    private final GlyphButtonView deleteButton;
+    private final ButtonView newButton;
+    private final ButtonView openButton;
+    private final ButtonView deleteButton;
     private final FindUserCriteria criteria = new FindUserCriteria();
 
     @Inject
@@ -65,9 +66,9 @@ public class UsersAndGroupsTabPresenter extends
 
         setInSlot(LIST, listPresenter);
 
-        newButton = listPresenter.addButton(GlyphIcons.NEW_ITEM);
-        openButton = listPresenter.addButton(GlyphIcons.OPEN);
-        deleteButton = listPresenter.addButton(GlyphIcons.DELETE);
+        newButton = listPresenter.addButton(SvgIcons.NEW_ITEM);
+        openButton = listPresenter.addButton(SvgIcons.OPEN);
+        deleteButton = listPresenter.addButton(SvgIcons.DELETE);
 
         final boolean updatePerm = securityContext.hasAppPermission(User.MANAGE_USERS_PERMISSION);
 

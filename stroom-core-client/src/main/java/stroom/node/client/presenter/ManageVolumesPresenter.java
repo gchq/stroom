@@ -30,8 +30,10 @@ import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.node.client.view.WrapperView;
 import stroom.node.shared.FlushVolumeStatusAction;
 import stroom.node.shared.Volume;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -51,10 +53,10 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
     private final Provider<VolumeEditPresenter> editProvider;
     private final ClientDispatchAsync dispatcher;
 
-    private final GlyphButtonView newButton;
-    private final GlyphButtonView openButton;
-    private final GlyphButtonView deleteButton;
-    private final GlyphButtonView rescanButton;
+    private final ButtonView newButton;
+    private final ButtonView openButton;
+    private final ButtonView deleteButton;
+    private final ButtonView rescanButton;
 
     @Inject
     public ManageVolumesPresenter(final EventBus eventBus, final WrapperView view, final ManageVolumesProxy proxy,
@@ -65,10 +67,10 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
         this.editProvider = editProvider;
         this.dispatcher = dispatcher;
 
-        newButton = volumeStatusListPresenter.getView().addButton(GlyphIcons.NEW_ITEM);
-        openButton = volumeStatusListPresenter.getView().addButton(GlyphIcons.EDIT);
-        deleteButton = volumeStatusListPresenter.getView().addButton(GlyphIcons.DELETE);
-        rescanButton = volumeStatusListPresenter.getView().addButton(GlyphIcons.REFRESH);
+        newButton = volumeStatusListPresenter.getView().addButton(SvgIcons.NEW_ITEM);
+        openButton = volumeStatusListPresenter.getView().addButton(SvgIcons.EDIT);
+        deleteButton = volumeStatusListPresenter.getView().addButton(SvgIcons.DELETE);
+        rescanButton = volumeStatusListPresenter.getView().addButton(SvgIcons.REFRESH_GREEN);
         rescanButton.setTitle("Rescan Public Volumes");
 
         view.setView(volumeStatusListPresenter.getView());

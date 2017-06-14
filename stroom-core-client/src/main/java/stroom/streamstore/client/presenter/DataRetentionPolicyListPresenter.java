@@ -26,10 +26,8 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.streamstore.shared.DataRetentionRule;
 import stroom.util.client.BorderUtil;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.SVGButtonView;
-import stroom.widget.button.client.SVGIcon;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcon;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;
@@ -100,11 +98,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
         return getView().getSelectionModel();
     }
 
-    public GlyphButtonView add(final GlyphIcon preset) {
-        return getView().addButton(preset);
-    }
-
-    public SVGButtonView add(final SVGIcon preset) {
+    public ButtonView add(final SvgIcon preset) {
         return getView().addButton(preset);
     }
 }

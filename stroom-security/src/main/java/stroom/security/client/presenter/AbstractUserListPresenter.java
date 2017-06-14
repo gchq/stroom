@@ -21,15 +21,15 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import stroom.cell.info.client.FACell;
+import stroom.cell.info.client.SvgCell;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.security.shared.UserRef;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.SvgIcon;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.util.client.MultiSelectionModel;
 
 public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserListView> implements UserListUiHandlers {
@@ -43,22 +43,22 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
         userListView.setUiHandlers(this);
 
         // Icon
-        dataGridView.addColumn(new Column<UserRef, GlyphIcon>(new FACell()) {
+        dataGridView.addColumn(new Column<UserRef, SvgIcon>(new SvgCell()) {
             @Override
-            public GlyphIcon getValue(final UserRef userRef) {
+            public SvgIcon getValue(final UserRef userRef) {
                 if (userRef.isEnabled()) {
                     if (!userRef.isGroup()) {
-                        return GlyphIcons.USER;
+                        return SvgIcons.USER;
                     }
 
-                    return GlyphIcons.USER_GROUP;
+                    return SvgIcons.USER_GROUP;
                 }
 
                 if (!userRef.isGroup()) {
-                    return GlyphIcons.USER_DISABLED;
+                    return SvgIcons.USER_DISABLED;
                 }
 
-                return GlyphIcons.USER_GROUP_DISABLED;
+                return SvgIcons.USER_GROUP_DISABLED;
             }
         }, "</br>", 20);
 
@@ -78,7 +78,7 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
         return dataGridView.addButton(title, enabledImage, disabledImage, enabled);
     }
 
-    public GlyphButtonView addButton(final GlyphIcon preset) {
+    public ButtonView addButton(final SvgIcon preset) {
         return dataGridView.addButton(preset);
     }
 

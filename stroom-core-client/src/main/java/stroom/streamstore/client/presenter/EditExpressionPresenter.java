@@ -34,10 +34,10 @@ import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.shared.ExpressionItem;
 import stroom.query.shared.ExpressionOperator;
 import stroom.streamstore.shared.FetchFieldsAction;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.SvgIcon;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -57,9 +57,9 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     private final MenuListPresenter menuListPresenter;
 
     private final ImageButtonView addOperatorButton;
-    private final GlyphButtonView addTermButton;
-    private final GlyphButtonView disableItemButton;
-    private final GlyphButtonView deleteItemButton;
+    private final ButtonView addTermButton;
+    private final ButtonView disableItemButton;
+    private final ButtonView deleteItemButton;
 
     @Inject
     public EditExpressionPresenter(final EventBus eventBus, final EditExpressionView view,
@@ -84,11 +84,11 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
             }
         });
 
-        addTermButton = view.addButton(GlyphIcons.ADD);
+        addTermButton = view.addButton(SvgIcons.ADD);
         addTermButton.setTitle("Add Term");
         addOperatorButton = view.addButton("Add Operator", resources.addOperator(), resources.addOperator(), true);
-        disableItemButton = view.addButton(GlyphIcons.DISABLE);
-        deleteItemButton = view.addButton(GlyphIcons.DELETE);
+        disableItemButton = view.addButton(SvgIcons.DISABLE);
+        deleteItemButton = view.addButton(SvgIcons.DELETE);
 
         dispatcher.exec(new FetchFieldsAction()).onSuccess(result -> expressionPresenter.init(dispatcher, new DocRef("STREAM_STORE", "STREAM_STORE"), result.getIndexFields()));
     }
@@ -179,12 +179,12 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         final boolean hasSelection = selectedItem != null;
 
         final List<Item> menuItems = new ArrayList<Item>();
-        menuItems.add(new IconMenuItem(1, GlyphIcons.ADD, GlyphIcons.ADD, "Add Term", null, true, () -> addTerm()));
+        menuItems.add(new IconMenuItem(1, SvgIcons.ADD, SvgIcons.ADD, "Add Term", null, true, () -> addTerm()));
         menuItems.add(new IconMenuItem(2, ImageIcon.create(resources.addOperator()), ImageIcon.create(resources.addOperator()), "Add Operator", null,
                 true, () -> addOperator()));
-        menuItems.add(new IconMenuItem(3, GlyphIcons.DISABLE, GlyphIcons.DISABLE, getEnableDisableText(),
+        menuItems.add(new IconMenuItem(3, SvgIcons.DISABLE, SvgIcons.DISABLE, getEnableDisableText(),
                 null, hasSelection, () -> disable()));
-        menuItems.add(new IconMenuItem(4, GlyphIcons.DELETE, GlyphIcons.DELETE, "Delete", null,
+        menuItems.add(new IconMenuItem(4, SvgIcons.DELETE, SvgIcons.DELETE, "Delete", null,
                 hasSelection, () -> delete()));
 
         return menuItems;
@@ -236,7 +236,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         ImageButtonView addButton(String title, ImageResource enabledImage, ImageResource disabledImage,
                                   boolean enabled);
 
-        GlyphButtonView addButton(GlyphIcon preset);
+        ButtonView addButton(SvgIcon preset);
 
         void setExpressionView(View view);
     }

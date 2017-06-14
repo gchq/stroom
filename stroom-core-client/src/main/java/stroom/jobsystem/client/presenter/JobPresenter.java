@@ -22,7 +22,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.jobsystem.shared.Job;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.tab.client.presenter.Icon;
 
 public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
@@ -58,7 +58,7 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
 
     @Override
     public Icon getIcon() {
-        return GlyphIcons.JOBS;
+        return SvgIcons.JOBS;
     }
 
     @Override

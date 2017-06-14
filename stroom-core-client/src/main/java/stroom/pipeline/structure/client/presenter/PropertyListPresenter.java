@@ -41,8 +41,9 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.util.shared.HasDisplayValue;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -78,7 +79,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     private static final SafeHtml DEFAULT = SafeHtmlUtils.fromSafeConstant("<div style=\"color:grey\">");
     private static final SafeHtml END = SafeHtmlUtils.fromSafeConstant("</div>");
 
-    private final GlyphButtonView editButton;
+    private final ButtonView editButton;
     private final Provider<NewPropertyPresenter> newPropertyPresenter;
 
     private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
@@ -93,7 +94,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
         super(eventBus, new DataGridViewImpl<PipelineProperty>(true));
         this.newPropertyPresenter = newPropertyPresenter;
 
-        editButton = getView().addButton(GlyphIcons.EDIT);
+        editButton = getView().addButton(SvgIcons.EDIT);
         editButton.setTitle("Edit Property");
 
         addColumns();

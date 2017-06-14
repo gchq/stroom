@@ -17,7 +17,6 @@
 package stroom.dashboard.client.query;
 
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -40,10 +39,9 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.QueryData;
 import stroom.security.client.ClientSecurityContext;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
-import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcon;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -56,9 +54,9 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
     private final ExpressionTreePresenter expressionPresenter;
     private final MySingleSelectionModel<Query> selectionModel;
     private final NamePresenter namePresenter;
-    private final GlyphButtonView createButton;
-    private final GlyphButtonView editButton;
-    private final GlyphButtonView deleteButton;
+    private final ButtonView createButton;
+    private final ButtonView editButton;
+    private final ButtonView deleteButton;
     private QueryPresenter queryPresenter;
     private ExpressionOperator currentExpression;
     private long currentDashboardId;
@@ -82,11 +80,11 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         selectionModel = new MySingleSelectionModel<>();
         view.getCellList().setSelectionModel(selectionModel);
 
-        createButton = view.addButton(GlyphIcons.NEW_ITEM);
+        createButton = view.addButton(SvgIcons.NEW_ITEM);
         createButton.setTitle("Create Favourite From Current Query");
-        editButton = view.addButton(GlyphIcons.OPEN);
+        editButton = view.addButton(SvgIcons.OPEN);
         editButton.setTitle("Change Favourite Name");
-        deleteButton = view.addButton(GlyphIcons.DELETE);
+        deleteButton = view.addButton(SvgIcons.DELETE);
         deleteButton.setTitle("Delete Favourite");
     }
 
@@ -278,9 +276,6 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
         void setExpressionView(View view);
 
-        ImageButtonView addButton(String title, ImageResource enabledImage, ImageResource disabledImage,
-                                  boolean enabled);
-
-        GlyphButtonView addButton(GlyphIcon preset);
+        ButtonView addButton(SvgIcon preset);
     }
 }

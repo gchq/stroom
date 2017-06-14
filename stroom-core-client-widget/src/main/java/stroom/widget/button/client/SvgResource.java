@@ -16,11 +16,26 @@
 
 package stroom.widget.button.client;
 
-public final class SVGIcons {
-    public static final SVGIcon SAVE = new SVGIcon("/images/save.svg", "Save", false);
-    public static final SVGIcon SAVE_AS = new SVGIcon("/images/saveas.svg", "Save As", true);
+public class SvgResource {
+    private final String url;
+    private final int width;
+    private final int height;
 
-    private SVGIcons() {
-        // Utility class.
+    public SvgResource(final String url, final int width, final int height) {
+        this.url = url;
+        this.width = width;
+        this.height = height;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
     }
 }

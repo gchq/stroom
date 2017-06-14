@@ -24,35 +24,60 @@ import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class ResourceCache {
-    private static Map<String, String> map = new HashMap<>();
+    private static Map<String, String> cache = new HashMap<>();
+    private static Map<String, Set<Consumer<String>>> consumers = new HashMap<>();
 
     public static void get(final String url, final Consumer<String> consumer) {
-        if (map.containsKey(url)) {
-            consumer.accept(map.get(url));
+        if (cache.containsKey(url)) {
+            consumer.accept(cache.get(url));
+        } else {
+            if (consumers.containsKey(url)) {
+                consumers.get(url).add(consumer);
+                dispatchToConsumers(url);
+            } else {
+                consumers.computeIfAbsent(url, k -> new HashSet<>()).add(consumer);
+                dispatchToConsumers(url);
+
+                final RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, url);
+                try {
+                    builder.sendRequest(null, new RequestCallback() {
+                        @Override
+                        public void onResponseReceived(final Request request, final Response response) {
+                            GWT.log("ResourceCache received data from: '" + url + "'");
+
+                            cache.put(url, response.getText());
+                            dispatchToConsumers(url);
+                        }
+
+                        @Override
+                        public void onError(final Request request, final Throwable exception) {
+                            GWT.log(exception.getMessage(), exception);
+                            cache.put(url, null);
+                            dispatchToConsumers(url);
+                        }
+                    });
+                } catch (final RequestException e) {
+                    GWT.log(e.getMessage(), e);
+                    cache.put(url, null);
+                    dispatchToConsumers(url);
+                }
+            }
         }
+    }
 
-        final RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, url);
-        try {
-            builder.sendRequest(null, new RequestCallback() {
-                @Override
-                public void onResponseReceived(final Request request, final Response response) {
-                    map.put(url, response.getText());
-                    consumer.accept(response.getText());
-                }
-
-                @Override
-                public void onError(final Request request, final Throwable exception) {
-                    GWT.log(exception.getMessage(), exception);
-                    map.put(url, null);
-                    consumer.accept(null);
-                }
-            });
-        } catch (final RequestException e) {
-            GWT.log(e.getMessage(), e);
+    private static void dispatchToConsumers(final String url) {
+        if (cache.containsKey(url)) {
+            final String data = cache.get(url);
+            final Set<Consumer<String>> set = consumers.remove(url);
+            if (set != null) {
+                set.forEach(consumer -> consumer.accept(data));
+            }
         }
     }
 }

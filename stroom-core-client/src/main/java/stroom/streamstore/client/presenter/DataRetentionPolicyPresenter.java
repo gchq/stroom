@@ -37,10 +37,9 @@ import stroom.streamstore.shared.DataRetentionRule;
 import stroom.streamstore.shared.FetchDataRetentionPolicyAction;
 import stroom.streamstore.shared.SaveDataRetentionPolicyAction;
 import stroom.streamstore.shared.TimeUnit;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
-import stroom.widget.button.client.SVGButtonView;
-import stroom.widget.button.client.SVGIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -56,14 +55,14 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
 
     private DataRetentionPolicy policy;
 
-    private SVGButtonView saveButton;
-    private GlyphButtonView addButton;
-    private GlyphButtonView editButton;
-    private GlyphButtonView copyButton;
-    private GlyphButtonView disableButton;
-    private GlyphButtonView deleteButton;
-    private GlyphButtonView moveUpButton;
-    private GlyphButtonView moveDownButton;
+    private ButtonView saveButton;
+    private ButtonView addButton;
+    private ButtonView editButton;
+    private ButtonView copyButton;
+    private ButtonView disableButton;
+    private ButtonView deleteButton;
+    private ButtonView moveUpButton;
+    private ButtonView moveDownButton;
 
     private boolean dirty;
     private String lastLabel;
@@ -87,14 +86,14 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
 
-        saveButton = listPresenter.add(SVGIcons.SAVE);
-        addButton = listPresenter.add(GlyphIcons.ADD);
-        editButton = listPresenter.add(GlyphIcons.EDIT);
-        copyButton = listPresenter.add(GlyphIcons.COPY);
-        disableButton = listPresenter.add(GlyphIcons.DISABLE);
-        deleteButton = listPresenter.add(GlyphIcons.DELETE);
-        moveUpButton = listPresenter.add(GlyphIcons.UP);
-        moveDownButton = listPresenter.add(GlyphIcons.DOWN);
+        saveButton = listPresenter.add(SvgIcons.SAVE);
+        addButton = listPresenter.add(SvgIcons.ADD);
+        editButton = listPresenter.add(SvgIcons.EDIT);
+        copyButton = listPresenter.add(SvgIcons.COPY);
+        disableButton = listPresenter.add(SvgIcons.DISABLE);
+        deleteButton = listPresenter.add(SvgIcons.DELETE);
+        moveUpButton = listPresenter.add(SvgIcons.UP);
+        moveDownButton = listPresenter.add(SvgIcons.DOWN);
 
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
@@ -323,7 +322,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
 
     @Override
     public Icon getIcon() {
-        return GlyphIcons.HISTORY;
+        return SvgIcons.HISTORY;
     }
 
     @Override

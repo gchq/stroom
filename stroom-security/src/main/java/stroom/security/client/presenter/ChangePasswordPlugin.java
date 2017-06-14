@@ -24,7 +24,7 @@ import stroom.app.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.CurrentUser;
 import stroom.security.client.event.ChangePasswordEvent;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 
@@ -42,7 +42,7 @@ public class ChangePasswordPlugin extends Plugin {
         if (currentUser != null) {
             event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
                     new KeyedParentMenuItem(4, "User", event.getMenuItems(), MenuKeys.USER_MENU));
-            event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, new IconMenuItem(1, GlyphIcons.PASSWORD, GlyphIcons.PASSWORD, "Change Password", null, true, new Command() {
+            event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, new IconMenuItem(1, SvgIcons.PASSWORD, SvgIcons.PASSWORD, "Change Password", null, true, new Command() {
                 @Override
                 public void execute() {
                     ChangePasswordEvent.fire(ChangePasswordPlugin.this, currentUser.getUser(), false);

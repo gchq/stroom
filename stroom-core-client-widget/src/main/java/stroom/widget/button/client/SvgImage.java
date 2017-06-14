@@ -22,15 +22,15 @@ import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.user.client.ui.Widget;
 import stroom.widget.util.client.ResourceCache;
 
-public class SVGImage extends Widget {
+public class SvgImage extends Widget {
     private int width;
     private int height;
 
-    public SVGImage() {
+    public SvgImage() {
         setElement(Document.get().createSpanElement());
     }
 
-    public SVGImage(final String url, final int width, final int height, final boolean detached) {
+    public SvgImage(final String url, final int width, final int height, final boolean detached) {
         this();
         setUrl(url);
         setWidth(width);
@@ -41,7 +41,7 @@ public class SVGImage extends Widget {
         }
     }
 
-    public SVGImage(final String url, final int width, final int height) {
+    public SvgImage(final String url, final int width, final int height) {
         this(url, width, height, false);
     }
 
@@ -50,7 +50,7 @@ public class SVGImage extends Widget {
             if (data != null) {
                 final Element element = getElement();
                 element.setInnerHTML(data);
-                final Element svg = getSVG(element);
+                final Element svg = getSvg(element);
                 if (svg != null) {
                     if (width > 0) {
                         svg.setAttribute("width", String.valueOf(width));
@@ -84,7 +84,7 @@ public class SVGImage extends Widget {
             final Element element = getElement();
             element.setAttribute("width", width + "px");
 
-            final Element svg = getSVG(element);
+            final Element svg = getSvg(element);
             if (svg != null) {
                 svg.setAttribute("width", String.valueOf(width));
             }
@@ -98,14 +98,14 @@ public class SVGImage extends Widget {
             final Element element = getElement();
             element.setAttribute("height", height + "px");
 
-            final Element svg = getSVG(element);
+            final Element svg = getSvg(element);
             if (svg != null) {
                 svg.setAttribute("height", String.valueOf(height));
             }
         }
     }
 
-    private Element getSVG(final Element parent) {
+    private Element getSvg(final Element parent) {
         final NodeList<Element> nodes = parent.getElementsByTagName("svg");
         if (nodes != null && nodes.getLength() > 0) {
             return nodes.getItem(0);

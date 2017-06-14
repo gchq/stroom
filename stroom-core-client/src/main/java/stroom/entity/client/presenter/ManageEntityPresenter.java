@@ -29,8 +29,9 @@ import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.StringCriteria.MatchStyle;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
@@ -44,9 +45,9 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
     private final ClientDispatchAsync dispatcher;
     private E entity;
     private C criteria;
-    private GlyphButtonView newButton;
-    private GlyphButtonView openButton;
-    private GlyphButtonView deleteButton;
+    private ButtonView newButton;
+    private ButtonView openButton;
+    private ButtonView deleteButton;
 
     public ManageEntityPresenter(final EventBus eventBus, final ManageEntityView view,
                                  final ManageEntityListPresenter<C, E> listPresenter, final Provider<?> editProvider,
@@ -63,11 +64,11 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
         setInSlot(LIST, listPresenter);
 
         if (allowNew() && newPresenter != null) {
-            newButton = listPresenter.addButton(GlyphIcons.NEW_ITEM);
+            newButton = listPresenter.addButton(SvgIcons.NEW_ITEM);
         }
-        openButton = listPresenter.addButton(GlyphIcons.EDIT);
+        openButton = listPresenter.addButton(SvgIcons.EDIT);
         if (allowDelete()) {
-            deleteButton = listPresenter.addButton(GlyphIcons.DELETE);
+            deleteButton = listPresenter.addButton(SvgIcons.DELETE);
         }
     }
 

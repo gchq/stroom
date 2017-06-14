@@ -60,8 +60,8 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.client.ImageUtil;
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.SharedMap;
-import stroom.widget.button.client.GlyphIcons;
-import stroom.widget.button.client.SVGIcons;
+import stroom.widget.button.client.SvgIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
@@ -371,7 +371,7 @@ public class EntityPluginEventManager extends Plugin {
             final boolean allowNew = children != null && children.size() > 0;
 
             if (allowNew) {
-                final Item newItem = new SimpleParentMenuItem(1, GlyphIcons.NEW_ITEM, GlyphIcons.NEW_ITEM, "New",
+                final Item newItem = new SimpleParentMenuItem(1, SvgIcons.NEW_ITEM, SvgIcons.NEW_ITEM, "New",
                         null, true, null) {
                     @Override
                     public Future<List<Item>> getChildren() {
@@ -439,7 +439,7 @@ public class EntityPluginEventManager extends Plugin {
 
         keyboardInterceptor.addKeyTest(ALT_W, command);
 
-        return new IconMenuItem(3, GlyphIcons.CLOSE, GlyphIcons.CLOSE, "Close", "Alt+W", enabled,
+        return new IconMenuItem(3, SvgIcons.CLOSE, SvgIcons.CLOSE, "Close", "Alt+W", enabled,
                 command);
     }
 
@@ -452,7 +452,7 @@ public class EntityPluginEventManager extends Plugin {
 
         keyboardInterceptor.addKeyTest(ALT_SHIFT_W, command);
 
-        return new IconMenuItem(4, GlyphIcons.CLOSE, GlyphIcons.CLOSE, "Close All",
+        return new IconMenuItem(4, SvgIcons.CLOSE, SvgIcons.CLOSE, "Close All",
                 "Alt+Shift+W", enabled, command);
     }
 
@@ -466,7 +466,7 @@ public class EntityPluginEventManager extends Plugin {
 
         keyboardInterceptor.addKeyTest(CTRL_S, command);
 
-        return new IconMenuItem(priority, SVGIcons.SAVE, SVGIcons.SAVE, "Save", "Ctrl+S",
+        return new IconMenuItem(priority, SvgIcons.SAVE, SvgIcons.SAVE, "Save", "Ctrl+S",
                 enabled, command);
     }
 
@@ -478,7 +478,7 @@ public class EntityPluginEventManager extends Plugin {
             }
         };
 
-        return new IconMenuItem(priority, SVGIcons.SAVE_AS, SVGIcons.SAVE_AS, "Save As", null,
+        return new IconMenuItem(priority, SvgIcons.SAVE_AS, SvgIcons.SAVE_AS, "Save As", null,
                 enabled, command);
     }
 
@@ -493,35 +493,35 @@ public class EntityPluginEventManager extends Plugin {
 
         keyboardInterceptor.addKeyTest(CTRL_SHIFT_S, command);
 
-        return new IconMenuItem(priority, SVGIcons.SAVE, SVGIcons.SAVE, "Save All",
+        return new IconMenuItem(priority, SvgIcons.SAVE, SvgIcons.SAVE, "Save All",
                 "Ctrl+Shift+S", enabled, command);
     }
 
     private MenuItem createCopyMenuItem(final List<ExplorerData> explorerDataList, final int priority, final boolean enabled) {
         final Command command = () -> ShowCopyEntityDialogEvent.fire(EntityPluginEventManager.this, explorerDataList);
 
-        return new IconMenuItem(priority, GlyphIcons.COPY, GlyphIcons.COPY, "Copy", null, enabled,
+        return new IconMenuItem(priority, SvgIcons.COPY, SvgIcons.COPY, "Copy", null, enabled,
                 command);
     }
 
     private MenuItem createMoveMenuItem(final List<ExplorerData> explorerDataList, final int priority, final boolean enabled) {
         final Command command = () -> ShowMoveEntityDialogEvent.fire(EntityPluginEventManager.this, explorerDataList);
 
-        return new IconMenuItem(priority, GlyphIcons.MOVE, GlyphIcons.MOVE, "Move", null, enabled,
+        return new IconMenuItem(priority, SvgIcons.MOVE, SvgIcons.MOVE, "Move", null, enabled,
                 command);
     }
 
     private MenuItem createRenameMenuItem(final List<ExplorerData> explorerDataList, final int priority, final boolean enabled) {
         final Command command = () -> ShowRenameEntityDialogEvent.fire(EntityPluginEventManager.this, explorerDataList);
 
-        return new IconMenuItem(priority, GlyphIcons.EDIT, GlyphIcons.EDIT, "Rename", null,
+        return new IconMenuItem(priority, SvgIcons.EDIT, SvgIcons.EDIT, "Rename", null,
                 enabled, command);
     }
 
     private MenuItem createDeleteMenuItem(final List<ExplorerData> explorerDataList, final int priority, final boolean enabled) {
         final Command command = () -> deleteItems(explorerDataList);
 
-        return new IconMenuItem(priority, GlyphIcons.DELETE, GlyphIcons.DELETE, "Delete", null,
+        return new IconMenuItem(priority, SvgIcons.DELETE, SvgIcons.DELETE, "Delete", null,
                 enabled, command);
     }
 
@@ -532,7 +532,7 @@ public class EntityPluginEventManager extends Plugin {
             }
         };
 
-        return new IconMenuItem(priority, GlyphIcons.PERMISSIONS, GlyphIcons.PERMISSIONS, "Permissions", null,
+        return new IconMenuItem(priority, SvgIcons.PERMISSIONS, SvgIcons.PERMISSIONS, "Permissions", null,
                 enabled, command);
     }
 

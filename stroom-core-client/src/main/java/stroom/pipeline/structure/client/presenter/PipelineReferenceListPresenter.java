@@ -42,8 +42,9 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.data.SourcePipeline;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -70,9 +71,9 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     private static final SafeHtml INHERITED = SafeHtmlUtils.fromSafeConstant("<div style=\"color:black\">");
     private static final SafeHtml END = SafeHtmlUtils.fromSafeConstant("</div>");
 
-    private final GlyphButtonView addButton;
-    private final GlyphButtonView editButton;
-    private final GlyphButtonView removeButton;
+    private final ButtonView addButton;
+    private final ButtonView editButton;
+    private final ButtonView removeButton;
 
     private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
     private PipelineEntity pipeline;
@@ -94,15 +95,15 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 //        selectionModel = new MySingleSelectionModel<PipelineReference>();
 //        getView().setSelectionModel(selectionModel);
 
-        addButton = getView().addButton(GlyphIcons.NEW_ITEM);
+        addButton = getView().addButton(SvgIcons.NEW_ITEM);
         addButton.setTitle("New Reference");
         addButton.setEnabled(false);
 
-        editButton = getView().addButton(GlyphIcons.EDIT);
+        editButton = getView().addButton(SvgIcons.EDIT);
         editButton.setTitle("Edit Reference");
         editButton.setEnabled(false);
 
-        removeButton = getView().addButton(GlyphIcons.REMOVE);
+        removeButton = getView().addButton(SvgIcons.REMOVE);
         removeButton.setTitle("Remove Refefence");
         removeButton.setEnabled(false);
 

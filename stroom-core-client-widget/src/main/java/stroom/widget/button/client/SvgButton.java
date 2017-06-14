@@ -25,7 +25,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 import stroom.widget.util.client.ResourceCache;
 
-public class SVGButton extends ButtonBase implements SVGButtonView {
+public class SvgButton extends ButtonBase implements ButtonView {
     /**
      * If <code>true</code>, this widget is capturing with the mouse held down.
      */
@@ -42,53 +42,27 @@ public class SVGButton extends ButtonBase implements SVGButtonView {
      */
     private boolean allowClick;
 
-    public static SVGButton create(final String icon, final String title, final boolean enabled) {
-        final SVGButton button = new SVGButton();
-        button.setIcon(icon);
-        button.setTitle(title);
-        button.setEnabled(enabled);
+    private final SvgIcon preset;
+
+    public static SvgButton create(final SvgIcon preset) {
+        final SvgButton button = new SvgButton(preset);
         return button;
     }
 
-    public static SVGButton create(final SVGIcon preset) {
-        final SVGButton button = new SVGButton();
-        button.setIcon(preset.getUrl());
-        button.setTitle(preset.getTitle());
-        button.setEnabled(preset.isEnabled());
-        return button;
-    }
-
-    public SVGButton() {
+    private SvgButton(final SvgIcon preset) {
         super(Document.get().createDivElement());
+        this.preset = preset;
+
         sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
         getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
 
-//        Image image = new Image();
-//        image.addLoadHandler(event -> {
-//            final NodeList<Element> elements =  image.getElement().getElementsByTagName("svg");
-//            if (elements != null && elements.getLength() > 0) {
-//                final Element svg = elements.getItem(0);
-//                copyAttribute(image.getElement(), svg, "id");
-//                copyAttribute(image.getElement(), svg, "class");
-//                svg.setAttribute("class", svg.getAttribute("class") + " replaced-svg");
-//                image.getElement().getParentElement().replaceChild(image.getElement(), svg);
-//            }
-//        });
-
-
-// 	<object id="logo" style="position:absolute;top:0px;left:0px;width:146px;height:35px" type="image/svg+xml" data="images/logo.svg" />
+        setIcon(preset.getUrl());
+        setWidth(preset.getWidth() + "px");
+        setHeight(preset.getHeight() + "px");
+        setTitle(preset.getTitle());
+        setEnabled(preset.isEnabled());
 
         getElement().setClassName("svg-button");
-//        getElement().setAttribute("type", "image/svg+xml");
-    }
-
-    private void copyAttribute(final Element from, final Element to, final String key) {
-        final String value = from.getAttribute(key);
-        if (value != null) {
-            to.setAttribute(key, value);
-        } else {
-            to.removeAttribute(key);
-        }
     }
 
     @Override
@@ -101,19 +75,14 @@ public class SVGButton extends ButtonBase implements SVGButtonView {
         }
     }
 
-    @Override
-    public void setIcon(final String url) {
-//        getElement().setAttribute("data", icon);
-
+    private void setIcon(final String url) {
         ResourceCache.get(url, data -> {
             if (data != null) {
                 getElement().setInnerHTML(data);
                 final Element svg = getElement().getElementsByTagName("svg").getItem(0).cast();
 //                svg.setAttribute("style", "fill:" + colourSet.getEnabled());
-                svg.setAttribute("width", "18");
-                svg.setAttribute("height", "18");
-//                    svg.getStyle().setWidth(18, Unit.PX);
-//                    svg.getStyle().setHeight(18, Unit.PX);
+                svg.setAttribute("width", String.valueOf(preset.getWidth()));
+                svg.setAttribute("height", String.valueOf(preset.getHeight()));
                 svg.setTitle(getElement().getTitle());
             }
         });

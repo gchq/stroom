@@ -59,9 +59,10 @@ import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
@@ -85,21 +86,21 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private final Provider<StreamUploadPresenter> streamUploadPresenter;
     private final Provider<StreamFilterPresenter> streamListFilterPresenter;
     private final ClientDispatchAsync dispatcher;
-    private final GlyphButtonView streamListFilter;
+    private final ButtonView streamListFilter;
 
     private boolean folderVisible;
     private boolean feedVisible;
     private boolean pipelineVisible;
     private FindStreamAttributeMapCriteria findStreamAttributeMapCriteria;
     private Feed feedCriteria;
-    private GlyphButtonView streamListUpload;
-    private GlyphButtonView streamListDownload;
-    private GlyphButtonView streamListDelete;
+    private ButtonView streamListUpload;
+    private ButtonView streamListDownload;
+    private ButtonView streamListDelete;
     private ImageButtonView streamListProcess;
-    private GlyphButtonView streamListUndelete;
-    private GlyphButtonView streamRelationListDownload;
-    private GlyphButtonView streamRelationListDelete;
-    private GlyphButtonView streamRelationListUndelete;
+    private ButtonView streamListUndelete;
+    private ButtonView streamRelationListDownload;
+    private ButtonView streamRelationListDelete;
+    private ButtonView streamRelationListUndelete;
     private ImageButtonView streamRelationListProcess;
 
     @Inject
@@ -134,29 +135,29 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
         // Delete, Undelete, DE-duplicate
         if (securityContext.hasAppPermission(Stream.DELETE_DATA_PERMISSION)) {
-            streamListDelete = streamListPresenter.add(GlyphIcons.DELETE);
+            streamListDelete = streamListPresenter.add(SvgIcons.DELETE);
             streamListDelete.setEnabled(false);
-            streamRelationListDelete = streamRelationListPresenter.add(GlyphIcons.DELETE);
+            streamRelationListDelete = streamRelationListPresenter.add(SvgIcons.DELETE);
             streamRelationListDelete.setEnabled(false);
-            streamListUndelete = streamListPresenter.add(GlyphIcons.UNDO);
+            streamListUndelete = streamListPresenter.add(SvgIcons.UNDO);
             streamListUndelete.setTitle("Un-Delete");
-            streamRelationListUndelete = streamRelationListPresenter.add(GlyphIcons.UNDO);
+            streamRelationListUndelete = streamRelationListPresenter.add(SvgIcons.UNDO);
             streamRelationListUndelete.setTitle("un-Delete");
         }
 
         // Download
         if (securityContext.hasAppPermission(Stream.EXPORT_DATA_PERMISSION)) {
-            streamListDownload = streamListPresenter.add(GlyphIcons.DOWNLOAD);
-            streamRelationListDownload = streamRelationListPresenter.add(GlyphIcons.DOWNLOAD);
+            streamListDownload = streamListPresenter.add(SvgIcons.DOWNLOAD);
+            streamRelationListDownload = streamRelationListPresenter.add(SvgIcons.DOWNLOAD);
         }
 
         // Upload
         if (securityContext.hasAppPermission(Stream.IMPORT_DATA_PERMISSION)) {
-            streamListUpload = streamListPresenter.add(GlyphIcons.UPLOAD);
+            streamListUpload = streamListPresenter.add(SvgIcons.UPLOAD);
         }
 
         // Filter
-        streamListFilter = streamListPresenter.add(GlyphIcons.FILTER);
+        streamListFilter = streamListPresenter.add(SvgIcons.FILTER);
 
         // Init the buttons
         setStreamListSelectableEnabled(null, StreamStatus.UNLOCKED);

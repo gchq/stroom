@@ -27,9 +27,9 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.streamstore.client.presenter.EditExpressionPresenter.EditExpressionView;
 import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.SvgIcon;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class EditExpressionViewImpl extends ViewImpl implements EditExpressionView, RequiresResize, ProvidesResize {
@@ -62,7 +62,7 @@ public class EditExpressionViewImpl extends ViewImpl implements EditExpressionVi
     }
 
     @Override
-    public GlyphButtonView addButton(final GlyphIcon preset) {
+    public ButtonView addButton(final SvgIcon preset) {
         return buttonPanel.add(preset);
     }
 

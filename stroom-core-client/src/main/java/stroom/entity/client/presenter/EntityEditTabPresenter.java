@@ -35,12 +35,10 @@ import stroom.task.client.TaskStartEvent;
 import stroom.util.client.ImageUtil;
 import stroom.util.shared.HasType;
 import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.button.client.SVGButtonView;
-import stroom.widget.button.client.SVGIcon;
-import stroom.widget.button.client.SVGIcons;
+import stroom.widget.button.client.SvgIcon;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 import stroom.widget.tab.client.presenter.Layer;
@@ -52,8 +50,8 @@ import java.util.List;
 public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E extends NamedEntity>
         extends EntityEditPresenter<V, E> implements EntityTabData, Refreshable, HasType {
     private final List<TabData> tabs = new ArrayList<TabData>();
-    private final SVGButtonView saveButton;
-    private final SVGButtonView saveAsButton;
+    private final ButtonView saveButton;
+    private final ButtonView saveAsButton;
     private TabData selectedTab;
     private String lastLabel;
     private ButtonPanel leftButtons;
@@ -64,8 +62,8 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
                                   final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
 
-        saveButton = addButtonLeft(SVGIcons.SAVE);
-        saveAsButton = addButtonLeft(SVGIcons.SAVE_AS);
+        saveButton = addButtonLeft(SvgIcons.SAVE);
+        saveAsButton = addButtonLeft(SvgIcons.SAVE_AS);
         saveButton.setEnabled(false);
         saveAsButton.setEnabled(false);
 
@@ -94,17 +92,7 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
         return button;
     }
 
-    public GlyphButtonView addButtonLeft(final GlyphIcon preset) {
-        if (leftButtons == null) {
-            leftButtons = new ButtonPanel();
-            leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
-            addWidgetLeft(leftButtons);
-        }
-
-        return leftButtons.add(preset);
-    }
-
-    public SVGButtonView addButtonLeft(final SVGIcon preset) {
+    public ButtonView addButtonLeft(final SvgIcon preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
             leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);

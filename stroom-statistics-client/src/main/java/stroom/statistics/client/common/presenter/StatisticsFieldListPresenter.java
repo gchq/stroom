@@ -35,8 +35,9 @@ import stroom.entity.client.presenter.HasWrite;
 import stroom.statistics.shared.StatisticField;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticsDataSourceData;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import java.util.ArrayList;
@@ -45,9 +46,9 @@ import java.util.List;
 public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView<StatisticField>>
         implements HasRead<StatisticStoreEntity>, HasWrite<StatisticStoreEntity>, HasDirtyHandlers {
     private final StatisticsFieldEditPresenter statisticsFieldEditPresenter;
-    private final GlyphButtonView newButton;
-    private final GlyphButtonView editButton;
-    private final GlyphButtonView removeButton;
+    private final ButtonView newButton;
+    private final ButtonView editButton;
+    private final ButtonView removeButton;
     private StatisticsDataSourceData statisticsDataSourceData;
 
     private StatisticsCustomMaskListPresenter customMaskListPresenter;
@@ -59,11 +60,11 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
         super(eventBus, new DataGridViewImpl<StatisticField>(true, true));
         this.statisticsFieldEditPresenter = statisticsFieldEditPresenter;
 
-        newButton = getView().addButton(GlyphIcons.NEW_ITEM);
+        newButton = getView().addButton(SvgIcons.NEW_ITEM);
         newButton.setTitle("New Field");
-        editButton = getView().addButton(GlyphIcons.EDIT);
+        editButton = getView().addButton(SvgIcons.EDIT);
         editButton.setTitle("Edit Field");
-        removeButton = getView().addButton(GlyphIcons.REMOVE);
+        removeButton = getView().addButton(SvgIcons.REMOVE);
         removeButton.setTitle("Remove Field");
 
         addColumns();

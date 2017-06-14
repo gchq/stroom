@@ -36,8 +36,9 @@ import stroom.entity.client.presenter.HasWrite;
 import stroom.index.shared.Index;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexFields;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import java.util.ArrayList;
@@ -47,11 +48,11 @@ import java.util.Set;
 public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<IndexField>>
         implements HasRead<Index>, HasWrite<Index>, HasDirtyHandlers {
     private final IndexFieldEditPresenter indexFieldEditPresenter;
-    private final GlyphButtonView newButton;
-    private final GlyphButtonView editButton;
-    private final GlyphButtonView removeButton;
-    private final GlyphButtonView upButton;
-    private final GlyphButtonView downButton;
+    private final ButtonView newButton;
+    private final ButtonView editButton;
+    private final ButtonView removeButton;
+    private final ButtonView upButton;
+    private final ButtonView downButton;
     private IndexFields indexFields;
 
     @SuppressWarnings("unchecked")
@@ -61,15 +62,15 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         super(eventBus, new DataGridViewImpl<IndexField>(true, true));
         this.indexFieldEditPresenter = indexFieldEditPresenter;
 
-        newButton = getView().addButton(GlyphIcons.NEW_ITEM);
+        newButton = getView().addButton(SvgIcons.NEW_ITEM);
         newButton.setTitle("New Field");
-        editButton = getView().addButton(GlyphIcons.EDIT);
+        editButton = getView().addButton(SvgIcons.EDIT);
         editButton.setTitle("Edit Field");
-        removeButton = getView().addButton(GlyphIcons.DELETE);
+        removeButton = getView().addButton(SvgIcons.DELETE);
         removeButton.setTitle("Remove Field");
-        upButton = getView().addButton(GlyphIcons.UP);
+        upButton = getView().addButton(SvgIcons.UP);
         upButton.setTitle("Move Up");
-        downButton = getView().addButton(GlyphIcons.DOWN);
+        downButton = getView().addButton(SvgIcons.DOWN);
         downButton.setTitle("Move Down");
 
         addColumns();

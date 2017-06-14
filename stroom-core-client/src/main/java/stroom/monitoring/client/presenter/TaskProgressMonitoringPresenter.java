@@ -49,8 +49,9 @@ import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TaskId;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -71,7 +72,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
     private final Set<TaskProgress> selectedTaskProgress = new HashSet<>();
     private final Set<TaskProgress> requestedTerminateTaskProgress = new HashSet<>();
     private final TooltipPresenter tooltipPresenter;
-    private final GlyphButtonView terminateButton;
+    private final ButtonView terminateButton;
 
     @Inject
     public TaskProgressMonitoringPresenter(final EventBus eventBus,
@@ -81,7 +82,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         this.tooltipPresenter = tooltipPresenter;
         this.criteria.setOrderBy(FindTaskProgressCriteria.ORDER_BY_AGE, OrderByDirection.DESCENDING);
 
-        terminateButton = getView().addButton(GlyphIcons.DELETE);
+        terminateButton = getView().addButton(SvgIcons.DELETE);
         terminateButton.addClickHandler(event -> endSelectedTask());
         terminateButton.setEnabled(true);
 
@@ -263,7 +264,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
 
     @Override
     public Icon getIcon() {
-        return GlyphIcons.JOBS;
+        return SvgIcons.JOBS;
     }
 
     private void endSelectedTask() {

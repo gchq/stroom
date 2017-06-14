@@ -25,16 +25,12 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.SVGImage;
+import stroom.widget.button.client.SvgImage;
 import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
-import stroom.widget.tab.client.presenter.SVGIcon;
+import stroom.widget.tab.client.presenter.SvgIcon;
 
 public class CurveTab extends AbstractTab {
     public interface Style extends CssResource {
@@ -135,24 +131,24 @@ public class CurveTab extends AbstractTab {
                     image.getElement().addClassName(resources.style().icon());
                     element.appendChild(image.getElement());
                 }
-            } else if (icon instanceof GlyphIcon) {
-                final GlyphIcon glyphIcon = (GlyphIcon) icon;
-                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
-                        + resources.style().icon()
-                        + "\"><div class=\""
-                        + resources.style().face()
-                        + "\" style=\"color:"
-                        + glyphIcon.getColourSet()
-                        + "\"><i class=\""
-                        + glyphIcon.getGlyph()
-                        + "\"></i></div></div>");
-                final HTML html = new HTML(safeHtml);
-                final Element elem = html.getElement();
-                element.appendChild(elem);
-            } else if (icon instanceof SVGIcon) {
-                final SVGIcon svgIcon = (SVGIcon) icon;
+//            } else if (icon instanceof SvgIcon) {
+//                final SvgIcon glyphIcon = (SvgIcon) icon;
+//                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
+//                        + resources.style().icon()
+//                        + "\"><div class=\""
+//                        + resources.style().face()
+//                        + "\" style=\"color:"
+//                        + glyphIcon.getColourSet()
+//                        + "\"><i class=\""
+//                        + glyphIcon.getGlyph()
+//                        + "\"></i></div></div>");
+//                final HTML html = new HTML(safeHtml);
+//                final Element elem = html.getElement();
+//                element.appendChild(elem);
+            } else if (icon instanceof SvgIcon) {
+                final SvgIcon svgIcon = (SvgIcon) icon;
 
-                final SVGImage svgImage = new SVGImage(svgIcon.getUrl(), 18, 18);
+                final SvgImage svgImage = new SvgImage(svgIcon.getUrl(), 18, 18);
                 svgImage.setStyleName(resources.style().icon());
 
 

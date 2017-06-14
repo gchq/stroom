@@ -53,12 +53,9 @@ import stroom.util.client.ImageUtil;
 import stroom.util.client.RandomId;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
-import stroom.widget.button.client.SVGButtonView;
-import stroom.widget.button.client.SVGIcon;
-import stroom.widget.button.client.SVGIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgIcon;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -71,12 +68,12 @@ import java.util.List;
 
 public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.DashboardView, Dashboard>
         implements FlexLayoutChangeHandler, EntityTabData, DashboardUiHandlers {
-    private final SVGButtonView saveButton;
-    private final SVGButtonView saveAsButton;
+    private final ButtonView saveButton;
+    private final ButtonView saveAsButton;
     private final DashboardLayoutPresenter layoutPresenter;
     private final Provider<ComponentAddPresenter> addPresenterProvider;
     private final Components components;
-    private final GlyphButtonView addButton;
+    private final ButtonView addButton;
     private ButtonPanel leftButtons;
     private ButtonPanel rightButtons;
     private String lastLabel;
@@ -94,8 +91,8 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
         this.addPresenterProvider = addPresenterProvider;
         this.components = components;
 
-        saveButton = addButtonLeft(SVGIcons.SAVE);
-        saveAsButton = addButtonLeft(SVGIcons.SAVE_AS);
+        saveButton = addButtonLeft(SvgIcons.SAVE);
+        saveAsButton = addButtonLeft(SvgIcons.SAVE_AS);
         saveButton.setEnabled(false);
         saveAsButton.setEnabled(false);
 
@@ -114,24 +111,14 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
         layoutPresenter.setComponents(components);
         view.setContent(layoutPresenter.getView());
 
-        addButton = addButtonLeft(GlyphIcons.ADD);
+        addButton = addButtonLeft(SvgIcons.ADD);
         addButton.setTitle("Add Component");
         addButton.setEnabled(false);
 
         view.setUiHandlers(this);
     }
 
-    private GlyphButtonView addButtonLeft(final GlyphIcon preset) {
-        if (leftButtons == null) {
-            leftButtons = new ButtonPanel();
-            leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
-            addWidgetLeft(leftButtons);
-        }
-
-        return leftButtons.add(preset);
-    }
-
-    private SVGButtonView addButtonLeft(final SVGIcon preset) {
+    private ButtonView addButtonLeft(final SvgIcon preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
             leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);

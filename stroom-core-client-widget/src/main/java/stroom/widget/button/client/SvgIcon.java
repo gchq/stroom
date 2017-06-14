@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.widget.tab.client.presenter;
+package stroom.widget.button.client;
 
-public class SVGIcon implements Icon {
-    private String url;
+import stroom.widget.tab.client.presenter.Icon;
 
-    private SVGIcon(final String url) {
-        this.url = url;
+public class SvgIcon extends SvgResource implements Icon {
+    private final String title;
+    private final boolean enabled;
+
+    public SvgIcon(final String url, final String title, final boolean enabled) {
+        super(url, 18, 18);
+        this.title = title;
+        this.enabled = enabled;
     }
 
-    public static SVGIcon create(final String url) {
-        return new SVGIcon(url);
+    public String getTitle() {
+        return title;
     }
 
-    public String getUrl() {
-        return url;
+    public boolean isEnabled() {
+        return enabled;
     }
 }

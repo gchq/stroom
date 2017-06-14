@@ -50,10 +50,10 @@ import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.SvgIcon;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -263,23 +263,23 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         });
     }
 
-    public GlyphIcon getInfoCellState(final StreamAttributeMap object) {
+    public SvgIcon getInfoCellState(final StreamAttributeMap object) {
         // Should only show unlocked ones by default
         if (StreamStatus.UNLOCKED.equals(object.getStream().getStatus())) {
-            return GlyphIcons.INFO;
+            return SvgIcons.INFO;
         }
         if (StreamStatus.DELETED.equals(object.getStream().getStatus())) {
-            return GlyphIcons.DELETE;
+            return SvgIcons.DELETE;
         }
 
-        return GlyphIcons.ALERT;
+        return SvgIcons.ALERT;
     }
 
     protected void addInfoColumn() {
         // Info column.
         final InfoColumn<StreamAttributeMap> infoColumn = new InfoColumn<StreamAttributeMap>() {
             @Override
-            public GlyphIcon getValue(final StreamAttributeMap object) {
+            public SvgIcon getValue(final StreamAttributeMap object) {
                 return getInfoCellState(object);
             }
 
@@ -540,7 +540,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         return getView().addButton(title, enabledImage, disabledImage, enabled);
     }
 
-    public GlyphButtonView add(final GlyphIcon preset) {
+    public ButtonView add(final SvgIcon preset) {
         return getView().addButton(preset);
     }
 }

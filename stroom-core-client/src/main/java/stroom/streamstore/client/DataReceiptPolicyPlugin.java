@@ -26,7 +26,7 @@ import stroom.monitoring.client.MonitoringPlugin;
 import stroom.policy.shared.Policy;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.DataReceiptPolicyPresenter;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;
 
@@ -45,6 +45,6 @@ public class DataReceiptPolicyPlugin extends MonitoringPlugin<DataReceiptPolicyP
     }
 
     private MenuItem createDataRetentionMenuItem() {
-        return new IconMenuItem(50, GlyphIcons.HISTORY, GlyphIcons.HISTORY, "Data Receipt", null, true, () -> open());
+        return new IconMenuItem(50, SvgIcons.HISTORY, SvgIcons.HISTORY, "Data Receipt", null, true, () -> open());
     }
 }

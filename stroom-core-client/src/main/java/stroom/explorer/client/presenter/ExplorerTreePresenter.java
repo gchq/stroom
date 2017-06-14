@@ -38,7 +38,7 @@ import stroom.explorer.shared.ExplorerData;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -169,7 +169,7 @@ public class ExplorerTreePresenter
 
     @Override
     public Icon getIcon() {
-        return GlyphIcons.EXPLORER;
+        return SvgIcons.EXPLORER;
     }
 
     @Override

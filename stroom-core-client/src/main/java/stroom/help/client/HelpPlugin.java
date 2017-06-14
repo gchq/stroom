@@ -25,7 +25,7 @@ import stroom.app.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SvgIcons;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class HelpPlugin extends Plugin {
@@ -46,9 +46,9 @@ public class HelpPlugin extends Plugin {
                     IconMenuItem helpMenuItem;
                     final String helpUrl = result.get(ClientProperties.HELP_URL);
                     if (helpUrl != null && helpUrl.trim().length() > 0) {
-                        helpMenuItem = new IconMenuItem(1, GlyphIcons.HELP, GlyphIcons.HELP, "Help", null, true, () -> Window.open(helpUrl, "_blank", ""));
+                        helpMenuItem = new IconMenuItem(1, SvgIcons.HELP, SvgIcons.HELP, "Help", null, true, () -> Window.open(helpUrl, "_blank", ""));
                     } else {
-                        helpMenuItem = new IconMenuItem(1, GlyphIcons.HELP, GlyphIcons.HELP, "Help is not configured!", null, false, null);
+                        helpMenuItem = new IconMenuItem(1, SvgIcons.HELP, SvgIcons.HELP, "Help is not configured!", null, false, null);
                     }
 
                     event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, helpMenuItem);
