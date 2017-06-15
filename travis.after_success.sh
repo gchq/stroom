@@ -1,5 +1,6 @@
 #!/bin/bash
 CURRENT_STROOM_DEV_VERSION="v6.0.0"
+DOCKER_REPO="gchq/stroom"
 DATE_ONLY="$(date +%Y%m%d)"
 DATE_TIME="$(date +%Y%m%d%H%M%S)"
 FLOATING_TAG=""

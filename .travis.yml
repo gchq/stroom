@@ -5,8 +5,6 @@ sudo: required #to ensure we get a VM rather than a container for more memory an
 
 env:
   global:
-    - CURRENT_STROOM_DEV_VERSION=v6.0.0
-    - DOCKER_REPO=gchq/stroom
     - DOCKER_COMPOSE_VERSION=1.13.0
     # $TAGPERM environment variable
     # generate a token at https://github.com/settings/tokens and encrypt it
