@@ -39,14 +39,6 @@ public class StroomStatsStoreEntity extends DocumentEntity {
     public static final String ENTITY_TYPE = "StroomStatsStore";
     public static final String ENTITY_TYPE_FOR_DISPLAY = "Stroom-Stats Store";
 
-    // IndexFields names
-    public static final String FIELD_NAME_DATE_TIME = "Date Time";
-    public static final String FIELD_NAME_VALUE = "Statistic Value";
-    public static final String FIELD_NAME_COUNT = "Statistic Count";
-    public static final String FIELD_NAME_MIN_VALUE = "Min Statistic Value";
-    public static final String FIELD_NAME_MAX_VALUE = "Max Statistic Value";
-    public static final String FIELD_NAME_PRECISION = "Precision";
-
     // Hibernate table/column names
     public static final String TABLE_NAME = "STROOM_STATS_STORE";
     public static final String STATISTIC_TYPE = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.TYPE;
@@ -253,5 +245,18 @@ public class StroomStatsStoreEntity extends DocumentEntity {
         } else {
             return Collections.emptySet();
         }
+    }
+
+    @Override
+    public String toString() {
+        return "StroomStatsStoreEntity{" +
+                "description='" + description + '\'' +
+                ", StatisticType=" + getStatisticType() +
+                ", RollUpType=" + getRollUpType() +
+                ", precision='" + precision + '\'' +
+                ", enabled=" + enabled +
+                ", data='" + data + '\'' +
+                ", stroomStatsStoreDataObject=" + stroomStatsStoreDataObject +
+                '}';
     }
 }
