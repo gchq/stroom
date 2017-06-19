@@ -16,12 +16,10 @@
 
 package stroom.security.server;
 
-import org.apache.shiro.authc.AccountException;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
-import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.realm.AuthenticatingRealm;
 import org.slf4j.Logger;
@@ -32,7 +30,6 @@ import org.springframework.util.StringUtils;
 import stroom.entity.shared.EntityServiceException;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.server.exception.AccountExpiredException;
-import stroom.security.server.exception.BadCredentialsException;
 import stroom.security.server.exception.DisabledException;
 import stroom.security.server.exception.LockedException;
 import stroom.security.shared.FindUserCriteria;
@@ -41,8 +38,6 @@ import stroom.security.shared.User;
 import stroom.security.shared.User.UserStatus;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
-import stroom.util.cert.CertificateUtil;
-import stroom.util.shared.EqualsUtil;
 
 import javax.inject.Inject;
 import java.util.regex.Pattern;
@@ -75,7 +70,7 @@ public class DBRealm extends AuthenticatingRealm {
     @Override
     public boolean supports(final AuthenticationToken token) {
         return token != null
-                && (token instanceof JWTAuthenticationToken || token instanceof UsernamePasswordToken || token instanceof CertificateAuthenticationToken);
+                && (token instanceof JWTAuthenticationToken);
     }
 
     @Override
@@ -85,17 +80,6 @@ public class DBRealm extends AuthenticatingRealm {
             final JWTAuthenticationToken jwtAuthenticationToken = (JWTAuthenticationToken) token;
             return authenticateWithJWT(jwtAuthenticationToken);
         }
-
-        if (token instanceof CertificateAuthenticationToken) {
-            final CertificateAuthenticationToken certificateAuthenticationToken = (CertificateAuthenticationToken) token;
-            return authenticateWithCertificate(certificateAuthenticationToken);
-        }
-
-        if (token instanceof UsernamePasswordToken) {
-            final UsernamePasswordToken usernamePasswordToken = (UsernamePasswordToken) token;
-            return authenticateWithUsernamePassword(usernamePasswordToken);
-        }
-
         throw new AuthenticationException("Token type '" + token.getClass().getSimpleName() + "' is not supported");
     }
 
@@ -118,101 +102,6 @@ public class DBRealm extends AuthenticatingRealm {
         }
 
         return null;
-    }
-
-    private AuthenticationInfo authenticateWithCertificate(final CertificateAuthenticationToken token)
-            throws AuthenticationException {
-        try {
-            if (!allowCertificateAuthentication()) {
-                throw new EntityServiceException("Certificate authentication is not allowed");
-            }
-
-            final Pattern pattern = getPattern();
-
-            if (pattern == null) {
-                throw new EntityServiceException("No valid certificateDNPattern found");
-            }
-
-            final String dn = (String) token.getCredentials();
-            final String username = CertificateUtil.extractUserIdFromDN(dn, pattern);
-
-            if (LOGGER.isDebugEnabled()) {
-                final String cn = CertificateUtil.extractCNFromDN(dn);
-                LOGGER.debug("authenticate() - dn=" + dn + ", cn=" + cn + ", userId=" + username);
-            }
-
-            final User user = loadUserByUsername(username);
-
-            if (StringUtils.hasText(username) && user == null) {
-                throw new EntityServiceException(username + " does not exist");
-            }
-
-            if (user != null) {
-                check(user);
-                return new SimpleAuthenticationInfo(user, user.getPasswordHash(), getName());
-            }
-        } catch (final AuthenticationException e) {
-            throw e;
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new BadCredentialsException(e.getMessage());
-        }
-
-        return null;
-    }
-
-    private AuthenticationInfo authenticateWithUsernamePassword(final UsernamePasswordToken token)
-            throws AuthenticationException {
-        try {
-            final String username = token.getUsername();
-
-            // Null username is invalid
-            if (username == null) {
-                throw new AccountException("Null user names are not allowed by this realm.");
-            }
-
-            final User user = loadUserByUsername(username);
-
-            if (StringUtils.hasText(username) && user == null) {
-                throw new BadCredentialsException("Bad Credentials");
-            }
-
-            if (user != null) {
-                check(user);
-                return new SimpleAuthenticationInfo(user, user.getPasswordHash(), getName());
-            }
-        } catch (final AuthenticationException e) {
-            throw e;
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new BadCredentialsException(e.getMessage());
-        }
-
-        return null;
-    }
-
-    private boolean allowCertificateAuthentication() {
-        return stroomPropertyService.getBooleanProperty("stroom.security.allowCertificateAuthentication", false);
-    }
-
-    private Pattern getPattern() {
-        final String regex = stroomPropertyService.getProperty("stroom.security.certificateDNPattern");
-        if (!EqualsUtil.isEquals(cachedRegex, regex)) {
-            cachedRegex = regex;
-            cachedPattern = null;
-
-            if (regex != null) {
-                try {
-                    cachedPattern = Pattern.compile(regex);
-                } catch (final RuntimeException e) {
-                    final String message = "Problem compiling certificateDNPattern regex: " + e.getMessage();
-                    LOGGER.error(message, e);
-                    throw new EntityServiceException(message);
-                }
-            }
-        }
-
-        return cachedPattern;
     }
 
     private void check(final User user) {

@@ -18,7 +18,6 @@ package stroom.security.server;
 
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,28 +38,8 @@ public class MyCredentialsMatcher implements CredentialsMatcher {
 
     @Override
     public boolean doCredentialsMatch(final AuthenticationToken token, final AuthenticationInfo info) {
-        try {
-            if (token == null) {
-                return false;
-            }
-
-            if (token instanceof UsernamePasswordToken) {
-                final UsernamePasswordToken usernamePasswordToken = (UsernamePasswordToken) token;
-
-                String password = null;
-                if (usernamePasswordToken.getCredentials() != null) {
-                    password = new String((char[]) usernamePasswordToken.getCredentials());
-                }
-
-                final String hashed = (String) info.getCredentials();
-                return passwordEncoder.matches(password, hashed);
-            }
-
-            if (token instanceof CertificateAuthenticationToken) {
-                return info != null;
-            }
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
+        if (token == null) {
+            return false;
         }
 
         if (token instanceof JWTAuthenticationToken) {
