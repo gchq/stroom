@@ -25,7 +25,6 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.logging.AuthenticationEventLog;
 import stroom.node.server.StroomPropertyService;
@@ -37,7 +36,6 @@ import stroom.security.shared.User.UserStatus;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.servlet.HttpServletRequestHolder;
-import stroom.util.cert.CertificateUtil;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.UserTokenUtil;
 
@@ -77,6 +75,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         this.securityContext = securityContext;
     }
 
+    //TODO This needs to move somewhere else. JWT Authenticator?
     private void checkLoginAllowed(final User user) {
         if (user != null) {
             final boolean preventLogin = StroomProperties.getBooleanProperty(PREVENT_LOGIN_PROPERTY, false);
@@ -359,60 +358,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public User autoLogin() throws RuntimeException {
         User user = userService.loadByUuid(securityContext.getUserUuid());
         return user;
-    }
-
-    private User loginWithCertificate() {
-        User user;
-
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("loginWithCertificate()");
-        }
-
-        final HttpServletRequest request = httpServletRequestHolder.get();
-        final String certificateDn = CertificateUtil.extractCertificateDN(request);
-
-        try {
-            if (certificateDn == null) {
-                return null;
-            }
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("loginWithCertificate() - certificateDn=" + certificateDn);
-            }
-
-            // Create the authentication token from the certificate
-            final CertificateAuthenticationToken token = new CertificateAuthenticationToken(certificateDn, true,
-                    request.getRemoteHost());
-
-            // Attempt authentication
-            final Subject currentUser = SecurityUtils.getSubject();
-            currentUser.login(token);
-
-            user = (User) currentUser.getPrincipal();
-        } catch (final RuntimeException ex) {
-            final String message = EntityServiceExceptionUtil.unwrapMessage(ex, ex);
-
-            // Audit the failed login
-            eventLog.logon(certificateDn, false, message, AuthenticateOutcomeReason.OTHER);
-
-            throw EntityServiceExceptionUtil.create(ex);
-        }
-
-        // Ensure regular users are allowed to login at this time.
-        checkLoginAllowed(user);
-
-        try {
-            // Pass back the user info
-            return handleLogin(request, user, certificateDn);
-
-        } catch (final RuntimeException ex) {
-            final String message = EntityServiceExceptionUtil.unwrapMessage(ex, ex);
-
-            // Audit the failed login
-            eventLog.logon(certificateDn, false, message, AuthenticateOutcomeReason.OTHER);
-
-            throw EntityServiceExceptionUtil.create(ex);
-        }
     }
 
     private User handleLogin(final HttpServletRequest request, final User user, final String userId) {
