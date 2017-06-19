@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.util;
+package stroom.util.cert;
 
 import org.springframework.util.Base64Utils;
 
@@ -26,7 +26,7 @@ import java.util.HashMap;
 /**
  * Utility to export a private key and certificate from a key store.
  *
- * E.g. java stroom.util.ExportKey
+ * E.g. java stroom.util.cert.ExportKey
  * keystore=/home/user01/keys/server.keystore keypass=changeit alias=smrs
  */
 public class ExportKey {
