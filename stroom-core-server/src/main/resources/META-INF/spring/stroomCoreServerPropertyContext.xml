@@ -364,6 +364,20 @@
             <property name="editable" value="true"/>
         </bean>
 
+        <!-- QUERY HISTORY PROPERTIES -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.query.history.itemsRetention"/>
+            <property name="value" value="100"/>
+            <property name="description" value="The maximum number of query history items that will be retained"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.query.history.daysRetention"/>
+            <property name="value" value="365"/>
+            <property name="description" value="The number of days query history items will be retained for"/>
+            <property name="editable" value="true"/>
+        </bean>
+
         <!-- SEARCH PROPERTIES -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.search.maxStoredDataQueueSize"/>

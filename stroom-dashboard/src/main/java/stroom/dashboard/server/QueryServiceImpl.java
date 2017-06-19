@@ -17,6 +17,9 @@
 package stroom.dashboard.server;
 
 import event.logging.BaseAdvancedQueryItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,10 +36,12 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityServiceException;
 import stroom.importexport.server.ImportExportHelper;
+import stroom.node.server.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,12 +50,20 @@ import java.util.UUID;
 @Transactional
 @AutoMarshal
 public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQueryCriteria> implements QueryService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(QueryServiceImpl.class);
+    private final StroomEntityManager entityManager;
     private final SecurityContext securityContext;
+    private final StroomPropertyService propertyService;
 
     @Inject
-    QueryServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
+    QueryServiceImpl(final StroomEntityManager entityManager,
+                     final ImportExportHelper importExportHelper,
+                     final SecurityContext securityContext,
+                     final StroomPropertyService propertyService) {
         super(entityManager, importExportHelper, securityContext);
+        this.entityManager = entityManager;
         this.securityContext = securityContext;
+        this.propertyService = propertyService;
     }
 
     @Override
@@ -85,6 +98,80 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
         securityContext.addDocumentPermissions(null, null, entity.getType(), entity.getUuid(), true);
 
         return entity;
+    }
+
+    @Override
+    public Query save(final Query entity) throws RuntimeException {
+        final Query query = super.save(entity);
+
+        // Make sure we only keep 100 items in the query history per user.
+        if (query != null && !query.isFavourite()) {
+            try {
+
+                final long historyItemsRetention = propertyService.getIntProperty("stroom.query.history.itemsRetention", 100);
+                final int historyDaysRetention = propertyService.getIntProperty("stroom.query.history.daysRetention", 365);
+
+                final long oldestCrtMs = ZonedDateTime.now().minusDays(historyDaysRetention).toInstant().toEpochMilli();
+
+                LOGGER.debug("Deleting old rows");
+
+                final SQLBuilder sql = new SQLBuilder();
+                sql.append("DELETE");
+                sql.append(" FROM ");
+                sql.append(Query.TABLE_NAME);
+                sql.append(" WHERE ");
+                sql.append(Query.CREATE_USER);
+                sql.append(" = ");
+                sql.arg(query.getCreateUser());
+                sql.append(" AND ");
+                sql.append(Query.FAVOURITE);
+                sql.append(" = ");
+                sql.arg(query.isFavourite());
+                sql.append(" AND ");
+                sql.append("(");
+
+                sql.append(Query.ID);
+                sql.append(" <= (");
+
+                sql.append("SELECT");
+                sql.append(" ID");
+                sql.append(" FROM (");
+
+                sql.append("SELECT");
+                sql.append(" ID");
+                sql.append(" FROM ");
+                sql.append(Query.TABLE_NAME);
+                sql.append(" WHERE ");
+                sql.append(Query.CREATE_USER);
+                sql.append(" = ");
+                sql.arg(query.getCreateUser());
+                sql.append(" AND ");
+                sql.append(Query.FAVOURITE);
+                sql.append(" = ");
+                sql.arg(query.isFavourite());
+                sql.append(" ORDER BY ID DESC LIMIT 1 OFFSET ");
+                sql.arg(historyItemsRetention);
+
+                sql.append(") foo");
+
+                sql.append(")");
+
+                sql.append(" OR ");
+                sql.append(Query.CREATE_TIME);
+                sql.append(" < ");
+                sql.arg(oldestCrtMs);
+
+                sql.append(")");
+
+                final long rows = entityManager.executeNativeUpdate(sql);
+                LOGGER.debug("Deleted " + rows + " rows");
+
+            } catch (final Exception e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+
+        return query;
     }
 
     @Override

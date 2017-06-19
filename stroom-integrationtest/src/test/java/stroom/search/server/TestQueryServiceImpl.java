@@ -16,6 +16,8 @@
 
 package stroom.search.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardService;
@@ -36,8 +38,6 @@ import stroom.query.shared.QueryData;
 import stroom.security.shared.User;
 import stroom.security.shared.UserService;
 import stroom.util.thread.ThreadUtil;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 
@@ -142,6 +142,31 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         String expected = sb.toString();
         expected = expected.replaceAll("\\s*", "");
         Assert.assertTrue(actual.contains(expected));
+    }
+
+    @Test
+    public void testOldHistoryDeletion() {
+        final FindQueryCriteria criteria = new FindQueryCriteria();
+        criteria.obtainDashboardIdSet().add(dashboard.getId());
+        criteria.setOrderBy(FindQueryCriteria.ORDER_BY_TIME, OrderByDirection.DESCENDING);
+
+        BaseResultList<Query> list = queryService.find(criteria);
+        Assert.assertEquals(2, list.size());
+
+        Query query = list.get(0);
+
+        // Now insert the same query over 100 times.
+        for (int i = 0; i < 120; i++) {
+            final Query newQuery = queryService.create(null, "History");
+            newQuery.setDashboard(query.getDashboard());
+            newQuery.setFavourite(false);
+            newQuery.setQueryData(query.getQueryData());
+            newQuery.setData(query.getData());
+            queryService.save(newQuery);
+        }
+
+        list = queryService.find(criteria);
+        Assert.assertEquals(100, list.size());
     }
 
     @Test

@@ -36,13 +36,17 @@ import stroom.task.cluster.ClusterResultCollector;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.task.server.TaskManager;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
+import stroom.util.thread.ThreadScopeWrapper;
 
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 @TaskHandlerBean(task = SearchBusPollAction.class)
 @Scope(value = StroomScope.TASK)
@@ -55,20 +59,25 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
     private final SearchDataSourceProviderRegistry searchDataSourceProviderRegistry;
     private final ActiveQueriesManager activeQueriesManager;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
+    private final TaskManager taskManager;
     private final SecurityContext securityContext;
 
     @Inject
-    SearchBusPollActionHandler(final QueryService queryService, final SearchResultCreator searchResultCreator,
+    SearchBusPollActionHandler(final QueryService queryService,
+                               final SearchResultCreator searchResultCreator,
                                final SearchEventLog searchEventLog,
                                final SearchDataSourceProviderRegistry searchDataSourceProviderRegistry,
                                final ActiveQueriesManager activeQueriesManager,
-                               final ClusterResultCollectorCache clusterResultCollectorCache, final SecurityContext securityContext) {
+                               final ClusterResultCollectorCache clusterResultCollectorCache,
+                               final TaskManager taskManager,
+                               final SecurityContext securityContext) {
         this.queryService = queryService;
         this.searchResultCreator = searchResultCreator;
         this.searchEventLog = searchEventLog;
         this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
         this.activeQueriesManager = activeQueriesManager;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
+        this.taskManager = taskManager;
         this.securityContext = securityContext;
     }
 
@@ -199,24 +208,37 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
     }
 
     private void storeSearchHistory(final QueryKey queryKey, final Search search) {
-        try {
-            if (queryKey instanceof QueryKeyImpl) {
-                final QueryKeyImpl queryKeyImpl = (QueryKeyImpl) queryKey;
+        // We only want to record search history for searches that occur when a dashboard is opened or user
+        // initiated ones. Only an initial or user executed search will be incremental.
+        if (search.isIncremental() && queryKey instanceof QueryKeyImpl) {
+            final CompletableFuture<Query> future = CompletableFuture.supplyAsync(() -> {
+                final Function<QueryKey, Query> function = k -> {
+                    Query result = null;
+                    try {
+                        final QueryKeyImpl queryKeyImpl = (QueryKeyImpl) queryKey;
 
-                // Add this search to the history so the user can get back to
-                // this search again.
-                final QueryData queryData = new QueryData();
-                queryData.setDataSource(search.getDataSourceRef());
-                queryData.setExpression(search.getExpression());
+                        // Add this search to the history so the user can get back to
+                        // this search again.
+                        final QueryData queryData = new QueryData();
+                        queryData.setDataSource(search.getDataSourceRef());
+                        queryData.setExpression(search.getExpression());
 
-                final Query query = queryService.create(null, "History");
+                        final Query query = queryService.create(null, "History");
 
-                query.setDashboard(Dashboard.createStub(queryKeyImpl.getDashboardId()));
-                query.setQueryData(queryData);
-                queryService.save(query);
-            }
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
+                        query.setDashboard(Dashboard.createStub(queryKeyImpl.getDashboardId()));
+                        query.setQueryData(queryData);
+                        result = queryService.save(query);
+
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+
+                    return result;
+                };
+
+                return ThreadScopeWrapper.run(function, queryKey);
+
+            }, taskManager.getExecutor());
         }
     }
 }
