@@ -26,6 +26,8 @@ if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
     git config --global user.email "builds@travis-ci.com"
     git config --global user.name "Travis CI"
 
+    git status
+
     #git tag ${gitTag} -a -m "Automated Travis build $TRAVIS_BUILD_NUMBER" 2>/dev/null
     git tag ${gitTag} -a -m "Automated Travis build $TRAVIS_BUILD_NUMBER" 
     #git push -q https://$TAGPERM@github.com/gchq/stroom --follow-tags >/dev/null 2>&1
