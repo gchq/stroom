@@ -87,17 +87,7 @@ public abstract class EntityEditPresenter<V extends View, E extends NamedEntity>
             checkedPermissions = true;
             if (entity instanceof Document) {
                 final Document document = (Document) entity;
-
-                securityContext.hasDocumentPermission(document.getType(), document.getUuid(), DocumentPermissionNames.UPDATE, new AsyncCallback<Boolean>() {
-                    @Override
-                    public void onSuccess(final Boolean result) {
-                        onPermissionsCheck(!result);
-                    }
-
-                    @Override
-                    public void onFailure(final Throwable caught) {
-                    }
-                });
+                securityContext.hasDocumentPermission(document.getType(), document.getUuid(), DocumentPermissionNames.UPDATE).onSuccess(this::setAllowUpdate);
             } else {
                 onPermissionsCheck(false);
             }
@@ -124,6 +114,10 @@ public abstract class EntityEditPresenter<V extends View, E extends NamedEntity>
             final HasReadOnly hasReadOnly = (HasReadOnly) getView();
             hasReadOnly.setReadOnly(readOnly);
         }
+    }
+
+    private void setAllowUpdate(Boolean allowUpdate) {
+        onPermissionsCheck(!allowUpdate);
     }
 
     public boolean isReadOnly() {

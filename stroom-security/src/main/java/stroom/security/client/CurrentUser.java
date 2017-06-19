@@ -18,10 +18,10 @@ package stroom.security.client;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.security.client.event.RequestLogoutEvent;
@@ -104,9 +104,18 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     @Override
-    public void hasDocumentPermission(final String documentType, final String documentId, final String permission, final AsyncCallback<Boolean> callback) {
+    public Future<Boolean> hasDocumentPermission(final String documentType, final String documentId, final String permission) {
+        final FutureImpl<Boolean> future = new FutureImpl<>();
+        // Set the default behaviour of the future to show an error.
+        future.onFailure(throwable -> AlertEvent.fireErrorFromException(CurrentUser.this, throwable, null));
+
         final ClientDispatchAsync dispatcher = dispatcherProvider.get();
-        dispatcher.exec(new CheckDocumentPermissionAction(documentType, documentId, permission)).onSuccess(result -> callback.onSuccess(result.getBoolean()));
+
+        dispatcher.exec(new CheckDocumentPermissionAction(documentType, documentId, permission))
+                .onSuccess(result -> future.setResult(result.getBoolean()))
+                .onFailure(future::setThrowable);
+
+        return future;
     }
 
     @Override

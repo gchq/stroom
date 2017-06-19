@@ -23,6 +23,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -49,6 +50,7 @@ import stroom.index.shared.IndexShard;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.security.client.ClientSecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.util.shared.ModelStringUtil;
@@ -88,6 +90,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private final GlyphButtonView buttonDelete;
     private Index index;
     private boolean readOnly;
+    private boolean allowDelete;
 
     @Inject
     public IndexShardPresenter(final EventBus eventBus, final Resources resources,
@@ -129,7 +132,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         final boolean enabled = !readOnly && (criteria.getIndexShardSet().size() > 0 || Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) && securityContext.hasAppPermission(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION);
         buttonFlush.setEnabled(enabled);
         buttonClose.setEnabled(enabled);
-        buttonDelete.setEnabled(enabled);
+        buttonDelete.setEnabled(allowDelete && enabled);
     }
 
     private void addColumns() {
@@ -390,6 +393,11 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             };
             dataProvider.addDataDisplay(getView().getDataDisplay());
         }
+
+        securityContext.hasDocumentPermission(index.getType(), index.getUuid(), DocumentPermissionNames.DELETE).onSuccess(result -> {
+            this.allowDelete = result;
+            enableButtons();
+        });
     }
 
     @Override
@@ -406,13 +414,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 enableButtons();
             }
         }
-
-//        IndexShard selected = getView().getSelectionModel().getSelected();
-//        if (selected != null) {
-//            if (!resultList.contains(selected)) {
-//                getView().getSelectionModel().clear();
-//            }
-//        }
     }
 
     private void flush() {
