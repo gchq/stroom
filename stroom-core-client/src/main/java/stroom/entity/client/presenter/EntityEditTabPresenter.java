@@ -80,7 +80,6 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
     }
 
-
     public ImageButtonView addButtonLeft(final String title, final ImageResource enabledImage,
                                          final ImageResource disabledImage) {
         if (leftButtons == null) {
