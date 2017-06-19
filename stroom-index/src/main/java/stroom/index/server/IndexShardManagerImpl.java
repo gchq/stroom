@@ -39,6 +39,7 @@ import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.Node;
 import stroom.query.shared.IndexFields;
+import stroom.security.Secured;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
 import stroom.util.logging.LambdaLogger;
@@ -69,6 +70,7 @@ import java.util.concurrent.locks.Lock;
  * Pool API into open index shards.
  */
 @Component("indexShardManager")
+@Secured(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION)
 @Profile(StroomSpringProfiles.PROD)
 @EntityEventHandler(type = Index.ENTITY_TYPE)
 public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, IndexShardWriter>

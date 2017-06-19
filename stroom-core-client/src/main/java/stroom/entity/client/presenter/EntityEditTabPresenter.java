@@ -189,7 +189,7 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
     }
 
     @Override
-    protected void onPermissionsCheck(final boolean readOnly) {
+    public void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
         saveButton.setEnabled(isDirty() && !readOnly);
         saveAsButton.setEnabled(true);

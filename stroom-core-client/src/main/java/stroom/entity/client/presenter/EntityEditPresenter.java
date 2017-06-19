@@ -35,7 +35,7 @@ import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 public abstract class EntityEditPresenter<V extends View, E extends NamedEntity> extends MyPresenterWidget<V>
-        implements HasRead<E>, HasWrite<E>, HasDirtyHandlers, HasType {
+        implements HasRead<E>, HasWrite<E>, HasPermissionCheck, HasDirtyHandlers, HasType {
     private final ClientSecurityContext securityContext;
     private E entity;
     private boolean dirty;
@@ -117,7 +117,8 @@ public abstract class EntityEditPresenter<V extends View, E extends NamedEntity>
         onWrite(entity);
     }
 
-    protected void onPermissionsCheck(boolean readOnly) {
+    @Override
+    public void onPermissionsCheck(boolean readOnly) {
         this.readOnly = readOnly;
         if (getView() instanceof HasReadOnly) {
             final HasReadOnly hasReadOnly = (HasReadOnly) getView();

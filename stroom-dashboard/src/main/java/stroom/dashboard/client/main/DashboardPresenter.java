@@ -290,7 +290,7 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
     }
 
     @Override
-    protected void onPermissionsCheck(final boolean readOnly) {
+    public void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
 
         saveButton.setEnabled(isDirty() && !readOnly);

@@ -107,8 +107,9 @@ public class PipelinePresenter extends EntityEditTabPresenter<LinkTabPanelView, 
     }
 
     @Override
-    protected void onPermissionsCheck(final boolean readOnly) {
+    public void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
+        tabContentProvider.onPermissionsCheck(readOnly);
         allowProcessorUpdates = hasManageProcessorsPermission && !readOnly;
         updatePermissions();
     }

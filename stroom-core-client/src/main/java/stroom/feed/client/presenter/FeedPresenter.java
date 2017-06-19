@@ -86,6 +86,12 @@ public class FeedPresenter extends EntityEditTabPresenter<LinkTabPanelView, Feed
     }
 
     @Override
+    public void onPermissionsCheck(final boolean readOnly) {
+        super.onPermissionsCheck(readOnly);
+        tabContentProvider.onPermissionsCheck(readOnly);
+    }
+
+    @Override
     public String getType() {
         return Feed.ENTITY_TYPE;
     }

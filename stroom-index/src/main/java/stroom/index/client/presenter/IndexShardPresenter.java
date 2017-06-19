@@ -36,6 +36,7 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.client.presenter.HasPermissionCheck;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
@@ -47,6 +48,7 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
+import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.util.shared.ModelStringUtil;
@@ -64,7 +66,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexShard>>
-        implements Refreshable, HasRead<Index> {
+        implements Refreshable, HasRead<Index>, HasPermissionCheck {
     public interface Resources extends ClientBundle {
         ImageResource flush();
 
@@ -77,6 +79,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
     private final TooltipPresenter tooltipPresenter;
     private final ClientDispatchAsync dispatcher;
+    private final ClientSecurityContext securityContext;
     private ActionDataProvider<IndexShard> dataProvider;
     private ResultList<IndexShard> resultList = null;
     private final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
@@ -84,13 +87,15 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private final ImageButtonView buttonClose;
     private final GlyphButtonView buttonDelete;
     private Index index;
+    private boolean readOnly;
 
     @Inject
     public IndexShardPresenter(final EventBus eventBus, final Resources resources,
-                               final TooltipPresenter tooltipPresenter, final ClientDispatchAsync dispatcher) {
+                               final TooltipPresenter tooltipPresenter, final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
         super(eventBus, new DataGridViewImpl<>(false));
         this.tooltipPresenter = tooltipPresenter;
         this.dispatcher = dispatcher;
+        this.securityContext = securityContext;
 
         buttonFlush = getView().addButton("Flush Selected Shards", resources.flush(), resources.flushDisabled(), false);
         buttonClose = getView().addButton("Close Selected Shards", resources.close(), resources.closeDisabled(), false);
@@ -121,7 +126,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     private void enableButtons() {
-        final boolean enabled = !criteria.getIndexShardSet().isMatchNothing();
+        final boolean enabled = !readOnly && (criteria.getIndexShardSet().size() > 0 || Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) && securityContext.hasAppPermission(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION);
         buttonFlush.setEnabled(enabled);
         buttonClose.setEnabled(enabled);
         buttonDelete.setEnabled(enabled);
@@ -163,7 +168,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             public TickBoxState getValue() {
                 if (Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) {
                     return TickBoxState.TICK;
-                } else if (criteria.getIndexShardSet().getSet().size() > 0) {
+                } else if (criteria.getIndexShardSet().size() > 0) {
                     return TickBoxState.HALF_TICK;
                 }
                 return TickBoxState.UNTICK;
@@ -198,6 +203,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 }
                 criteria.getIndexShardSet().remove(row);
             }
+            getView().redrawHeaders();
             enableButtons();
         });
     }
@@ -384,6 +390,12 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             };
             dataProvider.addDataDisplay(getView().getDataDisplay());
         }
+    }
+
+    @Override
+    public void onPermissionsCheck(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
     }
 
     private void onChangeData(final ResultList<IndexShard> data) {

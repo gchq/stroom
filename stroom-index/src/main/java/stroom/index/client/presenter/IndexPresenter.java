@@ -70,6 +70,12 @@ public class IndexPresenter extends EntityEditTabPresenter<LinkTabPanelView, Ind
     }
 
     @Override
+    public void onPermissionsCheck(final boolean readOnly) {
+        super.onPermissionsCheck(readOnly);
+        tabContentProvider.onPermissionsCheck(readOnly);
+    }
+
+    @Override
     protected void onWrite(final Index index) {
         tabContentProvider.write(index);
     }
