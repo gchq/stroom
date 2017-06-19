@@ -73,8 +73,7 @@ import java.util.concurrent.locks.Lock;
 @Secured(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION)
 @Profile(StroomSpringProfiles.PROD)
 @EntityEventHandler(type = Index.ENTITY_TYPE)
-public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, IndexShardWriter>
-        implements IndexShardManager, Indexer, EntityEvent.Handler {
+public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, IndexShardWriter> implements IndexShardManager, EntityEvent.Handler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardManagerImpl.class);
     private static final int MAX_CACHE_ENTRIES = 1000000;
 

@@ -30,7 +30,7 @@ import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.index.server.FieldFactory;
 import stroom.index.server.IndexShardKeyUtil;
-import stroom.index.server.IndexShardManagerImpl;
+import stroom.index.server.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
@@ -49,7 +49,7 @@ import java.util.List;
 
 public class TestBasicSearch extends AbstractCoreIntegrationTest {
     @Resource
-    private IndexShardManagerImpl indexShardManager;
+    private IndexShardManager indexShardManager;
     @Resource
     private IndexShardService indexShardService;
     @Resource

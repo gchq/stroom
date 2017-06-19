@@ -37,7 +37,7 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Resource
-    private IndexShardManagerImpl indexShardManager;
+    private IndexShardManager indexShardManager;
     @Resource
     private CommonTestControl commonTestControl;
 
