@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#317** : Users now need update permission on an index plus 'Manage Index Shards' permission to flush or close index shards. In addition to this a user needs delete permission to delete index shards.
 
+* Issue **#319** : SaveAs now fetches the parent folder correctly so that users can copy items if they have permission to do so.
+
 ## [v5.0-beta.32] - 2017-06-13
 
 * Issue **#311** : Fixed request for `Pipeline` in `meta` XSLT function. Errors are now dealt with correctly so that the XSLT will not fail due to missing meta data.
