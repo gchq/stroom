@@ -318,7 +318,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 }
             }
         };
-        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
+        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
     public void buildTipText(final StreamAttributeMap row, final StringBuilder html) {

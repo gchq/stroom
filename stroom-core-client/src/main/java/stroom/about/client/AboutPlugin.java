@@ -16,8 +16,6 @@
 
 package stroom.about.client;
 
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -31,18 +29,11 @@ import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.menu.client.presenter.Separator;
 
 public class AboutPlugin extends Plugin {
-    public interface AboutResources extends ClientBundle {
-        ImageResource about();
-    }
-
-    private final AboutResources resources;
     private final Provider<AboutPresenter> provider;
 
     @Inject
-    public AboutPlugin(final EventBus eventBus, final AboutResources resources,
-                       final Provider<AboutPresenter> provider) {
+    public AboutPlugin(final EventBus eventBus, final Provider<AboutPresenter> provider) {
         super(eventBus);
-        this.resources = resources;
         this.provider = provider;
     }
 

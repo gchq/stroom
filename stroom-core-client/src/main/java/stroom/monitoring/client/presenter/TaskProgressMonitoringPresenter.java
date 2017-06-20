@@ -167,7 +167,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                         popupPosition, null);
             }
         };
-        getView().addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
+        getView().addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         // Add Handlers
         column.setFieldUpdater((index, object, value) -> {

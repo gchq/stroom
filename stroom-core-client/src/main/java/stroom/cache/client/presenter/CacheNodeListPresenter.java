@@ -125,7 +125,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                         popupPosition, null);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
+        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
     private String getInfoHtml(final CacheNodeRow row) {

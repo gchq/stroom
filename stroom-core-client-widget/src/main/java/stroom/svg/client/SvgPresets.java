@@ -31,6 +31,7 @@ public final class SvgPresets {
     public static final SvgPreset EDIT = new SvgPreset("images/edit.svg", "Edit", false);
     public static final SvgPreset ERROR = new SvgPreset("images/error.svg", "Error", true);
     public static final SvgPreset EXPLORER = new SvgPreset("images/explorer.svg", "Explorer", true);
+    public static final SvgPreset FATAL = new SvgPreset("images/fatal.svg", "Fatal", true);
     public static final SvgPreset FEED = new SvgPreset("images/feed.svg", "Feed", true);
     public static final SvgPreset FAVOURITES = new SvgPreset("images/favourites.svg", "Favourites", false);
     public static final SvgPreset FILTER = new SvgPreset("images/filter.svg", "Filter", true);

@@ -240,7 +240,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 ShowPopupEvent.fire(IndexShardPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition, null);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
+        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
     private void addNodeColumn() {

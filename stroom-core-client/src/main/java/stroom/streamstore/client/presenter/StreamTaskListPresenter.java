@@ -109,7 +109,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                 ShowPopupEvent.fire(StreamTaskListPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition,
                         null);
             }
-        }, "<br/>", ColumnSizeConstants.GLYPH_COL);
+        }, "<br/>", ColumnSizeConstants.ICON_COL);
 
         getView().addResizableColumn(
                 new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_CREATE_TIME) {
