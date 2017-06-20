@@ -525,11 +525,11 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         dataGrid.setRowData(start, values);
     }
 
-    @Override
-    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
-                                     final ImageResource disabledImage, final boolean enabled) {
-        return buttonPanel.add(title, enabledImage, disabledImage, enabled);
-    }
+//    @Override
+//    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
+//                                     final ImageResource disabledImage, final boolean enabled) {
+//        return buttonPanel.add(title, enabledImage, disabledImage, enabled);
+//    }
 
     @Override
     public ButtonView addButton(final SvgPreset preset) {

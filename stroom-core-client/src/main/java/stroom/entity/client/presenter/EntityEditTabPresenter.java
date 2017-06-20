@@ -80,16 +80,16 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
     }
 
 
-    public ImageButtonView addButtonLeft(final String title, final ImageResource enabledImage,
-                                         final ImageResource disabledImage) {
-        if (leftButtons == null) {
-            leftButtons = new ButtonPanel();
-            addWidgetLeft(leftButtons);
-        }
-
-        final ImageButtonView button = leftButtons.add(title, enabledImage, disabledImage, true);
-        return button;
-    }
+//    public ImageButtonView addButtonLeft(final String title, final ImageResource enabledImage,
+//                                         final ImageResource disabledImage) {
+//        if (leftButtons == null) {
+//            leftButtons = new ButtonPanel();
+//            addWidgetLeft(leftButtons);
+//        }
+//
+//        final ImageButtonView button = leftButtons.add(title, enabledImage, disabledImage, true);
+//        return button;
+//    }
 
     public ButtonView addButtonLeft(final SvgPreset preset) {
         if (leftButtons == null) {
@@ -101,17 +101,17 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
         return leftButtons.add(preset);
     }
 
-    public ImageButtonView addButtonRight(final String title, final ImageResource enabledImage,
-                                          final ImageResource disabledImage) {
-        if (rightButtons == null) {
-            rightButtons = new ButtonPanel();
-            leftButtons.getElement().getStyle().setPaddingRight(1, Style.Unit.PX);
-            addWidgetLeft(rightButtons);
-        }
-
-        final ImageButtonView button = rightButtons.add(title, enabledImage, disabledImage, true);
-        return button;
-    }
+//    public ImageButtonView addButtonRight(final String title, final ImageResource enabledImage,
+//                                          final ImageResource disabledImage) {
+//        if (rightButtons == null) {
+//            rightButtons = new ButtonPanel();
+//            leftButtons.getElement().getStyle().setPaddingRight(1, Style.Unit.PX);
+//            addWidgetLeft(rightButtons);
+//        }
+//
+//        final ImageButtonView button = rightButtons.add(title, enabledImage, disabledImage, true);
+//        return button;
+//    }
 
     public void addTab(final TabData tab) {
         getView().getTabBar().addTab(tab);

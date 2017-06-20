@@ -35,6 +35,7 @@ public final class SvgPresets {
     public static final SvgPreset FEED = new SvgPreset("images/feed.svg", "Feed", true);
     public static final SvgPreset FAVOURITES = new SvgPreset("images/favourites.svg", "Favourites", false);
     public static final SvgPreset FILTER = new SvgPreset("images/filter.svg", "Filter", true);
+    public static final SvgPreset GENERATE = new SvgPreset("images/generate.svg", "Auto-generate roll-up permutations", true);
     public static final SvgPreset HELP = new SvgPreset("images/help.svg", "Help", true);
     public static final SvgPreset HISTORY = new SvgPreset("images/history.svg", "History", false);
     public static final SvgPreset INFO = new SvgPreset("images/info.svg", "Info", true);
@@ -53,6 +54,8 @@ public final class SvgPresets {
     public static final SvgPreset REMOVE = new SvgPreset("images/remove.svg", "Remove", false);
     public static final SvgPreset SAVE = new SvgPreset("images/save.svg", "Save", false);
     public static final SvgPreset SAVE_AS = new SvgPreset("images/saveas.svg", "Save As", true);
+    public static final SvgPreset SHARD_FLUSH = new SvgPreset("images/shard-flush.svg", "Flush Selected Shards", false);
+    public static final SvgPreset SHARD_CLOSE = new SvgPreset("images/shard-close.svg", "Close Selected Shards", false);
     public static final SvgPreset SPINNER = new SvgPreset("images/spinner.svg", null, true);
     public static final SvgPreset UNDO = new SvgPreset("images/undo.svg", "Undo", false);
     public static final SvgPreset UP = new SvgPreset("images/up.svg", "Up", false);

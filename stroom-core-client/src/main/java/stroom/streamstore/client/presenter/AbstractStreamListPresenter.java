@@ -535,10 +535,10 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
     }
 
-    public ImageButtonView add(final String title, final ImageResource enabledImage, final ImageResource disabledImage,
-                               final boolean enabled) {
-        return getView().addButton(title, enabledImage, disabledImage, enabled);
-    }
+//    public ImageButtonView add(final String title, final ImageResource enabledImage, final ImageResource disabledImage,
+//                               final boolean enabled) {
+//        return getView().addButton(title, enabledImage, disabledImage, enabled);
+//    }
 
     public ButtonView add(final SvgPreset preset) {
         return getView().addButton(preset);

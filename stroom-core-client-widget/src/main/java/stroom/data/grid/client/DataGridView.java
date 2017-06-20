@@ -51,7 +51,7 @@ public interface DataGridView<R> extends View, HasRows {
 
     void setColumnWidth(Column<R, ?> column, int width, Unit unit);
 
-    ImageButtonView addButton(String title, ImageResource enabledImage, ImageResource disabledImage, boolean enabled);
+//    ImageButtonView addButton(String title, ImageResource enabledImage, ImageResource disabledImage, boolean enabled);
 
     ButtonView addButton(SvgPreset preset);
 

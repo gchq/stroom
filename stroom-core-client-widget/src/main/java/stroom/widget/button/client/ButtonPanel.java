@@ -20,7 +20,6 @@ import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 import stroom.svg.client.SvgPreset;
 
@@ -49,12 +48,12 @@ public class ButtonPanel extends FlowPanel {
         setStyleName(resources.style().layout());
     }
 
-    public ImageButtonView add(final String title, final ImageResource enabledImage, final ImageResource disabledImage,
-            final boolean enabled) {
-        final ImageButton button = createButton(title, enabledImage, disabledImage, enabled);
-        add(button);
-        return button;
-    }
+//    public ImageButtonView add(final String title, final ImageResource enabledImage, final ImageResource disabledImage,
+//            final boolean enabled) {
+//        final ImageButton button = createButton(title, enabledImage, disabledImage, enabled);
+//        add(button);
+//        return button;
+//    }
 
 
     public ButtonView add(final SvgPreset preset) {
@@ -63,18 +62,18 @@ public class ButtonPanel extends FlowPanel {
         return button;
     }
 
-    private ImageButton createButton(final String title, final ImageResource enabledImage,
-            final ImageResource disabledImage, final boolean enabled) {
-        final ImageButton button = new ImageButton();
-        button.setTitle(title);
-        button.setEnabledImage(enabledImage);
-        button.setDisabledImage(disabledImage);
-        button.setEnabled(enabled);
-        if (vertical) {
-            button.getElement().getStyle().setDisplay(Display.BLOCK);
-        }
-        return button;
-    }
+//    private ImageButton createButton(final String title, final ImageResource enabledImage,
+//            final ImageResource disabledImage, final boolean enabled) {
+//        final ImageButton button = new ImageButton();
+//        button.setTitle(title);
+//        button.setEnabledImage(enabledImage);
+//        button.setDisabledImage(disabledImage);
+//        button.setEnabled(enabled);
+//        if (vertical) {
+//            button.getElement().getStyle().setDisplay(Display.BLOCK);
+//        }
+//        return button;
+//    }
 
     private SvgButton createButton(final SvgPreset preset) {
         final SvgButton button = SvgButton.create(preset);

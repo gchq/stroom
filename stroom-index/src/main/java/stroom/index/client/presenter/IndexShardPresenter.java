@@ -19,8 +19,6 @@ package stroom.index.client.presenter;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.inject.Inject;
@@ -49,10 +47,9 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ImageButtonView;
-import stroom.svg.client.SvgPresets;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -65,35 +62,25 @@ import java.util.Set;
 
 public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexShard>>
         implements Refreshable, HasRead<Index> {
-    public interface Resources extends ClientBundle {
-        ImageResource flush();
-
-        ImageResource flushDisabled();
-
-        ImageResource close();
-
-        ImageResource closeDisabled();
-    }
-
     private final TooltipPresenter tooltipPresenter;
     private final ClientDispatchAsync dispatcher;
     private ActionDataProvider<IndexShard> dataProvider;
     private ResultList<IndexShard> resultList = null;
     private final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-    private final ImageButtonView buttonFlush;
-    private final ImageButtonView buttonClose;
+    private final ButtonView buttonFlush;
+    private final ButtonView buttonClose;
     private final ButtonView buttonDelete;
     private Index index;
 
     @Inject
-    public IndexShardPresenter(final EventBus eventBus, final Resources resources,
+    public IndexShardPresenter(final EventBus eventBus,
                                final TooltipPresenter tooltipPresenter, final ClientDispatchAsync dispatcher) {
         super(eventBus, new DataGridViewImpl<>(false));
         this.tooltipPresenter = tooltipPresenter;
         this.dispatcher = dispatcher;
 
-        buttonFlush = getView().addButton("Flush Selected Shards", resources.flush(), resources.flushDisabled(), false);
-        buttonClose = getView().addButton("Close Selected Shards", resources.close(), resources.closeDisabled(), false);
+        buttonFlush = getView().addButton(SvgPresets.SHARD_FLUSH);
+        buttonClose = getView().addButton(SvgPresets.SHARD_CLOSE);
         buttonDelete = getView().addButton(SvgPresets.DELETE);
         buttonDelete.setTitle("Delete Selected Shards");
 

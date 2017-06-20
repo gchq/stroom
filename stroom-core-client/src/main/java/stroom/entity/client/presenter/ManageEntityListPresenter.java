@@ -16,7 +16,6 @@
 
 package stroom.entity.client.presenter;
 
-import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -26,9 +25,8 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ImageButtonView;
 import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonView;
 
 public class ManageEntityListPresenter<C extends BaseCriteria, E extends BaseEntity>
         extends MyPresenterWidget<DataGridView<E>> implements Refreshable {
@@ -39,10 +37,10 @@ public class ManageEntityListPresenter<C extends BaseCriteria, E extends BaseEnt
         super(eventBus, new DataGridViewImpl<E>(true));
     }
 
-    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
-                                     final ImageResource disabledImage, final boolean enabled) {
-        return getView().addButton(title, enabledImage, disabledImage, enabled);
-    }
+//    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
+//                                     final ImageResource disabledImage, final boolean enabled) {
+//        return getView().addButton(title, enabledImage, disabledImage, enabled);
+//    }
 
 
     public ButtonView addButton(final SvgPreset preset) {
