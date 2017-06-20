@@ -43,7 +43,7 @@ public class ServiceDiscoveryManager {
     private final AtomicReference<ServiceDiscovery<String>> serviceDiscoveryRef = new AtomicReference<>();
     private final List<Consumer<ServiceDiscovery<String>>> curatorStartupListeners = new ArrayList<>();
 
-    private HealthCheck.Result health;
+    private volatile HealthCheck.Result health;
     private final List<Closeable> closeables = new ArrayList<>();
 
     @SuppressWarnings("unused")
@@ -52,13 +52,18 @@ public class ServiceDiscoveryManager {
         this.stroomPropertyService = stroomPropertyService;
         this.zookeeperUrl = stroomPropertyService.getProperty(PROP_KEY_ZOOKEEPER_QUORUM);
 
-        health = HealthCheck.Result.unhealthy("Waiting for Curator connection");
+        health = HealthCheck.Result.unhealthy("Initialising Curator Connection...");
 
         //try and start the connection with ZK in another thread to prevent connection problems from stopping the bean
         //creation and application startup, then start ServiceDiscovery and notify any listeners
         CompletableFuture.runAsync(this::startCurator)
                 .thenRun(this::startServiceDiscovery)
-                .thenRun(this::notifyListeners);
+                .thenRun(this::notifyListeners)
+                .exceptionally(throwable -> {
+                    LOGGER.error("Error initialising service discovery", throwable);
+                    health = HealthCheck.Result.unhealthy("Failed to initialise service discovery due to error: " + throwable.getMessage());
+                    return null;
+                });
     }
 
     public Optional<ServiceDiscovery<String>> getServiceDiscovery() {
@@ -86,6 +91,7 @@ public class ServiceDiscoveryManager {
         if (!wasSet) {
             LOGGER.error("Attempt to set curatorFrameworkRef when already set");
         } else {
+            health = HealthCheck.Result.unhealthy("Curator client started, initialising service discovery...");
             LOGGER.info("Started Curator client using Zookeeper at '{}'", zookeeperUrl);
         }
     }
@@ -143,7 +149,7 @@ public class ServiceDiscoveryManager {
         if (serviceDiscovery != null) {
             try {
                 String services = serviceDiscovery.queryForNames().stream()
-                        .collect(Collectors.joining(","));
+                        .collect(Collectors.joining(", "));
                 return HealthCheck.Result.healthy("Running. Services found: " + services);
 
             } catch (Exception e) {

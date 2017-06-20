@@ -38,7 +38,7 @@ public class ServiceDiscoveryRegistrar {
         this.hostNameOrIpAddress = getHostOrIp(stroomPropertyService);
         this.servicePort = stroomPropertyService.getIntProperty(PROP_KEY_SERVICE_PORT, 8080);
 
-        health = HealthCheck.Result.unhealthy("Waiting for Curator connection...");
+        health = HealthCheck.Result.unhealthy("Not yet initialised...");
         this.serviceDiscoveryManager.registerStartupListener(this::curatorStartupListener);
     }
 
