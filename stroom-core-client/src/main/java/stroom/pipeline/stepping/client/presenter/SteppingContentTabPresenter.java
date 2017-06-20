@@ -123,7 +123,7 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
 
     @Override
     public Icon getIcon() {
-        return new SvgIcon(ImageUtil.getImageURL() + "/stepping.svg", 18, 18);
+        return new SvgIcon(ImageUtil.getImageURL() + "stepping.svg", 18, 18);
     }
 
     @Override

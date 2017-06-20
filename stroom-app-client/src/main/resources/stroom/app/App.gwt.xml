@@ -95,7 +95,6 @@
 
   <!-- Include new data controls -->
   <inherits name="stroom.data.Data" />
-  <inherits name="stroom.data.tree.Tree" />
   <inherits name="stroom.data.grid.Grid" />
   <inherits name="stroom.data.table.Table" />
   <inherits name="stroom.data.pager.Pager" />

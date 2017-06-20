@@ -49,19 +49,19 @@ import stroom.entity.client.event.ShowSaveAsEntityDialogEvent;
 import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.explorer.shared.DocumentType;
 import stroom.security.client.ClientSecurityContext;
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgIcon;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.util.client.ImageUtil;
 import stroom.util.client.RandomId;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.svg.client.SvgPreset;
-import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.svg.client.Icon;
-import stroom.widget.tab.client.presenter.ImageIcon;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -368,7 +368,7 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
 
     @Override
     public Icon getIcon() {
-        return ImageIcon.create(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getType() + ".svg");
+        return new SvgIcon(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getType() + ".svg", 18, 18);
     }
 
     @Override
