@@ -37,4 +37,12 @@ public class SvgPreset extends SvgIcon {
     public boolean isEnabled() {
         return enabled;
     }
+
+    public SvgPreset title(final String title) {
+        return new SvgPreset(getUrl(), getWidth(), getHeight(), title, isEnabled());
+    }
+
+    public SvgPreset enabled(final boolean enabled) {
+        return new SvgPreset(getUrl(), getWidth(), getHeight(), getTitle(), enabled);
+    }
 }

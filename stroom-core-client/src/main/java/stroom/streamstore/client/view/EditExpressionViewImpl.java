@@ -16,7 +16,6 @@
 
 package stroom.streamstore.client.view;
 
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.ProvidesResize;
@@ -26,10 +25,9 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.streamstore.client.presenter.EditExpressionPresenter.EditExpressionView;
+import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ImageButtonView;
-import stroom.svg.client.SvgPreset;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class EditExpressionViewImpl extends ViewImpl implements EditExpressionView, RequiresResize, ProvidesResize {
@@ -53,12 +51,6 @@ public class EditExpressionViewImpl extends ViewImpl implements EditExpressionVi
     @Override
     public void onResize() {
         ((RequiresResize) widget).onResize();
-    }
-
-    @Override
-    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
-                                     final ImageResource disabledImage, final boolean enabled) {
-        return buttonPanel.add(title, enabledImage, disabledImage, enabled);
     }
 
     @Override

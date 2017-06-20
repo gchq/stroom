@@ -103,7 +103,7 @@ public class FolderRootPlugin extends Plugin implements TabData {
 
     @Override
     public Icon getIcon() {
-        return new SvgIcon(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + FolderService.ROOT, 18, 19);
+        return new SvgIcon(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + FolderService.ROOT, 18, 18);
     }
 
     @Override

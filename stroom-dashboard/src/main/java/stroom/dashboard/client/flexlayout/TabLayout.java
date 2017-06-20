@@ -81,13 +81,13 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
 
         settings = new Button();
         settings.setStyleName("fa-button");
-        settings.setHTML("<i class=\"face fa fa-cog settingsButton\"></i>");
+        settings.setHTML("<img src=\"images/settings-grey.svg\" class=\"face settingsButton\" />");
         settings.setTitle("Settings");
         buttons.add(settings);
 
         close = new Button();
         close.setStyleName("fa-button");
-        close.setHTML("<i class=\"face fa fa-times closeButton\"></i>");
+        close.setHTML("<img src=\"images/close-grey.svg\" class=\"face closeButton\" />");
         close.setTitle("Close");
         buttons.add(close);
 

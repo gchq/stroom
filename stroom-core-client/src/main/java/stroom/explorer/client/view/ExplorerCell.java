@@ -16,7 +16,6 @@ import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import stroom.explorer.shared.ExplorerData;
 import stroom.util.client.ImageUtil;
-import stroom.svg.client.SvgImage;
 
 public class ExplorerCell extends AbstractCell<ExplorerData> {
     public interface Style extends CssResource {
@@ -29,18 +28,14 @@ public class ExplorerCell extends AbstractCell<ExplorerData> {
 
         String expander();
 
+        String expanderIcon();
+
         String icon();
 
         String text();
     }
 
     interface Resources extends ClientBundle {
-        ImageResource open();
-
-        ImageResource closed();
-
-        ImageResource leaf();
-
         @Source(Style.DEFAULT_CSS)
         Style style();
     }
@@ -98,10 +93,10 @@ public class ExplorerCell extends AbstractCell<ExplorerData> {
                         expanderPadding += 13;
                         break;
                     case OPEN:
-                        expanderIcon = getImageHtml(resources.open());
+                        expanderIcon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-open.svg"));
                         break;
                     case CLOSED:
-                        expanderIcon = getImageHtml(resources.closed());
+                        expanderIcon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-closed.svg"));
                         break;
                 }
             }

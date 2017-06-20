@@ -43,6 +43,7 @@ public class SvgButton extends ButtonBase implements ButtonView {
      */
     private boolean allowClick;
 
+    private final Element face;
     private final SvgPreset preset;
 
     public static SvgButton create(final SvgPreset preset) {
@@ -51,23 +52,25 @@ public class SvgButton extends ButtonBase implements ButtonView {
     }
 
     private SvgButton(final SvgPreset preset) {
-        super(Document.get().createImageElement());
+        super(Document.get().createDivElement());
         this.preset = preset;
 
         sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
-//        getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
+        getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
 
-        getElement().setAttribute("src", preset.getUrl());
+        getElement().setClassName("fa-button");
 
+        face = Document.get().createPushButtonElement();
+        face.setClassName("face");
 
+        getElement().appendChild(face);
 
-//        setIcon(preset.getUrl());
-        setWidth(preset.getWidth() + "px");
-        setHeight(preset.getHeight() + "px");
+        face.setInnerHTML("<img class=\"icon\" src=\"" + preset.getUrl() + "\" />");
+
+//        setWidth(preset.getWidth() + "px");
+//        setHeight(preset.getHeight() + "px");
         setTitle(preset.getTitle());
         setEnabled(preset.isEnabled());
-
-        getElement().setClassName("svg-button");
     }
 
     @Override

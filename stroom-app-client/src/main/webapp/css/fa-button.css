@@ -15,12 +15,14 @@
  */
 
 .fa-button {
+    width: 18px;
+    height: 18px;
 	display: inline-block;
 	border: none;
 	outline: none;
 	background: none;
 	margin: 0px;
-	padding: 0px;
+	padding: 1px;
 	cursor: default;
 	text-decoration: none;
 }
@@ -31,8 +33,8 @@
 	background: none;
 	cursor: pointer;
 	text-decoration: none;
-	min-width: 16px;
-	min-height: 16px;
+	width: 16px;
+	height: 16px;
 	margin: auto;
 	padding: 0;
 	overflow: hidden;
@@ -40,6 +42,11 @@
 	color: #5398ff;
 	font-size: 16px;
 	opacity: 1;
+}
+
+.fa-button .icon {
+    width: 16px;
+    height: 16px;
 }
 
 .fa-button .face--disabled {

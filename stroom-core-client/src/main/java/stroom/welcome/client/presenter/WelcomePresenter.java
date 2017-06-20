@@ -70,7 +70,7 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
 
     @Override
     public Icon getIcon() {
-        return new SvgIcon("/images/oo.svg", 188, 18);
+        return new SvgIcon("images/oo.svg", 188, 18);
     }
 
     @Override

@@ -11,7 +11,12 @@ vertical-align: top;
 }
 
 .expander {
-padding-top: 2px;
+padding-top: 1px;
+}
+
+.expanderIcon {
+width: 14px;
+height: 14px;
 }
 
 .icon {

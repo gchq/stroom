@@ -30,11 +30,16 @@ import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.FolderService;
+import stroom.explorer.shared.DocumentType;
 import stroom.streamstore.client.presenter.ClassificationUiHandlers;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.svg.client.Icon;
+import stroom.svg.client.SvgIcon;
+import stroom.svg.client.SvgPresets;
+import stroom.util.client.ImageUtil;
 import stroom.widget.tab.client.presenter.ImageIcon;
 
 public class SteppingContentTabPresenter extends ContentTabPresenter<ClassificationWrapperView>
@@ -118,7 +123,7 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
 
     @Override
     public Icon getIcon() {
-        return ImageIcon.create(TAB_IMAGE_URL + "stepping.png");
+        return new SvgIcon(ImageUtil.getImageURL() + "/stepping.svg", 18, 18);
     }
 
     @Override

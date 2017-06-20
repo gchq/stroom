@@ -21,8 +21,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -59,9 +57,8 @@ import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.widget.button.client.ButtonView;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
@@ -95,19 +92,19 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private ButtonView streamListUpload;
     private ButtonView streamListDownload;
     private ButtonView streamListDelete;
-    private ImageButtonView streamListProcess;
+    private ButtonView streamListProcess;
     private ButtonView streamListUndelete;
     private ButtonView streamRelationListDownload;
     private ButtonView streamRelationListDelete;
     private ButtonView streamRelationListUndelete;
-    private ImageButtonView streamRelationListProcess;
+    private ButtonView streamRelationListProcess;
 
     @Inject
     public StreamPresenter(final EventBus eventBus, final StreamView view, final LocationManager locationManager,
                            final StreamListPresenter streamListPresenter,
                            final StreamRelationListPresenter streamRelationListPresenter, final DataPresenter dataPresenter,
                            final Provider<StreamFilterPresenter> streamListFilterPresenter,
-                           final Provider<StreamUploadPresenter> streamUploadPresenter, final Resources resources,
+                           final Provider<StreamUploadPresenter> streamUploadPresenter,
                            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.locationManager = locationManager;
@@ -126,10 +123,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
         // Process
         if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
-            streamListProcess = streamListPresenter.add("Process", resources.pipeline(), resources.pipelineDisabled(),
-                    false);
-            streamRelationListProcess = streamRelationListPresenter.add("Process", resources.pipeline(),
-                    resources.pipelineDisabled(), false);
+            streamListProcess = streamListPresenter.add(SvgPresets.PROCESS);
+            streamRelationListProcess = streamRelationListPresenter.add(SvgPresets.PROCESS);
         }
 
         // Delete, Undelete, DE-duplicate
@@ -576,12 +571,6 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
     public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
         dataPresenter.setClassificationUiHandlers(classificationUiHandlers);
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource pipeline();
-
-        ImageResource pipelineDisabled();
     }
 
     public interface StreamView extends View {

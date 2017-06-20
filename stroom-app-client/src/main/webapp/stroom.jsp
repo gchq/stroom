@@ -30,9 +30,6 @@
 	<!-- <link rel="stylesheet" href="mdl/material.min.css" /> -->
     <!-- <script type="text/javascript" src='mdl/material.min.js'></script> -->
 
-	<!-- Font Awesome -->
-	<link rel="stylesheet" type="text/css" href="css/font-awesome.css">
-
     <!-- Roboto Font -->
 	<link rel="stylesheet" type="text/css" href="css/roboto.css">
 
@@ -108,7 +105,7 @@
 	  </div>
 	</div>
 
-	<object id="logo" style="position:absolute;top:0px;left:0px;width:146px;height:35px" type="image/svg+xml" data="images/logo.svg" />
+	<img id="logo" style="position:absolute;top:0px;left:0px;width:146px;height:35px" src="images/logo.svg" />
   
     <noscript>
       <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color:white; border: 1px solid red; padding: 4px; font-family: sans-serif">

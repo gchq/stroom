@@ -17,8 +17,6 @@
 package stroom.dashboard.client.query;
 
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -62,12 +60,11 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamtask.shared.StreamProcessor;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ImageButtonView;
-import stroom.svg.client.SvgPreset;
-import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -77,7 +74,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.presenter.ImageIcon;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -97,24 +93,23 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final QueryFavouritesPresenter favouritesPresenter;
     private final Provider<EntityChooser> pipelineSelection;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
-    private final Resources resources;
     private final MenuListPresenter menuListPresenter;
     private final ClientDispatchAsync dispatcher;
 
     private final IndexLoader indexLoader;
     private final SearchModel searchModel;
-    private final ImageButtonView addOperatorButton;
+    private final ButtonView addOperatorButton;
     private final ButtonView addTermButton;
     private final ButtonView disableItemButton;
     private final ButtonView deleteItemButton;
-    private final ImageButtonView historyButton;
-    private final ImageButtonView favouriteButton;
-    private final ImageButtonView warningsButton;
+    private final ButtonView historyButton;
+    private final ButtonView favouriteButton;
+    private final ButtonView warningsButton;
 
     private String params;
     private QueryData queryData;
     private String currentWarnings;
-    private ImageButtonView processButton;
+    private ButtonView processButton;
     private long defaultProcessorTimeLimit = DEFAULT_TIME_LIMIT;
     private long defaultProcessorRecordLimit = DEFAULT_RECORD_LIMIT;
     private boolean initialised;
@@ -126,7 +121,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final ExpressionTreePresenter expressionPresenter, final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
                           final Provider<EntityChooser> pipelineSelection,
-                          final ProcessorLimitsPresenter processorLimitsPresenter, final Resources resources,
+                          final ProcessorLimitsPresenter processorLimitsPresenter,
                           final MenuListPresenter menuListPresenter, final ClientDispatchAsync dispatcher,
                           final ClientSecurityContext securityContext, final ClientPropertyCache clientPropertyCache,
                           final TimeZones timeZones) {
@@ -137,7 +132,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.pipelineSelection = pipelineSelection;
         this.processorLimitsPresenter = processorLimitsPresenter;
         this.menuListPresenter = menuListPresenter;
-        this.resources = resources;
         this.dispatcher = dispatcher;
 
         view.setExpressionView(expressionPresenter.getView());
@@ -157,17 +151,17 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
         addTermButton = view.addButton(SvgPresets.ADD);
         addTermButton.setTitle("Add Term");
-        addOperatorButton = view.addButton("Add Operator", resources.addOperator(), resources.addOperator(), true);
+        addOperatorButton = view.addButton(SvgPresets.OPERATOR);
         disableItemButton = view.addButton(SvgPresets.DISABLE);
         deleteItemButton = view.addButton(SvgPresets.DELETE);
-        historyButton = view.addButton("History", resources.history(), null, true);
-        favouriteButton = view.addButton("Favourites", resources.favourite(), null, true);
+        historyButton = view.addButton(SvgPresets.HISTORY.enabled(true));
+        favouriteButton = view.addButton(SvgPresets.FAVOURITES.enabled(true));
 
         if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
-            processButton = view.addButton("Process", resources.pipeline(), resources.pipelineDisabled(), true);
+            processButton = view.addButton(SvgPresets.PROCESS.enabled(true));
         }
 
-        warningsButton = view.addButton("Show Warnings", resources.warning(), null, true);
+        warningsButton = view.addButton(SvgPresets.ALERT.title("Show Warnings"));
         warningsButton.setVisible(false);
 
         indexLoader = new IndexLoader(getEventBus(), dispatcher);
@@ -587,7 +581,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
         final List<Item> menuItems = new ArrayList<Item>();
         menuItems.add(new IconMenuItem(1, SvgPresets.ADD, SvgPresets.ADD, "Add Term", null, true, () -> addTerm()));
-        menuItems.add(new IconMenuItem(2, ImageIcon.create(resources.addOperator()), ImageIcon.create(resources.addOperator()), "Add Operator", null,
+        menuItems.add(new IconMenuItem(2, SvgPresets.OPERATOR, SvgPresets.OPERATOR, "Add Operator", null,
                 true, () -> addOperator()));
         menuItems.add(new IconMenuItem(3, SvgPresets.DISABLE, SvgPresets.DISABLE, getEnableDisableText(),
                 null, hasSelection, () -> disable()));
@@ -629,9 +623,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     public interface QueryView extends View, HasUiHandlers<QueryUiHandlers> {
-        ImageButtonView addButton(String title, ImageResource enabledImage, ImageResource disabledImage,
-                                  boolean enabled);
-
         ButtonView addButton(SvgPreset preset);
 
         void setExpressionView(View view);
@@ -639,21 +630,5 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         void setMode(SearchModel.Mode mode);
 
         void setEnabled(boolean enabled);
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource addOperator();
-
-        ImageResource search();
-
-        ImageResource history();
-
-        ImageResource favourite();
-
-        ImageResource pipeline();
-
-        ImageResource pipelineDisabled();
-
-        ImageResource warning();
     }
 }

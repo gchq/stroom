@@ -45,6 +45,6 @@ public class DataReceiptPolicyPlugin extends MonitoringPlugin<DataReceiptPolicyP
     }
 
     private MenuItem createDataRetentionMenuItem() {
-        return new IconMenuItem(50, SvgPresets.HISTORY, SvgPresets.HISTORY, "Data Receipt", null, true, () -> open());
+        return new IconMenuItem(50, SvgPresets.FEED, SvgPresets.FEED, "Data Receipt", null, true, () -> open());
     }
 }

@@ -31,6 +31,9 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.SafeUriHostedModeUtils;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.ui.Image;
 import stroom.data.table.client.CellTableViewImpl.MenuResources;
 import stroom.svg.client.Icon;
@@ -110,7 +113,7 @@ public class MenuItemCell extends AbstractCell<Item> {
             SafeHtml inner(String className, SafeHtml icon);
 
             @Template("<img class=\"{0}\" src=\"{1}\">")
-            SafeHtml icon(String className, String url);
+            SafeHtml icon(String className, SafeUri url);
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml text(String className, SafeHtml text);
@@ -154,7 +157,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                         }
                     } else if (enabledIcon != null && enabledIcon instanceof SvgPreset) {
                         final SvgPreset glyphIcon = (SvgPreset) enabledIcon;
-                        inner.append(TEMPLATE.icon(RESOURCES.style().icon(), glyphIcon.getUrl()));
+                        inner.append(TEMPLATE.icon(RESOURCES.style().icon(), UriUtils.fromString(glyphIcon.getUrl())));
                     } else {
                         inner.append(TEMPLATE.inner(RESOURCES.style().icon(), SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }
@@ -168,7 +171,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                         }
                     } else if (enabledIcon != null && enabledIcon instanceof SvgPreset) {
                         final SvgPreset glyphIcon = (SvgPreset) enabledIcon;
-                        inner.append(TEMPLATE.icon(RESOURCES.style().icon() + " " + RESOURCES.style().disabled(), glyphIcon.getUrl()));
+                        inner.append(TEMPLATE.icon(RESOURCES.style().icon() + " " + RESOURCES.style().disabled(), UriUtils.fromString(glyphIcon.getUrl())));
                     } else {
                         inner.append(TEMPLATE.inner(RESOURCES.style().icon(), SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }

@@ -17,17 +17,15 @@
 package stroom.pipeline.processor.client.presenter;
 
 import com.google.gwt.cell.client.FieldUpdater;
-import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.cell.client.NumberCell;
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
+import stroom.cell.info.client.SvgCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.client.TickBoxCell.Appearance;
 import stroom.cell.tickbox.client.TickBoxCell.DefaultAppearance;
@@ -56,6 +54,8 @@ import stroom.streamstore.client.presenter.StreamTooltipPresenterUtil;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
@@ -72,7 +72,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
         implements Refreshable, HasRead<BaseEntity> {
     private final ActionDataProvider<SharedObject> dataProvider;
     private final TooltipPresenter tooltipPresenter;
-    private final Resources resources;
     private final FetchProcessorAction action;
     private final SaveQueue<StreamProcessor> streamProcessorSaveQueue;
     private final SaveQueue<StreamProcessorFilter> streamProcessorFilterSaveQueue;
@@ -85,10 +84,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     @Inject
     public ProcessorListPresenter(final EventBus eventBus,
                                   final TooltipPresenter tooltipPresenter,
-                                  final ClientDispatchAsync dispatcher,
-                                  final Resources resources) {
+                                  final ClientDispatchAsync dispatcher) {
         super(eventBus, new DataGridViewImpl<>(true));
-        this.resources = resources;
         this.tooltipPresenter = tooltipPresenter;
 
         action = new FetchProcessorAction();
@@ -223,14 +220,14 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     }
 
     private void addIconColumn() {
-        getView().addColumn(new Column<SharedObject, ImageResource>(new ImageResourceCell()) {
+        getView().addColumn(new Column<SharedObject, SvgPreset>(new SvgCell()) {
             @Override
-            public ImageResource getValue(final SharedObject row) {
-                ImageResource icon = null;
+            public SvgPreset getValue(final SharedObject row) {
+                SvgPreset icon = null;
                 if (row instanceof StreamProcessorFilterRow) {
-                    icon = resources.filter();
+                    icon = SvgPresets.FILTER.enabled(true);
                 } else if (row instanceof StreamProcessorRow) {
-                    icon = resources.pipeline();
+                    icon = SvgPresets.PROCESS.enabled(true);
                 }
                 return icon;
             }
@@ -527,11 +524,5 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
         } else {
             return "";
         }
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource pipeline();
-
-        ImageResource filter();
     }
 }

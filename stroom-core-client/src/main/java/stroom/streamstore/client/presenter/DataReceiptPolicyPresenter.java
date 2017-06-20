@@ -321,7 +321,7 @@ public class DataReceiptPolicyPresenter extends ContentTabPresenter<DataReceiptP
 
     @Override
     public Icon getIcon() {
-        return SvgPresets.HISTORY;
+        return SvgPresets.FEED;
     }
 
     @Override

@@ -17,8 +17,6 @@
 package stroom.streamstore.client.presenter;
 
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -34,10 +32,9 @@ import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.shared.ExpressionItem;
 import stroom.query.shared.ExpressionOperator;
 import stroom.streamstore.shared.FetchFieldsAction;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ImageButtonView;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -46,29 +43,26 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.presenter.ImageIcon;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPresenter.EditExpressionView> implements HasDirtyHandlers {
     private final ExpressionTreePresenter expressionPresenter;
-    private final Resources resources;
     private final MenuListPresenter menuListPresenter;
 
-    private final ImageButtonView addOperatorButton;
+    private final ButtonView addOperatorButton;
     private final ButtonView addTermButton;
     private final ButtonView disableItemButton;
     private final ButtonView deleteItemButton;
 
     @Inject
     public EditExpressionPresenter(final EventBus eventBus, final EditExpressionView view,
-                                   final ExpressionTreePresenter expressionPresenter, final Resources resources,
+                                   final ExpressionTreePresenter expressionPresenter,
                                    final MenuListPresenter menuListPresenter, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.expressionPresenter = expressionPresenter;
         this.menuListPresenter = menuListPresenter;
-        this.resources = resources;
 
         view.setExpressionView(expressionPresenter.getView());
 
@@ -86,7 +80,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
         addTermButton = view.addButton(SvgPresets.ADD);
         addTermButton.setTitle("Add Term");
-        addOperatorButton = view.addButton("Add Operator", resources.addOperator(), resources.addOperator(), true);
+        addOperatorButton = view.addButton(SvgPresets.OPERATOR);
         disableItemButton = view.addButton(SvgPresets.DISABLE);
         deleteItemButton = view.addButton(SvgPresets.DELETE);
 
@@ -180,7 +174,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
         final List<Item> menuItems = new ArrayList<Item>();
         menuItems.add(new IconMenuItem(1, SvgPresets.ADD, SvgPresets.ADD, "Add Term", null, true, () -> addTerm()));
-        menuItems.add(new IconMenuItem(2, ImageIcon.create(resources.addOperator()), ImageIcon.create(resources.addOperator()), "Add Operator", null,
+        menuItems.add(new IconMenuItem(2, SvgPresets.OPERATOR, SvgPresets.OPERATOR, "Add Operator", null,
                 true, () -> addOperator()));
         menuItems.add(new IconMenuItem(3, SvgPresets.DISABLE, SvgPresets.DISABLE, getEnableDisableText(),
                 null, hasSelection, () -> disable()));
@@ -233,15 +227,8 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     }
 
     public interface EditExpressionView extends View {
-        ImageButtonView addButton(String title, ImageResource enabledImage, ImageResource disabledImage,
-                                  boolean enabled);
-
         ButtonView addButton(SvgPreset preset);
 
         void setExpressionView(View view);
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource addOperator();
     }
 }
