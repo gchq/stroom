@@ -95,7 +95,7 @@ ext.libs = [
     ehcache_spring_annotations: "com.googlecode.ehcache-spring-annotations:ehcache-spring-annotations:1.2.0",
     flyway_core: "org.flywaydb:flyway-core:4.0.3",
     gin: "com.google.gwt.inject:gin:2.1.2",
-    guava: "com.google.guava:guava:20.0",
+    guava: "com.google.guava:guava:20.0", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
     guice: "com.google.inject:guice:3.0",
     gwt_dev: "com.google.gwt:gwt-dev:$versions.gwt",
     gwt_servlet: "com.google.gwt:gwt-servlet:$versions.gwt",
@@ -195,6 +195,13 @@ subprojects {
             exclude group: "org.slf4j", module: "slf4j-log4j12"
             exclude group: "log4j", module: "log4j"
             exclude module: 'xercesImpl'
+
+            resolutionStrategy {
+                forcedModules = [
+                    //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
+                    libs.guava
+                ]
+            }
         }
     }
 
