@@ -39,7 +39,7 @@ ext.versions = [
     stroomStats: 'v0.4.0-alpha',
 
     //------------3rd-party------------
-    curator: '2.11.0', //must be chosen to be compatible with the ZK version in CDH 5.10
+    curator: '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
     dropwizard: '1.1.0', 
     dropwizard_metrics: '3.1.2', //should be kept in step with dropwizard
     gwt: '2.8.0',
@@ -96,7 +96,7 @@ ext.libs = [
     ehcache_spring_annotations: "com.googlecode.ehcache-spring-annotations:ehcache-spring-annotations:1.2.0",
     flyway_core: "org.flywaydb:flyway-core:4.0.3",
     gin: "com.google.gwt.inject:gin:2.1.2",
-    guava: "com.google.guava:guava:20.0", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
+    guava: "com.google.guava:guava:21.0", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
     guice: "com.google.inject:guice:3.0",
     gwt_dev: "com.google.gwt:gwt-dev:$versions.gwt",
     gwt_servlet: "com.google.gwt:gwt-servlet:$versions.gwt",
@@ -200,7 +200,7 @@ subprojects {
             resolutionStrategy {
                 forcedModules = [
                     //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
-                    libs.guava
+                    //libs.guava
                 ]
             }
         }
