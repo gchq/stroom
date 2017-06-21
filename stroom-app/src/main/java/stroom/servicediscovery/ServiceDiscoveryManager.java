@@ -2,6 +2,7 @@ package stroom.servicediscovery;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Preconditions;
+import io.vavr.Tuple2;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -19,10 +20,12 @@ import javax.inject.Singleton;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Component
 @Singleton
@@ -150,10 +153,21 @@ public class ServiceDiscoveryManager implements HasHealthCheck {
             try {
                 List<String> services = new ArrayList<>(serviceDiscovery.queryForNames());
 
+                Map<String, List<String>> serviceInstanceMap = Preconditions.checkNotNull(services).stream()
+                        .flatMap(serviceName -> {
+                            try {
+                                return serviceDiscovery.queryForInstances(serviceName).stream();
+                            } catch (Exception e) {
+                                throw new RuntimeException("Error getting service instances for " + serviceName);
+                            }
+                        })
+                        .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(), serviceInstance.buildUriSpec()))
+                        .collect(Collectors.groupingBy(Tuple2::_1, Collectors.mapping(Tuple2::_2, Collectors.toList())));
+
                 return HealthCheck.Result.builder()
                         .healthy()
-                        .withMessage("Running")
-                        .withDetail("services", services)
+                        .withMessage("Service discovery running")
+                        .withDetail("service-instances", serviceInstanceMap)
                         .build();
 
             } catch (Exception e) {

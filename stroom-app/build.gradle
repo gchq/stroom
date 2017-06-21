@@ -92,6 +92,7 @@ dependencies {
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_web
+    compile libs.vavr
     compile libs.ws_rs_api
 
     runtime libs.shiro_web

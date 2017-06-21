@@ -17,10 +17,13 @@ import stroom.resources.ResourcePaths;
 import javax.inject.Inject;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
+/**
+ * Responsible for registering stroom's various externally exposed services with service discovery
+ */
 @Component
 public class ServiceDiscoveryRegistrar implements HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryRegistrar.class);
@@ -70,19 +73,19 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("Successfully registered the following services: ");
 
-            List<String> services = new ArrayList<>();
+            Map<String, String> services = new TreeMap<>();
             Arrays.stream(RegisteredService.values())
                     .forEach(registeredService -> {
-                        registerResource(
+                        ServiceInstance<String> serviceInstance = registerResource(
                                 registeredService,
                                 serviceDiscovery);
-                        services.add(registeredService.getVersionedServiceName());
+                        services.put(registeredService.getVersionedServiceName(), serviceInstance.buildUriSpec());
                     });
 
             health = HealthCheck.Result.builder()
                     .healthy()
                     .withMessage("Services registered")
-                    .withDetail("services", services)
+                    .withDetail("registered-services", services)
                     .build();
 
             LOGGER.info("All service instances created successfully.");
@@ -93,7 +96,7 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
         }
     }
 
-    private void registerResource(final RegisteredService registeredService,
+    private ServiceInstance<String> registerResource(final RegisteredService registeredService,
                                   final ServiceDiscovery<String> serviceDiscovery) {
         try {
             UriSpec uriSpec = new UriSpec("{scheme}://{address}:{port}" +
@@ -111,6 +114,7 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
             Preconditions.checkNotNull(serviceDiscovery).registerService(serviceInstance);
 
             LOGGER.info("Successfully registered '{}' service.", registeredService.getVersionedServiceName());
+            return serviceInstance;
         } catch (Exception e) {
             throw new RuntimeException("Failed to register service " + registeredService.getVersionedServiceName(), e);
         }
