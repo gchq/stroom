@@ -90,6 +90,7 @@ ext.libs = [
     dropwizard_jetty: "io.dropwizard:dropwizard-jetty:$versions.dropwizard", //was 1.0.6 now 1.1.0
     dropwizard_metrics_annotation: "io.dropwizard.metrics:metrics-annotation:$versions.dropwizard_metrics",
     dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks:$versions.dropwizard_metrics",
+    dropwizard_servlets: "io.dropwizard:dropwizard-servlets:$versions.dropwizard",
     dropwizard_testing: "io.dropwizard:dropwizard-testing:$versions.dropwizard",
     ehcache_core: "net.sf.ehcache:ehcache-core:2.6.11",
     ehcache_spring_annotations: "com.googlecode.ehcache-spring-annotations:ehcache-spring-annotations:1.2.0",

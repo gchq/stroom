@@ -79,6 +79,7 @@ dependencies {
     compile libs.dropwizard_jetty
     compile libs.dropwizard_metrics_annotation
     compile libs.dropwizard_metrics_healthchecks
+    compile libs.dropwizard_servlets
     compile libs.guava
     compile libs.jackson_annotations
     compile libs.javax_inject
