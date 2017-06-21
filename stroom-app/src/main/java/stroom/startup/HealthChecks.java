@@ -16,7 +16,6 @@
 
 package stroom.startup;
 
-import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,12 +44,7 @@ public class HealthChecks {
                 .forEach(resource -> {
                     String name = resource.getName() + HEALTH_CHECK_SUFFIX;
                     LOGGER.debug("Registering heath check {}", name);
-                    healthCheckRegistry.register(name, new HealthCheck() {
-                        @Override
-                        protected Result check() throws Exception {
-                            return ((HasHealthCheck) resource).getHealth();
-                        }
-                    });
+                    healthCheckRegistry.register(name, ((HasHealthCheck) resource).getHealthCheck());
                 });
 
         //register a listener to be called once the spring beans are available
@@ -74,12 +68,7 @@ public class HealthChecks {
         String name = serviceDiscoveryRegistrar.getClass().getName() + HEALTH_CHECK_SUFFIX;
         LOGGER.debug("Registering heath check {}", name);
 
-        healthCheckRegistry.register(name, new HealthCheck() {
-            @Override
-            protected Result check() throws Exception {
-                return serviceDiscoveryRegistrar.getHealth();
-            }
-        });
+        healthCheckRegistry.register(name, serviceDiscoveryRegistrar.getHealthCheck());
     }
 
     private static void registerServiceDiscoveryManager(final ApplicationContext applicationContext,
@@ -89,12 +78,7 @@ public class HealthChecks {
         String name = serviceDiscoveryManager.getClass().getName() + HEALTH_CHECK_SUFFIX;
         LOGGER.debug("Registering heath check {}", name);
 
-        healthCheckRegistry.register(name, new HealthCheck() {
-            @Override
-            protected Result check() throws Exception {
-                return serviceDiscoveryManager.getHealth();
-            }
-        });
+        healthCheckRegistry.register(name, serviceDiscoveryManager.getHealthCheck());
     }
 
     private static void registerLogLevels(final HealthCheckRegistry healthCheckRegistry) {

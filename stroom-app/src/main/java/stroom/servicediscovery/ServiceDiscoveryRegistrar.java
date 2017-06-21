@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
+import stroom.resources.HasHealthCheck;
 import stroom.resources.RegisteredService;
 import stroom.resources.ResourcePaths;
 
@@ -21,7 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Component
-public class ServiceDiscoveryRegistrar {
+public class ServiceDiscoveryRegistrar implements HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryRegistrar.class);
 
     private static final String PROP_KEY_SERVICE_HOST_OR_IP = "stroom.serviceDiscovery.servicesHostNameOrIpAddress";

@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
+import stroom.resources.HasHealthCheck;
 import stroom.util.spring.StroomShutdown;
 
 import javax.inject.Singleton;
@@ -25,7 +26,7 @@ import java.util.function.Consumer;
 
 @Component
 @Singleton
-public class ServiceDiscoveryManager {
+public class ServiceDiscoveryManager implements HasHealthCheck {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
 
