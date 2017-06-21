@@ -21,6 +21,7 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
+import stroom.logging.LogLevelInspector;
 import stroom.resources.HasHealthCheck;
 import stroom.servicediscovery.ServiceDiscoveryManager;
 import stroom.servicediscovery.ServiceDiscoveryRegistrar;
@@ -54,6 +55,8 @@ public class HealthChecks {
 
         //register a listener to be called once the spring beans are available
         servletMonitor.registerApplicationContextListener(createApplicationContextListener(healthCheckRegistry));
+
+        registerLogLevels(healthCheckRegistry);
     }
 
     private static Consumer<ApplicationContext> createApplicationContextListener(final HealthCheckRegistry healthCheckRegistry) {
@@ -92,6 +95,11 @@ public class HealthChecks {
                 return serviceDiscoveryManager.getHealth();
             }
         });
+    }
+
+    private static void registerLogLevels(final HealthCheckRegistry healthCheckRegistry) {
+
+        healthCheckRegistry.register(LogLevelInspector.class.getName(), LogLevelInspector.INSTANCE.getHealthCheck());
     }
 
     //TODO decide if we want this, if so need to add DropWizardMetrics to stroom-core-server
