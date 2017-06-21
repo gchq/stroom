@@ -74,6 +74,9 @@ public class StroomStatsFilter extends AbstractSamplingFilter {
     @Override
     public void endDocument() throws SAXException {
         super.endDocument();
+        //TODO here we just grab the whole xml document as a string and put that into a single producer record
+        //If the xml doc contains many individual events then we could parse the xml to look for each event element
+        //and send the xml of each event as a producerRecord async and call a flush or get futures here.
         try {
             String topic = topicNameFactory.getTopic(stroomStatsStoreEntity.getStatisticType());
             String recordKey = stroomStatsStoreEntity.getName();

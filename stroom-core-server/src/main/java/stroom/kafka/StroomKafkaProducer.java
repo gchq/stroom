@@ -1,10 +1,10 @@
 package stroom.kafka;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +13,10 @@ import org.springframework.stereotype.Component;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomShutdown;
 
+import java.io.IOException;
+import java.time.Instant;
 import java.util.Properties;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 /**
@@ -27,7 +30,9 @@ import java.util.function.Consumer;
 @Component
 @Scope(StroomScope.SINGLETON)
 public class StroomKafkaProducer {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomKafkaProducer.class);
+    private static final int TIME_BETWEEN_INIT_ATTEMPS_MS = 30_000;
 
     public enum FlushMode {
         FLUSH_ON_SEND,
@@ -38,6 +43,7 @@ public class StroomKafkaProducer {
 
     //instance of a kafka producer that will be shared by all threads
     private volatile Producer<String, String> producer = null;
+    private volatile Instant timeOfLastFailedInitAttempt = Instant.EPOCH;
 
     public StroomKafkaProducer(
             @Value("#{propertyConfigurer.getProperty('kafka.bootstrap.servers')}") final String bootstrapServers) {
@@ -47,27 +53,36 @@ public class StroomKafkaProducer {
 
     public void send(final ProducerRecord<String, String> record,
                      final FlushMode flushMode,
-                     final Consumer<Exception> exceptionConsumer) {
+                     final Consumer<Exception> exceptionHandler) {
         //kafka may not have been up on startup so ensure we have a producer instance now
         try {
             intiProducer();
 
-            try {
-                Preconditions.checkNotNull(producer).send(record, (recordMetadata, exception) -> {
+            if (producer != null) {
+                try {
+                    Future<RecordMetadata> future = producer.send(record, (recordMetadata, exception) -> {
 
-                    if (exception != null) {
-                        exceptionConsumer.accept(exception);
+                        if (exception != null) {
+                            exceptionHandler.accept(exception);
+                        }
+                        LOGGER.trace("Record sent to Kafka");
+                    });
+
+                    if (flushMode.equals(FlushMode.FLUSH_ON_SEND)) {
+                        future.get();
                     }
-                    LOGGER.trace("Record sent to Kafka");
-                });
-            } finally {
-                if (flushMode.equals(FlushMode.FLUSH_ON_SEND)) {
-                    producer.flush();
+
+                } catch (Exception e) {
+                    LOGGER.error("Error initialising kafka producer to " + bootstrapServers, e);
+                    exceptionHandler.accept(e);
                 }
+            } else {
+                exceptionHandler.accept(new IOException("The kafka producer is currently not initialised, " +
+                        "kafka may be down or the connection details incorrect"));
             }
         } catch (Exception e) {
             LOGGER.error("Error initialising kafka producer to " + bootstrapServers, e);
-            exceptionConsumer.accept(e);
+            exceptionHandler.accept(e);
         }
     }
 
@@ -83,7 +98,7 @@ public class StroomKafkaProducer {
     private void intiProducer() {
         if (producer == null) {
             synchronized (this) {
-                if (producer == null) {
+                if (producer == null && isOkToInitNow()) {
                     if (Strings.isNullOrEmpty(bootstrapServers)) {
                         LOGGER.error("Kafka is not properly configured: 'kafka.bootstrap.servers' is required.");
                     } else {
@@ -110,6 +125,14 @@ public class StroomKafkaProducer {
                 }
             }
         }
+    }
+
+    /**
+     * A check to prevent many process trying to repeatedly init a producer. This means init will only be attempted
+     * every 30s to prevent the logs being filled up if kafka is down
+     */
+    private boolean isOkToInitNow() {
+        return Instant.now().isAfter(timeOfLastFailedInitAttempt.plusMillis(TIME_BETWEEN_INIT_ATTEMPS_MS));
     }
 
     @StroomShutdown

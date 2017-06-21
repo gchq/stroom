@@ -23,7 +23,6 @@ class MultiServiceInternalStatisticsFacade implements InternalStatisticsFacade {
 
     @Override
     public void putEvents(List<InternalStatisticEvent> statisticEvents, Consumer<Throwable> exceptionHandler) {
-        ;
 
         try {
             //Group the events by service and docref
@@ -45,39 +44,22 @@ class MultiServiceInternalStatisticsFacade implements InternalStatisticsFacade {
                                                     Collectors.toList()))));
 
             serviceToEventsMapMap.entrySet().forEach(entry -> {
-                InternalStatisticsService service = entry.getKey();
-                service.putEvents(entry.getValue());
+                //TODO as it stands if we get a failure to send with one service, we won't send to any other services
+                //it may be better to record the exception without letting it propogate and then throw an exception at
+                //the end if any failed
+                putEvents(entry.getKey(), entry.getValue());
             });
         } catch (Exception e) {
             LOGGER.error("Error sending internal stats to all services", e);
             exceptionHandler.accept(e);
         }
+    }
 
-        /*
-        //fire off the list of internal stats events to each service asynchronously
-        //ensuring all are completed
-        CompletableFuture<Void>[] futures = serviceToEventsMapMap.entrySet().stream()
-                .map(entry ->
-                        CompletableFuture.runAsync(() -> {
-                            InternalStatisticsService service = entry.getKey();
-                            service.putEvents(entry.getValue());
-                        }))
-                .toArray(len -> new CompletableFuture[len]);
-
+    private void putEvents(final InternalStatisticsService service, Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
         try {
-            CompletableFuture.allOf(futures)
-                    .exceptionally(throwable -> {
-                        exceptionHandler.accept(throwable);
-                        return null;
-                    })
-                    .get();
-        } catch (InterruptedException e) {
-            LOGGER.error("Thread interrupted waiting for internal stats to be sent to all services", e);
-            Thread.currentThread().interrupt();
-        } catch (ExecutionException e) {
-            LOGGER.error("Error sending internal stats to all services", e);
-            exceptionHandler.accept(e);
+            service.putEvents(eventsMap);
+        } catch (Exception e) {
+            throw new RuntimeException("Error sending internal statistics to service of type " + service.getDocRefType(), e);
         }
-        */
     }
 }
