@@ -72,8 +72,15 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.StroomLogger;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
+import event.logging.BaseAdvancedQueryItem;
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.BaseAdvancedQueryOperator.Or;
+import event.logging.TermCondition;
+import event.logging.util.EventLoggingUtil;
+import org.joda.time.DateTimeZone;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -442,7 +449,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         throw new StreamException(ex);
     }
 
-    private Stream unLock(final Stream stream, final HeaderMap metaMap, final boolean append) {
+    private Stream unLock(final Stream stream, final MetaMap metaMap, final boolean append) {
         if (StreamStatus.UNLOCKED.equals(stream.getStatus())) {
             throw new IllegalStateException("Attempt to unlock a stream that is already unlocked");
         }

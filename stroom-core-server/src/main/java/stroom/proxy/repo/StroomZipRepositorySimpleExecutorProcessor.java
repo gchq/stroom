@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.util.zip;
+package stroom.proxy.repo;
 
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.logging.StroomLogger;

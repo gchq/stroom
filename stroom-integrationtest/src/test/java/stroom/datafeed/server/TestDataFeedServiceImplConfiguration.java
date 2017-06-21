@@ -16,22 +16,21 @@
 
 package stroom.datafeed.server;
 
-import stroom.util.logging.StroomLogger;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-
+import stroom.feed.MetaMap;
 import stroom.streamstore.server.MockStreamStore;
+import stroom.util.logging.StroomLogger;
 import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.zip.HeaderMap;
-import stroom.util.zip.HeaderMapFactory;
+import stroom.util.zip.MetaMapFactory;
 
 /**
  * @Configuration specific to TesetDataFeedServiceImpl.
- *
- *                The combination of mock and prod classes means this test needs
- *                its own context.
+ * <p>
+ * The combination of mock and prod classes means this test needs
+ * its own context.
  */
 @Configuration
 public class TestDataFeedServiceImplConfiguration {
@@ -49,14 +48,14 @@ public class TestDataFeedServiceImplConfiguration {
 
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public MockHeaderMapFactory headerMapFactory() {
-        return new MockHeaderMapFactory();
+    public MockMetaMapFactory metaMapFactory() {
+        return new MockMetaMapFactory();
     }
 
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public HeaderMap headerMap(HeaderMapFactory headerMapFactory) {
-        return headerMapFactory.create();
+    public MetaMap metaMap(MetaMapFactory metaMapFactory) {
+        return metaMapFactory.create();
     }
 
     @Bean

@@ -23,7 +23,7 @@ import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.util.logging.StroomLogger;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +38,7 @@ public final class FileSystemStreamSource implements StreamSource {
     private Stream stream;
     private StreamVolume volume;
     private StreamType streamType;
-    private HeaderMap attributeMap;
+    private MetaMap attributeMap;
     private InputStream inputStream;
     private File file;
 
@@ -139,12 +139,12 @@ public final class FileSystemStreamSource implements StreamSource {
     }
 
     @Override
-    public HeaderMap getAttributeMap() {
+    public MetaMap getAttributeMap() {
         if (parent != null) {
             return parent.getAttributeMap();
         }
         if (attributeMap == null) {
-            attributeMap = new HeaderMap();
+            attributeMap = new MetaMap();
             try {
                 attributeMap.read(getChildStream(StreamType.MANIFEST).getInputStream(), true);
             } catch (Exception ex) {

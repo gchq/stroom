@@ -16,21 +16,22 @@
 
 package stroom;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.feed.shared.FeedService;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.node.server.NodeCache;
+import stroom.proxy.repo.ProxyRepositoryCreator;
+import stroom.proxy.repo.StroomZipRepository;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.zip.StroomZipRepository;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * Script to create some base data for testing.
@@ -51,9 +52,9 @@ public final class SampleRepositoryCreator {
         FileSystemUtil.deleteContents(FileUtil.getTempDir());
 
         System.setProperty("spring.profiles.active", StroomSpringProfiles.TEST);
-        final String[] context = new String[] { "classpath:META-INF/spring/stroomCoreServerContext.xml",
+        final String[] context = new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml",
                 "classpath:META-INF/spring/stroomDatabaseCommonTestControl.xml",
-                "classpath:META-INF/spring/stroomCoreServerLocalTestingContext.xml" };
+                "classpath:META-INF/spring/stroomCoreServerLocalTestingContext.xml"};
         appContext = new ClassPathXmlApplicationContext(context);
 
         nodeCache = (NodeCache) appContext.getBean("nodeCache");
@@ -90,13 +91,14 @@ public final class SampleRepositoryCreator {
         long startTime = System.currentTimeMillis() - (14 * dayMs);
 
         // Load each data item 5 times to create a reasonable amount to test.
+        final Path p = testDir.toPath();
         for (int i = 0; i < 5; i++) {
             // Load reference data first.
-            creator.read(testDir, true, startTime);
+            creator.read(p, true, startTime);
             startTime += tenMinMs;
 
             // Then load event data.
-            creator.read(testDir, false, startTime);
+            creator.read(p, false, startTime);
             startTime += tenMinMs;
         }
 
@@ -108,10 +110,8 @@ public final class SampleRepositoryCreator {
     /**
      * Main.
      *
-     * @param args
-     *            NA
-     * @throws Exception
-     *             NA
+     * @param args NA
+     * @throws Exception NA
      */
     public static void main(final String[] args) throws Exception {
         final SampleRepositoryCreator setupSampleData = new SampleRepositoryCreator();

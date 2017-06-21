@@ -51,6 +51,12 @@
     </dependency>
 
     <dependency>
+      <groupId>stroom-proxy</groupId>
+      <artifactId>stroom-proxy-repo</artifactId>
+      <version>5.1-beta.4</version>
+    </dependency>
+
+    <dependency>
       <groupId>aopalliance</groupId>
       <artifactId>aopalliance</artifactId>
     </dependency>

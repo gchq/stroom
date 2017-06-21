@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.datafeed.server;
+package stroom.proxy.repo;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
+import stroom.proxy.repo.StroomZipEntry;
 
-import stroom.util.zip.HeaderMapFactory;
+import java.io.IOException;
 
-public class MockHeaderMapFactory extends HeaderMapFactory {
-    @Resource
-    private HttpServletRequest httpServletRequest;
+public interface StroomStreamHandler {
+    void handleEntryStart(StroomZipEntry stroomZipEntry) throws IOException;
 
-    @Override
-    protected HttpServletRequest getHttpServletRequest() {
-        return httpServletRequest;
-    }
+    void handleEntryData(byte[] data, int off, int len) throws IOException;
+
+    void handleEntryEnd() throws IOException;
 }

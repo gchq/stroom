@@ -24,7 +24,7 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
 import stroom.util.spring.StroomScope;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -36,13 +36,13 @@ public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Ho
 
     @Resource
     private StreamHolder streamHolder;
-    private HeaderMap metaData;
+    private MetaMap metaData;
     private long lastMetaStreamNo;
 
-    public HeaderMap getMetaData() throws IOException {
+    public MetaMap getMetaData() throws IOException {
         // Determine if we need to read the meta stream.
         if (metaData == null || lastMetaStreamNo != streamHolder.getStreamNo()) {
-            metaData = new HeaderMap();
+            metaData = new MetaMap();
             lastMetaStreamNo = streamHolder.getStreamNo();
 
             // Setup meta data.

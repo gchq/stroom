@@ -33,7 +33,7 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.util.logging.StroomLogger;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 /**
  * A file system implementation of StreamTarget.
@@ -47,7 +47,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
     private final Set<StreamVolume> metaDataVolume;
 
     private final StreamType streamType;
-    private HeaderMap attributeMap = null;
+    private MetaMap attributeMap = null;
 
     private OutputStream outputStream;
     private Set<File> files;
@@ -242,12 +242,12 @@ public final class FileSystemStreamTarget implements StreamTarget {
     }
 
     @Override
-    public HeaderMap getAttributeMap() {
+    public MetaMap getAttributeMap() {
         if (parent != null) {
             return parent.getAttributeMap();
         }
         if (attributeMap == null) {
-            attributeMap = new HeaderMap();
+            attributeMap = new MetaMap();
             if (isAppend()) {
                 final File manifestFile = FileSystemStreamTypeUtil
                         .createChildStreamFile(getFiles(false).iterator().next(), StreamType.MANIFEST);

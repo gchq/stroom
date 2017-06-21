@@ -31,7 +31,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomScope;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -86,7 +86,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
         builder.append(" WHERE S.ID = ?");
     }
 
-    private static void fillMap(final ResultSet resultSet, final HeaderMap map) throws SQLException {
+    private static void fillMap(final ResultSet resultSet, final MetaMap map) throws SQLException {
         int i = 1;
         fillMapTime(resultSet, map, i++, StreamAttributeConstants.CREATE_TIME); // 1
         fillMapTime(resultSet, map, i++, StreamAttributeConstants.EFFECTIVE_TIME);
@@ -102,7 +102,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
 
     }
 
-    private static void fillMapTime(final ResultSet resultSet, final HeaderMap map, final int col, final String key)
+    private static void fillMapTime(final ResultSet resultSet, final MetaMap map, final int col, final String key)
             throws SQLException {
         final Long timeMs = resultSet.getLong(col);
         if (timeMs != null) {
@@ -110,7 +110,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
         }
     }
 
-    private static void fillMapLong(final ResultSet resultSet, final HeaderMap map, final int col, final String key)
+    private static void fillMapLong(final ResultSet resultSet, final MetaMap map, final int col, final String key)
             throws SQLException {
         final Long num = resultSet.getLong(col);
         if (num != null) {
@@ -118,7 +118,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
         }
     }
 
-    private static void fillMapString(final ResultSet resultSet, final HeaderMap map, final int col, final String key)
+    private static void fillMapString(final ResultSet resultSet, final MetaMap map, final int col, final String key)
             throws SQLException {
         final String str = resultSet.getString(col);
         if (str != null) {
@@ -187,7 +187,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
         final String streamTime = DateUtil.createNormalDateTimeString(stream.getCreateMs());
         LOGGER.info("exec() - Processing stream %s %s - Start", stream, streamTime);
 
-        final HeaderMap headerMap = new HeaderMap();
+        final MetaMap metaMap = new MetaMap();
         Connection connection = null;
         try {
             connection = dataSource.getConnection();
@@ -202,7 +202,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
             if (StringUtils.hasText(query)) {
                 final ResultSet resultSet = ConnectionUtil.executeQueryResultSet(connection, query, argObjs);
                 while (resultSet.next()) {
-                    fillMap(resultSet, headerMap);
+                    fillMap(resultSet, metaMap);
                 }
                 resultSet.close();
             }
@@ -213,16 +213,16 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
             ConnectionUtil.close(connection);
         }
 
-        if (headerMap.size() > 0) {
+        if (metaMap.size() > 0) {
             final StreamTarget streamTarget = streamStore.openStreamTarget(stream, true);
-            streamTarget.getAttributeMap().putAll(headerMap);
+            streamTarget.getAttributeMap().putAll(metaMap);
             streamStore.closeStreamTarget(streamTarget);
         } else {
             LOGGER.warn("exec() - No attributes added for stream %s", stream);
         }
 
         LOGGER.info("exec() - Processing stream %s %s - Finished in %s added %s attributes", stream, streamTime,
-                logExecutionTime, headerMap.size());
+                logExecutionTime, metaMap.size());
 
     }
 

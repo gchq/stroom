@@ -26,6 +26,10 @@ import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.VolumeService;
 import stroom.pipeline.server.filter.SafeXMLFilter;
 import stroom.pipeline.spring.PipelineConfiguration;
+import stroom.proxy.repo.StroomZipFile;
+import stroom.proxy.repo.StroomZipFileType;
+import stroom.proxy.repo.StroomZipNameSet;
+import stroom.proxy.repo.StroomZipRepository;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ServerComponentScanConfiguration;
@@ -43,10 +47,6 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.ThreadScopeRunnable;
-import stroom.util.zip.StroomZipFile;
-import stroom.util.zip.StroomZipFileType;
-import stroom.util.zip.StroomZipNameSet;
-import stroom.util.zip.StroomZipRepository;
 
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
@@ -57,6 +57,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 
 /**
  * Command line tool to process some files from a proxy stroom.
@@ -212,28 +214,33 @@ public class Headless extends AbstractCommandLineTool {
 
             // Loop over all of the data files in the repository.
             final StroomZipRepository repo = new StroomZipRepository(inputDir.getAbsolutePath());
-            for (final File zipFile : repo.getZipFiles()) {
-                LOGGER.info("Processing: " + zipFile.getAbsolutePath());
+            try (final Stream<Path> stream = repo.walkZipFiles()) {
+                stream.forEach(p -> {
+                    try {
+                        LOGGER.info("Processing: " + p.toAbsolutePath().toString());
 
-                final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
-                final StroomZipNameSet nameSet = stroomZipFile.getStroomZipNameSet();
+                        final StroomZipFile stroomZipFile = new StroomZipFile(p);
+                        final StroomZipNameSet nameSet = stroomZipFile.getStroomZipNameSet();
 
-                // Process each base file in a consistent order
-                for (final String baseName : nameSet.getBaseNameList()) {
-                    final InputStream dataStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
-                    final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
-                    final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
+                        // Process each base file in a consistent order
+                        for (final String baseName : nameSet.getBaseNameList()) {
+                            final InputStream dataStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
+                            final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
+                            final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
 
-                    final HeadlessTranslationTask task = new HeadlessTranslationTask(
-                            IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
-                            IgnoreCloseInputStream.wrap(contextStream), headlessFilter);
-                    taskManager.exec(task);
-                }
+                            final HeadlessTranslationTask task = new HeadlessTranslationTask(
+                                    IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
+                                    IgnoreCloseInputStream.wrap(contextStream), headlessFilter);
+                            taskManager.exec(task);
+                        }
 
-                // Close the zip file.
-                stroomZipFile.close();
+                        // Close the zip file.
+                        stroomZipFile.close();
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                });
             }
-
         } catch (final Exception e) {
             LOGGER.error(e, e);
         }

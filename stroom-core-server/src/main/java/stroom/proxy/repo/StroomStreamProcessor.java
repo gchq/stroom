@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.util.zip;
+package stroom.proxy.repo;
 
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.springframework.util.StringUtils;
+import stroom.feed.MetaMap;
 import stroom.util.cert.CertificateUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.ByteCountInputStream;
@@ -25,11 +31,7 @@ import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import org.springframework.util.StringUtils;
+import stroom.util.zip.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.Closeable;
@@ -48,17 +50,17 @@ public class StroomStreamProcessor {
 
     private static final String ZERO_CONTENT = "0";
 
-    private final HeaderMap globalHeaderMap;
+    private final MetaMap globalMetaMap;
     private final List<? extends StroomStreamHandler> stroomStreamHandlerList;
     private final byte[] buffer;
     private StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("StroomStreamProcessor ");
     private static String hostName;
     private boolean appendReceivedPath = true;
 
-    @SuppressWarnings({ "EI_EXPOSE_REP", "EI_EXPOSE_REP2" })
-    public StroomStreamProcessor(final HeaderMap headerMap, final List<? extends StroomStreamHandler> stroomStreamHandlerList,
+    @SuppressWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
+    public StroomStreamProcessor(final MetaMap metaMap, final List<? extends StroomStreamHandler> stroomStreamHandlerList,
                                  final byte[] buffer, final String logPrefix) {
-        this.globalHeaderMap = headerMap;
+        this.globalMetaMap = metaMap;
         this.buffer = buffer;
         this.stroomStreamHandlerList = stroomStreamHandlerList;
     }
@@ -87,27 +89,27 @@ public class StroomStreamProcessor {
     }
 
     public void processRequestHeader(final HttpServletRequest httpServletRequest) {
-        String guid = globalHeaderMap.get(StroomHeaderArguments.GUID);
+        String guid = globalMetaMap.get(StroomHeaderArguments.GUID);
 
         // Allocate a GUID if we have not got one.
         if (guid == null) {
             guid = UUID.randomUUID().toString();
-            globalHeaderMap.put(StroomHeaderArguments.GUID, guid);
+            globalMetaMap.put(StroomHeaderArguments.GUID, guid);
 
             // Only allocate RemoteXxx details if the GUID has not been
             // allocated.
 
             // Allocate remote address if not set.
             if (StringUtils.hasText(httpServletRequest.getRemoteAddr())) {
-                globalHeaderMap.put(StroomHeaderArguments.REMOTE_ADDRESS, httpServletRequest.getRemoteAddr());
+                globalMetaMap.put(StroomHeaderArguments.REMOTE_ADDRESS, httpServletRequest.getRemoteAddr());
             }
 
             // Save the time the data was received.
-            globalHeaderMap.put(StroomHeaderArguments.RECEIVED_TIME, DateUtil.createNormalDateTimeString());
+            globalMetaMap.put(StroomHeaderArguments.RECEIVED_TIME, DateUtil.createNormalDateTimeString());
 
             // Allocate remote address if not set.
             if (StringUtils.hasText(httpServletRequest.getRemoteHost())) {
-                globalHeaderMap.put(StroomHeaderArguments.REMOTE_HOST, httpServletRequest.getRemoteHost());
+                globalMetaMap.put(StroomHeaderArguments.REMOTE_HOST, httpServletRequest.getRemoteHost());
             }
 
             if (httpServletRequest.getAttribute(CertificateUtil.SERVLET_CERT_ARG) != null) {
@@ -120,11 +122,11 @@ public class StroomStreamProcessor {
                     final String dn = CertificateUtil.extractDNFromCertificate(cert);
                     final Long expiryDate = CertificateUtil.extractExpiryDateFromCertificate(cert);
                     if (expiryDate != null) {
-                        globalHeaderMap.put(StroomHeaderArguments.REMOTE_CERT_EXPIRY,
+                        globalMetaMap.put(StroomHeaderArguments.REMOTE_CERT_EXPIRY,
                                 DateUtil.createNormalDateTimeString(expiryDate));
                     }
 
-                    globalHeaderMap.put(StroomHeaderArguments.REMOTE_DN, dn);
+                    globalMetaMap.put(StroomHeaderArguments.REMOTE_DN, dn);
                 } catch (final Exception ex) {
                     LOGGER.error("doPost() - Failed to extract certificate", ex);
                 }
@@ -143,7 +145,7 @@ public class StroomStreamProcessor {
 
             boolean compressed = false;
 
-            String compression = globalHeaderMap.get(StroomHeaderArguments.COMPRESSION);
+            String compression = globalMetaMap.get(StroomHeaderArguments.COMPRESSION);
 
             if (StringUtils.hasText(compression)) {
                 compression = compression.toUpperCase(StreamUtil.DEFAULT_LOCALE);
@@ -152,8 +154,8 @@ public class StroomStreamProcessor {
                 }
             }
 
-            if (ZERO_CONTENT.equals(globalHeaderMap.get(StroomHeaderArguments.CONTENT_LENGTH))) {
-                LOGGER.warn("process() - Skipping Zero Content " + globalHeaderMap);
+            if (ZERO_CONTENT.equals(globalMetaMap.get(StroomHeaderArguments.CONTENT_LENGTH))) {
+                LOGGER.warn("process() - Skipping Zero Content " + globalMetaMap);
                 return;
             }
 
@@ -201,9 +203,9 @@ public class StroomStreamProcessor {
                     totalRead += read;
                 }
                 handleEntryEnd();
-                final HeaderMap entryHeaderMap = globalHeaderMap.cloneAllowable();
-                entryHeaderMap.put(StroomHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
-                sendHeader(StroomZipFile.SINGLE_META_ENTRY, entryHeaderMap);
+                final MetaMap entryMetaMap = MetaMapFactory.cloneAllowable(globalMetaMap);
+                entryMetaMap.put(StroomHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
+                sendHeader(StroomZipFile.SINGLE_META_ENTRY, entryMetaMap);
             }
         } catch (final IOException zex) {
             StroomStreamException.create(zex);
@@ -216,7 +218,7 @@ public class StroomStreamProcessor {
     private void processZipStream(final InputStream inputStream, final String prefix) throws IOException {
         final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStream);
 
-        final Map<String, HeaderMap> bufferedHeaderMap = new HashMap<>();
+        final Map<String, MetaMap> bufferedMetaMap = new HashMap<>();
         final Map<String, Long> dataStreamSizeMap = new HashMap<>();
         final List<String> sendDataList = new ArrayList<>();
         final StroomZipNameSet stroomZipNameSet = new StroomZipNameSet(false);
@@ -247,12 +249,12 @@ public class StroomStreamProcessor {
             final StroomZipEntry stroomZipEntry = stroomZipNameSet.add(entryName);
 
             if (StroomZipFileType.Meta.equals(stroomZipEntry.getStroomZipFileType())) {
-                final HeaderMap entryHeaderMap = globalHeaderMap.cloneAllowable();
+                final MetaMap entryMetaMap = MetaMapFactory.cloneAllowable(globalMetaMap);
                 // We have to wrap our stream reading code in a individual
                 // try/catch so we can return to the client an error in the case
                 // of a corrupt stream.
                 try {
-                    entryHeaderMap.read(zipArchiveInputStream, false);
+                    entryMetaMap.read(zipArchiveInputStream, false);
                 } catch (final IOException ioEx) {
                     throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ioEx.getMessage());
                 }
@@ -263,33 +265,33 @@ public class StroomStreamProcessor {
 
                     // The entry one will be initially set at the boundary Stroom
                     // server
-                    final String entryReceivedServer = entryHeaderMap.get(StroomHeaderArguments.RECEIVED_PATH);
+                    final String entryReceivedServer = entryMetaMap.get(StroomHeaderArguments.RECEIVED_PATH);
 
                     if (entryReceivedServer != null) {
                         if (!entryReceivedServer.contains(getHostName())) {
-                            entryHeaderMap.put(StroomHeaderArguments.RECEIVED_PATH,
+                            entryMetaMap.put(StroomHeaderArguments.RECEIVED_PATH,
                                     entryReceivedServer + "," + getHostName());
                         }
                     } else {
-                        entryHeaderMap.put(StroomHeaderArguments.RECEIVED_PATH, getHostName());
+                        entryMetaMap.put(StroomHeaderArguments.RECEIVED_PATH, getHostName());
                     }
                 }
 
-                if (entryHeaderMap.containsKey(StroomHeaderArguments.STREAM_SIZE)) {
+                if (entryMetaMap.containsKey(StroomHeaderArguments.STREAM_SIZE)) {
                     // Header already has stream size so just send it on
-                    sendHeader(stroomZipEntry, entryHeaderMap);
+                    sendHeader(stroomZipEntry, entryMetaMap);
                 } else {
                     // We need to add the stream size
                     // Send the data file yet ?
                     final String dataFile = stroomZipNameSet.getName(stroomZipEntry.getBaseName(), StroomZipFileType.Data);
                     if (dataFile != null && dataStreamSizeMap.containsKey(dataFile)) {
                         // Yes we can send the header now
-                        entryHeaderMap.put(StroomHeaderArguments.STREAM_SIZE,
+                        entryMetaMap.put(StroomHeaderArguments.STREAM_SIZE,
                                 String.valueOf(dataStreamSizeMap.get(dataFile)));
-                        sendHeader(stroomZipEntry, entryHeaderMap);
+                        sendHeader(stroomZipEntry, entryMetaMap);
                     } else {
                         // Else we have to buffer it
-                        bufferedHeaderMap.put(stroomZipEntry.getBaseName(), entryHeaderMap);
+                        bufferedMetaMap.put(stroomZipEntry.getBaseName(), entryMetaMap);
                     }
                 }
             } else {
@@ -322,11 +324,11 @@ public class StroomStreamProcessor {
                 // Buffered header can now be sent as we have sent the
                 // data
                 if (stroomZipEntry.getBaseName() != null) {
-                    final HeaderMap entryHeaderMap = bufferedHeaderMap.remove(stroomZipEntry.getBaseName());
-                    if (entryHeaderMap != null) {
-                        entryHeaderMap.put(StroomHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
+                    final MetaMap entryMetaMap = bufferedMetaMap.remove(stroomZipEntry.getBaseName());
+                    if (entryMetaMap != null) {
+                        entryMetaMap.put(StroomHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
                         handleEntryStart(new StroomZipEntry(null, stroomZipEntry.getBaseName(), StroomZipFileType.Meta));
-                        final byte[] headerBytes = entryHeaderMap.toByteArray();
+                        final byte[] headerBytes = entryMetaMap.toByteArray();
                         handleEntryData(headerBytes, 0, headerBytes.length);
                         handleEntryEnd();
                     }
@@ -339,7 +341,7 @@ public class StroomStreamProcessor {
             if (byteCountInputStream.getByteCount() > 22) {
                 throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, "No Zip Entries");
             } else {
-                LOGGER.warn("processZipStream() - Zip stream with no entries ! %s", globalHeaderMap);
+                LOGGER.warn("processZipStream() - Zip stream with no entries ! %s", globalMetaMap);
             }
         }
 
@@ -349,10 +351,10 @@ public class StroomStreamProcessor {
             // Send Generic Header
             if (headerName == null) {
                 final String dataFileName = stroomZipNameSet.getName(baseName, StroomZipFileType.Data);
-                final HeaderMap entryHeaderMap = globalHeaderMap.cloneAllowable();
-                entryHeaderMap.put(StroomHeaderArguments.STREAM_SIZE,
+                final MetaMap entryMetaMap = MetaMapFactory.cloneAllowable(globalMetaMap);
+                entryMetaMap.put(StroomHeaderArguments.STREAM_SIZE,
                         String.valueOf(dataStreamSizeMap.remove(dataFileName)));
-                sendHeader(new StroomZipEntry(null, baseName, StroomZipFileType.Meta), entryHeaderMap);
+                sendHeader(new StroomZipEntry(null, baseName, StroomZipFileType.Meta), entryMetaMap);
             }
         }
     }
@@ -365,11 +367,11 @@ public class StroomStreamProcessor {
         }
     }
 
-    private void sendHeader(final StroomZipEntry stroomZipEntry, final HeaderMap headerMap) throws IOException {
+    private void sendHeader(final StroomZipEntry stroomZipEntry, final MetaMap metaMap) throws IOException {
         handleEntryStart(stroomZipEntry);
         // Try and use the buffer
         final InitialByteArrayOutputStream byteArrayOutputStream = new InitialByteArrayOutputStream(buffer);
-        headerMap.write(byteArrayOutputStream, true);
+        metaMap.write(byteArrayOutputStream, true);
         final BufferPos bufferPos = byteArrayOutputStream.getBufferPos();
         handleEntryData(bufferPos.getBuffer(), 0, bufferPos.getBufferPos());
         handleEntryEnd();
@@ -377,8 +379,8 @@ public class StroomStreamProcessor {
 
     private void handleHeader() throws IOException {
         for (final StroomStreamHandler stroomStreamHandler : stroomStreamHandlerList) {
-            if (stroomStreamHandler instanceof StroomHeaderStreamHandler) {
-                ((StroomHeaderStreamHandler) stroomStreamHandler).handleHeader(globalHeaderMap);
+            if (stroomStreamHandler instanceof stroom.util.zip.StroomHeaderStreamHandler) {
+                ((stroom.util.zip.StroomHeaderStreamHandler) stroomStreamHandler).handleHeader(globalMetaMap);
             }
         }
     }

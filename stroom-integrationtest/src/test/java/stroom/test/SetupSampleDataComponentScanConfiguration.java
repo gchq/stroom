@@ -19,7 +19,7 @@ package stroom.test;
 import stroom.cluster.server.ClusterNodeManagerImpl;
 import stroom.cluster.server.MockClusterNodeManager;
 import stroom.dashboard.server.MockQueryService;
-import stroom.datafeed.server.MockHeaderMapFactory;
+import stroom.datafeed.server.MockMetaMapFactory;
 import stroom.datafeed.server.MockHttpServletRequest;
 import stroom.datafeed.server.MockHttpServletResponse;
 import stroom.dictionary.MockDictionaryService;
@@ -97,7 +97,7 @@ import org.springframework.context.annotation.FilterType;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockEntityService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockFeedService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockGlobalPropertyService.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHeaderMapFactory.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockMetaMapFactory.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHttpServletRequest.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHttpServletResponse.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockImportExportSerializer.class),

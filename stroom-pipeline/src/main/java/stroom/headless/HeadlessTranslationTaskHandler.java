@@ -68,7 +68,7 @@ import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 import stroom.util.zip.StroomHeaderArguments;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 @TaskHandlerBean(task = HeadlessTranslationTask.class)
 @Scope(StroomScope.TASK)
@@ -145,7 +145,7 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
             }
 
             // Load the meta and context data.
-            final HeaderMap metaData = new HeaderMap();
+            final MetaMap metaData = new MetaMap();
             metaData.read(metaStream, false);
 
             // Get the feed.

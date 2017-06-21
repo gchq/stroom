@@ -31,7 +31,7 @@ import java.util.zip.ZipOutputStream;
 
 import javax.annotation.Resource;
 
-import stroom.util.zip.StroomStreamProcessor;
+import stroom.proxy.repo.StroomStreamProcessor;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -45,7 +45,7 @@ import stroom.streamtask.server.StreamTargetStroomStreamHandler;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.zip.StroomHeaderArguments;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     @Resource
@@ -219,14 +219,14 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             final HashMap<StreamType, List<String>> expectedBoundaries) throws IOException {
         final Feed eventFeed = commonTestScenarioCreator.createSimpleFeed();
 
-        final HeaderMap headerMap = new HeaderMap();
-        headerMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
+        final MetaMap metaMap = new MetaMap();
+        metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                 .buildSingleHandlerList(streamStore, feedService, null, eventFeed, eventFeed.getStreamType());
 
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(headerMap, handlerList, new byte[1000],
-                "DefaultDataFeedRequest-" + headerMap.get(StroomHeaderArguments.GUID));
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList, new byte[1000],
+                "DefaultDataFeedRequest-" + metaMap.get(StroomHeaderArguments.GUID));
         stroomStreamProcessor.setAppendReceivedPath(false);
 
         for (int i = 0; i < processCount; i++) {

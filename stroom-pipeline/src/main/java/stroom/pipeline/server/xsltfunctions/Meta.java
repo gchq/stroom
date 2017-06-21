@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.util.spring.StroomScope;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
@@ -44,11 +44,11 @@ public class Meta extends StroomExtensionFunctionCall {
         String value = null;
 
         try {
-            final HeaderMap headerMap = metaDataHolder.getMetaData();
-            if (headerMap != null) {
+            final MetaMap metaMap = metaDataHolder.getMetaData();
+            if (metaMap != null) {
                 final String key = getSafeString(functionName, context, arguments, 0);
                 if (key != null) {
-                    value = headerMap.get(key);
+                    value = metaMap.get(key);
                 }
             }
 

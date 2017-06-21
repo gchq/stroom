@@ -50,7 +50,7 @@ import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.logging.StroomLogger;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -315,16 +315,16 @@ public class StreamAttributeMapServiceImpl
             final File manifest = FileSystemStreamTypeUtil.createChildStreamFile(streamVolume, StreamType.MANIFEST);
 
             if (manifest.isFile()) {
-                final HeaderMap headerMap = new HeaderMap();
+                final MetaMap metaMap = new MetaMap();
                 try {
-                    headerMap.read(new FileInputStream(manifest), true);
+                    metaMap.read(new FileInputStream(manifest), true);
                 } catch (final IOException ioException) {
                     LOGGER.error("loadAttributeMapFromFileSystem() %s", manifest, ioException);
                 }
 
-                for (final String name : headerMap.keySet()) {
+                for (final String name : metaMap.keySet()) {
                     final StreamAttributeKey key = keyMap.get(name);
-                    final String value = headerMap.get(name);
+                    final String value = metaMap.get(name);
                     if (key == null) {
                         streamAttributeMap.addAttribute(name, value);
                     } else {
