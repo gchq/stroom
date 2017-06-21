@@ -23,6 +23,7 @@ import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.policy.shared.FindPolicyCriteria;
 import stroom.policy.shared.Policy;
 import stroom.policy.shared.PolicyService;
+import stroom.query.shared.IndexFields;
 import stroom.streamstore.shared.DataReceiptPolicy;
 
 import javax.inject.Inject;
@@ -81,7 +82,7 @@ public class DataReceiptService {
             String data = policy.getData();
             DataReceiptPolicy dataReceiptPolicy = unmarshal(data);
             if (dataReceiptPolicy == null) {
-                dataReceiptPolicy = new DataReceiptPolicy(new ArrayList<>());
+                dataReceiptPolicy = new DataReceiptPolicy(new IndexFields(), new ArrayList<>());
             }
 
             dataReceiptPolicy.setVersion(policy.getVersion());

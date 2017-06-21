@@ -22,9 +22,12 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
+import stroom.query.shared.IndexField;
 import stroom.streamstore.client.presenter.DataReceiptRulePresenter.DataReceiptRuleView;
 import stroom.streamstore.shared.DataReceiptAction;
 import stroom.streamstore.shared.DataReceiptRule;
+
+import java.util.List;
 
 public class DataReceiptRulePresenter extends MyPresenterWidget<DataReceiptRuleView> {
     private final EditExpressionPresenter editExpressionPresenter;
@@ -39,10 +42,11 @@ public class DataReceiptRulePresenter extends MyPresenterWidget<DataReceiptRuleV
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
-    void read(final DataReceiptRule rule) {
+    void read(final DataReceiptRule rule, final List<IndexField> indexFields) {
+        editExpressionPresenter.init(null, null, indexFields);
         this.creationTime = rule.getCreationTime();
+        getView().setName(rule.getName());
         this.enabled = rule.isEnabled();
-
         if (rule.getExpression() == null) {
             editExpressionPresenter.read(new ExpressionOperator(Op.AND));
         } else {

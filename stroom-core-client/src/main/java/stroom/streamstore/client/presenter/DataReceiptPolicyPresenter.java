@@ -16,87 +16,91 @@
 
 package stroom.streamstore.client.presenter;
 
-import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.View;
-import stroom.alert.client.event.ConfirmEvent;
+import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
-import stroom.query.client.ExpressionTreePresenter;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.streamstore.shared.DataReceiptAction;
+import stroom.entity.client.presenter.ContentCallback;
+import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.client.presenter.TabContentProvider;
 import stroom.streamstore.shared.DataReceiptPolicy;
-import stroom.streamstore.shared.DataReceiptRule;
 import stroom.streamstore.shared.FetchDataReceiptPolicyAction;
 import stroom.streamstore.shared.SaveDataReceiptPolicyAction;
-import stroom.widget.button.client.ButtonView;
-import stroom.svg.client.SvgPresets;
-import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.svg.client.Icon;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
+import stroom.task.client.TaskEndEvent;
+import stroom.task.client.TaskStartEvent;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.tab.client.presenter.Layer;
+import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.presenter.TabDataImpl;
 
-public class DataReceiptPolicyPresenter extends ContentTabPresenter<DataReceiptPolicyPresenter.DataReceiptPolicyView> implements HasDirtyHandlers {
-    private final DataReceiptPolicyListPresenter listPresenter;
-    private final ExpressionTreePresenter expressionPresenter;
-    private final Provider<DataReceiptRulePresenter> editRulePresenterProvider;
+import java.util.ArrayList;
+import java.util.List;
+
+public class DataReceiptPolicyPresenter extends ContentTabPresenter<LinkTabPanelView> implements HasDirtyHandlers {
+    private static final TabData RULES = new TabDataImpl("Rules");
+    private static final TabData FIELDS = new TabDataImpl("Fields");
+
+    private final TabContentProvider<DataReceiptPolicy> tabContentProvider = new TabContentProvider<>();
     private final ClientDispatchAsync dispatcher;
 
     private DataReceiptPolicy policy;
 
+    private final List<TabData> tabs = new ArrayList<>();
     private ButtonView saveButton;
-    private ButtonView addButton;
-    private ButtonView editButton;
-    private ButtonView copyButton;
-    private ButtonView disableButton;
-    private ButtonView deleteButton;
-    private ButtonView moveUpButton;
-    private ButtonView moveDownButton;
+    private String lastLabel;
+    private ButtonPanel leftButtons;
+    private PresenterWidget<?> currentContent;
 
     private boolean dirty;
-    private String lastLabel;
 
     @Inject
     public DataReceiptPolicyPresenter(final EventBus eventBus,
-                                      final DataReceiptPolicyView view,
-                                      final DataReceiptPolicyListPresenter listPresenter,
-                                      final ExpressionTreePresenter expressionPresenter,
-                                      final Provider<DataReceiptRulePresenter> editRulePresenterProvider,
-                                      final ClientDispatchAsync dispatcher) {
+                                      final LinkTabPanelView view,
+                                      final Provider<DataReceiptPolicySettingsPresenter> settingsPresenterProvider,
+                                      final Provider<FieldListPresenter> fieldListPresenterProvider, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
-        this.listPresenter = listPresenter;
-        this.expressionPresenter = expressionPresenter;
-        this.editRulePresenterProvider = editRulePresenterProvider;
         this.dispatcher = dispatcher;
 
-        getView().setTableView(listPresenter.getView());
-        getView().setExpressionView(expressionPresenter.getView());
+        saveButton = addButtonLeft(SvgPresets.SAVE);
+        saveButton.setEnabled(false);
 
-        // Stop users from selecting expression items.
-        expressionPresenter.setSelectionModel(null);
+//        registerHandler(saveButton.addClickHandler(event -> {
+//            dispatcher.exec(new SaveDataReceiptPolicyAction(policy)).onSuccess(result -> {
+//                policy = result;
+//                listPresenter.getSelectionModel().clear();
+//                update();
+//                setDirty(false);
+//            });
+//        }));
+//        registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
 
-        saveButton = listPresenter.add(SvgPresets.SAVE);
-        addButton = listPresenter.add(SvgPresets.ADD);
-        editButton = listPresenter.add(SvgPresets.EDIT);
-        copyButton = listPresenter.add(SvgPresets.COPY);
-        disableButton = listPresenter.add(SvgPresets.DISABLE);
-        deleteButton = listPresenter.add(SvgPresets.DELETE);
-        moveUpButton = listPresenter.add(SvgPresets.UP);
-        moveDownButton = listPresenter.add(SvgPresets.DOWN);
+        tabContentProvider.setDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        });
 
-        listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
+        addTab(RULES);
+        tabContentProvider.add(RULES, settingsPresenterProvider);
 
-        updateButtons();
+        addTab(FIELDS);
+        tabContentProvider.add(FIELDS, fieldListPresenterProvider);
+
+        selectTab(RULES);
 
         dispatcher.exec(new FetchDataReceiptPolicyAction()).onSuccess(result -> {
             policy = result;
@@ -106,217 +110,59 @@ public class DataReceiptPolicyPresenter extends ContentTabPresenter<DataReceiptP
 
     @Override
     protected void onBind() {
+        super.onBind();
         registerHandler(saveButton.addClickHandler(event -> {
             dispatcher.exec(new SaveDataReceiptPolicyAction(policy)).onSuccess(result -> {
                 policy = result;
-                listPresenter.getSelectionModel().clear();
                 update();
                 setDirty(false);
             });
         }));
-        registerHandler(addButton.addClickHandler(event -> {
-            if (policy != null) {
-                add();
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (policy != null) {
-                final DataReceiptRule selected = listPresenter.getSelectionModel().getSelected();
-                if (selected != null) {
-                    edit(selected);
-                }
-            }
-        }));
-        registerHandler(copyButton.addClickHandler(event -> {
-            if (policy != null) {
-                final DataReceiptRule selected = listPresenter.getSelectionModel().getSelected();
-                if (selected != null) {
-                    ExpressionOperator expression = selected.getExpression();
-                    if (expression != null) {
-                        expression = expression.copy();
-                    }
+        registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
+    }
 
-                    final DataReceiptRule newRule = new DataReceiptRule(System.currentTimeMillis(), selected.getName(), selected.isEnabled(), expression, selected.getAction());
+    private ButtonView addButtonLeft(final SvgPreset preset) {
+        if (leftButtons == null) {
+            leftButtons = new ButtonPanel();
+//            leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
+            addWidgetLeft(leftButtons);
+        }
 
-                    final int index = policy.getRules().indexOf(selected);
+        return leftButtons.add(preset);
+    }
 
-                    if (index < policy.getRules().size() - 1) {
-                        policy.getRules().add(index + 1, newRule);
-                    } else {
-                        policy.getRules().add(newRule);
-                    }
+    public void addTab(final TabData tab) {
+        getView().getTabBar().addTab(tab);
+        tabs.add(tab);
+    }
 
-                    update();
-                    listPresenter.getSelectionModel().setSelected(newRule);
-                }
-            }
-        }));
-        registerHandler(disableButton.addClickHandler(event -> {
-            if (policy != null) {
-                final DataReceiptRule selected = listPresenter.getSelectionModel().getSelected();
-                if (selected != null) {
-                    final DataReceiptRule newRule = new DataReceiptRule(selected.getCreationTime(), selected.getName(), !selected.isEnabled(), selected.getExpression(), selected.getAction());
+    private void addWidgetLeft(final Widget widget) {
+        getView().addWidgetLeft(widget);
+    }
 
-                    final int index = policy.getRules().indexOf(selected);
-                    policy.getRules().remove(index);
-                    policy.getRules().add(index, newRule);
-                    listPresenter.getSelectionModel().setSelected(newRule);
-                    update();
-                    setDirty(true);
-                }
-            }
-        }));
-        registerHandler(deleteButton.addClickHandler(event -> {
-            if (policy != null) {
-                ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
-                    if (ok) {
-                        final DataReceiptRule rule = listPresenter.getSelectionModel().getSelected();
-                        policy.getRules().remove(rule);
-                        listPresenter.getSelectionModel().clear();
-                        update();
-                        setDirty(true);
+    private void selectTab(final TabData tab) {
+        TaskStartEvent.fire(DataReceiptPolicyPresenter.this);
+        Scheduler.get().scheduleDeferred(() -> {
+            if (tab != null) {
+                getContent(tab, content -> {
+                    if (content != null) {
+                        currentContent = content;
+
+                        // Set the content.
+                        getView().getLayerContainer().show((Layer) currentContent);
+
+                        // Update the selected tab.
+                        getView().getTabBar().selectTab(tab);
                     }
                 });
             }
-        }));
-        registerHandler(moveUpButton.addClickHandler(event -> {
-            if (policy != null) {
-                final DataReceiptRule rule = listPresenter.getSelectionModel().getSelected();
-                if (rule != null) {
-                    int index = policy.getRules().indexOf(rule);
-                    if (index > 0) {
-                        policy.getRules().remove(rule);
-                        policy.getRules().add(index - 1, rule);
-                        update();
-                        setDirty(true);
-                    }
-                }
-            }
-        }));
-        registerHandler(moveDownButton.addClickHandler(event -> {
-            if (policy != null) {
-                final DataReceiptRule rule = listPresenter.getSelectionModel().getSelected();
-                if (rule != null) {
-                    int index = policy.getRules().indexOf(rule);
-                    if (index < policy.getRules().size() - 1) {
-                        policy.getRules().remove(rule);
-                        policy.getRules().add(index + 1, rule);
-                        update();
-                        setDirty(true);
-                    }
-                }
-            }
-        }));
-        registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
-            final DataReceiptRule rule = listPresenter.getSelectionModel().getSelected();
-            if (rule != null) {
-                expressionPresenter.read(rule.getExpression());
-                if (event.getSelectionType().isDoubleSelect()) {
-                    edit(rule);
-                }
-            } else {
-                expressionPresenter.read(null);
-            }
-            updateButtons();
-        }));
 
-        super.onBind();
-    }
-
-    private void add() {
-        final DataReceiptRule newRule = new DataReceiptRule(System.currentTimeMillis(), "", true, new ExpressionOperator(Op.AND), DataReceiptAction.RECEIVE);
-        final DataReceiptRulePresenter editRulePresenter = editRulePresenterProvider.get();
-        editRulePresenter.read(newRule);
-
-        final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
-        ShowPopupEvent.fire(DataReceiptPolicyPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add New Rule", new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final DataReceiptRule rule = editRulePresenter.write();
-                    policy.getRules().add(0, rule);
-                    update();
-                    listPresenter.getSelectionModel().setSelected(rule);
-                    setDirty(true);
-                }
-
-                HidePopupEvent.fire(DataReceiptPolicyPresenter.this, editRulePresenter);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
-            }
+            TaskEndEvent.fire(DataReceiptPolicyPresenter.this);
         });
     }
 
-    private void edit(final DataReceiptRule existingRule) {
-        final DataReceiptRulePresenter editRulePresenter = editRulePresenterProvider.get();
-        editRulePresenter.read(existingRule);
-
-        final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
-        ShowPopupEvent.fire(DataReceiptPolicyPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Rule", new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final DataReceiptRule rule = editRulePresenter.write();
-                    final int index = policy.getRules().indexOf(existingRule);
-                    policy.getRules().remove(index);
-                    policy.getRules().add(index, rule);
-
-                    update();
-                    listPresenter.getSelectionModel().setSelected(rule);
-
-                    // Only mark the policies as dirty if the rule was actually changed.
-                    if (!existingRule.equals(rule)) {
-                        setDirty(true);
-                    }
-                }
-
-                HidePopupEvent.fire(DataReceiptPolicyPresenter.this, editRulePresenter);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
-            }
-        });
-    }
-
-    private void update() {
-        if (policy != null) {
-            // Set rule numbers on all of the rules for display purposes.
-            for (int i = 0; i < policy.getRules().size(); i++) {
-                policy.getRules().get(i).setRuleNumber(i + 1);
-            }
-            listPresenter.setData(policy.getRules());
-        }
-        updateButtons();
-    }
-
-    private void updateButtons() {
-        final boolean loadedPolicy = policy != null;
-        final DataReceiptRule selection = listPresenter.getSelectionModel().getSelected();
-        final boolean selected = loadedPolicy && selection != null;
-        int index = -1;
-        if (selected) {
-            index = policy.getRules().indexOf(selection);
-        }
-
-        if (selection != null && selection.isEnabled()) {
-            disableButton.setTitle("Disable");
-        } else {
-            disableButton.setTitle("Enable");
-        }
-
-        saveButton.setEnabled(loadedPolicy && dirty);
-        addButton.setEnabled(loadedPolicy);
-        editButton.setEnabled(selected);
-        copyButton.setEnabled(selected);
-        disableButton.setEnabled(selected);
-        deleteButton.setEnabled(selected);
-        moveUpButton.setEnabled(selected && index > 0);
-        moveDownButton.setEnabled(selected && index >= 0 && index < policy.getRules().size() - 1);
+    private void getContent(final TabData tab, final ContentCallback callback) {
+        callback.onReady(tabContentProvider.getPresenter(tab));
     }
 
     @Override
@@ -351,14 +197,18 @@ public class DataReceiptPolicyPresenter extends ContentTabPresenter<DataReceiptP
         }
     }
 
+    private void update() {
+        tabContentProvider.read(policy);
+        updateButtons();
+    }
+
+    private void updateButtons() {
+        final boolean loadedPolicy = policy != null;
+        saveButton.setEnabled(loadedPolicy && dirty);
+    }
+
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
-
-    public interface DataReceiptPolicyView extends View {
-        void setTableView(View view);
-
-        void setExpressionView(View view);
     }
 }

@@ -31,6 +31,7 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.shared.ExpressionItem;
 import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.IndexField;
 import stroom.streamstore.shared.FetchFieldsAction;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
@@ -59,7 +60,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     @Inject
     public EditExpressionPresenter(final EventBus eventBus, final EditExpressionView view,
                                    final ExpressionTreePresenter expressionPresenter,
-                                   final MenuListPresenter menuListPresenter, final ClientDispatchAsync dispatcher) {
+                                   final MenuListPresenter menuListPresenter) {
         super(eventBus, view);
         this.expressionPresenter = expressionPresenter;
         this.menuListPresenter = menuListPresenter;
@@ -83,8 +84,6 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         addOperatorButton = view.addButton(SvgPresets.OPERATOR);
         disableItemButton = view.addButton(SvgPresets.DISABLE);
         deleteItemButton = view.addButton(SvgPresets.DELETE);
-
-        dispatcher.exec(new FetchFieldsAction()).onSuccess(result -> expressionPresenter.init(dispatcher, new DocRef("STREAM_STORE", "STREAM_STORE"), result.getIndexFields()));
     }
 
     @Override
@@ -119,6 +118,10 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                 delete();
             }
         }));
+    }
+
+    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<IndexField> indexFields) {
+        expressionPresenter.init(dispatcher, dataSource, indexFields);
     }
 
     private void setButtonsEnabled() {

@@ -24,7 +24,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "term", propOrder = { "field", "condition", "value", "dictionary" })
+@XmlType(name = "term", propOrder = {"field", "condition", "value", "dictionary"})
 public class ExpressionTerm extends ExpressionItem {
     private static final long serialVersionUID = 9035311895540457146L;
 
@@ -88,15 +88,19 @@ public class ExpressionTerm extends ExpressionItem {
     @Override
     public void append(final StringBuilder sb, final String pad, final boolean singleLine) {
         if (isEnabled()) {
-            sb.append(field);
+            if (field != null) {
+                sb.append(field);
+            }
             sb.append(" ");
-            sb.append(condition.getDisplayValue());
+            if (condition != null) {
+                sb.append(condition.getDisplayValue());
+            }
             sb.append(" ");
             if (Condition.IN_DICTIONARY.equals(condition)) {
                 if (dictionary != null) {
                     sb.append(dictionary.getUuid());
                 }
-            } else {
+            } else if (value != null) {
                 sb.append(value);
             }
         }

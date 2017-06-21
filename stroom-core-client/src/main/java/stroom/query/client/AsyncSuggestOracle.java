@@ -46,12 +46,14 @@ public class AsyncSuggestOracle extends SuggestOracle {
 
     @Override
     public void requestSuggestions(final Request request, final Callback callback) {
-        dispatcher.exec(new FetchSuggestionsAction(dataSource, field, request.getQuery())).onSuccess(result -> {
-            final List<Suggestion> suggestions = new ArrayList<>();
-            for (final SharedString string : result) {
-                suggestions.add(new MultiWordSuggestion(string.toString(), string.toString()));
-            }
-            callback.onSuggestionsReady(request, new Response(suggestions));
-        });
+        if (dispatcher != null && dataSource != null) {
+            dispatcher.exec(new FetchSuggestionsAction(dataSource, field, request.getQuery())).onSuccess(result -> {
+                final List<Suggestion> suggestions = new ArrayList<>();
+                for (final SharedString string : result) {
+                    suggestions.add(new MultiWordSuggestion(string.toString(), string.toString()));
+                }
+                callback.onSuggestionsReady(request, new Response(suggestions));
+            });
+        }
     }
 }

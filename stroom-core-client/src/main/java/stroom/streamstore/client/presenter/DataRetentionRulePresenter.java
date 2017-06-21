@@ -20,10 +20,13 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.shared.DocRef;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
 import stroom.streamstore.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.streamstore.shared.DataRetentionRule;
+import stroom.streamstore.shared.FetchFieldsAction;
 import stroom.streamstore.shared.TimeUnit;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> {
@@ -33,16 +36,20 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
 
     @Inject
     public DataRetentionRulePresenter(final EventBus eventBus,
-                                      final DataRetentionRuleView view, final EditExpressionPresenter editExpressionPresenter) {
+                                      final DataRetentionRuleView view,
+                                      final EditExpressionPresenter editExpressionPresenter,
+                                      final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
+
+        dispatcher.exec(new FetchFieldsAction()).onSuccess(result -> editExpressionPresenter.init(dispatcher, new DocRef("STREAM_STORE", "STREAM_STORE"), result.getIndexFields()));
     }
 
     void read(final DataRetentionRule rule) {
         this.creationTime = rule.getCreationTime();
+        getView().setName(rule.getName());
         this.enabled = rule.isEnabled();
-
         if (rule.getExpression() == null) {
             editExpressionPresenter.read(new ExpressionOperator(Op.AND));
         } else {

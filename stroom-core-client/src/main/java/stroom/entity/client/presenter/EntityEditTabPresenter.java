@@ -94,7 +94,7 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
     public ButtonView addButtonLeft(final SvgPreset preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
-            leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
+//            leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
             addWidgetLeft(leftButtons);
         }
 
