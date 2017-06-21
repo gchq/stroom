@@ -24,7 +24,6 @@ import stroom.util.io.StreamProgressMonitor;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Monitor;
-import stroom.util.zip.StroomHeaderStreamHandler;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -169,7 +168,7 @@ public abstract class StroomZipRepositoryProcessor extends RepositoryProcessor {
         }
         final byte[] data = getReadBuffer();
         for (final StroomStreamHandler stroomStreamHandler : stroomStreamHandlerList) {
-            if (stroomStreamHandler instanceof stroom.util.zip.StroomHeaderStreamHandler) {
+            if (stroomStreamHandler instanceof StroomHeaderStreamHandler) {
                 ((StroomHeaderStreamHandler) stroomStreamHandler).handleHeader(metaMap);
             }
             stroomStreamHandler.handleEntryStart(targetEntry);

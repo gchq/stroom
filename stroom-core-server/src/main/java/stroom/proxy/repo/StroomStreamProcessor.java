@@ -31,7 +31,10 @@ import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
-import stroom.util.zip.*;
+import stroom.util.zip.MetaMapFactory;
+import stroom.util.zip.StroomHeaderArguments;
+import stroom.util.zip.StroomStatusCode;
+import stroom.util.zip.StroomStreamException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.Closeable;
@@ -379,8 +382,8 @@ public class StroomStreamProcessor {
 
     private void handleHeader() throws IOException {
         for (final StroomStreamHandler stroomStreamHandler : stroomStreamHandlerList) {
-            if (stroomStreamHandler instanceof stroom.util.zip.StroomHeaderStreamHandler) {
-                ((stroom.util.zip.StroomHeaderStreamHandler) stroomStreamHandler).handleHeader(globalMetaMap);
+            if (stroomStreamHandler instanceof StroomHeaderStreamHandler) {
+                ((StroomHeaderStreamHandler) stroomStreamHandler).handleHeader(globalMetaMap);
             }
         }
     }
