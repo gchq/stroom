@@ -87,6 +87,7 @@ dependencies {
     compile libs.jersey_server
     compile libs.jetty_server
     compile libs.jetty_servlet
+    compile libs.logback_classic
     compile libs.shiro_core
     compile libs.slf4j_api
     compile libs.spring_beans
