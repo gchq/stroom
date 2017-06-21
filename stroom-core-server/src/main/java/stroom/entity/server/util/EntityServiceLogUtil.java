@@ -16,21 +16,21 @@
 
 package stroom.entity.server.util;
 
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.spi.LocationAwareLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import org.apache.log4j.Level;
 
 import java.util.Collection;
 
 public final class EntityServiceLogUtil {
-    static String FQCN = EntityServiceLogUtil.class.getName();
+    private static String FQCN = EntityServiceLogUtil.class.getName();
 
-    public static final void logQuery(final StroomLogger stroomLogger, final String prefix,
-                                      final LogExecutionTime logExecutionTime, final Collection<?> rtnList, final SQLBuilder sql) {
+    public static void logQuery(final Logger logger, final String prefix,
+                                final LogExecutionTime logExecutionTime, final Collection<?> rtnList, final SQLBuilder sql) {
         final long duration = logExecutionTime.getDuration();
 
-        if (duration > 1000 || stroomLogger.isDebugEnabled()) {
+        if (duration > 1000 || logger.isDebugEnabled()) {
             final StringBuilder log = new StringBuilder();
             log.append(prefix);
             log.append(" - took ");
@@ -45,18 +45,18 @@ public final class EntityServiceLogUtil {
                 log.append(sql.toTraceString());
             }
             if (duration > 1000) {
-                stroomLogger.log(FQCN, Level.WARN, log.toString(), null);
+                log(logger, LocationAwareLogger.WARN_INT, log.toString(), null);
             } else {
-                stroomLogger.log(FQCN, Level.DEBUG, log.toString(), null);
+                log(logger, LocationAwareLogger.DEBUG_INT, log.toString(), null);
             }
         }
     }
 
-    public static final void logUpdate(final StroomLogger stroomLogger, final String prefix,
+    public static final void logUpdate(final Logger logger, final String prefix,
                                        final LogExecutionTime logExecutionTime, final Long updateCount, final SQLBuilder sql) {
         final long duration = logExecutionTime.getDuration();
 
-        if (duration > 1000 || stroomLogger.isDebugEnabled()) {
+        if (duration > 1000 || logger.isDebugEnabled()) {
             final StringBuilder log = new StringBuilder();
             log.append(prefix);
             log.append(" - took ");
@@ -71,9 +71,38 @@ public final class EntityServiceLogUtil {
                 log.append(sql.toTraceString());
             }
             if (duration > 1000) {
-                stroomLogger.log(FQCN, Level.WARN, log.toString(), null);
+                log(logger, LocationAwareLogger.WARN_INT, log.toString(), null);
             } else {
-                stroomLogger.log(FQCN, Level.DEBUG, log.toString(), null);
+                log(logger, LocationAwareLogger.DEBUG_INT, log.toString(), null);
+            }
+        }
+    }
+
+    private static void log(final Logger logger, final int severity, final String message, final Throwable t) {
+        if (logger instanceof LocationAwareLogger) {
+            final LocationAwareLogger locationAwareLogger = (LocationAwareLogger) logger;
+            locationAwareLogger.log(null, FQCN, severity, message, null, t);
+
+        } else {
+            switch (severity) {
+                case LocationAwareLogger.TRACE_INT:
+                    logger.trace(message, t);
+                    break;
+                case LocationAwareLogger.DEBUG_INT:
+                    logger.debug(message, t);
+                    break;
+                case LocationAwareLogger.INFO_INT:
+                    logger.info(message, t);
+                    break;
+                case LocationAwareLogger.WARN_INT:
+                    logger.warn(message, t);
+                    break;
+                case LocationAwareLogger.ERROR_INT:
+                    logger.error(message, t);
+                    break;
+                default:
+                    logger.error(message, t);
+                    break;
             }
         }
     }

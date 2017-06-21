@@ -16,27 +16,28 @@
 
 package stroom.entity.server.util;
 
+import org.hibernate.proxy.HibernateProxy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
-import stroom.entity.shared.Entity;
 import stroom.entity.shared.AuditedEntity;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.security.SecurityContext;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.EqualsUtil;
-import org.hibernate.proxy.HibernateProxy;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -58,7 +59,7 @@ import java.util.Set;
 @Primary
 @Transactional
 public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactoryAware {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomEntityManagerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomEntityManagerImpl.class);
 
     private final Provider<EntityEventBus> eventBusProvider;
     private final Provider<StroomDatabaseInfo> stroomDatabaseInfoProvider;
@@ -153,10 +154,10 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
         try {
             final Query query = createNativeQuery(sql.toString());
             SQLUtil.setParameters(query, sql);
-            rtn = Long.valueOf(query.executeUpdate());
+            rtn = (long) query.executeUpdate();
             EntityServiceLogUtil.logUpdate(LOGGER, "executeNativeUpdate", logExecutionTime, rtn, sql);
         } catch (final RuntimeException e) {
-            LOGGER.debug("executeNativeUpdate - %s \"%s\"", sql, sql.toTraceString(), e);
+            LOGGER.debug("executeNativeUpdate - " + sql.toString() + "\"" + sql.toTraceString() + "\"", e);
             throw e;
         }
         return rtn;

@@ -22,6 +22,8 @@ import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.joda.time.DateTimeZone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
@@ -40,6 +42,7 @@ import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
@@ -72,15 +75,6 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.feed.MetaMap;
-import event.logging.BaseAdvancedQueryItem;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.BaseAdvancedQueryOperator.Or;
-import event.logging.TermCondition;
-import event.logging.util.EventLoggingUtil;
-import org.joda.time.DateTimeZone;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -113,7 +107,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     public static final String MYSQL_INDEX_STRM_EFFECT_MS_IDX = "STRM_EFFECT_MS_IDX";
     public static final String MYSQL_INDEX_STRM_PARNT_STRM_ID_IDX = "STRM_PARNT_STRM_ID_IDX";
     public static final String MYSQL_INDEX_STRM_FK_STRM_PROC_ID_CRT_MS_IDX = "STRM_FK_STRM_PROC_ID_CRT_MS_IDX";
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(FileSystemStreamStoreImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamStoreImpl.class);
     private static final Set<String> SOURCE_FETCH_SET;
 
     static {
@@ -605,7 +599,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         try {
             target.close();
         } catch (final IOException e) {
-            LOGGER.error(e);
+            LOGGER.error(e.getMessage(), e);
         }
 
         // Make sure the stream data is deleted.
@@ -620,7 +614,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             // Close the stream source.
             streamSource.close();
         } catch (final Exception e) {
-            LOGGER.error(e);
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
