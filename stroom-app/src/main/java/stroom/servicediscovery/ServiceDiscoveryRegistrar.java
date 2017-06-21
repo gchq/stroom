@@ -16,7 +16,9 @@ import stroom.resources.ResourcePaths;
 import javax.inject.Inject;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class ServiceDiscoveryRegistrar {
@@ -67,16 +69,21 @@ public class ServiceDiscoveryRegistrar {
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("Successfully registered the following services: ");
 
+            List<String> services = new ArrayList<>();
             Arrays.stream(RegisteredService.values())
                     .forEach(registeredService -> {
                         registerResource(
                                 registeredService,
                                 serviceDiscovery);
-                        stringBuilder.append(registeredService.getVersionedServiceName());
-                        stringBuilder.append(", ");
+                        services.add(registeredService.getVersionedServiceName());
                     });
 
-            health = HealthCheck.Result.healthy(stringBuilder.toString().replaceAll(", $", ""));
+            health = HealthCheck.Result.builder()
+                    .healthy()
+                    .withMessage("Services registered")
+                    .withDetail("services", services)
+                    .build();
+
             LOGGER.info("All service instances created successfully.");
         } catch (Exception e) {
             health = HealthCheck.Result.unhealthy("Service instance creation failed!", e);

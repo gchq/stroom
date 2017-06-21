@@ -22,7 +22,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @Component
 @Singleton
@@ -148,9 +147,13 @@ public class ServiceDiscoveryManager {
         ServiceDiscovery<String> serviceDiscovery = serviceDiscoveryRef.get();
         if (serviceDiscovery != null) {
             try {
-                String services = serviceDiscovery.queryForNames().stream()
-                        .collect(Collectors.joining(", "));
-                return HealthCheck.Result.healthy("Running. Services found: " + services);
+                List<String> services = new ArrayList<>(serviceDiscovery.queryForNames());
+
+                return HealthCheck.Result.builder()
+                        .healthy()
+                        .withMessage("Running")
+                        .withDetail("services", services)
+                        .build();
 
             } catch (Exception e) {
                 return HealthCheck.Result.unhealthy("Error while querying available services, %s", e.getMessage());
