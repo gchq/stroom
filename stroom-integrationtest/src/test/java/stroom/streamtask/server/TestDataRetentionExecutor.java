@@ -24,10 +24,9 @@ import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.query.shared.ExpressionBuilder;
-import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.streamstore.server.DataRetentionExecutor;
 import stroom.streamstore.server.DataRetentionService;
 import stroom.streamstore.server.StreamMaintenanceService;
@@ -77,7 +76,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         // save two streams, one inside retention period, one outside
         final ExpressionBuilder builder = new ExpressionBuilder(true, Op.AND);
         builder.addTerm("Feed", Condition.EQUALS, feed.getName());
-        final DataRetentionRule rule = new DataRetentionRule(builder.build(), RETENTION_PERIOD_DAYS, stroom.streamstore.shared.TimeUnit.DAYS, false);
+        final DataRetentionRule rule = createRule(1, builder.build(), RETENTION_PERIOD_DAYS, stroom.streamstore.shared.TimeUnit.DAYS);
         final DataRetentionPolicy currentPolicy = dataRetentionService.load();
         final DataRetentionPolicy dataRetentionPolicy = new DataRetentionPolicy(Collections.singletonList(rule));
         if (currentPolicy != null) {
@@ -86,53 +85,57 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         dataRetentionService.save(dataRetentionPolicy);
 
 //        feed.setRetentionDayAge(RETENTION_PERIOD_DAYS);
-        Stream streamInsideRetetion = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null, now);
-        streamInsideRetetion.setStatusMs(now);
-        Stream streamOutsideRetetion = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null,
+        Stream streamInsideRetention = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null, now);
+        streamInsideRetention.setStatusMs(now);
+        Stream streamOutsideRetention = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null,
                 timeOutsideRetentionPeriod);
-        streamOutsideRetetion.setStatusMs(now);
+        streamOutsideRetention.setStatusMs(now);
 
         feed = feedService.save(feed);
-        streamInsideRetetion = streamMaintenanceService.save(streamInsideRetetion);
-        streamOutsideRetetion = streamMaintenanceService.save(streamOutsideRetetion);
+        streamInsideRetention = streamMaintenanceService.save(streamInsideRetention);
+        streamOutsideRetention = streamMaintenanceService.save(streamOutsideRetention);
 
         dumpStreams();
 
-        Long lastStatusMsInside = streamInsideRetetion.getStatusMs();
-        Long lastStatusMsOutside = streamOutsideRetetion.getStatusMs();
+        Long lastStatusMsInside = streamInsideRetention.getStatusMs();
+        Long lastStatusMsOutside = streamOutsideRetention.getStatusMs();
 
         // run the stream retention task which should 'delete' one stream
         dataRetentionExecutor.exec();
 
-        streamInsideRetetion = streamStore.loadStreamById(streamInsideRetetion.getId(), true);
-        streamOutsideRetetion = streamStore.loadStreamById(streamOutsideRetetion.getId(), true);
+        streamInsideRetention = streamStore.loadStreamById(streamInsideRetention.getId(), true);
+        streamOutsideRetention = streamStore.loadStreamById(streamOutsideRetention.getId(), true);
 
         dumpStreams();
 
-        Assert.assertEquals(StreamStatus.UNLOCKED, streamInsideRetetion.getStatus());
-        Assert.assertEquals(StreamStatus.DELETED, streamOutsideRetetion.getStatus());
+        Assert.assertEquals(StreamStatus.UNLOCKED, streamInsideRetention.getStatus());
+        Assert.assertEquals(StreamStatus.DELETED, streamOutsideRetention.getStatus());
         // no change to the record
-        Assert.assertEquals(lastStatusMsInside, streamInsideRetetion.getStatusMs());
+        Assert.assertEquals(lastStatusMsInside, streamInsideRetention.getStatusMs());
         // record changed
-        Assert.assertTrue(streamOutsideRetetion.getStatusMs().longValue() > lastStatusMsOutside);
+        Assert.assertTrue(streamOutsideRetention.getStatusMs().longValue() > lastStatusMsOutside);
 
-        lastStatusMsInside = streamInsideRetetion.getStatusMs();
-        lastStatusMsOutside = streamOutsideRetetion.getStatusMs();
+        lastStatusMsInside = streamInsideRetention.getStatusMs();
+        lastStatusMsOutside = streamOutsideRetention.getStatusMs();
 
         // run the task again, but this time no changes should be made as the
         // one outside the retention period is already 'deleted'
         dataRetentionExecutor.exec();
 
-        streamInsideRetetion = streamStore.loadStreamById(streamInsideRetetion.getId(), true);
-        streamOutsideRetetion = streamStore.loadStreamById(streamOutsideRetetion.getId(), true);
+        streamInsideRetention = streamStore.loadStreamById(streamInsideRetention.getId(), true);
+        streamOutsideRetention = streamStore.loadStreamById(streamOutsideRetention.getId(), true);
 
         dumpStreams();
 
-        Assert.assertEquals(StreamStatus.UNLOCKED, streamInsideRetetion.getStatus());
-        Assert.assertEquals(StreamStatus.DELETED, streamOutsideRetetion.getStatus());
+        Assert.assertEquals(StreamStatus.UNLOCKED, streamInsideRetention.getStatus());
+        Assert.assertEquals(StreamStatus.DELETED, streamOutsideRetention.getStatus());
         // no change to the records
-        Assert.assertEquals(lastStatusMsInside, streamInsideRetetion.getStatusMs());
-        Assert.assertEquals(lastStatusMsOutside, streamOutsideRetetion.getStatusMs());
+        Assert.assertEquals(lastStatusMsInside, streamInsideRetention.getStatusMs());
+        Assert.assertEquals(lastStatusMsOutside, streamOutsideRetention.getStatusMs());
+    }
+
+    private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final stroom.streamstore.shared.TimeUnit timeUnit) {
+        return new DataRetentionRule(num, System.currentTimeMillis(), "rule " + num, true, expression, age, timeUnit, false);
     }
 
     private void dumpStreams() {

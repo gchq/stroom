@@ -93,7 +93,7 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
                 .getTargetSource().getTarget();
         final Set<String> set = userAppPermissionServiceImpl.getRequiredPermissionSet();
         Assert.assertNotNull(set);
-        Assert.assertEquals(20, set.size());
+        Assert.assertEquals(21, set.size());
 
         final Permission permission = new Permission();
         permission.setName(PermissionNames.ADMINISTRATOR);

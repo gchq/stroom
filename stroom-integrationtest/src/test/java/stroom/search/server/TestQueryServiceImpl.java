@@ -137,11 +137,9 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         final StringBuilder sb = new StringBuilder();
         sb.append("<expression>\n");
-        sb.append("    <enabled>true</enabled>\n");
         sb.append("    <op>OR</op>\n");
         sb.append("    <children>\n");
         sb.append("        <term>\n");
-        sb.append("            <enabled>true</enabled>\n");
         sb.append("            <field>Some field</field>\n");
         sb.append("            <condition>CONTAINS</condition>\n");
         sb.append("            <value>Some value</value>\n");

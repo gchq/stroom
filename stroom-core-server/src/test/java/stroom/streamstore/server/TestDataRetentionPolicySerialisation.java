@@ -39,9 +39,9 @@ public class TestDataRetentionPolicySerialisation {
         final ExpressionOperator expression = builder.build();
 
         final List<DataRetentionRule> list = new ArrayList<>();
-        list.add(new DataRetentionRule(expression, 10, TimeUnit.DAYS, false));
-        list.add(new DataRetentionRule(expression, 1, TimeUnit.MONTHS, false));
-        list.add(new DataRetentionRule(expression, 2, TimeUnit.WEEKS, false));
+        list.add(createRule(1, expression, 10, TimeUnit.DAYS));
+        list.add(createRule(2, expression, 1, TimeUnit.MONTHS));
+        list.add(createRule(3, expression, 2, TimeUnit.WEEKS));
 
         final DataRetentionPolicy policies = new DataRetentionPolicy(list);
 
@@ -49,5 +49,9 @@ public class TestDataRetentionPolicySerialisation {
         final String xml = XMLMarshallerUtil.marshal(context, policies);
 
         System.out.println(xml);
+    }
+
+    private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final TimeUnit timeUnit) {
+        return new DataRetentionRule(num, System.currentTimeMillis(), "rule " + num, true, expression, age, timeUnit, false);
     }
 }
