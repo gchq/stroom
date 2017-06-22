@@ -52,6 +52,7 @@ import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadScopeRunnable;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -107,7 +108,7 @@ public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, Inde
     public void addDocument(final IndexShardKey indexShardKey, final Document document) {
         if (document != null) {
 
-            IndexShardWriter indexShardWriter = getIndexShardWriter(indexShardKey);
+            IndexShardWriter indexShardWriter = get(indexShardKey);
 
             // Try and add the document silently without locking.
             boolean success = false;
@@ -125,7 +126,7 @@ public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, Inde
                 lock.lock();
                 try {
                     // Ask the cache for the current one (it might have been changed by another thread) and try again.
-                    indexShardWriter = getIndexShardWriter(indexShardKey);
+                    indexShardWriter = get(indexShardKey);
                     success = addDocument(indexShardWriter, document);
 
                     if (!success) {
@@ -141,7 +142,7 @@ public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, Inde
             // One final try that will throw an index exception.
             if (!success) {
                 try {
-                    indexShardWriter = getIndexShardWriter(indexShardKey);
+                    indexShardWriter = get(indexShardKey);
                     indexShardWriter.addDocument(document);
                 } catch (final IndexException e) {
                     throw e;
@@ -171,29 +172,26 @@ public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, Inde
         return success;
     }
 
-    private IndexShardWriter getIndexShardWriter(final IndexShardKey indexShardKey) {
-        final IndexShardWriter indexShardWriter = get(indexShardKey);
-        if (indexShardWriter == null) {
-            throw new IndexException("Unable to get writer for index '" + indexShardKey.getIndex().getName()
-                    + "'. Please check the index has active volumes.");
-        }
-        return indexShardWriter;
-    }
-
     /**
      * Overrides method in simple pool. Will be called when an item is created
      * by the pool.
      */
     @Override
     public IndexShardWriter create(final IndexShardKey key) {
-        // Try and get an existing writer.
-        IndexShardWriter writer = getExistingWriter(key);
-        if (writer == null) {
-            // Create a new one
-            writer = createNewWriter(key);
-        }
+        try {
+            // Try and get an existing writer.
+            IndexShardWriter writer = getExistingWriter(key);
+            if (writer == null) {
+                // Create a new one
+                writer = createNewWriter(key);
+            }
 
-        return writer;
+            return writer;
+        } catch (final IndexException e) {
+            return new DummyIndexShardWriter(e);
+        } catch (final Throwable e) {
+            return new DummyIndexShardWriter(new IndexException(e.getMessage(), e));
+        }
     }
 
     /**
@@ -631,6 +629,90 @@ public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, Inde
 
         public String getActivity() {
             return activity;
+        }
+    }
+
+    private static class DummyIndexShardWriter implements IndexShardWriter {
+        private final IndexException indexException;
+
+        DummyIndexShardWriter(final IndexException indexException) {
+            this.indexException = indexException;
+        }
+
+        @Override
+        public void check() {
+        }
+
+        @Override
+        public IndexShardStatus getStatus() {
+            return IndexShardStatus.CORRUPT;
+        }
+
+        @Override
+        public void setStatus(final IndexShardStatus status) {
+        }
+
+        @Override
+        public boolean open(final boolean create) {
+            return false;
+        }
+
+        @Override
+        public boolean isFull() {
+            return true;
+        }
+
+        @Override
+        public void destroy() {
+        }
+
+        @Override
+        public boolean close() {
+            return true;
+        }
+
+        @Override
+        public boolean flush() {
+            return true;
+        }
+
+        @Override
+        public boolean delete() {
+            return true;
+        }
+
+        @Override
+        public boolean deleteFromDisk() {
+            return true;
+        }
+
+        @Override
+        public void updateIndex(final Index index) {
+        }
+
+        @Override
+        public void addDocument(final Document document) throws IOException, IndexException, AlreadyClosedException {
+            throw indexException;
+        }
+
+        @Override
+        public int getDocumentCount() {
+            return 0;
+        }
+
+        @Override
+        public IndexShard getIndexShard() {
+            return null;
+        }
+
+        @Override
+        public String getPartition() {
+            return null;
+        }
+
+        @Override
+        public IndexWriter getWriter() {
+            return null;
         }
     }
 }
