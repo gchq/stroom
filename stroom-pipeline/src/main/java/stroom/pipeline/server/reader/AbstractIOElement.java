@@ -275,13 +275,14 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
 
                 } else if (target instanceof TakesInput && inputStream != null) {
                     final TakesInput takesInput = (TakesInput) target;
+                    takesInput.setInputStream(inputStream, encoding);
 
                     // Create child processors.
                     final List<Processor> childProcessors = takesInput.createProcessors();
 
                     if (forkProcess) {
                         // Only add a piped output stream if we are going to
-                        // have child processors to consume the data.
+                        // have child processors consume the data.
                         if (childProcessors.size() > 0) {
                             final PipedInputStream pipedInputStream = new PipedInputStream();
                             final PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream);
@@ -291,19 +292,19 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
                         }
 
                     } else {
-                        takesInput.setInputStream(inputStream, encoding);
                         processors.addAll(childProcessors);
                     }
 
                 } else if (target instanceof TakesReader && reader != null) {
                     final TakesReader takesReader = (TakesReader) target;
+                    takesReader.setReader(reader);
 
                     // Create child processors.
                     final List<Processor> childProcessors = takesReader.createProcessors();
 
                     if (forkProcess) {
                         // Only add a piped writer if we are going to have
-                        // child processors to consume the data.
+                        // child processors consume the data.
                         if (childProcessors.size() > 0) {
                             final PipedReader pipedReader = new PipedReader();
                             final PipedWriter pipedWriter = new PipedWriter(pipedReader);
@@ -312,7 +313,6 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
                             processors.addAll(childProcessors);
                         }
                     } else {
-                        takesReader.setReader(reader);
                         processors.addAll(childProcessors);
                     }
                 }
