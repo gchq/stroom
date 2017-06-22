@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#325** : Query history is now cleaned with a separate job. Also query history is only recorded for manual querying, i.e. not when query is automated (on open or auto refresh). Queries are now recorded on a dashboard + query component basis and do not apply across multiple query components in a dashboard.
 
+* Issue **#323** : Fixed an issue where parser elements were not being returned as 'processors' correctly when downstream of a reader.
+
 ## [v5.0-beta.33] - 2017-06-19
 
 * Issue **#316** : Search history is now only stored on initial query when using automated queries or when a user runs a query manually. Search history is also automatically purged to keep either a specified number of items defined by `stroom.query.history.itemsRetention` (default 100) or for a number of days specified by `stroom.query.history.daysRetention` (default 365).
