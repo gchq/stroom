@@ -16,6 +16,19 @@
 
 package stroom.pipeline.server.reader;
 
+import stroom.pipeline.destination.Destination;
+import stroom.pipeline.destination.DestinationProvider;
+import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.pipeline.server.factory.AbstractElement;
+import stroom.pipeline.server.factory.Element;
+import stroom.pipeline.server.factory.HasTargets;
+import stroom.pipeline.server.factory.Processor;
+import stroom.pipeline.server.factory.TakesInput;
+import stroom.pipeline.server.factory.TakesReader;
+import stroom.pipeline.server.factory.Target;
+import stroom.util.io.StreamUtil;
+import stroom.util.logging.StroomLogger;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,19 +46,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import stroom.pipeline.destination.Destination;
-import stroom.pipeline.destination.DestinationProvider;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.factory.AbstractElement;
-import stroom.pipeline.server.factory.Element;
-import stroom.pipeline.server.factory.HasTargets;
-import stroom.pipeline.server.factory.Processor;
-import stroom.pipeline.server.factory.TakesInput;
-import stroom.pipeline.server.factory.TakesReader;
-import stroom.pipeline.server.factory.Target;
-import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
 
 public class AbstractIOElement extends AbstractElement implements HasTargets {
     private static abstract class DestinationProcessor implements Processor {
@@ -107,7 +107,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
         private InputStream inputStream;
 
         public DestinationOutputProcessor(final List<DestinationProvider> destinationProviders,
-                final List<OutputStream> otherOutputStreams) {
+                                          final List<OutputStream> otherOutputStreams) {
             super(destinationProviders);
             this.otherOutputStreams = otherOutputStreams;
         }
@@ -161,7 +161,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
         private Reader reader;
 
         public DestinationWriterProcessor(final List<DestinationProvider> destinationProviders,
-                final List<Writer> otherWriters) {
+                                          final List<Writer> otherWriters) {
             super(destinationProviders);
             this.otherWriters = otherWriters;
         }
@@ -273,51 +273,47 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
                 if (target instanceof DestinationProvider) {
                     destinationProviders.add((DestinationProvider) target);
 
-                } else if (target instanceof TakesInput) {
-                    if (inputStream != null) {
-                        final TakesInput takesInput = (TakesInput) target;
+                } else if (target instanceof TakesInput && inputStream != null) {
+                    final TakesInput takesInput = (TakesInput) target;
+                    takesInput.setInputStream(inputStream, encoding);
 
-                        // Create child processors.
-                        final List<Processor> childProcessors = takesInput.createProcessors();
+                    // Create child processors.
+                    final List<Processor> childProcessors = takesInput.createProcessors();
 
-                        if (forkProcess) {
-                            // Only add a piped output stream if we are going to
-                            // have child processors to consume the data.
-                            if (childProcessors.size() > 0) {
-                                final PipedInputStream pipedInputStream = new PipedInputStream();
-                                final PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream);
-                                takesInput.setInputStream(pipedInputStream, encoding);
-                                outputStreams.add(pipedOutputStream);
-                                processors.addAll(childProcessors);
-                            }
-
-                        } else {
-                            takesInput.setInputStream(inputStream, encoding);
+                    if (forkProcess) {
+                        // Only add a piped output stream if we are going to
+                        // have child processors consume the data.
+                        if (childProcessors.size() > 0) {
+                            final PipedInputStream pipedInputStream = new PipedInputStream();
+                            final PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream);
+                            takesInput.setInputStream(pipedInputStream, encoding);
+                            outputStreams.add(pipedOutputStream);
                             processors.addAll(childProcessors);
                         }
+
+                    } else {
+                        processors.addAll(childProcessors);
                     }
 
-                } else if (target instanceof TakesReader) {
-                    if (reader != null) {
-                        final TakesReader takesReader = (TakesReader) target;
+                } else if (target instanceof TakesReader && reader != null) {
+                    final TakesReader takesReader = (TakesReader) target;
+                    takesReader.setReader(reader);
 
-                        // Create child processors.
-                        final List<Processor> childProcessors = takesReader.createProcessors();
+                    // Create child processors.
+                    final List<Processor> childProcessors = takesReader.createProcessors();
 
-                        if (forkProcess) {
-                            // Only add a piped writer if we are going to have
-                            // child processors to consume the data.
-                            if (childProcessors.size() > 0) {
-                                final PipedReader pipedReader = new PipedReader();
-                                final PipedWriter pipedWriter = new PipedWriter(pipedReader);
-                                takesReader.setReader(pipedReader);
-                                writers.add(pipedWriter);
-                                processors.addAll(childProcessors);
-                            }
-                        } else {
-                            takesReader.setReader(reader);
+                    if (forkProcess) {
+                        // Only add a piped writer if we are going to have
+                        // child processors consume the data.
+                        if (childProcessors.size() > 0) {
+                            final PipedReader pipedReader = new PipedReader();
+                            final PipedWriter pipedWriter = new PipedWriter(pipedReader);
+                            takesReader.setReader(pipedReader);
+                            writers.add(pipedWriter);
                             processors.addAll(childProcessors);
                         }
+                    } else {
+                        processors.addAll(childProcessors);
                     }
                 }
             }

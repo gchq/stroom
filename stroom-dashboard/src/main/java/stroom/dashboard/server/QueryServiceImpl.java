@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package stroom.dashboard.server;
 
 import event.logging.BaseAdvancedQueryItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,11 +47,16 @@ import java.util.UUID;
 @Transactional
 @AutoMarshal
 public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQueryCriteria> implements QueryService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(QueryServiceImpl.class);
+    private final StroomEntityManager entityManager;
     private final SecurityContext securityContext;
 
     @Inject
-    QueryServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
+    QueryServiceImpl(final StroomEntityManager entityManager,
+                     final ImportExportHelper importExportHelper,
+                     final SecurityContext securityContext) {
         super(entityManager, importExportHelper, securityContext);
+        this.entityManager = entityManager;
         this.securityContext = securityContext;
     }
 
@@ -88,13 +95,107 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
     }
 
     @Override
+    public void clean(final String user, final boolean favourite, final Integer oldestId, final long oldestCrtMs) {
+        try {
+            LOGGER.debug("Deleting old rows");
+
+            final SQLBuilder sql = new SQLBuilder();
+            sql.append("DELETE");
+            sql.append(" FROM ");
+            sql.append(Query.TABLE_NAME);
+            sql.append(" WHERE ");
+            sql.append(Query.CREATE_USER);
+            sql.append(" = ");
+            sql.arg(user);
+            sql.append(" AND ");
+            sql.append(Query.FAVOURITE);
+            sql.append(" = ");
+            sql.arg(favourite);
+            sql.append(" AND ");
+
+            if (oldestId != null) {
+                sql.append("(");
+                sql.append(Query.ID);
+                sql.append(" <= ");
+                sql.arg(oldestId);
+                sql.append(" OR ");
+                sql.append(Query.CREATE_TIME);
+                sql.append(" < ");
+                sql.arg(oldestCrtMs);
+                sql.append(")");
+            } else {
+                sql.append(Query.CREATE_TIME);
+                sql.append(" < ");
+                sql.arg(oldestCrtMs);
+            }
+
+            final long rows = entityManager.executeNativeUpdate(sql);
+            LOGGER.debug("Deleted " + rows + " rows");
+
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<String> getUsers(final boolean favourite) {
+        final SQLBuilder sql = new SQLBuilder();
+        sql.append("SELECT ");
+        sql.append(Query.CREATE_USER);
+        sql.append(" FROM ");
+        sql.append(Query.TABLE_NAME);
+        sql.append(" WHERE ");
+        sql.append(Query.FAVOURITE);
+        sql.append(" = ");
+        sql.arg(favourite);
+        sql.append(" GROUP BY ");
+        sql.append(Query.CREATE_USER);
+        sql.append(" ORDER BY ");
+        sql.append(Query.CREATE_USER);
+
+        @SuppressWarnings("unchecked") final List<String> list = entityManager.executeNativeQueryResultList(sql);
+
+        return list;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Integer getOldestId(final String user, final boolean favourite, final int retain) {
+        final SQLBuilder sql = new SQLBuilder();
+        sql.append("SELECT");
+        sql.append(" ID");
+        sql.append(" FROM ");
+        sql.append(Query.TABLE_NAME);
+        sql.append(" WHERE ");
+        sql.append(Query.CREATE_USER);
+        sql.append(" = ");
+        sql.arg(user);
+        sql.append(" AND ");
+        sql.append(Query.FAVOURITE);
+        sql.append(" = ");
+        sql.arg(favourite);
+        sql.append(" ORDER BY ID DESC LIMIT 1 OFFSET ");
+        sql.arg(retain);
+
+        @SuppressWarnings("unchecked") final List<Integer> list = entityManager.executeNativeQueryResultList(sql);
+
+        if (list.size() == 1) {
+            return list.get(0);
+        }
+
+        return null;
+    }
+
+    @Override
     protected void checkUpdatePermission(final Query entity) {
         // Ignore.
     }
 
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindQueryCriteria criteria) {
-        CriteriaLoggingUtil.appendEntityIdSet(items, "dashboardIdSet", criteria.getDashboardIdSet());
+        CriteriaLoggingUtil.appendLongTerm(items, "dashboardId", criteria.getDashboardId());
+        CriteriaLoggingUtil.appendStringTerm(items, "queryId", criteria.getQueryId());
         super.appendCriteria(items, criteria);
     }
 
@@ -116,7 +217,8 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
                 SQLUtil.appendValueQuery(sql, alias + ".favourite", criteria.getFavourite());
             }
 
-            SQLUtil.appendSetQuery(sql, true, alias + ".dashboard", criteria.getDashboardIdSet());
+            SQLUtil.appendValueQuery(sql, alias + ".dashboardId", criteria.getDashboardId());
+            SQLUtil.appendValueQuery(sql, alias + ".queryId", criteria.getQueryId());
         }
     }
 

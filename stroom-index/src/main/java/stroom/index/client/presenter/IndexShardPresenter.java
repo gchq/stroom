@@ -64,6 +64,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         implements Refreshable, HasRead<Index> {
     private final TooltipPresenter tooltipPresenter;
     private final ClientDispatchAsync dispatcher;
+    private final ClientSecurityContext securityContext;
     private ActionDataProvider<IndexShard> dataProvider;
     private ResultList<IndexShard> resultList = null;
     private final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
@@ -71,13 +72,16 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private final ButtonView buttonClose;
     private final ButtonView buttonDelete;
     private Index index;
+    private boolean readOnly;
+    private boolean allowDelete;
 
     @Inject
-    public IndexShardPresenter(final EventBus eventBus,
-                               final TooltipPresenter tooltipPresenter, final ClientDispatchAsync dispatcher) {
+    public IndexShardPresenter(final EventBus eventBus, final Resources resources,
+                               final TooltipPresenter tooltipPresenter, final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
         super(eventBus, new DataGridViewImpl<>(false));
         this.tooltipPresenter = tooltipPresenter;
         this.dispatcher = dispatcher;
+        this.securityContext = securityContext;
 
         buttonFlush = getView().addButton(SvgPresets.SHARD_FLUSH);
         buttonClose = getView().addButton(SvgPresets.SHARD_CLOSE);
@@ -108,10 +112,10 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     private void enableButtons() {
-        final boolean enabled = !criteria.getIndexShardSet().isMatchNothing();
+        final boolean enabled = !readOnly && (criteria.getIndexShardSet().size() > 0 || Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) && securityContext.hasAppPermission(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION);
         buttonFlush.setEnabled(enabled);
         buttonClose.setEnabled(enabled);
-        buttonDelete.setEnabled(enabled);
+        buttonDelete.setEnabled(allowDelete && enabled);
     }
 
     private void addColumns() {
@@ -150,7 +154,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             public TickBoxState getValue() {
                 if (Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) {
                     return TickBoxState.TICK;
-                } else if (criteria.getIndexShardSet().getSet().size() > 0) {
+                } else if (criteria.getIndexShardSet().size() > 0) {
                     return TickBoxState.HALF_TICK;
                 }
                 return TickBoxState.UNTICK;
@@ -185,6 +189,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 }
                 criteria.getIndexShardSet().remove(row);
             }
+            getView().redrawHeaders();
             enableButtons();
         });
     }
@@ -371,6 +376,17 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             };
             dataProvider.addDataDisplay(getView().getDataDisplay());
         }
+
+        securityContext.hasDocumentPermission(index.getType(), index.getUuid(), DocumentPermissionNames.DELETE).onSuccess(result -> {
+            this.allowDelete = result;
+            enableButtons();
+        });
+    }
+
+    @Override
+    public void onPermissionsCheck(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
     }
 
     private void onChangeData(final ResultList<IndexShard> data) {
@@ -381,13 +397,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 enableButtons();
             }
         }
-
-//        IndexShard selected = getView().getSelectionModel().getSelected();
-//        if (selected != null) {
-//            if (!resultList.contains(selected)) {
-//                getView().getSelectionModel().clear();
-//            }
-//        }
     }
 
     private void flush() {

@@ -27,4 +27,6 @@ public interface HasLoadById<E extends Entity> {
     E loadById(long id) throws RuntimeException;
 
     E loadById(long id, Set<String> fetchSet) throws RuntimeException;
+
+    E loadByIdInsecure(long id, Set<String> fetchSet) throws RuntimeException;
 }

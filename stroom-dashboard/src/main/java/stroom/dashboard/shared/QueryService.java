@@ -19,5 +19,12 @@ package stroom.dashboard.shared;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.FindService;
 
+import java.util.List;
+
 public interface QueryService extends DocumentEntityService<Query>, FindService<Query, FindQueryCriteria> {
+    void clean(String user, boolean favourite, Integer oldestId, long oldestCrtMs);
+
+    List<String> getUsers(boolean favourite);
+
+    Integer getOldestId(String user, boolean favourite, int retain);
 }

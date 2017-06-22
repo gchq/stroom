@@ -1,0 +1,7 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <description/>
+   <name>RAW_STREAMING_READER_FORK-EVENTS</name>
+   <pipelineType>Event Data</pipelineType>
+   <uuid>g092e9bc-3e55-405a-a9ab-5927b78e2410</uuid>
+</pipeline>

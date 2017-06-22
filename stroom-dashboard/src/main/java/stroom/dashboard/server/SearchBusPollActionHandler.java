@@ -17,7 +17,6 @@
 package stroom.dashboard.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.Query;
 import stroom.dashboard.shared.QueryKeyImpl;
 import stroom.dashboard.shared.QueryService;
@@ -36,6 +35,7 @@ import stroom.task.cluster.ClusterResultCollector;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.task.server.TaskManager;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
@@ -55,20 +55,25 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
     private final SearchDataSourceProviderRegistry searchDataSourceProviderRegistry;
     private final ActiveQueriesManager activeQueriesManager;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
+    private final TaskManager taskManager;
     private final SecurityContext securityContext;
 
     @Inject
-    SearchBusPollActionHandler(final QueryService queryService, final SearchResultCreator searchResultCreator,
+    SearchBusPollActionHandler(final QueryService queryService,
+                               final SearchResultCreator searchResultCreator,
                                final SearchEventLog searchEventLog,
                                final SearchDataSourceProviderRegistry searchDataSourceProviderRegistry,
                                final ActiveQueriesManager activeQueriesManager,
-                               final ClusterResultCollectorCache clusterResultCollectorCache, final SecurityContext securityContext) {
+                               final ClusterResultCollectorCache clusterResultCollectorCache,
+                               final TaskManager taskManager,
+                               final SecurityContext securityContext) {
         this.queryService = queryService;
         this.searchResultCreator = searchResultCreator;
         this.searchEventLog = searchEventLog;
         this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
         this.activeQueriesManager = activeQueriesManager;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
+        this.taskManager = taskManager;
         this.securityContext = securityContext;
     }
 
@@ -199,8 +204,9 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
     }
 
     private void storeSearchHistory(final QueryKey queryKey, final Search search) {
-        try {
-            if (queryKey instanceof QueryKeyImpl) {
+        // We only want to record search history for user initiated searches.
+        if (search.isStoreHistory() && queryKey instanceof QueryKeyImpl) {
+            try {
                 final QueryKeyImpl queryKeyImpl = (QueryKeyImpl) queryKey;
 
                 // Add this search to the history so the user can get back to
@@ -211,12 +217,14 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
                 final Query query = queryService.create(null, "History");
 
-                query.setDashboard(Dashboard.createStub(queryKeyImpl.getDashboardId()));
+                query.setDashboardId(queryKeyImpl.getDashboardId());
+                query.setQueryId(queryKeyImpl.getQueryId());
                 query.setQueryData(queryData);
                 queryService.save(query);
+
+            } catch (final Exception e) {
+                LOGGER.error(e.getMessage(), e);
             }
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
         }
     }
 }

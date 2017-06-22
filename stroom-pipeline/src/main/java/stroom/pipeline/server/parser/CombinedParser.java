@@ -185,19 +185,22 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
             charsetName = inputSource.getEncoding();
         }
 
-        // Put the BOM removal input stream in place so that any BOM
-        // found is removed.
-        final BOMRemovalInputStream bris = new BOMRemovalInputStream(inputSource.getByteStream(), charsetName);
+        InputSource internalInputSource = inputSource;
+        if (inputSource.getByteStream() != null) {
+            // Put the BOM removal input stream in place so that any BOM
+            // found is removed.
+            final BOMRemovalInputStream bris = new BOMRemovalInputStream(inputSource.getByteStream(), charsetName);
 
-        Reader inputStreamReader = new InputStreamReader(bris, charsetName);
-        if (fixInvalidChars) {
-            inputStreamReader = new InvalidCharFilterReader(inputStreamReader);
+            Reader inputStreamReader = new InputStreamReader(bris, charsetName);
+            if (fixInvalidChars) {
+                inputStreamReader = new InvalidCharFilterReader(inputStreamReader);
+            }
+
+            final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+
+            internalInputSource = new InputSource(bufferedReader);
+            internalInputSource.setEncoding(charsetName);
         }
-
-        final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-
-        final InputSource internalInputSource = new InputSource(bufferedReader);
-        internalInputSource.setEncoding(charsetName);
 
         return internalInputSource;
     }

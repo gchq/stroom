@@ -58,8 +58,14 @@ public class MockIndexShardManager implements IndexShardManager, Indexer {
         }
     }
 
-    private IndexShardWriter get(final IndexShardKey key) {
+    @Override
+    public IndexShardWriter get(final IndexShardKey key) {
         return writers.computeIfAbsent(key, k -> new MockIndexShardWriter());
+    }
+
+    @Override
+    public void remove(final IndexShardKey key) {
+        writers.remove(key);
     }
 
     public Map<IndexShardKey, IndexShardWriter> getWriters() {

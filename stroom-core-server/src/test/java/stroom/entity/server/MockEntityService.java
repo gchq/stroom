@@ -96,6 +96,11 @@ public abstract class MockEntityService<E extends Entity, C extends BaseCriteria
     }
 
     @Override
+    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
+        return map.get(id);
+    }
+
+    @Override
     public E save(final E entity) {
         if (!entity.isPersistent()) {
             if (entity instanceof BaseEntity) {

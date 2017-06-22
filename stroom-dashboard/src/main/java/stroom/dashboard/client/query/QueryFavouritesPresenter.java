@@ -124,7 +124,8 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                 queryData.setExpression(currentExpression);
                                 final Query query = new Query();
                                 query.setQueryData(queryData);
-                                query.setDashboard(Dashboard.createStub(currentDashboardId));
+                                query.setDashboardId(currentDashboardId);
+                                query.setQueryId(queryPresenter.getId());
                                 query.setName(entityName);
                                 query.setFavourite(true);
 
@@ -216,10 +217,8 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
     private void refresh(final boolean showAfterRefresh) {
         final FindQueryCriteria criteria = new FindQueryCriteria();
 
-        final EntityIdSet<Dashboard> entityIdSet = criteria.obtainDashboardIdSet();
-        entityIdSet.setMatchNull(true);
-        entityIdSet.add(currentDashboardId);
-
+        criteria.setDashboardId(currentDashboardId);
+        criteria.setQueryId(queryPresenter.getId());
         criteria.setOrderBy(FindQueryCriteria.ORDER_BY_NAME, OrderByDirection.ASCENDING);
         criteria.setFavourite(true);
         criteria.setPageRequest(new PageRequest(0L, 100));

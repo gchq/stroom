@@ -16,7 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.OrderBy;
 import stroom.entity.shared.SQLNameConstants;
@@ -26,7 +25,8 @@ public class FindQueryCriteria extends FindDocumentEntityCriteria {
     public static final OrderBy ORDER_BY_NAME = new OrderBy("Name", "name", SQLNameConstants.NAME);
     private static final long serialVersionUID = -4421720204507720754L;
 
-    private EntityIdSet<Dashboard> dashboardIdSet;
+    private Long dashboardId;
+    private String queryId;
     private Boolean favourite;
 
     public FindQueryCriteria() {
@@ -37,20 +37,20 @@ public class FindQueryCriteria extends FindDocumentEntityCriteria {
         super(name);
     }
 
-    public EntityIdSet<Dashboard> getDashboardIdSet() {
-        return dashboardIdSet;
+    public Long getDashboardId() {
+        return dashboardId;
     }
 
-    public void setDashboardIdSet(final EntityIdSet<Dashboard> dashboardIdSet) {
-        this.dashboardIdSet = dashboardIdSet;
+    public void setDashboardId(final Long dashboardId) {
+        this.dashboardId = dashboardId;
     }
 
-    public EntityIdSet<Dashboard> obtainDashboardIdSet() {
-        if (dashboardIdSet == null) {
-            dashboardIdSet = new EntityIdSet<>();
-        }
+    public String getQueryId() {
+        return queryId;
+    }
 
-        return dashboardIdSet;
+    public void setQueryId(final String queryId) {
+        this.queryId = queryId;
     }
 
     public Boolean getFavourite() {

@@ -98,6 +98,12 @@ public class FolderPresenter extends EntityEditTabPresenter<LinkTabPanelView, Fo
     }
 
     @Override
+    public void onPermissionsCheck(final boolean readOnly) {
+        super.onPermissionsCheck(readOnly);
+        tabContentProvider.onPermissionsCheck(readOnly);
+    }
+
+    @Override
     public String getType() {
         return Folder.ENTITY_TYPE;
     }

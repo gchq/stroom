@@ -28,6 +28,7 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
 import stroom.security.Insecure;
+import stroom.security.Secured;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.logging.StroomLogger;
@@ -116,6 +117,7 @@ public class IndexShardServiceImpl
         super.appendCriteria(items, criteria);
     }
 
+    @Secured(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION)
     @Override
     public Boolean delete(final IndexShard entity) throws RuntimeException {
         final Index index = entity.getIndex();
@@ -159,7 +161,6 @@ public class IndexShardServiceImpl
             SQLUtil.appendSetQuery(sql, true, alias + ".volume", criteria.getVolumeIdSet());
             SQLUtil.appendSetQuery(sql, true, alias + ".pstatus", criteria.getIndexShardStatusSet(), true);
             SQLUtil.appendRangeQuery(sql, alias + ".documentCount", criteria.getDocumentCountRange());
-
         }
     }
 }

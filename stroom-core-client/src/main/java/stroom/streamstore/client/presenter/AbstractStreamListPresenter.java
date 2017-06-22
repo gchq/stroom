@@ -200,7 +200,6 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             public TickBoxState getValue(final StreamAttributeMap object) {
                 return TickBoxState.fromBoolean(entityIdSet.isMatch(object.getStream()));
             }
-
         };
         if (allowSelectAll) {
             final Header<TickBoxState> header = new Header<TickBoxState>(
@@ -259,6 +258,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 // masterEntityIdSet.remove(row.getStream());
                 entityIdSet.remove(row.getStream());
             }
+            getView().redrawHeaders();
             DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
         });
     }

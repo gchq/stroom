@@ -203,6 +203,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     // TODO : Remove this method when the explorer service is broken out as a separate micro service.
     @Transactional(readOnly = true)
+    @Override
     public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
         E entity = null;
 

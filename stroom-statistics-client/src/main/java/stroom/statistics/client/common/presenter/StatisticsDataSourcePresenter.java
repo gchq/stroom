@@ -91,6 +91,12 @@ public class StatisticsDataSourcePresenter extends EntityEditTabPresenter<LinkTa
     }
 
     @Override
+    public void onPermissionsCheck(final boolean readOnly) {
+        super.onPermissionsCheck(readOnly);
+        tabContentProvider.onPermissionsCheck(readOnly);
+    }
+
+    @Override
     public String getType() {
         return StatisticStoreEntity.ENTITY_TYPE;
     }

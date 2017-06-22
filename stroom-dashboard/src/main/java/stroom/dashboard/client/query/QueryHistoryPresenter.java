@@ -92,7 +92,8 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
 
     private void refresh(final boolean showAfterRefresh) {
         final FindQueryCriteria criteria = new FindQueryCriteria();
-        criteria.obtainDashboardIdSet().add(currentDashboardId);
+        criteria.setDashboardId(currentDashboardId);
+        criteria.setQueryId(queryPresenter.getId());
         criteria.setOrderBy(FindQueryCriteria.ORDER_BY_TIME, OrderByDirection.DESCENDING);
         criteria.setFavourite(false);
         criteria.setPageRequest(new PageRequest(0L, 100));

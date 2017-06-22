@@ -33,29 +33,35 @@ public class Search implements SharedObject {
     private Map<String, String> paramMap;
     private String dateTimeLocale;
     private boolean incremental;
+    private boolean storeHistory;
 
     public Search() {
         // Default constructor necessary for GWT serialisation.
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression) {
-        this(dataSourceRef, expression, null, Collections.emptyMap(), "UTC", true);
+        this(dataSourceRef, expression, null, Collections.emptyMap(), "UTC", true, false);
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
                   final Map<String, ComponentSettings> componentSettingsMap) {
-        this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), "UTC", true);
+        this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), "UTC", true, false);
     }
 
-    public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
-                  final Map<String, ComponentSettings> componentSettingsMap, final Map<String, String> paramMap,
-                  final String dateTimeLocale, final boolean incremental) {
+    public Search(final DocRef dataSourceRef,
+                  final ExpressionOperator expression,
+                  final Map<String, ComponentSettings> componentSettingsMap,
+                  final Map<String, String> paramMap,
+                  final String dateTimeLocale,
+                  final boolean incremental,
+                  final boolean storeHistory) {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
         this.paramMap = paramMap;
         this.dateTimeLocale = dateTimeLocale;
         this.incremental = incremental;
+        this.storeHistory = storeHistory;
     }
 
     public DocRef getDataSourceRef() {
@@ -80,5 +86,9 @@ public class Search implements SharedObject {
 
     public boolean isIncremental() {
         return incremental;
+    }
+
+    public boolean isStoreHistory() {
+        return storeHistory;
     }
 }

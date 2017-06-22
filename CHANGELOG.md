@@ -13,6 +13,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+## [v5.0-beta.34] - 2017-06-22
+
+* Issue **#325** : Query history is now cleaned with a separate job. Also query history is only recorded for manual querying, i.e. not when query is automated (on open or auto refresh). Queries are now recorded on a dashboard + query component basis and do not apply across multiple query components in a dashboard.
+
+* Issue **#323** : Fixed an issue where parser elements were not being returned as 'processors' correctly when downstream of a reader.
+
+* Issue **#322** : Index should now provide a more helpful message when an attempt is made to index data and no volumes have been assigned to an index.
+
+## [v5.0-beta.33] - 2017-06-19
+
+* Issue **#316** : Search history is now only stored on initial query when using automated queries or when a user runs a query manually. Search history is also automatically purged to keep either a specified number of items defined by `stroom.query.history.itemsRetention` (default 100) or for a number of days specified by `stroom.query.history.daysRetention` (default 365).
+
+* Issue **#317** : Users now need update permission on an index plus 'Manage Index Shards' permission to flush or close index shards. In addition to this a user needs delete permission to delete index shards.
+
+* Issue **#319** : SaveAs now fetches the parent folder correctly so that users can copy items if they have permission to do so.
+
+## [v5.0-beta.32] - 2017-06-13
+
+* Issue **#311** : Fixed request for `Pipeline` in `meta` XSLT function. Errors are now dealt with correctly so that the XSLT will not fail due to missing meta data.
+
+* Issue **#313** : Fixed case of `xmlVersion` property on `InvalidXMLCharFilterReader`.
+
+* Issue **#314** : Improved description of `tags` property in `BadTextXMLFilterReader`.
+
 ## [v5.0-beta.31] - 2017-06-07
 
 * Issue **#307** : Made some changes to avoid potential NPE caused by session serialisation.
@@ -446,7 +470,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Initial open source release
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v5.1-alpha.1...HEAD
-[v5.1-alpha.1]: https://github.com/gchq/stroom/compare/v5.0-beta.31...v5.1-alpha.1
+[v5.1-alpha.1]: https://github.com/gchq/stroom/compare/v5.0-beta.34...v5.1-alpha.1
+[v5.0-beta.34]: https://github.com/gchq/stroom/compare/v5.0-beta.33...v5.0-beta.34
+[v5.0-beta.33]: https://github.com/gchq/stroom/compare/v5.0-beta.32...v5.0-beta.33
+[v5.0-beta.32]: https://github.com/gchq/stroom/compare/v5.0-beta.31...v5.0-beta.32
 [v5.0-beta.31]: https://github.com/gchq/stroom/compare/v5.0-beta.30...v5.0-beta.31
 [v5.0-beta.30]: https://github.com/gchq/stroom/compare/v5.0-beta.29...v5.0-beta.30
 [v5.0-beta.29]: https://github.com/gchq/stroom/compare/v5.0-beta.28...v5.0-beta.29

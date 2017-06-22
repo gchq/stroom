@@ -16,8 +16,6 @@
 
 package stroom.security.client;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
-
 public interface ClientSecurityContext {
     /**
      * Get the id of the user associated with this security context.
@@ -37,7 +35,7 @@ public interface ClientSecurityContext {
      * Check if the user associated with this security context has the requested
      * permission to use the specified functionality.
      *
-     * @param permission    The permission we are checking for.
+     * @param permission The permission we are checking for.
      * @return True if the user associated with the security context has the
      * requested permission.
      */
@@ -54,5 +52,5 @@ public interface ClientSecurityContext {
      * @return True if the user associated with the security context has the
      * requested permission.
      */
-    void hasDocumentPermission(String documentType, String documentId, String permission, AsyncCallback<Boolean> callback);
+    Future<Boolean> hasDocumentPermission(String documentType, String documentId, String permission);
 }
