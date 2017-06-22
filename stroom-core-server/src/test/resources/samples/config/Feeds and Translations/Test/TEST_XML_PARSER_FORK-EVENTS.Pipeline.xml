@@ -1,0 +1,7 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <description/>
+   <name>TEST_XML_PARSER_FORK-EVENTS</name>
+   <pipelineType>Event Data</pipelineType>
+   <uuid>2ce16bef-3e86-4729-bcb5-0281e4e1914a</uuid>
+</pipeline>
