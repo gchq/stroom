@@ -16,10 +16,9 @@
 
 package stroom.pipeline.state;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.feed.MetaMap;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
@@ -29,7 +28,6 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.date.DateUtil;
 import stroom.util.spring.StroomScope;
-import stroom.feed.MetaMap;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -41,7 +39,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @Scope(value = StroomScope.TASK)
 public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Holder {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetaDataHolder.class);
     private static final int MINIMUM_BYTE_COUNT = 10;
     private static final String FEED = "Feed";
     private static final String STREAM_TYPE = "StreamType";
@@ -49,16 +46,13 @@ public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Ho
     private static final String EFFECTIVE_TIME = "EffectiveTime";
     private static final String PIPELINE = "Pipeline";
 
-    @Resource
-    private StreamHolder streamHolder;
-    private MetaMap metaData;
     private static final Set<String> FETCH_SET = Collections.singleton(PipelineEntity.ENTITY_TYPE);
 
     private final StreamHolder streamHolder;
     private final StreamProcessorService streamProcessorService;
 
     private Map<String, String> parentData = new ConcurrentHashMap<>();
-    private HeaderMap metaData;
+    private MetaMap metaData;
     private long lastMetaStreamNo;
 
     @Inject

@@ -34,6 +34,7 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.client.presenter.HasPermissionCheck;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
@@ -45,6 +46,8 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
+import stroom.security.client.ClientSecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.svg.client.SvgPresets;
@@ -61,7 +64,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexShard>>
-        implements Refreshable, HasRead<Index> {
+        implements Refreshable, HasRead<Index>, HasPermissionCheck {
     private final TooltipPresenter tooltipPresenter;
     private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
@@ -76,8 +79,10 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private boolean allowDelete;
 
     @Inject
-    public IndexShardPresenter(final EventBus eventBus, final Resources resources,
-                               final TooltipPresenter tooltipPresenter, final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
+    public IndexShardPresenter(final EventBus eventBus,
+                               final TooltipPresenter tooltipPresenter,
+                               final ClientDispatchAsync dispatcher,
+                               final ClientSecurityContext securityContext) {
         super(eventBus, new DataGridViewImpl<>(false));
         this.tooltipPresenter = tooltipPresenter;
         this.dispatcher = dispatcher;
