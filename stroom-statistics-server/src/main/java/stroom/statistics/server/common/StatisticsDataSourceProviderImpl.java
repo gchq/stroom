@@ -16,7 +16,7 @@
 
 package stroom.statistics.server.common;
 
-import stroom.query.shared.Condition;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.query.shared.DataSource;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexFieldType;

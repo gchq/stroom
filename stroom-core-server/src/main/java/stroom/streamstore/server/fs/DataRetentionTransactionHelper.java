@@ -79,7 +79,7 @@ public class DataRetentionTransactionHelper {
         // Also make sure we create a list of rules that are enabled and have at least one enabled term.
         final List<DataRetentionRule> activeRules = new ArrayList<>();
         rules.forEach(rule -> {
-            if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().isEnabled()) {
+            if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
                 final Set<String> fields = new HashSet<>();
                 addToFieldSet(rule, fields);
                 if (fields.size() > 0) {
@@ -250,7 +250,7 @@ public class DataRetentionTransactionHelper {
     }
 
     private void addChildren(final ExpressionItem item, final Set<String> fieldSet) {
-        if (item.isEnabled()) {
+        if (item.enabled()) {
             if (item instanceof ExpressionOperator) {
                 final ExpressionOperator operator = (ExpressionOperator) item;
                 operator.getChildren().forEach(i -> addChildren(i, fieldSet));

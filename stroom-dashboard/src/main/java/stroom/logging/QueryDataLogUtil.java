@@ -38,9 +38,9 @@ public class QueryDataLogUtil {
         }
 
         BaseAdvancedQueryOperator operator = null;
-        if (exp.getType() == Op.NOT) {
+        if (exp.getOp() == Op.NOT) {
             operator = new BaseAdvancedQueryOperator.Not();
-        } else if (exp.getType() == Op.OR) {
+        } else if (exp.getOp() == Op.OR) {
             operator = new BaseAdvancedQueryOperator.Or();
         } else {
             operator = new BaseAdvancedQueryOperator.And();
@@ -48,7 +48,7 @@ public class QueryDataLogUtil {
 
         if (exp.getChildren() != null) {
             for (final ExpressionItem child : exp.getChildren()) {
-                if (child.isEnabled()) {
+                if (child.enabled()) {
                     if (child instanceof ExpressionOperator) {
                         appendOperator(operator.getAdvancedQueryItems(), dictionaryService, (ExpressionOperator) child);
                     } else {

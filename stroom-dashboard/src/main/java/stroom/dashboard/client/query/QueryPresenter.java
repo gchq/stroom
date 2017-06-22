@@ -50,8 +50,9 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.shared.Automate;
 import stroom.query.shared.ComponentSettings;
-import stroom.query.shared.ExpressionItem;
+import stroom.query.shared.ExpressionBuilder;
 import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.ExpressionOperator.Op;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexFieldsMap;
 import stroom.query.shared.Limits;
@@ -215,8 +216,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         }));
         registerHandler(favouriteButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                final ExpressionOperator root = new ExpressionOperator();
-                expressionPresenter.write(root);
+                final ExpressionOperator root = expressionPresenter.write();
                 favouritesPresenter.show(QueryPresenter.this, getComponents().getDashboard().getId(),
                         getSettings().getDataSource(), root);
             }
@@ -242,7 +242,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private void setButtonsEnabled() {
-        final ExpressionItem selectedItem = getSelectedItem();
+        final stroom.query.client.Item selectedItem = getSelectedItem();
 
         if (selectedItem == null) {
             disableItemButton.setEnabled(false);
@@ -322,8 +322,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private void choosePipeline() {
         expressionPresenter.clearSelection();
         // Write expression.
-        final ExpressionOperator root = new ExpressionOperator();
-        expressionPresenter.write(root);
+        final ExpressionOperator root = expressionPresenter.write();
 
         final QueryData queryData = new QueryData();
         queryData.setDataSource(this.queryData.getDataSource());
@@ -420,8 +419,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             warningsButton.setVisible(false);
 
             // Write expression.
-            final ExpressionOperator root = new ExpressionOperator();
-            expressionPresenter.write(root);
+            final ExpressionOperator root = expressionPresenter.write();
 
             searchModel.search(root, params, incremental);
         }
@@ -444,7 +442,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         // Read expression.
         ExpressionOperator root = queryData.getExpression();
         if (root == null) {
-            root = new ExpressionOperator();
+            root = new ExpressionBuilder(Op.AND).build();
         }
         setExpression(root);
     }
@@ -454,13 +452,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         super.write(componentData);
 
         // Write expression.
-        ExpressionOperator root = queryData.getExpression();
-        if (root == null) {
-            root = new ExpressionOperator();
-            queryData.setExpression(root);
-        }
-        expressionPresenter.write(root);
-
+        queryData.setExpression(expressionPresenter.write());
         componentData.setSettings(queryData);
     }
 
@@ -576,7 +568,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private List<Item> addExpressionActionsToMenu() {
-        final ExpressionItem selectedItem = getSelectedItem();
+        final stroom.query.client.Item selectedItem = getSelectedItem();
         final boolean hasSelection = selectedItem != null;
 
         final List<Item> menuItems = new ArrayList<Item>();
@@ -592,14 +584,14 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private String getEnableDisableText() {
-        final ExpressionItem selectedItem = getSelectedItem();
-        if (selectedItem != null && !selectedItem.isEnabled()) {
+        final stroom.query.client.Item selectedItem = getSelectedItem();
+        if (selectedItem != null && !selectedItem.enabled()) {
             return "Enable";
         }
         return "Disable";
     }
 
-    private ExpressionItem getSelectedItem() {
+    private stroom.query.client.Item getSelectedItem() {
         if (expressionPresenter.getSelectionModel() != null) {
             return expressionPresenter.getSelectionModel().getSelectedObject();
         }

@@ -51,7 +51,7 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.query.shared.Condition;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;

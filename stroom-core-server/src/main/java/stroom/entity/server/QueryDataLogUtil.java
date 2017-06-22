@@ -37,7 +37,7 @@ public class QueryDataLogUtil {
             return;
         }
 
-        if (item.isEnabled()) {
+        if (item.enabled()) {
             if (item instanceof ExpressionOperator) {
                 appendOperator(items, dictionaryService, (ExpressionOperator) item);
             } else {
@@ -98,9 +98,9 @@ public class QueryDataLogUtil {
     private static void appendOperator(final List<BaseAdvancedQueryItem> items,
             final DictionaryService dictionaryService, final ExpressionOperator exp) {
         BaseAdvancedQueryOperator operator;
-        if (exp.getType() == Op.NOT) {
+        if (exp.getOp() == Op.NOT) {
             operator = new BaseAdvancedQueryOperator.Not();
-        } else if (exp.getType() == Op.OR) {
+        } else if (exp.getOp() == Op.OR) {
             operator = new BaseAdvancedQueryOperator.Or();
         } else {
             operator = new BaseAdvancedQueryOperator.And();

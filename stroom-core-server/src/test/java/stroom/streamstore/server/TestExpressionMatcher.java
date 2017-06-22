@@ -19,10 +19,10 @@ package stroom.streamstore.server;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.query.shared.Condition;
+import stroom.query.shared.ExpressionBuilder;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
@@ -57,10 +57,9 @@ public class TestExpressionMatcher extends StroomUnitTest {
     }
 
     private ExpressionOperator createExpression(final Op op, final String feedName) {
-        final ExpressionTerm feedTerm = new ExpressionTerm("Feed", Condition.CONTAINS, feedName);
-        final ExpressionOperator expressionOperator = new ExpressionOperator(op);
-        expressionOperator.addChild(feedTerm);
-        return expressionOperator;
+        final ExpressionBuilder builder = new ExpressionBuilder(true, op);
+        builder.addTerm("Feed", Condition.CONTAINS, feedName);
+        return builder.build();
     }
 
     private Map<String, Object> createAttributeMap() {

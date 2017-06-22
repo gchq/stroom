@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,84 +16,64 @@
 
 package stroom.query.shared;
 
-import java.util.List;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
+import java.io.Serializable;
 
-import stroom.util.shared.SharedObject;
-
+@XmlType(name = "ExpressionItem", propOrder = {"enabled"})
+@XmlSeeAlso({ExpressionOperator.class, ExpressionTerm.class})
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "item", propOrder = { "enabled" })
-@XmlSeeAlso({ ExpressionOperator.class, ExpressionTerm.class })
-public abstract class ExpressionItem implements SharedObject {
+public abstract class ExpressionItem implements Serializable {
     private static final long serialVersionUID = -8483817637655853635L;
 
-    @XmlElement(name = "enabled", defaultValue = "true")
-    private boolean enabled = true;
+    @XmlElement
+    private Boolean enabled;
 
-    public ExpressionItem() {
-        // Default constructor necessary for GWT serialisation.
+    ExpressionItem() {
     }
 
-    public void setEnabled(final boolean enabled) {
+    public ExpressionItem(final Boolean enabled) {
         this.enabled = enabled;
     }
 
-    public boolean isEnabled() {
+    public Boolean getEnabled() {
         return enabled;
     }
 
-    public abstract void append(final StringBuilder sb, final String pad, final boolean singleLine);
+    public boolean enabled() {
+        return enabled == null || enabled;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ExpressionItem)) return false;
+
+        final ExpressionItem that = (ExpressionItem) o;
+
+        return enabled != null ? enabled.equals(that.enabled) : that.enabled == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return enabled != null ? enabled.hashCode() : 0;
+    }
+
+    abstract void append(final StringBuilder sb, final String pad, final boolean singleLine);
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        append(sb, "", false);
+        append(sb, "", true);
         return sb.toString();
     }
 
-    public abstract ExpressionItem copy();
-
-    protected <T extends ExpressionItem> T copyTo(final T dest) {
-        ((ExpressionItem) dest).enabled = enabled;
-        return dest;
+    public String toMultiLineString() {
+        final StringBuilder sb = new StringBuilder();
+        append(sb, "", false);
+        return sb.toString();
     }
-
-    /**
-     * Recursive method to establish if an {@link ExpressionItem} (or any of its
-     * children) equal/contain the passed field name
-     *
-     * @param fieldToFind
-     *            The field to look for
-     * @return True if it is found
-     */
-    public abstract boolean contains(String fieldToFind);
-
-    /**
-     * Recursive method to populates the passed list with all enabled
-     * {@link ExpressionTerm} nodes found in the tree.
-     */
-    public static void findAllTermNodes(final ExpressionItem node, final List<ExpressionTerm> termsFound) {
-        // Don't go any further down this branch if this node is disabled.
-        if (node.enabled) {
-            if (node instanceof ExpressionTerm) {
-                final ExpressionTerm termNode = (ExpressionTerm) node;
-
-                termsFound.add(termNode);
-
-            } else if (node instanceof ExpressionOperator) {
-                for (final ExpressionItem childNode : ((ExpressionOperator) node).getChildren()) {
-                    findAllTermNodes(childNode, termsFound);
-                }
-            }
-        }
-    }
-
-    public abstract boolean internalEquals(final Object o);
-
-    public abstract int internalHashCode();
 }

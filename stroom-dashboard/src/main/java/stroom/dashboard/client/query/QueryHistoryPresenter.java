@@ -28,6 +28,7 @@ import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.PageRequest;
 import stroom.query.client.ExpressionTreePresenter;
+import stroom.query.shared.ExpressionOperator;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -100,11 +101,11 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         dispatcher.exec(action).onSuccess(result -> {
             selectionModel.clear();
 
-            String lastExpression = null;
+            ExpressionOperator lastExpression = null;
             final List<Query> dedupedList = new ArrayList<>(result.getSize());
             for (final Query query : result) {
                 if (query != null && query.getQueryData() != null && query.getQueryData().getExpression() != null) {
-                    final String expression = query.getQueryData().getExpression().toString();
+                    final ExpressionOperator expression = query.getQueryData().getExpression();
                     if (lastExpression == null || !lastExpression.equals(expression)) {
                         dedupedList.add(query);
                     }

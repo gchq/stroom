@@ -35,16 +35,15 @@ import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.shared.DocRef;
 import stroom.index.server.analyzer.AnalyzerFactory;
 import stroom.query.DateExpressionParser;
-import stroom.query.shared.Condition;
 import stroom.query.shared.ExpressionItem;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionTerm;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexField.AnalyzerType;
 import stroom.query.shared.IndexFieldType;
 import stroom.query.shared.IndexFieldsMap;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -92,7 +91,7 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Query getQuery(final Version matchVersion, final ExpressionItem item, final Set<String> terms) {
-        if (item.isEnabled()) {
+        if (item.enabled()) {
             if (item instanceof ExpressionTerm) {
                 // Create queries for single terms.
                 final ExpressionTerm term = (ExpressionTerm) item;
@@ -431,8 +430,8 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Occur getOccur(final ExpressionOperator operator) {
-        if (operator.getType() != null) {
-            switch (operator.getType()) {
+        if (operator.getOp() != null) {
+            switch (operator.getOp()) {
             case AND:
                 return Occur.MUST;
             case OR:
@@ -511,10 +510,10 @@ public class SearchExpressionQueryBuilder {
     }
 
     private boolean hasChildren(final ExpressionOperator operator) {
-        if (operator != null && operator.isEnabled() && operator.getChildren() != null
+        if (operator != null && operator.enabled() && operator.getChildren() != null
                 && operator.getChildren().size() > 0) {
             for (final ExpressionItem child : operator.getChildren()) {
-                if (child.isEnabled()) {
+                if (child.enabled()) {
                     if (child instanceof ExpressionOperator) {
                         final ExpressionOperator childOperator = (ExpressionOperator) child;
                         if (hasChildren(childOperator)) {

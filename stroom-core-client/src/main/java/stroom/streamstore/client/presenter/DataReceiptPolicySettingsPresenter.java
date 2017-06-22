@@ -30,7 +30,7 @@ import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.ExpressionBuilder;
 import stroom.query.shared.ExpressionOperator.Op;
 import stroom.query.shared.IndexField;
 import stroom.streamstore.client.presenter.DataReceiptPolicySettingsPresenter.DataReceiptPolicySettingsView;
@@ -114,12 +114,7 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
             if (rules != null) {
                 final DataReceiptRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
-                    ExpressionOperator expression = selected.getExpression();
-                    if (expression != null) {
-                        expression = expression.copy();
-                    }
-
-                    final DataReceiptRule newRule = new DataReceiptRule(System.currentTimeMillis(), selected.getName(), selected.isEnabled(), expression, selected.getAction());
+                    final DataReceiptRule newRule = new DataReceiptRule(selected.getRuleNumber() + 1, System.currentTimeMillis(), selected.getName(), selected.isEnabled(), selected.getExpression(), selected.getAction());
 
                     final int index = rules.indexOf(selected);
 
@@ -138,8 +133,7 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
             if (rules != null) {
                 final DataReceiptRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
-                    final DataReceiptRule newRule = new DataReceiptRule(selected.getCreationTime(), selected.getName(), !selected.isEnabled(), selected.getExpression(), selected.getAction());
-
+                    final DataReceiptRule newRule = new DataReceiptRule(selected.getRuleNumber(), selected.getCreationTime(), selected.getName(), !selected.isEnabled(), selected.getExpression(), selected.getAction());
                     final int index = rules.indexOf(selected);
                     rules.remove(index);
                     rules.add(index, newRule);
@@ -207,7 +201,7 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
     }
 
     private void add() {
-        final DataReceiptRule newRule = new DataReceiptRule(System.currentTimeMillis(), "", true, new ExpressionOperator(Op.AND), DataReceiptAction.RECEIVE);
+        final DataReceiptRule newRule = new DataReceiptRule(0, System.currentTimeMillis(), "", true, new ExpressionBuilder(Op.AND).build(), DataReceiptAction.RECEIVE);
         final DataReceiptRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule, indexFields);
 
@@ -288,7 +282,9 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
         if (rules != null) {
             // Set rule numbers on all of the rules for display purposes.
             for (int i = 0; i < rules.size(); i++) {
-                rules.get(i).setRuleNumber(i + 1);
+                final DataReceiptRule rule = rules.get(i);
+                final DataReceiptRule newRule = new DataReceiptRule(i + 1, rule.getCreationTime(), rule.getName(), rule.isEnabled(), rule.getExpression(), rule.getAction());
+                rules.set(i, newRule);
             }
             listPresenter.setData(rules);
         }

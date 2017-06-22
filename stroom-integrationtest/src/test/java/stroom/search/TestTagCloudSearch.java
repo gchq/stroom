@@ -18,7 +18,6 @@
 
 package stroom.search;
 
-import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
@@ -42,9 +41,9 @@ import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.ComponentSettings;
-import stroom.query.shared.Condition;
+import stroom.query.shared.ExpressionBuilder;
 import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.query.shared.Field;
 import stroom.query.shared.Format;
 import stroom.query.shared.QueryData;
@@ -215,19 +214,7 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
             final String to) {
         Query query = new Query();
 
-        final ExpressionTerm userId = new ExpressionTerm();
-        userId.setField("UserId");
-        userId.setCondition(Condition.CONTAINS);
-        userId.setValue(user);
-
-        final ExpressionTerm eventTime = new ExpressionTerm();
-        eventTime.setField("EventTime");
-        eventTime.setCondition(Condition.BETWEEN);
-        eventTime.setValue(from + "," + to);
-
-        final ExpressionOperator operator = new ExpressionOperator();
-        operator.addChild(userId);
-        operator.addChild(eventTime);
+        final ExpressionOperator operator = buildExpression(user, from, to).build();
 
         final QueryData queryData = new QueryData();
         queryData.setExpression(operator);
@@ -236,5 +223,14 @@ public class TestTagCloudSearch extends AbstractCoreIntegrationTest {
         query = queryMarshaller.marshal(query);
 
         return query;
+    }
+
+    private ExpressionBuilder buildExpression(final String user, final String from,
+                                              final String to) {
+        final ExpressionBuilder operator = new ExpressionBuilder();
+        operator.addTerm("UserId", Condition.CONTAINS, user);
+        operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
+
+        return operator;
     }
 }

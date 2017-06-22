@@ -72,4 +72,19 @@ public class IndexFields implements SharedObject {
         }
         return set;
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final IndexFields that = (IndexFields) o;
+
+        return indexFields != null ? indexFields.equals(that.indexFields) : that.indexFields == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return indexFields != null ? indexFields.hashCode() : 0;
+    }
 }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,7 +32,6 @@ import stroom.entity.shared.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
-import stroom.query.shared.ExpressionItem;
 import stroom.query.shared.IndexField;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.htree.client.BracketConnectorRenderer;
@@ -50,22 +49,18 @@ import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 import java.util.List;
 
-public class ExpressionTreePanel extends TreePanel<ExpressionItem> {
+public class ExpressionTreePanel extends TreePanel<Item> {
     private static final double HORIZONTAL_SEPARATION = 20;
     private static final double VERTICAL_SEPARATION = 0;
-
-    private TreeRenderer2<ExpressionItem> renderer;
-    private TreeLayout<ExpressionItem> treeLayout;
-
     private final LayeredCanvas canvas;
-    private ExpressionItemRenderer cellRenderer;
-
     private final FlowPanel panel;
     private final FlowPanel boxPanel;
-    private DefaultTreeForTreeLayout<ExpressionItem> tree;
-
     private final OperatorEditor operatorEditor;
     private final TermEditor termEditor;
+    private TreeRenderer2<Item> renderer;
+    private TreeLayout<Item> treeLayout;
+    private ExpressionItemRenderer cellRenderer;
+    private DefaultTreeForTreeLayout<Item> tree;
 
     public ExpressionTreePanel(final Provider<EntityDropDownPresenter> dictionaryProvider) {
         final EntityDropDownPresenter dictionaryPresenter = dictionaryProvider.get();
@@ -85,12 +80,12 @@ public class ExpressionTreePanel extends TreePanel<ExpressionItem> {
             final Context2d arrowContext = canvas.getLayer(TreeRenderer.ARROW_LAYER).getContext2d();
 
             cellRenderer = new ExpressionItemRenderer(boxPanel, operatorEditor, termEditor);
-            final ConnectorRenderer<ExpressionItem> connectorRenderer = new BracketConnectorRenderer<>(arrowContext);
+            final ConnectorRenderer<Item> connectorRenderer = new BracketConnectorRenderer<>(arrowContext);
 
             // setup the tree layout configuration
-            final DefaultConfiguration<ExpressionItem> layoutConfig = new DefaultConfiguration<>(HORIZONTAL_SEPARATION,
+            final DefaultConfiguration<Item> layoutConfig = new DefaultConfiguration<>(HORIZONTAL_SEPARATION,
                     VERTICAL_SEPARATION, Location.Left, AlignmentInLevel.TowardsRoot);
-            final NodeExtentProvider<ExpressionItem> extentProvider = cellRenderer;
+            final NodeExtentProvider<Item> extentProvider = cellRenderer;
 
             treeLayout = new CenteredParentTreeLayout<>(extentProvider, layoutConfig);
 
@@ -114,15 +109,7 @@ public class ExpressionTreePanel extends TreePanel<ExpressionItem> {
     }
 
     @Override
-    public void setTree(final DefaultTreeForTreeLayout<ExpressionItem> tree) {
-        this.tree = tree;
-        if (treeLayout != null) {
-            treeLayout.setTree(tree);
-        }
-    }
-
-    @Override
-    public Box<ExpressionItem> getBox(final ExpressionItem item) {
+    public Box<Item> getBox(final Item item) {
         if (renderer != null) {
             for (final ExpressionItemBox box : cellRenderer.getBoxes()) {
                 if (box.getItem() == item) {
@@ -135,7 +122,7 @@ public class ExpressionTreePanel extends TreePanel<ExpressionItem> {
     }
 
     @Override
-    public Box<ExpressionItem> getTargetBox(final Event event, final boolean usePosition) {
+    public Box<Item> getTargetBox(final Event event, final boolean usePosition) {
         if (renderer != null) {
             final Element target = event.getEventTarget().cast();
             for (final ExpressionItemBox box : cellRenderer.getBoxes()) {
@@ -155,7 +142,7 @@ public class ExpressionTreePanel extends TreePanel<ExpressionItem> {
     }
 
     @Override
-    public void setSelectionModel(final SelectionModel<ExpressionItem> selectionModel) {
+    public void setSelectionModel(final SelectionModel<Item> selectionModel) {
         if (renderer != null) {
             cellRenderer.setSelectionModel(selectionModel);
         }
@@ -176,8 +163,16 @@ public class ExpressionTreePanel extends TreePanel<ExpressionItem> {
     }
 
     @Override
-    public DefaultTreeForTreeLayout<ExpressionItem> getTree() {
+    public DefaultTreeForTreeLayout<Item> getTree() {
         return tree;
+    }
+
+    @Override
+    public void setTree(final DefaultTreeForTreeLayout<Item> tree) {
+        this.tree = tree;
+        if (treeLayout != null) {
+            treeLayout.setTree(tree);
+        }
     }
 
     public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<IndexField> indexFields) {

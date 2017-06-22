@@ -25,7 +25,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.entity.client.EntityItemListBox;
 import stroom.entity.shared.DocRef;
 import stroom.item.client.ItemListBox;
-import stroom.query.shared.Condition;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.streamstore.client.presenter.StreamAttributePresenter.StreamAttributeView;
 
 import java.util.List;

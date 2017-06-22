@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,8 +34,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.ItemListBox;
-import stroom.query.shared.Condition;
-import stroom.query.shared.ExpressionTerm;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexFieldType;
 import stroom.util.shared.EqualsUtil;
@@ -65,7 +64,7 @@ public class TermEditor extends Composite {
     private final List<Widget> activeWidgets = new ArrayList<>();
     private final List<HandlerRegistration> registrations = new ArrayList<>();
 
-    private ExpressionTerm term;
+    private Term term;
     private List<IndexField> indexFields;
     private boolean reading;
     private boolean editing;
@@ -139,7 +138,7 @@ public class TermEditor extends Composite {
         }
     }
 
-    public void startEdit(final ExpressionTerm term) {
+    public void startEdit(final Term term) {
         if (!editing) {
             this.term = term;
 
@@ -163,7 +162,7 @@ public class TermEditor extends Composite {
         }
     }
 
-    private void read(final ExpressionTerm term) {
+    private void read(final Term term) {
         reading = true;
 
         // Select the current value.
@@ -184,7 +183,7 @@ public class TermEditor extends Composite {
         reading = false;
     }
 
-    private void write(final ExpressionTerm term) {
+    private void write(final Term term) {
         if (fieldListBox.getSelectedItem() != null && conditionListBox.getSelectedItem() != null) {
             DocRef dictionaryRef = null;
 

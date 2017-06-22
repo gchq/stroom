@@ -22,9 +22,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionModel;
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
 import stroom.widget.htree.client.CellRenderer2;
 import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.Dimension;
@@ -35,16 +32,13 @@ import stroom.widget.util.client.MySingleSelectionModel;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class ExpressionItemRenderer implements CellRenderer2<ExpressionItem>, NodeExtentProvider<ExpressionItem> {
+public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeExtentProvider<Item> {
     private final FlowPanel panel;
-
-    private ExpressionItem editingItem;
     private final OperatorEditor operatorEditor;
     private final TermEditor termEditor;
-
-    private SelectionModel<ExpressionItem> selectionModel;
-
     private final List<ExpressionItemBox> boxes = new ArrayList<>();
+    private Item editingItem;
+    private SelectionModel<Item> selectionModel;
 
     public ExpressionItemRenderer(final FlowPanel panel, final OperatorEditor operatorEditor,
                                   final TermEditor termEditor) {
@@ -55,11 +49,11 @@ public final class ExpressionItemRenderer implements CellRenderer2<ExpressionIte
     }
 
     @Override
-    public void render(final TreeLayout<ExpressionItem> treeLayout, final Bounds bounds, final ExpressionItem item) {
+    public void render(final TreeLayout<Item> treeLayout, final Bounds bounds, final Item item) {
         final boolean selected = selectionModel != null && selectionModel.isSelected(item);
-        ExpressionItem editing = null;
+        Item editing = null;
         if (selectionModel != null && selectionModel instanceof MySingleSelectionModel<?>) {
-            editing = ((MySingleSelectionModel<ExpressionItem>) selectionModel).getSelectedObject();
+            editing = ((MySingleSelectionModel<Item>) selectionModel).getSelectedObject();
         }
         if (editing == null || !editing.equals(editingItem)) {
             // Stop editing previous item.
@@ -85,19 +79,19 @@ public final class ExpressionItemRenderer implements CellRenderer2<ExpressionIte
         if (editing != null) {
             if (editing.equals(item)) {
                 if (editingItem == null) {
-                    if (item instanceof ExpressionOperator) {
-                        final ExpressionOperator operator = (ExpressionOperator) item;
+                    if (item instanceof Operator) {
+                        final Operator operator = (Operator) item;
                         operatorEditor.startEdit(operator);
-                    } else if (item instanceof ExpressionTerm) {
-                        final ExpressionTerm term = (ExpressionTerm) item;
+                    } else if (item instanceof Term) {
+                        final Term term = (Term) item;
                         termEditor.startEdit(term);
                     }
                     editingItem = editing;
                 }
 
-                if (item instanceof ExpressionOperator) {
+                if (item instanceof Operator) {
                     widget = operatorEditor;
-                } else if (item instanceof ExpressionTerm) {
+                } else if (item instanceof Term) {
                     widget = termEditor;
                 }
             }
@@ -115,10 +109,10 @@ public final class ExpressionItemRenderer implements CellRenderer2<ExpressionIte
 
     private void stopEditing() {
         if (editingItem != null) {
-            if (editingItem instanceof ExpressionOperator) {
+            if (editingItem instanceof Operator) {
                 operatorEditor.endEdit();
                 operatorEditor.removeFromParent();
-            } else if (editingItem instanceof ExpressionTerm) {
+            } else if (editingItem instanceof Term) {
                 termEditor.endEdit();
                 termEditor.removeFromParent();
             }
@@ -127,20 +121,20 @@ public final class ExpressionItemRenderer implements CellRenderer2<ExpressionIte
     }
 
     @Override
-    public Dimension getExtents(final ExpressionItem item) {
-        if (item instanceof ExpressionOperator) {
+    public Dimension getExtents(final Item item) {
+        if (item instanceof Operator) {
             return new Dimension(54, 20);
         }
 
         return new Dimension(400, 20);
     }
 
-    public String getText(final ExpressionItem item) {
-        if (item instanceof ExpressionOperator) {
-            final ExpressionOperator operator = (ExpressionOperator) item;
-            return operator.getType().getDisplayValue();
-        } else if (item instanceof ExpressionTerm) {
-            final ExpressionTerm term = (ExpressionTerm) item;
+    public String getText(final Item item) {
+        if (item instanceof Operator) {
+            final Operator operator = (Operator) item;
+            return operator.getOp().getDisplayValue();
+        } else if (item instanceof Term) {
+            final Term term = (Term) item;
             final StringBuilder sb = new StringBuilder();
             if (term.getField() != null) {
                 sb.append(term.getField());
@@ -166,7 +160,7 @@ public final class ExpressionItemRenderer implements CellRenderer2<ExpressionIte
         return boxes;
     }
 
-    public void setSelectionModel(final SelectionModel<ExpressionItem> selectionModel) {
+    public void setSelectionModel(final SelectionModel<Item> selectionModel) {
         this.selectionModel = selectionModel;
     }
 }

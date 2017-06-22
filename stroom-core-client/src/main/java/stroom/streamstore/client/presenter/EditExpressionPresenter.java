@@ -125,7 +125,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     }
 
     private void setButtonsEnabled() {
-        final ExpressionItem selectedItem = getSelectedItem();
+        final stroom.query.client.Item selectedItem = getSelectedItem();
 
         if (selectedItem == null) {
             disableItemButton.setEnabled(false);
@@ -149,9 +149,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     }
 
     public ExpressionOperator write() {
-        final ExpressionOperator root = new ExpressionOperator();
-        expressionPresenter.write(root);
-        return root;
+        return expressionPresenter.write();
     }
 
     private void addOperator() {
@@ -172,7 +170,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     }
 
     private List<Item> addExpressionActionsToMenu() {
-        final ExpressionItem selectedItem = getSelectedItem();
+        final stroom.query.client.Item selectedItem = getSelectedItem();
         final boolean hasSelection = selectedItem != null;
 
         final List<Item> menuItems = new ArrayList<Item>();
@@ -188,14 +186,14 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     }
 
     private String getEnableDisableText() {
-        final ExpressionItem selectedItem = getSelectedItem();
-        if (selectedItem != null && !selectedItem.isEnabled()) {
+        final stroom.query.client.Item selectedItem = getSelectedItem();
+        if (selectedItem != null && !selectedItem.enabled()) {
             return "Enable";
         }
         return "Disable";
     }
 
-    private ExpressionItem getSelectedItem() {
+    private stroom.query.client.Item getSelectedItem() {
         if (expressionPresenter.getSelectionModel() != null) {
             return expressionPresenter.getSelectionModel().getSelectedObject();
         }

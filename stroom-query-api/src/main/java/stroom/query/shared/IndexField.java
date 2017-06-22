@@ -16,17 +16,17 @@
 
 package stroom.query.shared;
 
-import java.util.ArrayList;
-import java.util.List;
+import stroom.query.shared.ExpressionTerm.Condition;
+import stroom.util.shared.HasDisplayValue;
+import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
-
-import stroom.util.shared.HasDisplayValue;
-import stroom.util.shared.SharedObject;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>

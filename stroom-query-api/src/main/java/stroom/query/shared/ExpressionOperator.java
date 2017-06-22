@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,25 +16,107 @@
 
 package stroom.query.shared;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import stroom.util.shared.HasDisplayValue;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Arrays;
+import java.util.List;
 
-import stroom.util.shared.HasDisplayValue;
-
+@XmlType(name = "ExpressionOperator", propOrder = {"op", "children"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "operator", propOrder = { "op", "children" })
-@XmlRootElement(name = "operator")
-public class ExpressionOperator extends ExpressionItem {
+public final class ExpressionOperator extends ExpressionItem {
     private static final long serialVersionUID = 6602004424564268512L;
+
+    @XmlElement(name = "op")
+    private Op op = Op.AND;
+    @XmlElementWrapper(name = "children")
+    @XmlElements({
+            @XmlElement(name = "operator", type = ExpressionOperator.class),
+            @XmlElement(name = "term", type = ExpressionTerm.class)
+    })
+    private List<ExpressionItem> children;
+
+    private ExpressionOperator() {
+    }
+
+    public ExpressionOperator(final Boolean enabled, final Op op, final List<ExpressionItem> children) {
+        super(enabled);
+        this.op = op;
+        this.children = children;
+    }
+
+    public ExpressionOperator(final Boolean enabled, final Op op, final ExpressionItem... children) {
+        super(enabled);
+        this.op = op;
+        this.children = Arrays.asList(children);
+    }
+
+    public Op getOp() {
+        return op;
+    }
+
+    public List<ExpressionItem> getChildren() {
+        return children;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        final ExpressionOperator that = (ExpressionOperator) o;
+
+        if (op != that.op) return false;
+        return children != null ? children.equals(that.children) : that.children == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (op != null ? op.hashCode() : 0);
+        result = 31 * result + (children != null ? children.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    void append(final StringBuilder sb, final String pad, final boolean singleLine) {
+        if (enabled()) {
+            if (!singleLine && sb.length() > 0) {
+                sb.append("\n");
+                sb.append(pad);
+            }
+
+            sb.append(op);
+            if (singleLine) {
+                sb.append(" {");
+            }
+
+            if (children != null) {
+                final String padding = pad + "  ";
+                boolean firstItem = true;
+                for (final ExpressionItem expressionItem : children) {
+                    if (expressionItem.enabled()) {
+                        if (singleLine && !firstItem) {
+                            sb.append(", ");
+                        }
+
+                        expressionItem.append(sb, padding, singleLine);
+                        firstItem = false;
+                    }
+                }
+            }
+
+            if (singleLine) {
+                sb.append("}");
+            }
+        }
+    }
 
     public enum Op implements HasDisplayValue {
         AND("AND"), OR("OR"), NOT("NOT");
@@ -49,158 +131,5 @@ public class ExpressionOperator extends ExpressionItem {
         public String getDisplayValue() {
             return displayValue;
         }
-    }
-
-    @XmlElement(name = "op")
-    private Op op = Op.AND;
-
-    @XmlElementWrapper(name = "children")
-    @XmlElements({ @XmlElement(name = "operator", type = ExpressionOperator.class),
-            @XmlElement(name = "term", type = ExpressionTerm.class) })
-    private List<ExpressionItem> children = new ArrayList<>();
-
-    public ExpressionOperator() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ExpressionOperator(final Op op) {
-        this.op = op;
-    }
-
-    public void setType(final Op op) {
-        this.op = op;
-    }
-
-    public Op getType() {
-        return op;
-    }
-
-    public void addChild(final ExpressionItem child) {
-        children.add(child);
-    }
-
-    public void removeChild(final ExpressionItem child) {
-        children.remove(child);
-    }
-
-    public List<ExpressionItem> getChildren() {
-        return children;
-    }
-
-    public void setChildren(final List<ExpressionItem> children) {
-        this.children = children;
-    }
-
-    @Override
-    public void append(final StringBuilder sb, final String pad, final boolean singleLine) {
-        if (isEnabled()) {
-            final String padding = pad + "  ";
-
-            if (!singleLine) {
-                sb.append(pad);
-            }
-            sb.append(op);
-            if (!singleLine) {
-                sb.append("\n");
-            } else {
-                sb.append(" {");
-            }
-
-            if (children != null) {
-                final Iterator<ExpressionItem> iter = children.iterator();
-
-                while (iter.hasNext()) {
-                    final ExpressionItem child = iter.next();
-                    child.append(sb, padding, singleLine);
-
-                    if (singleLine) {
-                        if (iter.hasNext()) {
-                            sb.append(", ");
-                        }
-                    } else {
-                        sb.append("\n");
-                    }
-                }
-
-            }
-
-            if (singleLine) {
-                sb.append("} ");
-            }
-        }
-    }
-
-    protected <T extends ExpressionOperator> T copyTo(T dest) {
-        dest = super.copyTo(dest);
-        ((ExpressionOperator) dest).op = op;
-
-        if (children != null) {
-            for (final ExpressionItem item : children) {
-                dest.addChild(item.copy());
-            }
-        }
-
-        return dest;
-    }
-
-    @Override
-    public ExpressionOperator copy() {
-        return copyTo(new ExpressionOperator());
-    }
-
-    @Override
-    public boolean contains(final String fieldToFind) {
-        boolean hasBeenFound = false;
-
-        if (children != null) {
-            for (final ExpressionItem item : children) {
-                if (item.contains(fieldToFind)) {
-                    hasBeenFound = true;
-                    break;
-                }
-            }
-        }
-
-        return hasBeenFound;
-    }
-
-    @Override
-    public boolean internalEquals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        final ExpressionOperator that = (ExpressionOperator) o;
-
-        if (op != that.op) return false;
-
-        if (children != null && that.children != null) {
-            if (children.size() != that.children.size()) {
-                return false;
-            }
-
-            for (int i = 0; i < children.size(); i++) {
-                final ExpressionItem expressionItem1 = children.get(i);
-                final ExpressionItem expressionItem2 = that.children.get(i);
-                if (!expressionItem1.internalEquals(expressionItem2)) {
-                    return false;
-                }
-            }
-        }
-
-        return children == that.children;
-    }
-
-    @Override
-    public int internalHashCode() {
-        int result = op != null ? op.hashCode() : 0;
-
-        if (children != null) {
-            result = 31 * result + children.size();
-            for (final ExpressionItem expressionItem : children) {
-                result = 31 * result + expressionItem.internalHashCode();
-            }
-        }
-
-        return result;
     }
 }

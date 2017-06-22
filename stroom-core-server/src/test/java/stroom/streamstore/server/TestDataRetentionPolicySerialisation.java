@@ -18,10 +18,10 @@ package stroom.streamstore.server;
 
 import org.junit.Test;
 import stroom.entity.server.util.XMLMarshallerUtil;
-import stroom.query.shared.Condition;
+import stroom.query.shared.ExpressionBuilder;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.streamstore.shared.DataRetentionPolicy;
 import stroom.streamstore.shared.DataRetentionRule;
 import stroom.streamstore.shared.TimeUnit;
@@ -33,10 +33,10 @@ import java.util.List;
 public class TestDataRetentionPolicySerialisation {
     @Test
     public void test() throws Exception {
-
-        final ExpressionOperator expression = new ExpressionOperator(Op.AND);
-        expression.addChild(new ExpressionTerm("StreamType", Condition.EQUALS, "Raw Events"));
-        expression.addChild(new ExpressionTerm("Feed", Condition.EQUALS, "TEST_FEED"));
+        final ExpressionBuilder builder = new ExpressionBuilder(true, Op.AND);
+        builder.addTerm("StreamType", Condition.EQUALS, "Raw Events");
+        builder.addTerm("Feed", Condition.EQUALS, "TEST_FEED");
+        final ExpressionOperator expression = builder.build();
 
         final List<DataRetentionRule> list = new ArrayList<>();
         list.add(new DataRetentionRule(expression, 10, TimeUnit.DAYS, false));

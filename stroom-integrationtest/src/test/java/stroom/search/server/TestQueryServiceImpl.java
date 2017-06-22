@@ -16,6 +16,10 @@
 
 package stroom.search.server;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardService;
@@ -29,19 +33,21 @@ import stroom.entity.shared.DocRef;
 import stroom.entity.shared.FolderService;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
+import stroom.query.shared.ExpressionBuilder;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.query.shared.QueryData;
 import stroom.security.shared.User;
 import stroom.security.shared.UserService;
 import stroom.util.thread.ThreadUtil;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 
 public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
+    private static Logger LOGGER = LoggerFactory.getLogger(TestQueryServiceImpl.class);
+
     @Resource
     private DashboardService dashboardService;
     @Resource
@@ -77,7 +83,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         final QueryData refQueryData = new QueryData();
         refQuery.setQueryData(refQueryData);
         refQueryData.setDataSource(dataSourceRef);
-        refQueryData.setExpression(new ExpressionOperator());
+        refQueryData.setExpression(new ExpressionOperator(null, Op.AND, Arrays.asList()));
         queryService.save(refQuery);
 
         // Ensure the two query creation times are separated by one second so that ordering by time works correctly in
@@ -90,16 +96,12 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         testQuery.setQueryData(testQueryData);
         testQueryData.setDataSource(dataSourceRef);
 
-        final ExpressionOperator root = new ExpressionOperator();
-        root.setType(Op.OR);
+        final ExpressionBuilder root = new ExpressionBuilder(Op.OR);
+        root.addTerm("Some field", Condition.CONTAINS, "Some value");
 
-        final ExpressionTerm content = new ExpressionTerm();
-        content.setField("Some field");
-        content.setValue("Some value");
+        LOGGER.info(root.toString());
 
-        root.addChild(content);
-
-        testQueryData.setExpression(root);
+        testQueryData.setExpression(root.build());
         testQuery = queryService.save(testQuery);
     }
 

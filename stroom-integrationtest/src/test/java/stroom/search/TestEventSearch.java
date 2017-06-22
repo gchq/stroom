@@ -18,7 +18,6 @@
 
 package stroom.search;
 
-import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
@@ -42,9 +41,9 @@ import stroom.query.SearchDataSourceProvider;
 import stroom.query.SearchResultCollector;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.ComponentSettings;
-import stroom.query.shared.Condition;
+import stroom.query.shared.ExpressionBuilder;
 import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.query.shared.Field;
 import stroom.query.shared.Format;
 import stroom.query.shared.QueryData;
@@ -62,6 +61,7 @@ import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -95,18 +95,18 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
      */
     @Test
     public void positiveCaseInsensitiveTest() {
-        final ExpressionOperator expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
+        final ExpressionBuilder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
         test(expression, 5);
     }
 
-    private void test(final ExpressionOperator expressionIn, final int expectResultCount) {
-        final String[] compoentIds = new String[] { "table-1" };
-        test(expressionIn, expectResultCount, compoentIds, true);
+    private void test(final ExpressionBuilder expressionIn, final int expectResultCount) {
+        final List<String> componentIds = Collections.singletonList("table-1");
+        test(expressionIn, expectResultCount, componentIds, true);
     }
 
-    private void test(final ExpressionOperator expressionIn, final int expectResultCount, final String[] compoentIds,
-            final boolean extractValues) {
+    private void test(final ExpressionBuilder expressionIn, final int expectResultCount, final List<String> componentIds,
+                      final boolean extractValues) {
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
         StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
         StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
@@ -121,7 +121,7 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
 
         final Map<String, ComponentSettings> resultComponentMap = new HashMap<String, ComponentSettings>();
         final Map<String, ComponentResultRequest> componentResultRequests = new HashMap<String, ComponentResultRequest>();
-        for (final String componentId : compoentIds) {
+        for (final String componentId : componentIds) {
             final TableSettings tableSettings = createTableSettings(index);
             tableSettings.setExtractValues(extractValues);
             resultComponentMap.put(componentId, tableSettings);
@@ -204,7 +204,7 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         if (expectResultCount == 0) {
             Assert.assertEquals(0, rows.size());
         } else {
-            Assert.assertEquals(compoentIds.length, rows.size());
+            Assert.assertEquals(componentIds.size(), rows.size());
         }
 
         for (final List<Row> values : rows.values()) {
@@ -255,9 +255,9 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         return tableSettings;
     }
 
-    private Query buildQuery(final DocRef dataSourceRef, final ExpressionOperator expression) {
+    private Query buildQuery(final DocRef dataSourceRef, final ExpressionBuilder expression) {
         final QueryData queryData = new QueryData();
-        queryData.setExpression(expression);
+        queryData.setExpression(expression.build());
         queryData.setDataSource(dataSourceRef);
         Query query = new Query();
         query.setQueryData(queryData);
@@ -266,27 +266,12 @@ public class TestEventSearch extends AbstractCoreIntegrationTest {
         return query;
     }
 
-    private ExpressionOperator buildExpression(final String userField, final String userTerm, final String from,
-            final String to, final String wordsField, final String wordsTerm) {
-        final ExpressionTerm userId = new ExpressionTerm();
-        userId.setField(userField);
-        userId.setCondition(Condition.CONTAINS);
-        userId.setValue(userTerm);
-
-        final ExpressionTerm eventTime = new ExpressionTerm();
-        eventTime.setField("EventTime");
-        eventTime.setCondition(Condition.BETWEEN);
-        eventTime.setValue(from + "," + to);
-
-        final ExpressionTerm words = new ExpressionTerm();
-        words.setField(wordsField);
-        words.setCondition(Condition.CONTAINS);
-        words.setValue(wordsTerm);
-
-        final ExpressionOperator operator = new ExpressionOperator();
-        operator.addChild(userId);
-        operator.addChild(eventTime);
-        operator.addChild(words);
+    private ExpressionBuilder buildExpression(final String userField, final String userTerm, final String from,
+                                              final String to, final String wordsField, final String wordsTerm) {
+        final ExpressionBuilder operator = new ExpressionBuilder();
+        operator.addTerm(userField, Condition.CONTAINS, userTerm);
+        operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
+        operator.addTerm(wordsField, Condition.CONTAINS, wordsTerm);
 
         return operator;
     }

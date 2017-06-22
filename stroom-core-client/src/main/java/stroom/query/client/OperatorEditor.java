@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +23,17 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import stroom.item.client.ItemListBox;
-import stroom.query.client.TermEditor.Resources;
-import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
+import stroom.query.client.TermEditor.Resources;
 
 public class OperatorEditor extends Composite {
+    private static Resources resources;
     private final FlowPanel layout;
-    private final ItemListBox<ExpressionOperator.Op> listBox;
-    private ExpressionOperator operator;
-
+    private final ItemListBox<Op> listBox;
+    private Operator operator;
     private boolean reading;
     private boolean editing;
     private ExpressionUiHandlers uiHandlers;
-
-    private static Resources resources;
 
     public OperatorEditor() {
         if (resources == null) {
@@ -51,7 +48,7 @@ public class OperatorEditor extends Composite {
 
         listBox.addSelectionHandler(event -> {
             if (!reading && operator != null) {
-                operator.setType(event.getSelectedItem());
+                operator.setOp(event.getSelectedItem());
                 fireDirty();
             }
         });
@@ -64,14 +61,14 @@ public class OperatorEditor extends Composite {
         initWidget(layout);
     }
 
-    public void startEdit(final ExpressionOperator operator) {
+    public void startEdit(final Operator operator) {
         if (!editing) {
             reading = true;
 
             this.operator = operator;
 
             // Select the current value.
-            listBox.setSelectedItem(operator.getType());
+            listBox.setSelectedItem(operator.getOp());
 
             Scheduler.get().scheduleDeferred(() -> layout.setVisible(true));
 

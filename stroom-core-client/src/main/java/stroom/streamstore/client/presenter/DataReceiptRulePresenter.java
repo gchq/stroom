@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.query.shared.ExpressionBuilder;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
 import stroom.query.shared.IndexField;
@@ -31,12 +32,12 @@ import java.util.List;
 
 public class DataReceiptRulePresenter extends MyPresenterWidget<DataReceiptRuleView> {
     private final EditExpressionPresenter editExpressionPresenter;
-    private long creationTime;
-    private boolean enabled;
+    private DataReceiptRule originalRule;
 
     @Inject
     public DataReceiptRulePresenter(final EventBus eventBus,
-                                    final DataReceiptRuleView view, final EditExpressionPresenter editExpressionPresenter) {
+                                    final DataReceiptRuleView view,
+                                    final EditExpressionPresenter editExpressionPresenter) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
@@ -44,11 +45,10 @@ public class DataReceiptRulePresenter extends MyPresenterWidget<DataReceiptRuleV
 
     void read(final DataReceiptRule rule, final List<IndexField> indexFields) {
         editExpressionPresenter.init(null, null, indexFields);
-        this.creationTime = rule.getCreationTime();
+        this.originalRule = rule;
         getView().setName(rule.getName());
-        this.enabled = rule.isEnabled();
         if (rule.getExpression() == null) {
-            editExpressionPresenter.read(new ExpressionOperator(Op.AND));
+            editExpressionPresenter.read(new ExpressionBuilder(Op.AND).build());
         } else {
             editExpressionPresenter.read(rule.getExpression());
         }
@@ -57,7 +57,7 @@ public class DataReceiptRulePresenter extends MyPresenterWidget<DataReceiptRuleV
 
     DataReceiptRule write() {
         final ExpressionOperator expression = editExpressionPresenter.write();
-        return new DataReceiptRule(creationTime, getView().getName(), enabled, expression, getView().getAction());
+        return new DataReceiptRule(originalRule.getRuleNumber(), originalRule.getCreationTime(), getView().getName(), originalRule.isEnabled(), expression, getView().getAction());
     }
 
     public interface DataReceiptRuleView extends View {

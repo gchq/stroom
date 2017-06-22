@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,39 +17,45 @@
 package stroom.query.shared;
 
 import stroom.entity.shared.DocRef;
+import stroom.util.shared.HasDisplayValue;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Arrays;
+import java.util.List;
 
+@XmlType(name = "ExpressionTerm", propOrder = {"field", "condition", "value", "dictionary"})
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "term", propOrder = {"field", "condition", "value", "dictionary"})
-public class ExpressionTerm extends ExpressionItem {
+public final class ExpressionTerm extends ExpressionItem {
     private static final long serialVersionUID = 9035311895540457146L;
 
-    @XmlElement(name = "field")
+    @XmlElement
     private String field;
-    @XmlElement(name = "condition")
-    private Condition condition = Condition.CONTAINS;
-    @XmlElement(name = "value")
+    @XmlElement
+    private Condition condition;
+    @XmlElement
     private String value;
-    @XmlElement(name = "dictionary")
+    @XmlElement
     private DocRef dictionary;
 
-    public ExpressionTerm() {
-        // Default constructor necessary for GWT serialisation.
+    private ExpressionTerm() {
     }
 
     public ExpressionTerm(final String field, final Condition condition, final String value) {
-        this.field = field;
-        this.condition = condition;
-        this.value = value;
+        this(null, field, condition, value, null);
     }
 
     public ExpressionTerm(final String field, final Condition condition, final DocRef dictionary) {
+        this(null, field, condition, null, dictionary);
+    }
+
+    public ExpressionTerm(final Boolean enabled, final String field, final Condition condition, final String value, final DocRef dictionary) {
+        super(enabled);
         this.field = field;
         this.condition = condition;
+        this.value = value;
         this.dictionary = dictionary;
     }
 
@@ -57,37 +63,50 @@ public class ExpressionTerm extends ExpressionItem {
         return field;
     }
 
-    public void setField(final String field) {
-        this.field = field;
-    }
-
     public Condition getCondition() {
         return condition;
-    }
-
-    public void setCondition(final Condition condition) {
-        this.condition = condition;
     }
 
     public String getValue() {
         return value;
     }
 
-    public void setValue(final String value) {
-        this.value = value;
-    }
-
     public DocRef getDictionary() {
         return dictionary;
     }
 
-    public void setDictionary(final DocRef dictionary) {
-        this.dictionary = dictionary;
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        final ExpressionTerm that = (ExpressionTerm) o;
+
+        if (field != null ? !field.equals(that.field) : that.field != null) return false;
+        if (condition != that.condition) return false;
+        if (value != null ? !value.equals(that.value) : that.value != null) return false;
+        return dictionary != null ? dictionary.equals(that.dictionary) : that.dictionary == null;
     }
 
     @Override
-    public void append(final StringBuilder sb, final String pad, final boolean singleLine) {
-        if (isEnabled()) {
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (field != null ? field.hashCode() : 0);
+        result = 31 * result + (condition != null ? condition.hashCode() : 0);
+        result = 31 * result + (value != null ? value.hashCode() : 0);
+        result = 31 * result + (dictionary != null ? dictionary.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    void append(final StringBuilder sb, final String pad, final boolean singleLine) {
+        if (enabled()) {
+            if (!singleLine && sb.length() > 0) {
+                sb.append("\n");
+                sb.append(pad);
+            }
+
             if (field != null) {
                 sb.append(field);
             }
@@ -106,44 +125,22 @@ public class ExpressionTerm extends ExpressionItem {
         }
     }
 
-    protected <T extends ExpressionTerm> T copyTo(T dest) {
-        dest = super.copyTo(dest);
-        ((ExpressionTerm) dest).condition = condition;
-        ((ExpressionTerm) dest).field = field;
-        ((ExpressionTerm) dest).value = value;
-        ((ExpressionTerm) dest).dictionary = dictionary;
-        return dest;
-    }
+    public enum Condition implements HasDisplayValue {
+        CONTAINS("contains"), EQUALS("="), GREATER_THAN(">"), GREATER_THAN_OR_EQUAL_TO(">="), LESS_THAN(
+                "<"), LESS_THAN_OR_EQUAL_TO("<="), BETWEEN("between"), IN("in"), IN_DICTIONARY("in dictionary");
 
-    @Override
-    public ExpressionTerm copy() {
-        return copyTo(new ExpressionTerm());
-    }
+        public static final List<Condition> SIMPLE_CONDITIONS = Arrays.asList(EQUALS, GREATER_THAN, GREATER_THAN_OR_EQUAL_TO, LESS_THAN,
+                LESS_THAN_OR_EQUAL_TO, BETWEEN);
+        public static final String IN_CONDITION_DELIMITER = ",";
+        private final String displayValue;
 
-    @Override
-    public boolean contains(final String fieldToFind) {
-        return this.field.equals(fieldToFind);
-    }
+        Condition(final String displayValue) {
+            this.displayValue = displayValue;
+        }
 
-    @Override
-    public boolean internalEquals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        final ExpressionTerm term = (ExpressionTerm) o;
-
-        if (field != null ? !field.equals(term.field) : term.field != null) return false;
-        if (condition != term.condition) return false;
-        if (value != null ? !value.equals(term.value) : term.value != null) return false;
-        return dictionary != null ? dictionary.equals(term.dictionary) : term.dictionary == null;
-    }
-
-    @Override
-    public int internalHashCode() {
-        int result = field != null ? field.hashCode() : 0;
-        result = 31 * result + (condition != null ? condition.hashCode() : 0);
-        result = 31 * result + (value != null ? value.hashCode() : 0);
-        result = 31 * result + (dictionary != null ? dictionary.hashCode() : 0);
-        return result;
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
     }
 }

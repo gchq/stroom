@@ -22,6 +22,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRef;
+import stroom.query.shared.ExpressionBuilder;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
 import stroom.streamstore.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
@@ -31,8 +32,7 @@ import stroom.streamstore.shared.TimeUnit;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> {
     private final EditExpressionPresenter editExpressionPresenter;
-    private long creationTime;
-    private boolean enabled;
+    private DataRetentionRule originalRule;
 
     @Inject
     public DataRetentionRulePresenter(final EventBus eventBus,
@@ -47,11 +47,10 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
     }
 
     void read(final DataRetentionRule rule) {
-        this.creationTime = rule.getCreationTime();
+        this.originalRule = rule;
         getView().setName(rule.getName());
-        this.enabled = rule.isEnabled();
         if (rule.getExpression() == null) {
-            editExpressionPresenter.read(new ExpressionOperator(Op.AND));
+            editExpressionPresenter.read(new ExpressionBuilder(Op.AND).build());
         } else {
             editExpressionPresenter.read(rule.getExpression());
         }
@@ -62,7 +61,7 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
 
     DataRetentionRule write() {
         final ExpressionOperator expression = editExpressionPresenter.write();
-        return new DataRetentionRule(creationTime, getView().getName(), enabled, expression, getView().getAge(), getView().getTimeUnit(), getView().isForever());
+        return new DataRetentionRule(originalRule.getRuleNumber(), originalRule.getCreationTime(), getView().getName(), originalRule.isEnabled(), expression, getView().getAge(), getView().getTimeUnit(), getView().isForever());
     }
 
     public interface DataRetentionRuleView extends View {

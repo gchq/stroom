@@ -23,7 +23,8 @@ import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
-import stroom.query.shared.Condition;
+import stroom.query.shared.ExpressionBuilder;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
 import stroom.query.shared.ExpressionTerm;
@@ -74,10 +75,9 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         LOGGER.info("timeOutsideRetentionPeriod: %s", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
         // save two streams, one inside retention period, one outside
-        final ExpressionTerm feedTerm = new ExpressionTerm("Feed", Condition.EQUALS, feed.getName());
-        final ExpressionOperator expression = new ExpressionOperator(Op.AND);
-        expression.addChild(feedTerm);
-        final DataRetentionRule rule = new DataRetentionRule(expression, RETENTION_PERIOD_DAYS, stroom.streamstore.shared.TimeUnit.DAYS, false);
+        final ExpressionBuilder builder = new ExpressionBuilder(true, Op.AND);
+        builder.addTerm("Feed", Condition.EQUALS, feed.getName());
+        final DataRetentionRule rule = new DataRetentionRule(builder.build(), RETENTION_PERIOD_DAYS, stroom.streamstore.shared.TimeUnit.DAYS, false);
         final DataRetentionPolicy currentPolicy = dataRetentionService.load();
         final DataRetentionPolicy dataRetentionPolicy = new DataRetentionPolicy(Collections.singletonList(rule));
         if (currentPolicy != null) {

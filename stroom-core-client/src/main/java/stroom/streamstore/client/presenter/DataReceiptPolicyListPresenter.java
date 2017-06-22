@@ -69,9 +69,7 @@ public class DataReceiptPolicyListPresenter extends MyPresenterWidget<DataGridVi
         final Column<DataReceiptRule, String> expressionColumn = new Column<DataReceiptRule, String>(new TextCell()) {
             @Override
             public String getValue(final DataReceiptRule row) {
-                final StringBuilder expression = new StringBuilder();
-                row.getExpression().append(expression, "", true);
-                return expression.toString();
+                return row.getExpression().toString();
             }
         };
         getView().addResizableColumn(expressionColumn, "Expression", 500);

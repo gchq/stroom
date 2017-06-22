@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import stroom.query.shared.Condition;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.query.shared.ExpressionItem;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionTerm;
@@ -60,7 +60,7 @@ public class FilterTermsTreeBuilder {
     private static PrintableNode convertNode(final ExpressionItem oldNode, final Set<String> fieldBlackList) {
         PrintableNode newNode = null;
 
-        if (oldNode.isEnabled()) {
+        if (oldNode.enabled()) {
             if (oldNode instanceof ExpressionTerm) {
                 final ExpressionTerm termNode = (ExpressionTerm) oldNode;
                 if (termNode.getValue() != null && termNode.getValue().length() > 0) {
@@ -137,7 +137,7 @@ public class FilterTermsTreeBuilder {
         if (oldNode.getChildren() == null || oldNode.getChildren().size() == 0) {
             return null;
         } else {
-            final FilterOperationMode operationMode = FilterOperationMode.valueOf(oldNode.getType().toString());
+            final FilterOperationMode operationMode = FilterOperationMode.valueOf(oldNode.getOp().toString());
 
             final List<PrintableNode> children = new ArrayList<PrintableNode>();
 

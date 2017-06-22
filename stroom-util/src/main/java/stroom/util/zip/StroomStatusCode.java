@@ -33,6 +33,9 @@ public enum StroomStatusCode {
     FEED_IS_NOT_SET_TO_RECEIVED_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110, "Feed is not set to receive data",
             "The feed you have provided has not been setup to receive data"),
 
+    RECEIPT_POLICY_SET_TO_REJECT_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110, "The data receipt policy is set to reject this data",
+            "The data you have provided has been rejected by policy"),
+
     UNKNOWN_COMPRESSION(HttpServletResponse.SC_NOT_ACCEPTABLE, 200, "Unknown compression",
             "Compression argument must be one of ZIP, GZIP and NONE"),
 

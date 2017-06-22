@@ -29,6 +29,7 @@ import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.dictionary.shared.FindDictionaryCriteria;
 import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
@@ -42,7 +43,8 @@ import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.query.shared.Condition;
+import stroom.query.shared.ExpressionBuilder;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
 import stroom.query.shared.ExpressionTerm;
@@ -148,7 +150,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         // Create query.
         final QueryData queryData = new QueryData();
         queryData.setDataSource(DocRef.create(index));
-        queryData.setExpression(createExpression(dictionary));
+        queryData.setExpression(createExpression(dictionary).build());
 
         final ComponentConfig query = new ComponentConfig();
         query.setId("query-1234");
@@ -281,10 +283,10 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         Assert.assertEquals(0, commonTestControl.countEntity(Dashboard.class));
     }
 
-    private ExpressionOperator createExpression(final Dictionary dictionary) {
-        final ExpressionOperator root = new ExpressionOperator(Op.AND);
-        root.addChild(new ExpressionTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z"));
-        root.addChild(new ExpressionTerm("User", Condition.IN_DICTIONARY, DocRef.create(dictionary)));
+    private ExpressionBuilder createExpression(final Dictionary dictionary) {
+        final ExpressionBuilder root = new ExpressionBuilder(Op.AND);
+        root.addTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z");
+        root.addTerm("User", Condition.IN_DICTIONARY, DocRefUtil.create(dictionary));
         return root;
     }
 }

@@ -70,16 +70,8 @@ public class StreamAttributeMapRetentionRuleDecorator {
                 }
             }
 
-            // Create a rule name that includes the rule number.
-            String ruleName;
-            if (rule.getName() != null && rule.getName().length() > 0) {
-                ruleName = (index + 1) + " " + rule.getName();
-            } else {
-                ruleName = String.valueOf(index + 1);
-            }
-
             streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_UNTIL, keepUntil);
-            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_RULE, ruleName);
+            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_RULE, rule.toString());
         } else {
             streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_AGE, DataRetentionRule.FOREVER);
             streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_UNTIL, DataRetentionRule.FOREVER);
@@ -91,7 +83,7 @@ public class StreamAttributeMapRetentionRuleDecorator {
         for (int i = 0; i < rules.size(); i++) {
             final DataRetentionRule rule = rules.get(i);
             // We will ignore rules that are not enabled or have no enabled expression.
-            if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().isEnabled()) {
+            if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
                 if (expressionMatcher.match(attributeMap, rule.getExpression())) {
                     return i;
                 }

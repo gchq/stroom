@@ -23,15 +23,16 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "DataReceiptRule", propOrder = {"creationTime", "name", "enabled", "expression", "action"})
+@XmlType(name = "DataReceiptRule", propOrder = {"ruleNumber", "creationTime", "name", "enabled", "expression", "action"})
 @XmlRootElement(name = "dataReceiptRule")
 public class DataReceiptRule implements SharedObject {
     private static final long serialVersionUID = -4466080173384628077L;
 
+    @XmlElement(name = "ruleNumber")
+    private int ruleNumber;
     @XmlElement(name = "creationTime")
     private long creationTime;
     @XmlElement(name = "name")
@@ -43,29 +44,26 @@ public class DataReceiptRule implements SharedObject {
     @XmlElement(name = "action")
     private DataReceiptAction action;
 
-    private transient int ruleNumber;
-
     public DataReceiptRule() {
         // Default constructor for GWT serialisation.
     }
 
-    public DataReceiptRule(
-            final ExpressionOperator expression,
-            final DataReceiptAction action) {
-        this.expression = expression;
-        this.action = action;
-    }
-
-    public DataReceiptRule(final long creationTime,
+    public DataReceiptRule(final int ruleNumber,
+                           final long creationTime,
                            final String name,
                            final boolean enabled,
                            final ExpressionOperator expression,
                            final DataReceiptAction action) {
+        this.ruleNumber = ruleNumber;
         this.creationTime = creationTime;
         this.name = name;
         this.enabled = enabled;
         this.expression = expression;
         this.action = action;
+    }
+
+    public int getRuleNumber() {
+        return ruleNumber;
     }
 
     public long getCreationTime() {
@@ -74,10 +72,6 @@ public class DataReceiptRule implements SharedObject {
 
     public String getName() {
         return name;
-    }
-
-    public void setName(final String name) {
-        this.name = name;
     }
 
     public boolean isEnabled() {
@@ -92,15 +86,6 @@ public class DataReceiptRule implements SharedObject {
         return action;
     }
 
-    @XmlTransient
-    public int getRuleNumber() {
-        return ruleNumber;
-    }
-
-    public void setRuleNumber(final int ruleNumber) {
-        this.ruleNumber = ruleNumber;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -108,20 +93,34 @@ public class DataReceiptRule implements SharedObject {
 
         final DataReceiptRule that = (DataReceiptRule) o;
 
+        if (ruleNumber != that.ruleNumber) return false;
         if (creationTime != that.creationTime) return false;
         if (enabled != that.enabled) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (expression != null ? !expression.internalEquals(that.expression) : that.expression != null) return false;
+        if (expression != null ? !expression.equals(that.expression) : that.expression != null) return false;
         return action == that.action;
     }
 
     @Override
     public int hashCode() {
-        int result = (int) (creationTime ^ (creationTime >>> 32));
+        int result = ruleNumber;
+        result = 31 * result + (int) (creationTime ^ (creationTime >>> 32));
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (enabled ? 1 : 0);
-        result = 31 * result + (expression != null ? expression.internalHashCode() : 0);
+        result = 31 * result + (expression != null ? expression.hashCode() : 0);
         result = 31 * result + (action != null ? action.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        // Create a rule name that includes the rule number.
+        String ruleName;
+        if (name != null && name.length() > 0) {
+            ruleName = ruleNumber + " " + name;
+        } else {
+            ruleName = String.valueOf(ruleNumber);
+        }
+        return ruleName;
     }
 }

@@ -43,7 +43,7 @@ public class QueryCell extends AbstractCell<Query> {
     public interface Template extends SafeHtmlTemplates {
         @Template("<div class=\"{0}\"><span class=\"{1}\">{2}</span><span class=\"{3}\">{4}</span></div>")
         SafeHtml historyLayout(String outerClassName, String timeClassName, String time, String expressionClassName,
-                String expression);
+                               String expression);
 
         @Template("<div class=\"{0}\"><span class=\"{1}\">{2}</span></div>")
         SafeHtml favouritesLayout(String outerClassName, String nameClassName, String name);
@@ -73,11 +73,8 @@ public class QueryCell extends AbstractCell<Query> {
 
             } else {
                 final String time = ClientDateUtil.toISOString(value.getCreateTime());
-                final StringBuilder expression = new StringBuilder();
-                value.getQueryData().getExpression().append(expression, "", true);
-
                 sb.append(template.historyLayout(resources.style().outer(), resources.style().time(), time,
-                        resources.style().expression(), expression.toString()));
+                        resources.style().expression(), value.getQueryData().getExpression().toString()));
             }
         }
     }

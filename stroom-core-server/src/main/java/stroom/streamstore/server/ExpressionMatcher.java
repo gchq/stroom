@@ -3,7 +3,7 @@ package stroom.streamstore.server;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.shared.DocRef;
-import stroom.query.shared.Condition;
+import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.query.shared.ExpressionItem;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionTerm;
@@ -29,7 +29,7 @@ public class ExpressionMatcher {
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
-        if (!item.isEnabled()) {
+        if (!item.enabled()) {
             return true;
         }
 
@@ -39,7 +39,7 @@ public class ExpressionMatcher {
                 return true;
             }
 
-            switch (operator.getType()) {
+            switch (operator.getOp()) {
                 case AND:
                     for (final ExpressionItem child : operator.getChildren()) {
                         if (!match(attributeMap, child)) {

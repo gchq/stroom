@@ -30,6 +30,7 @@ import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.query.client.ExpressionTreePresenter;
+import stroom.query.shared.ExpressionBuilder;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
 import stroom.streamstore.shared.DataRetentionPolicy;
@@ -37,14 +38,16 @@ import stroom.streamstore.shared.DataRetentionRule;
 import stroom.streamstore.shared.FetchDataRetentionPolicyAction;
 import stroom.streamstore.shared.SaveDataRetentionPolicyAction;
 import stroom.streamstore.shared.TimeUnit;
-import stroom.widget.button.client.ButtonView;
+import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.svg.client.Icon;
+
+import java.util.List;
 
 public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetentionPolicyPresenter.DataRetentionPolicyView> implements HasDirtyHandlers {
     private final DataRetentionPolicyListPresenter listPresenter;
@@ -53,6 +56,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
     private final ClientDispatchAsync dispatcher;
 
     private DataRetentionPolicy policy;
+    private List<DataRetentionRule> rules;
 
     private ButtonView saveButton;
     private ButtonView addButton;
@@ -100,6 +104,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
 
         dispatcher.exec(new FetchDataRetentionPolicyAction()).onSuccess(result -> {
             policy = result;
+            this.rules = policy.getRules();
             update();
         });
     }
@@ -109,18 +114,19 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         registerHandler(saveButton.addClickHandler(event -> {
             dispatcher.exec(new SaveDataRetentionPolicyAction(policy)).onSuccess(result -> {
                 policy = result;
+                this.rules = policy.getRules();
                 listPresenter.getSelectionModel().clear();
                 update();
                 setDirty(false);
             });
         }));
         registerHandler(addButton.addClickHandler(event -> {
-            if (policy != null) {
+            if (rules != null) {
                 add();
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
-            if (policy != null) {
+            if (rules != null) {
                 final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
                     edit(selected);
@@ -128,22 +134,17 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
             }
         }));
         registerHandler(copyButton.addClickHandler(event -> {
-            if (policy != null) {
+            if (rules != null) {
                 final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
-                    ExpressionOperator expression = selected.getExpression();
-                    if (expression != null) {
-                        expression = expression.copy();
-                    }
+                    final DataRetentionRule newRule = new DataRetentionRule(selected.getRuleNumber(), System.currentTimeMillis(), selected.getName(), selected.isEnabled(), selected.getExpression(), selected.getAge(), selected.getTimeUnit(), selected.isForever());
 
-                    final DataRetentionRule newRule = new DataRetentionRule(System.currentTimeMillis(), selected.getName(), selected.isEnabled(), expression, selected.getAge(), selected.getTimeUnit(), selected.isForever());
+                    final int index = rules.indexOf(selected);
 
-                    final int index = policy.getRules().indexOf(selected);
-
-                    if (index < policy.getRules().size() - 1) {
-                        policy.getRules().add(index + 1, newRule);
+                    if (index < rules.size() - 1) {
+                        rules.add(index + 1, newRule);
                     } else {
-                        policy.getRules().add(newRule);
+                        rules.add(newRule);
                     }
 
                     update();
@@ -152,14 +153,14 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
             }
         }));
         registerHandler(disableButton.addClickHandler(event -> {
-            if (policy != null) {
+            if (rules != null) {
                 final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
-                    final DataRetentionRule newRule = new DataRetentionRule(selected.getCreationTime(), selected.getName(), !selected.isEnabled(), selected.getExpression(), selected.getAge(), selected.getTimeUnit(), selected.isForever());
+                    final DataRetentionRule newRule = new DataRetentionRule(selected.getRuleNumber(), selected.getCreationTime(), selected.getName(), !selected.isEnabled(), selected.getExpression(), selected.getAge(), selected.getTimeUnit(), selected.isForever());
 
-                    final int index = policy.getRules().indexOf(selected);
-                    policy.getRules().remove(index);
-                    policy.getRules().add(index, newRule);
+                    final int index = rules.indexOf(selected);
+                    rules.remove(index);
+                    rules.add(index, newRule);
                     listPresenter.getSelectionModel().setSelected(newRule);
                     update();
                     setDirty(true);
@@ -167,11 +168,11 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
             }
         }));
         registerHandler(deleteButton.addClickHandler(event -> {
-            if (policy != null) {
+            if (rules != null) {
                 ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
                     if (ok) {
                         final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
-                        policy.getRules().remove(rule);
+                        rules.remove(rule);
                         listPresenter.getSelectionModel().clear();
                         update();
                         setDirty(true);
@@ -180,13 +181,13 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
             }
         }));
         registerHandler(moveUpButton.addClickHandler(event -> {
-            if (policy != null) {
+            if (rules != null) {
                 final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
                 if (rule != null) {
-                    int index = policy.getRules().indexOf(rule);
+                    int index = rules.indexOf(rule);
                     if (index > 0) {
-                        policy.getRules().remove(rule);
-                        policy.getRules().add(index - 1, rule);
+                        rules.remove(rule);
+                        rules.add(index - 1, rule);
                         update();
                         setDirty(true);
                     }
@@ -194,13 +195,13 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
             }
         }));
         registerHandler(moveDownButton.addClickHandler(event -> {
-            if (policy != null) {
+            if (rules != null) {
                 final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
                 if (rule != null) {
-                    int index = policy.getRules().indexOf(rule);
-                    if (index < policy.getRules().size() - 1) {
-                        policy.getRules().remove(rule);
-                        policy.getRules().add(index + 1, rule);
+                    int index = rules.indexOf(rule);
+                    if (index < rules.size() - 1) {
+                        rules.remove(rule);
+                        rules.add(index + 1, rule);
                         update();
                         setDirty(true);
                     }
@@ -224,7 +225,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
     }
 
     private void add() {
-        final DataRetentionRule newRule = new DataRetentionRule(System.currentTimeMillis(), "", true, new ExpressionOperator(Op.AND), 1, TimeUnit.YEARS, true);
+        final DataRetentionRule newRule = new DataRetentionRule(0, System.currentTimeMillis(), "", true, new ExpressionBuilder(Op.AND).build(), 1, TimeUnit.YEARS, true);
         final DataRetentionRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule);
 
@@ -234,7 +235,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
                     final DataRetentionRule rule = editRulePresenter.write();
-                    policy.getRules().add(0, rule);
+                    rules.add(0, rule);
                     update();
                     listPresenter.getSelectionModel().setSelected(rule);
                     setDirty(true);
@@ -260,9 +261,9 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
                     final DataRetentionRule rule = editRulePresenter.write();
-                    final int index = policy.getRules().indexOf(existingRule);
-                    policy.getRules().remove(index);
-                    policy.getRules().add(index, rule);
+                    final int index = rules.indexOf(existingRule);
+                    rules.remove(index);
+                    rules.add(index, rule);
 
                     update();
                     listPresenter.getSelectionModel().setSelected(rule);
@@ -284,23 +285,25 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
     }
 
     private void update() {
-        if (policy != null) {
+        if (rules != null) {
             // Set rule numbers on all of the rules for display purposes.
-            for (int i = 0; i < policy.getRules().size(); i++) {
-                policy.getRules().get(i).setRuleNumber(i + 1);
+            for (int i = 0; i < rules.size(); i++) {
+                final DataRetentionRule rule = rules.get(i);
+                final DataRetentionRule newRule = new DataRetentionRule(i + 1, rule.getCreationTime(), rule.getName(), rule.isEnabled(), rule.getExpression(), rule.getAge(), rule.getTimeUnit(), rule.isForever());
+                rules.set(i, newRule);
             }
-            listPresenter.setData(policy.getRules());
+            listPresenter.setData(rules);
         }
         updateButtons();
     }
 
     private void updateButtons() {
-        final boolean loadedPolicy = policy != null;
+        final boolean loadedPolicy = rules != null;
         final DataRetentionRule selection = listPresenter.getSelectionModel().getSelected();
         final boolean selected = loadedPolicy && selection != null;
         int index = -1;
         if (selected) {
-            index = policy.getRules().indexOf(selection);
+            index = rules.indexOf(selection);
         }
 
         if (selection != null && selection.isEnabled()) {
@@ -316,7 +319,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
         disableButton.setEnabled(selected);
         deleteButton.setEnabled(selected);
         moveUpButton.setEnabled(selected && index > 0);
-        moveDownButton.setEnabled(selected && index >= 0 && index < policy.getRules().size() - 1);
+        moveDownButton.setEnabled(selected && index >= 0 && index < rules.size() - 1);
     }
 
     @Override
