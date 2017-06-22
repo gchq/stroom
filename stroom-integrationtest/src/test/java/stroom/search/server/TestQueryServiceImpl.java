@@ -19,6 +19,7 @@ package stroom.search.server;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
+import stroom.dashboard.server.QueryHistoryCleanExecutor;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardService;
 import stroom.dashboard.shared.FindQueryCriteria;
@@ -52,6 +53,10 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     private UserService userService;
     @Resource
     private FolderService folderService;
+    @Resource
+    private QueryHistoryCleanExecutor queryHistoryCleanExecutor;
+
+    private static final String QUERY_COMPONENT = "Test Component";
 
     private Dashboard dashboard;
     private User user;
@@ -73,7 +78,8 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         final DocRef dataSourceRef = DocRef.create(index);
 
         refQuery = queryService.create(null, "Ref query");
-        refQuery.setDashboard(dashboard);
+        refQuery.setDashboardId(dashboard.getId());
+        refQuery.setQueryId(QUERY_COMPONENT);
         final QueryData refQueryData = new QueryData();
         refQuery.setQueryData(refQueryData);
         refQueryData.setDataSource(dataSourceRef);
@@ -85,7 +91,8 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         ThreadUtil.sleep(1000);
 
         testQuery = queryService.create(null, "Test query");
-        testQuery.setDashboard(dashboard);
+        testQuery.setDashboardId(dashboard.getId());
+        testQuery.setQueryId(QUERY_COMPONENT);
         final QueryData testQueryData = new QueryData();
         testQuery.setQueryData(testQueryData);
         testQueryData.setDataSource(dataSourceRef);
@@ -106,7 +113,8 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     @Test
     public void testQueryRetrieval() {
         final FindQueryCriteria criteria = new FindQueryCriteria();
-        criteria.obtainDashboardIdSet().add(dashboard.getId());
+        criteria.setDashboardId(dashboard.getId());
+        criteria.setQueryId(QUERY_COMPONENT);
         criteria.setOrderBy(FindQueryCriteria.ORDER_BY_TIME, OrderByDirection.DESCENDING);
 
         final BaseResultList<Query> list = queryService.find(criteria);
@@ -147,7 +155,8 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     @Test
     public void testOldHistoryDeletion() {
         final FindQueryCriteria criteria = new FindQueryCriteria();
-        criteria.obtainDashboardIdSet().add(dashboard.getId());
+        criteria.setDashboardId(dashboard.getId());
+        criteria.setQueryId(QUERY_COMPONENT);
         criteria.setOrderBy(FindQueryCriteria.ORDER_BY_TIME, OrderByDirection.DESCENDING);
 
         BaseResultList<Query> list = queryService.find(criteria);
@@ -158,12 +167,16 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         // Now insert the same query over 100 times.
         for (int i = 0; i < 120; i++) {
             final Query newQuery = queryService.create(null, "History");
-            newQuery.setDashboard(query.getDashboard());
+            newQuery.setDashboardId(query.getDashboardId());
+            newQuery.setQueryId(query.getQueryId());
             newQuery.setFavourite(false);
             newQuery.setQueryData(query.getQueryData());
             newQuery.setData(query.getData());
             queryService.save(newQuery);
         }
+
+        // Clean the history.
+        queryHistoryCleanExecutor.clean(null, false);
 
         list = queryService.find(criteria);
         Assert.assertEquals(100, list.size());

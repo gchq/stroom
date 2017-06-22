@@ -27,6 +27,7 @@ import stroom.importexport.server.EntityPathResolver;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
+import java.util.List;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component("queryService")
@@ -34,6 +35,21 @@ public class MockQueryService extends MockDocumentEntityService<Query, FindQuery
     @Inject
     public MockQueryService(final GenericEntityService genericEntityService, final EntityPathResolver entityPathResolver) {
         super(genericEntityService, entityPathResolver);
+    }
+
+    @Override
+    public void clean(final String user, final boolean favourite, final Integer oldestId, final long oldestCrtMs) {
+
+    }
+
+    @Override
+    public List<String> getUsers(final boolean favourite) {
+        return null;
+    }
+
+    @Override
+    public Integer getOldestId(final String user, final boolean favourite, final int retain) {
+        return null;
     }
 
     @Override

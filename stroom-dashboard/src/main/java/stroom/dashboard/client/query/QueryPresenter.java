@@ -402,7 +402,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     @Override
     public void start() {
-        run(true);
+        run(true, true);
     }
 
     @Override
@@ -414,7 +414,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         searchModel.destroy();
     }
 
-    private void run(final boolean incremental) {
+    private void run(final boolean incremental, final boolean storeHistory) {
         final DocRef dataSourceRef = queryData.getDataSource();
 
         if (dataSourceRef == null) {
@@ -429,7 +429,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             final ExpressionOperator root = new ExpressionOperator();
             expressionPresenter.write(root);
 
-            searchModel.search(root, params, incremental);
+            searchModel.search(root, params, incremental, storeHistory);
         }
     }
 
@@ -486,7 +486,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             // An auto search can only commence if the UI has fully loaded and the data source has also loaded from the server.
             final Automate automate = getAutomate();
             if (automate.isOpen()) {
-                run(true);
+                run(true, false);
             }
         }
     }
@@ -570,7 +570,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     public void run() {
                         // Make sure search is currently inactive before we attempt to execute a new query.
                         if (SearchModel.Mode.INACTIVE.equals(searchModel.getMode())) {
-                            QueryPresenter.this.run(false);
+                            QueryPresenter.this.run(false, false);
                         }
                     }
                 };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package stroom.dashboard.server;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,12 +35,10 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityServiceException;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.node.server.StroomPropertyService;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,17 +50,14 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
     private static final Logger LOGGER = LoggerFactory.getLogger(QueryServiceImpl.class);
     private final StroomEntityManager entityManager;
     private final SecurityContext securityContext;
-    private final StroomPropertyService propertyService;
 
     @Inject
     QueryServiceImpl(final StroomEntityManager entityManager,
                      final ImportExportHelper importExportHelper,
-                     final SecurityContext securityContext,
-                     final StroomPropertyService propertyService) {
+                     final SecurityContext securityContext) {
         super(entityManager, importExportHelper, securityContext);
         this.entityManager = entityManager;
         this.securityContext = securityContext;
-        this.propertyService = propertyService;
     }
 
     @Override
@@ -101,77 +95,96 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
     }
 
     @Override
-    public Query save(final Query entity) throws RuntimeException {
-        final Query query = super.save(entity);
+    public void clean(final String user, final boolean favourite, final Integer oldestId, final long oldestCrtMs) {
+        try {
+            LOGGER.debug("Deleting old rows");
 
-        // Make sure we only keep 100 items in the query history per user.
-        if (query != null && !query.isFavourite()) {
-            try {
+            final SQLBuilder sql = new SQLBuilder();
+            sql.append("DELETE");
+            sql.append(" FROM ");
+            sql.append(Query.TABLE_NAME);
+            sql.append(" WHERE ");
+            sql.append(Query.CREATE_USER);
+            sql.append(" = ");
+            sql.arg(user);
+            sql.append(" AND ");
+            sql.append(Query.FAVOURITE);
+            sql.append(" = ");
+            sql.arg(favourite);
+            sql.append(" AND ");
 
-                final long historyItemsRetention = propertyService.getIntProperty("stroom.query.history.itemsRetention", 100);
-                final int historyDaysRetention = propertyService.getIntProperty("stroom.query.history.daysRetention", 365);
-
-                final long oldestCrtMs = ZonedDateTime.now().minusDays(historyDaysRetention).toInstant().toEpochMilli();
-
-                LOGGER.debug("Deleting old rows");
-
-                final SQLBuilder sql = new SQLBuilder();
-                sql.append("DELETE");
-                sql.append(" FROM ");
-                sql.append(Query.TABLE_NAME);
-                sql.append(" WHERE ");
-                sql.append(Query.CREATE_USER);
-                sql.append(" = ");
-                sql.arg(query.getCreateUser());
-                sql.append(" AND ");
-                sql.append(Query.FAVOURITE);
-                sql.append(" = ");
-                sql.arg(query.isFavourite());
-                sql.append(" AND ");
+            if (oldestId != null) {
                 sql.append("(");
-
                 sql.append(Query.ID);
-                sql.append(" <= (");
-
-                sql.append("SELECT");
-                sql.append(" ID");
-                sql.append(" FROM (");
-
-                sql.append("SELECT");
-                sql.append(" ID");
-                sql.append(" FROM ");
-                sql.append(Query.TABLE_NAME);
-                sql.append(" WHERE ");
-                sql.append(Query.CREATE_USER);
-                sql.append(" = ");
-                sql.arg(query.getCreateUser());
-                sql.append(" AND ");
-                sql.append(Query.FAVOURITE);
-                sql.append(" = ");
-                sql.arg(query.isFavourite());
-                sql.append(" ORDER BY ID DESC LIMIT 1 OFFSET ");
-                sql.arg(historyItemsRetention);
-
-                sql.append(") foo");
-
-                sql.append(")");
-
+                sql.append(" <= ");
+                sql.arg(oldestId);
                 sql.append(" OR ");
                 sql.append(Query.CREATE_TIME);
                 sql.append(" < ");
                 sql.arg(oldestCrtMs);
-
                 sql.append(")");
-
-                final long rows = entityManager.executeNativeUpdate(sql);
-                LOGGER.debug("Deleted " + rows + " rows");
-
-            } catch (final Exception e) {
-                LOGGER.error(e.getMessage(), e);
+            } else {
+                sql.append(Query.CREATE_TIME);
+                sql.append(" < ");
+                sql.arg(oldestCrtMs);
             }
+
+            final long rows = entityManager.executeNativeUpdate(sql);
+            LOGGER.debug("Deleted " + rows + " rows");
+
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<String> getUsers(final boolean favourite) {
+        final SQLBuilder sql = new SQLBuilder();
+        sql.append("SELECT ");
+        sql.append(Query.CREATE_USER);
+        sql.append(" FROM ");
+        sql.append(Query.TABLE_NAME);
+        sql.append(" WHERE ");
+        sql.append(Query.FAVOURITE);
+        sql.append(" = ");
+        sql.arg(favourite);
+        sql.append(" GROUP BY ");
+        sql.append(Query.CREATE_USER);
+        sql.append(" ORDER BY ");
+        sql.append(Query.CREATE_USER);
+
+        @SuppressWarnings("unchecked") final List<String> list = entityManager.executeNativeQueryResultList(sql);
+
+        return list;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Integer getOldestId(final String user, final boolean favourite, final int retain) {
+        final SQLBuilder sql = new SQLBuilder();
+        sql.append("SELECT");
+        sql.append(" ID");
+        sql.append(" FROM ");
+        sql.append(Query.TABLE_NAME);
+        sql.append(" WHERE ");
+        sql.append(Query.CREATE_USER);
+        sql.append(" = ");
+        sql.arg(user);
+        sql.append(" AND ");
+        sql.append(Query.FAVOURITE);
+        sql.append(" = ");
+        sql.arg(favourite);
+        sql.append(" ORDER BY ID DESC LIMIT 1 OFFSET ");
+        sql.arg(retain);
+
+        @SuppressWarnings("unchecked") final List<Integer> list = entityManager.executeNativeQueryResultList(sql);
+
+        if (list.size() == 1) {
+            return list.get(0);
         }
 
-        return query;
+        return null;
     }
 
     @Override
@@ -181,7 +194,8 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
 
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindQueryCriteria criteria) {
-        CriteriaLoggingUtil.appendEntityIdSet(items, "dashboardIdSet", criteria.getDashboardIdSet());
+        CriteriaLoggingUtil.appendLongTerm(items, "dashboardId", criteria.getDashboardId());
+        CriteriaLoggingUtil.appendStringTerm(items, "queryId", criteria.getQueryId());
         super.appendCriteria(items, criteria);
     }
 
@@ -203,7 +217,8 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
                 SQLUtil.appendValueQuery(sql, alias + ".favourite", criteria.getFavourite());
             }
 
-            SQLUtil.appendSetQuery(sql, true, alias + ".dashboard", criteria.getDashboardIdSet());
+            SQLUtil.appendValueQuery(sql, alias + ".dashboardId", criteria.getDashboardId());
+            SQLUtil.appendValueQuery(sql, alias + ".queryId", criteria.getQueryId());
         }
     }
 
