@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#322** : The index cache and other caching beans should now throw exceptions on `get` that were generated during the creation of cached items.
+
 ## [v5.0-beta.34] - 2017-06-22
 
 * Issue **#325** : Query history is now cleaned with a separate job. Also query history is only recorded for manual querying, i.e. not when query is automated (on open or auto refresh). Queries are now recorded on a dashboard + query component basis and do not apply across multiple query components in a dashboard.
