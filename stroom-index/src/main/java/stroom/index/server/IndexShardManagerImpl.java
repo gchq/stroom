@@ -52,7 +52,6 @@ import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadScopeRunnable;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -108,12 +107,10 @@ public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, Inde
     @Override
     public void addDocument(final IndexShardKey indexShardKey, final Document document) {
         if (document != null) {
-
-            IndexShardWriter indexShardWriter = get(indexShardKey);
-
             // Try and add the document silently without locking.
             boolean success = false;
             try {
+                final IndexShardWriter indexShardWriter = get(indexShardKey);
                 indexShardWriter.addDocument(document);
                 success = true;
             } catch (final Throwable t) {
@@ -127,22 +124,21 @@ public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, Inde
                 lock.lock();
                 try {
                     // Ask the cache for the current one (it might have been changed by another thread) and try again.
-                    indexShardWriter = get(indexShardKey);
+                    final IndexShardWriter indexShardWriter = get(indexShardKey);
+                    success = addDocument(indexShardWriter, document);
 
-                    // If we've already tried once already and we've been given back a dummy writer then give up.
-                    if (attempt > 0 && indexShardWriter instanceof DummyIndexShardWriter) {
-                        // This will exit the loop.
-                        attempt = MAX_ATTEMPTS;
-
-                    } else {
-                        success = addDocument(indexShardWriter, document);
-
-                        if (!success) {
-                            // Failed to add it so remove this object from the cache and try to get another one.
-                            remove(indexShardKey);
-                        }
+                    if (!success) {
+                        // Failed to add it so remove this object from the cache and try to get another one.
+                        remove(indexShardKey);
                     }
 
+                } catch (final Throwable t) {
+                    LOGGER.trace(t::getMessage, t);
+
+                    // If we've already tried once already then give up.
+                    if (attempt > 0) {
+                        throw t;
+                    }
                 } finally {
                     lock.unlock();
                 }
@@ -151,7 +147,7 @@ public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, Inde
             // One final try that will throw an index exception if needed.
             if (!success) {
                 try {
-                    indexShardWriter = get(indexShardKey);
+                    final IndexShardWriter indexShardWriter = get(indexShardKey);
                     indexShardWriter.addDocument(document);
                 } catch (final IndexException e) {
                     throw e;
@@ -187,20 +183,14 @@ public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, Inde
      */
     @Override
     public IndexShardWriter create(final IndexShardKey key) {
-        try {
-            // Try and get an existing writer.
-            IndexShardWriter writer = getExistingWriter(key);
-            if (writer == null) {
-                // Create a new one
-                writer = createNewWriter(key);
-            }
-
-            return writer;
-        } catch (final IndexException e) {
-            return new DummyIndexShardWriter(e);
-        } catch (final Throwable e) {
-            return new DummyIndexShardWriter(new IndexException(e.getMessage(), e));
+        // Try and get an existing writer.
+        IndexShardWriter writer = getExistingWriter(key);
+        if (writer == null) {
+            // Create a new one
+            writer = createNewWriter(key);
         }
+
+        return writer;
     }
 
     /**
@@ -638,90 +628,6 @@ public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, Inde
 
         public String getActivity() {
             return activity;
-        }
-    }
-
-    private static class DummyIndexShardWriter implements IndexShardWriter {
-        private final IndexException indexException;
-
-        DummyIndexShardWriter(final IndexException indexException) {
-            this.indexException = indexException;
-        }
-
-        @Override
-        public void check() {
-        }
-
-        @Override
-        public IndexShardStatus getStatus() {
-            return IndexShardStatus.CORRUPT;
-        }
-
-        @Override
-        public void setStatus(final IndexShardStatus status) {
-        }
-
-        @Override
-        public boolean open(final boolean create) {
-            return false;
-        }
-
-        @Override
-        public boolean isFull() {
-            return true;
-        }
-
-        @Override
-        public void destroy() {
-        }
-
-        @Override
-        public boolean close() {
-            return true;
-        }
-
-        @Override
-        public boolean flush() {
-            return true;
-        }
-
-        @Override
-        public boolean delete() {
-            return true;
-        }
-
-        @Override
-        public boolean deleteFromDisk() {
-            return true;
-        }
-
-        @Override
-        public void updateIndex(final Index index) {
-        }
-
-        @Override
-        public void addDocument(final Document document) throws IOException, IndexException, AlreadyClosedException {
-            throw indexException;
-        }
-
-        @Override
-        public int getDocumentCount() {
-            return 0;
-        }
-
-        @Override
-        public IndexShard getIndexShard() {
-            return null;
-        }
-
-        @Override
-        public String getPartition() {
-            return null;
-        }
-
-        @Override
-        public IndexWriter getWriter() {
-            return null;
         }
     }
 }
