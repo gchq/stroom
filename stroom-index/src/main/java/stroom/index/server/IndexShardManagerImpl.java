@@ -77,6 +77,7 @@ import java.util.concurrent.locks.Lock;
 public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, IndexShardWriter> implements IndexShardManager, EntityEvent.Handler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardManagerImpl.class);
     private static final int MAX_CACHE_ENTRIES = 1000000;
+    private static final int MAX_ATTEMPTS = 100;
 
     private final IndexService indexService;
     private final IndexShardService indexShardService;
@@ -120,18 +121,26 @@ public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, Inde
             }
 
             // Attempt a few more times under lock.
-            for (int i = 0; !success && i < 100; i++) {
+            for (int attempt = 0; !success && attempt < MAX_ATTEMPTS; attempt++) {
                 // If we failed then try under lock to make sure we get a new writer.
                 final Lock lock = keyLocks.getLockForKey(indexShardKey);
                 lock.lock();
                 try {
                     // Ask the cache for the current one (it might have been changed by another thread) and try again.
                     indexShardWriter = get(indexShardKey);
-                    success = addDocument(indexShardWriter, document);
 
-                    if (!success) {
-                        // Failed to add it so remove this object from the cache and try to get another one.
-                        remove(indexShardKey);
+                    // If we've already tried once already and we've been given back a dummy writer then give up.
+                    if (attempt > 0 && indexShardWriter instanceof DummyIndexShardWriter) {
+                        // This will exit the loop.
+                        attempt = MAX_ATTEMPTS;
+
+                    } else {
+                        success = addDocument(indexShardWriter, document);
+
+                        if (!success) {
+                            // Failed to add it so remove this object from the cache and try to get another one.
+                            remove(indexShardKey);
+                        }
                     }
 
                 } finally {
@@ -139,7 +148,7 @@ public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, Inde
                 }
             }
 
-            // One final try that will throw an index exception.
+            // One final try that will throw an index exception if needed.
             if (!success) {
                 try {
                     indexShardWriter = get(indexShardKey);
@@ -159,7 +168,7 @@ public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, Inde
             indexShardWriter.addDocument(document);
             success = true;
         } catch (final AlreadyClosedException | IndexException e) {
-            LOGGER.debug(e::getMessage, e);
+            LOGGER.trace(e::getMessage, e);
 
         } catch (final Throwable t) {
             LOGGER.error(t::getMessage, t);

@@ -66,7 +66,7 @@ public class IndexShardServiceImpl
     public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
         final Index index = indexShardKey.getIndex();
         if (index.getVolumes() == null || index.getVolumes().size() == 0) {
-            LOGGER.error(VOLUME_ERROR);
+            LOGGER.debug(VOLUME_ERROR);
             throw new IndexException(VOLUME_ERROR);
         }
 
