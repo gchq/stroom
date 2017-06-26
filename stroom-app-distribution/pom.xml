@@ -68,10 +68,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>stroom-proxy</groupId>
-            <artifactId>stroom-proxy-repo</artifactId>
-        </dependency>
-        <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
         </dependency>
