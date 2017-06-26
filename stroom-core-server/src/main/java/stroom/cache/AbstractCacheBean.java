@@ -30,74 +30,26 @@ import stroom.util.logging.StroomLogger;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
-    public interface Destroyable {
-        void destroy();
-    }
-
-    private static class CacheListener extends CacheEventListenerAdapter {
-        private static final StroomLogger LOGGER = StroomLogger.getLogger(CacheListener.class);
-
-        private final AbstractCacheBean<?, ?> parent;
-
-        public CacheListener(final AbstractCacheBean<?, ?> parent) {
-            this.parent = parent;
-        }
-
-        @Override
-        public void notifyRemoveAll(final Ehcache cache) {
-            // Hopefully clear will not be called.
-            LOGGER.trace("notifyRemoveAll()");
-            parent.destroyAll(cache);
-        }
-
-        @Override
-        public void notifyElementUpdated(final Ehcache cache, final Element element) throws CacheException {
-            LOGGER.trace("notifyElementUpdated()");
-        }
-
-        @Override
-        public void notifyElementRemoved(final Ehcache cache, final Element element) throws CacheException {
-            LOGGER.trace("notifyElementRemoved()");
-            parent.destroy(element);
-        }
-
-        @Override
-        public void notifyElementPut(final Ehcache cache, final Element element) throws CacheException {
-            LOGGER.trace("notifyElementPut()");
-        }
-
-        @Override
-        public void notifyElementExpired(final Ehcache cache, final Element element) {
-            LOGGER.trace("notifyElementExpired()");
-            parent.destroy(element);
-        }
-
-        @Override
-        public void notifyElementEvicted(final Ehcache cache, final Element element) {
-            LOGGER.trace("notifyElementEvicted()");
-            parent.destroy(element);
-        }
-
-        @Override
-        public void dispose() {
-            LOGGER.trace("dispose()");
-            // Do nothing.
-        }
-    }
-
     private static final StroomLogger LOGGER = StroomLogger.getLogger(AbstractCacheBean.class);
-
     private final Ehcache cache;
 
     public AbstractCacheBean(final CacheManager cacheManager, final String name, final int maxCacheEntries) {
         this(cacheManager, new CacheConfiguration(name, maxCacheEntries));
     }
 
+    @SuppressWarnings("unchecked")
     public AbstractCacheBean(final CacheManager cacheManager, final CacheConfiguration cacheConfiguration) {
         Ehcache cache = new Cache(cacheConfiguration);
-        cache = new SelfPopulatingCache(cache, key -> create((K) key));
+        cache = new SelfPopulatingCache(cache, key -> {
+            try {
+                return create((K) key);
+            } catch (final Throwable t) {
+                return t;
+            }
+        });
         cache.getCacheEventNotificationService().registerListener(new CacheListener(this));
 
         this.cache = cache;
@@ -114,7 +66,18 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
             if (element == null) {
                 return null;
             }
-            return (V) element.getObjectValue();
+
+            final Object object = element.getObjectValue();
+            if (object instanceof RuntimeException) {
+                throw (RuntimeException) object;
+            }
+            if (object instanceof Throwable) {
+                final Throwable throwable = (Throwable) object;
+                throw new RuntimeException(throwable.getMessage(), throwable);
+            }
+
+            return (V) object;
+
         } catch (final CacheException e) {
             final Throwable cause = e.getCause();
             if (cause != null && cause instanceof RuntimeException) {
@@ -211,6 +174,61 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
         if (value != null && value instanceof Destroyable) {
             final Destroyable destroyable = (Destroyable) value;
             destroyable.destroy();
+        }
+    }
+
+    public interface Destroyable {
+        void destroy();
+    }
+
+    private static class CacheListener extends CacheEventListenerAdapter {
+        private static final StroomLogger LOGGER = StroomLogger.getLogger(CacheListener.class);
+
+        private final AbstractCacheBean<?, ?> parent;
+
+        public CacheListener(final AbstractCacheBean<?, ?> parent) {
+            this.parent = parent;
+        }
+
+        @Override
+        public void notifyRemoveAll(final Ehcache cache) {
+            // Hopefully clear will not be called.
+            LOGGER.trace("notifyRemoveAll()");
+            parent.destroyAll(cache);
+        }
+
+        @Override
+        public void notifyElementUpdated(final Ehcache cache, final Element element) throws CacheException {
+            LOGGER.trace("notifyElementUpdated()");
+        }
+
+        @Override
+        public void notifyElementRemoved(final Ehcache cache, final Element element) throws CacheException {
+            LOGGER.trace("notifyElementRemoved()");
+            parent.destroy(element);
+        }
+
+        @Override
+        public void notifyElementPut(final Ehcache cache, final Element element) throws CacheException {
+            LOGGER.trace("notifyElementPut()");
+        }
+
+        @Override
+        public void notifyElementExpired(final Ehcache cache, final Element element) {
+            LOGGER.trace("notifyElementExpired()");
+            parent.destroy(element);
+        }
+
+        @Override
+        public void notifyElementEvicted(final Ehcache cache, final Element element) {
+            LOGGER.trace("notifyElementEvicted()");
+            parent.destroy(element);
+        }
+
+        @Override
+        public void dispose() {
+            LOGGER.trace("dispose()");
+            // Do nothing.
         }
     }
 }

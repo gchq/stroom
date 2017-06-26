@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+## [v5.0-beta.35] - 2017-06-26
+
+* Issue **#322** : The index cache and other caching beans should now throw exceptions on `get` that were generated during the creation of cached items.
+
 ## [v5.0-beta.34] - 2017-06-22
 
 * Issue **#325** : Query history is now cleaned with a separate job. Also query history is only recorded for manual querying, i.e. not when query is automated (on open or auto refresh). Queries are now recorded on a dashboard + query component basis and do not apply across multiple query components in a dashboard.
@@ -475,7 +479,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...HEAD
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
-[v5.1-alpha.1]: https://github.com/gchq/stroom/compare/v5.0-beta.34...v5.1-alpha.1
+[v5.1-alpha.1]: https://github.com/gchq/stroom/compare/v5.0-beta.35...v5.1-alpha.1
+[v5.0-beta.35]: https://github.com/gchq/stroom/compare/v5.0-beta.34...v5.0-beta.35
 [v5.0-beta.34]: https://github.com/gchq/stroom/compare/v5.0-beta.33...v5.0-beta.34
 [v5.0-beta.33]: https://github.com/gchq/stroom/compare/v5.0-beta.32...v5.0-beta.33
 [v5.0-beta.32]: https://github.com/gchq/stroom/compare/v5.0-beta.31...v5.0-beta.32

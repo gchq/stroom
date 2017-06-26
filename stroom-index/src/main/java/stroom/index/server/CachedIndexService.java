@@ -16,27 +16,104 @@
 
 package stroom.index.server;
 
-import javax.annotation.Resource;
-
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
-
-import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
-import stroom.query.shared.IndexFields;
-import stroom.query.shared.IndexFieldsMap;
-import stroom.entity.server.event.EntityEvent;
-import stroom.entity.server.event.EntityEventHandler;
-import stroom.entity.shared.Clearable;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.constructs.blocking.SelfPopulatingCache;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
+import stroom.entity.server.event.EntityEvent;
+import stroom.entity.server.event.EntityEventHandler;
+import stroom.entity.shared.Clearable;
+import stroom.entity.shared.DocRef;
+import stroom.index.shared.Index;
+import stroom.index.shared.IndexService;
+import stroom.query.shared.IndexFields;
+import stroom.query.shared.IndexFieldsMap;
+
+import javax.inject.Inject;
 
 @Component
 @EntityEventHandler(type = Index.ENTITY_TYPE)
 public class CachedIndexService implements Clearable, InitializingBean, EntityEvent.Handler {
+    private static final int MAX_CACHE_ENTRIES = 10;
+
+    private final CacheManager cacheManager;
+    private final IndexService indexService;
+    private final Cache cache;
+    private final SelfPopulatingCache selfPopulatingCache;
+
+    @Inject
+    public CachedIndexService(final CacheManager cacheManager, final IndexService indexService) {
+        this.cacheManager = cacheManager;
+        this.indexService = indexService;
+
+        final CacheConfiguration cacheConfiguration = new CacheConfiguration("Index Fields Map Cache",
+                MAX_CACHE_ENTRIES);
+        cacheConfiguration.setEternal(false);
+        // Allow collectors to idle for 10 minutes.
+        cacheConfiguration.setTimeToIdleSeconds(600);
+        // Allow collectors to live for 10 minutes.
+        cacheConfiguration.setTimeToLiveSeconds(600);
+
+        cache = new Cache(cacheConfiguration);
+        selfPopulatingCache = new SelfPopulatingCache(cache, key -> {
+            try {
+                final Index index = (Index) key;
+                final Index loaded = indexService.load(index);
+                if (loaded == null) {
+                    throw new NullPointerException("No index can be found for: " + DocRef.create(index));
+                }
+
+                // Create a map of index fields keyed by name.
+                final IndexFields indexFields = loaded.getIndexFieldsObject();
+                if (indexFields == null || indexFields.getIndexFields() == null || indexFields.getIndexFields().size() == 0) {
+                    throw new IndexException("No index fields have been set for: " + DocRef.create(index));
+                }
+
+                final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(indexFields);
+                return new CachedIndex(loaded, indexFields, indexFieldsMap);
+
+            } catch (final Throwable e) {
+                return e;
+            }
+        });
+    }
+
+    public CachedIndex get(final Index index) {
+        final Element element = selfPopulatingCache.get(index);
+        if (element == null) {
+            return null;
+        }
+
+        final Object object = element.getObjectValue();
+        if (object instanceof RuntimeException) {
+            throw (RuntimeException) object;
+        }
+        if (object instanceof Throwable) {
+            final Throwable throwable = (Throwable) object;
+            throw new RuntimeException(throwable.getMessage(), throwable);
+        }
+
+        return (CachedIndex) object;
+    }
+
+    @Override
+    public void clear() {
+        selfPopulatingCache.removeAll();
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        cacheManager.addCache(cache);
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        clear();
+    }
+
     public class CachedIndex {
         private final Index index;
         private final IndexFields indexFields;
@@ -59,62 +136,5 @@ public class CachedIndexService implements Clearable, InitializingBean, EntityEv
         public IndexFieldsMap getIndexFieldsMap() {
             return indexFieldsMap;
         }
-    }
-
-    private static final int MAX_CACHE_ENTRIES = 10;
-
-    @Resource
-    private CacheManager cacheManager;
-    @Resource
-    private IndexService indexService;
-
-    private final Cache cache;
-    private final SelfPopulatingCache selfPopulatingCache;
-
-    public CachedIndexService() {
-        final CacheConfiguration cacheConfiguration = new CacheConfiguration("Index Fields Map Cache",
-                MAX_CACHE_ENTRIES);
-        cacheConfiguration.setEternal(false);
-        // Allow collectors to idle for 10 minutes.
-        cacheConfiguration.setTimeToIdleSeconds(600);
-        // Allow collectors to live for 10 minutes.
-        cacheConfiguration.setTimeToLiveSeconds(600);
-
-        cache = new Cache(cacheConfiguration);
-        selfPopulatingCache = new SelfPopulatingCache(cache, key -> {
-            Index index = (Index) key;
-            index = indexService.load(index);
-            if (index != null) {
-                // Create a map of index fields keyed by name.
-                final IndexFields indexFields = index.getIndexFieldsObject();
-                final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(indexFields);
-                return new CachedIndex(index, indexFields, indexFieldsMap);
-            }
-
-            return null;
-        });
-    }
-
-    public CachedIndex get(final Index index) {
-        final Element element = selfPopulatingCache.get(index);
-        if (element == null) {
-            return null;
-        }
-        return (CachedIndex) element.getObjectValue();
-    }
-
-    @Override
-    public void clear() {
-        selfPopulatingCache.removeAll();
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        cacheManager.addCache(cache);
-    }
-
-    @Override
-    public void onChange(final EntityEvent event) {
-        clear();
     }
 }

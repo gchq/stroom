@@ -25,8 +25,10 @@ public class IndexFieldsMap extends HashMap<String, IndexField> {
     }
 
     public IndexFieldsMap(final IndexFields indexFields) {
-        for (final IndexField indexField : indexFields.getIndexFields()) {
-            put(indexField);
+        if (indexFields != null) {
+            for (final IndexField indexField : indexFields.getIndexFields()) {
+                put(indexField);
+            }
         }
     }
 
