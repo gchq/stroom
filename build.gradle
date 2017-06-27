@@ -22,7 +22,9 @@ ext.gwtCompilerProps = [
     mainClass: 'stroom.gwt.GwtCompilerWrapper',
     minHeap: getPropertyOrDefault('gwtCompilerMinHeap', '50M'),
     maxHeap: getPropertyOrDefault('gwtCompilerMaxHeap', '500M'),
-    workers: getPropertyOrDefault('gwtCompilerWorkers', '5')
+    workers: getPropertyOrDefault('gwtCompilerWorkers', '5'),
+    devModeMinHeap: '50M',
+    devModeMaxHeap: '1G'
 ]
 
 //version numbers for libs that share version numbers, e.g. dropwizard-*, or for github repo release versions
