@@ -180,7 +180,9 @@ ext.libs = [
 ]
 
 def contentPackImportDir = new File( "${System.properties['user.home']}/.stroom/contentPackImport/")
-def contentReleasesUrl="http://github.com/gchq/stroom-content/releases/download/"
+def contentReleasesUrl = "http://github.com/gchq/stroom-content/releases/download/"
+def visualisationsContentPackVer = "v3.0.4"
+def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations-dev/releases/download/${visualisationsContentPackVer}/visualisations-production-${visualisationsContentPackVer}.zip"
 
 //A set of content packs to download in the task downloadStroomContent
 ext.contentPacks = [
@@ -281,6 +283,12 @@ task downloadStroomContent() {
                 dest contentPackImportDir
                 overwrite true
             }
+        }
+        //now get the visualisations pack from a different repo
+        download {
+            src visualisationsContentPackUrl
+            dest contentPackImportDir
+            overwrite true
         }
     }
 }
