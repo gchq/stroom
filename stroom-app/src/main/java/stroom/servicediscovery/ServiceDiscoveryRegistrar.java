@@ -111,6 +111,9 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
                     .port(servicePort)
                     .build();
 
+            LOGGER.info("Attempting to register '{}' with service discovery at {}",
+                    registeredService.getVersionedServiceName(), serviceInstance.buildUriSpec());
+
             Preconditions.checkNotNull(serviceDiscovery).registerService(serviceInstance);
 
             LOGGER.info("Successfully registered '{}' service.", registeredService.getVersionedServiceName());
