@@ -858,6 +858,58 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
 
+        <!-- Authentication -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.services.authentication.name"/>
+            <property name="value" value="authentication"/>
+            <property name="description"
+                      value="Name of the authentication service" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.services.authentication.version"/>
+            <property name="value" value="1"/>
+            <property name="description"
+                      value="Version of the authentication service" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.services.authentication.docRefType"/>
+            <property name="value" value="authentication"/>
+            <property name="description"
+                      value="The entity type for the authentication service" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <!-- Authorisation -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.services.authorisation.name"/>
+            <property name="value" value="authorisation"/>
+            <property name="description"
+                      value="Name of the authorisation service" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.services.authorisation.version"/>
+            <property name="value" value="1"/>
+            <property name="description"
+                      value="Version of the authorisation service" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.services.authorisation.docRefType"/>
+            <property name="value" value="authorisation"/>
+            <property name="description"
+                      value="The entity type for the authorisation service" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
         <!-- Stroom-Stats -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.services.stroomStats.name"/>
@@ -930,6 +982,21 @@
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
+
+
+        <!-- Service discovery properties -->
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.kafka.bootstrap.servers"/>
+            <property name="value" value="localhost:9092"/>
+            <property name="description"
+                      value="The list of kafka brokers to initially connect to to obtain the full set of kafka brokers, in the form `host1:port,host2:port,etc'" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
         <!-- Service discovery properties -->
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
         <bean class="stroom.node.shared.GlobalProperty">
@@ -995,9 +1062,9 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.serviceDiscovery.zookeeperBasePath"/>
             <property name="value"
-                      value="stroom-services"/>
+                      value="/stroom-services"/>
             <property name="description"
-                      value="The base path to use in zookeeper for Curator service discover. All services registering or querying discoverable services must use the same value for this base path." />
+                      value="The base path to use in zookeeper for Curator service discover. All services registering or querying discoverable services must use the same value for this base path. Must start with a '/'" />
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>

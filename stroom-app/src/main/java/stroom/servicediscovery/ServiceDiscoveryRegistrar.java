@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
+import stroom.resources.HasHealthCheck;
 import stroom.resources.RegisteredService;
 import stroom.resources.ResourcePaths;
 
@@ -17,9 +18,14 @@ import javax.inject.Inject;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.TreeMap;
 
+/**
+ * Responsible for registering stroom's various externally exposed services with service discovery
+ */
 @Component
-public class ServiceDiscoveryRegistrar {
+public class ServiceDiscoveryRegistrar implements HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryRegistrar.class);
 
     private static final String PROP_KEY_SERVICE_HOST_OR_IP = "stroom.serviceDiscovery.servicesHostNameOrIpAddress";
@@ -38,7 +44,7 @@ public class ServiceDiscoveryRegistrar {
         this.hostNameOrIpAddress = getHostOrIp(stroomPropertyService);
         this.servicePort = stroomPropertyService.getIntProperty(PROP_KEY_SERVICE_PORT, 8080);
 
-        health = HealthCheck.Result.unhealthy("Waiting for Curator connection...");
+        health = HealthCheck.Result.unhealthy("Not yet initialised...");
         this.serviceDiscoveryManager.registerStartupListener(this::curatorStartupListener);
     }
 
@@ -67,16 +73,21 @@ public class ServiceDiscoveryRegistrar {
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("Successfully registered the following services: ");
 
+            Map<String, String> services = new TreeMap<>();
             Arrays.stream(RegisteredService.values())
                     .forEach(registeredService -> {
-                        registerResource(
+                        ServiceInstance<String> serviceInstance = registerResource(
                                 registeredService,
                                 serviceDiscovery);
-                        stringBuilder.append(registeredService.getVersionedServiceName());
-                        stringBuilder.append(", ");
+                        services.put(registeredService.getVersionedServiceName(), serviceInstance.buildUriSpec());
                     });
 
-            health = HealthCheck.Result.healthy(stringBuilder.toString().replaceAll(", $", ""));
+            health = HealthCheck.Result.builder()
+                    .healthy()
+                    .withMessage("Services registered")
+                    .withDetail("registered-services", services)
+                    .build();
+
             LOGGER.info("All service instances created successfully.");
         } catch (Exception e) {
             health = HealthCheck.Result.unhealthy("Service instance creation failed!", e);
@@ -85,7 +96,7 @@ public class ServiceDiscoveryRegistrar {
         }
     }
 
-    private void registerResource(final RegisteredService registeredService,
+    private ServiceInstance<String> registerResource(final RegisteredService registeredService,
                                   final ServiceDiscovery<String> serviceDiscovery) {
         try {
             UriSpec uriSpec = new UriSpec("{scheme}://{address}:{port}" +
@@ -100,9 +111,13 @@ public class ServiceDiscoveryRegistrar {
                     .port(servicePort)
                     .build();
 
+            LOGGER.info("Attempting to register '{}' with service discovery at {}",
+                    registeredService.getVersionedServiceName(), serviceInstance.buildUriSpec());
+
             Preconditions.checkNotNull(serviceDiscovery).registerService(serviceInstance);
 
             LOGGER.info("Successfully registered '{}' service.", registeredService.getVersionedServiceName());
+            return serviceInstance;
         } catch (Exception e) {
             throw new RuntimeException("Failed to register service " + registeredService.getVersionedServiceName(), e);
         }

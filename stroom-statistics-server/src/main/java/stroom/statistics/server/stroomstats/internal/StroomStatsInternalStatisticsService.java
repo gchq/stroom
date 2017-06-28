@@ -142,6 +142,7 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
                         return tag;
                     })
                     .forEach(tag -> tags.getTag().add(tag));
+            statistic.setTags(tags);
         }
         return statistic;
     }

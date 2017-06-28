@@ -44,6 +44,8 @@ test {
 }
 
 task setupSampleData(type: JavaExec) {
+    dependsOn this:compileJava
+    dependsOn this:compileTestJava
     // We need to set the working directory as the stroom root otherwise
     // setupSampleData won't find 'samples' directories in other modules.
     workingDir '../'

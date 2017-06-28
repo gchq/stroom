@@ -2,6 +2,7 @@ package stroom.servicediscovery;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Preconditions;
+import io.vavr.Tuple2;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -12,12 +13,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
+import stroom.resources.HasHealthCheck;
 import stroom.util.spring.StroomShutdown;
 
 import javax.inject.Singleton;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,7 +29,7 @@ import java.util.stream.Collectors;
 
 @Component
 @Singleton
-public class ServiceDiscoveryManager {
+public class ServiceDiscoveryManager implements HasHealthCheck {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
 
@@ -43,7 +46,7 @@ public class ServiceDiscoveryManager {
     private final AtomicReference<ServiceDiscovery<String>> serviceDiscoveryRef = new AtomicReference<>();
     private final List<Consumer<ServiceDiscovery<String>>> curatorStartupListeners = new ArrayList<>();
 
-    private HealthCheck.Result health;
+    private volatile HealthCheck.Result health;
     private final List<Closeable> closeables = new ArrayList<>();
 
     @SuppressWarnings("unused")
@@ -52,13 +55,18 @@ public class ServiceDiscoveryManager {
         this.stroomPropertyService = stroomPropertyService;
         this.zookeeperUrl = stroomPropertyService.getProperty(PROP_KEY_ZOOKEEPER_QUORUM);
 
-        health = HealthCheck.Result.unhealthy("Waiting for Curator connection");
+        health = HealthCheck.Result.unhealthy("Initialising Curator Connection...");
 
         //try and start the connection with ZK in another thread to prevent connection problems from stopping the bean
         //creation and application startup, then start ServiceDiscovery and notify any listeners
         CompletableFuture.runAsync(this::startCurator)
                 .thenRun(this::startServiceDiscovery)
-                .thenRun(this::notifyListeners);
+                .thenRun(this::notifyListeners)
+                .exceptionally(throwable -> {
+                    LOGGER.error("Error initialising service discovery", throwable);
+                    health = HealthCheck.Result.unhealthy("Failed to initialise service discovery due to error: " + throwable.getMessage());
+                    return null;
+                });
     }
 
     public Optional<ServiceDiscovery<String>> getServiceDiscovery() {
@@ -86,6 +94,7 @@ public class ServiceDiscoveryManager {
         if (!wasSet) {
             LOGGER.error("Attempt to set curatorFrameworkRef when already set");
         } else {
+            health = HealthCheck.Result.unhealthy("Curator client started, initialising service discovery...");
             LOGGER.info("Started Curator client using Zookeeper at '{}'", zookeeperUrl);
         }
     }
@@ -142,9 +151,24 @@ public class ServiceDiscoveryManager {
         ServiceDiscovery<String> serviceDiscovery = serviceDiscoveryRef.get();
         if (serviceDiscovery != null) {
             try {
-                String services = serviceDiscovery.queryForNames().stream()
-                        .collect(Collectors.joining(","));
-                return HealthCheck.Result.healthy("Running. Services found: " + services);
+                List<String> services = new ArrayList<>(serviceDiscovery.queryForNames());
+
+                Map<String, List<String>> serviceInstanceMap = Preconditions.checkNotNull(services).stream()
+                        .flatMap(serviceName -> {
+                            try {
+                                return serviceDiscovery.queryForInstances(serviceName).stream();
+                            } catch (Exception e) {
+                                throw new RuntimeException("Error getting service instances for " + serviceName);
+                            }
+                        })
+                        .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(), serviceInstance.buildUriSpec()))
+                        .collect(Collectors.groupingBy(Tuple2::_1, Collectors.mapping(Tuple2::_2, Collectors.toList())));
+
+                return HealthCheck.Result.builder()
+                        .healthy()
+                        .withMessage("Service discovery running")
+                        .withDetail("service-instances", serviceInstanceMap)
+                        .build();
 
             } catch (Exception e) {
                 return HealthCheck.Result.unhealthy("Error while querying available services, %s", e.getMessage());

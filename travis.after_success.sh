@@ -1,5 +1,6 @@
 #!/bin/bash
 CURRENT_STROOM_DEV_VERSION="v6.0.0"
+DOCKER_REPO="gchq/stroom"
 DATE_ONLY="$(date +%Y%m%d)"
 DATE_TIME="$(date +%Y%m%d%H%M%S)"
 FLOATING_TAG=""
@@ -21,12 +22,13 @@ if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
     echo "SPECIFIC_TAG: ${SPECIFIC_TAG}"
     gitTag=${versionStr}
     echo "gitTag: ${gitTag}"
+    echo "commit hash: ${TRAVIS_COMMIT}"
 
     git config --global user.email "builds@travis-ci.com"
     git config --global user.name "Travis CI"
 
     #git tag ${gitTag} -a -m "Automated Travis build $TRAVIS_BUILD_NUMBER" 2>/dev/null
-    git tag ${gitTag} -a -m "Automated Travis build $TRAVIS_BUILD_NUMBER" 
+    git tag -a ${gitTag} ${TRAVIS_COMMIT} -m "Automated Travis build $TRAVIS_BUILD_NUMBER" 
     #git push -q https://$TAGPERM@github.com/gchq/stroom --follow-tags >/dev/null 2>&1
     git push -q https://$TAGPERM@github.com/gchq/stroom --follow-tags 
 elif [ -n "$TRAVIS_TAG" ]; then

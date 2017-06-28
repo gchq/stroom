@@ -161,7 +161,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
 
     @Override
     public String getImportFileURL() {
-        return GWT.getModuleBaseURL() + "importfile.rpc";
+        return GWT.getHostPageBaseURL() + "importfile.rpc";
     }
 
     @Override

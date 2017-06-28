@@ -79,6 +79,7 @@ dependencies {
     compile libs.dropwizard_jetty
     compile libs.dropwizard_metrics_annotation
     compile libs.dropwizard_metrics_healthchecks
+    compile libs.dropwizard_servlets
     compile libs.guava
     compile libs.jackson_annotations
     compile libs.javax_inject
@@ -86,11 +87,13 @@ dependencies {
     compile libs.jersey_server
     compile libs.jetty_server
     compile libs.jetty_servlet
+    compile libs.logback_classic
     compile libs.shiro_core
     compile libs.slf4j_api
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_web
+    compile libs.vavr
     compile libs.ws_rs_api
 
     runtime libs.shiro_web

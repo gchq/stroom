@@ -1,3 +1,5 @@
+import de.undercouch.gradle.tasks.download.Download
+
 buildscript {
     repositories {
         mavenLocal()
@@ -8,7 +10,13 @@ buildscript {
         classpath group: 'ca.cutterslade.gradle', name: 'gradle-dependency-analyze', version: '1.1.0'
     }
 }
+
+plugins {
+    id "de.undercouch.download" version "3.2.0"
+}
+
 apply plugin: 'gchq.urldependencies'
+
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
@@ -22,7 +30,9 @@ ext.gwtCompilerProps = [
     mainClass: 'stroom.gwt.GwtCompilerWrapper',
     minHeap: getPropertyOrDefault('gwtCompilerMinHeap', '50M'),
     maxHeap: getPropertyOrDefault('gwtCompilerMaxHeap', '500M'),
-    workers: getPropertyOrDefault('gwtCompilerWorkers', '5')
+    workers: getPropertyOrDefault('gwtCompilerWorkers', '5'),
+    devModeMinHeap: '50M',
+    devModeMaxHeap: '1G'
 ]
 
 //version numbers for libs that share version numbers, e.g. dropwizard-*, or for github repo release versions
@@ -39,7 +49,7 @@ ext.versions = [
     stroomStats: 'v0.4.0-alpha',
 
     //------------3rd-party------------
-    curator: '2.11.0', //must be chosen to be compatible with the ZK version in CDH 5.10
+    curator: '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
     dropwizard: '1.1.0', 
     dropwizard_metrics: '3.1.2', //should be kept in step with dropwizard
     gwt: '2.8.0',
@@ -90,12 +100,13 @@ ext.libs = [
     dropwizard_jetty: "io.dropwizard:dropwizard-jetty:$versions.dropwizard", //was 1.0.6 now 1.1.0
     dropwizard_metrics_annotation: "io.dropwizard.metrics:metrics-annotation:$versions.dropwizard_metrics",
     dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks:$versions.dropwizard_metrics",
+    dropwizard_servlets: "io.dropwizard:dropwizard-servlets:$versions.dropwizard",
     dropwizard_testing: "io.dropwizard:dropwizard-testing:$versions.dropwizard",
     ehcache_core: "net.sf.ehcache:ehcache-core:2.6.11",
     ehcache_spring_annotations: "com.googlecode.ehcache-spring-annotations:ehcache-spring-annotations:1.2.0",
     flyway_core: "org.flywaydb:flyway-core:4.0.3",
     gin: "com.google.gwt.inject:gin:2.1.2",
-    guava: "com.google.guava:guava:20.0",
+    guava: "com.google.guava:guava:21.0", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
     guice: "com.google.inject:guice:3.0",
     gwt_dev: "com.google.gwt:gwt-dev:$versions.gwt",
     gwt_servlet: "com.google.gwt:gwt-servlet:$versions.gwt",
@@ -168,6 +179,21 @@ ext.libs = [
     zzDUMMYzz: "makes sorting easier"
 ]
 
+def contentPackImportDir = new File( "${System.properties['user.home']}/.stroom/contentPackImport/")
+def contentReleasesUrl = "http://github.com/gchq/stroom-content/releases/download/"
+def visualisationsContentPackVer = "v3.0.4"
+def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations-dev/releases/download/${visualisationsContentPackVer}/visualisations-production-${visualisationsContentPackVer}.zip"
+
+//A set of content packs to download in the task downloadStroomContent
+ext.contentPacks = [
+    'core-xml-schemas': 'v1.0',
+    'internal-statistics-stroom-stats': 'v2.0',
+    'internal-statistics-sql': 'v2.0',
+    'internal-dashboards': 'v1.1',
+    'stroom-101': 'v1.0',
+    'event-logging-xml-schema': 'v1.0'
+]
+
 task wrapper(type: Wrapper) {
     gradleVersion = '3.5'
 }
@@ -195,6 +221,13 @@ subprojects {
             exclude group: "org.slf4j", module: "slf4j-log4j12"
             exclude group: "log4j", module: "log4j"
             exclude module: 'xercesImpl'
+
+            resolutionStrategy {
+                forcedModules = [
+                    //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
+                    //libs.guava
+                ]
+            }
         }
     }
 
@@ -228,8 +261,41 @@ subprojects {
     }
 }
 
-task setupSampleData(type: GradleBuild) {
-    tasks = [':stroom-integrationtest:setupSampleData']
+
+task clearContentPackImportDir(type: Delete) {
+    doLast {
+        //cleans out any zip files in the contentPackImportDir
+        delete fileTree(contentPackImportDir) {
+            include '**/*.zip'
+         }
+     }
+}
+
+task downloadStroomContent() {
+    doLast {
+        //download each content pack to the contentPackImportDir ready for stroom to import on startup
+        for (pack in contentPacks) {
+            def packName = pack.key
+            def packVer = pack.value
+            def packUrl = "${contentReleasesUrl}${packName}-${packVer}/${packName}-${packVer}.zip"
+            download {
+                src packUrl
+                dest contentPackImportDir
+                overwrite true
+            }
+        }
+        //now get the visualisations pack from a different repo
+        download {
+            src visualisationsContentPackUrl
+            dest contentPackImportDir
+            overwrite true
+        }
+    }
+}
+
+task setupSampleData() {
+    dependsOn downloadStroomContent
+    dependsOn ':stroom-integrationtest:setupSampleData'
 }
 
 project(':stroom-util') {

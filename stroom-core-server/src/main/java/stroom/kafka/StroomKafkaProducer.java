@@ -24,7 +24,7 @@ import java.util.function.Consumer;
  * <p>
  * Requires configuration:
  * <<code>
- * kafka.bootstrap.servers=<host>:<port>
+ * stroom.kafka.bootstrap.servers=<host1>:<port>,<host2>:<port>,etc
  * </code>
  */
 @Component
@@ -46,7 +46,7 @@ public class StroomKafkaProducer {
     private volatile Instant timeOfLastFailedInitAttempt = Instant.EPOCH;
 
     public StroomKafkaProducer(
-            @Value("#{propertyConfigurer.getProperty('kafka.bootstrap.servers')}") final String bootstrapServers) {
+            @Value("#{propertyConfigurer.getProperty('stroom.kafka.bootstrap.servers')}") final String bootstrapServers) {
 
         this.bootstrapServers = bootstrapServers;
     }
@@ -100,7 +100,7 @@ public class StroomKafkaProducer {
             synchronized (this) {
                 if (producer == null && isOkToInitNow()) {
                     if (Strings.isNullOrEmpty(bootstrapServers)) {
-                        LOGGER.error("Kafka is not properly configured: 'kafka.bootstrap.servers' is required.");
+                        LOGGER.error("Kafka is not properly configured: 'stroom.kafka.bootstrap.servers' is required.");
                     } else {
                         LOGGER.info("Initialising kafka producer for {}", bootstrapServers);
                         Properties props = new Properties();

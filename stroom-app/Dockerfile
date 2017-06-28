@@ -43,11 +43,12 @@ ADD ./prod.yml /stroom/config.yml
 ADD ./docker-entrypoint.sh /usr/local/bin/
 
 #TODO ContentPackImport is finding the contentPackImport dir but not importing anything. Not sure why yet.
-ADD https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101.zip /stroom/contentPackImport/
-ADD https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v1.0/event-logging-xml-schema.zip /stroom/contentPackImport/
-ADD https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v1.0/core-xml-schemas.zip /stroom/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101-v1.0.zip /stroom/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v1.0/event-logging-xml-schema-v1.0.zip /stroom/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v1.0/core-xml-schemas-v1.0.zip /stroom/contentPackImport/
 ADD https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.0.4/visualisations-production-v3.0.4.zip /stroom/contentPackImport/
-ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-v1.2/internal-statistics-v1.2.zip /stroom/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-sql-v2.0/internal-statistics-sql-v2.0.zip /stroom/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-stroom-stats-v2.0/internal-statistics-stroom-stats-v2.0.zip /stroom/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/internal-dashboards-v1.1/internal-dashboards-v1.1.zip /stroom/contentPackImport/
 
 #Create Docker volume for Stroom's volumes dir

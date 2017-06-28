@@ -49,5 +49,6 @@ public class App extends Application<Config> {
         ServletMonitor servletMonitor = new ServletMonitor((servlets.upgradeDispatcherServletHolder));
         Resources resources = new Resources(environment.jersey(), servletMonitor);
         HealthChecks.registerHealthChecks(environment.healthChecks(), resources, servletMonitor);
+        AdminTasks.registerAdminTasks(environment);
     }
 }
