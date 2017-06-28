@@ -29,6 +29,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.entity.shared.EntityServiceException;
 import stroom.node.server.StroomPropertyService;
+import stroom.security.SecurityContext;
 import stroom.security.server.exception.AccountExpiredException;
 import stroom.security.server.exception.DisabledException;
 import stroom.security.server.exception.LockedException;
@@ -38,6 +39,7 @@ import stroom.security.shared.User;
 import stroom.security.shared.User.UserStatus;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
+import stroom.util.task.ServerTask;
 
 import javax.inject.Inject;
 import java.util.regex.Pattern;
@@ -51,6 +53,7 @@ public class DBRealm extends AuthenticatingRealm {
     private final UserService userService;
     private final UserAppPermissionService userAppPermissionService;
     private final StroomPropertyService stroomPropertyService;
+    private final SecurityContext securityContext;
 
     private String cachedRegex;
     private Pattern cachedPattern;
@@ -60,11 +63,13 @@ public class DBRealm extends AuthenticatingRealm {
     @Inject
     public DBRealm(final UserService userService, final UserAppPermissionService userAppPermissionService,
                    final StroomPropertyService stroomPropertyService,
-                   final CredentialsMatcher matcher) {
+                   final CredentialsMatcher matcher,
+                   final SecurityContext securityContext) {
         super(matcher);
         this.userService = userService;
         this.userAppPermissionService = userAppPermissionService;
         this.stroomPropertyService = stroomPropertyService;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -120,7 +125,18 @@ public class DBRealm extends AuthenticatingRealm {
         User user = null;
 
         try {
+            if (!doneCreateOrRefreshAdminRole) {
+                doneCreateOrRefreshAdminRole = true;
+                createOrRefreshAdminUserGroup();
+            }
+
             UserRef userRef = userService.getUserRefByName(username);
+            if (userRef == null) {
+                // The requested system user does not exist.
+                if (UserService.INITIAL_ADMIN_ACCOUNT.equals(username)) {
+                    userRef = createOrRefreshAdmin();
+                }
+            }
 
             if (userRef != null) {
                 user = userService.loadByUuidInsecure(userRef.getUuid());
@@ -133,11 +149,11 @@ public class DBRealm extends AuthenticatingRealm {
         return user;
     }
 
-    //TODO: Used by SetupSampleData, but should go because it's no longer used in prod code.
     /**
      * @return a new admin user
      */
     public UserRef createOrRefreshAdmin() {
+        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
         // Ensure all perms have been created
         userAppPermissionService.init();
 
@@ -159,10 +175,10 @@ public class DBRealm extends AuthenticatingRealm {
             userRef = UserRef.create(user);
         }
 
+        securityContext.popUser();
         return userRef;
     }
 
-    //TODO: Used by SetupSampleData, but should go because it's no longer used in prod code.
     /**
      * Enusure the admin user groups are created
      *
@@ -172,8 +188,9 @@ public class DBRealm extends AuthenticatingRealm {
         return createOrRefreshAdminUserGroup(ADMINISTRATORS);
     }
 
-    //TODO: Used by SetupSampleData, but should go because it's no longer used in prod code.
     private UserRef createOrRefreshAdminUserGroup(final String userGroupName) {
+        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
+
         final FindUserCriteria findUserGroupCriteria = new FindUserCriteria(userGroupName, true);
         findUserGroupCriteria.getFetchSet().add(Permission.ENTITY_TYPE);
 
@@ -189,6 +206,7 @@ public class DBRealm extends AuthenticatingRealm {
             }
         }
 
+        securityContext.popUser();
         return UserRef.create(userGroup);
     }
 }
