@@ -22,7 +22,6 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
-import stroom.util.cert.CertificateUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.CloseableUtil;
@@ -36,7 +35,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -106,26 +104,6 @@ public class StroomStreamProcessor {
             // Allocate remote address if not set.
             if (StringUtils.hasText(httpServletRequest.getRemoteHost())) {
                 globalHeaderMap.put(StroomHeaderArguments.REMOTE_HOST, httpServletRequest.getRemoteHost());
-            }
-
-            if (httpServletRequest.getAttribute(CertificateUtil.SERVLET_CERT_ARG) != null) {
-                // Here we pull out the SSL client certificate and check that it
-                // is OK based on the settings of the group the feed belongs to.
-                try {
-                    final Object[] certs = (Object[]) httpServletRequest.getAttribute(CertificateUtil.SERVLET_CERT_ARG);
-
-                    final X509Certificate cert = CertificateUtil.extractCertificate(certs);
-                    final String dn = CertificateUtil.extractDNFromCertificate(cert);
-                    final Long expiryDate = CertificateUtil.extractExpiryDateFromCertificate(cert);
-                    if (expiryDate != null) {
-                        globalHeaderMap.put(StroomHeaderArguments.REMOTE_CERT_EXPIRY,
-                                DateUtil.createNormalDateTimeString(expiryDate));
-                    }
-
-                    globalHeaderMap.put(StroomHeaderArguments.REMOTE_DN, dn);
-                } catch (final Exception ex) {
-                    LOGGER.error("doPost() - Failed to extract certificate", ex);
-                }
             }
         }
 

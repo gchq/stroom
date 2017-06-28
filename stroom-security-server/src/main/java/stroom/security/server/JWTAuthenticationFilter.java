@@ -65,7 +65,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
     @Override
     protected JWTAuthenticationToken createToken(ServletRequest request, ServletResponse response) throws IOException {
-        return jwtService.verifyToken(request).orElseGet(null);
+        return jwtService.verifyToken(request).orElse(null);
     }
 
     @Override

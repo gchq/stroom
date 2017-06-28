@@ -16,7 +16,6 @@
 
 package stroom.util.web;
 
-import stroom.util.cert.CertificateUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.servlet.ServletException;
@@ -50,16 +49,6 @@ public final class DebugServletUtil {
         debugResponse.append("===========\n");
         debugResponse.append("contentLength=" + req.getContentLength());
 
-        debugResponse.append("\n");
-
-        debugResponse.append("HTTP Client Certificate\n");
-        debugResponse.append("=======================\n");
-        String certDn = CertificateUtil.extractCertificateDN(req);
-        if (certDn != null) {
-            debugResponse.append(certDn + "\n");
-        } else {
-            debugResponse.append("None\n");
-        }
         debugResponse.append("\n");
 
         debugResponse.append("HTTP Payload\n");
