@@ -26,7 +26,9 @@ public enum ExternalService {
     //stateless so random strategy
     AUTHENTICATION("authentication", new RandomStrategy<>()),
     //stateless so random strategy
-    AUTHORISATION("authorisation", new RandomStrategy<>());
+    AUTHORISATION("authorisation", new RandomStrategy<>()),
+    //stateless so random strategy
+    LOGIN_UI("authentication", new RandomStrategy<>());
 
     private static final String PROP_KEY_PREFIX = "stroom.services.";
     private static final String NAME_SUFFIX = ".name";

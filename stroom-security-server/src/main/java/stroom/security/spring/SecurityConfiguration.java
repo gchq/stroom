@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import stroom.ServiceDiscoverer;
 import stroom.security.server.DBRealm;
 import stroom.security.server.JWTAuthenticationFilter;
 import stroom.security.server.JWTService;
@@ -75,8 +76,8 @@ public class SecurityConfiguration {
     private DBRealm dbRealm;
 
     @Bean(name = "jwtFilter")
-    public JWTAuthenticationFilter jwtAuthenticationFilter(JWTService jwtService) {
-        return new JWTAuthenticationFilter(jwtService);
+    public JWTAuthenticationFilter jwtAuthenticationFilter(JWTService jwtService, ServiceDiscoverer serviceDiscoverer) {
+        return new JWTAuthenticationFilter(jwtService, serviceDiscoverer);
     }
 
     @Bean(name = "shiroFilter")
