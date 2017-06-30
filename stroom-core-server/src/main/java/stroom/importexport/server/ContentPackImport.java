@@ -71,9 +71,12 @@ public class ContentPackImport {
     }
 
     private void doImport() {
-        LOGGER.info("ContentPackImport started");
-
         final List<Path> contentPacksDirs = getContentPackBaseDirs();
+        doImport(contentPacksDirs);
+    }
+
+    private void doImport(final List<Path> contentPacksDirs) {
+        LOGGER.info("ContentPackImport started");
 
         AtomicInteger successCounter = new AtomicInteger();
         AtomicInteger failedCounter = new AtomicInteger();

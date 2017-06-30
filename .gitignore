@@ -10,6 +10,8 @@ jars/
 stroom-dashboard-gwt/hs_err_pid*.log
 stroom-app-gwt/hs_err_pid*.log
 
+stroom-core-server/transientContentPacks/*
+
 # IntelliJ
 # Here we ignore everything and create exceptions for what we want to share.
 /out/
