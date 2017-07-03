@@ -195,15 +195,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
 
     @Override
+    @Insecure
     public UserRef changePassword(final UserRef userRef, final String oldPassword, final String newPassword) {
         if (userRef == null) {
             return null;
         }
 
-        // Make sure only a user with manage users permission can change a password or that the user is changing their own.
-        if (!securityContext.hasAppPermission(FindUserCriteria.MANAGE_USERS_PERMISSION) && !userRef.equals(getCurrentUser())) {
-            return null;
-        }
+//        // Make sure only a user with manage users permission can change a password or that the user is changing their own.
+//        if (!securityContext.hasAppPermission(FindUserCriteria.MANAGE_USERS_PERMISSION) && !userRef.equals(getCurrentUser())) {
+//            return null;
+//        }
 
         // Load the user for the supplied ref.
         final User user = userService.loadByUuid(userRef.getUuid());
