@@ -22,8 +22,8 @@ ENV IN_DOCKER="true"
 #Copy the content packs in so they get imported on first run of Stroom
 ADD . /usr/stroom-app
 ADD https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101-v1.0.zip /usr/stroom-app/contentPackImport/
-ADD https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v1.0/event-logging-xml-schema.zip /usr/stroom-app/contentPackImport/
-ADD https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v1.0/core-xml-schemas.zip /usr/stroom-app/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v1.0/event-logging-xml-schema-v1.0.zip /usr/stroom-app/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v1.0/core-xml-schemas-v1.0.zip /usr/stroom-app/contentPackImport/
 ADD https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.0.4/visualisations-production-v3.0.4.zip /usr/stroom-app/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-v1.2/internal-statistics-v1.2.zip /usr/stroom-app/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/internal-dashboards-v1.1/internal-dashboards-v1.1.zip /usr/stroom-app/contentPackImport/
