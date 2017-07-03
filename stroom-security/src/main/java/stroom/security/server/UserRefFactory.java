@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.security.shared;
+package stroom.security.server;
 
-import stroom.dispatch.shared.Action;
-import stroom.util.shared.VoidResult;
+import stroom.security.shared.UserRef;
+import stroom.security.shared.UserStatus;
 
-public class LogoutAction extends Action<VoidResult> {
-    private static final long serialVersionUID = -6740095230475597845L;
-
-    public LogoutAction() {
-        // Default constructor necessary for GWT serialisation.
+public final class UserRefFactory {
+    private UserRefFactory() {
+        // Factory class.
     }
 
-    @Override
-    public String getTaskName() {
-        return "Logout";
+    public static UserRef create(final User user) {
+        if (user == null) {
+            return null;
+        }
+
+        final String type = user.getType();
+        final String uuid = user.getUuid();
+        final String name = user.getName();
+
+        return new UserRef(type, uuid, name, user.isGroup(), UserStatus.ENABLED.equals(user.getStatus()));
     }
 }

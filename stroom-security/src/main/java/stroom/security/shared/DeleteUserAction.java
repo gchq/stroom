@@ -17,27 +17,24 @@
 package stroom.security.shared;
 
 import stroom.dispatch.shared.Action;
-import stroom.entity.shared.DocRef;
+import stroom.util.shared.VoidResult;
 
-public class FetchAllDocumentPermissionsAction extends Action<DocumentPermissions> {
-    private static final long serialVersionUID = -6740095230475597845L;
+public class DeleteUserAction extends Action<VoidResult> {
+    private UserRef userRef;
 
-    private DocRef docRef;
-
-    public FetchAllDocumentPermissionsAction() {
-        // Default constructor necessary for GWT serialisation.
+    public DeleteUserAction() {
     }
 
-    public FetchAllDocumentPermissionsAction(final DocRef docRef) {
-        this.docRef = docRef;
+    public DeleteUserAction(final UserRef userRef) {
+        this.userRef = userRef;
     }
 
-    public DocRef getDocRef() {
-        return docRef;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     @Override
     public String getTaskName() {
-        return "Fetch Document Permissions";
+        return "Delete user";
     }
 }

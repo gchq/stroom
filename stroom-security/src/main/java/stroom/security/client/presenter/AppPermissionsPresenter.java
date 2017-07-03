@@ -28,7 +28,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.FetchUserAppPermissionsAction;
-import stroom.security.shared.User;
+import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 
@@ -124,6 +124,6 @@ public class AppPermissionsPresenter extends
     }
 
     protected boolean isCurrentUserUpdate() {
-        return securityContext.hasAppPermission(User.MANAGE_USERS_PERMISSION);
+        return securityContext.hasAppPermission(FindUserCriteria.MANAGE_USERS_PERMISSION);
     }
 }

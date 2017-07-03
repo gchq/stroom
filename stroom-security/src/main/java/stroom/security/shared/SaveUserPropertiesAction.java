@@ -17,27 +17,32 @@
 package stroom.security.shared;
 
 import stroom.dispatch.shared.Action;
-import stroom.entity.shared.DocRef;
 
-public class FetchAllDocumentPermissionsAction extends Action<DocumentPermissions> {
+public class SaveUserPropertiesAction extends Action<UserProperties> {
     private static final long serialVersionUID = -6740095230475597845L;
 
-    private DocRef docRef;
+    private UserRef userRef;
+    private UserProperties userProperties;
 
-    public FetchAllDocumentPermissionsAction() {
+    public SaveUserPropertiesAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchAllDocumentPermissionsAction(final DocRef docRef) {
-        this.docRef = docRef;
+    public SaveUserPropertiesAction(final UserRef userRef, final UserProperties userProperties) {
+        this.userRef = userRef;
+        this.userProperties = userProperties;
     }
 
-    public DocRef getDocRef() {
-        return docRef;
+    public UserRef getUserRef() {
+        return userRef;
+    }
+
+    public UserProperties getUserProperties() {
+        return userProperties;
     }
 
     @Override
     public String getTaskName() {
-        return "Fetch Document Permissions";
+        return "Save User Properties";
     }
 }

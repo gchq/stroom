@@ -17,26 +17,34 @@
 package stroom.security.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.security.shared.EmailPasswordResetForUserAction;
-import stroom.security.shared.User;
+import stroom.security.Secured;
+import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.LoadUserPropertiesAction;
+import stroom.security.shared.UserProperties;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = EmailPasswordResetForUserAction.class)
+@TaskHandlerBean(task = LoadUserPropertiesAction.class)
 @Scope(value = StroomScope.TASK)
-public class EmailPasswordResetForUserHandler extends AbstractTaskHandler<EmailPasswordResetForUserAction, User> {
-    private final AuthenticationService authenticationService;
+@Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
+public class LoadUserPropertiesHandler extends AbstractTaskHandler<LoadUserPropertiesAction, UserProperties> {
+    private final UserService userService;
 
     @Inject
-    EmailPasswordResetForUserHandler(final AuthenticationService authenticationService) {
-        this.authenticationService = authenticationService;
+    LoadUserPropertiesHandler(final UserService userService) {
+        this.userService = userService;
     }
 
     @Override
-    public User exec(final EmailPasswordResetForUserAction task) {
-        return authenticationService.emailPasswordReset(task.getUser());
+    public UserProperties exec(final LoadUserPropertiesAction action) {
+        final User user = userService.loadByUuid(action.getUserRef().getUuid());
+        if (user == null) {
+            return null;
+        }
+
+        return new UserProperties(user.isStatusEnabled(), user.isLoginExpiry());
     }
 }

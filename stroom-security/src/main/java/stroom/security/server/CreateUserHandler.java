@@ -17,9 +17,9 @@
 package stroom.security.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.security.Insecure;
-import stroom.security.shared.AutoLoginAction;
-import stroom.security.shared.UserAndPermissions;
+import stroom.security.Secured;
+import stroom.security.shared.CreateUserAction;
+import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -27,26 +27,23 @@ import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = AutoLoginAction.class)
+@TaskHandlerBean(task = CreateUserAction.class)
 @Scope(value = StroomScope.TASK)
-@Insecure
-public class AutoLoginHandler extends AbstractTaskHandler<AutoLoginAction, UserAndPermissions> {
-    private final AuthenticationService authenticationService;
-    private final UserAndPermissionsHelper userAndPermissionsHelper;
+@Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
+public class CreateUserHandler extends AbstractTaskHandler<CreateUserAction, UserRef> {
+    private final UserService userService;
 
     @Inject
-    AutoLoginHandler(final AuthenticationService authenticationService, final UserAndPermissionsHelper userAndPermissionsHelper) {
-        this.authenticationService = authenticationService;
-        this.userAndPermissionsHelper = userAndPermissionsHelper;
+    CreateUserHandler(final UserService userService) {
+        this.userService = userService;
     }
 
     @Override
-    public UserAndPermissions exec(final AutoLoginAction task) {
-        final UserRef userRef = authenticationService.autoLogin();
-        if (userRef == null) {
-            return null;
+    public UserRef exec(final CreateUserAction action) {
+        if (action.isGroup()) {
+            return userService.createUserGroup(action.getName());
+        } else {
+            return userService.createUser(action.getName());
         }
-
-        return new UserAndPermissions(userRef, userAndPermissionsHelper.get(userRef), null);
     }
 }

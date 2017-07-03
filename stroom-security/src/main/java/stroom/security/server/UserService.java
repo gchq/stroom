@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.security.shared;
+package stroom.security.server;
 
 import stroom.entity.shared.EntityService;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.HasLoadByUuid;
 import stroom.entity.shared.ProvidesNamePattern;
+import stroom.security.server.User;
+import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.UserRef;
 
 import java.util.List;
 
@@ -34,9 +37,9 @@ public interface UserService extends EntityService<User>, FindService<User, Find
 
     List<UserRef> findGroupsForUser(UserRef user);
 
-    User createUser(String name);
+    UserRef createUser(String name);
 
-    User createUserGroup(String name);
+    UserRef createUserGroup(String name);
 
     void addUserToGroup(final UserRef user, final UserRef userGroup);
 

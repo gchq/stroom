@@ -53,16 +53,8 @@ public class DocumentPermissions implements SharedObject {
         return allPermissions;
     }
 
-    public void setAllPermissions(final String[] allPermissions) {
-        this.allPermissions = allPermissions;
-    }
-
     public Map<UserRef, Set<String>> getUserPermissions() {
         return userPermissions;
-    }
-
-    public void setUserPermissions(final Map<UserRef, Set<String>> userPermissions) {
-        this.userPermissions = userPermissions;
     }
 
     public Set<String> getPermissionsForUser(final UserRef userRef) {

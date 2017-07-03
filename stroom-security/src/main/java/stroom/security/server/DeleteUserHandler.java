@@ -18,29 +18,32 @@ package stroom.security.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.security.Secured;
-import stroom.security.shared.FetchUserAppPermissionsAction;
+import stroom.security.shared.DeleteUserAction;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.UserAppPermissions;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FetchUserAppPermissionsAction.class)
+@TaskHandlerBean(task = DeleteUserAction.class)
 @Scope(value = StroomScope.TASK)
 @Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
-public class FetchUserAppPermissionsHandler
-        extends AbstractTaskHandler<FetchUserAppPermissionsAction, UserAppPermissions> {
-    private final UserAppPermissionsCache userAppPermissionsCache;
+public class DeleteUserHandler extends AbstractTaskHandler<DeleteUserAction, VoidResult> {
+    private final UserService userService;
 
     @Inject
-    FetchUserAppPermissionsHandler(final UserAppPermissionsCache userAppPermissionsCache) {
-        this.userAppPermissionsCache = userAppPermissionsCache;
+    DeleteUserHandler(final UserService userService) {
+        this.userService = userService;
     }
 
     @Override
-    public UserAppPermissions exec(final FetchUserAppPermissionsAction action) {
-        return userAppPermissionsCache.get(action.getUserRef());
+    public VoidResult exec(final DeleteUserAction action) {
+        User user = userService.loadByUuid(action.getUserRef().getUuid());
+        if (user != null) {
+            userService.delete(user);
+        }
+        return VoidResult.INSTANCE;
     }
 }

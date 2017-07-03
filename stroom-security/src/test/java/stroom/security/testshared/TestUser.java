@@ -19,11 +19,10 @@ package stroom.security.testshared;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import stroom.security.shared.User;
-import stroom.security.shared.User.UserStatus;
-import stroom.util.test.StroomUnitTest;
+import stroom.security.server.User;
+import stroom.security.shared.UserStatus;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestUser extends StroomUnitTest {

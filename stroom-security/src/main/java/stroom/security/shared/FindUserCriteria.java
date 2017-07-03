@@ -18,12 +18,13 @@ package stroom.security.shared;
 
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.Period;
-import stroom.security.shared.User.UserStatus;
 
 /**
  * Criteria class.
  */
 public class FindUserCriteria extends FindDocumentEntityCriteria {
+    public static final String MANAGE_USERS_PERMISSION = "Manage Users";
+
     /**
      * Order by types.
      */

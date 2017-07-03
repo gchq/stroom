@@ -18,28 +18,25 @@ package stroom.security.shared;
 
 import stroom.dispatch.shared.Action;
 
-public class EmailPasswordResetForUserAction extends Action<User> {
+public class LoadUserPropertiesAction extends Action<UserProperties> {
     private static final long serialVersionUID = -6740095230475597845L;
 
-    public EmailPasswordResetForUserAction() {
+    private UserRef userRef;
+
+    public LoadUserPropertiesAction() {
+        // Default constructor necessary for GWT serialisation.
     }
 
-    public EmailPasswordResetForUserAction(final User user) {
-        this.user = user;
+    public LoadUserPropertiesAction(final UserRef userRef) {
+        this.userRef = userRef;
     }
 
-    private User user;
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     @Override
     public String getTaskName() {
-        return "Reset Password";
+        return "Load User Properties";
     }
 }

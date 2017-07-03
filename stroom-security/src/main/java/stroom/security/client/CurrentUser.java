@@ -27,8 +27,8 @@ import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.security.client.event.RequestLogoutEvent;
 import stroom.security.shared.CheckDocumentPermissionAction;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
+import stroom.security.shared.UserRef;
 
 import javax.inject.Singleton;
 import java.util.Set;
@@ -37,7 +37,7 @@ import java.util.Set;
 public class CurrentUser implements ClientSecurityContext, HasHandlers {
     private final EventBus eventBus;
     private final Provider<ClientDispatchAsync> dispatcherProvider;
-    private User user;
+    private UserRef userRef;
     private Set<String> permissions;
 
     @Inject
@@ -47,7 +47,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     public void clear() {
-        this.user = null;
+        this.userRef = null;
         this.permissions = null;
     }
 
@@ -58,7 +58,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     public void setUserAndPermissions(final UserAndPermissions userAndPermissions, final boolean fireUserChangedEvent) {
         clear();
         if (userAndPermissions != null) {
-            this.user = userAndPermissions.getUser();
+            this.userRef = userAndPermissions.getUserRef();
             this.permissions = userAndPermissions.getAppPermissionSet();
         }
 
@@ -71,21 +71,21 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
         }
     }
 
-    public User getUser() {
-        return user;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     @Override
     public String getUserId() {
-        if (user == null) {
+        if (userRef == null) {
             return null;
         }
-        return user.getName();
+        return userRef.getName();
     }
 
     @Override
     public boolean isLoggedIn() {
-        return user != null;
+        return userRef != null;
     }
 
     private boolean isAdmin() {

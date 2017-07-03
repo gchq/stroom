@@ -14,27 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.security.shared;
+package stroom.security.server;
 
-import stroom.entity.shared.Copyable;
-import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.Folder;
-import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.HasUuid;
 import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.util.shared.HasDisplayValue;
-import org.hibernate.annotations.GenericGenerator;
+import stroom.security.shared.UserStatus;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
-import java.util.UUID;
 
 /**
  * <p>
@@ -42,10 +33,10 @@ import java.util.UUID;
  * </p>
  */
 @Entity
-@Table(name = "USR", uniqueConstraints = @UniqueConstraint(columnNames = { SQLNameConstants.NAME, User.GROUP }) )
+@Table(name = "USR", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME, User.GROUP}))
 public class User extends NamedEntity implements HasUuid {
     public static final String TABLE_NAME = SQLNameConstants.USER;
-//    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
+    //    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String PASS_HASH = SQLNameConstants.PASSWORD + SEP + SQLNameConstants.HASH;
     public static final String PASS_EXPIRY_MS = SQLNameConstants.PASSWORD + SEP + SQLNameConstants.EXPIRY
             + SQLNameConstants.MS_SUFFIX;
@@ -58,11 +49,10 @@ public class User extends NamedEntity implements HasUuid {
             + SQLNameConstants.FAILURE;
     public static final String TOTAL_LOGIN_FAILURES = SQLNameConstants.TOTAL + SEP + SQLNameConstants.LOGIN + SEP
             + SQLNameConstants.FAILURE;
-//    public static final String LAST_ACCESS_MS = SQLNameConstants.LAST + SEP + SQLNameConstants.ACCESS
+    //    public static final String LAST_ACCESS_MS = SQLNameConstants.LAST + SEP + SQLNameConstants.ACCESS
 //            + SQLNameConstants.MS_SUFFIX;
     public static final String GROUP = SQLNameConstants.GROUP;
     public static final String ENTITY_TYPE = "User";
-    public static final String MANAGE_USERS_PERMISSION = "Manage Users";
 
     private static final long serialVersionUID = -2415531358356094596L;
 
@@ -83,7 +73,7 @@ public class User extends NamedEntity implements HasUuid {
     private Long lastLoginMs;
     /**
      * The time from when this login is valid.
-     *
+     * <p>
      * 1) When created it is the create time 2) When last logged in is the last
      * login time 3) When account re-enabled the current time
      */
@@ -129,8 +119,7 @@ public class User extends NamedEntity implements HasUuid {
     }
 
     /**
-     * @param passwordHash
-     *            setter
+     * @param passwordHash setter
      */
     public void setPasswordHash(final String passwordHash) {
         this.passwordHash = passwordHash;
@@ -145,8 +134,7 @@ public class User extends NamedEntity implements HasUuid {
     }
 
     /**
-     * @param passwordExpiryMs
-     *            setter
+     * @param passwordExpiryMs setter
      */
     public void setPasswordExpiryMs(final Long passwordExpiryMs) {
         this.passwordExpiryMs = passwordExpiryMs;
@@ -170,8 +158,7 @@ public class User extends NamedEntity implements HasUuid {
     }
 
     /**
-     * @param lastLoginMs
-     *            setter
+     * @param lastLoginMs setter
      */
     public void setLastLoginMs(final Long lastLoginMs) {
         this.lastLoginMs = lastLoginMs;
@@ -198,8 +185,7 @@ public class User extends NamedEntity implements HasUuid {
     }
 
     /**
-     * @param pstatus
-     *            setter
+     * @param pstatus setter
      */
     public void setPstatus(final byte pstatus) {
         this.pstatus = pstatus;
@@ -223,8 +209,7 @@ public class User extends NamedEntity implements HasUuid {
     }
 
     /**
-     * @param status
-     *            setter
+     * @param status setter
      */
     private void setStatus(final UserStatus status) {
         this.pstatus = status.getPrimitiveValue();
@@ -288,8 +273,7 @@ public class User extends NamedEntity implements HasUuid {
     }
 
     /**
-     * @param currentLoginFailures
-     *            setter
+     * @param currentLoginFailures setter
      */
     public void setCurrentLoginFailures(final int currentLoginFailures) {
         this.currentLoginFailures = currentLoginFailures;
@@ -304,8 +288,7 @@ public class User extends NamedEntity implements HasUuid {
     }
 
     /**
-     * @param totalLoginFailures
-     *            setter
+     * @param totalLoginFailures setter
      */
     public void setTotalLoginFailures(final int totalLoginFailures) {
         this.totalLoginFailures = totalLoginFailures;
@@ -315,35 +298,5 @@ public class User extends NamedEntity implements HasUuid {
     @Override
     public final String getType() {
         return ENTITY_TYPE;
-    }
-
-    /**
-     * The status of the user.
-     */
-    public enum UserStatus implements HasDisplayValue, HasPrimitiveValue {
-        ENABLED("Enabled", 0), // Normal User.
-        DISABLED("Disabled", 1), // Old User no longer allowed access.
-        LOCKED("Locked", 2), // Locked user due to sign in problems.
-        EXPIRED("Expired", 3); // Expired account.
-
-        public static final PrimitiveValueConverter<UserStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-                UserStatus.values());
-        private final String displayValue;
-        private final byte primitiveValue;
-
-        UserStatus(final String displayValue, final int primitiveValue) {
-            this.displayValue = displayValue;
-            this.primitiveValue = (byte) primitiveValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-
-        @Override
-        public byte getPrimitiveValue() {
-            return primitiveValue;
-        }
     }
 }

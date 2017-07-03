@@ -47,15 +47,7 @@ public class ChangeSet<T> implements SharedObject {
         return addSet;
     }
 
-    public void setAddSet(final Set<T> addSet) {
-        this.addSet = addSet;
-    }
-
     public Set<T> getRemoveSet() {
         return removeSet;
-    }
-
-    public void setRemoveSet(final Set<T> removeSet) {
-        this.removeSet = removeSet;
     }
 }

@@ -18,34 +18,26 @@ package stroom.security.shared;
 
 import stroom.dispatch.shared.Action;
 
-public class ResetPasswordAction extends Action<User> {
+public class ResetPasswordAction extends Action<UserRef> {
     private static final long serialVersionUID = -6740095230475597845L;
 
     public ResetPasswordAction() {
     }
 
-    public ResetPasswordAction(final User user, String password) {
+    public ResetPasswordAction(final UserRef user, String password) {
         this.user = user;
         this.password = password;
     }
 
-    private User user;
+    private UserRef user;
     private String password;
 
-    public User getUser() {
+    public UserRef getUser() {
         return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
     }
 
     public String getPassword() {
         return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     @Override

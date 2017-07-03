@@ -19,8 +19,8 @@ package stroom.security.server;
 import org.springframework.context.annotation.Scope;
 import stroom.security.Insecure;
 import stroom.security.shared.ChangePasswordAction;
-import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
+import stroom.security.shared.UserRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
@@ -42,12 +42,12 @@ public class ChangePasswordHandler extends AbstractTaskHandler<ChangePasswordAct
 
     @Override
     public UserAndPermissions exec(final ChangePasswordAction task) {
-        final User user = authenticationService.changePassword(task.getUser(), task.getOldPassword(),
+        final UserRef userRef = authenticationService.changePassword(task.getUserRef(), task.getOldPassword(),
                 task.getNewPassword());
-        if (user == null) {
+        if (userRef == null) {
             return null;
         }
 
-        return userAndPermissionsHelper.get(user);
+        return new UserAndPermissions(userRef, userAndPermissionsHelper.get(userRef), null);
     }
 }

@@ -40,16 +40,8 @@ public class CheckDocumentPermissionAction extends Action<SharedBoolean> {
         return documentType;
     }
 
-    public void setDocumentType(final String documentType) {
-        this.documentType = documentType;
-    }
-
     public String getDocumentId() {
         return documentId;
-    }
-
-    public void setDocumentId(final String documentId) {
-        this.documentId = documentId;
     }
 
     public String getPermission() {

@@ -18,14 +18,28 @@ package stroom.security.shared;
 
 import stroom.dispatch.shared.Action;
 
-public class RefreshCurrentUserAction extends Action<UserAndPermissions> {
-    private static final long serialVersionUID = -6740095230475597845L;
+public class CreateUserAction extends Action<UserRef> {
+    private String name;
+    private boolean group;
 
-    public RefreshCurrentUserAction() {
+    public CreateUserAction() {
+    }
+
+    public CreateUserAction(final String name, final boolean group) {
+        this.name = name;
+        this.group = group;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public boolean isGroup() {
+        return group;
     }
 
     @Override
     public String getTaskName() {
-        return "Refresh User";
+        return "Create user";
     }
 }

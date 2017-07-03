@@ -16,19 +16,17 @@
 
 package stroom.security.server;
 
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.Insecure;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.User;
-import stroom.security.shared.User.UserStatus;
-import stroom.security.shared.UserService;
+import stroom.security.shared.UserStatus;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomSimpleCronSchedule;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import javax.inject.Inject;
 

@@ -25,9 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.EntityServiceHelper;
 import stroom.entity.server.FindServiceHelper;
 import stroom.entity.server.QueryAppender;
+import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
-import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
@@ -38,9 +38,7 @@ import stroom.entity.shared.SQLNameConstants;
 import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomSpringProfiles;
@@ -55,7 +53,7 @@ import java.util.UUID;
 
 @Transactional
 @Profile(StroomSpringProfiles.PROD)
-@Secured(User.MANAGE_USERS_PERMISSION)
+@Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
 @Component("userService")
 public class UserServiceImpl implements UserService {
     private static final String USER_NAME_PATTERN_PROPERTY = "stroom.security.userNamePattern";
@@ -178,7 +176,7 @@ public class UserServiceImpl implements UserService {
         if (users != null) {
             final User user = users.getFirst();
             if (user != null) {
-                return UserRef.create(user);
+                return UserRefFactory.create(user);
             }
         }
 
@@ -193,7 +191,7 @@ public class UserServiceImpl implements UserService {
         if (users != null) {
             final User user = users.getFirst();
             if (user != null) {
-                return UserRef.create(user);
+                return UserRefFactory.create(user);
             }
         }
 
@@ -261,19 +259,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User createUser(final String name) {
+    public UserRef createUser(final String name) {
         final User user = new User();
         user.setName(name);
         user.setGroup(false);
-        return save(user);
+        return UserRefFactory.create(save(user));
     }
 
     @Override
-    public User createUserGroup(final String name) {
+    public UserRef createUserGroup(final String name) {
         final User user = new User();
         user.setName(name);
         user.setGroup(true);
-        return save(user);
+        return UserRefFactory.create(save(user));
     }
 
     @Override
@@ -362,7 +360,7 @@ public class UserServiceImpl implements UserService {
         // Delete any document permissions associated with this user.
         try {
             if (documentPermissionService != null && Boolean.TRUE.equals(success)) {
-                documentPermissionService.clearUserPermissions(UserRef.create(entity));
+                documentPermissionService.clearUserPermissions(UserRefFactory.create(entity));
             }
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
@@ -373,7 +371,7 @@ public class UserServiceImpl implements UserService {
 
     private List<UserRef> toRefList(final List<User> list) {
         final List<UserRef> refs = new ArrayList<>(list.size());
-        list.stream().forEach(user -> refs.add(UserRef.create(user)));
+        list.stream().forEach(user -> refs.add(UserRefFactory.create(user)));
         return refs;
     }
 

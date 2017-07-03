@@ -21,10 +21,8 @@ import org.junit.Test;
 import org.springframework.aop.framework.Advised;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
 import stroom.util.logging.StroomLogger;
 import stroom.util.test.FileSystemTestUtil;
 
@@ -177,18 +175,18 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     private UserRef createUser(final String name) {
-        User user = userService.createUser(name);
+        UserRef userRef = userService.createUser(name);
+        Assert.assertNotNull(userRef);
+        final User user = userService.loadByUuid(userRef.getUuid());
         Assert.assertNotNull(user);
-        user = userService.load(user);
-        Assert.assertNotNull(user);
-        return UserRef.create(user);
+        return UserRefFactory.create(user);
     }
 
     private UserRef createUserGroup(final String name) {
-        User user = userService.createUserGroup(name);
+        UserRef userRef = userService.createUserGroup(name);
+        Assert.assertNotNull(userRef);
+        final User user = userService.loadByUuid(userRef.getUuid());
         Assert.assertNotNull(user);
-        user = userService.load(user);
-        Assert.assertNotNull(user);
-        return UserRef.create(user);
+        return UserRefFactory.create(user);
     }
 }

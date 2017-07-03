@@ -28,9 +28,8 @@ import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityService;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.security.shared.DocumentPermissions;
-import stroom.security.shared.User;
-import stroom.security.shared.User.UserStatus;
 import stroom.security.shared.UserRef;
+import stroom.security.shared.UserStatus;
 import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;

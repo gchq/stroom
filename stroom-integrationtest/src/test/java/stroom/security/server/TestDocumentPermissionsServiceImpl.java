@@ -26,9 +26,7 @@ import stroom.entity.shared.DocRef;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.security.shared.DocumentPermissions;
-import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
 import stroom.util.logging.StroomLogger;
 import stroom.util.test.FileSystemTestUtil;
 
@@ -173,18 +171,18 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
     }
 
     private UserRef createUser(final String name) {
-        User user = userService.createUser(name);
+        UserRef userRef = userService.createUser(name);
+        Assert.assertNotNull(userRef);
+        final User user = userService.loadByUuid(userRef.getUuid());
         Assert.assertNotNull(user);
-        user = userService.load(user);
-        Assert.assertNotNull(user);
-        return UserRef.create(user);
+        return UserRefFactory.create(user);
     }
 
     private UserRef createUserGroup(final String name) {
-        User user = userService.createUserGroup(name);
+        UserRef userRef = userService.createUserGroup(name);
+        Assert.assertNotNull(userRef);
+        final User user = userService.loadByUuid(userRef.getUuid());
         Assert.assertNotNull(user);
-        user = userService.load(user);
-        Assert.assertNotNull(user);
-        return UserRef.create(user);
+        return UserRefFactory.create(user);
     }
 }
