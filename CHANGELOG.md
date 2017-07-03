@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#334** : Improved entity sorting SQL and separated generation of SQL and HQL to help avoid future issues.
 
+* Issue **#335** : Improved user management
+
 ## [v5.0-beta.35] - 2017-06-26
 
 * Issue **#322** : The index cache and other caching beans should now throw exceptions on `get` that were generated during the creation of cached items.
