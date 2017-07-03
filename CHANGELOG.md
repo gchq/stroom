@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#335** : Improved user management
 
+* Issue **#337** : Added certificate auth option to export servlet and disabled the export config feature by default.
+
 ## [v5.0-beta.35] - 2017-06-26
 
 * Issue **#322** : The index cache and other caching beans should now throw exceptions on `get` that were generated during the creation of cached items.
