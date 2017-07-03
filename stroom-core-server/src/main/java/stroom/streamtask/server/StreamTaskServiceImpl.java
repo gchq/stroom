@@ -16,13 +16,17 @@
 
 package stroom.streamtask.server;
 
+import event.logging.BaseAdvancedQueryItem;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
 import stroom.entity.server.UserManagerQueryUtil;
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.SqlBuilder;
+import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Folder;
@@ -41,9 +45,6 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.StreamTaskService;
-import event.logging.BaseAdvancedQueryItem;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -57,6 +58,11 @@ import java.util.Set;
 @Component
 public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, FindStreamTaskCriteria>
         implements StreamTaskService {
+    public static final String TABLE_PREFIX_STREAM_TASK = "ST.";
+    public static final String TABLE_PREFIX_FEED = "F.";
+    public static final String TABLE_PREFIX_STREAM = "S.";
+    public static final String TABLE_PREFIX_PIPELINE = "P.";
+
     private final StreamStore streamStore;
 
     @Inject
@@ -72,7 +78,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
 
     @Override
     public BaseResultList<SummaryDataRow> findSummary(final FindStreamTaskCriteria criteria) throws RuntimeException {
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT D.* FROM (");
         sql.append("SELECT P.");
         sql.append(PipelineEntity.ID);
@@ -127,20 +133,19 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
         sql.append(")");
         sql.append(" WHERE 1=1");
 
-        SQLUtil.appendSetQuery(sql, false, "S." + Stream.STATUS, criteria.obtainFindStreamCriteria().getStatusSet(),
-                false);
-        SQLUtil.appendSetQuery(sql, false, "P." + BaseEntity.ID,
+        sql.appendPrimitiveValueSetQuery("S." + Stream.STATUS, criteria.obtainFindStreamCriteria().getStatusSet());
+        sql.appendEntityIdSetQuery("P." + BaseEntity.ID,
                 criteria.obtainFindStreamCriteria().getPipelineIdSet());
-        SQLUtil.appendIncludeExcludeSetQuery(sql, false, "F." + BaseEntity.ID,
+        sql.appendIncludeExcludeSetQuery("F." + BaseEntity.ID,
                 criteria.obtainFindStreamCriteria().getFeeds());
 
         UserManagerQueryUtil.appendFolderCriteria(criteria.obtainFindStreamCriteria().getFolderIdSet(),
-                "P." + Folder.FOREIGN_KEY, sql, false, getEntityManager());
+                "P." + Folder.FOREIGN_KEY, sql, getEntityManager());
 
         sql.append(" GROUP BY PIPE_ID, FEED_ID, PRIORITY_1, STAT_ID1");
         sql.append(") D");
 
-        SQLUtil.appendOrderBy(sql, false, criteria, null);
+        sql.appendOrderBy(getSqlFieldMap().getSqlFieldMap(), criteria, null);
 
         return getEntityManager().executeNativeQuerySummaryDataResult(sql, 4);
     }
@@ -170,13 +175,27 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
         return new StreamTaskQueryAppender(entityManager);
     }
 
+    @Override
+    protected FieldMap createFieldMap() {
+        return super.createFieldMap()
+                .add(FindStreamTaskCriteria.FIELD_CREATE_TIME, TABLE_PREFIX_STREAM_TASK + StreamTask.CREATE_MS, "createMs")
+                .add(FindStreamTaskCriteria.FIELD_START_TIME, TABLE_PREFIX_STREAM_TASK + StreamTask.START_TIME_MS, "startTimeMs")
+                .add(FindStreamTaskCriteria.FIELD_END_TIME_DATE, TABLE_PREFIX_STREAM_TASK + StreamTask.END_TIME_MS, "endTimeMs")
+                .add(FindStreamTaskCriteria.FIELD_FEED_NAME, "F_NAME", "stream.feed.name")
+                .add(FindStreamTaskCriteria.FIELD_PRIORITY, "PRIORITY_1", "streamProcessorFilter.priority")
+                .add(FindStreamTaskCriteria.FIELD_PIPELINE_NAME, "P_NAME", "streamProcessorFilter.streamProcessor.pipeline.name")
+                .add(FindStreamTaskCriteria.FIELD_STATUS, "STAT_ID1", "pstatus")
+                .add(FindStreamTaskCriteria.FIELD_COUNT, SQLNameConstants.COUNT, "NA")
+                .add(FindStreamTaskCriteria.FIELD_NODE, null, "node.name");
+    }
+
     private static class StreamTaskQueryAppender extends QueryAppender<StreamTask, FindStreamTaskCriteria> {
-        public StreamTaskQueryAppender(StroomEntityManager entityManager) {
+        StreamTaskQueryAppender(StroomEntityManager entityManager) {
             super(entityManager);
         }
 
         @Override
-        protected void appendBasicJoin(final SQLBuilder sql, final String alias, final Set<String> fetchSet) {
+        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
             super.appendBasicJoin(sql, alias, fetchSet);
 
             if (fetchSet != null) {
@@ -206,46 +225,46 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
         }
 
         @Override
-        protected void appendBasicCriteria(final SQLBuilder sql, final String alias,
+        protected void appendBasicCriteria(final HqlBuilder sql, final String alias,
                                            final FindStreamTaskCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
             // Append all the criteria
-            SQLUtil.appendSetQuery(sql, true, alias + ".pstatus", criteria.getStreamTaskStatusSet(), false);
+            sql.appendPrimitiveValueSetQuery(alias + ".pstatus", criteria.getStreamTaskStatusSet());
 
-            SQLUtil.appendSetQuery(sql, true, alias, criteria.getStreamTaskIdSet());
+            sql.appendEntityIdSetQuery(alias, criteria.getStreamTaskIdSet());
 
-            SQLUtil.appendSetQuery(sql, true, alias + ".node", criteria.getNodeIdSet());
+            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
 
-            SQLUtil.appendSetQuery(sql, true, alias + ".streamProcessorFilter.streamProcessor.pipeline",
+            sql.appendEntityIdSetQuery(alias + ".streamProcessorFilter.streamProcessor.pipeline",
                     criteria.obtainPipelineIdSet());
 
-            SQLUtil.appendSetQuery(sql, true, alias + ".streamProcessorFilter", criteria.getStreamProcessorFilterIdSet());
+            sql.appendEntityIdSetQuery(alias + ".streamProcessorFilter", criteria.getStreamProcessorFilterIdSet());
 
-            SQLUtil.appendValueQuery(sql, alias + ".createMs", criteria.getCreateMs());
+            sql.appendValueQuery(alias + ".createMs", criteria.getCreateMs());
 
             final FindStreamCriteria findStreamCriteria = criteria.getFindStreamCriteria();
             if (findStreamCriteria != null) {
-                SQLUtil.appendSetQuery(sql, true, alias + ".stream", findStreamCriteria.getStreamIdSet());
+                sql.appendEntityIdSetQuery(alias + ".stream", findStreamCriteria.getStreamIdSet());
 
-                SQLUtil.appendSetQuery(sql, true, alias + ".stream.streamType", findStreamCriteria.getStreamTypeIdSet());
+                sql.appendEntityIdSetQuery(alias + ".stream.streamType", findStreamCriteria.getStreamTypeIdSet());
 
-                SQLUtil.appendSetQuery(sql, true, alias + ".stream.pstatus", findStreamCriteria.getStatusSet(), false);
+                sql.appendPrimitiveValueSetQuery(alias + ".stream.pstatus", findStreamCriteria.getStatusSet());
 
-                SQLUtil.appendSetQuery(sql, true, alias + ".streamProcessorFilter.streamProcessor.pipeline",
+                sql.appendEntityIdSetQuery(alias + ".streamProcessorFilter.streamProcessor.pipeline",
                         findStreamCriteria.getPipelineIdSet());
 
-                SQLUtil.appendSetQuery(sql, true, alias + ".streamProcessorFilter.streamProcessor",
+                sql.appendEntityIdSetQuery(alias + ".streamProcessorFilter.streamProcessor",
                         findStreamCriteria.getStreamProcessorIdSet());
 
-                SQLUtil.appendIncludeExcludeSetQuery(sql, true, alias + ".stream.feed", findStreamCriteria.getFeeds());
+                sql.appendIncludeExcludeSetQuery(alias + ".stream.feed", findStreamCriteria.getFeeds());
 
-                SQLUtil.appendRangeQuery(sql, alias + ".stream.createMs", findStreamCriteria.getCreatePeriod());
-                SQLUtil.appendRangeQuery(sql, alias + ".stream.effectiveMs", findStreamCriteria.getEffectivePeriod());
+                sql.appendRangeQuery(alias + ".stream.createMs", findStreamCriteria.getCreatePeriod());
+                sql.appendRangeQuery(alias + ".stream.effectiveMs", findStreamCriteria.getEffectivePeriod());
             }
 
             UserManagerQueryUtil.appendFolderCriteria(criteria.obtainFindStreamCriteria().getFolderIdSet(),
-                    alias + ".streamProcessorFilter.streamProcessor.pipeline.folder", sql, true, getEntityManager());
+                    alias + ".streamProcessorFilter.streamProcessor.pipeline.folder", sql, getEntityManager());
         }
     }
 }

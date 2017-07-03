@@ -61,7 +61,7 @@ public class Dictionary extends StroomExtensionFunctionCall {
                 try {
                     // Try and load a dictionary with the supplied name.
                     final FindDictionaryCriteria criteria = new FindDictionaryCriteria(name);
-                    criteria.setOrderBy(FindDictionaryCriteria.ORDER_BY_ID);
+                    criteria.setSort(FindDictionaryCriteria.FIELD_ID);
                     final BaseResultList<stroom.dictionary.shared.Dictionary> list = dictionaryService
                             .find(criteria);
 

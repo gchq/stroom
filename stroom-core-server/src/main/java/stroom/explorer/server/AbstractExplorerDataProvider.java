@@ -19,6 +19,7 @@ package stroom.explorer.server;
 import org.springframework.aop.framework.Advised;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.shared.*;
+import stroom.entity.shared.Sort.Direction;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
@@ -45,7 +46,7 @@ public abstract class AbstractExplorerDataProvider<E extends DocumentEntity, C e
     public void addItems(final FindService<E, C> findService,
                          final TreeModel treeModel, final C criteria) {
         if (criteria != null) {
-            criteria.setOrderBy(FindNamedEntityCriteria.ORDER_BY_NAME);
+            criteria.setSort(FindNamedEntityCriteria.FIELD_NAME);
         }
 
         // TODO : This is a temporary fudge until the separate explorer service is created - we shouldn't need to poke insecure holes in the document service.

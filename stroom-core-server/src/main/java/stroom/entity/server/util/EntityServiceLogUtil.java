@@ -16,10 +16,10 @@
 
 package stroom.entity.server.util;
 
-import stroom.util.logging.StroomLogger;
-import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
 import org.apache.log4j.Level;
+import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
+import stroom.util.shared.ModelStringUtil;
 
 import java.util.Collection;
 
@@ -27,7 +27,7 @@ public final class EntityServiceLogUtil {
     static String FQCN = EntityServiceLogUtil.class.getName();
 
     public static final void logQuery(final StroomLogger stroomLogger, final String prefix,
-                                      final LogExecutionTime logExecutionTime, final Collection<?> rtnList, final SQLBuilder sql) {
+                                      final LogExecutionTime logExecutionTime, final Collection<?> rtnList, final AbstractSqlBuilder sql) {
         final long duration = logExecutionTime.getDuration();
 
         if (duration > 1000 || stroomLogger.isDebugEnabled()) {
@@ -53,7 +53,7 @@ public final class EntityServiceLogUtil {
     }
 
     public static final void logUpdate(final StroomLogger stroomLogger, final String prefix,
-                                       final LogExecutionTime logExecutionTime, final Long updateCount, final SQLBuilder sql) {
+                                       final LogExecutionTime logExecutionTime, final Long updateCount, final AbstractSqlBuilder sql) {
         final long duration = logExecutionTime.getDuration();
 
         if (duration > 1000 || stroomLogger.isDebugEnabled()) {

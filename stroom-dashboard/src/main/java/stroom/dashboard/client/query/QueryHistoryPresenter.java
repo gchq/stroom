@@ -24,7 +24,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.Query;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
+import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.PageRequest;
 import stroom.query.client.ExpressionTreePresenter;
@@ -93,7 +93,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         final FindQueryCriteria criteria = new FindQueryCriteria();
         criteria.setDashboardId(currentDashboardId);
         criteria.setQueryId(queryPresenter.getId());
-        criteria.setOrderBy(FindQueryCriteria.ORDER_BY_TIME, OrderByDirection.DESCENDING);
+        criteria.setSort(FindQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
         criteria.setFavourite(false);
         criteria.setPageRequest(new PageRequest(0L, 100));
 

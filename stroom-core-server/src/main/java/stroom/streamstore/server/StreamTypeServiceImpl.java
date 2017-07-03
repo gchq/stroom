@@ -16,19 +16,18 @@
 
 package stroom.streamstore.server;
 
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.NamedEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.security.Insecure;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamTypeService;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -60,7 +59,7 @@ public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, Fi
      */
     @SuppressWarnings("unchecked")
     public StreamType get(final String streamTypeName) {
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e FROM ");
         sql.append(getEntityClass().getName());
         sql.append(" AS e");
@@ -103,9 +102,9 @@ public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, Fi
         }
 
         @Override
-        public void appendBasicCriteria(SQLBuilder sql, String alias, FindStreamTypeCriteria criteria) {
+        public void appendBasicCriteria(HqlBuilder sql, String alias, FindStreamTypeCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
-            SQLUtil.appendSetQuery(sql, true, alias + ".ppurpose", criteria.getPurpose(), false);
+            sql.appendPrimitiveValueSetQuery(alias + ".ppurpose", criteria.getPurpose());
         }
     }
 }

@@ -16,14 +16,22 @@
 
 package stroom.index.server;
 
+import event.logging.BaseAdvancedQueryItem;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
 import stroom.entity.shared.PermissionException;
-import stroom.index.shared.*;
+import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.Index;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexShardService;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
@@ -33,10 +41,6 @@ import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomSpringProfiles;
-import event.logging.BaseAdvancedQueryItem;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -133,13 +137,19 @@ public class IndexShardServiceImpl
         return new IndexShardQueryAppender(entityManager);
     }
 
+    @Override
+    protected FieldMap createFieldMap() {
+        return super.createFieldMap()
+                .add(FindIndexShardCriteria.FIELD_PARTITION, IndexShard.PARTITION, "partition");
+    }
+
     private static class IndexShardQueryAppender extends QueryAppender<IndexShard, FindIndexShardCriteria> {
         public IndexShardQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }
 
         @Override
-        protected void appendBasicJoin(final SQLBuilder sql, final String alias, final Set<String> fetchSet) {
+        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
             super.appendBasicJoin(sql, alias, fetchSet);
             if (fetchSet != null) {
                 if (fetchSet.contains(Node.ENTITY_TYPE)) {
@@ -152,15 +162,15 @@ public class IndexShardServiceImpl
         }
 
         @Override
-        protected void appendBasicCriteria(final SQLBuilder sql, final String alias,
+        protected void appendBasicCriteria(final HqlBuilder sql, final String alias,
                                            final FindIndexShardCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
-            SQLUtil.appendSetQuery(sql, true, alias + ".index", criteria.getIndexIdSet());
-            SQLUtil.appendSetQuery(sql, true, alias + ".node", criteria.getNodeIdSet());
-            SQLUtil.appendSetQuery(sql, true, alias + ".volume", criteria.getVolumeIdSet());
-            SQLUtil.appendSetQuery(sql, true, alias + ".pstatus", criteria.getIndexShardStatusSet(), true);
-            SQLUtil.appendRangeQuery(sql, alias + ".documentCount", criteria.getDocumentCountRange());
+            sql.appendEntityIdSetQuery(alias + ".index", criteria.getIndexIdSet());
+            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
+            sql.appendEntityIdSetQuery(alias + ".volume", criteria.getVolumeIdSet());
+            sql.appendPrimitiveValueSetQuery(alias + ".pstatus", criteria.getIndexShardStatusSet());
+            sql.appendRangeQuery(alias + ".documentCount", criteria.getDocumentCountRange());
         }
     }
 }

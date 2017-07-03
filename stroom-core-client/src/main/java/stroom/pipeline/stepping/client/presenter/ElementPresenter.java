@@ -102,7 +102,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                         if (TextConverter.ENTITY_TYPE.equals(entityRef.getType())) {
                             final FindTextConverterCriteria criteria = new FindTextConverterCriteria();
                             criteria.setName(new StringCriteria(entityRef.getName()));
-                            criteria.setOrderBy(FindXSLTCriteria.ORDER_BY_ID);
+                            criteria.setSort(FindXSLTCriteria.FIELD_ID);
                             final EntityServiceFindAction<FindTextConverterCriteria, TextConverter> findAction = new EntityServiceFindAction<>(criteria);
                             async = true;
                             dispatcher.exec(findAction)
@@ -119,7 +119,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                         } else if (XSLT.ENTITY_TYPE.equals(entityRef.getType())) {
                             final FindXSLTCriteria criteria = new FindXSLTCriteria();
                             criteria.setName(new StringCriteria(entityRef.getName()));
-                            criteria.setOrderBy(FindXSLTCriteria.ORDER_BY_ID);
+                            criteria.setSort(FindXSLTCriteria.FIELD_ID);
                             final EntityServiceFindAction<FindXSLTCriteria, XSLT> findAction = new EntityServiceFindAction<>(criteria);
                             async = true;
                             dispatcher.exec(findAction)

@@ -16,13 +16,13 @@
 
 package stroom.streamtask.server;
 
-import stroom.node.server.StroomPropertyService;
-import stroom.util.logging.StroomLogger;
 import org.springframework.util.StringUtils;
-
+import stroom.entity.server.util.SqlBuilder;
 import stroom.jobsystem.server.ClusterLockService;
+import stroom.node.server.StroomPropertyService;
 import stroom.streamstore.shared.Stream;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.task.TaskMonitor;
 
@@ -42,10 +42,10 @@ public abstract class AbstractBatchDeleteExecutor {
     private final String tempIdTable;
 
     public AbstractBatchDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
-            final ClusterLockService clusterLockService, final StroomPropertyService propertyService,
-            final TaskMonitor taskMonitor, final String taskName, final String clusterLockName,
-            final String deleteAgePropertyName, final String deleteBatchSizePropertyName,
-            final int deleteBatchSizeDefaultValue, final String tempIdTable) {
+                                       final ClusterLockService clusterLockService, final StroomPropertyService propertyService,
+                                       final TaskMonitor taskMonitor, final String taskName, final String clusterLockName,
+                                       final String deleteAgePropertyName, final String deleteBatchSizePropertyName,
+                                       final int deleteBatchSizeDefaultValue, final String tempIdTable) {
         this.batchIdTransactionHelper = batchIdTransactionHelper;
         this.clusterLockService = clusterLockService;
         this.propertyService = propertyService;
@@ -145,16 +145,16 @@ public abstract class AbstractBatchDeleteExecutor {
     private long insertIntoTempIdTable(final long age, final int batchSize, final long total) {
         info("Inserting ids for deletion into temp id table (total=%s)", total);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        final String sql = getTempIdSelectSql(age, batchSize);
-        final long count = batchIdTransactionHelper.insertIntoTempIdTable(tempIdTable, sql.toString());
+        final SqlBuilder sql = getTempIdSelectSql(age, batchSize);
+        final long count = batchIdTransactionHelper.insertIntoTempIdTable(tempIdTable, sql);
         LOGGER.debug("Inserted %s ids in %s", count, logExecutionTime);
         return count;
     }
 
-    protected abstract String getTempIdSelectSql(final long age, final int batchSize);
+    protected abstract SqlBuilder getTempIdSelectSql(final long age, final int batchSize);
 
     protected final void deleteWithJoin(final String fromTable, final String fromColumn, final String type,
-            final long total) {
+                                        final long total) {
         info("Deleting %s (total=%s)", type, total);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final long count = batchIdTransactionHelper.deleteWithJoin(fromTable, fromColumn, tempIdTable, Stream.ID);

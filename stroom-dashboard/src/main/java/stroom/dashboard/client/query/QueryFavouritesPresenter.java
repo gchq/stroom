@@ -25,13 +25,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.Query;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
+import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.DocRef;
-import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.EntityServiceSaveAction;
@@ -221,7 +219,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
         criteria.setDashboardId(currentDashboardId);
         criteria.setQueryId(queryPresenter.getId());
-        criteria.setOrderBy(FindQueryCriteria.ORDER_BY_NAME, OrderByDirection.ASCENDING);
+        criteria.setSort(FindQueryCriteria.FIELD_NAME, Direction.ASCENDING, true);
         criteria.setFavourite(true);
         criteria.setPageRequest(new PageRequest(0L, 100));
 

@@ -22,9 +22,6 @@ package stroom.entity.shared;
 public class FindFolderCriteria extends FindDocumentEntityCriteria {
     private static final long serialVersionUID = 2559262939309086599L;
 
-    public static final OrderBy ORDER_BY_DESCRIPTION = new OrderBy("Description", "description", true);
-    public static final OrderBy ORDER_BY_STATUS = new OrderBy("Status", "status");
-
     /**
      * If the FolderIdSet is related our id's not our parents
      */

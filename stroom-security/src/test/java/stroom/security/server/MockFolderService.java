@@ -52,11 +52,6 @@ public class MockFolderService extends MockDocumentEntityService<Folder, FindFol
     }
 
     @Override
-    public EntityIdSet<Folder> buildNestedFolderList(final FolderIdSet queryFolderIdSet) {
-        return null;
-    }
-
-    @Override
     public Class<Folder> getEntityClass() {
         return Folder.class;
     }

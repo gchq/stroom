@@ -26,7 +26,7 @@ import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.Query;
 import stroom.dashboard.shared.QueryService;
 import stroom.entity.server.util.BaseEntityDeProxyProcessor;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
+import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.FolderService;
@@ -115,7 +115,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         final FindQueryCriteria criteria = new FindQueryCriteria();
         criteria.setDashboardId(dashboard.getId());
         criteria.setQueryId(QUERY_COMPONENT);
-        criteria.setOrderBy(FindQueryCriteria.ORDER_BY_TIME, OrderByDirection.DESCENDING);
+        criteria.setSort(FindQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
 
         final BaseResultList<Query> list = queryService.find(criteria);
 
@@ -157,7 +157,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         final FindQueryCriteria criteria = new FindQueryCriteria();
         criteria.setDashboardId(dashboard.getId());
         criteria.setQueryId(QUERY_COMPONENT);
-        criteria.setOrderBy(FindQueryCriteria.ORDER_BY_TIME, OrderByDirection.DESCENDING);
+        criteria.setSort(FindQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
 
         BaseResultList<Query> list = queryService.find(criteria);
         Assert.assertEquals(2, list.size());

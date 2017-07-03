@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.entity.shared;
+package stroom.node.shared;
 
-public interface FolderService extends DocumentEntityService<Folder>, FindService<Folder, FindFolderCriteria> {
-    String ROOT = "System";
+import stroom.entity.shared.BaseCriteria;
+
+public class FindDBTableCriteria extends BaseCriteria {
 }

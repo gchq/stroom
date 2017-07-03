@@ -16,11 +16,13 @@
 
 package stroom.feed.server;
 
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
@@ -28,8 +30,6 @@ import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.config.StroomProperties;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.persistence.Transient;
@@ -50,7 +50,7 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
     @SuppressWarnings("unchecked")
     @Override
     public Feed loadByName(final String name) {
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e");
         sql.append(" FROM ");
         sql.append(getEntityClass().getName());
@@ -109,13 +109,20 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
         return new FeedQueryAppender(entityManager);
     }
 
+    @Override
+    protected FieldMap createFieldMap() {
+        return super.createFieldMap()
+                .add(FindFeedCriteria.FIELD_TYPE, Feed.REFERENCE, "reference")
+                .add(FindFeedCriteria.FIELD_CLASSIFICATION, Feed.CLASSIFICATION, "classification");
+    }
+
     private static class FeedQueryAppender extends QueryAppender<Feed, FindFeedCriteria> {
         public FeedQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }
 
         @Override
-        protected void appendBasicJoin(final SQLBuilder sql, final String alias, final Set<String> fetchSet) {
+        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
             super.appendBasicJoin(sql, alias, fetchSet);
             if (fetchSet != null && fetchSet.contains(StreamType.ENTITY_TYPE)) {
                 sql.append(" INNER JOIN FETCH " + alias + ".streamType");
@@ -123,11 +130,11 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
         }
 
         @Override
-        protected void appendBasicCriteria(final SQLBuilder sql, final String alias, final FindFeedCriteria criteria) {
+        protected void appendBasicCriteria(final HqlBuilder sql, final String alias, final FindFeedCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
-            SQLUtil.appendValueQuery(sql, alias + ".reference", criteria.getReference());
-            SQLUtil.appendSetQuery(sql, true, alias, criteria.getFeedIdSet());
+            sql.appendValueQuery(alias + ".reference", criteria.getReference());
+            sql.appendEntityIdSetQuery(alias, criteria.getFeedIdSet());
         }
     }
 }

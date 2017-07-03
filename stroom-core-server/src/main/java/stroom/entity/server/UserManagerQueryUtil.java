@@ -16,29 +16,28 @@
 
 package stroom.entity.server;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderIdSet;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
- * Utility to build EJBQL.
+ * Utility to build SQL.
  */
 public final class UserManagerQueryUtil {
     private UserManagerQueryUtil() {
         // NA
     }
 
-    @SuppressWarnings("rawtypes")
-    public static EntityIdSet<Folder> buildNestedFolderList(final StroomEntityManager entityManager,
-            final FolderIdSet queryFolderIdSet) {
+    private static EntityIdSet<Folder> buildNestedFolderList(final StroomEntityManager entityManager,
+                                                             final FolderIdSet queryFolderIdSet) {
         final EntityIdSet<Folder> totalFolderIdSet = new EntityIdSet<>();
         if (queryFolderIdSet.isDeep() && Boolean.TRUE.equals(queryFolderIdSet.getMatchNull())) {
             totalFolderIdSet.setMatchAll(Boolean.TRUE);
@@ -50,22 +49,6 @@ public final class UserManagerQueryUtil {
 
         initialFolderIdSet.copyFrom(queryFolderIdSet);
 
-        // Add in global groups if needed.
-        if (queryFolderIdSet.isGlobal()) {
-            final SQLBuilder sql = new SQLBuilder();
-            sql.append("SELECT ");
-            sql.append(BaseEntity.ID);
-            sql.append(" FROM ");
-            sql.append(Folder.TABLE_NAME);
-            sql.append(" WHERE ");
-            sql.append("1 = 1");
-
-            final List rawResults = entityManager.executeNativeQueryResultList(sql, null);
-            for (final Object o : rawResults) {
-                initialFolderIdSet.add(Long.valueOf(String.valueOf(o)));
-            }
-        }
-
         if (initialFolderIdSet.isConstrained()) {
             doBuildNestedFolderList(entityManager, totalFolderIdSet, initialFolderIdSet);
         }
@@ -74,20 +57,20 @@ public final class UserManagerQueryUtil {
 
     @SuppressWarnings("rawtypes")
     private static void doBuildNestedFolderList(final StroomEntityManager entityManager,
-            final EntityIdSet<Folder> totalFolderIdSet, final EntityIdSet<Folder> initialFolderIdSet) {
+                                                final EntityIdSet<Folder> totalFolderIdSet, final EntityIdSet<Folder> initialFolderIdSet) {
         totalFolderIdSet.addAll(initialFolderIdSet.getSet());
 
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT ");
         sql.append(BaseEntity.ID);
         sql.append(" FROM ");
         sql.append(Folder.TABLE_NAME);
         sql.append(" WHERE 1=1");
-        SQLUtil.appendSetQuery(sql, false, Folder.FOREIGN_KEY, initialFolderIdSet, false);
+        sql.appendEntityIdSetQuery(Folder.FOREIGN_KEY, initialFolderIdSet);
 
         // Find all the child rows and remove out any we already know about
         final List rawResults = entityManager.executeNativeQueryResultList(sql);
-        final Set<Long> subSet = new HashSet<Long>();
+        final Set<Long> subSet = new HashSet<>();
         for (final Object o : rawResults) {
             subSet.add(Long.valueOf(String.valueOf(o)));
         }
@@ -101,10 +84,10 @@ public final class UserManagerQueryUtil {
     }
 
     /**
-     * Append on some EJB QL.
+     * Append on some HQL.
      */
     public static void appendFolderCriteria(final FolderIdSet folderIdSet, final String folderAlias,
-            final SQLBuilder sql, final boolean ejbQl, final StroomEntityManager entityManager) {
+                                            final HqlBuilder sql, final StroomEntityManager entityManager) {
         if (folderIdSet != null && folderIdSet.isConstrained()) {
             // Null is a special case and not deep
             if (Boolean.TRUE.equals(folderIdSet.getMatchNull())) {
@@ -118,11 +101,30 @@ public final class UserManagerQueryUtil {
                     realIdSet = buildNestedFolderList(entityManager, folderIdSet);
                 }
 
-                if (ejbQl) {
-                    SQLUtil.appendSetQuery(sql, ejbQl, folderAlias + ".id", realIdSet, false);
-                } else {
-                    SQLUtil.appendSetQuery(sql, ejbQl, folderAlias, realIdSet, false);
+                sql.appendEntityIdSetQuery(folderAlias, realIdSet);
+            }
+        }
+    }
+
+    /**
+     * Append on some SQL.
+     */
+    public static void appendFolderCriteria(final FolderIdSet folderIdSet, final String folderAlias,
+                                            final SqlBuilder sql, final StroomEntityManager entityManager) {
+        if (folderIdSet != null && folderIdSet.isConstrained()) {
+            // Null is a special case and not deep
+            if (Boolean.TRUE.equals(folderIdSet.getMatchNull())) {
+                sql.append(" AND (");
+                sql.append(folderAlias);
+                sql.append(" IS NULL)");
+            } else {
+                EntityIdSet<Folder> realIdSet = folderIdSet;
+
+                if (folderIdSet.isDeep()) {
+                    realIdSet = buildNestedFolderList(entityManager, folderIdSet);
                 }
+
+                sql.appendEntityIdSetQuery(folderAlias, realIdSet);
             }
         }
     }

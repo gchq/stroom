@@ -29,8 +29,9 @@ import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.SqlBuilder;
+import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityServiceException;
@@ -99,7 +100,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
         try {
             LOGGER.debug("Deleting old rows");
 
-            final SQLBuilder sql = new SQLBuilder();
+            final SqlBuilder sql = new SqlBuilder();
             sql.append("DELETE");
             sql.append(" FROM ");
             sql.append(Query.TABLE_NAME);
@@ -140,7 +141,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
     @Transactional(readOnly = true)
     @Override
     public List<String> getUsers(final boolean favourite) {
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT ");
         sql.append(Query.CREATE_USER);
         sql.append(" FROM ");
@@ -162,7 +163,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
     @Transactional(readOnly = true)
     @Override
     public Integer getOldestId(final String user, final boolean favourite, final int retain) {
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT");
         sql.append(" ID");
         sql.append(" FROM ");
@@ -210,15 +211,15 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
         }
 
         @Override
-        protected void appendBasicCriteria(final SQLBuilder sql, final String alias, final FindQueryCriteria criteria) {
+        protected void appendBasicCriteria(final HqlBuilder sql, final String alias, final FindQueryCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
             if (criteria.getFavourite() != null) {
-                SQLUtil.appendValueQuery(sql, alias + ".favourite", criteria.getFavourite());
+                sql.appendValueQuery(alias + ".favourite", criteria.getFavourite());
             }
 
-            SQLUtil.appendValueQuery(sql, alias + ".dashboardId", criteria.getDashboardId());
-            SQLUtil.appendValueQuery(sql, alias + ".queryId", criteria.getQueryId());
+            sql.appendValueQuery(alias + ".dashboardId", criteria.getDashboardId());
+            sql.appendValueQuery(alias + ".queryId", criteria.getQueryId());
         }
     }
 
@@ -226,5 +227,11 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<Query, FindQuery
     public String getNamePattern() {
         // Unnamed queries are valid.
         return null;
+    }
+
+    @Override
+    protected FieldMap createFieldMap() {
+        return super.createFieldMap()
+                .add(FindQueryCriteria.FIELD_TIME, Query.CREATE_TIME, "createTime");
     }
 }

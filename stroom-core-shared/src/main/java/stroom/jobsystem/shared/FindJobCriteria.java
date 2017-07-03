@@ -17,7 +17,6 @@
 package stroom.jobsystem.shared;
 
 import stroom.entity.shared.FindNamedEntityCriteria;
-import stroom.entity.shared.OrderBy;
 
 /**
  * Criteria object used to fetch a job that matches the parameters specified.
@@ -25,6 +24,5 @@ import stroom.entity.shared.OrderBy;
 public class FindJobCriteria extends FindNamedEntityCriteria {
     private static final long serialVersionUID = 3995637015554049174L;
 
-    public static final OrderBy ORDER_BY_ADVANCED_AND_NAME = new OrderBy("Name", "name", true);
-
+    public static final String FIELD_ADVANCED = "Advanced";
 }

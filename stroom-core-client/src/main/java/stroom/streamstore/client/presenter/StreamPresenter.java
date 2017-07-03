@@ -37,7 +37,7 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.entity.client.presenter.HasRead;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
+import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityIdSet;
@@ -379,8 +379,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         criteria.obtainFindStreamCriteria().getFetchSet().add(PipelineEntity.ENTITY_TYPE);
         criteria.obtainFindStreamCriteria().getFetchSet().add(StreamProcessor.ENTITY_TYPE);
         criteria.obtainFindStreamCriteria().getFetchSet().add(StreamType.ENTITY_TYPE);
-        criteria.obtainFindStreamCriteria().setOrderBy(FindStreamCriteria.ORDER_BY_CREATE_MS,
-                OrderByDirection.DESCENDING);
+        criteria.obtainFindStreamCriteria().setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.DESCENDING, false);
 
         return criteria;
     }

@@ -37,7 +37,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.TreeRowHandler;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
+import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.ResultList;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
@@ -79,7 +79,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         super(eventBus, new DataGridViewImpl<>(false, 1000));
         this.dispatcher = dispatcher;
         this.tooltipPresenter = tooltipPresenter;
-        this.criteria.setOrderBy(FindTaskProgressCriteria.ORDER_BY_AGE, OrderByDirection.DESCENDING);
+        this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
 
         terminateButton = getView().addButton(GlyphIcons.DELETE);
         terminateButton.addClickHandler(event -> endSelectedTask());

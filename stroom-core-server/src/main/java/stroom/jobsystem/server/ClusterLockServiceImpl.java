@@ -16,27 +16,25 @@
 
 package stroom.jobsystem.server;
 
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-
-import javax.annotation.Resource;
-
-import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
+import stroom.entity.server.util.SqlBuilder;
+import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.jobsystem.shared.ClusterLock;
 import stroom.node.server.NodeCache;
 import stroom.task.server.TaskManager;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.SharedBoolean;
 import stroom.util.spring.StroomFrequencySchedule;
+
+import javax.annotation.Resource;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class ClusterLockServiceImpl implements ClusterLockService {
@@ -65,7 +63,7 @@ public class ClusterLockServiceImpl implements ClusterLockService {
         // This happens outside this transaction
         clusterLockServiceTransactionHelper.checkLockCreated(lockName);
 
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT * FROM ");
         sql.append(ClusterLock.TABLE_NAME);
         sql.append(" WHERE ");

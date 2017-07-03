@@ -25,7 +25,7 @@ import stroom.dashboard.shared.FindDashboardCriteria;
 import stroom.dashboard.shared.Query;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.PermissionInheritance;
@@ -92,7 +92,7 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
         checkDeletePermission(entity);
 
         // Delete associated queries first.
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("DELETE FROM ");
         sql.append(Query.TABLE_NAME);
         sql.append(" WHERE ");

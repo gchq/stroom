@@ -23,7 +23,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
+import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.feed.shared.Feed;
@@ -52,13 +52,13 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
 
     @Inject
     public StreamRelationListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-            final TooltipPresenter tooltipPresenter, final ClientSecurityContext securityContext) {
+                                       final TooltipPresenter tooltipPresenter, final ClientSecurityContext securityContext) {
         super(eventBus, dispatcher, tooltipPresenter, securityContext, false);
         dataProvider.setAllowNoConstraint(false);
     }
 
     public void setSelectedStream(final StreamAttributeMap streamAttributeMap, final boolean fireEvents,
-            final boolean showSystemFiles) {
+                                  final boolean showSystemFiles) {
         if (streamAttributeMap == null) {
             setCriteria(null);
 
@@ -74,7 +74,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             findStreamCriteria.getFetchSet().add(Feed.ENTITY_TYPE);
             findStreamCriteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
             findStreamCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
-            findStreamCriteria.setOrderBy(FindStreamCriteria.ORDER_BY_CREATE_MS, OrderByDirection.ASCENDING);
+            findStreamCriteria.setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.ASCENDING, false);
 
             setCriteria(criteria);
         }
@@ -115,7 +115,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
     }
 
     private void addChildren(final StreamAttributeMap parent, final List<StreamAttributeMap> data,
-            final List<StreamAttributeMap> newData, final int depth) {
+                             final List<StreamAttributeMap> newData, final int depth) {
         for (final StreamAttributeMap row : data) {
             final Stream stream = row.getStream();
 

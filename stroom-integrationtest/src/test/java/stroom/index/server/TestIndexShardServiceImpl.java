@@ -16,13 +16,14 @@
 
 package stroom.index.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
+import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.Range;
-import stroom.index.server.IndexShardKeyUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.Index.PartitionBy;
@@ -36,8 +37,6 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
 import stroom.util.date.DateUtil;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 
@@ -135,8 +134,8 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
 
         final FindIndexShardCriteria findIndexShardCriteria = new FindIndexShardCriteria();
         // Order by partition name and key.
-        findIndexShardCriteria.addOrderBy(FindIndexShardCriteria.ORDER_BY_PARTITION, OrderByDirection.DESCENDING);
-        findIndexShardCriteria.addOrderBy(FindIndexShardCriteria.ORDER_BY_ID, OrderByDirection.DESCENDING);
+        findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, Direction.DESCENDING, false);
+        findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, Direction.DESCENDING, false);
 
         // Find data.
         final BaseResultList<IndexShard> list = indexShardService.find(findIndexShardCriteria);

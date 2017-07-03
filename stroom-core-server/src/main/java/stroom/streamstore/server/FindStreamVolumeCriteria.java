@@ -19,7 +19,6 @@ package stroom.streamstore.server;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.OrderBy;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.Stream;
@@ -41,8 +40,6 @@ public class FindStreamVolumeCriteria extends BaseCriteria {
         }
         return streamRange != null && streamRange.isFileLocation();
     }
-
-    public static final OrderBy ORDER_BY_LAST_ACCESS_TIME = new OrderBy("Last Access Time");
 
     public static FindStreamVolumeCriteria create(final Stream stream) {
         FindStreamVolumeCriteria rtn = new FindStreamVolumeCriteria();

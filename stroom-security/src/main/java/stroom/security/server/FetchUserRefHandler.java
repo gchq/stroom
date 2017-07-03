@@ -52,7 +52,7 @@ public class FetchUserRefHandler
     @Override
     public ResultList<UserRef> exec(final FetchUserRefAction action) {
         final FindUserCriteria findUserCriteria = action.getCriteria();
-        findUserCriteria.setOrderBy(FindUserCriteria.ORDER_BY_NAME);
+        findUserCriteria.setSort(FindUserCriteria.FIELD_NAME);
         if (findUserCriteria.getRelatedUser() != null) {
             UserRef userRef = findUserCriteria.getRelatedUser();
             List<UserRef> list;

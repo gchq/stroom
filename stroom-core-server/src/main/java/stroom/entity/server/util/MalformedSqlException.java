@@ -16,10 +16,10 @@
 
 package stroom.entity.server.util;
 
-public class MalformedSQLException extends RuntimeException {
+public class MalformedSqlException extends RuntimeException {
     private static final long serialVersionUID = -7394917648742281613L;
 
-    public MalformedSQLException(final String message) {
+    public MalformedSqlException(final String message) {
         super(message);
     }
 }

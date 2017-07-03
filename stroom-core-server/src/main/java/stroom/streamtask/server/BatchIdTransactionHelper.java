@@ -16,16 +16,15 @@
 
 package stroom.streamtask.server;
 
-import javax.inject.Inject;
-
-import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.entity.server.util.StroomEntityManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SqlBuilder;
+import stroom.entity.server.util.StroomDatabaseInfo;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.streamstore.shared.Stream;
+
+import javax.inject.Inject;
 
 @Transactional(isolation = Isolation.READ_COMMITTED)
 @Component
@@ -40,7 +39,7 @@ public class BatchIdTransactionHelper {
     }
 
     public long createTempIdTable(final String tempIdTable) {
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
 
         sql.append("CREATE TABLE ");
         sql.append("IF NOT EXISTS ");
@@ -60,8 +59,8 @@ public class BatchIdTransactionHelper {
         return executeUpdate(sql);
     }
 
-    public long insertIntoTempIdTable(final String tempIdTable, final String select) {
-        final SQLBuilder sql = new SQLBuilder();
+    public long insertIntoTempIdTable(final String tempIdTable, final SqlBuilder select) {
+        final SqlBuilder sql = new SqlBuilder();
 
         sql.append("INSERT INTO ");
         sql.append(tempIdTable);
@@ -82,7 +81,7 @@ public class BatchIdTransactionHelper {
     }
 
     public Long getTempIdCount(final String tempIdTable) {
-        final SQLBuilder sql = new SQLBuilder(false);
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT COUNT(");
         sql.append("ID");
         sql.append(") FROM ");
@@ -91,8 +90,8 @@ public class BatchIdTransactionHelper {
     }
 
     public long deleteWithJoin(final String fromTable, final String fromColumn, final String joinTable,
-            final String joinColumn) {
-        final SQLBuilder sql = new SQLBuilder();
+                               final String joinColumn) {
+        final SqlBuilder sql = new SqlBuilder();
         if (stroomDatabaseInfo.isMysql()) {
             // MySQL does a delete much faster if we join to the table
             // containing the ids to delete.
@@ -130,7 +129,7 @@ public class BatchIdTransactionHelper {
     }
 
     public long truncateTempIdTable(final String tempIdTable) {
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
 
         sql.append("TRUNCATE TABLE ");
         sql.append(tempIdTable);
@@ -149,7 +148,7 @@ public class BatchIdTransactionHelper {
     // return executeUpdate(sql);
     // }
 
-    private Long executeUpdate(final SQLBuilder sql) {
+    private Long executeUpdate(final SqlBuilder sql) {
         return stroomEntityManager.executeNativeUpdate(sql);
     }
 }

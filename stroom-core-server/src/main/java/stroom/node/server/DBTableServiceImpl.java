@@ -22,11 +22,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
-import stroom.entity.shared.OrderBy;
+import stroom.entity.shared.Sort;
+import stroom.entity.shared.Sort.Direction;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.DBTableStatus;
+import stroom.node.shared.FindDBTableCriteria;
 import stroom.security.Secured;
+import stroom.util.shared.CompareUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -56,41 +58,45 @@ public class DBTableServiceImpl implements DBTableService {
     }
 
     @Override
-    public List<DBTableStatus> findSystemTableStatus(final OrderBy orderBy, final OrderByDirection orderByDirection) {
+    public List<DBTableStatus> findSystemTableStatus(final FindDBTableCriteria criteria) {
         final List<DBTableStatus> rtnList = new ArrayList<>();
         addTableStatus(dataSource, rtnList);
         addTableStatus(statisticsDataSource, rtnList);
 
         rtnList.sort((o1, o2) -> {
-            int diff = 0;
+            if (criteria.getSortList() != null && criteria.getSortList().size() > 0) {
+                for (final Sort sort : criteria.getSortList()) {
+                    final String field = sort.getField();
 
-            if (orderBy == null || DBTableStatus.DATABASE.equals(orderBy)) {
-                diff = o1.getDb().compareToIgnoreCase(o2.getDb());
+                    int compare = 0;
+                    if (DBTableStatus.FIELD_DATABASE.equals(field)) {
+                        compare = CompareUtil.compareString(o1.getDb(), o2.getDb());
+                    } else if (DBTableStatus.FIELD_TABLE.equals(field)) {
+                        compare = CompareUtil.compareString(o1.getTable(), o2.getTable());
+                    } else if (DBTableStatus.FIELD_ROW_COUNT.equals(field)) {
+                        compare = CompareUtil.compareLong(o1.getCount(), o2.getCount());
+                    } else if (DBTableStatus.FIELD_DATA_SIZE.equals(field)) {
+                        compare = CompareUtil.compareLong(o1.getDataSize(), o2.getDataSize());
+                    } else if (DBTableStatus.FIELD_INDEX_SIZE.equals(field)) {
+                        compare = CompareUtil.compareLong(o1.getIndexSize(), o2.getIndexSize());
+                    }
+                    if (Direction.DESCENDING.equals(sort.getDirection())) {
+                        compare = compare * -1;
+                    }
 
-                if (OrderByDirection.DESCENDING.equals(orderByDirection)) {
-                    diff = diff * -1;
-                }
-
-                if (diff == 0) {
-                    diff = o1.getTable().compareToIgnoreCase(o2.getTable());
+                    if (compare != 0) {
+                        return compare;
+                    }
                 }
             } else {
-                if (DBTableStatus.TABLE.equals(orderBy)) {
-                    diff = o1.getTable().compareToIgnoreCase(o2.getTable());
-                } else if (DBTableStatus.ROW_COUNT.equals(orderBy)) {
-                    diff = Long.compare(o1.getCount(), o2.getCount());
-                } else if (DBTableStatus.DATA_SIZE.equals(orderBy)) {
-                    diff = Long.compare(o1.getDataSize(), o2.getDataSize());
-                } else if (DBTableStatus.INDEX_SIZE.equals(orderBy)) {
-                    diff = Long.compare(o1.getIndexSize(), o2.getIndexSize());
+                int compare = o1.getDb().compareToIgnoreCase(o2.getDb());
+                if (compare == 0) {
+                    compare = o1.getTable().compareToIgnoreCase(o2.getTable());
                 }
-
-                if (OrderByDirection.DESCENDING.equals(orderByDirection)) {
-                    diff = diff * -1;
-                }
+                return compare;
             }
 
-            return diff;
+            return 0;
         });
 
         return rtnList;

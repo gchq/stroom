@@ -69,7 +69,7 @@ public class PreparedStatementUtil {
 
     public static ResultSet createCloseStatementResultSet(final PreparedStatement statement) throws SQLException {
         final ResultSet resultSet = statement.executeQuery();
-        return (ResultSet) Proxy.newProxyInstance(SQLUtil.class.getClassLoader(), new Class[] { ResultSet.class },
+        return (ResultSet) Proxy.newProxyInstance(SqlUtil.class.getClassLoader(), new Class[] { ResultSet.class },
                 new InvocationHandler() {
                     @Override
                     public Object invoke(final Object proxy, final Method method, final Object[] args)

@@ -16,11 +16,10 @@
 
 package stroom.entity.server;
 
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
-import stroom.entity.shared.Entity;
 import stroom.entity.shared.BaseCriteria;
+import stroom.entity.shared.Entity;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.FindNamedEntityCriteria;
@@ -35,30 +34,30 @@ public class QueryAppender<E extends Entity, C extends BaseCriteria> {
         this.entityManager = entityManager;
     }
 
-    protected void appendBasicJoin(SQLBuilder sql, String alias, Set<String> fetchSet) {
+    protected void appendBasicJoin(HqlBuilder sql, String alias, Set<String> fetchSet) {
     }
 
-    protected void appendBasicCriteria(final SQLBuilder sql, final String alias, final C criteria) {
+    protected void appendBasicCriteria(final HqlBuilder sql, final String alias, final C criteria) {
         if (criteria instanceof FindDocumentEntityCriteria) {
             final FindDocumentEntityCriteria findDocumentEntityCriteria = (FindDocumentEntityCriteria) criteria;
             if (findDocumentEntityCriteria instanceof FindFolderCriteria) {
                 final FindFolderCriteria findFolderCriteria = (FindFolderCriteria) findDocumentEntityCriteria;
                 if (findFolderCriteria.isSelf()) {
-                    SQLUtil.appendSetQuery(sql, true, alias + ".id", findFolderCriteria.getFolderIdSet());
+                    sql.appendEntityIdSetQuery(alias, findFolderCriteria.getFolderIdSet());
                 } else {
                     UserManagerQueryUtil.appendFolderCriteria(findDocumentEntityCriteria.getFolderIdSet(),
-                            alias + ".folder", sql, true, entityManager);
+                            alias + ".folder", sql, entityManager);
                 }
 
             } else {
                 UserManagerQueryUtil.appendFolderCriteria(findDocumentEntityCriteria.getFolderIdSet(), alias + ".folder",
-                        sql, true, entityManager);
+                        sql, entityManager);
             }
         }
 
         if (criteria instanceof FindNamedEntityCriteria) {
             final FindNamedEntityCriteria findNamedEntityCriteria = (FindNamedEntityCriteria) criteria;
-            SQLUtil.appendValueQuery(sql, alias + ".name", findNamedEntityCriteria.getName());
+            sql.appendValueQuery(alias + ".name", findNamedEntityCriteria.getName());
         }
     }
 
@@ -78,6 +77,7 @@ public class QueryAppender<E extends Entity, C extends BaseCriteria> {
      * Allow sub classes to post-process list
      */
     protected List<E> postLoad(final C criteria, final List<E> list) {
+        list.forEach(this::postLoad);
         return list;
     }
 

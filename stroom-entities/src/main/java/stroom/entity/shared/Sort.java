@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.data.grid.client;
+package stroom.entity.shared;
 
-import com.google.gwt.cell.client.Cell;
-import com.google.gwt.user.cellview.client.Column;
-import stroom.util.shared.HasDisplayValue;
+import java.io.Serializable;
 
-public abstract class OrderByColumn<T, C> extends Column<T, C> implements HasDisplayValue {
-    private final String field;
-    private final boolean ignoreCase;
+public class Sort implements Serializable {
+    private static final long serialVersionUID = -5994197736743037915L;
 
-    public OrderByColumn(final Cell<C> cell, final String field, final boolean ignoreCase) {
-        super(cell);
-        setSortable(true);
+    private String field;
+    private Direction direction;
+    private boolean ignoreCase;
+
+    public Sort() {
+        // Default constructor necessary for GWT serialisation.
+    }
+
+    public Sort(final String field, final Direction direction, final boolean ignoreCase) {
         this.field = field;
+        this.direction = direction;
         this.ignoreCase = ignoreCase;
     }
 
@@ -35,12 +39,18 @@ public abstract class OrderByColumn<T, C> extends Column<T, C> implements HasDis
         return field;
     }
 
+    public Direction getDirection() {
+        return direction;
+    }
+
     public boolean isIgnoreCase() {
         return ignoreCase;
     }
 
-    @Override
-    public String getDisplayValue() {
-        return field;
+    /**
+     * The direction of the sort.
+     */
+    public enum Direction {
+        ASCENDING, DESCENDING
     }
 }

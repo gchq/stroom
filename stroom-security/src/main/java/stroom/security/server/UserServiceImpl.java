@@ -18,13 +18,23 @@
 
 package stroom.security.server;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.EntityServiceHelper;
 import stroom.entity.server.FindServiceHelper;
 import stroom.entity.server.QueryAppender;
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.SqlBuilder;
+import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.shared.BaseCriteria;
+import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.FindNamedEntityCriteria;
+import stroom.entity.shared.NamedEntity;
+import stroom.entity.shared.SQLNameConstants;
 import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.security.shared.FindUserCriteria;
@@ -34,10 +44,6 @@ import stroom.security.shared.UserService;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomSpringProfiles;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;
@@ -101,6 +107,7 @@ public class UserServiceImpl implements UserService {
     private final QueryAppender<User, FindUserCriteria> queryAppender;
 
     private String entityType;
+    private FieldMap fieldMap;
 
     @Inject
     UserServiceImpl(final StroomEntityManager entityManager,
@@ -136,8 +143,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public BaseResultList<User> find(final FindUserCriteria criteria) {
-        // Build up the EJB QL
-        final SQLBuilder sql = new SQLBuilder();
+        // Build up the HQL
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT user FROM ");
         sql.append(User.class.getName());
         sql.append(" as user");
@@ -146,17 +153,17 @@ public class UserServiceImpl implements UserService {
 
         sql.append(" WHERE 1=1"); // Avoid conditional AND's
 
-        SQLUtil.appendValueQuery(sql, "user.name", criteria.getName());
+        sql.appendValueQuery("user.name", criteria.getName());
 
-        SQLUtil.appendValueQuery(sql, "user.group", criteria.getGroup());
+        sql.appendValueQuery("user.group", criteria.getGroup());
 
-        SQLUtil.appendValueQuery(sql, "user.pstatus", criteria.getUserStatus());
+        sql.appendValueQuery("user.pstatus", criteria.getUserStatus());
 
-        SQLUtil.appendRangeQuery(sql, "user.lastLoginMs", criteria.getLastLoginPeriod());
+        sql.appendRangeQuery("user.lastLoginMs", criteria.getLastLoginPeriod());
 
-        SQLUtil.appendRangeQuery(sql, "user.loginValidMs", criteria.getLoginValidPeriod());
+        sql.appendRangeQuery("user.loginValidMs", criteria.getLoginValidPeriod());
 
-        SQLUtil.appendOrderBy(sql, true, criteria, "user");
+        sql.appendOrderBy(getFieldMap().getHqlFieldMap(), criteria, "user");
 
         // Create the query
         return BaseResultList.createCriterialBasedList(entityManager.executeQueryResultList(sql, criteria),
@@ -196,7 +203,7 @@ public class UserServiceImpl implements UserService {
     @Insecure
     @Override
     public List<UserRef> findUsersInGroup(final UserRef userGroup) {
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT");
         sql.append(" u.*");
         sql.append(" FROM ");
@@ -226,7 +233,7 @@ public class UserServiceImpl implements UserService {
     @Insecure
     @Override
     public List<UserRef> findGroupsForUser(final UserRef user) {
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT");
         sql.append(" u.*");
         sql.append(" FROM ");
@@ -272,7 +279,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void addUserToGroup(final UserRef user, final UserRef userGroup) {
         try {
-            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_ADD_USER_TO_GROUP, 1, user.getUuid(), userGroup.getUuid());
+            final SqlBuilder sqlBuilder = new SqlBuilder(SQL_ADD_USER_TO_GROUP, 1, user.getUuid(), userGroup.getUuid());
             entityManager.executeNativeUpdate(sqlBuilder);
         } catch (final PersistenceException e) {
             // Expected exception.
@@ -287,7 +294,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void removeUserFromGroup(final UserRef user, final UserRef userGroup) {
         try {
-            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_REMOVE_USER_FROM_GROUP, user.getUuid(), userGroup.getUuid());
+            final SqlBuilder sqlBuilder = new SqlBuilder(SQL_REMOVE_USER_FROM_GROUP, user.getUuid(), userGroup.getUuid());
             entityManager.executeNativeUpdate(sqlBuilder);
         } catch (final RuntimeException e) {
             LOGGER.error("removeUserFromGroup()", e);
@@ -350,7 +357,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Boolean delete(final User entity) throws RuntimeException {
-        final Boolean success =  entityServiceHelper.delete(entity);
+        final Boolean success = entityServiceHelper.delete(entity);
 
         // Delete any document permissions associated with this user.
         try {
@@ -396,5 +403,20 @@ public class UserServiceImpl implements UserService {
     @Override
     public FindUserCriteria createCriteria() {
         return new FindUserCriteria();
+    }
+
+    private FieldMap createFieldMap() {
+        return new FieldMap()
+                .add(BaseCriteria.FIELD_ID, BaseEntity.ID, "id")
+                .add(FindNamedEntityCriteria.FIELD_NAME, NamedEntity.NAME, "name")
+                .add(FindUserCriteria.FIELD_STATUS, SQLNameConstants.STATUS, "pstatus")
+                .add(FindUserCriteria.FIELD_LAST_LOGIN, User.LAST_LOGIN_MS, "lastLoginMs");
+    }
+
+    private FieldMap getFieldMap() {
+        if (fieldMap == null) {
+            fieldMap = createFieldMap();
+        }
+        return fieldMap;
     }
 }

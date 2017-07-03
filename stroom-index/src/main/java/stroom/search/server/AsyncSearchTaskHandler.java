@@ -17,7 +17,7 @@
 package stroom.search.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
+import stroom.entity.shared.Sort.Direction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
@@ -117,9 +117,8 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // Only non deleted indexes.
                     findIndexShardCriteria.getIndexShardStatusSet().addAll(IndexShard.NON_DELETED_INDEX_SHARD_STATUS);
                     // Order by partition name and key.
-                    findIndexShardCriteria.addOrderBy(FindIndexShardCriteria.ORDER_BY_PARTITION,
-                            OrderByDirection.DESCENDING);
-                    findIndexShardCriteria.addOrderBy(FindIndexShardCriteria.ORDER_BY_ID, OrderByDirection.DESCENDING);
+                    findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, Direction.DESCENDING, false);
+                    findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, Direction.DESCENDING, false);
                     findIndexShardCriteria.getFetchSet().add(Node.ENTITY_TYPE);
                     final List<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
 
