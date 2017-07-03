@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.36] - 2017-07-03
+
 * Issue **#334** : Improved entity sorting SQL and separated generation of SQL and HQL to help avoid future issues.
 
 * Issue **#335** : Improved user management
@@ -475,7 +477,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.35...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.36...HEAD
+[v5.0-beta.36]: https://github.com/gchq/stroom/compare/v5.0-beta.35...v5.0-beta.36
 [v5.0-beta.35]: https://github.com/gchq/stroom/compare/v5.0-beta.34...v5.0-beta.35
 [v5.0-beta.34]: https://github.com/gchq/stroom/compare/v5.0-beta.33...v5.0-beta.34
 [v5.0-beta.33]: https://github.com/gchq/stroom/compare/v5.0-beta.32...v5.0-beta.33
