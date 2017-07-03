@@ -294,31 +294,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return null;
     }
 
-//    @Override
-//    public String getCurrentUserId() throws RuntimeException {
-//        if (sessionExists()) {
-//            final HttpServletRequest request = httpServletRequestHolder.get();
-//            return (String) request.getSession().getAttribute(USER_ID_SESSION_KEY);
-//        }
-//
-//        return null;
-//    }
-
-//    @Override
-//    @Insecure
-//    public void refreshCurrentUser() throws RuntimeException {
-//        if (sessionExists()) {
-//            final HttpServletRequest request = httpServletRequestHolder.get();
-//
-//            UserRef userRef = getCurrentUser();
-//            if (userRef != null) {
-//                userRef = userService.loadByUuid(user.getUuid());
-//            }
-//
-//            request.getSession().setAttribute(USER_SESSION_KEY, userRef);
-//        }
-//    }
-
     private boolean sessionExists() {
         return httpServletRequestHolder.getSessionId() != null;
     }
@@ -335,24 +310,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return mailSenderProvider.get().canEmailPasswordReset();
     }
 
-//    @Override
-//    public void emailPasswordReset(UserRef userRef) {
-//        if (userRef == null) {
-//            return;
-//        }
-//
-//        // Load the user for the supplied ref.
-//        User user = userService.loadByUuid(userRef.getUuid());
-//
-//        if (user == null) {
-//            return;
-//        }
-//
-//        final String password = PasswordGenerator.generatePassword();
-//        final User updatedUser = updatePassword(user, password);
-//        mailSenderProvider.get().emailPasswordReset(UserRefFactory.create(updatedUser), password);
-//    }
-
     private int getDaysToPasswordExpiry() {
         return stroomPropertyService.getIntProperty("stroom.daysToPasswordExpiry", DEFAULT_DAYS_TO_PASSWORD_EXPIRY);
     }
@@ -363,36 +320,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (userRef != null) {
             final User user = userService.loadByUuid(userRef.getUuid());
             if (user != null) {
-
-//
-//
-//
-//
-//                if (userRef == null) {
-//                    return;
-//                }
-//
-//                // Load the user for the supplied ref.
-//                User user = userService.loadByUuid(userRef.getUuid());
-//
-//                if (user == null) {
-//                    return;
-//                }
-
                 final String password = PasswordGenerator.generatePassword();
                 final User updatedUser = updatePassword(user, password);
                 mailSenderProvider.get().emailPasswordReset(UserRefFactory.create(updatedUser), password);
-
-
-//
-//
-//
-//
-//
-//
-//
-//
-//                emailPasswordReset(user);
             }
         }
         return Boolean.TRUE;
@@ -403,8 +333,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public UserRef autoLogin() throws RuntimeException {
         UserRef userRef = getCurrentUser();
         if (userRef != null) {
-//            final User user = userService.loadByUuid(userRef.getUuid());
-//            return UserRefFactory.create(user);
             return userRef;
         }
         return loginWithCertificate();
