@@ -49,8 +49,13 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
     private static final boolean TEAR_DOWN_DATABASE_BETWEEEN_TESTS = true;
 
+    private static boolean XML_SCHEMAS_DOWNLOADED = false;
+
     @Resource
     private CommonTestControl commonTestControl;
+
+    @Resource
+    private ContentPackImportService contentPackImportService;
 
     @BeforeClass
     public static final void beforeClass() throws IOException {
@@ -88,6 +93,10 @@ public abstract class StroomIntegrationTest implements StroomTest {
                 // return true here.
                 state.setDoneSetup(doSingleSetup());
             }
+        }
+
+        if (!XML_SCHEMAS_DOWNLOADED) {
+            contentPackImportService.importContentPacks();
         }
 
         onBefore();

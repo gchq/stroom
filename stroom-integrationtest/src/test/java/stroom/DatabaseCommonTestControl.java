@@ -27,10 +27,8 @@ import stroom.dictionary.shared.Dictionary;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
-import stroom.importexport.server.ImportExportSerializer;
 import stroom.index.server.IndexShardWriterCache;
 import stroom.index.server.IndexShardWriterImpl;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -70,12 +68,10 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
-import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.visualisation.shared.Visualisation;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -87,12 +83,13 @@ import java.util.Map;
  */
 @Component
 public class DatabaseCommonTestControl implements CommonTestControl, ApplicationContextAware {
+
     @Resource
     private VolumeService volumeService;
     @Resource
     private IndexShardService indexShardService;
     @Resource
-    private ImportExportSerializer importExportSerializer;
+    private ContentPackImportService contentPackImportService;
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
     @Resource
@@ -248,12 +245,6 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     // @Override
     @Override
     public void createRequiredXMLSchemas() {
-        // Import schemas if we haven't done so already.
-        final int schemaCount = countEntity(XMLSchema.class);
-        if (schemaCount == 0) {
-            // Import the schemas.
-            final File xsdDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "samples/config/XML Schemas");
-            importExportSerializer.read(xsdDir.toPath(), null, ImportMode.IGNORE_CONFIRMATION);
-        }
+        contentPackImportService.importContentPacks();
     }
 }

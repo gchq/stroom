@@ -24,8 +24,8 @@ public class ContentPackDownloader {
     public static final String URL_PREFIX = "https://github.com/gchq/stroom-content/releases/download/";
 
     public enum ConflictMode {
-       OVERWRITE_EXISTING,
-        KEEP_EXISTING;
+        OVERWRITE_EXISTING,
+        KEEP_EXISTING
     }
 
 
@@ -45,22 +45,30 @@ public class ContentPackDownloader {
 
         if (destFileExists && conflictMode.equals(ConflictMode.KEEP_EXISTING)) {
             LOGGER.debug("Requested contentPack {} already exists in {}, keeping existing",
-                    contentPackName, destFilePath.toAbsolutePath().toString());
-        } else if (destFileExists && conflictMode.equals(ConflictMode.OVERWRITE_EXISTING)) {
+                    contentPackName,
+                    destFilePath.toAbsolutePath().toString());
+            return;
+        }
+
+        if (destFileExists && conflictMode.equals(ConflictMode.OVERWRITE_EXISTING)) {
             LOGGER.debug("Requested contentPack {} already exists in {}, overwriting existing",
-                    contentPackName, destFilePath.toAbsolutePath().toString());
+                    contentPackName,
+                    destFilePath.toAbsolutePath().toString());
             try {
                 Files.delete(destFilePath);
             } catch (IOException e) {
                 throw new RuntimeException(String.format("Unable to remove existing content pack %s",
                         destFilePath.toAbsolutePath().toString()), e);
             }
-        } else {
-            URL fileUrl = buildFileUrl(contentPackName, version);
-            LOGGER.debug("Downloading contentPack {} from {} to {}",
-                    contentPackName, fileUrl.toString(), destFilePath.toAbsolutePath().toString());
-            downloadFile(fileUrl, destFilePath);
         }
+
+        URL fileUrl = buildFileUrl(contentPackName, version);
+        LOGGER.debug("Downloading contentPack {} from {} to {}",
+                contentPackName,
+                fileUrl.toString(),
+                destFilePath.toAbsolutePath().toString());
+
+        downloadFile(fileUrl, destFilePath);
     }
 
     private static String buildFilename(final String contentPackName, final Version version) {
@@ -70,6 +78,7 @@ public class ContentPackDownloader {
     private static String buildReleaseName(final String contentPackName, final Version version) {
         return contentPackName + "-v" + version.toString();
     }
+
     private static Path buildDestFilePath(final String contentPackName, final Version version, final Path destDir) {
         String filename = buildFilename(contentPackName, version);
         return destDir.resolve(filename);
