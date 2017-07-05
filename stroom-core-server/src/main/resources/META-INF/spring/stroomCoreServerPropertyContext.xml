@@ -321,6 +321,14 @@
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name"
+                      value="stroom.security.loginUrl"/>
+            <property name="value" value="http://localhost/login"/>
+            <property name="description"
+                      value="The location of the login app"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.security.certificateDNPattern"/>
             <property name="value" value="CN=[^ ]+ [^ ]+ \(?([a-zA-Z0-9]+)\)?"/>
             <property name="description"

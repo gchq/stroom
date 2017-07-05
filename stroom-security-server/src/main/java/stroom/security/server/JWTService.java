@@ -7,7 +7,6 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.web.util.WebUtils;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
@@ -56,6 +55,7 @@ public class JWTService {
             else{
                 jws = bearerString;
             }
+            LOGGER.debug("Found auth header in request. It looks like this: {}", jws);
         }
         else if(authParam.isPresent()) {
             jws = authParam.get();
@@ -101,6 +101,7 @@ public class JWTService {
 
     public static Optional<String> getAuthParam(ServletRequest request){
         String token = request.getParameter("token");
+        LOGGER.debug("Found param token. It looks like this: {}", token);
         return Optional.ofNullable(token);
     }
 

@@ -76,8 +76,8 @@ public class SecurityConfiguration {
     private DBRealm dbRealm;
 
     @Bean(name = "jwtFilter")
-    public JWTAuthenticationFilter jwtAuthenticationFilter(JWTService jwtService, ServiceDiscoverer serviceDiscoverer) {
-        return new JWTAuthenticationFilter(jwtService, serviceDiscoverer);
+    public JWTAuthenticationFilter jwtAuthenticationFilter(JWTService jwtService) {
+        return new JWTAuthenticationFilter(jwtService);
     }
 
     @Bean(name = "shiroFilter")

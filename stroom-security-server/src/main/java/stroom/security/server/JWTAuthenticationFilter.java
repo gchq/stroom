@@ -16,32 +16,28 @@
 
 package stroom.security.server;
 
-import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.web.filter.authc.AuthenticatingFilter;
 import org.apache.shiro.web.util.WebUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.ExternalService;
-import stroom.ServiceDiscoverer;
+import stroom.util.config.StroomProperties;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Optional;
 
 public class JWTAuthenticationFilter extends AuthenticatingFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTAuthenticationFilter.class);
 
     private JWTService jwtService;
-    private ServiceDiscoverer serviceDiscoverer;
+    //TODO Use an API gateway
+    private final String LOGIN_URL = "stroom.security.loginUrl";
 
-    public JWTAuthenticationFilter(final JWTService jwtService, final ServiceDiscoverer serviceDiscoverer) {
+    public JWTAuthenticationFilter(final JWTService jwtService) {
         this.jwtService = jwtService;
-        this.serviceDiscoverer = serviceDiscoverer;
-        updatedLoginUrl();
     }
 
     @Override
@@ -55,17 +51,10 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         }
 
         if (!loggedIn) {
-            LOGGER.info("Redirecting to login");
-            // We always want to make sure we've got the most up-to-date login URL. If we can't get it then
-            // we'll still attempt to re-direct, because we might have a valid URL cached already.
-            try {
-                updatedLoginUrl();
-            } catch(RuntimeException e){
-               LOGGER.error("Unable to get the login URL - falling back on existing URL: {}", e);
-            }
-
+            String loginUrl = StroomProperties.getProperty(LOGIN_URL);
+            LOGGER.info("Redirecting to login at: '{}'", loginUrl);
             HttpServletResponse httpResponse = WebUtils.toHttp(response);
-            httpResponse.sendRedirect(getLoginUrl());
+            httpResponse.sendRedirect(loginUrl);
         }
 
         return loggedIn;
@@ -81,19 +70,5 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         HttpServletResponse httpResponse = WebUtils.toHttp(response);
         httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         return false;
-    }
-
-    /**
-     * This checks with service discovery to find a login URL, and then sets it.
-     */
-    private void updatedLoginUrl() {
-        Optional<ServiceInstance<String>> loginUiService = serviceDiscoverer.getServiceInstance(ExternalService.LOGIN_UI);
-        if(loginUiService.isPresent()){
-            setLoginUrl(loginUiService.get().getAddress());
-        }
-        else{
-            throw new RuntimeException(
-                    "I cannot find the login service so I do not know where to send you to log in.");
-        }
     }
 }
