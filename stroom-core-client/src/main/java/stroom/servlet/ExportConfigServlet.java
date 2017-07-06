@@ -29,8 +29,6 @@ import stroom.util.shared.ResourceKey;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -83,6 +81,8 @@ public class ExportConfigServlet extends HttpServlet {
             } finally {
                 resourceStore.deleteTempFile(tempResourceKey);
             }
+        } else {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Export is not enabled");
         }
     }
 }

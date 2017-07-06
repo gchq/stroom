@@ -53,14 +53,22 @@ public class UserSecurityMethodInterceptor {
     }
 
     @Pointcut("@within(stroom.security.Secured)")
-    public void hasAnnotationOnType() {
+    public void hasSecuredAnnotationOnType() {
+    }
+
+    @Pointcut("@within(stroom.security.Insecure)")
+    public void hasInsecureAnnotationOnType() {
     }
 
     @Pointcut("@annotation(stroom.security.Secured)")
-    public void hasAnnotationOnMethod() {
+    public void hasSecuredAnnotationOnMethod() {
     }
 
-    @Around("hasAnnotationOnType() || hasAnnotationOnMethod()")
+    @Pointcut("@annotation(stroom.security.Insecure)")
+    public void hasInsecureAnnotationOnMethod() {
+    }
+
+    @Around("hasSecuredAnnotationOnType() || hasInsecureAnnotationOnType() || hasSecuredAnnotationOnMethod() || hasInsecureAnnotationOnMethod()")
     public Object secureMethod(final ProceedingJoinPoint joinPoint) throws Throwable {
         try {
             // Initiate current check type.

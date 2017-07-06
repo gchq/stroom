@@ -16,44 +16,16 @@
 
 package stroom.security.server;
 
-import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.web.filter.authc.FormAuthenticationFilter;
-import org.apache.shiro.web.util.WebUtils;
+import org.apache.shiro.web.filter.authc.BasicHttpAuthenticationFilter;
 import stroom.util.cert.CertificateUtil;
 import stroom.util.logging.StroomLogger;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletResponse;
 
-public class CertificateAuthenticationFilter extends FormAuthenticationFilter {
+public class CertificateAuthenticationFilter extends BasicHttpAuthenticationFilter {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(CertificateAuthenticationFilter.class);
-
-    public CertificateAuthenticationFilter() {
-        setLoginUrl(DEFAULT_LOGIN_URL);
-    }
-
-    @Override
-    public void setLoginUrl(String loginUrl) {
-        String previous = getLoginUrl();
-        if (previous != null) {
-            this.appliedPaths.remove(previous);
-        }
-        super.setLoginUrl(loginUrl);
-        this.appliedPaths.put(getLoginUrl(), null);
-    }
-
-    @Override
-    protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
-        final boolean loggedIn = executeLogin(request, response);
-        if (!loggedIn) {
-            HttpServletResponse httpResponse = WebUtils.toHttp(response);
-            httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        }
-
-        return loggedIn;
-    }
 
     @Override
     protected AuthenticationToken createToken(ServletRequest request, ServletResponse response) {
@@ -71,12 +43,5 @@ public class CertificateAuthenticationFilter extends FormAuthenticationFilter {
         }
 
         return super.createToken(request, response);
-    }
-
-    @Override
-    protected boolean onLoginFailure(AuthenticationToken token, AuthenticationException e, ServletRequest request, ServletResponse response) {
-        HttpServletResponse httpResponse = WebUtils.toHttp(response);
-        httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        return false;
     }
 }

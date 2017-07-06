@@ -17,8 +17,8 @@
 package stroom.security.spring;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
-import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.AbstractShiroFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -29,7 +29,6 @@ import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import stroom.security.server.CertificateAuthenticationFilter;
-import stroom.security.server.DBRealm;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
@@ -59,26 +58,20 @@ public class SecurityConfiguration {
     public static final String PROD_SECURITY = "PROD_SECURITY";
     public static final String MOCK_SECURITY = "MOCK_SECURITY";
     private static final StroomLogger LOGGER = StroomLogger.getLogger(SecurityConfiguration.class);
+
     @Resource
-    private DBRealm dbRealm;
+    private SecurityManager securityManager;
 
     @Bean(name = "shiroFilter")
     public AbstractShiroFilter shiroFilter() throws Exception {
         final ShiroFilterFactoryBean shiroFilter = new ShiroFilterFactoryBean();
-        shiroFilter.setSecurityManager(securityManager());
+        shiroFilter.setSecurityManager(securityManager);
         shiroFilter.setLoginUrl("/login.html");
         shiroFilter.setSuccessUrl("/stroom.jsp");
         shiroFilter.getFilters().put("certFilter", new CertificateAuthenticationFilter());
         shiroFilter.getFilterChainDefinitionMap().put("/**/secure/**", "authc, roles[USER]");
-        shiroFilter.getFilterChainDefinitionMap().put("/export/**", "certFilter");
+        shiroFilter.getFilterChainDefinitionMap().put("/export", "certFilter");
         return (AbstractShiroFilter) shiroFilter.getObject();
-    }
-
-    @Bean(name = "securityManager")
-    public org.apache.shiro.mgt.SecurityManager securityManager() {
-        final DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
-        securityManager.setRealm(dbRealm);
-        return securityManager;
     }
 
     @Bean(name = "mailSender")
