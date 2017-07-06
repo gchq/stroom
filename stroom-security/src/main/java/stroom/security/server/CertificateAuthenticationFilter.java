@@ -28,6 +28,16 @@ public class CertificateAuthenticationFilter extends BasicHttpAuthenticationFilt
     private static final StroomLogger LOGGER = StroomLogger.getLogger(CertificateAuthenticationFilter.class);
 
     @Override
+    protected boolean isLoginAttempt(final ServletRequest request, final ServletResponse response) {
+        final String certificateDn = CertificateUtil.extractCertificateDN(request);
+        if (certificateDn != null) {
+            return true;
+        }
+
+        return super.isLoginAttempt(request, response);
+    }
+
+    @Override
     protected AuthenticationToken createToken(ServletRequest request, ServletResponse response) {
         final String certificateDn = CertificateUtil.extractCertificateDN(request);
 

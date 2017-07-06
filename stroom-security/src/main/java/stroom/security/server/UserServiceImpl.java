@@ -162,12 +162,19 @@ public class UserServiceImpl implements UserService {
     @Insecure
     @Override
     public UserRef getUserByName(final String name) {
-        final FindUserCriteria findUserCriteria = new FindUserCriteria(name, false);
-        final BaseResultList<User> users = find(findUserCriteria);
-        if (users != null) {
-            final User user = users.getFirst();
-            if (user != null) {
-                return UserRefFactory.create(user);
+        if (name != null && name.trim().length() > 0) {
+            final FindUserCriteria findUserCriteria = new FindUserCriteria(name, false);
+            final BaseResultList<User> users = find(findUserCriteria);
+            if (users != null) {
+                final User user = users.getFirst();
+                if (user != null) {
+                    // Make sure this is the user that was requested.
+                    if (!user.getName().equals(name)) {
+                        throw new RuntimeException("Unexpected: returned user name does not match requested user name");
+                    }
+
+                    return UserRefFactory.create(user);
+                }
             }
         }
 
