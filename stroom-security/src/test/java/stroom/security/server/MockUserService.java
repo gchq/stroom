@@ -63,11 +63,6 @@ public class MockUserService extends MockEntityService<User, FindUserCriteria> i
     }
 
     @Override
-    public UserRef getUserGroupByName(final String name) {
-        return null;
-    }
-
-    @Override
     public List<UserRef> findUsersInGroup(final UserRef userGroup) {
         return null;
     }

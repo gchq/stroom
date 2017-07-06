@@ -20,7 +20,6 @@ import stroom.entity.shared.EntityService;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.HasLoadByUuid;
 import stroom.entity.shared.ProvidesNamePattern;
-import stroom.security.server.User;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 
@@ -30,8 +29,6 @@ public interface UserService extends EntityService<User>, FindService<User, Find
     String INITIAL_ADMIN_ACCOUNT = "admin";
 
     UserRef getUserByName(String name);
-
-    UserRef getUserGroupByName(String name);
 
     List<UserRef> findUsersInGroup(UserRef userGroup);
 

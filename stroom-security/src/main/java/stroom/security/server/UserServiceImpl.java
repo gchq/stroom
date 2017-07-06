@@ -126,13 +126,6 @@ public class UserServiceImpl implements UserService {
         return new QueryAppender(entityManager);
     }
 
-
-//    @Override
-//    public String getNamePattern() {
-//        return NAME_PATTERN;
-//    }
-
-
     /**
      * @param criteria for the search
      * @return list of Users
@@ -146,8 +139,6 @@ public class UserServiceImpl implements UserService {
         sql.append("SELECT user FROM ");
         sql.append(User.class.getName());
         sql.append(" as user");
-
-//        appendBasicJoin(sql, "user", criteria.getFetchSet());
 
         sql.append(" WHERE 1=1"); // Avoid conditional AND's
 
@@ -172,21 +163,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserRef getUserByName(final String name) {
         final FindUserCriteria findUserCriteria = new FindUserCriteria(name, false);
-        final BaseResultList<User> users = find(findUserCriteria);
-        if (users != null) {
-            final User user = users.getFirst();
-            if (user != null) {
-                return UserRefFactory.create(user);
-            }
-        }
-
-        return null;
-    }
-
-    @Insecure
-    @Override
-    public UserRef getUserGroupByName(final String name) {
-        final FindUserCriteria findUserCriteria = new FindUserCriteria(name, true);
         final BaseResultList<User> users = find(findUserCriteria);
         if (users != null) {
             final User user = users.getFirst();
