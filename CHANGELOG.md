@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#337** : Added basic auth option to export servlet to complement cert based auth.
 
+* Issue **#332** : The index shard searcher cache now makes sure to get the current writer needed for the current searcher on open.
+
 ## [v5.0-beta.35] - 2017-06-26
 
 * Issue **#322** : The index cache and other caching beans should now throw exceptions on `get` that were generated during the creation of cached items.
