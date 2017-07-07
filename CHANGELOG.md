@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.38] - 2017-07-07
+
+* Issue **#340** : Fixed headless and corresponding test.
+
 ## [v5.0-beta.37] - 2017-07-07
 
 * Issue **#333** : Fixed event-logging version in build.
@@ -485,7 +489,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.37...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.38...HEAD
+[v5.0-beta.38]: https://github.com/gchq/stroom/compare/v5.0-beta.37...v5.0-beta.38
 [v5.0-beta.37]: https://github.com/gchq/stroom/compare/v5.0-beta.36...v5.0-beta.37
 [v5.0-beta.36]: https://github.com/gchq/stroom/compare/v5.0-beta.35...v5.0-beta.36
 [v5.0-beta.35]: https://github.com/gchq/stroom/compare/v5.0-beta.34...v5.0-beta.35
