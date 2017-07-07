@@ -16,16 +16,18 @@
 
 package stroom.entity.server;
 
+import event.logging.BaseAdvancedQueryItem;
+import org.springframework.transaction.annotation.Transactional;
+import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.Entity;
 import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseEntityService;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.Entity;
 import stroom.entity.shared.FindService;
 import stroom.security.Secured;
 import stroom.security.shared.PermissionNames;
-import event.logging.BaseAdvancedQueryItem;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -41,6 +43,7 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
     private final FindServiceHelper<E, C> findServiceHelper;
 
     private String entityType;
+    private FieldMap sqlFieldMap;
 
     protected SystemEntityServiceImpl(final StroomEntityManager entityManager) {
         this.entityManager = entityManager;
@@ -109,7 +112,7 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
 
     @Override
     public BaseResultList<E> find(C criteria) throws RuntimeException {
-        return findServiceHelper.find(criteria);
+        return findServiceHelper.find(criteria, getSqlFieldMap());
     }
 
     public String getEntityType() {
@@ -122,12 +125,6 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
         }
         return entityType;
     }
-
-//    @Insecure
-//    @Override
-//    public String getEntityType() {
-//        return super.getEntityType();
-//    }
 
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final C criteria) {
@@ -144,5 +141,17 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
 
     protected final QueryAppender<E, C> getQueryAppender() {
         return queryAppender;
+    }
+
+    protected FieldMap createFieldMap() {
+        return new FieldMap()
+                .add(BaseCriteria.FIELD_ID, BaseEntity.ID, "id");
+    }
+
+    protected final FieldMap getSqlFieldMap() {
+        if (sqlFieldMap == null) {
+            sqlFieldMap = createFieldMap();
+        }
+        return sqlFieldMap;
     }
 }

@@ -55,7 +55,7 @@ import stroom.script.shared.Script;
 import stroom.security.server.DocumentPermission;
 import stroom.security.server.Permission;
 import stroom.security.server.UserGroupUser;
-import stroom.security.shared.User;
+import stroom.security.server.User;
 import stroom.statistics.shared.StatisticStore;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;

@@ -16,11 +16,15 @@
 
 package stroom.streamstore.server.fs;
 
+import event.logging.BaseAdvancedQueryItem;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.SupportsCriteriaLogging;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.FeedService;
 import stroom.node.shared.Volume;
@@ -34,11 +38,6 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamTypeService;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.util.logging.StroomLogger;
-import event.logging.BaseAdvancedQueryItem;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.io.File;
@@ -91,24 +90,24 @@ public class FileSystemStreamMaintenanceService
             throw new IllegalArgumentException("Not enough criteria to run");
         }
 
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT sv FROM ");
         sql.append(StreamVolume.class.getName());
         sql.append(" sv");
         sql.append(" WHERE 1=1");
 
-        SQLUtil.appendSetQuery(sql, true, "sv.volume.node", criteria.getNodeIdSet());
-        SQLUtil.appendSetQuery(sql, true, "sv.volume", criteria.getVolumeIdSet());
-        SQLUtil.appendSetQuery(sql, true, "sv.stream", criteria.getStreamIdSet());
-        SQLUtil.appendSetQuery(sql, true, "sv.stream.pstatus", criteria.getStreamStatusSet(), false);
+        sql.appendEntityIdSetQuery("sv.volume.node", criteria.getNodeIdSet());
+        sql.appendEntityIdSetQuery("sv.volume", criteria.getVolumeIdSet());
+        sql.appendEntityIdSetQuery("sv.stream", criteria.getStreamIdSet());
+        sql.appendPrimitiveValueSetQuery("sv.stream.pstatus", criteria.getStreamStatusSet());
 
         if (criteria.getStreamRange() != null && criteria.getStreamRange().getStreamTypePath() != null) {
             sql.append(" AND sv.stream.streamType.path = ");
             sql.arg(criteria.getStreamRange().getStreamTypePath());
         }
         if (criteria.getStreamRange() != null && criteria.getStreamRange().isFileLocation()) {
-            SQLUtil.appendRangeQuery(sql, "sv.stream.id", criteria.getStreamRange());
-            SQLUtil.appendRangeQuery(sql, "sv.stream.createMs", criteria.getStreamRange().getCreatePeriod());
+            sql.appendRangeQuery("sv.stream.id", criteria.getStreamRange());
+            sql.appendRangeQuery("sv.stream.createMs", criteria.getStreamRange().getCreatePeriod());
         }
         // Create the query
         final List<StreamVolume> results = entityManager.executeQueryResultList(sql, criteria);
@@ -175,7 +174,7 @@ public class FileSystemStreamMaintenanceService
     @Transactional(readOnly = true)
     public FileArrayList findAllStreamFile(final Stream stream) {
         final FileArrayList results = new FileArrayList();
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT sv FROM ");
         sql.append(StreamVolume.class.getName());
         sql.append(" sv");
@@ -198,7 +197,7 @@ public class FileSystemStreamMaintenanceService
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ScanVolumePathResult scanVolumePath(final Volume volume, final boolean doDelete, final String repoPath,
-            final long oldFileAge) {
+                                               final long oldFileAge) {
         final ScanVolumePathResult result = new ScanVolumePathResult();
 
         final long oldFileTime = System.currentTimeMillis() - oldFileAge;
@@ -247,7 +246,7 @@ public class FileSystemStreamMaintenanceService
     }
 
     private void buildStreamsKeyedByBaseName(final Volume volume, final String repoPath,
-            final Map<String, StreamVolume> streamsKeyedByBaseName) {
+                                             final Map<String, StreamVolume> streamsKeyedByBaseName) {
         // OK we have build up a list of files located in the directory
         // Now see what is there as per the database.
         final FindStreamVolumeCriteria criteria = new FindStreamVolumeCriteria();
@@ -268,7 +267,7 @@ public class FileSystemStreamMaintenanceService
     }
 
     private void buildFilesKeyedByBaseName(final ScanVolumePathResult result, final String repoPath,
-            final Map<String, List<String>> filesKeyedByBaseName, final File directory, final String[] kids) {
+                                           final Map<String, List<String>> filesKeyedByBaseName, final File directory, final String[] kids) {
         if (kids != null) {
             for (int i = 0; i < kids.length; i++) {
                 final File kidFile = new File(directory, kids[i]);
@@ -304,7 +303,7 @@ public class FileSystemStreamMaintenanceService
     }
 
     private void tryDelete(final ScanVolumePathResult result, final boolean doDeleete, final File deleteFile,
-            final long oldFileTime) {
+                           final long oldFileTime) {
         try {
             final long lastModified = deleteFile.lastModified();
 
@@ -328,15 +327,15 @@ public class FileSystemStreamMaintenanceService
     }
 
     private void checkEmptyDirectory(final ScanVolumePathResult result, final boolean doDeleete, final File directory,
-            final long oldFileTime, final String[] kids) {
+                                     final long oldFileTime, final String[] kids) {
         if (kids == null || kids.length == 0) {
             tryDelete(result, doDeleete, directory, oldFileTime);
         }
     }
 
     private void deleteUnknownFiles(final ScanVolumePathResult result, final boolean doDelete, final File directory,
-            final long oldFileTime, final Map<String, List<String>> filesKeyedByBaseName,
-            final Map<String, StreamVolume> streamsKeyedByBaseName) {
+                                    final long oldFileTime, final Map<String, List<String>> filesKeyedByBaseName,
+                                    final Map<String, StreamVolume> streamsKeyedByBaseName) {
         // OK now we can go through all the files that exist on the file
         // system and delete out as required
         for (final Entry<String, List<String>> entry : filesKeyedByBaseName.entrySet()) {

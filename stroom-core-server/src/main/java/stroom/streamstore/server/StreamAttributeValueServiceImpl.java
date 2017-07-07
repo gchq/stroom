@@ -16,16 +16,16 @@
 
 package stroom.streamstore.server;
 
-import stroom.entity.server.CriteriaLoggingUtil;
-import stroom.entity.server.QueryAppender;
-import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
-import stroom.streamstore.shared.StreamAttributeValue;
 import event.logging.BaseAdvancedQueryItem;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.entity.server.CriteriaLoggingUtil;
+import stroom.entity.server.QueryAppender;
+import stroom.entity.server.SystemEntityServiceImpl;
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.SqlBuilder;
+import stroom.entity.server.util.StroomEntityManager;
+import stroom.streamstore.shared.StreamAttributeValue;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -45,7 +45,7 @@ public class StreamAttributeValueServiceImpl
 
     @Override
     public Long findDelete(final FindStreamAttributeValueCriteria criteria) throws RuntimeException {
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("DELETE FROM ");
         sql.append(StreamAttributeValue.TABLE_NAME);
         sql.append(" WHERE 1=1");
@@ -54,7 +54,7 @@ public class StreamAttributeValueServiceImpl
             throw new IllegalArgumentException("findDelete must be called with a create range");
         }
 
-        SQLUtil.appendRangeQuery(sql, StreamAttributeValue.CREATE_MS, criteria.getCreatePeriod());
+        sql.appendRangeQuery(StreamAttributeValue.CREATE_MS, criteria.getCreatePeriod());
 
         return entityManager.executeNativeUpdate(sql);
     }
@@ -103,8 +103,8 @@ public class StreamAttributeValueServiceImpl
         }
 
         @Override
-        public void appendBasicCriteria(SQLBuilder sql, String alias, FindStreamAttributeValueCriteria criteria) {
-            SQLUtil.appendSetQuery(sql, false, alias + ".streamId", criteria.getStreamIdSet());
+        public void appendBasicCriteria(HqlBuilder sql, String alias, FindStreamAttributeValueCriteria criteria) {
+            sql.appendEntityIdSetQuery(alias + ".streamId", criteria.getStreamIdSet());
         }
     }
 }

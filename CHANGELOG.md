@@ -17,6 +17,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+## [v5.0-beta.36] - 2017-07-03
+
+* Issue **#334** : Improved entity sorting SQL and separated generation of SQL and HQL to help avoid future issues.
+
+* Issue **#335** : Improved user management
+
+* Issue **#337** : Added certificate auth option to export servlet and disabled the export config feature by default.
+
+* Issue **#337** : Added basic auth option to export servlet to complement cert based auth.
+
+* Issue **#332** : The index shard searcher cache now makes sure to get the current writer needed for the current searcher on open.
+
 ## [v5.0-beta.35] - 2017-06-26
 
 * Issue **#322** : The index cache and other caching beans should now throw exceptions on `get` that were generated during the creation of cached items.
@@ -479,7 +491,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...HEAD
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
-[v5.1-alpha.1]: https://github.com/gchq/stroom/compare/v5.0-beta.35...v5.1-alpha.1
+[v5.1-alpha.1]: https://github.com/gchq/stroom/compare/v5.0-beta.36...v5.1-alpha.1
+[v5.0-beta.36]: https://github.com/gchq/stroom/compare/v5.0-beta.35...v5.0-beta.36
 [v5.0-beta.35]: https://github.com/gchq/stroom/compare/v5.0-beta.34...v5.0-beta.35
 [v5.0-beta.34]: https://github.com/gchq/stroom/compare/v5.0-beta.33...v5.0-beta.34
 [v5.0-beta.33]: https://github.com/gchq/stroom/compare/v5.0-beta.32...v5.0-beta.33

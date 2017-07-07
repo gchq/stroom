@@ -30,10 +30,10 @@ import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.Query;
 import stroom.dashboard.shared.QueryService;
 import stroom.entity.server.util.BaseEntityDeProxyProcessor;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.FolderService;
+import stroom.entity.shared.Sort.Direction;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.query.shared.ExpressionBuilder;
@@ -41,8 +41,8 @@ import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionOperator.Op;
 import stroom.query.shared.ExpressionTerm.Condition;
 import stroom.query.shared.QueryData;
-import stroom.security.shared.User;
-import stroom.security.shared.UserService;
+import stroom.security.shared.UserRef;
+import stroom.security.server.UserService;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
@@ -67,7 +67,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     private static final String QUERY_COMPONENT = "Test Component";
 
     private Dashboard dashboard;
-    private User user;
+    private UserRef userRef;
     private Query testQuery;
     private Query refQuery;
 
@@ -76,7 +76,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         // need an explicit teardown and setup of the DB before each test method
         clean();
 
-        user = userService.createUser("testuser");
+        userRef = userService.createUser("testuser");
 
         final DocRef testFolder = DocRef.create(folderService.create(null, "Test Folder"));
 
@@ -119,7 +119,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         final FindQueryCriteria criteria = new FindQueryCriteria();
         criteria.setDashboardId(dashboard.getId());
         criteria.setQueryId(QUERY_COMPONENT);
-        criteria.setOrderBy(FindQueryCriteria.ORDER_BY_TIME, OrderByDirection.DESCENDING);
+        criteria.setSort(FindQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
 
         final BaseResultList<Query> list = queryService.find(criteria);
 
@@ -159,7 +159,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         final FindQueryCriteria criteria = new FindQueryCriteria();
         criteria.setDashboardId(dashboard.getId());
         criteria.setQueryId(QUERY_COMPONENT);
-        criteria.setOrderBy(FindQueryCriteria.ORDER_BY_TIME, OrderByDirection.DESCENDING);
+        criteria.setSort(FindQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
 
         BaseResultList<Query> list = queryService.find(criteria);
         Assert.assertEquals(2, list.size());

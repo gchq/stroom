@@ -18,24 +18,29 @@ package stroom.data.grid.client;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.user.cellview.client.Column;
-import stroom.entity.shared.OrderBy;
 import stroom.util.shared.HasDisplayValue;
 
-public abstract class OrderByColumn<T, C> extends Column<T, C>implements HasDisplayValue {
-    private final OrderBy orderBy;
+public abstract class OrderByColumn<T, C> extends Column<T, C> implements HasDisplayValue {
+    private final String field;
+    private final boolean ignoreCase;
 
-    public OrderByColumn(final Cell<C> cell, final OrderBy orderBy) {
+    public OrderByColumn(final Cell<C> cell, final String field, final boolean ignoreCase) {
         super(cell);
         setSortable(true);
-        this.orderBy = orderBy;
+        this.field = field;
+        this.ignoreCase = ignoreCase;
     }
 
-    public OrderBy getOrderBy() {
-        return orderBy;
+    public String getField() {
+        return field;
+    }
+
+    public boolean isIgnoreCase() {
+        return ignoreCase;
     }
 
     @Override
     public String getDisplayValue() {
-        return orderBy.getDisplayValue();
+        return field;
     }
 }

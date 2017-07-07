@@ -141,7 +141,7 @@ public class ConnectionUtil {
             PreparedStatementUtil.setArguments(preparedStatement, args);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    result = SQLUtil.getLong(resultSet, 1);
+                    result = SqlUtil.getLong(resultSet, 1);
                 }
             }
 

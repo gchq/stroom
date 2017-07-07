@@ -16,17 +16,16 @@
 
 package stroom.security.client.presenter;
 
-import stroom.security.shared.User;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 import stroom.security.shared.UserRef;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 public class GroupEditPresenter extends MyPresenterWidget<GroupEditPresenter.UserGroupEditView> {
     private final UserEditAddRemoveUsersPresenter addRemoveUsersPresenter;
@@ -43,8 +42,8 @@ public class GroupEditPresenter extends MyPresenterWidget<GroupEditPresenter.Use
         view.setAppPermissionsView(appPermissionsPresenter.getView());
     }
 
-    public void show(final User user, final PopupUiHandlers popupUiHandlers) {
-        read(user);
+    public void show(final UserRef userRef, final PopupUiHandlers popupUiHandlers) {
+        read(userRef);
 
         final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
             @Override
@@ -59,14 +58,14 @@ public class GroupEditPresenter extends MyPresenterWidget<GroupEditPresenter.Use
             }
         };
         final PopupSize popupSize = new PopupSize(500, 555, 500, 555, true);
-        final String caption = "Group - " + user.getName();
+        final String caption = "Group - " + userRef.getName();
         ShowPopupEvent.fire(GroupEditPresenter.this, GroupEditPresenter.this, PopupView.PopupType.CLOSE_DIALOG,
                 popupSize, caption, internalPopupUiHandlers);
     }
 
-    private void read(User user) {
-        addRemoveUsersPresenter.setUser(UserRef.create(user));
-        appPermissionsPresenter.setUser(UserRef.create(user));
+    private void read(UserRef userRef) {
+        addRemoveUsersPresenter.setUser(userRef);
+        appPermissionsPresenter.setUser(userRef);
     }
 
     public interface UserGroupEditView extends View {

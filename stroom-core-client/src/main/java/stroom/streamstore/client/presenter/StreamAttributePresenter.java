@@ -37,7 +37,7 @@ public class StreamAttributePresenter extends MyPresenterWidget<StreamAttributeP
         super(eventBus, view);
 
         final FindStreamAttributeKeyCriteria criteria = new FindStreamAttributeKeyCriteria();
-        criteria.setOrderBy(FindStreamAttributeKeyCriteria.ORDER_BY_NAME);
+        criteria.setSort(FindStreamAttributeKeyCriteria.FIELD_NAME);
         dispatcher.exec(new EntityReferenceFindAction<>(criteria)).onSuccess(view::setKeys);
     }
 

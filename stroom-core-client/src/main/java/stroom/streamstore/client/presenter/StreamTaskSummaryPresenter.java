@@ -82,7 +82,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
         getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         getView().addResizableColumn(new OrderByColumn<SummaryDataRow, String>(new TextCell(),
-                FindStreamTaskCriteria.ORDER_BY_PIPELINE_NAME) {
+                FindStreamTaskCriteria.FIELD_PIPELINE_NAME, true) {
             @Override
             public String getValue(final SummaryDataRow row) {
                 return row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_PIPELINE);
@@ -90,7 +90,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
         }, "Pipeline", 250);
 
         getView().addResizableColumn(
-                new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_FEED_NAME) {
+                new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.FIELD_FEED_NAME, true) {
                     @Override
                     public String getValue(final SummaryDataRow row) {
                         return row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_FEED);
@@ -98,7 +98,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
                 }, "Feed", 250);
 
         getView().addResizableColumn(
-                new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_PRIORITY) {
+                new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PRIORITY, false) {
             @Override
             public String getValue(final SummaryDataRow row) {
                 return row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_PRIORITY);
@@ -106,7 +106,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
         }, "Priority", 100);
 
         getView().addResizableColumn(
-                new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_STATUS) {
+                new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.FIELD_STATUS, false) {
                     @Override
                     public String getValue(final SummaryDataRow row) {
                         return TaskStatus.PRIMITIVE_VALUE_CONVERTER
@@ -117,7 +117,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
                 }, "Status", 100);
 
         getView().addResizableColumn(
-                new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_COUNT) {
+                new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.FIELD_COUNT, false) {
                     @Override
                     public String getValue(final SummaryDataRow row) {
                         return ModelStringUtil.formatCsv(row.getCount());

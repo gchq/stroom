@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.NamedEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.policy.shared.FindPolicyCriteria;
@@ -47,7 +47,7 @@ public class PolicyServiceImpl extends NamedEntityServiceImpl<Policy, FindPolicy
      */
     @SuppressWarnings("unchecked")
     public Policy get(final String name) {
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e FROM ");
         sql.append(getEntityClass().getName());
         sql.append(" AS e");
@@ -89,7 +89,7 @@ public class PolicyServiceImpl extends NamedEntityServiceImpl<Policy, FindPolicy
         }
 
         @Override
-        public void appendBasicCriteria(SQLBuilder sql, String alias, FindPolicyCriteria criteria) {
+        public void appendBasicCriteria(HqlBuilder sql, String alias, FindPolicyCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
         }
     }

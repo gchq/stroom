@@ -35,10 +35,8 @@ import stroom.security.server.exception.AuthenticationServiceException;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
@@ -145,10 +143,7 @@ class SecurityContextImpl implements SecurityContext {
             if (userRef == null) {
                 final Subject subject = getSubject();
                 if (subject != null && subject.isAuthenticated()) {
-                    final User user = (User) subject.getPrincipal();
-                    if (user != null) {
-                        userRef = UserRef.create(user);
-                    }
+                    userRef = (UserRef) subject.getPrincipal();
                 }
             }
         } catch (final InvalidSessionException e) {

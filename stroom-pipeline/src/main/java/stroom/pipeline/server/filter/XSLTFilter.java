@@ -160,7 +160,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 LOGGER.debug("Finding XSLT with resolved name '%s' from pattern '%s'", resolvedName, xsltNamePattern);
                 final FindXSLTCriteria criteria = new FindXSLTCriteria();
                 criteria.setName(new StringCriteria(resolvedName));
-                criteria.setOrderBy(FindXSLTCriteria.ORDER_BY_ID);
+                criteria.setSort(FindXSLTCriteria.FIELD_ID);
                 final List<XSLT> xsltList = xsltService.find(criteria);
                 if (xsltList == null || xsltList.size() == 0) {
                     if (!suppressXSLTNotFoundWarnings) {

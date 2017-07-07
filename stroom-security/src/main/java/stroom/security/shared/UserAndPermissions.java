@@ -23,31 +23,29 @@ import java.util.Set;
 public class UserAndPermissions implements SharedObject {
     private static final long serialVersionUID = -174816031610623504L;
 
-    private User user;
+    private UserRef userRef;
     private Set<String> appPermissionSet;
+    private Integer daysToPasswordExpiry;
 
     public UserAndPermissions() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public UserAndPermissions(final User user, final Set<String> appPermissionSet) {
-        this.user = user;
+    public UserAndPermissions(final UserRef userRef, final Set<String> appPermissionSet, final Integer daysToPasswordExpiry) {
+        this.userRef = userRef;
         this.appPermissionSet = appPermissionSet;
+        this.daysToPasswordExpiry = daysToPasswordExpiry;
     }
 
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(final User user) {
-        this.user = user;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     public Set<String> getAppPermissionSet() {
         return appPermissionSet;
     }
 
-    public void setAppPermissionSet(final Set<String> appPermissionSet) {
-        this.appPermissionSet = appPermissionSet;
+    public Integer getDaysToPasswordExpiry() {
+        return daysToPasswordExpiry;
     }
 }

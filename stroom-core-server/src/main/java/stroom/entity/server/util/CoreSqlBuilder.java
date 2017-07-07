@@ -22,38 +22,39 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class SQLBuilder {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(SQLBuilder.class);
+public abstract class CoreSqlBuilder {
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(CoreSqlBuilder.class);
     private static final boolean VALIDATE = true;
 
     private final List<Object> args;
     private final StringBuilder sql;
 
-    public SQLBuilder() {
-        this(true);
-    }
-
-    public SQLBuilder(final boolean useArgs) {
-        if (useArgs) {
-            args = new ArrayList<Object>();
-        } else {
-            args = null;
-        }
+    CoreSqlBuilder() {
+        args = new ArrayList<>();
         sql = new StringBuilder();
     }
 
-    public SQLBuilder(final String prepared, final Object... args) {
+    CoreSqlBuilder(final String prepared, final Object... args) {
         sql = new StringBuilder(prepared);
         this.args = Arrays.asList(args);
     }
 
-    public SQLBuilder append(final String string) {
+    public CoreSqlBuilder append(final CoreSqlBuilder sqlBuilder) {
+        final String string = sqlBuilder.toString();
+        sql.append(string);
+        for (final Object arg : sqlBuilder.getArgs()) {
+            this.args.add(arg);
+        }
+        return this;
+    }
+
+    public CoreSqlBuilder append(final String string) {
         checkStaticStringAppend(string);
         sql.append(string);
         return this;
     }
 
-    public SQLBuilder append(final long l, final boolean check) {
+    public CoreSqlBuilder append(final long l, final boolean check) {
         if (check) {
             checkValueAppend("long");
         }
@@ -61,14 +62,43 @@ public class SQLBuilder {
         return this;
     }
 
-    public SQLBuilder append(final long l) {
+    public CoreSqlBuilder append(final long l) {
         return append(l, true);
     }
 
-    public SQLBuilder append(final byte b) {
+    public CoreSqlBuilder append(final byte b) {
         checkValueAppend("byte");
         sql.append(b);
         return this;
+    }
+
+    public void join(final String table, final String alias, final String aliasLeft, final String fieldLeft, final String aliasRight, final String fieldRight) {
+        join(" JOIN ", table, alias, aliasLeft, fieldLeft, aliasRight, fieldRight);
+    }
+
+    public void leftOuterJoin(final String table, final String alias, final String aliasLeft, final String fieldLeft, final String aliasRight, final String fieldRight) {
+        join(" LEFT OUTER JOIN ", table, alias, aliasLeft, fieldLeft, aliasRight, fieldRight);
+    }
+
+    public void rightOuterJoin(final String table, final String alias, final String aliasLeft, final String fieldLeft, final String aliasRight, final String fieldRight) {
+        join(" RIGHT OUTER JOIN ", table, alias, aliasLeft, fieldLeft, aliasRight, fieldRight);
+    }
+
+    private void join(final String joinType, final String table, final String alias, final String aliasLeft, final String fieldLeft, final String aliasRight, final String fieldRight) {
+        sql.append(joinType);
+        sql.append(table);
+        sql.append(" ");
+        sql.append(alias);
+        sql.append(" ON ");
+        sql.append("(");
+        sql.append(aliasLeft);
+        sql.append(".");
+        sql.append(fieldLeft);
+        sql.append(" = ");
+        sql.append(aliasRight);
+        sql.append(".");
+        sql.append(fieldRight);
+        sql.append(")");
     }
 
     public int length() {
@@ -79,34 +109,24 @@ public class SQLBuilder {
         sql.setLength(newLength);
     }
 
-    public SQLBuilder arg(final Object arg) {
-        if (args != null) {
-            args.add(arg);
-            checkStringAppend("?");
-            sql.append("?");
-            sql.append(args.size());
-
-        } else {
-            checkStaticStringAppend(arg.toString());
-            sql.append(arg);
-        }
+    public CoreSqlBuilder arg(final Object arg) {
+        args.add(arg);
+        checkStringAppend("?");
+        sql.append("?");
+        sql.append(args.size());
 
         return this;
     }
 
     public Object get(final int pos) {
-        if (args != null && pos >= 1 && args.size() >= pos) {
+        if (pos >= 1 && args.size() >= pos) {
             return args.get(pos - 1);
         }
 
         return null;
     }
 
-    public String toTraceString() {
-        if (args == null) {
-            return toString();
-        }
-
+    String toTraceString() {
         final StringBuilder trace = new StringBuilder();
         int pos = 0;
         for (int i = 0; i < sql.length(); i++) {
@@ -134,15 +154,15 @@ public class SQLBuilder {
         if (VALIDATE) {
             try {
                 if (sql.length() == 0) {
-                    throw new MalformedSQLException("Attempt to append " + type + " to empty expression");
+                    throw new MalformedSqlException("Attempt to append " + type + " to empty expression");
                 } else {
                     final char c = sql.charAt(sql.length() - 1);
                     if (c != ' ' && c != '(' && c != ',') {
-                        throw new MalformedSQLException(
+                        throw new MalformedSqlException(
                                 "Previous character should be space, bracket or comma - " + info(""));
                     }
                 }
-            } catch (final MalformedSQLException e) {
+            } catch (final MalformedSqlException e) {
                 LOGGER.warn(e.getMessage(), e);
             }
         }
@@ -151,11 +171,11 @@ public class SQLBuilder {
     private void checkStaticStringAppend(final String string) {
         if (VALIDATE) {
             try {
-                if (string.indexOf("?") != -1) {
-                    throw new MalformedSQLException("Unexpected arg in statement - " + info(string));
+                if (string.contains("?")) {
+                    throw new MalformedSqlException("Unexpected arg in statement - " + info(string));
                 }
                 checkStringAppend(string);
-            } catch (final MalformedSQLException e) {
+            } catch (final MalformedSqlException e) {
                 LOGGER.warn(e.getMessage(), e);
             }
         }
@@ -165,8 +185,8 @@ public class SQLBuilder {
         if (VALIDATE) {
             try {
                 if (string.length() > 0) {
-                    if (string.indexOf("  ") != -1) {
-                        throw new MalformedSQLException("Too many spaces in statement - " + info(string));
+                    if (string.contains("  ")) {
+                        throw new MalformedSqlException("Too many spaces in statement - " + info(string));
                     }
                     if (sql.length() > 0) {
                         final char c1 = sql.charAt(sql.length() - 1);
@@ -174,20 +194,20 @@ public class SQLBuilder {
 
                         if (c2 == ',' || c2 == '.') {
                             if (c1 != '\'' && c1 != ')' && !Character.isDigit(c1) && !Character.isLetter(c1)) {
-                                throw new MalformedSQLException(
+                                throw new MalformedSqlException(
                                         "Previous character should be alphanumeric - " + info("v" + string));
                             }
                         } else if (c1 != ' ' && c1 != '(' && c1 != '.' && c1 != ',' && c2 != ' ' && c2 != ')') {
-                            throw new MalformedSQLException(
+                            throw new MalformedSqlException(
                                     "Previous character should be space, bracket or dot - " + info("v" + string));
                         }
 
                         if (c1 == ' ' && c2 == ' ') {
-                            throw new MalformedSQLException("Too many spaces in statement - " + info(string));
+                            throw new MalformedSqlException("Too many spaces in statement - " + info(string));
                         }
                     }
                 }
-            } catch (final MalformedSQLException e) {
+            } catch (final MalformedSqlException e) {
                 LOGGER.warn(e.getMessage(), e);
             }
         }

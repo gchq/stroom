@@ -16,14 +16,12 @@
 
 package stroom.security.server;
 
-import stroom.entity.server.MockEntityService;
-import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.User;
-import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
-import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import stroom.entity.server.MockEntityService;
+import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.UserRef;
+import stroom.util.spring.StroomSpringProfiles;
 
 import java.util.List;
 import java.util.Set;
@@ -65,11 +63,6 @@ public class MockUserService extends MockEntityService<User, FindUserCriteria> i
     }
 
     @Override
-    public UserRef getUserGroupByName(final String name) {
-        return null;
-    }
-
-    @Override
     public List<UserRef> findUsersInGroup(final UserRef userGroup) {
         return null;
     }
@@ -80,20 +73,20 @@ public class MockUserService extends MockEntityService<User, FindUserCriteria> i
     }
 
     @Override
-    public User createUser(final String name) {
+    public UserRef createUser(final String name) {
         final User user = new User();
         user.setUuid(UUID.randomUUID().toString());
         user.setName(name);
-        return save(user);
+        return UserRefFactory.create(save(user));
     }
 
     @Override
-    public User createUserGroup(final String name) {
+    public UserRef createUserGroup(final String name) {
         final User user = new User();
         user.setUuid(UUID.randomUUID().toString());
         user.setName(name);
         user.setGroup(true);
-        return save(user);
+        return UserRefFactory.create(save(user));
     }
 
     @Override

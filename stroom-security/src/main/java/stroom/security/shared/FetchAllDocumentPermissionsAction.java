@@ -36,13 +36,8 @@ public class FetchAllDocumentPermissionsAction extends Action<DocumentPermission
         return docRef;
     }
 
-    public void setDocRef(final DocRef docRef) {
-        this.docRef = docRef;
-    }
-
     @Override
     public String getTaskName() {
         return "Fetch Document Permissions";
     }
-
 }

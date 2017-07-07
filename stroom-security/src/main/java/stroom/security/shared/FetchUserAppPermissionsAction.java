@@ -35,10 +35,6 @@ public class FetchUserAppPermissionsAction extends Action<UserAppPermissions> {
         return userRef;
     }
 
-    public void setUserRef(final UserRef userRef) {
-        this.userRef = userRef;
-    }
-
     @Override
     public String getTaskName() {
         return "Fetch Feature Permissions";

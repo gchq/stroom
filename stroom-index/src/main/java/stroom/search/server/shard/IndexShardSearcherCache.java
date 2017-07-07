@@ -57,6 +57,7 @@ public class IndexShardSearcherCache implements InitializingBean {
         private volatile ConcurrentLinkedQueue<Throwable> exceptions;
         private volatile boolean cached;
         private volatile boolean open;
+        private volatile IndexWriter indexWriter;
 
         public IndexShardSearcherPool(final IndexShard indexShard) {
             this.indexShard = indexShard;
@@ -98,16 +99,33 @@ public class IndexShardSearcherCache implements InitializingBean {
         }
 
         private synchronized void open() {
+            IndexWriter indexWriter = null;
+            Exception writerException = null;
+
+            // Get the current writer for this index shard.
+            try {
+                indexWriter = indexer.getWriter(indexShard);
+            } catch (final Exception e) {
+                writerException = e;
+            }
+
+            // See if the writer has changed since we created this searcher.
+            if (indexWriter != this.indexWriter) {
+                // If the writer has changed and this searcher is still open then close this searcher so it can be
+                // opened again using the current writer.
+                if (open) {
+                    close();
+                }
+
+                // Assign the current writer.
+                this.indexWriter = indexWriter;
+
+                // Reset any exceptions.
+                exceptions = null;
+            }
+
             if (!open && !hasExceptions()) {
                 try {
-                    IndexWriter indexWriter = null;
-                    Exception writerException = null;
-                    try {
-                        indexWriter = indexer.getWriter(indexShard);
-                    } catch (final Exception e) {
-                        writerException = e;
-                    }
-
                     indexShardSearcher = new IndexShardSearcherImpl(indexShard, indexWriter);
 
                     if (writerException != null) {

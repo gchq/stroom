@@ -22,8 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.dictionary.shared.DictionaryService;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
@@ -99,7 +98,7 @@ public class DataRetentionTransactionHelper {
 
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamFields.getFieldMap(), dictionaryService);
 
-        final String sql = getSQL(ageRange, fieldSet, false);
+        final String sql = getSql(ageRange, fieldSet, false);
         try (final Connection connection = dataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -138,7 +137,7 @@ public class DataRetentionTransactionHelper {
 
     private long getRowCount(final Period ageRange, final Set<String> fieldSet) {
         long rowCount = 0;
-        final String sql = getSQL(ageRange, fieldSet, true);
+        final String sql = getSql(ageRange, fieldSet, true);
         try (final Connection connection = dataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -153,8 +152,8 @@ public class DataRetentionTransactionHelper {
         return rowCount;
     }
 
-    private String getSQL(final Period ageRange, final Set<String> fieldSet, final boolean count) {
-        final SQLBuilder sql = new SQLBuilder();
+    private String getSql(final Period ageRange, final Set<String> fieldSet, final boolean count) {
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT");
 
         final boolean includeStream = addFieldsToQuery(StreamFields.getStreamFields(), fieldSet, sql, "S");
@@ -175,18 +174,18 @@ public class DataRetentionTransactionHelper {
         sql.append(" S");
 
         if (includeFeed) {
-            SQLUtil.join(sql, Feed.TABLE_NAME, "F", "S", Feed.FOREIGN_KEY, "F", Feed.ID);
+            sql.join(Feed.TABLE_NAME, "F", "S", Feed.FOREIGN_KEY, "F", Feed.ID);
         }
         if (includeStreamType) {
-            SQLUtil.join(sql, StreamType.TABLE_NAME, "ST", "S", StreamType.FOREIGN_KEY, "ST", StreamType.ID);
+            sql.join(StreamType.TABLE_NAME, "ST", "S", StreamType.FOREIGN_KEY, "ST", StreamType.ID);
         }
         if (includePipeline) {
-            SQLUtil.leftOuterJoin(sql, StreamProcessor.TABLE_NAME, "SP", "S", StreamProcessor.FOREIGN_KEY, "SP", StreamProcessor.ID);
-            SQLUtil.leftOuterJoin(sql, PipelineEntity.TABLE_NAME, "p", "SP", PipelineEntity.FOREIGN_KEY, "p", PipelineEntity.ID);
+            sql.leftOuterJoin(StreamProcessor.TABLE_NAME, "SP", "S", StreamProcessor.FOREIGN_KEY, "SP", StreamProcessor.ID);
+            sql.leftOuterJoin(PipelineEntity.TABLE_NAME, "p", "SP", PipelineEntity.FOREIGN_KEY, "p", PipelineEntity.ID);
         }
 
         sql.append(" WHERE 1=1");
-        SQLUtil.appendLongRangeQuery(sql, "S." + Stream.CREATE_MS, ageRange);
+        sql.appendRangeQuery("S." + Stream.CREATE_MS, ageRange);
 
         return sql.toString();
     }
@@ -223,7 +222,7 @@ public class DataRetentionTransactionHelper {
         return attributeMap;
     }
 
-    private boolean addFieldsToQuery(final Map<String, String> fieldMap, final Set<String> fieldSet, final SQLBuilder sql, final String alias) {
+    private boolean addFieldsToQuery(final Map<String, String> fieldMap, final Set<String> fieldSet, final SqlBuilder sql, final String alias) {
         final AtomicBoolean used = new AtomicBoolean();
 
         fieldMap.forEach((k, v) -> {

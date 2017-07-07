@@ -17,8 +17,6 @@
 package stroom.security.server;
 
 import org.springframework.stereotype.Component;
-import stroom.security.shared.User;
-import stroom.security.shared.UserAndPermissions;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 
@@ -38,9 +36,8 @@ public class UserAndPermissionsHelper {
         this.userAppPermissionsCache = userAppPermissionsCache;
     }
 
-    public UserAndPermissions get(final User user) {
+    public Set<String> get(final UserRef userRef) {
         final Set<String> appPermissionSet = new HashSet<>();
-        final UserRef userRef = UserRef.create(user);
 
         // Add app permissions set explicitly for this user first.
         addPermissions(appPermissionSet, userRef);
@@ -55,7 +52,7 @@ public class UserAndPermissionsHelper {
             }
         }
 
-        return new UserAndPermissions(user, appPermissionSet);
+        return appPermissionSet;
     }
 
     private void addPermissions(final Set<String> appPermissionSet, final UserRef userRef) {

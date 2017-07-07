@@ -27,7 +27,7 @@ public final class EntityServiceLogUtil {
     private static String FQCN = EntityServiceLogUtil.class.getName();
 
     public static void logQuery(final Logger logger, final String prefix,
-                                final LogExecutionTime logExecutionTime, final Collection<?> rtnList, final SQLBuilder sql) {
+                                final LogExecutionTime logExecutionTime, final Collection<?> rtnList, final AbstractSqlBuilder sql) {
         final long duration = logExecutionTime.getDuration();
 
         if (duration > 1000 || logger.isDebugEnabled()) {
@@ -53,7 +53,7 @@ public final class EntityServiceLogUtil {
     }
 
     public static final void logUpdate(final Logger logger, final String prefix,
-                                       final LogExecutionTime logExecutionTime, final Long updateCount, final SQLBuilder sql) {
+                                       final LogExecutionTime logExecutionTime, final Long updateCount, final AbstractSqlBuilder sql) {
         final long duration = logExecutionTime.getDuration();
 
         if (duration > 1000 || logger.isDebugEnabled()) {

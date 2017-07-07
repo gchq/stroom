@@ -16,17 +16,14 @@
 
 package stroom.pipeline.shared;
 
+import stroom.entity.shared.EntityMatcher;
+import stroom.entity.shared.FindDocumentEntityCriteria;
+
 import java.util.HashSet;
 import java.util.Set;
 
-import stroom.entity.shared.EntityMatcher;
-import stroom.entity.shared.FindDocumentEntityCriteria;
-import stroom.entity.shared.OrderBy;
-
 public class FindPipelineEntityCriteria extends FindDocumentEntityCriteria implements EntityMatcher<PipelineEntity> {
     private static final long serialVersionUID = 1L;
-
-    public static final OrderBy ORDER_BY_DESCRIPTION = new OrderBy("Description", "description", true);
 
     private Set<String> types;
 

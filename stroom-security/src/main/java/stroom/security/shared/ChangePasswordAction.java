@@ -21,41 +21,29 @@ import stroom.dispatch.shared.Action;
 public class ChangePasswordAction extends Action<UserAndPermissions> {
     private static final long serialVersionUID = -6740095230475597845L;
 
-    private User user;
+    private UserRef userRef;
     private String oldPassword;
     private String newPassword;
 
     public ChangePasswordAction() {
     }
 
-    public ChangePasswordAction(final User user, String oldPassword, String newPassword) {
-        this.user = user;
+    public ChangePasswordAction(final UserRef userRef, String oldPassword, String newPassword) {
+        this.userRef = userRef;
         this.oldPassword = oldPassword;
         this.newPassword = newPassword;
     }
 
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     public String getOldPassword() {
         return oldPassword;
     }
 
-    public void setOldPassword(String oldPassword) {
-        this.oldPassword = oldPassword;
-    }
-
     public String getNewPassword() {
         return newPassword;
-    }
-
-    public void setNewPassword(String newPassword) {
-        this.newPassword = newPassword;
     }
 
     @Override

@@ -16,15 +16,16 @@
 
 package stroom.entity.server;
 
+import event.logging.BaseAdvancedQueryItem;
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.NamedEntityService;
 import stroom.security.Insecure;
 import stroom.util.config.StroomProperties;
-import event.logging.BaseAdvancedQueryItem;
 
 import javax.persistence.Transient;
 import java.util.Collections;
@@ -71,7 +72,7 @@ public abstract class NamedEntityServiceImpl<E extends NamedEntity, C extends Fi
     public E loadByName(final String name, final Set<String> fetchSet) {
         E entity = null;
 
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e");
         sql.append(" FROM ");
         sql.append(getEntityClass().getName());
@@ -104,5 +105,10 @@ public abstract class NamedEntityServiceImpl<E extends NamedEntity, C extends Fi
             CriteriaLoggingUtil.appendStringTerm(items, "name", criteria.getName().getString());
         }
         super.appendCriteria(items, criteria);
+    }
+
+    protected FieldMap createFieldMap() {
+        return super.createFieldMap()
+                .add(FindNamedEntityCriteria.FIELD_NAME, NamedEntity.NAME, "name");
     }
 }

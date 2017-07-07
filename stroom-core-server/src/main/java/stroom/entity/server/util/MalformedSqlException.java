@@ -16,23 +16,10 @@
 
 package stroom.entity.server.util;
 
-import stroom.util.test.StroomUnitTest;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+public class MalformedSqlException extends RuntimeException {
+    private static final long serialVersionUID = -7394917648742281613L;
 
-import stroom.entity.shared.FolderIdSet;
-import stroom.util.test.StroomJUnit4ClassRunner;
-
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestCloneUtil extends StroomUnitTest {
-    @Test
-    public void testCloneFolderIdSet() {
-        final FolderIdSet set1 = new FolderIdSet();
-        set1.setDeep(false);
-
-        final FolderIdSet set2 = CloneUtil.deepClone(set1);
-
-        Assert.assertEquals(set1.isDeep(), set2.isDeep());
+    public MalformedSqlException(final String message) {
+        super(message);
     }
 }

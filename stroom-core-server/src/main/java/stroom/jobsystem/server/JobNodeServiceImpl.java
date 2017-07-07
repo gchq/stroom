@@ -22,8 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
@@ -232,7 +232,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         // Force to delete
         entityManager.flush();
 
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         if (stroomDatabaseInfo.isMysql()) {
             sql.append(DELETE_ORPHAN_JOBS_MYSQL);
         } else {
@@ -307,7 +307,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         }
 
         @Override
-        protected void appendBasicJoin(final SQLBuilder sql, final String alias, final Set<String> fetchSet) {
+        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
             super.appendBasicJoin(sql, alias, fetchSet);
             if (fetchSet != null) {
                 if (fetchSet.contains(Node.ENTITY_TYPE)) {
@@ -320,11 +320,11 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         }
 
         @Override
-        protected void appendBasicCriteria(final SQLBuilder sql, final String alias, final FindJobNodeCriteria criteria) {
+        protected void appendBasicCriteria(final HqlBuilder sql, final String alias, final FindJobNodeCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
-            SQLUtil.appendSetQuery(sql, true, alias + ".node", criteria.getNodeIdSet());
-            SQLUtil.appendSetQuery(sql, true, alias + ".job", criteria.getJobIdSet());
-            SQLUtil.appendValueQuery(sql, alias + ".job.name", criteria.getJobName());
+            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
+            sql.appendEntityIdSetQuery(alias + ".job", criteria.getJobIdSet());
+            sql.appendValueQuery(alias + ".job.name", criteria.getJobName());
         }
     }
 }

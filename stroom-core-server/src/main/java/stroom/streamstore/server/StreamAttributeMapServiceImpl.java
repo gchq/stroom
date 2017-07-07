@@ -22,11 +22,11 @@ import event.logging.BaseAdvancedQueryItem;
 import org.springframework.stereotype.Component;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.server.SupportsCriteriaLogging;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.PermissionException;
+import stroom.entity.shared.Sort.Direction;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.node.shared.Volume;
@@ -118,7 +118,7 @@ public class StreamAttributeMapServiceImpl
 
             final FindStreamCriteria streamCriteria = new FindStreamCriteria();
             streamCriteria.copyFrom(criteria.getFindStreamCriteria());
-            streamCriteria.setOrderBy(FindStreamCriteria.ORDER_BY_CREATE_MS, OrderByDirection.DESCENDING);
+            streamCriteria.setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.DESCENDING, false);
 
             final boolean includeRelations = streamCriteria.getFetchSet().contains(Stream.ENTITY_TYPE);
             streamCriteria.setFetchSet(new HashSet<>());
@@ -196,7 +196,7 @@ public class StreamAttributeMapServiceImpl
             keyMap.put(key.getId(), key);
         }
 
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT ");
         sql.append(StreamAttributeValue.STREAM_ID);
         sql.append(", ");

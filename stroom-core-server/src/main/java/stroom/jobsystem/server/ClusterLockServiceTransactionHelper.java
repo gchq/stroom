@@ -22,13 +22,13 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import stroom.entity.server.util.SQLBuilder;
 import stroom.jobsystem.shared.ClusterLock;
 
 @Transactional
@@ -69,7 +69,7 @@ public class ClusterLockServiceTransactionHelper {
 
     @SuppressWarnings("unchecked")
     private ClusterLock find(final String name) {
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("select cl from ");
         sql.append(ClusterLock.class.getName());
         sql.append(" cl where cl.name = ");

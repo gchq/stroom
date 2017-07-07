@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
@@ -82,8 +82,8 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
     }
 
     @Override
-    protected String getTempIdSelectSql(final long age, final int batchSize) {
-        final SQLBuilder sql = new SQLBuilder();
+    protected SqlBuilder getTempIdSelectSql(final long age, final int batchSize) {
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT ");
         sql.append(Stream.ID);
         sql.append(" FROM ");
@@ -91,15 +91,15 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
         sql.append(" WHERE ");
         sql.append(SQLNameConstants.STATUS);
         sql.append(" = ");
-        sql.append(StreamStatus.DELETED.getPrimitiveValue());
+        sql.arg(StreamStatus.DELETED.getPrimitiveValue());
         sql.append(" AND ");
         sql.append(Stream.STATUS_MS);
         sql.append(" < ");
-        sql.append(age);
+        sql.arg(age);
         sql.append(" ORDER BY ");
         sql.append(Stream.ID);
         sql.append(" LIMIT ");
-        sql.append(batchSize);
-        return sql.toString();
+        sql.arg(batchSize);
+        return sql;
     }
 }

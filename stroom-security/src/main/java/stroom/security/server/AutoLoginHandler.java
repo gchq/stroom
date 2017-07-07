@@ -19,8 +19,8 @@ package stroom.security.server;
 import org.springframework.context.annotation.Scope;
 import stroom.security.Insecure;
 import stroom.security.shared.AutoLoginAction;
-import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
+import stroom.security.shared.UserRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
@@ -42,11 +42,11 @@ public class AutoLoginHandler extends AbstractTaskHandler<AutoLoginAction, UserA
 
     @Override
     public UserAndPermissions exec(final AutoLoginAction task) {
-        final User user = authenticationService.autoLogin();
-        if (user == null) {
+        final UserRef userRef = authenticationService.autoLogin();
+        if (userRef == null) {
             return null;
         }
 
-        return userAndPermissionsHelper.get(user);
+        return new UserAndPermissions(userRef, userAndPermissionsHelper.get(userRef), null);
     }
 }

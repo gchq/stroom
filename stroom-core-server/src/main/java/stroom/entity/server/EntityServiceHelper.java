@@ -16,8 +16,8 @@
 
 package stroom.entity.server;
 
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.server.util.SQLBuilder;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.HasUuid;
@@ -85,7 +85,7 @@ public class EntityServiceHelper<E extends Entity> {
     public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
         E entity = null;
 
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e");
         sql.append(" FROM ");
         sql.append(entityClass.getName());
@@ -116,7 +116,7 @@ public class EntityServiceHelper<E extends Entity> {
     public E loadByUuid(final String uuid, final Set<String> fetchSet) throws RuntimeException {
         E entity = null;
 
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e FROM ");
         sql.append(entityClass.getName());
         sql.append(" AS e");

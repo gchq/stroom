@@ -16,11 +16,13 @@
 
 package stroom.statistics.server.common;
 
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.server.util.SQLUtil;
 import stroom.entity.shared.StringCriteria;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
@@ -28,8 +30,6 @@ import stroom.statistics.common.FindStatisticsEntityCriteria;
 import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.util.logging.StroomLogger;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -69,7 +69,7 @@ public class StatisticStoreEntityServiceImpl
         }
 
         @Override
-        protected void appendBasicCriteria(final stroom.entity.server.util.SQLBuilder sql, final String alias,
+        protected void appendBasicCriteria(final HqlBuilder sql, final String alias,
                                            final FindStatisticsEntityCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
@@ -78,14 +78,14 @@ public class StatisticStoreEntityServiceImpl
             if (engineNames != null) {
                 if (engineNames.size() == 0) {
                 } else if (engineNames.size() == 1) {
-                    SQLUtil.appendValueQuery(sql, alias + ".engineName", engineNames.get(0));
+                    sql.appendValueQuery(alias + ".engineName", engineNames.get(0));
                 } else {
-                    SQLUtil.appendValuesQuery(sql, alias + ".engineName", StringCriteria.convertStringList(engineNames));
+                    sql.appendValuesQuery(alias + ".engineName", StringCriteria.convertStringList(engineNames));
                 }
             }
 
             if (criteria.getStatisticType() != null) {
-                SQLUtil.appendValueQuery(sql, alias + ".pStatisticType", criteria.getStatisticType().getPrimitiveValue());
+                sql.appendValueQuery(alias + ".pStatisticType", criteria.getStatisticType().getPrimitiveValue());
             }
         }
     }

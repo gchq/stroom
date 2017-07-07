@@ -16,56 +16,16 @@
 
 package stroom.security.server;
 
-import stroom.security.shared.User;
+import stroom.security.shared.UserRef;
 
 public class MockAuthenticationService implements AuthenticationService {
     @Override
-    public User autoLogin() throws RuntimeException {
+    public UserRef autoLogin() throws RuntimeException {
         return null;
     }
 
     @Override
-    public void refreshCurrentUser() throws RuntimeException {
-    }
-
-    @Override
-    public boolean canEmailPasswordReset() {
-        return false;
-    }
-
-    @Override
-    public User changePassword(final User user, final String oldPassword, final String newPassword)
-            throws RuntimeException {
-        return null;
-    }
-
-    @Override
-    public Boolean emailPasswordReset(final String userName) throws RuntimeException {
-        return Boolean.FALSE;
-    }
-
-    @Override
-    public User emailPasswordReset(final User user) throws RuntimeException {
-        return null;
-    }
-
-    @Override
-    public User getCurrentUser() throws RuntimeException {
-        return null;
-    }
-
-    @Override
-    public String getCurrentUserId() throws RuntimeException {
-        return null;
-    }
-
-//    @Override
-//    public boolean isUserAuthenticated() throws RuntimeException {
-//        return false;
-//    }
-
-    @Override
-    public User login(final String userName, final String password) throws RuntimeException {
+    public UserRef login(final String userName, final String password) throws RuntimeException {
         return null;
     }
 
@@ -75,7 +35,27 @@ public class MockAuthenticationService implements AuthenticationService {
     }
 
     @Override
-    public User resetPassword(final User user, final String password) throws RuntimeException {
+    public UserRef getCurrentUser() throws RuntimeException {
         return null;
+    }
+
+    @Override
+    public UserRef changePassword(final UserRef user, final String oldPassword, final String newPassword) throws RuntimeException {
+        return null;
+    }
+
+    @Override
+    public UserRef resetPassword(final UserRef user, final String password) throws RuntimeException {
+        return null;
+    }
+
+    @Override
+    public boolean canEmailPasswordReset() {
+        return false;
+    }
+
+    @Override
+    public Boolean emailPasswordReset(final String userName) throws RuntimeException {
+        return Boolean.FALSE;
     }
 }

@@ -17,7 +17,6 @@
 package stroom.security.shared;
 
 import stroom.entity.shared.DocRef;
-import stroom.security.shared.User.UserStatus;
 
 public class UserRef extends DocRef {
     private static final long serialVersionUID = 5883121212911541301L;
@@ -29,19 +28,6 @@ public class UserRef extends DocRef {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public static UserRef create(final User user) {
-        if (user == null) {
-            return null;
-        }
-
-        final String type = user.getType();
-        final String uuid = user.getUuid();
-        final String name = user.getName();
-
-        return new UserRef(type, uuid, name, user.isGroup(), UserStatus.ENABLED.equals(user.getStatus()));
-    }
-
-
     public UserRef(final String type, final String uuid, final String name, final boolean group, final boolean enabled) {
         super(type, null, uuid, name);
         this.group = group;
@@ -52,15 +38,7 @@ public class UserRef extends DocRef {
         return group;
     }
 
-    public void setGroup(final boolean group) {
-        this.group = group;
-    }
-
     public boolean isEnabled() {
         return enabled;
-    }
-
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
     }
 }

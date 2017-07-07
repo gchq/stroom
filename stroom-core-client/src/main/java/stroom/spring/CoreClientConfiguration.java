@@ -88,7 +88,7 @@ public class CoreClientConfiguration {
         mappings.setProperty("/stroom/importfile.rpc", ImportFileServlet.BEAN_NAME);
         mappings.setProperty("/stroom/script", "scriptServlet");
         mappings.setProperty("/clustercall.rpc", ClusterCallServiceRPC.BEAN_NAME);
-        mappings.setProperty("/export/*", ExportConfigServlet.BEAN_NAME);
+        mappings.setProperty("/export", ExportConfigServlet.BEAN_NAME);
         mappings.setProperty("/status", StatusServlet.BEAN_NAME);
         mappings.setProperty("/echo", EchoServlet.BEAN_NAME);
         mappings.setProperty("/debug", DebugServlet.BEAN_NAME);

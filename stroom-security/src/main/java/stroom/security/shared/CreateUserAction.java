@@ -14,12 +14,32 @@
  * limitations under the License.
  */
 
-package stroom.entity.server.util;
+package stroom.security.shared;
 
-public class MalformedSQLException extends RuntimeException {
-    private static final long serialVersionUID = -7394917648742281613L;
+import stroom.dispatch.shared.Action;
 
-    public MalformedSQLException(final String message) {
-        super(message);
+public class CreateUserAction extends Action<UserRef> {
+    private String name;
+    private boolean group;
+
+    public CreateUserAction() {
+    }
+
+    public CreateUserAction(final String name, final boolean group) {
+        this.name = name;
+        this.group = group;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public boolean isGroup() {
+        return group;
+    }
+
+    @Override
+    public String getTaskName() {
+        return "Create user";
     }
 }

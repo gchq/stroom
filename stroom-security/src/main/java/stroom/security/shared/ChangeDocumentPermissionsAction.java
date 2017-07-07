@@ -57,16 +57,8 @@ public class ChangeDocumentPermissionsAction extends Action<VoidResult> {
         return docRef;
     }
 
-    public void setDocRef(final DocRef docRef) {
-        this.docRef = docRef;
-    }
-
     public ChangeSet<UserPermission> getChangeSet() {
         return changeSet;
-    }
-
-    public void setChangeSet(ChangeSet<UserPermission> changeSet) {
-        this.changeSet = changeSet;
     }
 
     public Cascade getCascade() {

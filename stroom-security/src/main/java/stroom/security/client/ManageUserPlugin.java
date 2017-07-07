@@ -17,7 +17,6 @@
 package stroom.security.client;
 
 import com.google.gwt.inject.client.AsyncProvider;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -27,7 +26,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
 import stroom.security.client.presenter.UsersAndGroupsPresenter;
-import stroom.security.shared.User;
+import stroom.security.shared.FindUserCriteria;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -56,25 +55,20 @@ public class ManageUserPlugin extends NodeToolsPlugin {
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(User.MANAGE_USERS_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(FindUserCriteria.MANAGE_USERS_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(1, SvgPresets.USER, SvgPresets.USER, "Users And Groups", null, true, new Command() {
+                    new IconMenuItem(1, SvgPresets.USER, SvgPresets.USER, "Users And Groups", null, true, () -> usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
                         @Override
-                        public void execute() {
-                            usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
-                                @Override
-                                public void onSuccess(final UsersAndGroupsPresenter presenter) {
-                                    final PopupSize popupSize = new PopupSize(800, 600, true);
-                                    ShowPopupEvent.fire(ManageUserPlugin.this, presenter,
-                                            PopupType.CLOSE_DIALOG, null, popupSize, "Users And Groups", null, null);
-                                }
-
-                                @Override
-                                public void onFailure(final Throwable caught) {
-                                }
-                            });
+                        public void onSuccess(final UsersAndGroupsPresenter presenter) {
+                            final PopupSize popupSize = new PopupSize(800, 600, true);
+                            ShowPopupEvent.fire(ManageUserPlugin.this, presenter,
+                                    PopupType.CLOSE_DIALOG, null, popupSize, "Users And Groups", null, null);
                         }
-                    }));
+
+                        @Override
+                        public void onFailure(final Throwable caught) {
+                        }
+                    })));
         }
     }
 }

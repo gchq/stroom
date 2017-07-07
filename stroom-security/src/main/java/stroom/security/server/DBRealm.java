@@ -16,21 +16,6 @@
 
 package stroom.security.server;
 
-import stroom.entity.shared.EntityServiceException;
-import stroom.node.server.StroomPropertyService;
-import stroom.security.server.exception.AccountExpiredException;
-import stroom.security.server.exception.BadCredentialsException;
-import stroom.security.server.exception.DisabledException;
-import stroom.security.server.exception.LockedException;
-import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.PermissionNames;
-import stroom.security.shared.User;
-import stroom.security.shared.User.UserStatus;
-import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
-import stroom.util.cert.CertificateUtil;
-import stroom.util.logging.StroomLogger;
-import stroom.util.shared.EqualsUtil;
 import org.apache.shiro.authc.AccountException;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -42,6 +27,19 @@ import org.apache.shiro.realm.AuthenticatingRealm;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import stroom.entity.shared.EntityServiceException;
+import stroom.node.server.StroomPropertyService;
+import stroom.security.server.exception.AccountExpiredException;
+import stroom.security.server.exception.BadCredentialsException;
+import stroom.security.server.exception.DisabledException;
+import stroom.security.server.exception.LockedException;
+import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.PermissionNames;
+import stroom.security.shared.UserRef;
+import stroom.security.shared.UserStatus;
+import stroom.util.cert.CertificateUtil;
+import stroom.util.logging.StroomLogger;
+import stroom.util.shared.EqualsUtil;
 
 import javax.inject.Inject;
 import java.util.regex.Pattern;
@@ -50,7 +48,7 @@ import java.util.regex.Pattern;
 public class DBRealm extends AuthenticatingRealm {
     public static final StroomLogger LOGGER = StroomLogger.getLogger(DBRealm.class);
 
-    public static final String ADMINISTRATORS = "Administrators";
+    private static final String ADMINISTRATORS = "Administrators";
 
     private final UserService userService;
     private final UserAppPermissionService userAppPermissionService;
@@ -122,7 +120,7 @@ public class DBRealm extends AuthenticatingRealm {
 
             if (user != null) {
                 check(user);
-                return new SimpleAuthenticationInfo(user, user.getPasswordHash(), getName());
+                return new SimpleAuthenticationInfo(UserRefFactory.create(user), user.getPasswordHash(), getName());
             }
         } catch (final AuthenticationException e) {
             throw e;
@@ -152,7 +150,7 @@ public class DBRealm extends AuthenticatingRealm {
 
             if (user != null) {
                 check(user);
-                return new SimpleAuthenticationInfo(user, user.getPasswordHash(), getName());
+                return new SimpleAuthenticationInfo(UserRefFactory.create(user), user.getPasswordHash(), getName());
             }
         } catch (final AuthenticationException e) {
             throw e;
@@ -244,13 +242,13 @@ public class DBRealm extends AuthenticatingRealm {
 
             final UserRef userGroup = createOrRefreshAdminUserGroup();
             try {
-                userService.addUserToGroup(UserRef.create(user), userGroup);
+                userService.addUserToGroup(UserRefFactory.create(user), userGroup);
             } catch (final RuntimeException e) {
                 // Expected.
                 LOGGER.debug(e.getMessage());
             }
 
-            userRef = UserRef.create(user);
+            userRef = UserRefFactory.create(user);
         }
 
         return userRef;
@@ -269,18 +267,19 @@ public class DBRealm extends AuthenticatingRealm {
         final FindUserCriteria findUserGroupCriteria = new FindUserCriteria(userGroupName, true);
         findUserGroupCriteria.getFetchSet().add(Permission.ENTITY_TYPE);
 
-        User userGroup = userService.find(findUserGroupCriteria).getFirst();
-        if (userGroup == null) {
-            userGroup = userService.createUserGroup(userGroupName);
-
-            try {
-                userAppPermissionService.addPermission(UserRef.create(userGroup), PermissionNames.ADMINISTRATOR);
-            } catch (final RuntimeException e) {
-                // Expected.
-                LOGGER.debug(e.getMessage());
-            }
+        final User userGroup = userService.find(findUserGroupCriteria).getFirst();
+        if (userGroup != null) {
+            return UserRefFactory.create(userGroup);
         }
 
-        return UserRef.create(userGroup);
+        final UserRef newUserGroup = userService.createUserGroup(userGroupName);
+        try {
+            userAppPermissionService.addPermission(newUserGroup, PermissionNames.ADMINISTRATOR);
+        } catch (final RuntimeException e) {
+            // Expected.
+            LOGGER.debug(e.getMessage());
+        }
+
+        return newUserGroup;
     }
 }

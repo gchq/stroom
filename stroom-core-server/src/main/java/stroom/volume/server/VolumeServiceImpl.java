@@ -24,11 +24,11 @@ import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
+import stroom.entity.shared.Sort.Direction;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
@@ -341,7 +341,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         final List<Volume> newState = new ArrayList<>();
 
         final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
-        findVolumeCriteria.addOrderBy(FindVolumeCriteria.ORDER_BY_ID);
+        findVolumeCriteria.addSort(FindVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
         final List<Volume> volumeList = find(findVolumeCriteria);
         for (final Volume volume : volumeList) {
             if (volume.getNode().equals(node)) {
@@ -505,12 +505,12 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         }
 
         @Override
-        public void appendBasicCriteria(SQLBuilder sql, String alias, FindVolumeCriteria criteria) {
+        public void appendBasicCriteria(HqlBuilder sql, String alias, FindVolumeCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
-            SQLUtil.appendSetQuery(sql, true, alias + ".node", criteria.getNodeIdSet());
-            SQLUtil.appendSetQuery(sql, true, alias + ".pindexStatus", criteria.getIndexStatusSet(), false);
-            SQLUtil.appendSetQuery(sql, true, alias + ".pstreamStatus", criteria.getStreamStatusSet(), false);
-            SQLUtil.appendSetQuery(sql, true, alias + ".pvolumeType", criteria.getVolumeTypeSet(), false);
+            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
+            sql.appendPrimitiveValueSetQuery(alias + ".pindexStatus", criteria.getIndexStatusSet());
+            sql.appendPrimitiveValueSetQuery(alias + ".pstreamStatus", criteria.getStreamStatusSet());
+            sql.appendPrimitiveValueSetQuery(alias + ".pvolumeType", criteria.getVolumeTypeSet());
         }
     }
 

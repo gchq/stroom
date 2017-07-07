@@ -16,18 +16,16 @@
 
 package stroom.security.server;
 
-import stroom.entity.shared.MockitoEntityServiceUtil;
-import stroom.node.server.MockStroomPropertyService;
-import stroom.security.shared.User;
-import stroom.security.shared.User.UserStatus;
-import stroom.security.shared.UserService;
-import stroom.util.date.DateUtil;
-import stroom.util.test.FileSystemTestUtil;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import stroom.entity.shared.MockitoEntityServiceUtil;
+import stroom.node.server.MockStroomPropertyService;
+import stroom.security.shared.UserStatus;
+import stroom.util.date.DateUtil;
+import stroom.util.test.FileSystemTestUtil;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestUserManagerImpl {

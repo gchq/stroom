@@ -29,11 +29,12 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryDataLogUtil;
 import stroom.entity.server.util.EntityServiceLogUtil;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.FieldMap;
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.SqlBuilder;
+import stroom.entity.server.util.SqlUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
@@ -42,6 +43,7 @@ import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
+import stroom.entity.shared.Sort.Direction;
 import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
@@ -123,6 +125,10 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         Locale.setDefault(Locale.ROOT);
     }
 
+    private static final FieldMap FIELD_MAP = new FieldMap()
+            .add(FindStreamCriteria.FIELD_ID, BaseEntity.ID, "id")
+            .add(FindStreamCriteria.FIELD_CREATE_MS, Stream.CREATE_MS, "createMs");
+
     private final StroomEntityManager entityManager;
     private final StroomDatabaseInfo stroomDatabaseInfo;
     private final NodeCache nodeCache;
@@ -196,10 +202,10 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         final int MAX = 200;
         final FindStreamCriteria outerCriteria = new FindStreamCriteria();
         outerCriteria.obtainPageRequest().setLength(1000);
-        outerCriteria.setOrderBy(FindStreamCriteria.ORDER_BY_CREATE_MS, OrderByDirection.DESCENDING);
+        outerCriteria.setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.DESCENDING, false);
         final FileSystemStreamStoreImpl fileSystemStreamStore = new FileSystemStreamStoreImpl(null, null, null, null,
                 null, null, null, null, null, null, null);
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
 
         sql.append("SELECT U.* FROM ( ");
         boolean doneOne = false;
@@ -213,20 +219,20 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             findStreamCriteria.obtainPageRequest().setLength(1000);
             findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
             findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE.getId());
-            findStreamCriteria.setOrderBy(FindStreamCriteria.ORDER_BY_CREATE_MS, OrderByDirection.DESCENDING);
+            findStreamCriteria.setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.DESCENDING, false);
             fileSystemStreamStore.rawBuildSQL(findStreamCriteria, sql);
             sql.append(") \n");
             doneOne = true;
         }
         sql.append(" ) AS U ");
-        SQLUtil.appendOrderBy(sql, false, outerCriteria, "U");
-        SQLUtil.applyRestrictionCriteria(outerCriteria, sql);
+        sql.appendOrderBy(FIELD_MAP.getSqlFieldMap(), outerCriteria, "U");
+        sql.applyRestrictionCriteria(outerCriteria);
 
         System.out.println(sql.toString());
 
         System.out.println("=========================");
 
-        final SQLBuilder sql2 = new SQLBuilder();
+        final SqlBuilder sql2 = new SqlBuilder();
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
         for (int i = 0; i < MAX; i++) {
             findStreamCriteria.obtainFeeds().obtainInclude().add((long) i);
@@ -234,7 +240,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         findStreamCriteria.obtainPageRequest().setLength(1000);
         findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
         findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE.getId());
-        findStreamCriteria.setOrderBy(FindStreamCriteria.ORDER_BY_CREATE_MS, OrderByDirection.DESCENDING);
+        findStreamCriteria.setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.DESCENDING, false);
         fileSystemStreamStore.rawBuildSQL(findStreamCriteria, sql2);
         System.out.println(sql2.toString());
     }
@@ -273,7 +279,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             throws RuntimeException {
         Stream entity = null;
 
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e");
         sql.append(" FROM ");
         sql.append(Stream.class.getName());
@@ -684,7 +690,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     @Override
     @Transactional(readOnly = true)
     public long getLockCount() {
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT count(*) FROM ");
         sql.append(Stream.class.getName());
         sql.append(" S WHERE S.pstatus = ");
@@ -700,7 +706,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     @SuppressWarnings("unchecked")
     @Transactional(readOnly = true)
     public Set<StreamVolume> findStreamVolume(final Long metaDataId) {
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT sv FROM ");
         sql.append(StreamVolume.class.getName());
         sql.append(" sv WHERE sv.stream.id = ");
@@ -731,7 +737,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             return BaseResultList.createCriterialBasedList(rtnList, originalCriteria);
         }
 
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         buildRawSelectSQL(queryCriteria, sql);
         List<Stream> rtnList = entityManager.executeNativeQueryResultList(sql, Stream.class);
 
@@ -847,7 +853,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         return feedService.find(findFeedCriteria);
     }
 
-    private void buildRawSelectSQL(final FindStreamCriteria queryCriteria, final SQLBuilder sql) {
+    private void buildRawSelectSQL(final FindStreamCriteria queryCriteria, final SqlBuilder sql) {
         // If we are doing more than one feed query (but less than 20) query
         // using union
         if (queryCriteria.getFeeds() != null && queryCriteria.getFeeds().getExclude() == null
@@ -880,15 +886,15 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             }
             sql.append(") AS U");
 
-            SQLUtil.appendOrderBy(sql, false, queryCriteria, "U");
-            SQLUtil.applyRestrictionCriteria(queryCriteria, sql);
+            sql.appendOrderBy(FIELD_MAP.getSqlFieldMap(), queryCriteria, "U");
+            sql.applyRestrictionCriteria(queryCriteria);
         } else {
             rawBuildSQL(queryCriteria, sql);
         }
     }
 
     @SuppressWarnings("incomplete-switch")
-    private void rawBuildSQL(final FindStreamCriteria criteria, final SQLBuilder sql) {
+    private void rawBuildSQL(final FindStreamCriteria criteria, final SqlBuilder sql) {
         sql.append("SELECT S.*");
         sql.append(" FROM ");
         sql.append(Stream.TABLE_NAME);
@@ -901,11 +907,11 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         appendStreamCriteria(criteria, sql);
 
         // Append order by criteria.
-        SQLUtil.appendOrderBy(sql, false, criteria, "S");
-        SQLUtil.applyRestrictionCriteria(criteria, sql);
+        sql.appendOrderBy(FIELD_MAP.getSqlFieldMap(), criteria, "S");
+        sql.applyRestrictionCriteria(criteria);
     }
 
-    private void appendJoin(final FindStreamCriteria criteria, final SQLBuilder sql) {
+    private void appendJoin(final FindStreamCriteria criteria, final SqlBuilder sql) {
         String indexToUse = null;
 
         // Here we try and better second guess a index to use for MYSQL
@@ -978,7 +984,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         appendStreamProcessorJoin(criteria, sql);
     }
 
-    private void appendStreamProcessorJoin(final FindStreamCriteria queryCriteria, final SQLBuilder sql) {
+    private void appendStreamProcessorJoin(final FindStreamCriteria queryCriteria, final SqlBuilder sql) {
         if (queryCriteria.getPipelineIdSet() != null && queryCriteria.getPipelineIdSet().isConstrained()) {
             sql.append(" JOIN ");
             sql.append(StreamProcessor.TABLE_NAME);
@@ -990,7 +996,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         }
     }
 
-    private void appendStreamCriteria(final FindStreamCriteria criteria, final SQLBuilder sql) {
+    private void appendStreamCriteria(final FindStreamCriteria criteria, final SqlBuilder sql) {
         if (criteria.getAttributeConditionList() != null) {
             for (int i = 0; i < criteria.getAttributeConditionList().size(); i++) {
                 final StreamAttributeCondition condition = criteria.getAttributeConditionList().get(i);
@@ -1063,24 +1069,24 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             }
         }
 
-        SQLUtil.appendRangeQuery(sql, "S." + Stream.CREATE_MS, criteria.getCreatePeriod());
+        sql.appendRangeQuery("S." + Stream.CREATE_MS, criteria.getCreatePeriod());
 
-        SQLUtil.appendRangeQuery(sql, "S." + Stream.EFFECTIVE_MS, criteria.getEffectivePeriod());
+        sql.appendRangeQuery("S." + Stream.EFFECTIVE_MS, criteria.getEffectivePeriod());
 
-        SQLUtil.appendRangeQuery(sql, "S." + Stream.STATUS_MS, criteria.getStatusPeriod());
+        sql.appendRangeQuery("S." + Stream.STATUS_MS, criteria.getStatusPeriod());
 
-        SQLUtil.appendRangeQuery(sql, "S." + Stream.ID, criteria.getStreamIdRange());
+        sql.appendRangeQuery("S." + Stream.ID, criteria.getStreamIdRange());
 
-        SQLUtil.appendSetQuery(sql, false, "S." + Stream.ID, criteria.getStreamIdSet());
+        sql.appendEntityIdSetQuery("S." + Stream.ID, criteria.getStreamIdSet());
 
-        SQLUtil.appendSetQuery(sql, false, "S." + Stream.STATUS, criteria.getStatusSet(), false);
+        sql.appendPrimitiveValueSetQuery("S." + Stream.STATUS, criteria.getStatusSet());
 
-        SQLUtil.appendSetQuery(sql, false, "S." + Stream.PARENT_STREAM_ID, criteria.getParentStreamIdSet(), false);
-        SQLUtil.appendSetQuery(sql, false, "S." + StreamType.FOREIGN_KEY, criteria.getStreamTypeIdSet());
-        SQLUtil.appendIncludeExcludeSetQuery(sql, false, "S." + Feed.FOREIGN_KEY, criteria.getFeeds());
+        sql.appendEntityIdSetQuery("S." + Stream.PARENT_STREAM_ID, criteria.getParentStreamIdSet());
+        sql.appendEntityIdSetQuery("S." + StreamType.FOREIGN_KEY, criteria.getStreamTypeIdSet());
+        sql.appendIncludeExcludeSetQuery("S." + Feed.FOREIGN_KEY, criteria.getFeeds());
 
-        SQLUtil.appendSetQuery(sql, false, "SP." + PipelineEntity.FOREIGN_KEY, criteria.getPipelineIdSet());
-        SQLUtil.appendSetQuery(sql, false, "S." + StreamProcessor.FOREIGN_KEY, criteria.getStreamProcessorIdSet());
+        sql.appendEntityIdSetQuery("SP." + PipelineEntity.FOREIGN_KEY, criteria.getPipelineIdSet());
+        sql.appendEntityIdSetQuery("S." + StreamProcessor.FOREIGN_KEY, criteria.getStreamProcessorIdSet());
     }
 
     private Object[] getValues(final StreamAttributeFieldUse use, final StreamAttributeCondition condition) {
@@ -1111,23 +1117,23 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         for (final Stream stream : streamList) {
             criteriaSet.add(stream.getId());
         }
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT s FROM ");
         sql.append(Stream.class.getName());
         sql.append(" s");
         sql.append(" WHERE 1=1");
 
-        SQLUtil.appendSetQuery(sql, true, "s.parentStreamId", criteriaSet, false);
+        sql.appendCriteriaSetQuery("s.parentStreamId", criteriaSet);
         // Only pick up unlocked streams if set are filtering with status
         // (normal mode in GUI)
-        SQLUtil.appendSetQuery(sql, true, "s.pstatus", fetchCriteria.getStatusSet(), false);
+        sql.appendPrimitiveValueSetQuery("s.pstatus", fetchCriteria.getStatusSet());
 
         return entityManager.executeQueryResultList(sql);
     }
 
     @SuppressWarnings("unchecked")
     private Stream findParent(final Stream stream) {
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT s FROM ");
         sql.append(Stream.class.getName());
         sql.append(" s");
@@ -1151,8 +1157,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         final StreamType streamType = getStreamType(criteria.getStreamType());
         final Feed feed = getFeed(criteria.getFeed());
 
-        // Build up the EJB QL
-        final SQLBuilder sql = new SQLBuilder();
+        // Build up the HQL
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT S FROM ");
         sql.append(Stream.class.getName());
         sql.append(" S WHERE");
@@ -1161,8 +1167,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         sql.append(" AND S.pstatus = ");
         // Only find stuff that has been written
         sql.arg(StreamStatus.UNLOCKED.getPrimitiveValue());
-        SQLUtil.appendRangeQuery(sql, "S.effectiveMs", criteria.getEffectivePeriod());
-        SQLUtil.appendValueQuery(sql, "S.feed", feed);
+        sql.appendRangeQuery("S.effectiveMs", criteria.getEffectivePeriod());
+        sql.appendValueQuery("S.feed", feed);
 
         // Create the query
         // Get the results
@@ -1201,7 +1207,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             Collections.sort(feedList);
 
             // Now load just the 'best' matches up.
-            final SQLBuilder sql = new SQLBuilder();
+            final HqlBuilder sql = new HqlBuilder();
             sql.append("SELECT S FROM ");
             sql.append(Stream.class.getName());
             sql.append(" S WHERE");
@@ -1236,7 +1242,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     public Period getCreatePeriod() {
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT MIN(");
         sql.append(Stream.CREATE_MS);
         sql.append("), MAX(");
@@ -1262,7 +1268,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         final Map<Long, Long> rtnMap = new HashMap<>();
 
         // Find best match otherwise.
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
 //        if (!stroomDatabaseInfo.isMysql() && criteria.getFeed() != null) {
 //            final EntityIdSet<Feed> originalFeedSet = new EntityIdSet<>();
 //            originalFeedSet.copyFrom(criteria.getFeedIdSet());
@@ -1314,8 +1320,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         @SuppressWarnings("unchecked") final List<Object[]> resultSet = entityManager.executeNativeQueryResultList(sql);
 
         for (final Object[] row : resultSet) {
-            final Long feedId = SQLUtil.getLong(row, 0);
-            final Long effectiveMs = SQLUtil.getLong(row, 1);
+            final Long feedId = SqlUtil.getLong(row, 0);
+            final Long effectiveMs = SqlUtil.getLong(row, 1);
 
             if (feedId != null && effectiveMs != null) {
                 rtnMap.put(feedId, effectiveMs);
@@ -1341,7 +1347,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             newStatus = StreamStatus.UNLOCKED;
         }
 
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
 
         if (stroomDatabaseInfo.isMysql()) {
             // UPDATE
@@ -1373,8 +1379,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             appendStreamCriteria(criteria, sql);
 
             // Append order by criteria.
-//            SQLUtil.appendOrderBy(sql, false, criteria, "S");
-            SQLUtil.applyRestrictionCriteria(criteria, sql);
+//            sql.appendOrderBy(sql, false, criteria, "S");
+            sql.applyRestrictionCriteria(criteria);
 
         } else {
             // UPDATE
@@ -1416,8 +1422,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             appendStreamCriteria(criteria, sql);
 
             // Append order by criteria.
-//            SQLUtil.appendOrderBy(sql, false, criteria, "S");
-            SQLUtil.applyRestrictionCriteria(criteria, sql);
+//            sql.appendOrderBy(sql, false, criteria, "S");
+            sql.applyRestrictionCriteria(criteria);
 
             sql.append(")");
         }
@@ -1425,7 +1431,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         return entityManager.executeNativeUpdate(sql);
     }
 
-    private void incrementVersion(final SQLBuilder sql, final String prefix) {
+    private void incrementVersion(final SqlBuilder sql, final String prefix) {
         sql.append(" SET ");
         sql.append(prefix);
         sql.append(BaseEntity.VERSION);

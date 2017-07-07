@@ -45,7 +45,7 @@ public class ChangePasswordPlugin extends Plugin {
             event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, new IconMenuItem(1, SvgPresets.PASSWORD, SvgPresets.PASSWORD, "Change Password", null, true, new Command() {
                 @Override
                 public void execute() {
-                    ChangePasswordEvent.fire(ChangePasswordPlugin.this, currentUser.getUser(), false);
+                    ChangePasswordEvent.fire(ChangePasswordPlugin.this, currentUser.getUserRef(), false);
                 }
             }));
         }

@@ -16,16 +16,29 @@
 
 package stroom.security.shared;
 
-import stroom.dispatch.shared.Action;
+import stroom.util.shared.SharedObject;
 
-public class RefreshCurrentUserAction extends Action<UserAndPermissions> {
-    private static final long serialVersionUID = -6740095230475597845L;
+public class UserProperties implements SharedObject {
+    private static final long serialVersionUID = 2536752388307664050L;
 
-    public RefreshCurrentUserAction() {
+    private Boolean status;
+
+    private Boolean loginExpires;
+
+    public UserProperties() {
+        // Default constructor necessary for GWT serialisation.
     }
 
-    @Override
-    public String getTaskName() {
-        return "Refresh User";
+    public UserProperties(final Boolean status, final Boolean loginExpires) {
+        this.status = status;
+        this.loginExpires = loginExpires;
+    }
+
+    public Boolean getStatus() {
+        return status;
+    }
+
+    public Boolean getLoginExpires() {
+        return loginExpires;
     }
 }

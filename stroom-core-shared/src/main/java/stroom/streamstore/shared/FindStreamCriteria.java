@@ -26,7 +26,6 @@ import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
 import stroom.entity.shared.Matcher;
-import stroom.entity.shared.OrderBy;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
@@ -50,7 +49,7 @@ public class FindStreamCriteria extends BaseCriteria
         implements HasFolderIdSet, Copyable<FindStreamCriteria>, HasIsConstrained, Matcher<Stream> {
     private static final long serialVersionUID = -4777723504698304778L;
 
-    public static final OrderBy ORDER_BY_CREATE_MS = new OrderBy("Create", "createMs", Stream.CREATE_MS);
+    public static final String FIELD_CREATE_MS = "Create";
 
     /**
      * Keep up to date as it's used to cache SQL queries.

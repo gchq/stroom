@@ -35,29 +35,29 @@ public interface StroomEntityManager extends Flushable {
 
     <T extends Entity> Boolean deleteEntity(T entity);
 
-    Long executeNativeUpdate(SQLBuilder sql);
+    Long executeNativeUpdate(SqlBuilder sql);
 
-    long executeNativeQueryLongResult(SQLBuilder sql);
+    long executeNativeQueryLongResult(SqlBuilder sql);
 
-    BaseResultList<SummaryDataRow> executeNativeQuerySummaryDataResult(SQLBuilder sql, int numberKeys);
-
-    @SuppressWarnings("rawtypes")
-    List executeNativeQueryResultList(SQLBuilder sql);
-
-    <T> List<T> executeNativeQueryResultList(SQLBuilder sql, Class<?> clazz);
+    BaseResultList<SummaryDataRow> executeNativeQuerySummaryDataResult(SqlBuilder sql, int numberKeys);
 
     @SuppressWarnings("rawtypes")
-    List executeQueryResultList(SQLBuilder sql);
+    List executeNativeQueryResultList(SqlBuilder sql);
+
+    <T> List<T> executeNativeQueryResultList(SqlBuilder sql, Class<?> clazz);
 
     @SuppressWarnings("rawtypes")
-    List executeQueryResultList(SQLBuilder sql, BaseCriteria criteria);
+    List executeQueryResultList(HqlBuilder sql);
 
     @SuppressWarnings("rawtypes")
-    List executeQueryResultList(SQLBuilder sql, BaseCriteria criteria, boolean allowCaching);
+    List executeQueryResultList(HqlBuilder sql, BaseCriteria criteria);
 
-    long executeQueryLongResult(SQLBuilder sql);
+    @SuppressWarnings("rawtypes")
+    List executeQueryResultList(HqlBuilder sql, BaseCriteria criteria, boolean allowCaching);
 
-    String runSubSelectQuery(SQLBuilder sql, boolean handleNull);
+    long executeQueryLongResult(HqlBuilder sql);
+
+    String runSubSelectQuery(HqlBuilder sql, boolean handleNull);
 
     boolean hasNativeColumn(String nativeTable, String nativeColumn);
 

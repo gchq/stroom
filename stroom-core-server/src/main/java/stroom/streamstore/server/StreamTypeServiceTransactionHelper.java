@@ -18,7 +18,7 @@ package stroom.streamstore.server;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.streamstore.shared.StreamType;
@@ -37,13 +37,12 @@ public class StreamTypeServiceTransactionHelper {
     public void doInserts() {
         final long now = System.currentTimeMillis();
 
-        // We use SQL to insert because we need a predefined key.
-        final SQLBuilder sql = new SQLBuilder(false);
-
         for (final StreamType streamType : StreamType.initialValues()) {
             final long pk = streamType.getId();
             if (stroomEntityManager.loadEntityById(StreamType.class, pk) == null) {
                 try {
+                    // We use SQL to insert because we need a predefined key.
+                    final SqlBuilder sql = new SqlBuilder();
                     sql.append("INSERT INTO ");
                     sql.append(StreamType.TABLE_NAME);
                     sql.append(" (");
@@ -67,25 +66,29 @@ public class StreamTypeServiceTransactionHelper {
                     sql.append(",");
                     sql.append(SQLNameConstants.PURPOSE);
                     sql.append(") VALUES (");
-                    sql.append(streamType.getId());
-                    sql.append(",1,");
-                    sql.append(now);
+                    sql.arg(streamType.getId());
                     sql.append(",");
-                    sql.append(now);
-                    sql.append(",'upgrade','upgrade',");
-                    sql.append("'" + streamType.getPath() + "'");
+                    sql.arg(1);
                     sql.append(",");
-                    sql.append("'" + streamType.getExtension() + "'");
+                    sql.arg(now);
                     sql.append(",");
-                    sql.append("'" + streamType.getName() + "'");
+                    sql.arg(now);
                     sql.append(",");
-                    sql.append(streamType.getPpurpose());
+                    sql.arg("upgrade");
+                    sql.append(",");
+                    sql.arg("upgrade");
+                    sql.append(",");
+                    sql.arg(streamType.getPath());
+                    sql.append(",");
+                    sql.arg(streamType.getExtension());
+                    sql.append(",");
+                    sql.arg(streamType.getName());
+                    sql.append(",");
+                    sql.arg(streamType.getPpurpose());
                     sql.append(")");
                     stroomEntityManager.executeNativeUpdate(sql);
                 } catch (final Exception ex) {
                     LOGGER.error("init() - Added initial stream type %s", streamType, ex);
-                } finally {
-                    sql.setLength(0);
                 }
             }
         }

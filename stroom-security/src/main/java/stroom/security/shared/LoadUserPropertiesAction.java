@@ -14,19 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.servlet;
+package stroom.security.shared;
 
-import org.springframework.stereotype.Component;
+import stroom.dispatch.shared.Action;
 
-/**
- * Bean to check
- */
-@Component
-public class ClusterCallCertificateRequiredCache extends AbstractCertificateRequiredCache {
-    public static final String PROPERTY = "stroom.clusterCallCertificateRequiredFilterCn";
+public class LoadUserPropertiesAction extends Action<UserProperties> {
+    private static final long serialVersionUID = -6740095230475597845L;
+
+    private UserRef userRef;
+
+    public LoadUserPropertiesAction() {
+        // Default constructor necessary for GWT serialisation.
+    }
+
+    public LoadUserPropertiesAction(final UserRef userRef) {
+        this.userRef = userRef;
+    }
+
+    public UserRef getUserRef() {
+        return userRef;
+    }
 
     @Override
-    protected String getFilterProperty() {
-        return PROPERTY;
+    public String getTaskName() {
+        return "Load User Properties";
     }
 }

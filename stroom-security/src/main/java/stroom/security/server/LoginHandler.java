@@ -19,8 +19,8 @@ package stroom.security.server;
 import org.springframework.context.annotation.Scope;
 import stroom.security.Insecure;
 import stroom.security.shared.LoginAction;
-import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
+import stroom.security.shared.UserRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
@@ -33,20 +33,34 @@ import javax.inject.Inject;
 public class LoginHandler extends AbstractTaskHandler<LoginAction, UserAndPermissions> {
     private final AuthenticationService authenticationService;
     private final UserAndPermissionsHelper userAndPermissionsHelper;
+    private final UserService userService;
 
     @Inject
-    LoginHandler(final AuthenticationService authenticationService, final UserAndPermissionsHelper userAndPermissionsHelper) {
+    LoginHandler(final AuthenticationService authenticationService, final UserAndPermissionsHelper userAndPermissionsHelper, final UserService userService) {
         this.authenticationService = authenticationService;
         this.userAndPermissionsHelper = userAndPermissionsHelper;
+        this.userService = userService;
     }
 
     @Override
     public UserAndPermissions exec(final LoginAction task) {
-        final User user = authenticationService.login(task.getUserName(), task.getPassword());
-        if (user == null) {
+        final UserRef userRef = authenticationService.login(task.getUserName(), task.getPassword());
+        if (userRef == null) {
             return null;
         }
 
-        return userAndPermissionsHelper.get(user);
+        final User user = userService.loadByUuid(userRef.getUuid());
+        final Integer daysToExpiry = getDaysToExpiry(user.getPasswordExpiryMs());
+        return new UserAndPermissions(userRef, userAndPermissionsHelper.get(userRef), daysToExpiry);
+    }
+
+    private Integer getDaysToExpiry(final Long expiry) {
+        if (expiry == null) {
+            return null;
+        }
+
+        final long milliseconds = expiry - System.currentTimeMillis();
+        final int days = (int) (milliseconds / 1000 / 60 / 60 / 24);
+        return days;
     }
 }

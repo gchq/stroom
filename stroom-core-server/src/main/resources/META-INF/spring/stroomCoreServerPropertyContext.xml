@@ -654,21 +654,12 @@
             <property name="editable" value="true"/>
             <property name="requireRestart" value="false"/>
         </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name"
-                      value="stroom.clusterCallCertificateRequiredFilterCn"/>
-            <property name="value" value=""/>
-            <property name="description"
-                      value="Allowed Certificates to talk within cluster"/>
-            <property name="editable" value="true"/>
-        </bean>
 
         <!-- EXPORT -->
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.exportCertificateRequiredFilterCn"/>
-            <property name="value" value=""/>
-            <property name="description"
-                      value="Allowed Certificates to export config from system"/>
+            <property name="name" value="stroom.export.enabled"/>
+            <property name="value" value="false"/>
+            <property name="description" value="Determines if the system will allow configuration to be exported via the export servlet"/>
             <property name="editable" value="true"/>
         </bean>
 

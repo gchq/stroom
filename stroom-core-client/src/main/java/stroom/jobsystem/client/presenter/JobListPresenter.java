@@ -136,9 +136,9 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
             }
         };
         final FindJobCriteria findJobCriteria = new FindJobCriteria();
-        findJobCriteria.setOrderBy(FindJobCriteria.ORDER_BY_ADVANCED_AND_NAME);
+        findJobCriteria.setSort(FindJobCriteria.FIELD_ADVANCED);
+        findJobCriteria.addSort(FindJobCriteria.FIELD_NAME);
         this.dataProvider.setCriteria(findJobCriteria);
-
     }
 
     public MultiSelectionModel<Job> getSelectionModel() {

@@ -14,19 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.servlet;
+package stroom.security.shared;
 
-import org.springframework.stereotype.Component;
+import stroom.dispatch.shared.Action;
+import stroom.util.shared.VoidResult;
 
-/**
- * Bean to check
- */
-@Component
-public class ExportCertificateRequiredCache extends AbstractCertificateRequiredCache {
-    public static final String PROPERTY = "stroom.exportCertificateRequiredFilterCn";
+public class DeleteUserAction extends Action<VoidResult> {
+    private UserRef userRef;
+
+    public DeleteUserAction() {
+    }
+
+    public DeleteUserAction(final UserRef userRef) {
+        this.userRef = userRef;
+    }
+
+    public UserRef getUserRef() {
+        return userRef;
+    }
 
     @Override
-    protected String getFilterProperty() {
-        return PROPERTY;
+    public String getTaskName() {
+        return "Delete user";
     }
 }

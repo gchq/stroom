@@ -28,7 +28,7 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
 import stroom.entity.client.presenter.HasRead;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
+import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.NamedEntity;
@@ -50,12 +50,12 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import java.util.ArrayList;
 
-public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<StreamTask>>implements HasRead<BaseEntity> {
+public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<StreamTask>> implements HasRead<BaseEntity> {
     private final EntityServiceFindActionDataProvider<FindStreamTaskCriteria, StreamTask> dataProvider;
 
     @Inject
     public StreamTaskListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-            final TooltipPresenter tooltipPresenter) {
+                                   final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<StreamTask>(false));
 
         // Info column.
@@ -112,7 +112,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
         }, "<br/>", ColumnSizeConstants.ICON_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_CREATE_TIME) {
+                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_CREATE_TIME, false) {
                     @Override
                     public String getValue(final StreamTask row) {
                         return ClientDateUtil.toISOString(row.getCreateMs());
@@ -120,7 +120,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                 }, "Create", ColumnSizeConstants.DATE_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_STATUS) {
+                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_STATUS, false) {
                     @Override
                     public String getValue(final StreamTask row) {
                         return row.getStatus().getDisplayValue();
@@ -128,7 +128,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                 }, "Status", 80);
 
         getView()
-                .addColumn(new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_NODE) {
+                .addColumn(new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_NODE, true) {
                     @Override
                     public String getValue(final StreamTask row) {
                         if (row.getNode() != null) {
@@ -138,7 +138,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                         }
                     }
                 }, "Node", 100);
-        getView().addColumn(new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_PRIORITY) {
+        getView().addColumn(new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PRIORITY, false) {
             @Override
             public String getValue(final StreamTask row) {
                 if (row.getStreamProcessorFilter() != null) {
@@ -149,7 +149,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
             }
         }, "Priority", 100);
         getView().addResizableColumn(
-                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_PIPELINE_NAME) {
+                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PIPELINE_NAME, true) {
                     @Override
                     public String getValue(final StreamTask row) {
                         if (row.getStreamProcessorFilter() != null) {
@@ -165,14 +165,14 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                     }
                 }, "Pipeline", 200);
         getView().addResizableColumn(
-                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_START_TIME) {
+                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_START_TIME, false) {
                     @Override
                     public String getValue(final StreamTask row) {
                         return ClientDateUtil.toISOString(row.getStartTimeMs());
                     }
                 }, "Start Time", ColumnSizeConstants.DATE_COL);
         getView().addResizableColumn(
-                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.ORDER_BY_END_TIME_DATE) {
+                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_END_TIME_DATE, false) {
                     @Override
                     public String getValue(final StreamTask row) {
                         return ClientDateUtil.toISOString(row.getEndTimeMs());
@@ -251,7 +251,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
 
     private FindStreamTaskCriteria initCriteria() {
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
-        criteria.setOrderBy(FindStreamTaskCriteria.ORDER_BY_CREATE_TIME, OrderByDirection.DESCENDING);
+        criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME, Direction.DESCENDING, false);
         criteria.getFetchSet().add(Stream.ENTITY_TYPE);
         criteria.getFetchSet().add(StreamType.ENTITY_TYPE);
         criteria.getFetchSet().add(Feed.ENTITY_TYPE);
