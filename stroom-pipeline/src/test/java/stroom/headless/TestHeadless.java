@@ -36,11 +36,6 @@ public class TestHeadless {
     @Test
     public void test() throws Exception {
         try {
-            // Let tests update the database
-            StroomProperties.setOverrideProperty("stroom.jpaHbm2DdlAuto", "update", StroomProperties.Source.TEST);
-            StroomProperties.setOverrideProperty("stroom.connectionTesterClassName",
-                    "stroom.entity.server.util.StroomConnectionTesterOkOnException", StroomProperties.Source.TEST);
-
             Path newTempDir = FileUtil.getTempDir().toPath().resolve("headless");
             StroomProperties.setOverrideProperty("stroom.temp", newTempDir.toAbsolutePath().toString(), StroomProperties.Source.TEST);
 
