@@ -84,14 +84,12 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         }
         dataRetentionService.save(dataRetentionPolicy);
 
-//        feed.setRetentionDayAge(RETENTION_PERIOD_DAYS);
         Stream streamInsideRetention = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null, now);
         streamInsideRetention.setStatusMs(now);
         Stream streamOutsideRetention = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null,
                 timeOutsideRetentionPeriod);
         streamOutsideRetention.setStatusMs(now);
 
-        feed = feedService.save(feed);
         streamInsideRetention = streamMaintenanceService.save(streamInsideRetention);
         streamOutsideRetention = streamMaintenanceService.save(streamOutsideRetention);
 

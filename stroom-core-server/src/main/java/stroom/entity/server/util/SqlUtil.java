@@ -41,7 +41,7 @@ public final class SqlUtil {
     }
 
     /**
-     * Prime a query with the list are parameters by index shard.
+     * Prime a query with the list of parameters.
      */
     static void setParameters(final Query query, final CoreSqlBuilder sql) {
         if (sql != null) {

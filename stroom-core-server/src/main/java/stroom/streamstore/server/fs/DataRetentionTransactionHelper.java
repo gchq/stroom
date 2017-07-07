@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.dictionary.shared.DictionaryService;
+import stroom.entity.server.util.PreparedStatementUtil;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
@@ -98,9 +99,11 @@ public class DataRetentionTransactionHelper {
 
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamFields.getFieldMap(), dictionaryService);
 
-        final String sql = getSql(ageRange, fieldSet, false);
+        final SqlBuilder sql = getSql(ageRange, fieldSet, false);
         try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql.toString())) {
+                PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
+
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         final Map<String, Object> attributeMap = createAttributeMap(resultSet, fieldSet);
@@ -137,9 +140,11 @@ public class DataRetentionTransactionHelper {
 
     private long getRowCount(final Period ageRange, final Set<String> fieldSet) {
         long rowCount = 0;
-        final String sql = getSql(ageRange, fieldSet, true);
+        final SqlBuilder sql = getSql(ageRange, fieldSet, true);
         try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql.toString())) {
+                PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
+
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         rowCount = resultSet.getLong(1);
@@ -152,7 +157,7 @@ public class DataRetentionTransactionHelper {
         return rowCount;
     }
 
-    private String getSql(final Period ageRange, final Set<String> fieldSet, final boolean count) {
+    private SqlBuilder getSql(final Period ageRange, final Set<String> fieldSet, final boolean count) {
         final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT");
 
@@ -187,7 +192,7 @@ public class DataRetentionTransactionHelper {
         sql.append(" WHERE 1=1");
         sql.appendRangeQuery("S." + Stream.CREATE_MS, ageRange);
 
-        return sql.toString();
+        return sql;
     }
 
     private DataRetentionRule findMatchingRule(final ExpressionMatcher expressionMatcher, final Map<String, Object> attributeMap, final List<DataRetentionRule> activeRules) {
