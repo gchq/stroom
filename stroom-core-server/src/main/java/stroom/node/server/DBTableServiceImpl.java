@@ -18,6 +18,9 @@ package stroom.node.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.ConnectionUtil;
@@ -31,7 +34,6 @@ import stroom.security.Secured;
 import stroom.util.shared.CompareUtil;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -43,25 +45,28 @@ import java.util.List;
 @Transactional(readOnly = true)
 @Secured(DBTableStatus.MANAGE_DB_PERMISSION)
 @Component("dbTableService")
-public class DBTableServiceImpl implements DBTableService {
+public class DBTableServiceImpl implements DBTableService, BeanFactoryAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBTableServiceImpl.class);
 
-    private final DataSource dataSource;
-    private final DataSource statisticsDataSource;
+    private BeanFactory beanFactory;
     private final StroomDatabaseInfo stroomDatabaseInfo;
 
     @Inject
-    DBTableServiceImpl(final DataSource dataSource, @Named("statisticsDataSource") final DataSource statisticsDataSource, final StroomDatabaseInfo stroomDatabaseInfo) {
-        this.dataSource = dataSource;
-        this.statisticsDataSource = statisticsDataSource;
+    DBTableServiceImpl(final StroomDatabaseInfo stroomDatabaseInfo) {
         this.stroomDatabaseInfo = stroomDatabaseInfo;
     }
 
     @Override
     public List<DBTableStatus> findSystemTableStatus(final FindDBTableCriteria criteria) {
         final List<DBTableStatus> rtnList = new ArrayList<>();
-        addTableStatus(dataSource, rtnList);
-        addTableStatus(statisticsDataSource, rtnList);
+
+        if (beanFactory != null) {
+            final Object dataSource = beanFactory.getBean("dataSource");
+            final Object statisticsDataSource = beanFactory.getBean("statisticsDataSource");
+
+            addTableStatus(dataSource, rtnList);
+            addTableStatus(statisticsDataSource, rtnList);
+        }
 
         rtnList.sort((o1, o2) -> {
             if (criteria.getSortList() != null && criteria.getSortList().size() > 0) {
@@ -102,7 +107,13 @@ public class DBTableServiceImpl implements DBTableService {
         return rtnList;
     }
 
-    private void addTableStatus(final DataSource dataSource, final List<DBTableStatus> rtnList) {
+
+    private void addTableStatus(final Object bean, final List<DBTableStatus> rtnList) {
+        if (bean == null || !(bean instanceof DataSource)) {
+            return;
+        }
+
+        final DataSource dataSource = (DataSource) bean;
         Connection connection = null;
 
         try {
@@ -146,5 +157,10 @@ public class DBTableServiceImpl implements DBTableService {
         } finally {
             ConnectionUtil.close(connection);
         }
+    }
+
+    @Override
+    public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
+        this.beanFactory = beanFactory;
     }
 }
