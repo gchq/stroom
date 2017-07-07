@@ -39,7 +39,7 @@
   <artifactId>stroom</artifactId>
   <name>stroom</name>
   <description>STROOM</description>
-  <version>5.0-beta.37</version>
+  <version>5.0-beta.38</version>
   <packaging>pom</packaging>
 
   <properties>
