@@ -95,12 +95,9 @@ public abstract class StroomIntegrationTest implements StroomTest {
             }
         }
 
-        if (!XML_SCHEMAS_DOWNLOADED) {
-            contentPackImportService.importContentPacks();
-        }
-
         onBefore();
     }
+
 
     /**
      * Remove all entities from the database.
@@ -149,6 +146,17 @@ public abstract class StroomIntegrationTest implements StroomTest {
         // one test in this test class.
         if (force || getTestCount() > 1) {
             commonTestControl.setup();
+        }
+    }
+
+    public void importSchemas() {
+        importSchemas(false);
+    }
+
+    public void importSchemas(final boolean force) {
+        if (force || !XML_SCHEMAS_DOWNLOADED) {
+            contentPackImportService.importXmlSchemas();
+            XML_SCHEMAS_DOWNLOADED = true;
         }
     }
 

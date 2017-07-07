@@ -16,6 +16,8 @@
 
 package stroom.importexport.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.DocRefs;
@@ -30,11 +32,16 @@ import java.util.List;
 @Profile(StroomSpringProfiles.TEST)
 @Component
 public class MockImportExportSerializer implements ImportExportSerializer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MockImportExportSerializer.class);
+
     @Override
     public void read(final Path dir, final List<ImportState> importStateList, final ImportMode importMode) {
+        LOGGER.info("read called on MockImportExportSerializer, doing nothing");
     }
 
     @Override
     public void write(final Path dir, final DocRefs docRefs, final boolean omitAuditFields, final List<Message> messageList) {
+        LOGGER.info("write called on MockImportExportSerializer, doing nothing");
     }
 }

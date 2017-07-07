@@ -16,6 +16,8 @@
 
 package stroom.importexport.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.DocRefs;
@@ -30,20 +32,26 @@ import java.util.List;
 @Profile(StroomSpringProfiles.TEST)
 @Component
 public class MockImportExportService implements ImportExportService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MockImportExportService.class);
     @Override
     public SharedList<ImportState> createImportConfirmationList(final Path data) {
+        LOGGER.info("createImportConfirmationList called on MockImportExportService, doing nothing");
         return null;
     }
 
     @Override
     public void performImportWithConfirmation(final Path data, final List<ImportState> confirmList) {
+        LOGGER.info("performImportWithConfirmation called on MockImportExportService, doing nothing");
     }
 
     @Override
     public void performImportWithoutConfirmation(final Path data) {
+        LOGGER.info("performImportWithoutConfirmation called on MockImportExportService, doing nothing");
     }
 
     @Override
     public void exportConfig(final DocRefs criteria, final Path data, final List<Message> messageList) {
+        LOGGER.info("exportConfig called on MockImportExportService, doing nothing");
     }
 }

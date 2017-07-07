@@ -46,9 +46,9 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
     @Resource
     private StatisticsDataSourceProvider statisticsDataSourceProvider;
 
-    private DocRefs buildFindFolderCriteria() {
+    private DocRefs buildFindFolderCriteria(DocRef folderDocRef) {
         final DocRefs docRefs = new DocRefs();
-        docRefs.add(new DocRef(Folder.ENTITY_TYPE,"0", "System"));
+        docRefs.add(folderDocRef);
         return docRefs;
     }
 
@@ -76,7 +76,7 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
         FileSystemUtil.deleteDirectory(testDataDir);
         FileSystemUtil.mkdirs(null, testDataDir);
 
-        importExportSerializer.write(testDataDir.toPath(), buildFindFolderCriteria(), true, null);
+        importExportSerializer.write(testDataDir.toPath(), buildFindFolderCriteria(folder), true, null);
 
         Assert.assertEquals(2, testDataDir.listFiles().length);
 

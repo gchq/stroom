@@ -91,6 +91,7 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         // @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value =
         // ImportExportSerializerImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ImportExportServiceImpl.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ImportExportServiceImpl.class),
         // @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value =
         // IndexServiceImpl.class),
         // @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value =

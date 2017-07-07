@@ -29,11 +29,11 @@ public class ContentPackDownloader {
     }
 
 
-    public static void downloadContentPack(final String contentPackName, final Version version, final Path destDir) {
-        downloadContentPack(contentPackName, version, destDir, ConflictMode.KEEP_EXISTING);
+    public static Path downloadContentPack(final String contentPackName, final Version version, final Path destDir) {
+        return downloadContentPack(contentPackName, version, destDir, ConflictMode.KEEP_EXISTING);
     }
 
-    public static void downloadContentPack(final String contentPackName, final Version version, final Path destDir, final ConflictMode conflictMode) {
+    public static Path downloadContentPack(final String contentPackName, final Version version, final Path destDir, final ConflictMode conflictMode) {
         Preconditions.checkNotNull(contentPackName);
         Preconditions.checkNotNull(version);
         Preconditions.checkNotNull(destDir);
@@ -47,7 +47,7 @@ public class ContentPackDownloader {
             LOGGER.debug("Requested contentPack {} already exists in {}, keeping existing",
                     contentPackName,
                     destFilePath.toAbsolutePath().toString());
-            return;
+            return destFilePath;
         }
 
         if (destFileExists && conflictMode.equals(ConflictMode.OVERWRITE_EXISTING)) {
@@ -63,12 +63,14 @@ public class ContentPackDownloader {
         }
 
         URL fileUrl = buildFileUrl(contentPackName, version);
-        LOGGER.debug("Downloading contentPack {} from {} to {}",
+        LOGGER.info("Downloading contentPack {} from {} to {}",
                 contentPackName,
                 fileUrl.toString(),
                 destFilePath.toAbsolutePath().toString());
 
         downloadFile(fileUrl, destFilePath);
+
+        return destFilePath;
     }
 
     private static String buildFilename(final String contentPackName, final Version version) {
