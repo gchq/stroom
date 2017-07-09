@@ -16,104 +16,86 @@
 
 package stroom.headless;
 
-import stroom.test.StroomProcessTestFileUtil;
-import stroom.test.ComparisonHelper;
-import stroom.util.config.StroomProperties;
-import stroom.util.io.FileUtil;
-import stroom.util.logging.StroomLogger;
-import stroom.util.zip.ZipUtil;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
-import org.junit.Ignore;
+import org.junit.Test;
+import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.test.ComparisonHelper;
+import stroom.test.StroomProcessTestFileUtil;
+import stroom.util.config.StroomProperties;
+import stroom.util.io.FileUtil;
+import stroom.util.zip.ZipUtil;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 
 public class TestHeadless {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestHeadless.class);
-
-    // TODO : Add new data to test headless.
-
-    @Ignore
+    @Test
     public void test() throws Exception {
-        String newTempDir = null;
-
         try {
-            // Let tests update the database
-//            StroomProperties.setOverrideProperty("stroom.jpaHbm2DdlAuto", "update", "test");
-//            StroomProperties.setOverrideProperty("stroom.connectionTesterClassName",
-//                    "stroom.entity.server.util.StroomConnectionTesterOkOnException", "test");
-
-            newTempDir = FileUtil.getTempDir().getCanonicalPath() + File.separator + "headless";
-            StroomProperties.setOverrideProperty("stroom.temp", newTempDir, StroomProperties.Source.TEST);
+            Path newTempDir = FileUtil.getTempDir().toPath().resolve("headless");
+            StroomProperties.setOverrideProperty("stroom.temp", newTempDir.toAbsolutePath().toString(), StroomProperties.Source.TEST);
 
             // Make sure the new temp directory is empty.
-            final File tmpDir = new File(newTempDir);
-            if (tmpDir.isDirectory()) {
-                FileUtils.deleteDirectory(tmpDir);
+            if (Files.isDirectory(newTempDir)) {
+                FileUtils.deleteDirectory(newTempDir.toFile());
             }
 
-            final String dir = StroomProcessTestFileUtil.getTestResourcesDir().getCanonicalPath() + File.separator
-                    + "TestHeadless";
+            final Path base = StroomProcessTestFileUtil.getTestResourcesDir().toPath();
+            final Path testPath = base.resolve("TestHeadless");
+            final Path tmpPath = testPath.resolve("tmp");
+            FileSystemUtil.deleteDirectory(tmpPath);
+            Files.createDirectories(tmpPath);
 
-            final String inputDirPath = dir + File.separator + "input";
-            final String outputDirPath = dir + File.separator + "output";
-            new File(inputDirPath).mkdir();
-            new File(outputDirPath).mkdir();
+            final Path inputDirPath = tmpPath.resolve("input");
+            final Path outputDirPath = tmpPath.resolve("output");
 
-            final String configFilePath = dir + File.separator + "config.zip";
-            final String configUnzippedDirPath = dir + File.separator + "configUnzipped";
-            final String inputFilePath = inputDirPath + File.separator + "001.zip";
-            final String inputUnzippedDirPath = dir + File.separator + "inputUnzipped";
-            final String outputFilePath = outputDirPath + File.separator + "output";
-            final String expectedOutputFilePath = dir + File.separator + "expectedOutput";
+            FileSystemUtil.deleteDirectory(inputDirPath);
+            Files.createDirectories(inputDirPath);
+            Files.createDirectories(outputDirPath);
 
-            // Clear out any files from previous runs
-            Files.deleteIfExists(new File(inputFilePath).toPath());
-            Files.deleteIfExists(new File(configFilePath).toPath());
+            final Path samplesPath = base.resolve("../../../../stroom-core-server/src/test/resources/samples").toAbsolutePath();
+            final Path outputFilePath = outputDirPath.resolve("output");
+            final Path expectedOutputFilePath = testPath.resolve("expectedOutput");
 
-            // build the input zip file from the source files
-            // the zip files created are transient and are ignored by git. They
-            // are left in place to make it
-            // easier to see the actual file when debugging the test
-            final File inputZipFile = new File(inputFilePath);
-            ZipUtil.zip(inputZipFile, new File(inputUnzippedDirPath));
+            // Create input zip file
+            final Path rawInputPath = testPath.resolve("input");
+            Files.createDirectories(rawInputPath);
+            final Path inputFilePath = inputDirPath.resolve("001.zip");
+            Files.deleteIfExists(inputFilePath);
+            ZipUtil.zip(inputFilePath.toFile(), rawInputPath.toFile());
 
-            // build the config zip file from the source files
-            // the zip files created are transient and are ignored by git. They
-            // are left in place to make it
-            // easier to see the actual file when debugging the test
-            final File configZipFile = new File(configFilePath);
-            ZipUtil.zip(configZipFile, new File(configUnzippedDirPath));
+            // Create config zip file
+            final Path configUnzippedDirPath = samplesPath.resolve("config");
+            final Path configFilePath = tmpPath.resolve("config.zip");
+            Files.deleteIfExists(configFilePath);
+            ZipUtil.zip(configFilePath.toFile(), configUnzippedDirPath.toFile());
 
             final Headless headless = new Headless();
 
-            headless.setConfig(configFilePath);
-            headless.setInput(inputDirPath);
-            headless.setOutput(outputFilePath);
-            headless.setTmp(newTempDir);
+            headless.setConfig(configFilePath.toAbsolutePath().toString());
+            headless.setInput(inputDirPath.toAbsolutePath().toString());
+            headless.setOutput(outputFilePath.toAbsolutePath().toString());
+            headless.setTmp(newTempDir.toAbsolutePath().toString());
             headless.run();
 
-            final List<String> expectedLines = Files.readAllLines(new File(expectedOutputFilePath).toPath(),
-                    Charset.defaultCharset());
-            final List<String> outputLines = Files.readAllLines(new File(outputFilePath).toPath(),
-                    Charset.defaultCharset());
+            final List<String> expectedLines = Files.readAllLines(expectedOutputFilePath, Charset.defaultCharset());
+            final List<String> outputLines = Files.readAllLines(outputFilePath, Charset.defaultCharset());
 
             // same number of lines output as expected
             Assert.assertEquals(expectedLines.size(), outputLines.size());
 
             // make sure all lines are present in both
-            Assert.assertEquals(new HashSet<String>(expectedLines), new HashSet<String>(outputLines));
+            Assert.assertEquals(new HashSet<>(expectedLines), new HashSet<>(outputLines));
 
             // content should exactly match expected file
-            ComparisonHelper.compareFiles(new File(expectedOutputFilePath), new File(outputFilePath));
+            ComparisonHelper.compareFiles(expectedOutputFilePath.toFile(), outputFilePath.toFile());
 
         } finally {
             StroomProperties.removeOverrides();
         }
     }
-
 }

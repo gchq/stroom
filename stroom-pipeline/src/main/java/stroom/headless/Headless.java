@@ -266,7 +266,7 @@ public class Headless extends AbstractCommandLineTool {
     }
 
     private ApplicationContext buildAppContext() {
-        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD);
+        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ",Headless");
         final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ScopeConfiguration.class, PersistenceConfiguration.class, ServerComponentScanConfiguration.class,
                 ServerConfiguration.class, PipelineConfiguration.class);

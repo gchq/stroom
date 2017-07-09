@@ -267,7 +267,7 @@ public class StreamTaskCreatorTransactionHelper {
                     } else {
                         // If the stream is locked then don't take ownership of
                         // the task at this time, i.e. set the node to null.
-                        batchStreamTaskInsert.arg("null");
+                        batchStreamTaskInsert.arg(null);
                     }
                     batchStreamTaskInsert.append(",");
                     batchStreamTaskInsert.arg(stream.getId());

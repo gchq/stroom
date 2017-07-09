@@ -287,13 +287,15 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.maintenance.message"/>
             <property name="value" value=""/>
-            <property name="description" value="Provide a warning message to users about an outage or other significant event."/>
+            <property name="description"
+                      value="Provide a warning message to users about an outage or other significant event."/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.maintenance.preventLogin"/>
             <property name="value" value="false"/>
-            <property name="description" value="Prevent new logins to the system. This is useful if the system is scheduled to have an outage."/>
+            <property name="description"
+                      value="Prevent new logins to the system. This is useful if the system is scheduled to have an outage."/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
@@ -500,7 +502,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.jdbcDriverUrl"/>
             <property name="value"
-                      value="jdbc:hsqldb:file:${stroom.temp}/STROOMDB/HSQLDB.DAT;shutdown=true"/>
+                      value="jdbc:hsqldb:file:${stroom.temp}/stroom/HSQLDB.DAT;shutdown=true"/>
             <property name="description"
                       value="Should only be set per node in application property file"/>
             <property name="editable" value="false"/>
@@ -546,7 +548,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.statistics.sql.jdbcDriverUrl"/>
             <property name="value"
-                      value="jdbc:hsqldb:file:${stroom.temp}/STROOMDB/HSQLDB.DAT;shutdown=true"/>
+                      value="jdbc:hsqldb:file:${stroom.temp}/statistics/HSQLDB.DAT;shutdown=true"/>
             <property name="description"
                       value="Should only be set per node in application property file"/>
             <property name="editable" value="false"/>
@@ -659,7 +661,8 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.export.enabled"/>
             <property name="value" value="false"/>
-            <property name="description" value="Determines if the system will allow configuration to be exported via the export servlet"/>
+            <property name="description"
+                      value="Determines if the system will allow configuration to be exported via the export servlet"/>
             <property name="editable" value="true"/>
         </bean>
 
@@ -836,7 +839,7 @@
             <property name="name" value="stroom.contentPackImportEnabled"/>
             <property name="value" value="true"/>
             <property name="description"
-                      value="If true any content packs found in ${CATALINA_BASE}/contentPackImport/ will be imported into Stroom. Only intended for use on new Stroom instances to reduce the risk of overwriting existing entities" />
+                      value="If true any content packs found in ${CATALINA_BASE}/contentPackImport/ will be imported into Stroom. Only intended for use on new Stroom instances to reduce the risk of overwriting existing entities"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -844,7 +847,7 @@
             <property name="name" value="stroom.volumes.createDefaultOnStart"/>
             <property name="value" value="true"/>
             <property name="description"
-                      value="If no existing volumes are present a default volume will be created on application start. The volume will live in the volumes sub directory of the Stroom installation directory" />
+                      value="If no existing volumes are present a default volume will be created on application start. The volume will live in the volumes sub directory of the Stroom installation directory"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>

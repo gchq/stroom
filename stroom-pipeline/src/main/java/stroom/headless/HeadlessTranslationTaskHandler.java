@@ -150,8 +150,6 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
 
             // Get the feed.
             final String feedName = metaData.get(StroomHeaderArguments.FEED);
-            final String effectiveTime = metaData.get(StroomHeaderArguments.EFFECTIVE_TIME);
-
             final Feed feed = getFeed(feedName);
             feedHolder.setFeed(feed);
 
@@ -184,15 +182,25 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
             this.metaData.putAll(metaData);
             task.getHeadlessFilter().changeMetaData(metaData);
 
-            // Set the stream.
+            // Create the stream.
             final Stream stream = new Stream();
+            // Set the feed.
             stream.setFeed(feed);
-            stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(effectiveTime));
-            streamHolder.setStream(stream);
+
+            // Set effective time.
+            try {
+                final String effectiveTime = metaData.get(StroomHeaderArguments.EFFECTIVE_TIME);
+                if (effectiveTime != null && effectiveTime.length() > 0) {
+                    stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(effectiveTime));
+                }
+            } catch (final Exception e) {
+                outputError(e);
+            }
 
             // Add stream providers for lookups etc.
             final BasicInputStreamProvider streamProvider = new BasicInputStreamProvider(
                     new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
+            streamHolder.setStream(stream);
             streamHolder.addProvider(streamProvider, StreamType.RAW_EVENTS);
             if (task.getMetaStream() != null) {
                 final BasicInputStreamProvider metaStreamProvider = new BasicInputStreamProvider(
