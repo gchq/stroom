@@ -801,7 +801,12 @@ public class SQLStatisticEventStore implements Statistics {
     private void putBatch(final List<StatisticEvent> eventsBatch) {
         if (eventsBatch.size() > 0) {
             final StatisticEvent firstEventInBatch = eventsBatch.get(0);
-            final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(firstEventInBatch.getName());
+            final String statName = firstEventInBatch.getName();
+            final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(statName);
+
+            if (statisticsDataSource == null) {
+                throw new RuntimeException(String.format("No statistic data source exists for name %s", statName));
+            }
             putEvents(eventsBatch, statisticsDataSource);
             eventsBatch.clear();
         }
