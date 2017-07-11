@@ -31,6 +31,7 @@ import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Monitor;
+import stroom.util.shared.SimpleThreadPool;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
@@ -51,6 +52,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -64,6 +66,8 @@ import java.util.concurrent.locks.ReentrantLock;
 @Component("taskManager")
 public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskProgressCriteria> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskManagerImpl.class);
+
+    private static final ThreadPool DEFAULT_THREAD_POOL = new SimpleThreadPool("Default", 2);
 
     private final TaskHandlerBeanRegistry taskHandlerBeanRegistry;
     private final NodeCache nodeCache;
@@ -86,6 +90,11 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
         // When we are running unit tests we need to make sure that all Stroom
         // threads complete and are shutdown between tests.
         ExternalShutdownController.addTerminateHandler(TaskManagerImpl.class, () -> shutdown());
+    }
+
+    @Override
+    public Executor getExecutor() {
+        return getExecutor(DEFAULT_THREAD_POOL);
     }
 
     private ThreadPoolExecutor getExecutor(final ThreadPool threadPool) {

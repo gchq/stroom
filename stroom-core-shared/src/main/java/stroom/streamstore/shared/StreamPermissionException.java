@@ -17,6 +17,8 @@
 package stroom.streamstore.shared;
 
 public class StreamPermissionException extends RuntimeException {
+    private static final long serialVersionUID = -4440960036445588068L;
+
     public StreamPermissionException(final String message) {
         super(message);
     }

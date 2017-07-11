@@ -29,7 +29,11 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Map;
 import java.util.StringTokenizer;
+
+import stroom.util.io.StreamUtil;
+import stroom.feed.MetaMap;
 
 public class MigrationTool {
     static boolean ignoreError;
@@ -37,8 +41,7 @@ public class MigrationTool {
 
     public static void main(final String[] args)
             throws SQLException, InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
-        final HeaderMap map = new HeaderMap();
-        map.loadArgs(args);
+        final Map<String, String> map = ArgsUtil.parse(args);
 
         final String url = map.get("jdbcDriverUrl");
         String clazz = map.get("jdbcDriverClassName");

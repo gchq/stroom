@@ -27,8 +27,8 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.client.presenter.ExplorerTreeUiHandlers;
-import stroom.widget.button.client.GlyphButton;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SvgButton;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 
 public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandlers>
@@ -39,21 +39,21 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
     private final Widget widget;
 
     @UiField(provided = true)
-    GlyphButton newItem;
+    SvgButton newItem;
     @UiField(provided = true)
-    GlyphButton deleteItem;
+    SvgButton deleteItem;
     @UiField
     QuickFilter nameFilter;
     @UiField
     SimplePanel treeContainer;
     @UiField(provided = true)
-    GlyphButton typeFilter;
+    SvgButton typeFilter;
 
     @Inject
     public ExplorerTreeViewImpl(final Binder binder) {
-        newItem = GlyphButton.create(GlyphIcons.NEW_ITEM);
-        deleteItem = GlyphButton.create(GlyphIcons.DELETE);
-        typeFilter = GlyphButton.create(GlyphIcons.FILTER);
+        newItem = SvgButton.create(SvgPresets.NEW_ITEM);
+        deleteItem = SvgButton.create(SvgPresets.DELETE);
+        typeFilter = SvgButton.create(SvgPresets.FILTER);
         widget = binder.createAndBindUi(this);
     }
 

@@ -18,7 +18,7 @@ package stroom.streamstore.server;
 
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 import java.io.Closeable;
 import java.io.OutputStream;
@@ -44,7 +44,7 @@ public interface StreamTarget extends Closeable {
     /**
      * Any attributes regarding the stream
      */
-    HeaderMap getAttributeMap();
+    MetaMap getAttributeMap();
 
     /**
      * @return the real IO output stream

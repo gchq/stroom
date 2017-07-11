@@ -18,7 +18,6 @@ package stroom.util.cert;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.zip.HeaderMap;
 
 import javax.security.auth.x500.X500Principal;
 import javax.servlet.http.HttpServletRequest;
@@ -27,6 +26,10 @@ import java.util.Date;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.servlet.ServletRequest;
+
+import stroom.feed.MetaMap;
 
 public class CertificateUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(CertificateUtil.class);
@@ -39,16 +42,16 @@ public class CertificateUtil {
     /**
      * Do all the below in 1 go !
      */
-    public static String extractCertificateDN(final HttpServletRequest httpServletRequest) {
-        return extractDNFromCertificate(extractCertificate(httpServletRequest));
+    public static String extractCertificateDN(final ServletRequest request) {
+        return extractDNFromCertificate(extractCertificate(request));
     }
 
     /**
      * Pull out the Subject from the certificate. E.g.
      * "CN=some.server.co.uk, OU=servers, O=some organisation, C=GB"
      */
-    public static java.security.cert.X509Certificate extractCertificate(final HttpServletRequest httpServletRequest) {
-        final Object[] certs = (Object[]) httpServletRequest.getAttribute(CertificateUtil.SERVLET_CERT_ARG);
+    public static java.security.cert.X509Certificate extractCertificate(final ServletRequest request) {
+        final Object[] certs = (Object[]) request.getAttribute(CertificateUtil.SERVLET_CERT_ARG);
 
         return CertificateUtil.extractCertificate(certs);
     }
@@ -112,7 +115,7 @@ public class CertificateUtil {
             return null;
         }
         final StringTokenizer attributes = new StringTokenizer(dn, ",");
-        final HeaderMap map = new HeaderMap();
+        final MetaMap map = new MetaMap();
         while (attributes.hasMoreTokens()) {
             final String token = attributes.nextToken();
             if (token.contains("=")) {

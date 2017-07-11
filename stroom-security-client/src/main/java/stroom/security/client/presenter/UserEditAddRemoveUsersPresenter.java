@@ -22,8 +22,8 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -35,8 +35,8 @@ import javax.inject.Provider;
 public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter implements UserListUiHandlers {
     private final ClientDispatchAsync dispatcher;
     private final Provider<AdvancedUserListPresenter> selectUserPresenterProvider;
-    private final GlyphButtonView addButton;
-    private final GlyphButtonView removeButton;
+    private final ButtonView addButton;
+    private final ButtonView removeButton;
 
     private UserRef relatedUser;
 
@@ -47,9 +47,9 @@ public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter i
         this.dispatcher = dispatcher;
         this.selectUserPresenterProvider = selectUserPresenterProvider;
 
-        addButton = addButton(GlyphIcons.ADD);
+        addButton = addButton(SvgPresets.ADD);
         addButton.setTitle("Add Group");
-        removeButton = addButton(GlyphIcons.REMOVE);
+        removeButton = addButton(SvgPresets.REMOVE);
         removeButton.setTitle("Remove Group");
     }
 

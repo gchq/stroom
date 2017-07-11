@@ -25,14 +25,12 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.SvgImage;
+import stroom.svg.client.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
+import stroom.svg.client.SvgIcon;
 
 public class CurveTab extends AbstractTab {
     public interface Style extends CssResource {
@@ -133,19 +131,46 @@ public class CurveTab extends AbstractTab {
                     image.getElement().addClassName(resources.style().icon());
                     element.appendChild(image.getElement());
                 }
-            } else if (icon instanceof GlyphIcon) {
-                final GlyphIcon glyphIcon = (GlyphIcon) icon;
-                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
-                        + resources.style().icon()
-                        + "\"><div class=\""
-                        + resources.style().face()
-                        + "\" style=\"color:"
-                        + glyphIcon.getColourSet()
-                        + "\"><i class=\""
-                        + glyphIcon.getGlyph()
-                        + "\"></i></div></div>");
-                final HTML html = new HTML(safeHtml);
-                final Element elem = html.getElement();
+//            } else if (icon instanceof SvgIcon) {
+//                final SvgIcon glyphIcon = (SvgIcon) icon;
+//                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
+//                        + resources.style().icon()
+//                        + "\"><div class=\""
+//                        + resources.style().face()
+//                        + "\" style=\"color:"
+//                        + glyphIcon.getColourSet()
+//                        + "\"><i class=\""
+//                        + glyphIcon.getGlyph()
+//                        + "\"></i></div></div>");
+//                final HTML html = new HTML(safeHtml);
+//                final Element elem = html.getElement();
+//                element.appendChild(elem);
+            } else if (icon instanceof SvgIcon) {
+                final SvgIcon svgIcon = (SvgIcon) icon;
+
+                final Image image = new Image(svgIcon.getUrl());
+                image.addStyleName(resources.style().icon());
+
+
+//                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
+//                        + resources.style().icon()
+//                        + "\"></div>");
+//                final HTML html = new HTML(safeHtml);
+//
+//                if (svgIcon.getUrl() != null) {
+//                    ResourceCache.get(svgIcon.getUrl(), data -> {
+//                        html.setHTML("<div class=\"" +
+//                                resources.style().icon() +
+//                                "\">" +
+//                                data +
+//                                "</div>");
+//                        final Element svg = getElement().getElementsByTagName("svg").getItem(0).cast();
+//                        svg.setAttribute("width", "18");
+//                        svg.setAttribute("height", "18");
+//                    });
+//                }
+
+                final Element elem = image.getElement();
                 element.appendChild(elem);
             }
         }

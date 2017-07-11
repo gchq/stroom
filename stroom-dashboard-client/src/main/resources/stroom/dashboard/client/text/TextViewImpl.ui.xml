@@ -15,7 +15,7 @@
                     <r:ResizeSimplePanel ui:field="content"
                                          width="100%" height="100%"/>
                     <button:FabButton ui:field="playButton"
-                                      addStyleNames="stroom-pipeline-stepping-button" icon="fa fa-step-forward"
+                                      addStyleNames="stroom-pipeline-stepping-button" icon="images/step.svg"
                                       title="Enter Stepping Mode" visible="false"/>
                 </r:ResizeFlowPanel>
             </g:center>

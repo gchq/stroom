@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,7 +31,7 @@ import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.index.server.IndexShardWriterCache;
+import stroom.index.server.IndexShardManager;
 import stroom.index.server.IndexShardWriterImpl;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
@@ -50,11 +50,12 @@ import stroom.node.shared.VolumeState;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
+import stroom.policy.shared.Policy;
 import stroom.script.shared.Script;
 import stroom.security.server.DocumentPermission;
 import stroom.security.server.Permission;
 import stroom.security.server.UserGroupUser;
-import stroom.security.shared.User;
+import stroom.security.server.User;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.streamstore.server.fs.FileSystemUtil;
@@ -96,7 +97,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
     @Resource
-    private IndexShardWriterCache indexShardWriterPool;
+    private IndexShardManager indexShardManager;
     @Resource
     private DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
     @Resource
@@ -135,6 +136,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         deleteEntity(StreamAttributeValue.class);
         deleteEntity(Stream.class);
 
+        deleteEntity(Policy.class);
+
         deleteEntity(QueryEntity.class);
         deleteEntity(Dashboard.class);
         deleteEntity(Visualisation.class);
@@ -148,7 +151,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         streamTaskCreator.shutdown();
 
         // Make sure we don't delete database entries without clearing the pool.
-        indexShardWriterPool.shutdown();
+        indexShardManager.shutdown();
 
         for (final IndexShard indexShard : indexShardService.find(new FindIndexShardCriteria())) {
             final IndexShardWriterImpl writer = new IndexShardWriterImpl(indexShardService, null, indexShard.getIndex(),

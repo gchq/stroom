@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,7 +27,7 @@ import stroom.cluster.server.ClusterNodeManagerImpl;
 import stroom.cluster.server.MockClusterNodeManager;
 import stroom.dashboard.server.MockQueryService;
 import stroom.dashboard.server.MockVisualisationService;
-import stroom.datafeed.server.MockHeaderMapFactory;
+import stroom.datafeed.server.MockMetaMapFactory;
 import stroom.datafeed.server.MockHttpServletRequest;
 import stroom.datafeed.server.MockHttpServletResponse;
 import stroom.dictionary.MockDictionaryService;
@@ -40,7 +40,7 @@ import stroom.importexport.server.MockImportExportService;
 import stroom.index.server.MockIndexService;
 import stroom.index.server.MockIndexShardService;
 import stroom.index.server.MockIndexShardWriter;
-import stroom.index.server.MockIndexShardWriterCache;
+import stroom.index.server.MockIndexShardManager;
 import stroom.jobsystem.server.MockClusterLockService;
 import stroom.jobsystem.server.MockJobManager;
 import stroom.jobsystem.server.MockJobNodeService;
@@ -97,13 +97,13 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockEntityService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockFeedService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockGlobalPropertyService.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHeaderMapFactory.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockMetaMapFactory.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHttpServletRequest.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHttpServletResponse.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockImportExportSerializer.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockImportExportService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexService.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexShardWriterCache.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexShardManager.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexShardService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexShardWriter.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockJobManager.class),

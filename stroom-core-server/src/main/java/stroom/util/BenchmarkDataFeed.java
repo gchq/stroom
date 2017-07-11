@@ -16,14 +16,6 @@
 
 package stroom.util;
 
-import stroom.task.server.StroomThreadGroup;
-import stroom.util.date.DateUtil;
-import stroom.util.io.StreamUtil;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.thread.CustomThreadFactory;
-import stroom.util.zip.HeaderMap;
-
-import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -41,6 +33,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPOutputStream;
+
+import javax.net.ssl.HttpsURLConnection;
+
+import stroom.task.server.StroomThreadGroup;
+import stroom.util.date.DateUtil;
+import stroom.util.io.StreamUtil;
+import stroom.util.shared.ModelStringUtil;
+import stroom.util.thread.CustomThreadFactory;
+import stroom.feed.MetaMap;
 
 public class BenchmarkDataFeed {
     private static class DataFeedResult {
@@ -69,8 +70,7 @@ public class BenchmarkDataFeed {
 
     public static void main(final String[] args) throws IOException {
         final BenchmarkDataFeed benchmarkDataFeed = new BenchmarkDataFeed();
-        final HeaderMap map = new HeaderMap();
-        map.loadArgs(args);
+        final Map<String, String> map = ArgsUtil.parse(args);
         benchmarkDataFeed.setOptionalArgs(map);
         benchmarkDataFeed.run();
     }
@@ -387,9 +387,8 @@ public class BenchmarkDataFeed {
     public void processCommand(final String line) {
         final String upperLine = line.toUpperCase();
         if (upperLine.startsWith("SET ")) {
-            final HeaderMap map = new HeaderMap();
             final String[] args = line.substring(4).split(" ");
-            map.loadArgs(args);
+            final Map<String, String> map = ArgsUtil.parse(args);
             setOptionalArgs(map);
         }
         if (upperLine.startsWith("START")) {

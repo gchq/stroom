@@ -24,7 +24,6 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
-import stroom.entity.shared.OrderBy;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
@@ -44,6 +43,7 @@ import java.util.Set;
 public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
     private static final int TEST_SIZE = 10;
     private static final int TEST_PAGE = 2;
+
     @Resource
     private FeedService feedService;
     @Resource
@@ -133,16 +133,16 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
         list = feedService.find(criteria);
         Assert.assertEquals(2, list.size());
 
-        final List<OrderBy> orderByList = new ArrayList<>();
-        orderByList.add(FindFeedCriteria.ORDER_BY_NAME);
-        orderByList.add(FindFeedCriteria.ORDER_BY_FOLDER);
-        orderByList.add(FindFeedCriteria.ORDER_BY_TYPE);
-        orderByList.add(FindFeedCriteria.ORDER_BY_CLASSIFICATION);
+        final List<String> sortList = new ArrayList<>();
+        sortList.add(FindFeedCriteria.FIELD_NAME);
+        sortList.add(FindFeedCriteria.FIELD_FOLDER);
+        sortList.add(FindFeedCriteria.FIELD_TYPE);
+        sortList.add(FindFeedCriteria.FIELD_CLASSIFICATION);
 
         // Test order by.
-        for (final OrderBy orderBy : orderByList) {
+        for (final String field : sortList) {
             criteria = new FindFeedCriteria();
-            criteria.setOrderBy(orderBy);
+            criteria.setSort(field);
             list = feedService.find(criteria);
             Assert.assertEquals(2, list.size());
         }

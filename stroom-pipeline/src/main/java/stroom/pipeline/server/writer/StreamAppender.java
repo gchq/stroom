@@ -40,7 +40,7 @@ import stroom.streamstore.shared.StreamTypeService;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -135,8 +135,8 @@ public class StreamAppender extends AbstractAppender {
         // Only do something if an output stream was used.
         if (streamTarget != null) {
             // Write meta data.
-            final HeaderMap headerMap = metaData.getHeaderMap();
-            streamTarget.getAttributeMap().putAll(headerMap);
+            final MetaMap metaMap = metaData.getMetaMap();
+            streamTarget.getAttributeMap().putAll(metaMap);
             // We leave the streamCloser to close the stream target as it may
             // want to delete it instead
         }

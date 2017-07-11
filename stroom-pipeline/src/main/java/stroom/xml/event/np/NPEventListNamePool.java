@@ -48,13 +48,13 @@ import java.util.HashMap;
  * A NamePool holds a collection of expanded names, each containing a namespace
  * URI, a namespace prefix, and a local name; plus a collection of namespaces,
  * each consisting of a prefix/URI pair.
- *
+ * <p>
  * <p>
  * Each expanded name is allocated a unique integer namecode. The namecode
  * enables all three parts of the expanded name to be determined, that is, the
  * prefix, the URI, and the local name.
  * </p>
- *
+ * <p>
  * <p>
  * The equivalence betweem names depends only on the URI and the local name. The
  * namecode is designed so that if two namecodes represent names with the same
@@ -63,12 +63,12 @@ import java.util.HashMap;
  * integer comparison of these 20 bits. The bottom 20 bits of a namecode are
  * referred to as a fingerprint.
  * </p>
- *
+ * <p>
  * <p>
  * The NamePool eliminates duplicate names if they have the same prefix, uri,
  * and local part. It retains duplicates if they have different prefixes
  * </p>
- *
+ * <p>
  * <p>
  * Internally the NamePool is organized as a fixed number of hash chains. The
  * selection of a hash chain is based on hashing the local name, because it is
@@ -81,12 +81,12 @@ import java.util.HashMap;
  * prefixes used with a particular namespace are "xs" and "xsd", say, then these
  * will be prefix codes 1 and 2.
  * </p>
- *
+ * <p>
  * <p>
  * Fingerprints in the range 0 to 1023 are reserved for system use, and are
  * allocated as constants mainly to names in the XSLT and XML Schema namespaces:
  * constants representing these names are found in {@link StandardNames}.
- *
+ * <p>
  * <p>
  * Operations that update the NamePool, or that have the potential to update it,
  * are synchronized. Read-only operations are done without synchronization.
@@ -96,31 +96,31 @@ import java.util.HashMap;
  * splitting the workload to use multiple Configurations each with a separate
  * NamePool.
  * </p>
- *
+ * <p>
  * <h3>Internal organization of the NamePool</h3>
- *
+ * <p>
  * <p>
  * The NamePool holds two kinds of entry: name entries, representing expanded
  * names (local name + prefix + URI), identified by a name code, and namespace
  * entries (prefix + URI) identified by a namespace code.
  * </p>
- *
+ * <p>
  * <p>
  * The data structure of the name table is as follows.
  * </p>
- *
+ * <p>
  * <p>
  * There is a fixed size hash table; names are allocated to slots in this table
  * by hashing on the local name. Each entry in the table is the head of a chain
  * of NameEntry objects representing names that have the same hash code.
  * </p>
- *
+ * <p>
  * <p>
  * Each NameEntry represents a distinct name (same URI and local name). It
  * contains the local name as a string, plus a short integer representing the
  * URI (as an offset into the array uris[] - this is known as the URIcode).
  * </p>
- *
+ * <p>
  * <p>
  * The fingerprint of a name consists of the hash slot number (in the bottom 10
  * bits) concatenated with the depth of the entry down the chain of hash
@@ -129,7 +129,7 @@ import java.util.HashMap;
  * attributes, and of built-in types). These names are not stored in the name
  * pool, but are accessible as if they were.
  * </p>
- *
+ * <p>
  * <p>
  * A nameCode contains the fingerprint in the bottom 20 bits. It also contains a
  * 10-bit prefix index. This distinguishes the prefix used, among all the
@@ -138,7 +138,7 @@ import java.util.HashMap;
  * associated with the namespace URI. Note that the data structures and
  * algorithms are optimized for the case where URIs usually use the same prefix.
  * </p>
- *
+ * <p>
  * <p>
  * The nameCode -1 is reserved to mean "not known" or inapplicable. The
  * fingerprint -1 has the same meaning. Note that masking the nameCode -1 to
@@ -153,7 +153,7 @@ public class NPEventListNamePool implements Serializable {
      * nameCode nc, the fingerprint is <code>nc & NamePool.FP_MASK</code>. (In
      * practice, Saxon code often uses the literal constant 0xfffff, to extract
      * the bottom 20 bits).
-     *
+     * <p>
      * <p>
      * The difference between a fingerprint and a nameCode is that a nameCode
      * contains information about the prefix of a name, the fingerprint depends
@@ -172,6 +172,13 @@ public class NPEventListNamePool implements Serializable {
     // Limit: maximum number of prefixes allowed for one URI
     public static final int MAX_PREFIXES_PER_URI = 1023;
 
+    private static final int NULL_CODE = 0;
+    private static final int XML_CODE = 1;
+    private static final int XSLT_CODE = 2;
+    private static final int SAXON_CODE = 3;
+    private static final int SCHEMA_CODE = 4;
+    private static final int XSI_CODE = 5;
+
     /**
      * Internal structure of a NameEntry, the entry on the hash chain of names.
      */
@@ -185,10 +192,8 @@ public class NPEventListNamePool implements Serializable {
         /**
          * Create a NameEntry for a QName
          *
-         * @param uriCode
-         *            the numeric code representing the namespace URI
-         * @param localName
-         *            the local part of the QName
+         * @param uriCode   the numeric code representing the namespace URI
+         * @param localName the local part of the QName
          */
         public NameEntry(short uriCode, String localName) {
             this.uriCode = uriCode;
@@ -227,29 +232,29 @@ public class NPEventListNamePool implements Serializable {
      * Create a NamePool
      */
     public NPEventListNamePool() {
-        prefixes[NamespaceConstant.NULL_CODE] = "";
-        uris[NamespaceConstant.NULL_CODE] = NamespaceConstant.NULL;
-        prefixCodesForUri[NamespaceConstant.NULL_CODE] = new short[] { NamespaceConstant.NULL_CODE };
+        prefixes[NULL_CODE] = "";
+        uris[NULL_CODE] = NamespaceConstant.NULL;
+        prefixCodesForUri[NULL_CODE] = new short[]{NULL_CODE};
 
-        prefixes[NamespaceConstant.XML_CODE] = "xml";
-        uris[NamespaceConstant.XML_CODE] = NamespaceConstant.XML;
-        prefixCodesForUri[NamespaceConstant.XML_CODE] = new short[] { NamespaceConstant.XML_CODE };
+        prefixes[XML_CODE] = "xml";
+        uris[XML_CODE] = NamespaceConstant.XML;
+        prefixCodesForUri[XML_CODE] = new short[]{XML_CODE};
 
-        prefixes[NamespaceConstant.XSLT_CODE] = "xsl";
-        uris[NamespaceConstant.XSLT_CODE] = NamespaceConstant.XSLT;
-        prefixCodesForUri[NamespaceConstant.XSLT_CODE] = new short[] { NamespaceConstant.XSLT_CODE };
+        prefixes[XSLT_CODE] = "xsl";
+        uris[XSLT_CODE] = NamespaceConstant.XSLT;
+        prefixCodesForUri[XSLT_CODE] = new short[]{XSLT_CODE};
 
-        prefixes[NamespaceConstant.SAXON_CODE] = "saxon";
-        uris[NamespaceConstant.SAXON_CODE] = NamespaceConstant.SAXON;
-        prefixCodesForUri[NamespaceConstant.SAXON_CODE] = new short[] { NamespaceConstant.SAXON_CODE };
+        prefixes[SAXON_CODE] = "saxon";
+        uris[SAXON_CODE] = NamespaceConstant.SAXON;
+        prefixCodesForUri[SAXON_CODE] = new short[]{SAXON_CODE};
 
-        prefixes[NamespaceConstant.SCHEMA_CODE] = "xs";
-        uris[NamespaceConstant.SCHEMA_CODE] = NamespaceConstant.SCHEMA;
-        prefixCodesForUri[NamespaceConstant.SCHEMA_CODE] = new short[] { NamespaceConstant.SCHEMA_CODE };
+        prefixes[SCHEMA_CODE] = "xs";
+        uris[SCHEMA_CODE] = NamespaceConstant.SCHEMA;
+        prefixCodesForUri[SCHEMA_CODE] = new short[]{SCHEMA_CODE};
 
-        prefixes[NamespaceConstant.XSI_CODE] = "xsi";
-        uris[NamespaceConstant.XSI_CODE] = NamespaceConstant.SCHEMA_INSTANCE;
-        prefixCodesForUri[NamespaceConstant.XSI_CODE] = new short[] { NamespaceConstant.XSI_CODE };
+        prefixes[XSI_CODE] = "xsi";
+        uris[XSI_CODE] = NamespaceConstant.SCHEMA_INSTANCE;
+        prefixCodesForUri[XSI_CODE] = new short[]{XSI_CODE};
 
         prefixesUsed = 6;
         urisUsed = 6;
@@ -296,8 +301,7 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Get a name entry corresponding to a given name code
      *
-     * @param nameCode
-     *            the integer name code
+     * @param nameCode the integer name code
      * @return the NameEntry for this name code, or null if there is none.
      */
     private NameEntry getNameEntry(int nameCode) {
@@ -318,12 +322,10 @@ public class NPEventListNamePool implements Serializable {
      * Allocate the namespace code for a namespace prefix/URI pair. Create it if
      * not already present
      *
-     * @param prefix
-     *            the namespace prefix
-     * @param uri
-     *            the namespace URI
+     * @param prefix the namespace prefix
+     * @param uri    the namespace URI
      * @return an integer code identifying the namespace. The namespace code
-     *         identifies both the prefix and the URI.
+     * identifies both the prefix and the URI.
      */
     public synchronized int allocateNamespaceCode(String prefix, String uri) {
         short prefixCode = allocateCodeForPrefix(prefix);
@@ -350,12 +352,10 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Get the existing namespace code for a namespace prefix/URI pair.
      *
-     * @param prefix
-     *            the namespace prefix. May be "" for the default namespace
-     * @param uri
-     *            the namespace URI. May be "" for the "null namespace"
+     * @param prefix the namespace prefix. May be "" for the default namespace
+     * @param uri    the namespace URI. May be "" for the "null namespace"
      * @return the integer namespace code that identifies this namespace
-     *         binding; or -1 if this binding is not present in the name pool
+     * binding; or -1 if this binding is not present in the name pool
      */
     public int getNamespaceCode(String prefix, String uri) {
         short prefixCode = getCodeForPrefix(prefix);
@@ -381,12 +381,10 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Search an array of shorts (e.g. prefix codes) for a given value
      *
-     * @param codes
-     *            the array to be searched
-     * @param value
-     *            the value being sought
+     * @param codes the array to be searched
+     * @param value the value being sought
      * @return the position of the first occurrence of the value in the array,
-     *         or -1 if not found
+     * or -1 if not found
      */
     private static int search(short[] codes, short value) {
         for (int i = 0; i < codes.length; i++) {
@@ -400,22 +398,21 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Get the namespace code allocated to a given namecode.
      *
-     * @param namecode
-     *            a code identifying an expanded QName, e.g. of an element or
-     *            attribute
+     * @param namecode a code identifying an expanded QName, e.g. of an element or
+     *                 attribute
      * @return a code identifying the namespace used in the given name. The
-     *         namespace code identifies both the prefix and the URI.
-     *         <p>
-     *         Return -1 if no namespace code has been allocated. This should
-     *         not happen for a legitimate namecode, since a namespace code is
-     *         always allocated at the time the namecode is created.
-     *         </p>
+     * namespace code identifies both the prefix and the URI.
+     * <p>
+     * Return -1 if no namespace code has been allocated. This should
+     * not happen for a legitimate namecode, since a namespace code is
+     * always allocated at the time the namecode is created.
+     * </p>
      */
     public int getNamespaceCode(int namecode) {
         short uriCode;
         int fp = namecode & FP_MASK;
         if ((fp & USER_DEFINED_MASK) == 0) {
-            uriCode = StandardNames.getURICode(fp);
+            uriCode = getStandardURICode(fp);
         } else {
             NameEntry entry = getNameEntry(namecode);
             if (entry == null) {
@@ -429,14 +426,33 @@ public class NPEventListNamePool implements Serializable {
         return (prefixCode << 16) + uriCode;
     }
 
+    public static short getStandardURICode(int fingerprint) {
+        int c = fingerprint >> 7;
+        switch (c) {
+            case 0:
+                return NULL_CODE;
+            case 1:
+                return XSLT_CODE;
+            case 2:
+                return SAXON_CODE;
+            case 3:
+                return XML_CODE;
+            case 4:
+                return SCHEMA_CODE;
+            case 5:
+                return XSI_CODE;
+            default:
+                return -1;
+        }
+    }
+
     /**
      * Get the prefix index from a namecode
      *
-     * @param nameCode
-     *            the name code
+     * @param nameCode the name code
      * @return the prefix index. A value of zero means the name is unprefixed
-     *         (which in the case of an attribute, means that it is in the null
-     *         namespace)
+     * (which in the case of an attribute, means that it is in the null
+     * namespace)
      */
     public static int getPrefixIndex(int nameCode) {
         return (nameCode >> 20) & 0x3ff;
@@ -446,8 +462,7 @@ public class NPEventListNamePool implements Serializable {
      * Determine whether a given namecode has a non-empty prefix (and therefore,
      * in the case of attributes, whether the name is in a non-null namespace
      *
-     * @param nameCode
-     *            the name code to be tested
+     * @param nameCode the name code to be tested
      * @return true if the name has a non-empty prefix
      */
     public static boolean isPrefixed(int nameCode) {
@@ -457,10 +472,9 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Allocate the uri code for a given URI; create one if not found
      *
-     * @param uri
-     *            The namespace URI. Supply "" or null for the "null namespace"
+     * @param uri The namespace URI. Supply "" or null for the "null namespace"
      * @return an integer code that uniquely identifies this URI within the
-     *         namepool.
+     * namepool.
      */
     public synchronized short allocateCodeForURI(String uri) {
         return allocateCodeForURIInternal(uri);
@@ -471,14 +485,13 @@ public class NPEventListNamePool implements Serializable {
      * non-synchronized version of the external method is provided to avoid the
      * overhead of synchronizing a second time.
      *
-     * @param uri
-     *            The namespace URI. Supply "" or null for the "null namespace"
+     * @param uri The namespace URI. Supply "" or null for the "null namespace"
      * @return an integer code that uniquely identifies this URI within the
-     *         namepool.
+     * namepool.
      */
     private short allocateCodeForURIInternal(String uri) {
         if (uri == null) {
-            return NamespaceConstant.NULL_CODE;
+            return NULL_CODE;
         }
         for (short j = 0; j < urisUsed; j++) {
             if (uris[j].equals(uri)) {
@@ -504,10 +517,9 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Get the uri code for a given URI
      *
-     * @param uri
-     *            the URI whose code is required
+     * @param uri the URI whose code is required
      * @return the associated integer URI code, or -1 if not present in the name
-     *         pool
+     * pool
      */
     public short getCodeForURI(String uri) {
         for (short j = 0; j < urisUsed; j++) {
@@ -521,8 +533,7 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Allocate the prefix code for a given Prefix; create one if not found
      *
-     * @param prefix
-     *            the namespace prefix whose code is to be allocated or returned
+     * @param prefix the namespace prefix whose code is to be allocated or returned
      * @return the numeric code for this prefix
      */
     private short allocateCodeForPrefix(String prefix) {
@@ -530,14 +541,14 @@ public class NPEventListNamePool implements Serializable {
         // method exploit knowledge of the standard prefixes to shorten the
         // search
         if (prefix.length() == 0) {
-            return NamespaceConstant.NULL_CODE;
+            return NULL_CODE;
         }
         short start = 1;
         if (prefix.charAt(0) != 'x') {
             if (prefix.equals("saxon")) {
-                return NamespaceConstant.SAXON_CODE;
+                return SAXON_CODE;
             }
-            start = NamespaceConstant.XSI_CODE + 1;
+            start = XSI_CODE + 1;
         }
 
         for (short i = start; i < prefixesUsed; i++) {
@@ -560,11 +571,10 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Get the prefix code for a given Prefix
      *
-     * @param prefix
-     *            the prefix. Supply "" for the null prefix representing the
-     *            default namespace.
+     * @param prefix the prefix. Supply "" for the null prefix representing the
+     *               default namespace.
      * @return a code uniquely identifying this prefix within the name pool, or
-     *         -1 if not found
+     * -1 if not found
      */
     public short getCodeForPrefix(String prefix) {
         for (short i = 0; i < prefixesUsed; i++) {
@@ -580,10 +590,9 @@ public class NPEventListNamePool implements Serializable {
      * which one is returned. If there are no prefixes registered for this URI,
      * return null.
      *
-     * @param URI
-     *            the namespace URI
+     * @param URI the namespace URI
      * @return a prefix that has previously been associated with this URI, if
-     *         available; otherwise null
+     * available; otherwise null
      */
     public String suggestPrefixForURI(String URI) {
         if (URI.equals(NamespaceConstant.XML)) {
@@ -603,13 +612,11 @@ public class NPEventListNamePool implements Serializable {
      * Get a prefix code among all the prefix codes used with a given URI, given
      * its index
      *
-     * @param uriCode
-     *            the integer code identifying the URI
-     * @param index
-     *            indicates which of the prefixes associated with this URI is
-     *            required
+     * @param uriCode the integer code identifying the URI
+     * @param index   indicates which of the prefixes associated with this URI is
+     *                required
      * @return the prefix code with the given index. If the index is 0, the
-     *         prefix is always 0.
+     * prefix is always 0.
      */
     private short getPrefixCodeWithIndex(short uriCode, int index) {
         if (index == 0) {
@@ -622,23 +629,20 @@ public class NPEventListNamePool implements Serializable {
      * Allocate a name from the pool, or a new Name if there is not a matching
      * one there
      *
-     * @param prefix
-     *            the namespace prefix. Use "" for the null prefix, representing
-     *            the absent namespace
-     * @param uri
-     *            the namespace URI. Use "" or null for the non-namespace.
-     * @param localName
-     *            the local part of the name
+     * @param prefix    the namespace prefix. Use "" for the null prefix, representing
+     *                  the absent namespace
+     * @param uri       the namespace URI. Use "" or null for the non-namespace.
+     * @param localName the local part of the name
      * @return an integer (the "namecode") identifying the name within the
-     *         namepool. The Name itself may be retrieved using the getName(int)
-     *         method
+     * namepool. The Name itself may be retrieved using the getName(int)
+     * method
      */
     public synchronized int allocate(String prefix, String uri, String localName) {
         short prefixCode = allocateCodeForPrefix(prefix);
         if (NamespaceConstant.isReserved(uri) || NamespaceConstant.SAXON.equals(uri)) {
             int fp = StandardNames.getFingerprint(uri, localName);
             if (fp != -1) {
-                short uriCode = StandardNames.getURICode(fp);
+                short uriCode = getStandardURICode(fp);
                 int pindex;
                 if (prefix.length() == 0) {
                     pindex = 0;
@@ -724,12 +728,10 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Get the namespace-URI of a name, given its name code or fingerprint
      *
-     * @param nameCode
-     *            the name code or fingerprint of a name
+     * @param nameCode the name code or fingerprint of a name
      * @return the namespace URI corresponding to this name code. Returns "" for
-     *         the null namespace.
-     * @throws IllegalArgumentException
-     *             if the nameCode is not known to the NamePool.
+     * the null namespace.
+     * @throws IllegalArgumentException if the nameCode is not known to the NamePool.
      */
     public String getURI(int nameCode) {
         if ((nameCode & USER_DEFINED_MASK) == 0) {
@@ -746,13 +748,12 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Get the URI code of a name, given its name code or fingerprint
      *
-     * @param nameCode
-     *            the name code or fingerprint of a name in the name pool
+     * @param nameCode the name code or fingerprint of a name in the name pool
      * @return the integer code identifying the namespace URI part of the name
      */
     public short getURICode(int nameCode) {
         if ((nameCode & USER_DEFINED_MASK) == 0) {
-            return StandardNames.getURICode(nameCode & FP_MASK);
+            return getStandardURICode(nameCode & FP_MASK);
         }
         NameEntry entry = getNameEntry(nameCode);
         if (entry == null) {
@@ -765,10 +766,9 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Get the local part of a name, given its name code or fingerprint
      *
-     * @param nameCode
-     *            the integer name code or fingerprint of the name
+     * @param nameCode the integer name code or fingerprint of the name
      * @return the local part of the name represented by this name code or
-     *         fingerprint
+     * fingerprint
      */
     public String getLocalName(int nameCode) {
         if ((nameCode & USER_DEFINED_MASK) == 0) {
@@ -785,10 +785,9 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Get the prefix part of a name, given its name code
      *
-     * @param nameCode
-     *            the integer name code of a name in the name pool
+     * @param nameCode the integer name code of a name in the name pool
      * @return the prefix of this name. Note that if a fingerprint rather than a
-     *         full name code is supplied the returned prefix will be ""
+     * full name code is supplied the returned prefix will be ""
      */
     public String getPrefix(int nameCode) {
         int prefixIndex = (nameCode >> 20) & 0x3ff;
@@ -803,18 +802,17 @@ public class NPEventListNamePool implements Serializable {
      * Get the display form of a name (the QName), given its name code or
      * fingerprint
      *
-     * @param nameCode
-     *            the integer name code or fingerprint of a name in the name
-     *            pool
+     * @param nameCode the integer name code or fingerprint of a name in the name
+     *                 pool
      * @return the corresponding lexical QName (if a fingerprint was supplied,
-     *         this will simply be the local name)
+     * this will simply be the local name)
      */
     public String getDisplayName(int nameCode) {
         if ((nameCode & USER_DEFINED_MASK) == 0) {
             // This indicates a standard name known to the system (but it might
             // have a non-standard prefix)
             short uriCode = getURICode(nameCode);
-            if (uriCode == NamespaceConstant.XML_CODE) {
+            if (uriCode == XML_CODE) {
                 return "xml:" + StandardNames.getLocalName(nameCode & FP_MASK);
             } else {
                 if (isPrefixed(nameCode)) {
@@ -840,11 +838,10 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Get the Clark form of a name, given its name code or fingerprint
      *
-     * @param nameCode
-     *            the integer name code or fingerprint of a name in the name
-     *            pool
+     * @param nameCode the integer name code or fingerprint of a name in the name
+     *                 pool
      * @return the local name if the name is in the null namespace, or
-     *         "{uri}local" otherwise. The name is always interned.
+     * "{uri}local" otherwise. The name is always interned.
      */
     public String getClarkName(int nameCode) {
         if ((nameCode & USER_DEFINED_MASK) == 0) {
@@ -866,11 +863,10 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Allocate a fingerprint given a Clark Name
      *
-     * @param expandedName
-     *            the name in Clark notation, that is "localname" or
-     *            "{uri}localName"
+     * @param expandedName the name in Clark notation, that is "localname" or
+     *                     "{uri}localName"
      * @return the fingerprint of the name, which need not previously exist in
-     *         the name pool
+     * the name pool
      */
     public int allocateClarkName(String expandedName) {
         String namespace;
@@ -896,9 +892,8 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Parse a Clark-format expanded name, returning the URI and local name
      *
-     * @param expandedName
-     *            the name in Clark notation, that is "localname" or
-     *            "{uri}localName"
+     * @param expandedName the name in Clark notation, that is "localname" or
+     *                     "{uri}localName"
      * @return an array of two strings, the URI and the local name respectively
      */
     public static String[] parseClarkName(String expandedName) {
@@ -918,15 +913,14 @@ public class NPEventListNamePool implements Serializable {
             namespace = "";
             localName = expandedName;
         }
-        return new String[] { namespace, localName };
+        return new String[]{namespace, localName};
     }
 
     /**
      * Internal error: name not found in namepool (Usual cause is allocating a
      * name code from one name pool and trying to find it in another)
      *
-     * @param nameCode
-     *            the absent name code
+     * @param nameCode the absent name code
      */
     private static void unknownNameCode(int nameCode) {
         throw new IllegalArgumentException("Unknown name code " + nameCode);
@@ -938,12 +932,10 @@ public class NPEventListNamePool implements Serializable {
      * two fingerprint are the same, the names are the same (ie. same local name
      * and same URI).
      *
-     * @param uri
-     *            the namespace URI of the required QName
-     * @param localName
-     *            the local part of the required QName
+     * @param uri       the namespace URI of the required QName
+     * @param localName the local part of the required QName
      * @return the integer fingerprint, or -1 if this is not found in the name
-     *         pool
+     * pool
      */
     public int getFingerprint(String uri, String localName) {
         // A read-only version of allocate()
@@ -1000,9 +992,8 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Get the namespace URI from a namespace code.
      *
-     * @param code
-     *            a namespace code, representing the binding of a prefix to a
-     *            namespace URI
+     * @param code a namespace code, representing the binding of a prefix to a
+     *             namespace URI
      * @return the namespace URI represented by this namespace binding
      */
     public String getURIFromNamespaceCode(int code) {
@@ -1012,8 +1003,7 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Get the namespace URI from a URI code.
      *
-     * @param code
-     *            a code that identifies the URI within the name pool
+     * @param code a code that identifies the URI within the name pool
      * @return the URI represented by this code
      */
     public String getURIFromURICode(short code) {
@@ -1023,9 +1013,8 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Get the namespace prefix from a namespace code.
      *
-     * @param code
-     *            a namespace code representing the binding of a prefix to a
-     *            URI)
+     * @param code a namespace code representing the binding of a prefix to a
+     *             URI)
      * @return the prefix represented by this namespace binding
      */
     public String getPrefixFromNamespaceCode(int code) {
@@ -1035,27 +1024,22 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Get the nameCode for a lexical QName, given a namespace resolver.
      *
-     * @param qname
-     *            the lexical QName (with leading and trailing whitespace
-     *            allowed).
-     * @param useDefault
-     *            if true, an absent prefix is resolved by the NamespaceResolver
-     *            to the namespace URI assigned to the prefix "". If false, an
-     *            absent prefix is interpreted as meaning the name is in no
-     *            namespace.
-     * @param resolver
-     *            NamespaceResolver used to resolve the namespace prefix to a
-     *            namespace URI
-     * @param checker
-     *            NameChecker used to check names against the XML 1.0 or 1.1
-     *            specification
+     * @param qname      the lexical QName (with leading and trailing whitespace
+     *                   allowed).
+     * @param useDefault if true, an absent prefix is resolved by the NamespaceResolver
+     *                   to the namespace URI assigned to the prefix "". If false, an
+     *                   absent prefix is interpreted as meaning the name is in no
+     *                   namespace.
+     * @param resolver   NamespaceResolver used to resolve the namespace prefix to a
+     *                   namespace URI
+     * @param checker    NameChecker used to check names against the XML 1.0 or 1.1
+     *                   specification
      * @return the corresponding nameCode
-     * @throws net.sf.saxon.trans.XPathException
-     *             if the string is not a valid lexical QName or if the
-     *             namespace prefix has not been declared
+     * @throws net.sf.saxon.trans.XPathException if the string is not a valid lexical QName or if the
+     *                                           namespace prefix has not been declared
      */
     public int allocateLexicalQName(CharSequence qname, boolean useDefault, NamespaceResolver resolver,
-            NameChecker checker) throws XPathException {
+                                    NameChecker checker) throws XPathException {
         try {
             String[] parts = checker.getQNameParts(Whitespace.trimWhitespace(qname));
             String uri = resolver.getURIForPrefix(parts[0], useDefault);
@@ -1071,11 +1055,9 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Save client data on behalf of a user of the namepool
      *
-     * @param key
-     *            the class that is maintaining private data in the name pool
-     * @param value
-     *            the private data maintained in the name pool on behalf of this
-     *            class
+     * @param key   the class that is maintaining private data in the name pool
+     * @param value the private data maintained in the name pool on behalf of this
+     *              class
      */
     public void setClientData(Class<?> key, Object value) {
         if (clientData == null) {
@@ -1087,10 +1069,9 @@ public class NPEventListNamePool implements Serializable {
     /**
      * Retrieve client data on behalf of a user of the namepool
      *
-     * @param key
-     *            the class that is maintaining private data in the name pool
+     * @param key the class that is maintaining private data in the name pool
      * @return the private data maintained in the name pool on behalf of this
-     *         class
+     * class
      */
     public Object getClientData(Class<?> key) {
         if (clientData == null) {
@@ -1120,7 +1101,7 @@ public class NPEventListNamePool implements Serializable {
         }
         for (int u = 0; u < urisUsed; u++) {
             System.err.println("URI " + u + " = " + uris[u]);
-            FastStringBuffer fsb = new FastStringBuffer(FastStringBuffer.SMALL);
+            FastStringBuffer fsb = new FastStringBuffer(FastStringBuffer.C64);
             for (int p = 0; p < prefixCodesForUri[u].length; p++) {
                 fsb.append(prefixCodesForUri[u][p] + ", ");
             }
@@ -1158,8 +1139,7 @@ public class NPEventListNamePool implements Serializable {
         /**
          * Create the exception
          *
-         * @param message
-         *            the error message associated with the error
+         * @param message the error message associated with the error
          */
         public NamePoolLimitException(String message) {
             super(message);

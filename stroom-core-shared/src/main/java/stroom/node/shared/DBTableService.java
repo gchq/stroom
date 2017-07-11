@@ -16,11 +16,8 @@
 
 package stroom.node.shared;
 
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
-import stroom.entity.shared.OrderBy;
-
 import java.util.List;
 
 public interface DBTableService {
-    List<DBTableStatus> findSystemTableStatus(OrderBy orderBy, OrderByDirection orderByDirection);
+    List<DBTableStatus> findSystemTableStatus(FindDBTableCriteria criteria);
 }

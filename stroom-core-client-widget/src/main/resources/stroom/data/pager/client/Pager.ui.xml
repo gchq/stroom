@@ -45,10 +45,10 @@
         <g:Label ui:field="lblOfSeparator" text="&nbsp;of&nbsp;" styleName="{style.label}"/>
         <g:Label ui:field="lblOf" styleName="{style.label}"/>
         <g:HTMLPanel styleName="{style.space}">&nbsp;</g:HTMLPanel>
-        <paging:GlyphButton ui:field="first"/>
-        <paging:GlyphButton ui:field="prev"/>
-        <paging:GlyphButton ui:field="next"/>
-        <paging:GlyphButton ui:field="last"/>
-        <paging:GlyphButton ui:field="refresh"/>
+        <paging:SvgButton ui:field="first"/>
+        <paging:SvgButton ui:field="prev"/>
+        <paging:SvgButton ui:field="next"/>
+        <paging:SvgButton ui:field="last"/>
+        <paging:SvgButton ui:field="refresh"/>
     </g:FlowPanel>
 </ui:UiBinder>

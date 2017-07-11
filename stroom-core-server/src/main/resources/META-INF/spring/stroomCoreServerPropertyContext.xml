@@ -50,14 +50,6 @@
             <property name="requireUiRestart" value="false"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.proxy.zipFilenameDelimiter"/>
-            <property name="value" value="%"/>
-            <property name="description" value="The char or string to delimit the id part of the zip file name from the templated part (see zipFilenameTemplate) if a template is provided."/>
-            <property name="editable" value="true"/>
-            <property name="requireRestart" value="false"/>
-            <property name="requireUiRestart" value="false"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.maxAggregation"/>
             <property name="value" value="10000"/>
             <property name="description"
@@ -295,13 +287,15 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.maintenance.message"/>
             <property name="value" value=""/>
-            <property name="description" value="Provide a warning message to users about an outage or other significant event."/>
+            <property name="description"
+                      value="Provide a warning message to users about an outage or other significant event."/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.maintenance.preventLogin"/>
             <property name="value" value="false"/>
-            <property name="description" value="Prevent new logins to the system. This is useful if the system is scheduled to have an outage."/>
+            <property name="description"
+                      value="Prevent new logins to the system. This is useful if the system is scheduled to have an outage."/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
@@ -361,6 +355,20 @@
             <property name="value" value="1024"/>
             <property name="description"
                       value="The amount of RAM Lucene can use to buffer when indexing in Mb"/>
+            <property name="editable" value="true"/>
+        </bean>
+
+        <!-- QUERY HISTORY PROPERTIES -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.query.history.itemsRetention"/>
+            <property name="value" value="100"/>
+            <property name="description" value="The maximum number of query history items that will be retained"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.query.history.daysRetention"/>
+            <property name="value" value="365"/>
+            <property name="description" value="The number of days query history items will be retained for"/>
             <property name="editable" value="true"/>
         </bean>
 
@@ -494,7 +502,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.jdbcDriverUrl"/>
             <property name="value"
-                      value="jdbc:hsqldb:file:${stroom.temp}/STROOMDB/HSQLDB.DAT;shutdown=true"/>
+                      value="jdbc:hsqldb:file:${stroom.temp}/stroom/HSQLDB.DAT;shutdown=true"/>
             <property name="description"
                       value="Should only be set per node in application property file"/>
             <property name="editable" value="false"/>
@@ -540,7 +548,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.statistics.sql.jdbcDriverUrl"/>
             <property name="value"
-                      value="jdbc:hsqldb:file:${stroom.temp}/STROOMDB/HSQLDB.DAT;shutdown=true"/>
+                      value="jdbc:hsqldb:file:${stroom.temp}/statistics/HSQLDB.DAT;shutdown=true"/>
             <property name="description"
                       value="Should only be set per node in application property file"/>
             <property name="editable" value="false"/>
@@ -648,21 +656,13 @@
             <property name="editable" value="true"/>
             <property name="requireRestart" value="false"/>
         </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name"
-                      value="stroom.clusterCallCertificateRequiredFilterCn"/>
-            <property name="value" value=""/>
-            <property name="description"
-                      value="Allowed Certificates to talk within cluster"/>
-            <property name="editable" value="true"/>
-        </bean>
 
         <!-- EXPORT -->
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.exportCertificateRequiredFilterCn"/>
-            <property name="value" value=""/>
+            <property name="name" value="stroom.export.enabled"/>
+            <property name="value" value="false"/>
             <property name="description"
-                      value="Allowed Certificates to export config from system"/>
+                      value="Determines if the system will allow configuration to be exported via the export servlet"/>
             <property name="editable" value="true"/>
         </bean>
 
@@ -785,6 +785,13 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.helpUrl"/>
+            <property name="value" value=""/>
+            <property name="description" value="The URL of hosted help files."/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
 
         <!-- SQL statistics store properties -->
         <bean class="stroom.node.shared.GlobalProperty">
@@ -813,7 +820,7 @@
             <property name="name" value="stroom.contentPackImportEnabled"/>
             <property name="value" value="true"/>
             <property name="description"
-                      value="If true any content packs found in ${CATALINA_BASE}/contentPackImport/ will be imported into Stroom. Only intended for use on new Stroom instances to reduce the risk of overwriting existing entities" />
+                      value="If true any content packs found in ${CATALINA_BASE}/contentPackImport/ will be imported into Stroom. Only intended for use on new Stroom instances to reduce the risk of overwriting existing entities"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -821,7 +828,7 @@
             <property name="name" value="stroom.volumes.createDefaultOnStart"/>
             <property name="value" value="true"/>
             <property name="description"
-                      value="If no existing volumes are present a default volume will be created on application start. The volume will live in the volumes sub directory of the Stroom installation directory" />
+                      value="If no existing volumes are present a default volume will be created on application start. The volume will live in the volumes sub directory of the Stroom installation directory"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>

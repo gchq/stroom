@@ -60,65 +60,70 @@ public class StatisticsConfiguration {
 
     @Bean
     public Flyway statisticsFlyway(@Named("statisticsDataSource") final ComboPooledDataSource dataSource) throws PropertyVetoException {
-        final Flyway flyway = new Flyway();
-        flyway.setDataSource(dataSource);
-        flyway.setLocations("stroom/statistics/sql/db/migration/mysql");
+        final String jpaHbm2DdlAuto = StroomProperties.getProperty("stroom.jpaHbm2DdlAuto", "validate");
+        if (!"update".equals(jpaHbm2DdlAuto)) {
+            final Flyway flyway = new Flyway();
+            flyway.setDataSource(dataSource);
+            flyway.setLocations("stroom/statistics/sql/db/migration/mysql");
 
-        Version version = null;
-        boolean usingFlyWay = false;
-        LOGGER.info("Testing installed statistics schema version");
+            Version version = null;
+            boolean usingFlyWay = false;
+            LOGGER.info("Testing installed statistics schema version");
 
-        try {
-            try (final Connection connection = dataSource.getConnection()) {
-                try (final Statement statement = connection.createStatement()) {
-                    try (final ResultSet resultSet = statement.executeQuery("SELECT version FROM schema_version ORDER BY installed_rank DESC")) {
-                        if (resultSet.next()) {
-                            usingFlyWay = true;
+            try {
+                try (final Connection connection = dataSource.getConnection()) {
+                    try (final Statement statement = connection.createStatement()) {
+                        try (final ResultSet resultSet = statement.executeQuery("SELECT version FROM schema_version ORDER BY installed_rank DESC")) {
+                            if (resultSet.next()) {
+                                usingFlyWay = true;
 
-                            final String ver = resultSet.getString(1);
-                            final String[] parts = ver.split("\\.");
-                            int maj = 0;
-                            int min = 0;
-                            int pat = 0;
-                            if (parts.length > 0) {
-                                maj = Integer.valueOf(parts[0]);
+                                final String ver = resultSet.getString(1);
+                                final String[] parts = ver.split("\\.");
+                                int maj = 0;
+                                int min = 0;
+                                int pat = 0;
+                                if (parts.length > 0) {
+                                    maj = Integer.valueOf(parts[0]);
+                                }
+                                if (parts.length > 1) {
+                                    min = Integer.valueOf(parts[1]);
+                                }
+                                if (parts.length > 2) {
+                                    pat = Integer.valueOf(parts[2]);
+                                }
+
+                                version = new Version(maj, min, pat);
                             }
-                            if (parts.length > 1) {
-                                min = Integer.valueOf(parts[1]);
-                            }
-                            if (parts.length > 2) {
-                                pat = Integer.valueOf(parts[2]);
-                            }
-
-                            version = new Version(maj, min, pat);
                         }
                     }
                 }
+            } catch (final Exception e) {
+                LOGGER.debug(e.getMessage());
+                // Ignore.
             }
-        } catch (final Exception e) {
-            LOGGER.debug(e.getMessage());
-            // Ignore.
+
+            if (version != null) {
+                LOGGER.info("Detected current statistics version is v" + version.toString());
+            } else {
+                LOGGER.info("This is a new statistics installation!");
+            }
+
+
+            if (version == null) {
+                // If we have no version then this is a new statistics instance so perform full FlyWay migration.
+                flyway.migrate();
+            } else if (usingFlyWay) {
+                // If we are already using FlyWay then allow FlyWay to attempt migration.
+                flyway.migrate();
+            } else {
+                final String message = "The current statistics version cannot be upgraded to v5+. You must be on v4.0.60 or later.";
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
+                throw new RuntimeException(message);
+            }
+
+            return flyway;
         }
 
-        if (version != null) {
-            LOGGER.info("Detected current statistics version is v" + version.toString());
-        } else {
-            LOGGER.info("This is a new statistics installation!");
-        }
-
-
-        if (version == null) {
-            // If we have no version then this is a new statistics instance so perform full FlyWay migration.
-            flyway.migrate();
-        } else if (usingFlyWay) {
-            // If we are already using FlyWay then allow FlyWay to attempt migration.
-            flyway.migrate();
-        } else {
-            final String message = "The current statistics version cannot be upgraded to v5+. You must be on v4.0.60 or later.";
-            LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
-            throw new RuntimeException(message);
-        }
-
-        return flyway;
+        return null;
     }
 }

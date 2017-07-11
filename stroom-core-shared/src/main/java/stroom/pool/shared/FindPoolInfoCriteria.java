@@ -16,8 +16,9 @@
 
 package stroom.pool.shared;
 
+import stroom.entity.shared.Sort;
+import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.FindNamedEntityCriteria;
-import stroom.entity.shared.OrderBy;
 import stroom.util.shared.CompareUtil;
 
 import java.util.Comparator;
@@ -25,34 +26,42 @@ import java.util.Comparator;
 public class FindPoolInfoCriteria extends FindNamedEntityCriteria implements Comparator<PoolInfo> {
     private static final long serialVersionUID = 2756271393367666136L;
 
-    public static final OrderBy ORDER_BY_LAST_ACCESS = new OrderBy("Last Access");
-    public static final OrderBy ORDER_BY_IN_USE = new OrderBy("In Use");
-    public static final OrderBy ORDER_BY_IN_POOL = new OrderBy("In Pool");
-    public static final OrderBy ORDER_BY_IDLE_TIME = new OrderBy("Idle Time (s)");
-    public static final OrderBy ORDER_BY_LIVE_TIME = new OrderBy("Live Time (s)");
+    public static final String FIELD_LAST_ACCESS = "Last Access";
+    public static final String FIELD_IN_USE = "In Use";
+    public static final String FIELD_IN_POOL = "In Pool";
+    public static final String FIELD_IDLE_TIME = "Idle Time (s)";
+    public static final String FIELD_LIVE_TIME = "Live Time (s)";
 
     @Override
     public int compare(final PoolInfo o1, final PoolInfo o2) {
-        int compare = 0;
-        if (getOrderBy() != null) {
-            if (ORDER_BY_NAME.equals(getOrderBy())) {
-                compare = CompareUtil.compareString(o1.getName(), o2.getName());
-            } else if (ORDER_BY_LAST_ACCESS.equals(getOrderBy())) {
-                compare = CompareUtil.compareLong(o1.getLastAccessTime(), o2.getLastAccessTime());
-            } else if (ORDER_BY_IN_USE.equals(getOrderBy())) {
-                compare = CompareUtil.compareInteger(o1.getInUse(), o2.getInUse());
-            } else if (ORDER_BY_IN_POOL.equals(getOrderBy())) {
-                compare = CompareUtil.compareInteger(o1.getInPool(), o2.getInPool());
-            } else if (ORDER_BY_IDLE_TIME.equals(getOrderBy())) {
-                compare = CompareUtil.compareLong(o1.getTimeToIdleMs(), o2.getTimeToIdleMs());
-            } else if (ORDER_BY_LIVE_TIME.equals(getOrderBy())) {
-                compare = CompareUtil.compareLong(o1.getTimeToLiveMs(), o2.getTimeToLiveMs());
+        if (getSortList() != null) {
+            for (final Sort sort : getSortList()) {
+                final String field = sort.getField();
+
+                int compare = 0;
+                if (FIELD_NAME.equals(field)) {
+                    compare = CompareUtil.compareString(o1.getName(), o2.getName());
+                } else if (FIELD_LAST_ACCESS.equals(field)) {
+                    compare = CompareUtil.compareLong(o1.getLastAccessTime(), o2.getLastAccessTime());
+                } else if (FIELD_IN_USE.equals(field)) {
+                    compare = CompareUtil.compareInteger(o1.getInUse(), o2.getInUse());
+                } else if (FIELD_IN_POOL.equals(field)) {
+                    compare = CompareUtil.compareInteger(o1.getInPool(), o2.getInPool());
+                } else if (FIELD_IDLE_TIME.equals(field)) {
+                    compare = CompareUtil.compareLong(o1.getTimeToIdleMs(), o2.getTimeToIdleMs());
+                } else if (FIELD_LIVE_TIME.equals(field)) {
+                    compare = CompareUtil.compareLong(o1.getTimeToLiveMs(), o2.getTimeToLiveMs());
+                }
+                if (Direction.DESCENDING.equals(sort.getDirection())) {
+                    compare = compare * -1;
+                }
+
+                if (compare != 0) {
+                    return compare;
+                }
             }
         }
 
-        if (getOrderByDirection() == OrderByDirection.DESCENDING) {
-            compare = compare * -1;
-        }
-        return compare;
+        return 0;
     }
 }

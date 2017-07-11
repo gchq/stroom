@@ -31,6 +31,7 @@ import stroom.cache.shared.CacheInfo;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
     public interface Destroyable {
@@ -96,9 +97,16 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
         this(cacheManager, new CacheConfiguration(name, maxCacheEntries));
     }
 
+    @SuppressWarnings("unchecked")
     public AbstractCacheBean(final CacheManager cacheManager, final CacheConfiguration cacheConfiguration) {
         Ehcache cache = new Cache(cacheConfiguration);
-        cache = new SelfPopulatingCache(cache, key -> create((K) key));
+        cache = new SelfPopulatingCache(cache, key -> {
+            try {
+                return create((K) key);
+            } catch (final Throwable t) {
+                return t;
+            }
+        });
         cache.getCacheEventNotificationService().registerListener(new CacheListener(this));
 
         this.cache = cache;
@@ -115,7 +123,18 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
             if (element == null) {
                 return null;
             }
-            return (V) element.getObjectValue();
+
+            final Object object = element.getObjectValue();
+            if (object instanceof RuntimeException) {
+                throw (RuntimeException) object;
+            }
+            if (object instanceof Throwable) {
+                final Throwable throwable = (Throwable) object;
+                throw new RuntimeException(throwable.getMessage(), throwable);
+            }
+
+            return (V) object;
+
         } catch (final CacheException e) {
             final Throwable cause = e.getCause();
             if (cause != null && cause instanceof RuntimeException) {
@@ -211,9 +230,11 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
     protected void destroy(final K key, final V value) {
         if (value != null && value instanceof Destroyable) {
             final Destroyable destroyable = (Destroyable) value;
-            if (destroyable != null) {
-                destroyable.destroy();
-            }
+            destroyable.destroy();
         }
+    }
+
+    public interface Destroyable {
+        void destroy();
     }
 }

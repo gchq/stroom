@@ -17,7 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 import com.google.gwt.user.client.Command;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.Icon;
 
 public class IconMenuItem extends CommandMenuItem {
     private final Icon enabledIcon;

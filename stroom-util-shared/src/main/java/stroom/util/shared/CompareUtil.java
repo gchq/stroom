@@ -46,6 +46,19 @@ public final class CompareUtil {
         return l1.compareTo(l2);
     }
 
+    public static int compareBoolean(final Boolean l1, final Boolean l2) {
+        if (l1 == null && l2 == null) {
+            return 0;
+        }
+        if (l1 == null) {
+            return -1;
+        }
+        if (l2 == null) {
+            return +1;
+        }
+        return l1.compareTo(l2);
+    }
+
     public static int compareString(final String l1, final String l2) {
         if (l1 == null && l2 == null) {
             return 0;

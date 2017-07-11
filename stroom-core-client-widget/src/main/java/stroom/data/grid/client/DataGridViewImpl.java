@@ -52,9 +52,9 @@ import com.google.gwt.view.client.RangeChangeEvent.Handler;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.data.pager.client.Pager;
 import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ImageButtonView;
+import stroom.svg.client.SvgPreset;
 import stroom.widget.util.client.DoubleSelectTest;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -523,14 +523,14 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         dataGrid.setRowData(start, values);
     }
 
-    @Override
-    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
-                                     final ImageResource disabledImage, final boolean enabled) {
-        return buttonPanel.add(title, enabledImage, disabledImage, enabled);
-    }
+//    @Override
+//    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
+//                                     final ImageResource disabledImage, final boolean enabled) {
+//        return buttonPanel.add(title, enabledImage, disabledImage, enabled);
+//    }
 
     @Override
-    public GlyphButtonView addButton(final GlyphIcon preset) {
+    public ButtonView addButton(final SvgPreset preset) {
         return buttonPanel.add(preset);
     }
 

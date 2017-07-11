@@ -24,6 +24,8 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.svg.client.SvgIcon;
+import stroom.svg.client.SvgImage;
 
 public class PipelineElementBox extends Box<PipelineElement> {
     public interface Style extends CssResource {
@@ -49,7 +51,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
     private final PipelineElement pipelineElement;
 
-    public PipelineElementBox(final PipelineElement pipelineElement, final Image image) {
+    public PipelineElementBox(final PipelineElement pipelineElement, final SvgIcon icon) {
         this.pipelineElement = pipelineElement;
 
         if (resources == null) {
@@ -64,7 +66,8 @@ public class PipelineElementBox extends Box<PipelineElement> {
         label.addStyleName(resources.style().label());
         background.add(label);
 
-        if (image != null) {
+        if (icon != null) {
+            final Image image = new Image(icon.getUrl());
             image.addStyleName(resources.style().image());
             background.add(image);
             label.getElement().getStyle().setPaddingLeft(25, Unit.PX);

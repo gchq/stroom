@@ -71,8 +71,8 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         return selectionModel.addSelectionChangeHandler(handler);
     }
 
-    public void setFields(final List<DataSourceField> fields) {
-        getView().setFields(fields);
+    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<DataSourceField> indexFields) {
+        getView().init(dispatcher, dataSource, indexFields);
     }
 
     public void read(final ExpressionOperator root) {
@@ -225,7 +225,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
         void setSelectionModel(MySingleSelectionModel<Item> selectionModel);
 
-        void setFields(List<DataSourceField> fields);
+        void init(ClientDispatchAsync dispatcher, DocRef dataSource, List<DataSourceField> indexFields);
 
         void endEditing();
 

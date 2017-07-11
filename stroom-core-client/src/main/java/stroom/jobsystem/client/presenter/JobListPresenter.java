@@ -37,8 +37,8 @@ import stroom.entity.shared.EntityRow;
 import stroom.entity.shared.ResultList;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -59,11 +59,11 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
 
         getView().addColumn(new InfoHelpLinkColumn<Job>() {
             @Override
-            public GlyphIcon getValue(final Job row) {
+            public SvgPreset getValue(final Job row) {
                 if (!row.isPersistent()) {
                     return null;
                 }
-                return GlyphIcons.HELP;
+                return SvgPresets.HELP;
             }
 
             @Override
@@ -136,9 +136,9 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
             }
         };
         final FindJobCriteria findJobCriteria = new FindJobCriteria();
-        findJobCriteria.setOrderBy(FindJobCriteria.ORDER_BY_ADVANCED_AND_NAME);
+        findJobCriteria.setSort(FindJobCriteria.FIELD_ADVANCED);
+        findJobCriteria.addSort(FindJobCriteria.FIELD_NAME);
         this.dataProvider.setCriteria(findJobCriteria);
-
     }
 
     public MultiSelectionModel<Job> getSelectionModel() {

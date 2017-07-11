@@ -17,6 +17,8 @@
 package stroom.util.io;
 
 public class FileUtilException extends RuntimeException {
+    private static final long serialVersionUID = 8845765305436611231L;
+
     public FileUtilException(final String message) {
         super(message);
     }

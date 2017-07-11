@@ -22,6 +22,8 @@ import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
+import stroom.proxy.repo.StroomZipFile;
+import stroom.proxy.repo.StroomZipFileType;
 import stroom.streamstore.server.StreamAttributeValueFlush;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
@@ -37,8 +39,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.task.server.TaskManager;
 import stroom.util.io.StreamUtil;
 import stroom.util.task.ServerTask;
-import stroom.util.zip.StroomZipFile;
-import stroom.util.zip.StroomZipFileType;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -73,7 +73,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         Assert.assertEquals(2, streamStore.find(findStreamCriteria).size());
 
-        final StroomZipFile stroomZipFile = new StroomZipFile(file.toFile());
+        final StroomZipFile stroomZipFile = new StroomZipFile(file);
         Assert.assertTrue(stroomZipFile.containsEntry("001", StroomZipFileType.Manifest));
         Assert.assertTrue(stroomZipFile.containsEntry("001", StroomZipFileType.Data));
         Assert.assertFalse(stroomZipFile.containsEntry("001", StroomZipFileType.Context));
@@ -147,7 +147,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         taskManager.exec(new StreamDownloadTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, file, streamDownloadSettings));
 
-        final StroomZipFile stroomZipFile = new StroomZipFile(file.toFile());
+        final StroomZipFile stroomZipFile = new StroomZipFile(file);
         Assert.assertTrue(stroomZipFile.containsEntry("001_1", StroomZipFileType.Manifest));
         Assert.assertTrue(stroomZipFile.containsEntry("001_1", StroomZipFileType.Meta));
         Assert.assertTrue(stroomZipFile.containsEntry("001_1", StroomZipFileType.Context));

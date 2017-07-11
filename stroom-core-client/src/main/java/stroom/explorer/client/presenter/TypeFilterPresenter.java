@@ -16,19 +16,20 @@
 
 package stroom.explorer.client.presenter;
 
-import com.google.gwt.cell.client.SafeImageCell;
+import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.safehtml.shared.SafeUri;
-import com.google.gwt.safehtml.shared.UriUtils;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import stroom.cell.info.client.SvgCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.event.DataSelectionEvent;
@@ -39,6 +40,7 @@ import stroom.data.table.client.CellTableViewImpl;
 import stroom.data.table.client.CellTableViewImpl.BasicResources;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.svg.client.SvgPreset;
 import stroom.util.client.ImageUtil;
 
 import java.util.HashSet;
@@ -75,10 +77,10 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
         getView().addColumn(checkedColumn);
 
         // Icon.
-        final Column<DocumentType, SafeUri> iconColumn = new Column<DocumentType, SafeUri>(new SafeImageCell()) {
+        final Column<DocumentType, SafeHtml> iconColumn = new Column<DocumentType, SafeHtml>(new SafeHtmlCell()) {
             @Override
-            public SafeUri getValue(final DocumentType object) {
-                return UriUtils.fromString(ImageUtil.getImageURL() + object.getIconUrl());
+            public SafeHtml getValue(final DocumentType object) {
+                return SafeHtmlUtils.fromTrustedString("<img style=\"width:16px;height:16px;padding:2px\" src=\"" + ImageUtil.getImageURL() + object.getIconUrl() + "\"/>");
             }
         };
         getView().addColumn(iconColumn);

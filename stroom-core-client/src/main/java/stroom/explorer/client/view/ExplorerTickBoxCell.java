@@ -32,6 +32,8 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerData> {
 
         String expander();
 
+        String expanderIcon();
+
         String tickBox();
 
         String icon();
@@ -40,12 +42,6 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerData> {
     }
 
     interface Resources extends ClientBundle {
-        ImageResource open();
-
-        ImageResource closed();
-
-        ImageResource leaf();
-
         @Source(Style.DEFAULT_CSS)
         Style style();
     }
@@ -60,7 +56,7 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerData> {
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml tickBox(String iconClass, SafeHtml icon);
 
-        @Template("<div class=\"{0}\"><img src=\"{1}\" /></div>")
+        @Template("<img class=\"{0}\" src=\"{1}\" />")
         SafeHtml icon(String iconClass, SafeUri iconUrl);
 
         @Template("<div class=\"{0}\">{1}</div>")
@@ -119,14 +115,14 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerData> {
                         expanderPadding += 13;
                         break;
                     case OPEN:
-                        expanderIcon = getImageHtml(resources.open());
+                        expanderIcon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-open.svg"));
                         break;
                     case CLOSED:
-                        expanderIcon = getImageHtml(resources.closed());
+                        expanderIcon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-closed.svg"));
                         break;
                 }
             } else {
-                expanderIcon = getImageHtml(resources.leaf());
+                expanderIcon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-leaf.svg"));
             }
 
             int indent = item.getDepth();

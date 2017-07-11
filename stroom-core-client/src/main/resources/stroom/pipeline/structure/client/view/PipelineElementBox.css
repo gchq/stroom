@@ -55,6 +55,8 @@
 	position: absolute;
 	left: 3px;
 	top: 1px;
+	width: 16px;
+	height: 16px;
 	cursor: pointer;
 }
 

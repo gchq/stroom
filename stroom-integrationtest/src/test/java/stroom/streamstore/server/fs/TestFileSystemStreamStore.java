@@ -280,7 +280,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         findStreamCriteria.setPageRequest(new PageRequest(0L, 100));
         findStreamCriteria.obtainStatusSet().clear();
         findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        findStreamCriteria.setOrderBy(FindStreamCriteria.ORDER_BY_CREATE_MS);
+        findStreamCriteria.setSort(FindStreamCriteria.FIELD_CREATE_MS);
 
         findStreamCriteria.setCreatePeriod(PeriodUtil.createToDateWithOffset(System.currentTimeMillis(), 1));
         findStreamCriteria.setEffectivePeriod(PeriodUtil.createToDateWithOffset(System.currentTimeMillis(), 1));

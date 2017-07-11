@@ -24,7 +24,7 @@ import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.stereotype.Component;
 import stroom.logging.AuthenticationEventLog;
-import stroom.security.shared.User;
+import stroom.security.shared.UserRef;
 import stroom.servlet.HttpServletRequestHolder;
 
 import javax.inject.Inject;
@@ -52,18 +52,18 @@ public class AuthenticationServiceMailSender {
         this.httpServletRequestHolder = httpServletRequestHolder;
     }
 
-    public void emailPasswordReset(final User user, final String password) {
+    public void emailPasswordReset(final UserRef userRef, final String password) {
         if (canEmailPasswordReset()) {
             // Add event log data for reset password.
-            eventLog.resetPassword(user.getName(), true);
+            eventLog.resetPassword(userRef.getName(), true);
 
             final SimpleMailMessage mailMessage = new SimpleMailMessage();
             resetPasswordTemplate.copyTo(mailMessage);
-            mailMessage.setTo(user.getName() + "@" + userDomain);
+            mailMessage.setTo(userRef.getName() + "@" + userDomain);
 
             String message = mailMessage.getText();
             message = StringUtils.replace(message, "\\n", "\n");
-            message = StringUtils.replace(message, "${username}", user.getName());
+            message = StringUtils.replace(message, "${username}", userRef.getName());
             message = StringUtils.replace(message, "${password}", password);
             final HttpServletRequest req = httpServletRequestHolder.get();
             message = StringUtils.replace(message, "${hostname}", req.getServerName());

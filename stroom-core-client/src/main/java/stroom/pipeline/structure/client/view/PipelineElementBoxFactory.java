@@ -16,10 +16,10 @@
 
 package stroom.pipeline.structure.client.view;
 
-import com.google.gwt.user.client.ui.Image;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.svg.client.SvgIcon;
 
 @Singleton
 public class PipelineElementBoxFactory {
@@ -28,9 +28,9 @@ public class PipelineElementBoxFactory {
     }
 
     public PipelineElementBox create(final PipelineElement pipelineElement) {
-        final Image image = PipelineImageUtil.getImage(pipelineElement.getElementType());
-        if (image != null) {
-            return new PipelineElementBox(pipelineElement, image);
+        final SvgIcon icon = PipelineImageUtil.getIcon(pipelineElement.getElementType());
+        if (icon != null) {
+            return new PipelineElementBox(pipelineElement, icon);
         } else {
             return new PipelineElementBox(pipelineElement, null);
         }

@@ -26,58 +26,65 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
-import stroom.entity.shared.OrderBy;
+import stroom.entity.shared.Sort.Direction;
+import stroom.entity.shared.Sort.Direction;
 import stroom.node.shared.DBTableStatus;
+import stroom.node.shared.FindDBTableCriteria;
 import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.button.client.GlyphIcons;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.SvgPresets;
+import stroom.svg.client.Icon;
 
 public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataGridView<DBTableStatus>> implements ColumnSortEvent.Handler {
-    private final FindSystemTableStatusAction action;
+    private final FindDBTableCriteria criteria;
     private final ActionDataProvider<DBTableStatus> dataProvider;
 
     @Inject
     public DatabaseTablesMonitoringPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
         super(eventBus, new DataGridViewImpl<>(false, 1000));
 
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.DATABASE) {
+        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.FIELD_DATABASE, true) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return row.getDb();
             }
-        }, DBTableStatus.DATABASE.getDisplayValue(), 200);
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.TABLE) {
+        }, DBTableStatus.FIELD_DATABASE, 200);
+
+        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.FIELD_TABLE, true) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return row.getTable();
             }
-        }, DBTableStatus.TABLE.getDisplayValue(), 200);
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.ROW_COUNT) {
+        }, DBTableStatus.FIELD_TABLE, 200);
+
+        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.FIELD_ROW_COUNT, false) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return ModelStringUtil.formatCsv(row.getCount());
             }
-        }, DBTableStatus.ROW_COUNT.getDisplayValue(), 100);
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.DATA_SIZE) {
+        }, DBTableStatus.FIELD_ROW_COUNT, 100);
+
+        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.FIELD_DATA_SIZE, false) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return ModelStringUtil.formatIECByteSizeString(row.getDataSize());
             }
-        }, DBTableStatus.DATA_SIZE.getDisplayValue(), 100);
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.INDEX_SIZE) {
+        }, DBTableStatus.FIELD_DATA_SIZE, 100);
+
+        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.FIELD_INDEX_SIZE, false) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return ModelStringUtil.formatIECByteSizeString(row.getIndexSize());
             }
-        }, DBTableStatus.INDEX_SIZE.getDisplayValue(), 100);
+        }, DBTableStatus.FIELD_INDEX_SIZE, 100);
+
         getView().addEndColumn(new EndColumn<>());
 
         getView().addColumnSortHandler(this);
 
-        action = new FindSystemTableStatusAction();
+        criteria = new FindDBTableCriteria();
+        final FindSystemTableStatusAction action = new FindSystemTableStatusAction(criteria);
         dataProvider = new ActionDataProvider<>(dispatcher, action);
         dataProvider.addDataDisplay(getView().getDataDisplay());
 
@@ -87,14 +94,12 @@ public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataG
     @Override
     public void onColumnSort(final ColumnSortEvent event) {
         if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-            final OrderBy orderBy = ((OrderByColumn<?, ?>) event.getColumn()).getOrderBy();
-
-            if (action != null) {
-                action.setOrderBy(orderBy);
+            final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+            if (criteria != null) {
                 if (event.isSortAscending()) {
-                    action.setOrderByDirection(OrderByDirection.ASCENDING);
+                    criteria.setSort(orderByColumn.getField(), Direction.ASCENDING, orderByColumn.isIgnoreCase());
                 } else {
-                    action.setOrderByDirection(OrderByDirection.DESCENDING);
+                    criteria.setSort(orderByColumn.getField(), Direction.DESCENDING, orderByColumn.isIgnoreCase());
                 }
                 dataProvider.refresh();
             }
@@ -103,7 +108,7 @@ public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataG
 
     @Override
     public Icon getIcon() {
-        return GlyphIcons.DATABASE;
+        return SvgPresets.DATABASE;
     }
 
     @Override

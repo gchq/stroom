@@ -27,6 +27,7 @@ import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
+import stroom.entity.shared.Sort.Direction;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
@@ -51,8 +52,8 @@ public abstract class AbstractExplorerDataProvider<E extends DocumentEntity, C e
 
     public void addItems(final FindService<E, C> findService,
                          final TreeModel treeModel, final C criteria) {
-        if (criteria instanceof FindNamedEntityCriteria) {
-            criteria.setOrderBy(FindNamedEntityCriteria.ORDER_BY_NAME);
+        if (criteria != null) {
+            criteria.setSort(FindNamedEntityCriteria.FIELD_NAME);
         }
 
         // TODO : This is a temporary fudge until the separate explorer service is created - we shouldn't need to poke insecure holes in the document service.
@@ -93,7 +94,7 @@ public abstract class AbstractExplorerDataProvider<E extends DocumentEntity, C e
 
     @Override
     public String getIconUrl() {
-        return DocumentType.DOC_IMAGE_URL + getType() + ".png";
+        return DocumentType.DOC_IMAGE_URL + getType() + ".svg";
     }
 
     // TODO : This is a temporary fudge until the separate explorer service is created.

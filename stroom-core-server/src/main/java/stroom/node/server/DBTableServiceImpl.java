@@ -18,18 +18,22 @@ package stroom.node.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
-import stroom.entity.shared.OrderBy;
+import stroom.entity.shared.Sort;
+import stroom.entity.shared.Sort.Direction;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.DBTableStatus;
+import stroom.node.shared.FindDBTableCriteria;
 import stroom.security.Secured;
+import stroom.util.shared.CompareUtil;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -41,62 +45,75 @@ import java.util.List;
 @Transactional(readOnly = true)
 @Secured(DBTableStatus.MANAGE_DB_PERMISSION)
 @Component("dbTableService")
-public class DBTableServiceImpl implements DBTableService {
+public class DBTableServiceImpl implements DBTableService, BeanFactoryAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBTableServiceImpl.class);
 
-    private final DataSource dataSource;
-    private final DataSource statisticsDataSource;
+    private BeanFactory beanFactory;
     private final StroomDatabaseInfo stroomDatabaseInfo;
 
     @Inject
-    DBTableServiceImpl(final DataSource dataSource, @Named("statisticsDataSource") final DataSource statisticsDataSource, final StroomDatabaseInfo stroomDatabaseInfo) {
-        this.dataSource = dataSource;
-        this.statisticsDataSource = statisticsDataSource;
+    DBTableServiceImpl(final StroomDatabaseInfo stroomDatabaseInfo) {
         this.stroomDatabaseInfo = stroomDatabaseInfo;
     }
 
     @Override
-    public List<DBTableStatus> findSystemTableStatus(final OrderBy orderBy, final OrderByDirection orderByDirection) {
+    public List<DBTableStatus> findSystemTableStatus(final FindDBTableCriteria criteria) {
         final List<DBTableStatus> rtnList = new ArrayList<>();
-        addTableStatus(dataSource, rtnList);
-        addTableStatus(statisticsDataSource, rtnList);
+
+        if (beanFactory != null) {
+            final Object dataSource = beanFactory.getBean("dataSource");
+            final Object statisticsDataSource = beanFactory.getBean("statisticsDataSource");
+
+            addTableStatus(dataSource, rtnList);
+            addTableStatus(statisticsDataSource, rtnList);
+        }
 
         rtnList.sort((o1, o2) -> {
-            int diff = 0;
+            if (criteria.getSortList() != null && criteria.getSortList().size() > 0) {
+                for (final Sort sort : criteria.getSortList()) {
+                    final String field = sort.getField();
 
-            if (orderBy == null || DBTableStatus.DATABASE.equals(orderBy)) {
-                diff = o1.getDb().compareToIgnoreCase(o2.getDb());
+                    int compare = 0;
+                    if (DBTableStatus.FIELD_DATABASE.equals(field)) {
+                        compare = CompareUtil.compareString(o1.getDb(), o2.getDb());
+                    } else if (DBTableStatus.FIELD_TABLE.equals(field)) {
+                        compare = CompareUtil.compareString(o1.getTable(), o2.getTable());
+                    } else if (DBTableStatus.FIELD_ROW_COUNT.equals(field)) {
+                        compare = CompareUtil.compareLong(o1.getCount(), o2.getCount());
+                    } else if (DBTableStatus.FIELD_DATA_SIZE.equals(field)) {
+                        compare = CompareUtil.compareLong(o1.getDataSize(), o2.getDataSize());
+                    } else if (DBTableStatus.FIELD_INDEX_SIZE.equals(field)) {
+                        compare = CompareUtil.compareLong(o1.getIndexSize(), o2.getIndexSize());
+                    }
+                    if (Direction.DESCENDING.equals(sort.getDirection())) {
+                        compare = compare * -1;
+                    }
 
-                if (OrderByDirection.DESCENDING.equals(orderByDirection)) {
-                    diff = diff * -1;
-                }
-
-                if (diff == 0) {
-                    diff = o1.getTable().compareToIgnoreCase(o2.getTable());
+                    if (compare != 0) {
+                        return compare;
+                    }
                 }
             } else {
-                if (DBTableStatus.TABLE.equals(orderBy)) {
-                    diff = o1.getTable().compareToIgnoreCase(o2.getTable());
-                } else if (DBTableStatus.ROW_COUNT.equals(orderBy)) {
-                    diff = Long.compare(o1.getCount(), o2.getCount());
-                } else if (DBTableStatus.DATA_SIZE.equals(orderBy)) {
-                    diff = Long.compare(o1.getDataSize(), o2.getDataSize());
-                } else if (DBTableStatus.INDEX_SIZE.equals(orderBy)) {
-                    diff = Long.compare(o1.getIndexSize(), o2.getIndexSize());
+                int compare = o1.getDb().compareToIgnoreCase(o2.getDb());
+                if (compare == 0) {
+                    compare = o1.getTable().compareToIgnoreCase(o2.getTable());
                 }
-
-                if (OrderByDirection.DESCENDING.equals(orderByDirection)) {
-                    diff = diff * -1;
-                }
+                return compare;
             }
 
-            return diff;
+            return 0;
         });
 
         return rtnList;
     }
 
-    private void addTableStatus(final DataSource dataSource, final List<DBTableStatus> rtnList) {
+
+    private void addTableStatus(final Object bean, final List<DBTableStatus> rtnList) {
+        if (bean == null || !(bean instanceof DataSource)) {
+            return;
+        }
+
+        final DataSource dataSource = (DataSource) bean;
         Connection connection = null;
 
         try {
@@ -140,5 +157,10 @@ public class DBTableServiceImpl implements DBTableService {
         } finally {
             ConnectionUtil.close(connection);
         }
+    }
+
+    @Override
+    public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
+        this.beanFactory = beanFactory;
     }
 }

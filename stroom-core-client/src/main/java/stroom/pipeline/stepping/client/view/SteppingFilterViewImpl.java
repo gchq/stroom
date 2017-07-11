@@ -30,8 +30,8 @@ import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.Steppin
 import stroom.pipeline.stepping.client.presenter.SteppingFilterUiHandlers;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
-import stroom.widget.button.client.GlyphButton;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SvgButton;
+import stroom.svg.client.SvgPresets;
 
 public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiHandlers>
         implements SteppingFilterSettingsView {
@@ -45,21 +45,21 @@ public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiH
     @UiField
     ListBox skipToOutput;
     @UiField(provided = true)
-    GlyphButton addXPath;
+    SvgButton addXPath;
     @UiField(provided = true)
-    GlyphButton editXPath;
+    SvgButton editXPath;
     @UiField(provided = true)
-    GlyphButton removeXPath;
+    SvgButton removeXPath;
     @UiField
     SimplePanel xPathList;
 
     @Inject
     public SteppingFilterViewImpl(final Binder binder) {
-        addXPath = GlyphButton.create(GlyphIcons.ADD);
+        addXPath = SvgButton.create(SvgPresets.ADD);
         addXPath.setTitle("Add XPath");
-        editXPath = GlyphButton.create(GlyphIcons.EDIT);
+        editXPath = SvgButton.create(SvgPresets.EDIT);
         editXPath.setTitle("Edit XPath");
-        removeXPath = GlyphButton.create(GlyphIcons.REMOVE);
+        removeXPath = SvgButton.create(SvgPresets.REMOVE);
         removeXPath.setTitle("Delete XPath");
 
         widget = binder.createAndBindUi(this);

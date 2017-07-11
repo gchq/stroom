@@ -21,9 +21,16 @@ import org.slf4j.LoggerFactory;
 import stroom.io.StreamCloser;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.util.zip.HeaderMap;
+import stroom.util.logging.StroomLogger;
+import stroom.feed.MetaMap;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +45,7 @@ public final class FileSystemStreamSource implements StreamSource {
     private Stream stream;
     private StreamVolume volume;
     private StreamType streamType;
-    private HeaderMap attributeMap;
+    private MetaMap attributeMap;
     private InputStream inputStream;
     private File file;
 
@@ -50,10 +57,10 @@ public final class FileSystemStreamSource implements StreamSource {
      * Creates a new file system stream source.
      *
      * @return A new file system stream source or null if a file cannot be
-     *         created.
+     * created.
      */
     public static FileSystemStreamSource create(final Stream stream, final StreamVolume volume,
-            final StreamType streamType) {
+                                                final StreamType streamType) {
         return new FileSystemStreamSource(stream, volume, streamType);
     }
 
@@ -104,7 +111,11 @@ public final class FileSystemStreamSource implements StreamSource {
                 inputStream = FileSystemStreamTypeUtil.getInputStream(streamType, getFile());
                 streamCloser.add(inputStream);
             } catch (IOException ioEx) {
-                LOGGER.error("getInputStream", ioEx);
+                // Don't log this as an error if we expect this stream to have been deleted or be locked.
+                if (stream == null || StreamStatus.UNLOCKED.equals(stream.getStatus())) {
+                    LOGGER.error("getInputStream", ioEx);
+                }
+
                 throw new RuntimeException(ioEx);
             }
         }
@@ -135,12 +146,12 @@ public final class FileSystemStreamSource implements StreamSource {
     }
 
     @Override
-    public HeaderMap getAttributeMap() {
+    public MetaMap getAttributeMap() {
         if (parent != null) {
             return parent.getAttributeMap();
         }
         if (attributeMap == null) {
-            attributeMap = new HeaderMap();
+            attributeMap = new MetaMap();
             try {
                 attributeMap.read(getChildStream(StreamType.MANIFEST).getInputStream(), true);
             } catch (Exception ex) {

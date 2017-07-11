@@ -20,13 +20,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.internalstatistics.MetaDataStatistic;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component
 public class MockMetaDataStatistic implements MetaDataStatistic {
     @Override
-    public void recordStatistics(HeaderMap metaData) {
+    public void recordStatistics(MetaMap metaData) {
     }
 
 }

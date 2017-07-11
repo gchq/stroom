@@ -43,7 +43,7 @@
 	position: relative;
 	background: #ddd;
 	color: #fff;
-	font-size: 30px;
+	font-size: 0px;
 	transition: background-color .5s;
 	-webkit-transition: background-color .5s;
 	-moz-transition: background-color .5s;

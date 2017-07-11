@@ -27,8 +27,8 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.streamstore.client.presenter.EntityIdSetPresenter.EntityIdSetView;
 import stroom.streamstore.client.presenter.EntityIdSetUiHandlers;
-import stroom.widget.button.client.GlyphButton;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SvgButton;
+import stroom.svg.client.SvgPresets;
 
 public class EntityIdSetViewImpl extends ViewWithUiHandlers<EntityIdSetUiHandlers>implements EntityIdSetView {
     public interface Binder extends UiBinder<Widget, EntityIdSetViewImpl> {
@@ -37,16 +37,16 @@ public class EntityIdSetViewImpl extends ViewWithUiHandlers<EntityIdSetUiHandler
     private final Widget widget;
 
     @UiField(provided = true)
-    GlyphButton add;
+    SvgButton add;
     @UiField(provided = true)
-    GlyphButton remove;
+    SvgButton remove;
     @UiField
     ScrollPanel list;
 
     @Inject
     public EntityIdSetViewImpl(final Binder binder) {
-        add = GlyphButton.create(GlyphIcons.ADD);
-        remove = GlyphButton.create(GlyphIcons.REMOVE);
+        add = SvgButton.create(SvgPresets.ADD);
+        remove = SvgButton.create(SvgPresets.REMOVE);
         widget = binder.createAndBindUi(this);
     }
 

@@ -47,8 +47,12 @@ import stroom.pipeline.server.XSLTServiceImpl;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.resource.server.ResourceStoreImpl;
 import stroom.security.server.UserServiceImpl;
+import stroom.statistics.server.common.MetaDataStatisticImpl;
+import stroom.statistics.server.common.StatisticEventStoreFactoryImpl;
+import stroom.streamstore.server.DataRetentionExecutor;
 import stroom.streamstore.server.StreamAttributeKeyServiceImpl;
 import stroom.streamstore.server.StreamTypeServiceImpl;
+import stroom.streamstore.server.fs.DataRetentionTransactionHelper;
 import stroom.streamstore.server.fs.FileSystemStreamStore;
 import stroom.streamstore.shared.StreamTypeService;
 import stroom.streamtask.server.StreamProcessorFilterServiceImpl;
@@ -87,6 +91,8 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         // EntityPathResolverImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = FeedServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = FileSystemStreamStore.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DataRetentionTransactionHelper.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DataRetentionExecutor.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = GlobalPropertyServiceImpl.class),
         // @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value =
         // ImportExportSerializerImpl.class),

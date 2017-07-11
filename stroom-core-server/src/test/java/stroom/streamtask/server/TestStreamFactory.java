@@ -23,17 +23,17 @@ import stroom.streamstore.server.StreamFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestStreamFactory extends StroomUnitTest {
     @Test
     public void testSimple() {
         final String testDate = "2000-01-01T00:00:00.000Z";
-        final HeaderMap headerMap = new HeaderMap();
-        headerMap.put("effectivetime", testDate);
+        final MetaMap metaMap = new MetaMap();
+        metaMap.put("effectivetime", testDate);
 
-        final Long time = StreamFactory.getReferenceEffectiveTime(headerMap, true);
+        final Long time = StreamFactory.getReferenceEffectiveTime(metaMap, true);
 
         Assert.assertEquals(testDate, DateUtil.createNormalDateTimeString(time));
     }

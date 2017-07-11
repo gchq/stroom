@@ -19,7 +19,7 @@ package stroom;
 import org.junit.Assert;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 
@@ -46,12 +46,11 @@ public class DatabaseCommonTestControlTransactionHelper {
     /**
      * Count the records.
      *
-     * @param clazz
-     *            to count
+     * @param clazz to count
      * @return the count
      */
     public int countEntity(final Class<?> clazz) {
-        final SQLBuilder sql = new SQLBuilder(false);
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT count(*) FROM ");
         sql.append(clazz.getName());
         return (int) entityManager.executeQueryLongResult(sql);
@@ -62,9 +61,9 @@ public class DatabaseCommonTestControlTransactionHelper {
      *
      * @param clazz
      */
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings({"unchecked"})
     public void deleteClass(final Class<?> clazz) {
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e FROM ");
         sql.append(clazz.getName());
         sql.append(" as e ");

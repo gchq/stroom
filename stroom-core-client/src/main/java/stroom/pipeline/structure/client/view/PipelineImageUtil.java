@@ -16,18 +16,17 @@
 
 package stroom.pipeline.structure.client.view;
 
-import com.google.gwt.user.client.ui.Image;
-import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.svg.client.SvgIcon;
 import stroom.util.client.ImageUtil;
 
 public class PipelineImageUtil {
-    public static Image getImage(final PipelineElementType pipelineElementType) {
-        return new Image(getPipelineImageURL() + pipelineElementType.getIcon());
-    }
+    public static SvgIcon getIcon(final PipelineElementType pipelineElementType) {
+        if (pipelineElementType.getIcon() == null || pipelineElementType.getIcon().length() == 0) {
+            return null;
+        }
 
-    public static String getImageURL(final PipelineElement element) {
-        return getPipelineImageURL() + element.getElementType().getIcon();
+        return new SvgIcon(getPipelineImageURL() + pipelineElementType.getIcon(), 16, 16);
     }
 
     private static String getPipelineImageURL() {

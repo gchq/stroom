@@ -47,8 +47,11 @@ public class StroomXSLTFunctionLibrary {
             register("current-user", CurrentUser.class, 0, 0, new SequenceType[] {}, SequenceType.SINGLE_STRING);
             register("dictionary", Dictionary.class, 1, 1, new SequenceType[] { SequenceType.SINGLE_STRING },
                     SequenceType.OPTIONAL_STRING);
-            register("feed-attribute", FeedAttribute.class, 1, 1, new SequenceType[] { SequenceType.SINGLE_STRING },
+
+            // TODO : Deprecate
+            register("feed-attribute", Meta.class, 1, 1, new SequenceType[] { SequenceType.SINGLE_STRING },
                     SequenceType.OPTIONAL_STRING);
+
             register("feed-name", FeedName.class, 0, 0, new SequenceType[] {}, SequenceType.SINGLE_STRING);
             register("format-date", FormatDate.class, 1, 5,
                     new SequenceType[] { SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING,
@@ -65,6 +68,8 @@ public class StroomXSLTFunctionLibrary {
                     "lookup", Lookup.class, 2, 4, new SequenceType[] { SequenceType.SINGLE_STRING,
                             SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_BOOLEAN },
                     SequenceType.NODE_SEQUENCE);
+            register("meta", Meta.class, 1, 1, new SequenceType[] { SequenceType.SINGLE_STRING },
+                    SequenceType.OPTIONAL_STRING);
             register("numeric-ip", NumericIP.class, 1, 1, new SequenceType[] { SequenceType.SINGLE_STRING },
                     SequenceType.SINGLE_STRING);
             register("random", Random.class, 0, 0, new SequenceType[] {}, SequenceType.SINGLE_DOUBLE);

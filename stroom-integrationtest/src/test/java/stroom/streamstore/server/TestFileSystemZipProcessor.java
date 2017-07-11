@@ -16,6 +16,22 @@
 
 package stroom.streamstore.server;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import javax.annotation.Resource;
+
+import stroom.proxy.repo.StroomStreamProcessor;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
@@ -44,6 +60,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import stroom.util.zip.StroomHeaderArguments;
+import stroom.feed.MetaMap;
 
 public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     @Resource
@@ -217,14 +235,14 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             final HashMap<StreamType, List<String>> expectedBoundaries) throws IOException {
         final Feed eventFeed = commonTestScenarioCreator.createSimpleFeed();
 
-        final HeaderMap headerMap = new HeaderMap();
-        headerMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
+        final MetaMap metaMap = new MetaMap();
+        metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                 .buildSingleHandlerList(streamStore, feedService, null, eventFeed, eventFeed.getStreamType());
 
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(headerMap, handlerList, new byte[1000],
-                "DefaultDataFeedRequest-" + headerMap.get(StroomHeaderArguments.GUID));
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList, new byte[1000],
+                "DefaultDataFeedRequest-" + metaMap.get(StroomHeaderArguments.GUID));
         stroomStreamProcessor.setAppendReceivedPath(false);
 
         for (int i = 0; i < processCount; i++) {

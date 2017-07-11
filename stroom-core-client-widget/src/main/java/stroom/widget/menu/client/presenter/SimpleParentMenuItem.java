@@ -16,7 +16,7 @@
 
 package stroom.widget.menu.client.presenter;
 
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.Icon;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 

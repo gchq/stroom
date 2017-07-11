@@ -23,8 +23,6 @@ import stroom.util.client.ImageUtil;
 import stroom.widget.tab.client.presenter.TabData;
 
 public abstract class ContentTabPresenter<V extends View> extends MyPresenterWidget<V>implements TabData {
-    public static final String TAB_IMAGE_URL = ImageUtil.getImageURL() + "tab/";
-
     public ContentTabPresenter(final EventBus eventBus, final V view) {
         super(eventBus, view);
     }

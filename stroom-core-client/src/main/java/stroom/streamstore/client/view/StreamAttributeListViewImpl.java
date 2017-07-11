@@ -27,8 +27,8 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.streamstore.client.presenter.StreamAttributeListPresenter.StreamAttributeListView;
 import stroom.streamstore.client.presenter.StreamAttributeListUiHandlers;
-import stroom.widget.button.client.GlyphButton;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SvgButton;
+import stroom.svg.client.SvgPresets;
 
 public class StreamAttributeListViewImpl extends ViewWithUiHandlers<StreamAttributeListUiHandlers>
         implements StreamAttributeListView {
@@ -38,16 +38,16 @@ public class StreamAttributeListViewImpl extends ViewWithUiHandlers<StreamAttrib
     private final Widget widget;
 
     @UiField(provided = true)
-    GlyphButton add;
+    SvgButton add;
     @UiField(provided = true)
-    GlyphButton remove;
+    SvgButton remove;
     @UiField
     ScrollPanel list;
 
     @Inject
     public StreamAttributeListViewImpl(final Binder binder) {
-        add = GlyphButton.create(GlyphIcons.ADD);
-        remove = GlyphButton.create(GlyphIcons.REMOVE);
+        add = SvgButton.create(SvgPresets.ADD);
+        remove = SvgButton.create(SvgPresets.REMOVE);
         widget = binder.createAndBindUi(this);
     }
 

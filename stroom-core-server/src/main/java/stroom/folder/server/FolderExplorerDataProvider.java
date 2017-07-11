@@ -31,7 +31,7 @@ import javax.inject.Named;
 @ProvidesExplorerData
 @Component
 public class FolderExplorerDataProvider extends AbstractExplorerDataProvider<Folder, FindFolderCriteria> {
-    public static final String ICON_URL = DocumentType.DOC_IMAGE_URL + Folder.ENTITY_TYPE + ".png";
+    public static final String ICON_URL = DocumentType.DOC_IMAGE_URL + Folder.ENTITY_TYPE + ".svg";
 
     private final FolderService folderService;
 

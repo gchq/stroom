@@ -24,8 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
@@ -160,33 +161,40 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                 LOGGER.error("Invalid annotations on {}", stroomBeanMethod);
                 continue;
             }
+
+            // Get the actual job.
+            Job job = new Job();
+            job.setName(jobScheduleDescriptor.jobName());
+            job.setEnabled(jobScheduleDescriptor.enabled());
+            job = getOrCreateJob(job);
+
+            final JobNode newJobNode = new JobNode();
+            newJobNode.setJob(job);
+            newJobNode.setNode(node);
+            newJobNode.setEnabled(jobScheduleDescriptor.enabled());
+            if (stroomSimpleCronSchedule != null) {
+                newJobNode.setJobType(JobType.CRON);
+                newJobNode.setSchedule(stroomSimpleCronSchedule.cron());
+            } else if (stroomFrequencySchedule != null) {
+                newJobNode.setJobType(JobType.FREQUENCY);
+                newJobNode.setSchedule(stroomFrequencySchedule.value());
+            }
+
             // Add the job node to the DB if it isn't there already.
-            final JobNode existingJobNode = existingJobMap.get(jobScheduleDescriptor.jobName());
+            JobNode existingJobNode = existingJobMap.get(jobScheduleDescriptor.jobName());
             if (existingJobNode == null) {
-                // Get the actual job.
-                Job job = new Job();
-                job.setName(jobScheduleDescriptor.jobName());
-                job.setEnabled(jobScheduleDescriptor.enabled());
-                job = getOrCreateJob(job);
-
-                final JobNode newJobNode = new JobNode();
-                newJobNode.setJob(job);
-                newJobNode.setNode(node);
-                newJobNode.setEnabled(jobScheduleDescriptor.enabled());
-                if (stroomSimpleCronSchedule != null) {
-                    newJobNode.setJobType(JobType.CRON);
-                    newJobNode.setSchedule(stroomSimpleCronSchedule.cron());
-                } else if (stroomFrequencySchedule != null) {
-                    newJobNode.setJobType(JobType.FREQUENCY);
-                    newJobNode.setSchedule(stroomFrequencySchedule.value());
-                }
-
                 LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
                         newJobNode.getNode().getName());
                 save(newJobNode);
                 existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
-            }
 
+            } else if (!newJobNode.getJobType().equals(existingJobNode.getJobType())) {
+                // If the job type has changed then update the job node.
+                existingJobNode.setJobType(newJobNode.getJobType());
+                existingJobNode.setSchedule(newJobNode.getSchedule());
+                existingJobNode = save(existingJobNode);
+                existingJobMap.put(jobScheduleDescriptor.jobName(), existingJobNode);
+            }
         }
 
         // Distributed Jobs done a different way
@@ -226,7 +234,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         // Force to delete
         entityManager.flush();
 
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         if (stroomDatabaseInfo.isMysql()) {
             sql.append(DELETE_ORPHAN_JOBS_MYSQL);
         } else {
@@ -257,6 +265,13 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         final BaseResultList<Job> existingJob = jobService.find(criteria);
         if (existingJob != null && existingJob.size() > 0) {
             result = existingJob.getFirst();
+
+            // Update the job description if we need to.
+            if (job.getDescription() != null && !job.getDescription().equals(result.getDescription())) {
+                result.setDescription(job.getDescription());
+                LOGGER.info("Updating Job     '%s'", job.getName());
+                result = jobService.save(result);
+            }
         } else {
             LOGGER.info("Adding Job     '{}'", job.getName());
             result = jobService.save(job);
@@ -294,7 +309,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         }
 
         @Override
-        protected void appendBasicJoin(final SQLBuilder sql, final String alias, final Set<String> fetchSet) {
+        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
             super.appendBasicJoin(sql, alias, fetchSet);
             if (fetchSet != null) {
                 if (fetchSet.contains(Node.ENTITY_TYPE)) {
@@ -307,11 +322,11 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         }
 
         @Override
-        protected void appendBasicCriteria(final SQLBuilder sql, final String alias, final FindJobNodeCriteria criteria) {
+        protected void appendBasicCriteria(final HqlBuilder sql, final String alias, final FindJobNodeCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
-            SQLUtil.appendSetQuery(sql, true, alias + ".node", criteria.getNodeIdSet());
-            SQLUtil.appendSetQuery(sql, true, alias + ".job", criteria.getJobIdSet());
-            SQLUtil.appendValueQuery(sql, alias + ".job.name", criteria.getJobName());
+            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
+            sql.appendEntityIdSetQuery(alias + ".job", criteria.getJobIdSet());
+            sql.appendValueQuery(alias + ".job.name", criteria.getJobName());
         }
     }
 }

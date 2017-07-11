@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
@@ -64,7 +64,7 @@ public class ClusterLockServiceImpl implements ClusterLockService {
         // This happens outside this transaction
         clusterLockServiceTransactionHelper.checkLockCreated(lockName);
 
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT * FROM ");
         sql.append(ClusterLock.TABLE_NAME);
         sql.append(" WHERE ");
@@ -131,7 +131,6 @@ public class ClusterLockServiceImpl implements ClusterLockService {
         LOGGER.debug("releaseLock({}) - <<< {}", lockName, success);
     }
 
-    @Override
     @StroomFrequencySchedule("1m")
     public void keepAlive() {
         LOGGER.debug("keepAlive() - >>>");

@@ -16,13 +16,9 @@
 
 package stroom.streamstore.client.presenter;
 
-import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -32,10 +28,13 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.cell.info.client.SvgCell;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.pipeline.shared.FetchMarkerResult;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.util.shared.Marker;
 import stroom.util.shared.Severity;
@@ -52,17 +51,12 @@ import java.util.List;
 public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>> {
     private static HashSet<Severity> ALL_SEVERITIES = new HashSet<Severity>(Arrays.asList(Severity.SEVERITIES));
 
-    private static Resources resources;
     private HashSet<Severity> expandedSeverities;
     private DataPresenter dataPresenter;
 
     @Inject
     public MarkerListPresenter(final EventBus eventBus) {
         super(eventBus, new DataGridViewImpl<Marker>(false, DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, null));
-
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-        }
 
         addExpanderColumn();
         addSeverityColumn();
@@ -101,23 +95,23 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
     }
 
     private void addSeverityColumn() {
-        getView().addColumn(new Column<Marker, ImageResource>(new ImageResourceCell()) {
+        getView().addColumn(new Column<Marker, SvgPreset>(new SvgCell()) {
             @Override
-            public ImageResource getValue(final Marker marker) {
+            public SvgPreset getValue(final Marker marker) {
                 switch (marker.getSeverity()) {
                     case FATAL_ERROR:
-                        return resources.fatal();
+                        return SvgPresets.FATAL;
                     case ERROR:
-                        return resources.error();
+                        return SvgPresets.ERROR;
                     case WARNING:
-                        return resources.warning();
+                        return SvgPresets.ALERT;
                     case INFO:
-                        return resources.info();
+                        return SvgPresets.INFO;
                 }
 
-                return resources.warning();
+                return SvgPresets.ALERT;
             }
-        }, "", ColumnSizeConstants.GLYPH_COL);
+        }, "", ColumnSizeConstants.ICON_COL);
     }
 
     private void addElementId() {
@@ -273,15 +267,5 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
 
     public void setDataPresenter(final DataPresenter dataPresenter) {
         this.dataPresenter = dataPresenter;
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource info();
-
-        ImageResource warning();
-
-        ImageResource error();
-
-        ImageResource fatal();
     }
 }

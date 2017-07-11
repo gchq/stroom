@@ -41,6 +41,6 @@ public class FindSystemTableStatusHandler
 
     @Override
     public BaseResultList<DBTableStatus> exec(final FindSystemTableStatusAction action) {
-        return BaseResultList.createUnboundedList(dbTableService.findSystemTableStatus(action.getOrderBy(), action.getOrderByDirection()));
+        return BaseResultList.createUnboundedList(dbTableService.findSystemTableStatus(action.getCriteria()));
     }
 }

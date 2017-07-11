@@ -29,13 +29,23 @@
 	z-index: 4;
 }
 
+.stroom-dashboard-query-play img {
+	width: 37px;
+	height: 37px;
+}
+
 .stroom-dashboard-query-play .face {
 	background: #15a32c;
-	padding-left: 6px;
+	padding-left: 8px;
 }
 
 .stroom-dashboard-query-play .face:hover {
 	background: #0bd32b;
+}
+
+.stroom-dashboard-query-pause img {
+	width: 30px;
+	height: 30px;
 }
 
 .stroom-dashboard-query-pause .face {
@@ -44,6 +54,11 @@
 
 .stroom-dashboard-query-pause .face:hover {
 	background: #0bd32b;
+}
+
+.stroom-dashboard-query-stop img {
+	width: 16px;
+	height: 16px;
 }
 
 .stroom-dashboard-query-stop {
@@ -56,7 +71,6 @@
 	background: #d30000;
 	width: 30px;
 	height: 30px;
-	font-size: 14px;
 }
 
 .stroom-dashboard-query-stop .face:hover {

@@ -31,6 +31,8 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import stroom.util.shared.Expander;
 
@@ -40,23 +42,22 @@ import java.util.Set;
 
 public class ExpanderCell extends AbstractCell<Expander> {
     interface Resources extends ClientBundle {
-        ImageResource open();
-
-        ImageResource closed();
-
-        ImageResource leaf();
-
         @Source("expander.css")
         Style style();
     }
 
     interface Style extends CssResource {
+        String expanderIcon();
+
         String active();
     }
 
     interface Template extends SafeHtmlTemplates {
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml outerDiv(String className, SafeStyles style, SafeHtml icon);
+
+        @Template("<img class=\"{0}\" src=\"{1}\" />")
+        SafeHtml icon(String iconClass, SafeUri iconUrl);
     }
 
     private static final Set<String> ENABLED_EVENTS = new HashSet<>(Arrays.asList("click", "keydown"));
@@ -111,12 +112,15 @@ public class ExpanderCell extends AbstractCell<Expander> {
             SafeHtml icon = null;
 
             if (value.isLeaf()) {
-                icon = getImageHtml(resources.leaf());
+                icon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString("images/tree-leaf.svg"));
+//                icon = getImageHtml(resources.leaf());
             } else if (value.isExpanded()) {
-                icon = getImageHtml(resources.open());
+                icon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString("images/tree-open.svg"));
+//                icon = getImageHtml(resources.open());
                 className = resources.style().active();
             } else {
-                icon = getImageHtml(resources.closed());
+                icon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString("images/tree-closed.svg"));
+//                icon = getImageHtml(resources.closed());
                 className = resources.style().active();
             }
 

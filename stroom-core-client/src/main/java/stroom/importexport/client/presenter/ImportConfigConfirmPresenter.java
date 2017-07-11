@@ -44,8 +44,8 @@ import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.Severity;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -235,18 +235,18 @@ public class ImportConfigConfirmPresenter extends
         // Info column.
         final InfoColumn<ImportState> infoColumn = new InfoColumn<ImportState>() {
             @Override
-            public GlyphIcon getValue(final ImportState object) {
+            public SvgPreset getValue(final ImportState object) {
                 if (object.getMessageList().size() > 0 || object.getUpdatedFieldList().size() > 0) {
                     final Severity severity = object.getSeverity();
                     switch (severity) {
                         case INFO:
-                            return GlyphIcons.INFO;
+                            return SvgPresets.INFO;
                         case WARNING:
-                            return GlyphIcons.ALERT;
+                            return SvgPresets.ALERT;
                         case ERROR:
-                            return GlyphIcons.ERROR;
+                            return SvgPresets.ERROR;
                         default:
-                            return GlyphIcons.ERROR;
+                            return SvgPresets.ERROR;
                     }
                 }
                 return null;

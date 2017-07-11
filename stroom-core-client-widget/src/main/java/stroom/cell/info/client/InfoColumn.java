@@ -20,17 +20,17 @@ import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 
-public abstract class InfoColumn<T> extends Column<T, GlyphIcon> {
+public abstract class InfoColumn<T> extends Column<T, SvgPreset> {
     public InfoColumn() {
-        super(new FACell());
+        super(new SvgCell());
     }
 
     @Override
-    public GlyphIcon getValue(T object) {
-        return GlyphIcons.INFO;
+    public SvgPreset getValue(T object) {
+        return SvgPresets.INFO;
     }
 
     protected abstract void showInfo(final T row, int x, int y);

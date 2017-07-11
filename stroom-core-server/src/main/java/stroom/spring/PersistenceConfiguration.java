@@ -70,42 +70,43 @@ public class PersistenceConfiguration {
 
     @Bean
     public Flyway flyway(final ComboPooledDataSource dataSource) throws PropertyVetoException {
-        final Flyway flyway = new Flyway();
-        flyway.setDataSource(dataSource);
+        final String jpaHbm2DdlAuto = StroomProperties.getProperty("stroom.jpaHbm2DdlAuto", "validate");
+        if (!"update".equals(jpaHbm2DdlAuto)) {
+            final Flyway flyway = new Flyway();
+            flyway.setDataSource(dataSource);
 
-        final String driver = StroomProperties.getProperty("stroom.jdbcDriverClassName");
-        if (driver.toLowerCase().contains("hsqldb")) {
-            flyway.setLocations("stroom/db/migration/hsqldb");
-        } else {
-            flyway.setLocations("stroom/db/migration/mysql");
-        }
+            final String driver = StroomProperties.getProperty("stroom.jdbcDriverClassName");
+            if (driver.toLowerCase().contains("hsqldb")) {
+                flyway.setLocations("stroom/db/migration/hsqldb");
+            } else {
+                flyway.setLocations("stroom/db/migration/mysql");
+            }
 
+            Version version = null;
+            boolean usingFlyWay = false;
+            LOGGER.info("Testing installed Stroom schema version");
 
-        Version version = null;
-        boolean usingFlyWay = false;
-        LOGGER.info("Testing installed Stroom schema version");
+            try {
+                try (final Connection connection = dataSource.getConnection()) {
+                    try (final Statement statement = connection.createStatement()) {
+                        try (final ResultSet resultSet = statement.executeQuery("SELECT version FROM schema_version ORDER BY installed_rank DESC")) {
+                            if (resultSet.next()) {
+                                usingFlyWay = true;
 
-        try {
-            try (final Connection connection = dataSource.getConnection()) {
-                try (final Statement statement = connection.createStatement()) {
-                    try (final ResultSet resultSet = statement.executeQuery("SELECT version FROM schema_version ORDER BY installed_rank DESC")) {
-                        if (resultSet.next()) {
-                            usingFlyWay = true;
-
-                            final String ver = resultSet.getString(1);
-                            final String[] parts = ver.split("\\.");
-                            int maj = 0;
-                            int min = 0;
-                            int pat = 0;
-                            if (parts.length > 0) {
-                                maj = Integer.valueOf(parts[0]);
-                            }
-                            if (parts.length > 1) {
-                                min = Integer.valueOf(parts[1]);
-                            }
-                            if (parts.length > 2) {
-                                pat = Integer.valueOf(parts[2]);
-                            }
+                                final String ver = resultSet.getString(1);
+                                final String[] parts = ver.split("\\.");
+                                int maj = 0;
+                                int min = 0;
+                                int pat = 0;
+                                if (parts.length > 0) {
+                                    maj = Integer.valueOf(parts[0]);
+                                }
+                                if (parts.length > 1) {
+                                    min = Integer.valueOf(parts[1]);
+                                }
+                                if (parts.length > 2) {
+                                    pat = Integer.valueOf(parts[2]);
+                                }
 
                             version = new Version(maj, min, pat);
                             LOGGER.info("Found schema_version.version " + ver);
@@ -136,45 +137,45 @@ public class PersistenceConfiguration {
             }
         }
 
-        if (version == null) {
-            try {
-                try (final Connection connection = dataSource.getConnection()) {
-                    try (final Statement statement = connection.createStatement()) {
-                        try (final ResultSet resultSet = statement.executeQuery("SELECT ID FROM FD LIMIT 1")) {
-                            if (resultSet.next()) {
-                                version = new Version(2, 0, 0);
+            if (version == null) {
+                try {
+                    try (final Connection connection = dataSource.getConnection()) {
+                        try (final Statement statement = connection.createStatement()) {
+                            try (final ResultSet resultSet = statement.executeQuery("SELECT ID FROM FD LIMIT 1")) {
+                                if (resultSet.next()) {
+                                    version = new Version(2, 0, 0);
+                                }
                             }
                         }
                     }
+                } catch (final Exception e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    // Ignore.
                 }
-            } catch (final Exception e) {
-                LOGGER.debug(e.getMessage(), e);
-                // Ignore.
             }
-        }
 
-        if (version == null) {
-            try {
-                try (final Connection connection = dataSource.getConnection()) {
-                    try (final Statement statement = connection.createStatement()) {
-                        try (final ResultSet resultSet = statement.executeQuery("SELECT ID FROM FEED LIMIT 1")) {
-                            if (resultSet.next()) {
-                                version = new Version(2, 0, 0);
+            if (version == null) {
+                try {
+                    try (final Connection connection = dataSource.getConnection()) {
+                        try (final Statement statement = connection.createStatement()) {
+                            try (final ResultSet resultSet = statement.executeQuery("SELECT ID FROM FEED LIMIT 1")) {
+                                if (resultSet.next()) {
+                                    version = new Version(2, 0, 0);
+                                }
                             }
                         }
                     }
+                } catch (final Exception e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    // Ignore.
                 }
-            } catch (final Exception e) {
-                LOGGER.debug(e.getMessage(), e);
-                // Ignore.
             }
-        }
 
-        if (version != null) {
-            LOGGER.info("Detected current Stroom version is v" + version.toString());
-        } else {
-            LOGGER.info("This is a new installation!");
-        }
+            if (version != null) {
+                LOGGER.info("Detected current Stroom version is v" + version.toString());
+            } else {
+                LOGGER.info("This is a new installation!");
+            }
 
 
         if (version == null) {
@@ -194,7 +195,10 @@ public class PersistenceConfiguration {
             throw new RuntimeException(message);
         }
 
-        return flyway;
+            return flyway;
+        }
+
+        return null;
     }
 
     @Bean

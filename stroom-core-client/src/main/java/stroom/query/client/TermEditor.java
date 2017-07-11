@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,15 +27,20 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.datasource.api.v1.DataSourceField;
 import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.shared.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.ItemListBox;
 import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.query.shared.ExpressionTerm.Condition;
+import stroom.query.shared.IndexField;
+import stroom.query.shared.IndexFieldType;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 
@@ -52,9 +57,9 @@ public class TermEditor extends Composite {
     private final ItemListBox<DataSourceField> fieldListBox;
     private final ItemListBox<Condition> conditionListBox;
     private final Label andLabel;
-    private final TextBox value;
-    private final TextBox valueFrom;
-    private final TextBox valueTo;
+    private final SuggestBox value;
+    private final SuggestBox valueFrom;
+    private final SuggestBox valueTo;
     private final MyDateBox date;
     private final MyDateBox dateFrom;
     private final MyDateBox dateTo;
@@ -68,6 +73,8 @@ public class TermEditor extends Composite {
     private boolean reading;
     private boolean editing;
     private ExpressionUiHandlers uiHandlers;
+
+    private AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
 
     public TermEditor(final EntityDropDownPresenter dictionaryPresenter) {
         if (resources == null) {
@@ -124,7 +131,9 @@ public class TermEditor extends Composite {
         initWidget(layout);
     }
 
-    public void setFields(final List<DataSourceField> indexFields) {
+    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<DataSourceField> indexFields) {
+        suggestOracle.setDispatcher(dispatcher);
+        suggestOracle.setDataSource(dataSource);
         this.indexFields = indexFields;
         fieldListBox.clear();
         if (indexFields != null) {
@@ -186,8 +195,8 @@ public class TermEditor extends Composite {
 
             final StringBuilder sb = new StringBuilder();
             for (final Widget widget : activeWidgets) {
-                if (widget instanceof TextBox) {
-                    sb.append(((TextBox) widget).getText());
+                if (widget instanceof SuggestBox) {
+                    sb.append(((SuggestBox) widget).getText());
                     sb.append(",");
                 } else if (widget instanceof MyDateBox) {
                     sb.append(((MyDateBox) widget).getValue());
@@ -217,6 +226,7 @@ public class TermEditor extends Composite {
     }
 
     private void changeField(final DataSourceField field) {
+        suggestOracle.setField(field);
         final List<Condition> conditions = getConditions(field);
 
         conditionListBox.clear();
@@ -448,11 +458,6 @@ public class TermEditor extends Composite {
         registerHandler(dateFrom.addValueChangeHandler(event -> fireDirty()));
         registerHandler(dateTo.addValueChangeHandler(event -> fireDirty()));
 
-
-//        registerHandler(date.addValueChangeHandler(dateChangeHandler));
-//        registerHandler(dateFrom.addValueChangeHandler(dateChangeHandler));
-//        registerHandler(dateTo.addValueChangeHandler(dateChangeHandler));
-
         if (dictionaryPresenter != null) {
             registerHandler(dictionaryPresenter.addDataSelectionHandler(event -> {
                 final DocRef selection = dictionaryPresenter.getSelectedEntityReference();
@@ -502,8 +507,8 @@ public class TermEditor extends Composite {
         return conditionListBox;
     }
 
-    private TextBox createTextBox(final int width) {
-        final TextBox textBox = new TextBox();
+    private SuggestBox createTextBox(final int width) {
+        final SuggestBox textBox = new SuggestBox(suggestOracle);
         fixStyle(textBox, width);
         return textBox;
     }

@@ -77,7 +77,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -601,8 +601,8 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                         // Only do something if an output stream was used.
                         if (processInfoStreamTarget != null) {
                             // Write meta data.
-                            final HeaderMap headerMap = metaData.getHeaderMap();
-                            processInfoStreamTarget.getAttributeMap().putAll(headerMap);
+                            final MetaMap metaMap = metaData.getMetaMap();
+                            processInfoStreamTarget.getAttributeMap().putAll(metaMap);
                             // We let the streamCloser close the stream target
                             // with the stream store as it may want to delete it
                         }

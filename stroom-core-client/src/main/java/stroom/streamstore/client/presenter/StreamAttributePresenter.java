@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,9 +28,6 @@ import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.StreamAttributeCondition;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class StreamAttributePresenter extends MyPresenterWidget<StreamAttributePresenter.StreamAttributeView> {
     @Inject
     public StreamAttributePresenter(final EventBus eventBus, final StreamAttributeView view,
@@ -38,11 +35,8 @@ public class StreamAttributePresenter extends MyPresenterWidget<StreamAttributeP
         super(eventBus, view);
 
         final FindStreamAttributeKeyCriteria criteria = new FindStreamAttributeKeyCriteria();
-        criteria.setOrderBy(FindStreamAttributeKeyCriteria.ORDER_BY_NAME);
-        dispatcher.exec(new EntityReferenceFindAction<>(criteria)).onSuccess(result -> {
-            final List<DocRef> list = new ArrayList<>(result.getValues());
-            view.setKeys(list);
-        });
+        criteria.setSort(FindStreamAttributeKeyCriteria.FIELD_NAME);
+        dispatcher.exec(new EntityReferenceFindAction<>(criteria)).onSuccess(view::setKeys);
     }
 
     public void read(final StreamAttributeCondition condition) {

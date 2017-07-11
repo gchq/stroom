@@ -21,8 +21,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -37,7 +35,7 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.entity.client.presenter.HasRead;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
+import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
@@ -60,9 +58,8 @@ import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
-import stroom.widget.button.client.ImageButtonView;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
@@ -86,29 +83,29 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private final Provider<StreamUploadPresenter> streamUploadPresenter;
     private final Provider<StreamFilterPresenter> streamListFilterPresenter;
     private final ClientDispatchAsync dispatcher;
-    private final GlyphButtonView streamListFilter;
+    private final ButtonView streamListFilter;
 
     private boolean folderVisible;
     private boolean feedVisible;
     private boolean pipelineVisible;
     private FindStreamAttributeMapCriteria findStreamAttributeMapCriteria;
     private Feed feedCriteria;
-    private GlyphButtonView streamListUpload;
-    private GlyphButtonView streamListDownload;
-    private GlyphButtonView streamListDelete;
-    private ImageButtonView streamListProcess;
-    private GlyphButtonView streamListUndelete;
-    private GlyphButtonView streamRelationListDownload;
-    private GlyphButtonView streamRelationListDelete;
-    private GlyphButtonView streamRelationListUndelete;
-    private ImageButtonView streamRelationListProcess;
+    private ButtonView streamListUpload;
+    private ButtonView streamListDownload;
+    private ButtonView streamListDelete;
+    private ButtonView streamListProcess;
+    private ButtonView streamListUndelete;
+    private ButtonView streamRelationListDownload;
+    private ButtonView streamRelationListDelete;
+    private ButtonView streamRelationListUndelete;
+    private ButtonView streamRelationListProcess;
 
     @Inject
     public StreamPresenter(final EventBus eventBus, final StreamView view, final LocationManager locationManager,
                            final StreamListPresenter streamListPresenter,
                            final StreamRelationListPresenter streamRelationListPresenter, final DataPresenter dataPresenter,
                            final Provider<StreamFilterPresenter> streamListFilterPresenter,
-                           final Provider<StreamUploadPresenter> streamUploadPresenter, final Resources resources,
+                           final Provider<StreamUploadPresenter> streamUploadPresenter,
                            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.locationManager = locationManager;
@@ -127,37 +124,35 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
         // Process
         if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
-            streamListProcess = streamListPresenter.add("Process", resources.pipeline(), resources.pipelineDisabled(),
-                    false);
-            streamRelationListProcess = streamRelationListPresenter.add("Process", resources.pipeline(),
-                    resources.pipelineDisabled(), false);
+            streamListProcess = streamListPresenter.add(SvgPresets.PROCESS);
+            streamRelationListProcess = streamRelationListPresenter.add(SvgPresets.PROCESS);
         }
 
         // Delete, Undelete, DE-duplicate
         if (securityContext.hasAppPermission(Stream.DELETE_DATA_PERMISSION)) {
-            streamListDelete = streamListPresenter.add(GlyphIcons.DELETE);
+            streamListDelete = streamListPresenter.add(SvgPresets.DELETE);
             streamListDelete.setEnabled(false);
-            streamRelationListDelete = streamRelationListPresenter.add(GlyphIcons.DELETE);
+            streamRelationListDelete = streamRelationListPresenter.add(SvgPresets.DELETE);
             streamRelationListDelete.setEnabled(false);
-            streamListUndelete = streamListPresenter.add(GlyphIcons.UNDO);
+            streamListUndelete = streamListPresenter.add(SvgPresets.UNDO);
             streamListUndelete.setTitle("Un-Delete");
-            streamRelationListUndelete = streamRelationListPresenter.add(GlyphIcons.UNDO);
+            streamRelationListUndelete = streamRelationListPresenter.add(SvgPresets.UNDO);
             streamRelationListUndelete.setTitle("un-Delete");
         }
 
         // Download
         if (securityContext.hasAppPermission(Stream.EXPORT_DATA_PERMISSION)) {
-            streamListDownload = streamListPresenter.add(GlyphIcons.DOWNLOAD);
-            streamRelationListDownload = streamRelationListPresenter.add(GlyphIcons.DOWNLOAD);
+            streamListDownload = streamListPresenter.add(SvgPresets.DOWNLOAD);
+            streamRelationListDownload = streamRelationListPresenter.add(SvgPresets.DOWNLOAD);
         }
 
         // Upload
         if (securityContext.hasAppPermission(Stream.IMPORT_DATA_PERMISSION)) {
-            streamListUpload = streamListPresenter.add(GlyphIcons.UPLOAD);
+            streamListUpload = streamListPresenter.add(SvgPresets.UPLOAD);
         }
 
         // Filter
-        streamListFilter = streamListPresenter.add(GlyphIcons.FILTER);
+        streamListFilter = streamListPresenter.add(SvgPresets.FILTER);
 
         // Init the buttons
         setStreamListSelectableEnabled(null, StreamStatus.UNLOCKED);
@@ -380,8 +375,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         criteria.obtainFindStreamCriteria().getFetchSet().add(PipelineEntity.ENTITY_TYPE);
         criteria.obtainFindStreamCriteria().getFetchSet().add(StreamProcessor.ENTITY_TYPE);
         criteria.obtainFindStreamCriteria().getFetchSet().add(StreamType.ENTITY_TYPE);
-        criteria.obtainFindStreamCriteria().setOrderBy(FindStreamCriteria.ORDER_BY_CREATE_MS,
-                OrderByDirection.DESCENDING);
+        criteria.obtainFindStreamCriteria().setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.DESCENDING, false);
 
         return criteria;
     }
@@ -577,12 +571,6 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
     public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
         dataPresenter.setClassificationUiHandlers(classificationUiHandlers);
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource pipeline();
-
-        ImageResource pipelineDisabled();
     }
 
     public interface StreamView extends View {

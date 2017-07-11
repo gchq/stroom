@@ -55,9 +55,9 @@ import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.Indicators;
 import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.LayerContainer;
 
@@ -77,7 +77,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final ClientDispatchAsync dispatcher;
     private final Map<String, ElementPresenter> editorMap = new HashMap<String, ElementPresenter>();
     private final PipelineModel pipelineModel;
-    private final GlyphButtonView saveButton;
+    private final ButtonView saveButton;
     private boolean foundRecord;
     private boolean showingData;
     private boolean busyTranslating;
@@ -118,7 +118,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         stepControlPresenter.setEnabledButtons(false, action.getStepType(), true, showingData, foundRecord);
 
-        saveButton = addButtonLeft(GlyphIcons.SAVE);
+        saveButton = addButtonLeft(SvgPresets.SAVE);
     }
 
     private static String replace(final String path, final String type, final String replacement) {
@@ -134,17 +134,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         return newPath;
     }
 
-//    private ImageButtonView addButtonLeft(final String title, final ImageResource enabledImage,
-//                                          final ImageResource disabledImage) {
-//        if (leftButtons == null) {
-//            leftButtons = new ButtonPanel();
-//            getView().addWidgetLeft(leftButtons);
-//        }
-//
-//        final ImageButtonView button = leftButtons.add(title, enabledImage, disabledImage, true);
-//        return button;
-//    }
-
     @Override
     protected void onBind() {
         registerHandler(
@@ -158,7 +147,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         registerHandler(saveButton.addClickHandler(event -> save()));
     }
 
-    private GlyphButtonView addButtonLeft(final GlyphIcon preset) {
+    private ButtonView addButtonLeft(final SvgPreset preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
             getView().addWidgetLeft(leftButtons);

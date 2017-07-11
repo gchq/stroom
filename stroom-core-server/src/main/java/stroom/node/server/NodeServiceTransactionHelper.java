@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.node.shared.Node;
@@ -51,7 +51,7 @@ public class NodeServiceTransactionHelper {
     @SuppressWarnings("unchecked")
     @Transactional(readOnly = true)
     public Node getNode(final String name) {
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT r FROM ");
         sql.append(Node.class.getName());
         sql.append(" r where r.name = ");
@@ -69,7 +69,7 @@ public class NodeServiceTransactionHelper {
     @SuppressWarnings("unchecked")
     @Transactional(readOnly = true)
     public Rack getRack(final String name) {
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT r FROM ");
         sql.append(Rack.class.getName());
         sql.append(" r where r.name = ");

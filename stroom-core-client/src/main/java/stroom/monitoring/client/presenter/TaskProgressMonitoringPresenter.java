@@ -37,7 +37,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.TreeRowHandler;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
+import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.ResultList;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
@@ -49,13 +49,13 @@ import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TaskId;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.Icon;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
@@ -71,7 +71,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
     private final Set<TaskProgress> selectedTaskProgress = new HashSet<>();
     private final Set<TaskProgress> requestedTerminateTaskProgress = new HashSet<>();
     private final TooltipPresenter tooltipPresenter;
-    private final GlyphButtonView terminateButton;
+    private final ButtonView terminateButton;
 
     @Inject
     public TaskProgressMonitoringPresenter(final EventBus eventBus,
@@ -79,9 +79,9 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         super(eventBus, new DataGridViewImpl<>(false, 1000));
         this.dispatcher = dispatcher;
         this.tooltipPresenter = tooltipPresenter;
-        this.criteria.setOrderBy(FindTaskProgressCriteria.ORDER_BY_AGE, OrderByDirection.DESCENDING);
+        this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
 
-        terminateButton = getView().addButton(GlyphIcons.DELETE);
+        terminateButton = getView().addButton(SvgPresets.DELETE);
         terminateButton.addClickHandler(event -> endSelectedTask());
         terminateButton.setEnabled(true);
 
@@ -167,7 +167,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                         popupPosition, null);
             }
         };
-        getView().addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
+        getView().addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         // Add Handlers
         column.setFieldUpdater((index, object, value) -> {
@@ -263,7 +263,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
 
     @Override
     public Icon getIcon() {
-        return GlyphIcons.JOBS;
+        return SvgPresets.JOBS;
     }
 
     private void endSelectedTask() {

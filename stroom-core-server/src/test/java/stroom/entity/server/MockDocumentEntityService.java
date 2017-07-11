@@ -170,6 +170,11 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     }
 
     @Override
+    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
+        return map.get(id);
+    }
+
+    @Override
     public E save(final E entity) throws RuntimeException {
         if (!entity.isPersistent()) {
             throw new EntityServiceException("You cannot update an entity that has not been created");

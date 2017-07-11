@@ -33,7 +33,11 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -63,12 +67,12 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
     public static class AsyncFlush {
         private final Stream stream;
         private final boolean append;
-        private final HeaderMap headerMap;
+        private final MetaMap metaMap;
 
-        public AsyncFlush(final Stream stream, final boolean append, final HeaderMap headerMap) {
+        public AsyncFlush(final Stream stream, final boolean append, final MetaMap metaMap) {
             this.stream = stream;
             this.append = append;
-            this.headerMap = headerMap;
+            this.metaMap = metaMap;
         }
 
         public Stream getStream() {
@@ -79,15 +83,15 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
             return append;
         }
 
-        public HeaderMap getHeaderMap() {
-            return headerMap;
+        public MetaMap getMetaMap() {
+            return metaMap;
         }
     }
 
     final Queue<AsyncFlush> queue = new ConcurrentLinkedQueue<>();
 
     @Override
-    public void persitAttributes(final Stream stream, final boolean append, final HeaderMap metaMap) {
+    public void persitAttributes(final Stream stream, final boolean append, final MetaMap metaMap) {
         queue.add(new AsyncFlush(stream, append, metaMap));
     }
 
@@ -164,8 +168,8 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
                     for (final AsyncFlush asyncFlush : batchInsert) {
                         if (asyncFlush.getStream().getCreateMs() > applicableStreamAgeMs) {
                             // Found a key
-                            if (asyncFlush.getHeaderMap().containsKey(streamMDKey.getName())) {
-                                final String newValue = asyncFlush.getHeaderMap().get(streamMDKey.getName());
+                            if (asyncFlush.getMetaMap().containsKey(streamMDKey.getName())) {
+                                final String newValue = asyncFlush.getMetaMap().get(streamMDKey.getName());
                                 boolean dirty = false;
                                 StreamAttributeValue streamAttributeValue = null;
                                 final Map<Long, StreamAttributeValue> map = streamToAttributeMap

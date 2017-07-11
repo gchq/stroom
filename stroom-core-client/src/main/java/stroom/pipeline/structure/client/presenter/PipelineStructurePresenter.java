@@ -53,9 +53,10 @@ import stroom.pipeline.structure.client.view.PipelineImageUtil;
 import stroom.query.api.v1.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.svg.client.SvgIcon;
 import stroom.util.client.BorderUtil;
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
@@ -69,7 +70,7 @@ import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.Icon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 
 import java.util.ArrayList;
@@ -303,9 +304,9 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
         final List<Item> menuItems = new ArrayList<>();
 
-        menuItems.add(new SimpleParentMenuItem(0, GlyphIcons.ADD, GlyphIcons.ADD, "Add", null, addMenuItems != null && addMenuItems.size() > 0, addMenuItems));
-        menuItems.add(new SimpleParentMenuItem(1, GlyphIcons.UNDO, GlyphIcons.UNDO, "Restore", null, restoreMenuItems != null && restoreMenuItems.size() > 0, restoreMenuItems));
-        menuItems.add(new IconMenuItem(2, GlyphIcons.REMOVE, GlyphIcons.REMOVE, "Remove", null, selected != null, () -> onRemove(null)));
+        menuItems.add(new SimpleParentMenuItem(0, SvgPresets.ADD, SvgPresets.ADD, "Add", null, addMenuItems != null && addMenuItems.size() > 0, addMenuItems));
+        menuItems.add(new SimpleParentMenuItem(1, SvgPresets.UNDO, SvgPresets.UNDO, "Restore", null, restoreMenuItems != null && restoreMenuItems.size() > 0, restoreMenuItems));
+        menuItems.add(new IconMenuItem(2, SvgPresets.REMOVE, SvgPresets.REMOVE, "Remove", null, selected != null, () -> onRemove(null)));
 
         return menuItems;
     }
@@ -330,8 +331,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     for (final PipelineElementType pipelineElementType : entry.getValue()) {
                         if (StructureValidationUtil.isValidChildType(parentType, pipelineElementType, childCount)) {
                             final String type = pipelineElementType.getType();
-                            final Icon icon = ImageIcon.create(PipelineImageUtil.getImage(pipelineElementType));
-
+                            final Icon icon = PipelineImageUtil.getIcon(pipelineElementType);
                             final Item item = new IconMenuItem(j++, icon, null, type, null, true,
                                     new AddPipelineElementCommand(pipelineElementType));
                             children.add(item);
@@ -378,7 +378,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     final Category category = pipelineElementType.getCategory();
 
                     final List<Item> items = categoryMenuItems.computeIfAbsent(category, k -> new ArrayList<>());
-                    final Icon icon = ImageIcon.create(PipelineImageUtil.getImage(pipelineElementType));
+                    final Icon icon = PipelineImageUtil.getIcon(pipelineElementType);
 
                     final Item item = new IconMenuItem(pos++, icon, null, element.getId(), null, true,
                             new RestorePipelineElementCommand(element));

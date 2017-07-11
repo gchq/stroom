@@ -30,8 +30,7 @@ import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.index.server.FieldFactory;
 import stroom.index.server.IndexShardKeyUtil;
-import stroom.index.server.IndexShardWriter;
-import stroom.index.server.IndexShardWriterCache;
+import stroom.index.server.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
@@ -50,7 +49,7 @@ import java.util.List;
 
 public class TestBasicSearch extends AbstractCoreIntegrationTest {
     @Resource
-    private IndexShardWriterCache indexShardWriterCache;
+    private IndexShardManager indexShardManager;
     @Resource
     private IndexShardService indexShardService;
     @Resource
@@ -85,14 +84,10 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
             document.add(testFld);
             document.add(nonStoredFld);
 
-            // final PoolItem<IndexShardKey, IndexShardWriter> poolItem =
-            // .borrowObject(indexShardKey, true);
-            final IndexShardWriter writer = indexShardWriterCache.get(indexShardKey);
-            writer.addDocument(document);
-            // indexShardWriterPool.returnObject(poolItem, true);
+            indexShardManager.addDocument(indexShardKey, document);
         }
 
-        indexShardWriterCache.flushAll();
+        indexShardManager.flushAll();
 
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         criteria.getIndexIdSet().add(index);

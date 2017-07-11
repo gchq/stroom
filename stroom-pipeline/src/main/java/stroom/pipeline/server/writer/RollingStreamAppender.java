@@ -33,7 +33,6 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
-import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.shared.Stream;
@@ -42,7 +41,7 @@ import stroom.streamstore.shared.StreamTypeService;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 
 /**
@@ -52,7 +51,7 @@ import java.io.IOException;
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "RollingStreamAppender", category = Category.DESTINATION, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
-        PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.STREAM)
+        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class RollingStreamAppender extends AbstractRollingAppender implements RollingDestinationFactory {
     private static final int MB = 1024 * 1024;
     private static final int DEFAULT_MAX_SIZE = 100 * MB;
@@ -61,18 +60,11 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     private static final int MINUTE = 60 * SECOND;
     private static final int HOUR = 60 * MINUTE;
 
-    @Resource
-    private StreamStore streamStore;
-    @Resource
-    private StreamHolder streamHolder;
-    @Resource
-    private FeedService feedService;
-    @Resource
-    private StreamTypeService streamTypeService;
-    @Resource
-    private StreamProcessorHolder streamProcessorHolder;
-    @Resource
-    private NodeCache nodeCache;
+    private final StreamStore streamStore;
+    private final StreamHolder streamHolder;
+    private final FeedService feedService;
+    private final StreamTypeService streamTypeService;
+    private final NodeCache nodeCache;
 
     private Feed feed;
     private String streamType;
@@ -84,6 +76,15 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
     private StreamKey key;
 
+    @Inject
+    RollingStreamAppender(final StreamStore streamStore, final StreamHolder streamHolder, final FeedService feedService, final StreamTypeService streamTypeService, final NodeCache nodeCache) {
+        this.streamStore = streamStore;
+        this.streamHolder = streamHolder;
+        this.feedService = feedService;
+        this.streamTypeService = streamTypeService;
+        this.nodeCache = nodeCache;
+    }
+
     @Override
     public RollingDestination createDestination() throws IOException {
         if (key.getStreamType() == null) {
@@ -94,15 +95,15 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
             throw new ProcessException("Stream type not specified");
         }
 
+        // Don't set the processor or the task or else this rolling stream will be deleted automatically because the
+        // system will think it is superseded output.
         final Stream stream = Stream.createProcessedStream(streamHolder.getStream(), key.getFeed(), st,
-                streamProcessorHolder.getStreamProcessor(), streamProcessorHolder.getStreamTask());
+                null, null);
 
         final String nodeName = nodeCache.getDefaultNode().getName();
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
-        final RollingStreamDestination dest = new RollingStreamDestination(key, frequency, maxSize, streamStore,
+        return new RollingStreamDestination(key, frequency, maxSize, streamStore,
                 streamTarget, nodeName, System.currentTimeMillis());
-
-        return dest;
     }
 
     @Override

@@ -29,9 +29,8 @@ import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.StringCriteria.MatchStyle;
-import stroom.security.client.ClientSecurityContext;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
@@ -39,22 +38,20 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
         MyPresenterWidget<ManageEntityPresenter.ManageEntityView> implements ManageEntityUiHandlers, HasHandlers {
     public static final String LIST = "LIST";
 
-    protected final ManageEntityListPresenter<C, E> listPresenter;
-    protected final Provider<?> editProvider;
-    protected final ManageNewEntityPresenter newPresenter;
-    protected final ClientDispatchAsync dispatcher;
-
-    private final GlyphButtonView newButton;
-    private final GlyphButtonView openButton;
-    private final GlyphButtonView deleteButton;
-
-    protected E entity;
-    protected C criteria;
+    private final ManageEntityListPresenter<C, E> listPresenter;
+    private final Provider<?> editProvider;
+    private final ManageNewEntityPresenter newPresenter;
+    private final ClientDispatchAsync dispatcher;
+    private E entity;
+    private C criteria;
+    private ButtonView newButton;
+    private ButtonView openButton;
+    private ButtonView deleteButton;
 
     public ManageEntityPresenter(final EventBus eventBus, final ManageEntityView view,
                                  final ManageEntityListPresenter<C, E> listPresenter, final Provider<?> editProvider,
                                  final ManageNewEntityPresenter newPresenter,
-                                 final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
+                                 final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
@@ -65,19 +62,13 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
 
         setInSlot(LIST, listPresenter);
 
-        newButton = listPresenter.addButton(GlyphIcons.NEW_ITEM);
-        openButton = listPresenter.addButton(GlyphIcons.EDIT);
-        deleteButton = listPresenter.addButton(GlyphIcons.DELETE);
-
-        //final boolean updatePerm = securityContext.hasAppPermission(getEntityType(), DocumentPermissionNames.UPDATE);
-//
-//        if (!allowDelete() || !updatePerm) {
-//            deleteButton.setVisible(false);
-//        }
-//        if (!allowNew() || !updatePerm) {
-//            newButton.setVisible(false);
-//        }
-
+        if (allowNew() && newPresenter != null) {
+            newButton = listPresenter.addButton(SvgPresets.NEW_ITEM);
+        }
+        openButton = listPresenter.addButton(SvgPresets.EDIT);
+        if (allowDelete()) {
+            deleteButton = listPresenter.addButton(SvgPresets.DELETE);
+        }
     }
 
     @Override
@@ -88,21 +79,27 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
                 onOpen();
             }
         }));
-        registerHandler(newButton.addClickHandler(event -> {
-            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
-                onNew();
-            }
-        }));
-        registerHandler(openButton.addClickHandler(event -> {
-            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
-                onOpen();
-            }
-        }));
-        registerHandler(deleteButton.addClickHandler(event -> {
-            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
-                onDelete();
-            }
-        }));
+        if (newButton != null) {
+            registerHandler(newButton.addClickHandler(event -> {
+                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                    onNew();
+                }
+            }));
+        }
+        if (openButton != null) {
+            registerHandler(openButton.addClickHandler(event -> {
+                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                    onOpen();
+                }
+            }));
+        }
+        if (deleteButton != null) {
+            registerHandler(deleteButton.addClickHandler(event -> {
+                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                    onDelete();
+                }
+            }));
+        }
 
         super.onBind();
     }
@@ -175,8 +172,8 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
      * This sets the name filter to be used when fetching items. This method
      * returns false is the filter is set to the same value that is already set.
      *
-     * @param nameFilter
-     * @return
+     * @param nameFilter The name to filter by.
+     * @return True if the filter has changed.
      */
     private boolean setNameFilter(final String nameFilter) {
         if (criteria == null) {
@@ -191,7 +188,7 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
             }
         }
 
-        if ((filter == null && criteria.getName() == null) || (filter != null && filter.equals(criteria.getName()))) {
+        if ((filter == null && criteria.getName() == null) || (filter != null && filter.equals(criteria.getName().getString()))) {
             return false;
         }
 
@@ -223,10 +220,6 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
         };
 
         newPresenter.show(hidePopupUiHandlers);
-    }
-
-    public void onNew(final E entity) {
-        onEdit(entity);
     }
 
     protected boolean allowNew() {

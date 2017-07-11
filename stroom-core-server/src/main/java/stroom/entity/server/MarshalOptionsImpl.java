@@ -26,7 +26,7 @@ import stroom.util.spring.StroomScope;
 @Lazy
 @Scope(value = StroomScope.THREAD, proxyMode = ScopedProxyMode.INTERFACES)
 public class MarshalOptionsImpl implements MarshalOptions {
-    // Don't do any any marshal
+    // Don't do any marshal
     private boolean disabled;
 
     @Override

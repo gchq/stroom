@@ -17,8 +17,6 @@
 package stroom.entity.client.presenter;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.PresenterWidget;
@@ -30,17 +28,15 @@ import stroom.entity.client.event.ShowSaveAsEntityDialogEvent;
 import stroom.entity.shared.NamedEntity;
 import stroom.explorer.shared.DocumentType;
 import stroom.security.client.ClientSecurityContext;
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.client.ImageUtil;
 import stroom.util.shared.HasType;
 import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
-import stroom.widget.button.client.ImageButtonView;
-import stroom.widget.tab.client.presenter.Icon;
-import stroom.widget.tab.client.presenter.ImageIcon;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 
@@ -50,8 +46,8 @@ import java.util.List;
 public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E extends NamedEntity>
         extends EntityEditPresenter<V, E> implements EntityTabData, Refreshable, HasType {
     private final List<TabData> tabs = new ArrayList<TabData>();
-    private final GlyphButtonView saveButton;
-    private final GlyphButtonView saveAsButton;
+    private final ButtonView saveButton;
+    private final ButtonView saveAsButton;
     private TabData selectedTab;
     private String lastLabel;
     private ButtonPanel leftButtons;
@@ -62,8 +58,8 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
                                   final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
 
-        saveButton = addButtonLeft(GlyphIcons.SAVE);
-        saveAsButton = addButtonLeft(GlyphIcons.SAVE_AS);
+        saveButton = addButtonLeft(SvgPresets.SAVE);
+        saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
         saveButton.setEnabled(false);
         saveAsButton.setEnabled(false);
 
@@ -81,38 +77,38 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
     }
 
 
-    public ImageButtonView addButtonLeft(final String title, final ImageResource enabledImage,
-                                         final ImageResource disabledImage) {
+//    public ImageButtonView addButtonLeft(final String title, final ImageResource enabledImage,
+//                                         final ImageResource disabledImage) {
+//        if (leftButtons == null) {
+//            leftButtons = new ButtonPanel();
+//            addWidgetLeft(leftButtons);
+//        }
+//
+//        final ImageButtonView button = leftButtons.add(title, enabledImage, disabledImage, true);
+//        return button;
+//    }
+
+    public ButtonView addButtonLeft(final SvgPreset preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
-            addWidgetLeft(leftButtons);
-        }
-
-        final ImageButtonView button = leftButtons.add(title, enabledImage, disabledImage, true);
-        return button;
-    }
-
-    public GlyphButtonView addButtonLeft(final GlyphIcon preset) {
-        if (leftButtons == null) {
-            leftButtons = new ButtonPanel();
-            leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
+//            leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
             addWidgetLeft(leftButtons);
         }
 
         return leftButtons.add(preset);
     }
 
-    public ImageButtonView addButtonRight(final String title, final ImageResource enabledImage,
-                                          final ImageResource disabledImage) {
-        if (rightButtons == null) {
-            rightButtons = new ButtonPanel();
-            leftButtons.getElement().getStyle().setPaddingRight(1, Style.Unit.PX);
-            addWidgetLeft(rightButtons);
-        }
-
-        final ImageButtonView button = rightButtons.add(title, enabledImage, disabledImage, true);
-        return button;
-    }
+//    public ImageButtonView addButtonRight(final String title, final ImageResource enabledImage,
+//                                          final ImageResource disabledImage) {
+//        if (rightButtons == null) {
+//            rightButtons = new ButtonPanel();
+//            leftButtons.getElement().getStyle().setPaddingRight(1, Style.Unit.PX);
+//            addWidgetLeft(rightButtons);
+//        }
+//
+//        final ImageButtonView button = rightButtons.add(title, enabledImage, disabledImage, true);
+//        return button;
+//    }
 
     public void addTab(final TabData tab) {
         getView().getTabBar().addTab(tab);
@@ -185,14 +181,13 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
 
     @Override
     public Icon getIcon() {
-        return ImageIcon.create(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getType() + ".png");
+        return new SvgPreset(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getType() + ".svg", null, true);
     }
 
     @Override
-    protected void onPermissionsCheck(final boolean readOnly) {
+    public void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
-
-        saveButton.setEnabled(!readOnly);
+        saveButton.setEnabled(isDirty() && !readOnly);
         saveAsButton.setEnabled(true);
     }
 
@@ -203,8 +198,9 @@ public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E exten
             if (lastLabel == null || !lastLabel.equals(getLabel())) {
                 lastLabel = getLabel();
                 RefreshContentTabEvent.fire(this, this);
-                saveButton.setEnabled(dirty);
             }
+
+            saveButton.setEnabled(dirty);
         }
     }
 }

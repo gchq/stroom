@@ -160,7 +160,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 LOGGER.debug("Finding XSLT with resolved name '{}' from pattern '{}'", resolvedName, xsltNamePattern);
                 final FindXSLTCriteria criteria = new FindXSLTCriteria();
                 criteria.setName(new StringCriteria(resolvedName));
-                criteria.setOrderBy(FindXSLTCriteria.ORDER_BY_ID);
+                criteria.setSort(FindXSLTCriteria.FIELD_ID);
                 final List<XSLT> xsltList = xsltService.find(criteria);
                 if (xsltList == null || xsltList.size() == 0) {
                     if (!suppressXSLTNotFoundWarnings) {
@@ -649,7 +649,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         this.xsltNamePattern = xsltNamePattern;
     }
 
-    @PipelineProperty(description = "If XSLT cannot be found to match the name pattern suppress warnings.", defaultValue = "true")
+    @PipelineProperty(description = "If XSLT cannot be found to match the name pattern suppress warnings.", defaultValue = "false")
     public void setSuppressXSLTNotFoundWarnings(final boolean suppressXSLTNotFoundWarnings) {
         this.suppressXSLTNotFoundWarnings = suppressXSLTNotFoundWarnings;
     }
@@ -661,6 +661,11 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         }
 
         pipelineReferences.add(pipelineReference);
+    }
+
+    @PipelineProperty(description = "Advanced: Choose whether or not you want to use cached XSLT templates to improve performance.", defaultValue = "true")
+    public void setUsePool(final boolean usePool) {
+        this.usePool = usePool;
     }
 
     @Override

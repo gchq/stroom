@@ -31,14 +31,14 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import stroom.widget.button.client.GlyphButton;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SvgButton;
+import stroom.svg.client.SvgPresets;
 
 public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
     private final Label label = new Label("Quick Filter", false);
     private final TextBox textBox = new TextBox();
-    private final GlyphButton clearButton;
+    private final SvgButton clearButton;
 
     private EventBus eventBus;
 
@@ -69,7 +69,7 @@ public class QuickFilter extends FlowPanel
         textBox.setStyleName(RESOURCES.style().textBox());
         label.setStyleName(RESOURCES.style().label());
 
-        clearButton = GlyphButton.create(GlyphIcons.CLEAR);
+        clearButton = SvgButton.create(SvgPresets.CLEAR);
         clearButton.addStyleName(RESOURCES.style().clear());
 
         add(textBox);

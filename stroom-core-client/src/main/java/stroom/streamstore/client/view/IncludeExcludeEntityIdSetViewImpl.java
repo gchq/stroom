@@ -27,8 +27,8 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.streamstore.client.presenter.IncludeExcludeEntityIdSetPresenter.IncludeExcludeEntityIdSetView;
 import stroom.streamstore.client.presenter.IncludeExcludeEntityIdSetUiHandlers;
-import stroom.widget.button.client.GlyphButton;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SvgButton;
+import stroom.svg.client.SvgPresets;
 
 public class IncludeExcludeEntityIdSetViewImpl extends ViewWithUiHandlers<IncludeExcludeEntityIdSetUiHandlers>
         implements IncludeExcludeEntityIdSetView {
@@ -38,13 +38,13 @@ public class IncludeExcludeEntityIdSetViewImpl extends ViewWithUiHandlers<Includ
     private final Widget widget;
 
     @UiField(provided = true)
-    GlyphButton edit;
+    SvgButton edit;
     @UiField
     ScrollPanel list;
 
     @Inject
     public IncludeExcludeEntityIdSetViewImpl(final Binder binder) {
-        edit = GlyphButton.create(GlyphIcons.EDIT);
+        edit = SvgButton.create(SvgPresets.EDIT);
         widget = binder.createAndBindUi(this);
     }
 
